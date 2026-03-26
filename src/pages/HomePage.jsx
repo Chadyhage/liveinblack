@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Earth3D from '../components/Earth3D'
@@ -14,10 +14,51 @@ export default function HomePage() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  // Region state — default to Île-de-France
+  // Region state — restored from localStorage or auto-detected
   const defaultRegion = regions.find((r) => r.id === 'france')
-  const [selectedRegion, setSelectedRegion] = useState(defaultRegion)
+  const [selectedRegion, setSelectedRegion] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lib_region')
+      if (saved) {
+        const { id } = JSON.parse(saved)
+        const found = regions.find(r => r.id === id)
+        if (found) return found
+      }
+    } catch {}
+    return defaultRegion
+  })
   const [showRegionSelector, setShowRegionSelector] = useState(false)
+  const [geoToast, setGeoToast] = useState('') // "📍 Localisation détectée : France"
+
+  // Auto-detect region on first visit (no saved region)
+  useEffect(() => {
+    const alreadySaved = localStorage.getItem('lib_region')
+    if (alreadySaved) return // user already has a saved preference
+    if (!navigator.geolocation) return
+
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json&accept-language=fr`
+          )
+          const data = await res.json()
+          const country = data.address?.country
+          const matched = regions.find(r =>
+            r.country.toLowerCase() === country?.toLowerCase()
+          )
+          if (matched) {
+            setSelectedRegion(matched)
+            localStorage.setItem('lib_region', JSON.stringify({ id: matched.id }))
+            setGeoToast(`📍 ${matched.flag} ${matched.name} détecté`)
+            setTimeout(() => setGeoToast(''), 4000)
+          }
+        } catch {}
+      },
+      () => {}, // silently ignore denied/errors
+      { timeout: 8000 }
+    )
+  }, [])
 
   // Get coordinates for the globe
   const lat = selectedRegion?.lat ?? 48.8
@@ -52,10 +93,17 @@ export default function HomePage() {
 
   const handleRegionSelect = (region) => {
     setSelectedRegion(region)
+    localStorage.setItem('lib_region', JSON.stringify({ id: region.id }))
   }
 
   return (
     <Layout>
+      {/* Geo-detection toast */}
+      {geoToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#1a1a1a] border border-[#d4af37]/30 text-[#d4af37] text-xs font-semibold shadow-lg animate-fade-in-up">
+          {geoToast}
+        </div>
+      )}
       <div className="px-4 py-6 space-y-8">
         {/* Greeting */}
         <div className="animate-fade-in-up">
