@@ -56,12 +56,21 @@ export function removePendingValidation(uid) {
   localStorage.setItem(PENDING_KEY, JSON.stringify(list))
 }
 
-export function approveValidation(uid) {
+export async function approveValidation(uid) {
   const pending = getPendingValidations().find(u => u.uid === uid)
   if (!pending) return null
   const approved = { ...pending, status: 'active', approvedAt: Date.now() }
   saveAccount(approved)
   removePendingValidation(uid)
+  // Sync to Firestore if Firebase is active
+  try {
+    const { USE_REAL_FIREBASE, db } = await import('../firebase')
+    if (USE_REAL_FIREBASE) {
+      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', uid), approved)
+      await deleteDoc(doc(db, 'pending_validations', uid))
+    }
+  } catch {}
   // Mark in session if it's the current user
   try {
     const current = JSON.parse(localStorage.getItem('lib_user') || 'null')

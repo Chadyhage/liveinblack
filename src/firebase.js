@@ -1,41 +1,19 @@
-// ============================================================
-//  LIVEINBLACK — Configuration Firebase
-//  À remplir avec tes vraies clés (voir instructions ci-dessous)
-// ============================================================
-//
-//  ÉTAPES POUR ACTIVER LA VRAIE AUTH :
-//
-//  1. Va sur https://console.firebase.google.com
-//  2. Clique "Ajouter un projet" → nom : liveinblack
-//  3. Dans le projet → "Authentication" → "Sign-in method"
-//     Active : Email/Mot de passe, Google, Facebook
-//  4. Dans "Paramètres du projet" → "Tes applications" → icône Web </>
-//  5. Copie le firebaseConfig et colle-le ici ci-dessous
-//  6. Remplace USE_REAL_FIREBASE par true
-//
-// ============================================================
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
 
-export const USE_REAL_FIREBASE = false  // ← passe à true quand tu as ta config
+export const USE_REAL_FIREBASE = true
 
 const firebaseConfig = {
-  apiKey: "COLLE-TA-CLE-ICI",
-  authDomain: "ton-projet.firebaseapp.com",
-  projectId: "ton-projet",
-  storageBucket: "ton-projet.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:xxxxxxxxxxxx",
+  apiKey: "AIzaSyBee1WKyQmZSuzHVsn1DBoZ0p-fRkUvlI0",
+  authDomain: "liveinblack-15d30.firebaseapp.com",
+  projectId: "liveinblack-15d30",
+  storageBucket: "liveinblack-15d30.firebasestorage.app",
+  messagingSenderId: "758710974251",
+  appId: "1:758710974251:web:613dfca10c5f8e7aedb76e",
+  measurementId: "G-8YBQ81DR6H"
 }
 
-// ----------------------------------------------------------------
-// Initialisation Firebase (seulement si USE_REAL_FIREBASE = true)
-// ----------------------------------------------------------------
-let auth = null
-
-if (USE_REAL_FIREBASE) {
-  const { initializeApp } = await import('firebase/app')
-  const { getAuth } = await import('firebase/auth')
-  const app = initializeApp(firebaseConfig)
-  auth = getAuth(app)
-}
-
-export { auth }
+const app = initializeApp(firebaseConfig)
+export const auth = getAuth(app)
+export const db = getFirestore(app)

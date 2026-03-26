@@ -21,9 +21,17 @@ async function doEmailLogin(email, password) {
     throw { code: 'auth/wrong-password' }
   }
   const { signInWithEmailAndPassword } = await import('firebase/auth')
-  const { auth } = await import('../firebase')
+  const { auth, db } = await import('../firebase')
+  const { doc, getDoc } = await import('firebase/firestore')
   const cred = await signInWithEmailAndPassword(auth, email, password)
-  return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email }
+  const snap = await getDoc(doc(db, 'users', cred.user.uid))
+  if (snap.exists()) {
+    const profile = snap.data()
+    if (profile.status === 'pending') throw { code: 'auth/account-pending', role: profile.role }
+    if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
+    return profile
+  }
+  return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', status: 'active' }
 }
 
 const SUPER_ADMIN_EMAIL = 'hagechady4@gmail.com'
@@ -54,10 +62,27 @@ async function doEmailRegister(data) {
     return user
   }
   const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
-  const { auth } = await import('../firebase')
+  const { auth, db } = await import('../firebase')
+  const { doc, setDoc } = await import('firebase/firestore')
+  const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+  const isAgent = role === 'agent'
+  const isPrest = role === 'prestataire'
+  const needsValidation = (isAgent || isPrest) && !isSuperAdmin
+  const finalRole = isSuperAdmin ? 'agent' : role
   const cred = await createUserWithEmailAndPassword(auth, email, password)
   if (name) await updateProfile(cred.user, { displayName: name })
-  return { uid: cred.user.uid, name, email, phone, role, status: 'active', createdAt: Date.now() }
+  const userObj = {
+    uid: cred.user.uid, name, email, phone,
+    role: finalRole,
+    prestataireType: isPrest ? prestataireType : null,
+    status: needsValidation ? 'pending' : 'active',
+    createdAt: Date.now(),
+  }
+  await setDoc(doc(db, 'users', cred.user.uid), userObj)
+  if (needsValidation) {
+    await setDoc(doc(db, 'pending_validations', cred.user.uid), { ...userObj, requestedAt: Date.now() })
+  }
+  return userObj
 }
 
 async function doGoogleLogin() {
