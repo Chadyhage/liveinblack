@@ -328,18 +328,31 @@ export default function LoginPage() {
           <div className="text-5xl mb-2">📧</div>
           <h2 className="text-white font-black text-xl">Vérifie ton email</h2>
           <p className="text-gray-400 text-sm">
-            Un email de confirmation a été envoyé à <span className="text-white font-semibold">{unverifiedEmail}</span>.
+            Un lien de confirmation a été envoyé à <span className="text-white font-semibold">{unverifiedEmail}</span>.
           </p>
-          <p className="text-gray-500 text-xs">Clique sur le lien dans l'email, puis reviens ici pour te connecter.</p>
+          <div className="text-left bg-[#1a1a1a] rounded-xl p-3 space-y-1.5">
+            <p className="text-gray-300 text-xs font-semibold">Comment ça marche :</p>
+            <p className="text-gray-500 text-xs">① Ouvre ta boîte mail</p>
+            <p className="text-gray-500 text-xs">② Cherche un email de <span className="text-gray-300">noreply@liveinblack-15d30.firebaseapp.com</span></p>
+            <p className="text-gray-500 text-xs">③ Clique sur le lien dans cet email</p>
+            <p className="text-gray-500 text-xs">④ Reviens ici et connecte-toi</p>
+          </div>
+          <p className="text-gray-600 text-[10px]">L'email peut arriver dans les spams / courriers indésirables.</p>
           {resendSent && <p className="text-green-400 text-xs">Email renvoyé ✓</p>}
           <button onClick={handleResendVerification} className="w-full text-[#d4af37] text-xs hover:underline">
             Renvoyer l'email
           </button>
           <button
-            onClick={() => { setUnverifiedEmail(''); setMode('login') }}
+            onClick={() => {
+              const savedEmail = unverifiedEmail
+              setUnverifiedEmail('')
+              setMode('login')
+              setEmail(savedEmail)
+              setError('Email vérifié ? Entre ton mot de passe pour te connecter.')
+            }}
             className="btn-gold w-full mt-2"
           >
-            J'ai vérifié, me connecter
+            J'ai cliqué sur le lien → Me connecter
           </button>
         </div>
       </div>
