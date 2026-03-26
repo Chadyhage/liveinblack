@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pandoc \"C:/Users/ASUS STRIX/Downloads/PARTIE 3.docx\" -o /tmp/partie3.md)",
+      "Read(//tmp/**)",
+      "Read(//c/Users/ASUS STRIX/Downloads/**)",
+      "Bash(python3 -c \":*)",
+      "Bash(npm create:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(node_modules/.bin/tailwindcss init:*)",
+      "Bash(npm run:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node_modules/.bin/vite build:*)",
+      "Bash(node_modules/.bin/npm install:*)",
+      "Bash(\"/c/Program Files/nodejs/npm.cmd\" install three)",
+      "Bash(node -e \"const fs=require\\(''fs''\\);const c=fs.readFileSync\\(''src/data/events.js'',''utf8''\\);let open=0,close=0,brackets=[];for\\(let i=0;i<c.length;i++\\){if\\(c[i]===''{''\\)open++;if\\(c[i]===''}''\\)close++;}console.log\\(''open {:'', open, ''close }:'', close\\)\")",
+      "Bash(node -e \"const fs=require\\(''fs''\\);const c=fs.readFileSync\\(''src/data/events.js'',''utf8''\\);let open=0,close=0;for\\(let i=0;i<c.length;i++\\){if\\(c[i]===''[''\\)open++;if\\(c[i]==='']''\\)close++;}console.log\\(''open [:'', open, ''close ]:'', close\\)\")",
+      "Bash(node -e \"const fs=require\\(''fs''\\);const buf=fs.readFileSync\\(''src/data/events.js''\\);console.log\\(''BOM?'', buf[0]===0xEF&&buf[1]===0xBB&&buf[2]===0xBF\\); console.log\\(''first 4 bytes:'', buf[0].toString\\(16\\), buf[1].toString\\(16\\), buf[2].toString\\(16\\), buf[3].toString\\(16\\)\\)\")",
+      "Bash(node -e \"const fs=require\\(''fs''\\);const c=fs.readFileSync\\(''src/data/events.js'',''utf8''\\);const lines=c.split\\(''\\\\n''\\);let crlf=0,lf=0;for\\(const l of lines\\){if\\(l.endsWith\\(''\\\\r''\\)\\)crlf++;else lf++;}console.log\\(''CRLF lines:'',crlf,''LF-only lines:'',lf,''total:'',lines.length\\)\")",
+      "Bash(node -e \"console.log\\(require\\(''./node_modules/react-easy-crop/package.json''\\).version\\)\")",
+      "Bash(node -e \"const r = require\\(''./node_modules/qrcode.react''\\); console.log\\(Object.keys\\(r\\)\\)\")",
+      "Bash(npx vite:*)",
+      "Bash(node -e \"require.resolve\\(''jsqr''\\)\")",
+      "mcp__Windows-MCP__Screenshot",
+      "Bash(where gh:*)",
+      "Bash(where vercel:*)",
+      "Bash(where netlify:*)",
+      "Bash(gh --version)",
+      "Bash(npx vercel:*)",
+      "Bash(npm --version)"
+    ]
+  }
+}
