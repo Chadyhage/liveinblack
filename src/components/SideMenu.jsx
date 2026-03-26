@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
@@ -11,6 +12,7 @@ export default function SideMenu({ open, onClose }) {
   const isAgent = user?.role === 'agent'
   const isPrestataire = user?.role === 'prestataire' || user?.role === 'organisateur'
   const pendingCount = isAgent ? getPendingValidations().length : 0
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   const links = [
     { path: '/accueil', label: 'Accueil', icon: '⬜' },
@@ -101,7 +103,7 @@ export default function SideMenu({ open, onClose }) {
         {/* Footer */}
         <div className="p-4 border-t border-[#1e1e1e]">
           <button
-            onClick={logout}
+            onClick={() => setConfirmLogout(true)}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-gray-600 hover:text-red-400 hover:bg-red-400/5 transition-all"
           >
             <span>→</span>
@@ -109,6 +111,32 @@ export default function SideMenu({ open, onClose }) {
           </button>
         </div>
       </div>
+
+      {/* Confirm logout modal */}
+      {confirmLogout && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setConfirmLogout(false)} />
+          <div className="relative glass rounded-2xl p-6 w-full max-w-xs space-y-4 text-center">
+            <div className="text-3xl">👋</div>
+            <h3 className="text-white font-bold">Se déconnecter ?</h3>
+            <p className="text-gray-400 text-sm">Tu devras te reconnecter pour accéder à ton compte.</p>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setConfirmLogout(false)}
+                className="flex-1 py-2.5 rounded-xl border border-[#333] text-gray-400 text-sm hover:border-white/20 hover:text-white transition-all"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={logout}
+                className="flex-1 py-2.5 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 text-sm font-semibold hover:bg-red-500/30 transition-all"
+              >
+                Se déconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
