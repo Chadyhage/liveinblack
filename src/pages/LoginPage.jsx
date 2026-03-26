@@ -422,7 +422,7 @@ export default function LoginPage() {
       </div>
 
       {/* Form */}
-      <div className="relative z-10 mt-auto px-6 pb-10">
+      <div className="relative z-10 mt-auto md:my-auto px-6 pb-10 md:pb-16 md:w-full md:max-w-sm md:mx-auto">
         <div className="glass p-6 rounded-3xl">
 
           {/* ── Mode tabs ── */}

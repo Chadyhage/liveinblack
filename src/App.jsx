@@ -44,7 +44,7 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ user, setUser }}>
       <BrowserRouter>
-        <div className="page-container relative">
+        <div className="min-h-screen bg-[#080808] relative">
           <Routes>
             <Route path="/" element={user ? <Navigate to="/accueil" /> : <LoginPage />} />
             <Route path="/accueil" element={user ? <HomePage /> : <Navigate to="/" />} />
