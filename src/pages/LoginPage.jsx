@@ -24,6 +24,10 @@ async function doEmailLogin(email, password) {
   const { auth, db } = await import('../firebase')
   const { doc, getDoc } = await import('firebase/firestore')
   const cred = await signInWithEmailAndPassword(auth, email, password)
+  // Block login if email not verified (except super admin)
+  if (!cred.user.emailVerified && email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+    throw { code: 'auth/email-not-verified' }
+  }
   const snap = await getDoc(doc(db, 'users', cred.user.uid))
   if (snap.exists()) {
     const profile = snap.data()
@@ -71,6 +75,11 @@ async function doEmailRegister(data) {
   const finalRole = isSuperAdmin ? 'agent' : role
   const cred = await createUserWithEmailAndPassword(auth, email, password)
   if (name) await updateProfile(cred.user, { displayName: name })
+  // Send email verification (skip for super admin)
+  if (!isSuperAdmin) {
+    const { sendEmailVerification } = await import('firebase/auth')
+    await sendEmailVerification(cred.user)
+  }
   const userObj = {
     uid: cred.user.uid, name, email, phone,
     role: finalRole,
@@ -82,7 +91,7 @@ async function doEmailRegister(data) {
   if (needsValidation) {
     await setDoc(doc(db, 'pending_validations', cred.user.uid), { ...userObj, requestedAt: Date.now() })
   }
-  return userObj
+  return isSuperAdmin ? userObj : { ...userObj, _needsEmailVerification: true }
 }
 
 async function doGoogleLogin() {
@@ -170,6 +179,10 @@ export default function LoginPage() {
   const [showResetModal, setShowResetModal] = useState(false)
   const [resetEmail, setResetEmail] = useState('')
   const [resetSent, setResetSent] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetError, setResetError] = useState('')
+  const [unverifiedEmail, setUnverifiedEmail] = useState('') // email not yet verified
+  const [resendSent, setResendSent] = useState(false)
   const [pendingInfo, setPendingInfo] = useState(null) // { role } — account waiting validation
 
   const { setUser } = useAuth()
@@ -190,6 +203,8 @@ export default function LoginPage() {
     } catch (err) {
       if (err.code === 'auth/account-pending') {
         setPendingInfo({ role: err.role })
+      } else if (err.code === 'auth/email-not-verified') {
+        setUnverifiedEmail(email)
       } else if (
         (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') &&
         email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
@@ -233,6 +248,8 @@ export default function LoginPage() {
       })
       if (userData.status === 'pending') {
         setPendingInfo({ role: userData.role })
+      } else if (userData._needsEmailVerification) {
+        setUnverifiedEmail(regEmail)
       } else {
         setUser(userData)
         navigate('/accueil')
@@ -270,6 +287,63 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // ── Real password reset ──
+  async function handleSendReset() {
+    if (!resetEmail) return
+    setResetLoading(true)
+    setResetError('')
+    try {
+      const { sendPasswordResetEmail } = await import('firebase/auth')
+      const { auth } = await import('../firebase')
+      await sendPasswordResetEmail(auth, resetEmail)
+      setResetSent(true)
+    } catch (err) {
+      setResetError(getFirebaseError(err.code))
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
+  // ── Resend verification email ──
+  async function handleResendVerification() {
+    setResendSent(false)
+    try {
+      const { auth } = await import('../firebase')
+      if (auth.currentUser) {
+        const { sendEmailVerification } = await import('firebase/auth')
+        await sendEmailVerification(auth.currentUser)
+        setResendSent(true)
+      }
+    } catch {}
+  }
+
+  // ── "Email not verified" screen ──
+  if (unverifiedEmail) {
+    return (
+      <div className="relative min-h-screen bg-black flex flex-col items-center justify-center px-6">
+        <div className="absolute inset-0 corridor-bg" />
+        <div className="relative z-10 glass p-8 rounded-3xl text-center max-w-sm w-full space-y-4">
+          <div className="text-5xl mb-2">📧</div>
+          <h2 className="text-white font-black text-xl">Vérifie ton email</h2>
+          <p className="text-gray-400 text-sm">
+            Un email de confirmation a été envoyé à <span className="text-white font-semibold">{unverifiedEmail}</span>.
+          </p>
+          <p className="text-gray-500 text-xs">Clique sur le lien dans l'email, puis reviens ici pour te connecter.</p>
+          {resendSent && <p className="text-green-400 text-xs">Email renvoyé ✓</p>}
+          <button onClick={handleResendVerification} className="w-full text-[#d4af37] text-xs hover:underline">
+            Renvoyer l'email
+          </button>
+          <button
+            onClick={() => { setUnverifiedEmail(''); setMode('login') }}
+            className="btn-gold w-full mt-2"
+          >
+            J'ai vérifié, me connecter
+          </button>
+        </div>
+      </div>
+    )
   }
 
   // ── "Account pending validation" screen ──
@@ -579,8 +653,11 @@ export default function LoginPage() {
               <>
                 <p className="text-gray-400 text-sm">Entre ton adresse email et on t'envoie un lien de réinitialisation.</p>
                 <input className="input-dark" type="email" placeholder="ton@email.com"
-                  value={resetEmail} onChange={e => setResetEmail(e.target.value)} />
-                <button onClick={() => { if (resetEmail) setResetSent(true) }} className="btn-gold w-full">Envoyer</button>
+                  value={resetEmail} onChange={e => { setResetEmail(e.target.value); setResetError('') }} />
+                {resetError && <p className="text-red-400 text-xs">{resetError}</p>}
+                <button onClick={handleSendReset} disabled={resetLoading} className="btn-gold w-full disabled:opacity-60">
+                  {resetLoading ? <Spinner text="Envoi..." /> : 'Envoyer'}
+                </button>
                 <button onClick={() => setShowResetModal(false)} className="w-full text-center text-gray-600 text-xs hover:text-gray-400 transition-colors">Annuler</button>
               </>
             ) : (
@@ -621,6 +698,7 @@ function getFirebaseError(code) {
     'auth/popup-closed-by-user': 'Connexion annulée.',
     'auth/network-request-failed': 'Erreur réseau. Vérifie ta connexion.',
     'auth/account-rejected': 'Ton compte a été refusé. Contacte le support.',
+    'auth/email-not-verified': 'Email non vérifié. Consulte ta boîte mail.',
   }
   return messages[code] || 'Une erreur est survenue. Réessaie.'
 }
