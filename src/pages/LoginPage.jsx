@@ -136,6 +136,7 @@ const COUNTRY_CODES = [
   { code: 'CI', dial: '+225', flag: '🇨🇮', name: "Côte d'Ivoire" },
   { code: 'CM', dial: '+237', flag: '🇨🇲', name: 'Cameroun' },
   { code: 'TG', dial: '+228', flag: '🇹🇬', name: 'Togo' },
+  { code: 'NE', dial: '+227', flag: '🇳🇪', name: 'Niger' },
   { code: 'BJ', dial: '+229', flag: '🇧🇯', name: 'Bénin' },
   { code: 'GH', dial: '+233', flag: '🇬🇭', name: 'Ghana' },
   { code: 'NG', dial: '+234', flag: '🇳🇬', name: 'Nigeria' },
