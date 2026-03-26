@@ -183,6 +183,16 @@ export default function LoginPage() {
     } catch (err) {
       if (err.code === 'auth/account-pending') {
         setPendingInfo({ role: err.role })
+      } else if (
+        (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') &&
+        email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+      ) {
+        // Super admin hasn't created their account yet → switch to registration pre-filled
+        setMode('register')
+        setRegStep(2)
+        setRegRole('agent')
+        setRegEmail(email)
+        setError("Ton compte admin n'existe pas encore. Choisis un mot de passe pour le créer.")
       } else {
         setError(getFirebaseError(err.code))
       }
