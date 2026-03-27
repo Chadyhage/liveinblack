@@ -107,17 +107,21 @@ async function doGoogleLogin() {
   return { uid: cred.user.uid, name: cred.user.displayName, email: cred.user.email, photo: cred.user.photoURL, role: 'user', status: 'active' }
 }
 
-async function doFacebookLogin() {
+async function doAppleLogin() {
   if (!USE_REAL_FIREBASE) {
-    const uid = 'fb-demo'
-    const user = { uid, name: 'Utilisateur Facebook', email: 'demo@facebook.com', role: 'user', status: 'active', createdAt: Date.now() }
+    const uid = 'apple-demo'
+    const user = { uid, name: 'Utilisateur Apple', email: 'demo@icloud.com', role: 'user', status: 'active', createdAt: Date.now() }
     saveAccount(user)
     return user
   }
-  const { signInWithPopup, FacebookAuthProvider } = await import('firebase/auth')
+  const { signInWithPopup, OAuthProvider } = await import('firebase/auth')
   const { auth } = await import('../firebase')
-  const cred = await signInWithPopup(auth, new FacebookAuthProvider())
-  return { uid: cred.user.uid, name: cred.user.displayName, email: cred.user.email, photo: cred.user.photoURL, role: 'user', status: 'active' }
+  const provider = new OAuthProvider('apple.com')
+  provider.addScope('email')
+  provider.addScope('name')
+  const cred = await signInWithPopup(auth, provider)
+  const name = cred.user.displayName || cred.user.email?.split('@')[0] || 'Utilisateur Apple'
+  return { uid: cred.user.uid, name, email: cred.user.email, photo: cred.user.photoURL, role: 'user', status: 'active' }
 }
 
 // ─── Country dial codes ───────────────────────────────────────────────────
@@ -276,11 +280,11 @@ export default function LoginPage() {
     }
   }
 
-  async function handleFacebook() {
+  async function handleApple() {
     setError('')
     setLoading(true)
     try {
-      const userData = await doFacebookLogin()
+      const userData = await doAppleLogin()
       setUser(userData)
       navigate('/accueil')
     } catch (err) {
@@ -636,12 +640,12 @@ export default function LoginPage() {
                   </svg>
                   Google
                 </button>
-                <button onClick={handleFacebook} disabled={loading}
+                <button onClick={handleApple} disabled={loading}
                   className="flex items-center justify-center gap-2 border border-[#222] rounded-xl py-2.5 text-sm text-gray-400 hover:border-white/20 hover:text-white transition-all disabled:opacity-50">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  <svg width="16" height="16" viewBox="0 0 814 1000" fill="currentColor">
+                    <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 383.8 1 261 1 148.9 1 78.7 25.4 12.7 73.5-21.3c43.7-31.1 93.1-47.1 145.3-47.1 82.8 0 138.4 44.7 186.7 44.7 46.5 0 119.5-47.4 215.8-47.4zm-97.5-161.1c-5.8 27.5-28.9 75.3-73.7 113.5-47.8 40.8-99.4 61-150.2 61-5.8 0-11.6-.6-17.4-1.3 0-3.8-.6-7.7-.6-12.2 0-26.3 7.1-74.1 47.8-115 40.8-40.8 100.2-68 152.7-68 5.8 0 11.6.6 17.4 1.3-.6 7.1-.6 14.8-.6 20.7z"/>
                   </svg>
-                  Facebook
+                  Apple
                 </button>
               </div>
             </div>
@@ -710,6 +714,8 @@ function getFirebaseError(code) {
     'auth/invalid-email': 'Adresse email invalide.',
     'auth/too-many-requests': 'Trop de tentatives. Réessaie dans quelques minutes.',
     'auth/popup-closed-by-user': 'Connexion annulée.',
+    'auth/cancelled-popup-request': 'Connexion annulée.',
+    'auth/apple-signin-failed': 'Connexion Apple échouée. Réessaie.',
     'auth/network-request-failed': 'Erreur réseau. Vérifie ta connexion.',
     'auth/account-rejected': 'Ton compte a été refusé. Contacte le support.',
     'auth/email-not-verified': 'Email non vérifié. Consulte ta boîte mail.',
