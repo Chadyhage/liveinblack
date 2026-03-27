@@ -23,24 +23,44 @@ const FAQ = [
   { q: "Comment créer un événement ?", a: "Rends-toi dans 'Mes Événements & Créations' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
 ]
 
+function getProfileError(code) {
+  switch (code) {
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return 'Mot de passe actuel incorrect'
+    case 'auth/requires-recent-login': return 'Session expirée — déconnecte-toi et reconnecte-toi'
+    case 'auth/email-already-in-use': return 'Cet e-mail est déjà utilisé par un autre compte'
+    case 'auth/invalid-email': return 'Adresse e-mail invalide'
+    case 'auth/weak-password': return 'Mot de passe trop faible (minimum 6 caractères)'
+    case 'auth/too-many-requests': return 'Trop de tentatives, réessaie dans quelques minutes'
+    default: return 'Une erreur est survenue, réessaie'
+  }
+}
+
 export default function ProfilePage() {
   const { user, setUser } = useAuth()
   const navigate = useNavigate()
   const [panel, setPanel] = useState(null) // null | 'settings' | 'billets' | 'encheres' | 'commandes' | 'service-orders' | 'support'
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   // Settings form state
   const [settingsForm, setSettingsForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
+    currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   })
   const [settingsMsg, setSettingsMsg] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   // Support state
   const [openFaq, setOpenFaq] = useState(null)
 
-  function saveSettings() {
+  const emailChanged = settingsForm.email.trim() !== (user?.email || '')
+  const passwordChanged = !!settingsForm.newPassword
+  const needsCurrentPassword = emailChanged || passwordChanged
+
+  async function saveSettings() {
     if (!settingsForm.name.trim()) {
       setSettingsMsg({ type: 'error', text: 'Le prénom / nom est obligatoire' })
       return
@@ -49,16 +69,71 @@ export default function ProfilePage() {
       setSettingsMsg({ type: 'error', text: 'Adresse e-mail invalide' })
       return
     }
-    if (settingsForm.newPassword && settingsForm.newPassword !== settingsForm.confirmPassword) {
-      setSettingsMsg({ type: 'error', text: 'Les mots de passe ne correspondent pas' })
+    if (passwordChanged) {
+      if (settingsForm.newPassword.length < 8) {
+        setSettingsMsg({ type: 'error', text: 'Le mot de passe doit contenir au moins 8 caractères' })
+        return
+      }
+      if (settingsForm.newPassword !== settingsForm.confirmPassword) {
+        setSettingsMsg({ type: 'error', text: 'Les mots de passe ne correspondent pas' })
+        return
+      }
+    }
+    if (needsCurrentPassword && !settingsForm.currentPassword) {
+      setSettingsMsg({ type: 'error', text: 'Saisis ton mot de passe actuel pour modifier l\'e-mail ou le mot de passe' })
       return
     }
-    const uid = getUserId(user)
-    const updatedUser = { ...user, name: settingsForm.name.trim(), email: settingsForm.email.trim() }
-    setUser(updatedUser)
-    updateAccount(uid, { name: settingsForm.name.trim(), email: settingsForm.email.trim() })
-    setSettingsMsg({ type: 'success', text: 'Modifications enregistrées ✓' })
-    setTimeout(() => setSettingsMsg(null), 3000)
+
+    setSaving(true)
+    setSettingsMsg(null)
+
+    try {
+      const { USE_REAL_FIREBASE } = await import('../firebase')
+      if (USE_REAL_FIREBASE) {
+        const { auth } = await import('../firebase')
+        const { updateProfile, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } = await import('firebase/auth')
+        const currentUser = auth.currentUser
+
+        if (currentUser) {
+          // Update display name
+          if (settingsForm.name.trim() !== user.name) {
+            await updateProfile(currentUser, { displayName: settingsForm.name.trim() })
+          }
+
+          // Email or password change requires re-authentication
+          if (needsCurrentPassword) {
+            const isEmailPassword = currentUser.providerData.some(p => p.providerId === 'password')
+            if (!isEmailPassword) {
+              setSettingsMsg({ type: 'error', text: 'Connexion via Google/Apple — e-mail et mot de passe gérés par ce service' })
+              setSaving(false)
+              return
+            }
+            const credential = EmailAuthProvider.credential(user.email, settingsForm.currentPassword)
+            await reauthenticateWithCredential(currentUser, credential)
+
+            if (emailChanged) {
+              await updateEmail(currentUser, settingsForm.email.trim())
+            }
+            if (passwordChanged) {
+              await updatePassword(currentUser, settingsForm.newPassword)
+            }
+          }
+        }
+      }
+
+      // Update local state
+      const uid = getUserId(user)
+      const updatedUser = { ...user, name: settingsForm.name.trim(), email: settingsForm.email.trim() }
+      setUser(updatedUser)
+      updateAccount(uid, { name: settingsForm.name.trim(), email: settingsForm.email.trim() })
+      setSettingsForm(f => ({ ...f, currentPassword: '', newPassword: '', confirmPassword: '' }))
+      setSettingsMsg({ type: 'success', text: 'Modifications enregistrées ✓' })
+      setTimeout(() => setSettingsMsg(null), 3000)
+    } catch (err) {
+      setSettingsMsg({ type: 'error', text: getProfileError(err.code) })
+    } finally {
+      setSaving(false)
+    }
   }
 
   function BackButton() {
@@ -127,19 +202,32 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
+
+            {needsCurrentPassword && (
+              <div className="space-y-3 pt-2 border-t border-[#1a1a1a]">
+                <h3 className="text-orange-400 text-xs uppercase tracking-widest">Confirmation requise</h3>
+                <div>
+                  <label className="text-gray-500 text-xs mb-1.5 block">Mot de passe actuel</label>
+                  <input
+                    className="input-dark"
+                    type="password"
+                    placeholder="Ton mot de passe actuel"
+                    value={settingsForm.currentPassword}
+                    onChange={e => setSettingsForm(f => ({ ...f, currentPassword: e.target.value }))}
+                  />
+                </div>
+                <p className="text-gray-600 text-[10px]">Requis pour modifier ton e-mail ou mot de passe.</p>
+              </div>
+            )}
+
             {settingsMsg && (
               <div className={`p-3 rounded-xl text-xs ${settingsMsg.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
                 {settingsMsg.text}
               </div>
             )}
-            <button onClick={saveSettings} className="btn-gold w-full">
-              Enregistrer les modifications
+            <button onClick={saveSettings} disabled={saving} className="btn-gold w-full disabled:opacity-50 disabled:cursor-not-allowed">
+              {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </button>
-            <div className="glass p-3 rounded-xl border border-white/5">
-              <p className="text-gray-600 text-[10px]">
-                ⚠ Mode simulation — les changements sont sauvegardés localement.
-              </p>
-            </div>
           </div>
         </div>
       </Layout>
@@ -467,12 +555,45 @@ export default function ProfilePage() {
 
         {/* Logout */}
         <button
-          onClick={() => { setUser(null); navigate('/') }}
+          onClick={() => setShowLogoutConfirm(true)}
           className="w-full py-3 border border-red-500/20 text-red-400 rounded-xl text-sm font-semibold hover:bg-red-500/10 transition-all"
         >
           Se déconnecter
         </button>
       </div>
+
+      {/* Logout confirmation modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center px-6">
+          <div className="glass rounded-2xl p-6 w-full max-w-xs space-y-4 border border-red-500/20">
+            <h3 className="text-white font-bold text-center">Se déconnecter ?</h3>
+            <p className="text-gray-400 text-sm text-center">Tu devras te reconnecter pour accéder à ton compte.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-300 text-sm font-semibold hover:bg-white/5 transition-all"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={async () => {
+                  const { USE_REAL_FIREBASE } = await import('../firebase')
+                  if (USE_REAL_FIREBASE) {
+                    const { auth } = await import('../firebase')
+                    const { signOut } = await import('firebase/auth')
+                    await signOut(auth).catch(() => {})
+                  }
+                  setUser(null)
+                  navigate('/')
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/30 transition-all"
+              >
+                Déconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }
