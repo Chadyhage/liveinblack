@@ -66,7 +66,7 @@ export default function Layout({ children }) {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all relative group"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
                 style={active ? {
                   background: 'linear-gradient(to right, rgba(212,175,55,0.1), rgba(212,175,55,0.04))',
                   borderLeft: '2px solid #d4af37',
@@ -78,10 +78,6 @@ export default function Layout({ children }) {
               >
                 <span className="text-base">{item.icon}</span>
                 <span className="text-sm font-medium tracking-wide">{item.label}</span>
-                {!active && (
-                  <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: 'rgba(255,255,255,0.03)' }} />
-                )}
               </button>
             )
           })}
@@ -115,7 +111,7 @@ export default function Layout({ children }) {
         <div className="flex flex-col gap-0.5">
           <button
             onClick={() => navigate('/portefeuille')}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-white/[0.04]"
             style={{ color: 'rgba(180,180,200,0.6)' }}
           >
             <span className="text-base">💰</span>
@@ -123,13 +119,11 @@ export default function Layout({ children }) {
               style={{ background: 'linear-gradient(135deg, #d4af37, #f0e080)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {balance.toFixed(0)} €
             </span>
-            <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ background: 'rgba(255,255,255,0.03)' }} />
           </button>
 
           <button
             onClick={() => navigate('/profil')}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-white/[0.04]"
             style={{ color: 'rgba(180,180,200,0.6)' }}
           >
             <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 overflow-hidden"

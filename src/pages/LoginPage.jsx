@@ -327,11 +327,7 @@ export default function LoginPage() {
   // ── "Email not verified" screen ──
   if (unverifiedEmail) {
     return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center px-6" style={{ background: '#000' }}>
-        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.22, filter: 'saturate(0.6)' }}>
-          <source src="/bg-liquid.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(4,4,11,0.6) 0%, rgba(0,0,0,0.9) 100%)' }} />
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-6 login-bg">
         <div className="relative z-10 p-8 rounded-3xl text-center max-w-sm w-full space-y-4" style={{
           background: 'linear-gradient(145deg, rgba(8,8,16,0.9), rgba(4,4,10,0.95))',
           backdropFilter: 'blur(28px)',
@@ -377,11 +373,7 @@ export default function LoginPage() {
   if (pendingInfo) {
     const roleLabel = ROLES[pendingInfo.role]?.label || pendingInfo.role
     return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center px-6" style={{ background: '#000' }}>
-        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.22, filter: 'saturate(0.6)' }}>
-          <source src="/bg-liquid.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(4,4,11,0.6) 0%, rgba(0,0,0,0.9) 100%)' }} />
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-6 login-bg">
         <div className="relative z-10 p-8 rounded-3xl text-center max-w-sm w-full space-y-4" style={{
           background: 'linear-gradient(145deg, rgba(8,8,16,0.9), rgba(4,4,10,0.95))',
           backdropFilter: 'blur(28px)',
@@ -407,24 +399,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col" style={{ background: '#000' }}>
+    <div className="relative min-h-screen overflow-hidden flex flex-col" style={{ background: '#04040b' }}>
 
-      {/* ── Liquid Metal Video Background ── */}
-      <video
-        autoPlay muted loop playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ opacity: 0.28, filter: 'saturate(0.7) contrast(1.1)' }}
-      >
-        <source src="/bg-liquid.mp4" type="video/mp4" />
-      </video>
-
-      {/* ── Deep obsidian overlay with vignette ── */}
-      <div className="absolute inset-0" style={{
-        background: 'radial-gradient(ellipse at 50% 40%, rgba(4,4,11,0.55) 0%, rgba(0,0,0,0.88) 100%)',
-      }} />
-      {/* Edge vignettes */}
+      {/* ── CSS Liquid Metal Background (no video — pure CSS) ── */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 20%, transparent 75%, rgba(0,0,0,0.85) 100%)',
+        background: `
+          radial-gradient(ellipse 80% 60% at 20% 20%, rgba(100,90,60,0.18) 0%, transparent 60%),
+          radial-gradient(ellipse 70% 50% at 80% 70%, rgba(60,60,90,0.15) 0%, transparent 60%),
+          radial-gradient(ellipse 50% 40% at 50% 50%, rgba(30,25,15,0.4) 0%, transparent 70%),
+          linear-gradient(135deg, #030309 0%, #06060e 40%, #04040b 100%)
+        `,
+      }} />
+      {/* Animated metallic shimmer lines */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: `
+          repeating-linear-gradient(
+            105deg,
+            transparent 0px,
+            transparent 80px,
+            rgba(212,175,55,0.025) 80px,
+            rgba(212,175,55,0.025) 81px
+          )
+        `,
+        animation: 'chrome-shimmer 12s linear infinite',
+        backgroundSize: '200% 100%',
+      }} />
+      {/* Vignette */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.7) 100%)',
       }} />
 
       {/* ── Ambient chrome orbs ── */}

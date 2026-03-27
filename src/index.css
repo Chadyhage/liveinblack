@@ -322,12 +322,21 @@
   animation: chrome-shimmer 5s linear infinite;
 }
 
-/* ── Corridor login background ── */
+/* ── Corridor login background (legacy) ── */
 .corridor-bg {
   background:
     linear-gradient(to bottom, #000 0%, transparent 30%, transparent 70%, #000 100%),
     linear-gradient(to right, #000 0%, transparent 15%, transparent 85%, #000 100%),
     radial-gradient(ellipse at center bottom, #0a0a14 0%, var(--obsidian) 50%, #000 100%);
+}
+
+/* ── Login page CSS-only background (replaces video) ── */
+.login-bg {
+  background:
+    radial-gradient(ellipse 90% 60% at 15% 15%, rgba(110,95,55,0.2) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 75%, rgba(55,55,90,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 80% at 50% 100%, rgba(20,18,10,0.6) 0%, transparent 60%),
+    linear-gradient(160deg, #030309 0%, #05050d 50%, #04040b 100%);
 }
 
 /* ── Glow effects ── */
