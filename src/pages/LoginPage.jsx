@@ -327,9 +327,18 @@ export default function LoginPage() {
   // ── "Email not verified" screen ──
   if (unverifiedEmail) {
     return (
-      <div className="relative min-h-screen bg-black flex flex-col items-center justify-center px-6">
-        <div className="absolute inset-0 corridor-bg" />
-        <div className="relative z-10 glass p-8 rounded-3xl text-center max-w-sm w-full space-y-4">
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-6" style={{ background: '#000' }}>
+        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.22, filter: 'saturate(0.6)' }}>
+          <source src="/bg-liquid.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(4,4,11,0.6) 0%, rgba(0,0,0,0.9) 100%)' }} />
+        <div className="relative z-10 p-8 rounded-3xl text-center max-w-sm w-full space-y-4" style={{
+          background: 'linear-gradient(145deg, rgba(8,8,16,0.9), rgba(4,4,10,0.95))',
+          backdropFilter: 'blur(28px)',
+          border: '1px solid rgba(220,220,255,0.08)',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)',
+        }}>
           <div className="text-5xl mb-2">📧</div>
           <h2 className="text-white font-black text-xl">Vérifie ton email</h2>
           <p className="text-gray-400 text-sm">
@@ -368,9 +377,18 @@ export default function LoginPage() {
   if (pendingInfo) {
     const roleLabel = ROLES[pendingInfo.role]?.label || pendingInfo.role
     return (
-      <div className="relative min-h-screen bg-black flex flex-col items-center justify-center px-6">
-        <div className="absolute inset-0 corridor-bg" />
-        <div className="relative z-10 glass p-8 rounded-3xl text-center max-w-sm w-full space-y-4">
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-6" style={{ background: '#000' }}>
+        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.22, filter: 'saturate(0.6)' }}>
+          <source src="/bg-liquid.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(4,4,11,0.6) 0%, rgba(0,0,0,0.9) 100%)' }} />
+        <div className="relative z-10 p-8 rounded-3xl text-center max-w-sm w-full space-y-4" style={{
+          background: 'linear-gradient(145deg, rgba(8,8,16,0.9), rgba(4,4,10,0.95))',
+          backdropFilter: 'blur(28px)',
+          border: '1px solid rgba(220,220,255,0.08)',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)',
+        }}>
           <div className="text-5xl mb-2">⏳</div>
           <h2 className="text-white font-black text-xl">Validation en cours</h2>
           <p className="text-gray-400 text-sm">
@@ -389,54 +407,100 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black flex flex-col">
-      {/* Background */}
-      <div className="absolute inset-0 corridor-bg" />
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 bottom-0 left-0" style={{ width: '28%', background: 'linear-gradient(to right, #0a0a0a, #111)', clipPath: 'polygon(0 0, 100% 15%, 100% 85%, 0 100%)' }} />
-        <div className="absolute top-0 bottom-0 right-0" style={{ width: '28%', background: 'linear-gradient(to left, #0a0a0a, #111)', clipPath: 'polygon(0 15%, 100% 0, 100% 100%, 0 85%)' }} />
-        <div className="absolute top-0 left-0 right-0" style={{ height: '18%', background: 'linear-gradient(to bottom, #050505, #111)', clipPath: 'polygon(0 0, 100% 0, 85% 100%, 15% 100%)' }} />
-        <div className="absolute bottom-0 left-0 right-0" style={{ height: '22%', background: 'linear-gradient(to top, #050505, #0d0d0d)', clipPath: 'polygon(15% 0, 85% 0, 100% 100%, 0 100%)' }} />
-      </div>
+    <div className="relative min-h-screen overflow-hidden flex flex-col" style={{ background: '#000' }}>
 
-      {/* Hooded Figure */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ opacity: mode === 'register' && regStep === 2 ? 0 : 1, transition: 'opacity 0.3s' }}>
-        <div style={{ animation: 'walkToward 3s ease-in-out infinite' }}>
-          <svg width="140" height="270" viewBox="0 0 160 300" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 30px rgba(0,0,0,0.9))' }}>
-            <ellipse cx="80" cy="210" rx="42" ry="80" fill="#0d0d0d" />
-            <ellipse cx="80" cy="140" rx="50" ry="20" fill="#0f0f0f" />
-            <ellipse cx="80" cy="100" rx="44" ry="50" fill="#111" />
-            <ellipse cx="80" cy="108" rx="28" ry="35" fill="#060606" />
-            <ellipse cx="80" cy="112" rx="20" ry="24" fill="#0e0e0e" />
-            <ellipse cx="72" cy="108" rx="3" ry="2" fill="#1a1a1a" opacity="0.8" />
-            <ellipse cx="88" cy="108" rx="3" ry="2" fill="#1a1a1a" opacity="0.8" />
-            <path d="M 36 95 Q 80 60 124 95" stroke="#1a1a1a" strokeWidth="3" fill="none" />
-            <line x1="80" y1="155" x2="70" y2="280" stroke="#0f0f0f" strokeWidth="2" opacity="0.5" />
-            <line x1="80" y1="155" x2="90" y2="280" stroke="#0f0f0f" strokeWidth="2" opacity="0.5" />
-          </svg>
+      {/* ── Liquid Metal Video Background ── */}
+      <video
+        autoPlay muted loop playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ opacity: 0.28, filter: 'saturate(0.7) contrast(1.1)' }}
+      >
+        <source src="/bg-liquid.mp4" type="video/mp4" />
+      </video>
+
+      {/* ── Deep obsidian overlay with vignette ── */}
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(ellipse at 50% 40%, rgba(4,4,11,0.55) 0%, rgba(0,0,0,0.88) 100%)',
+      }} />
+      {/* Edge vignettes */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 20%, transparent 75%, rgba(0,0,0,0.85) 100%)',
+      }} />
+
+      {/* ── Ambient chrome orbs ── */}
+      <div className="absolute pointer-events-none" style={{
+        top: '10%', left: '15%', width: '280px', height: '280px',
+        background: 'radial-gradient(circle, rgba(100,100,160,0.12) 0%, transparent 70%)',
+        filter: 'blur(40px)',
+        animation: 'glow-pulse 8s ease-in-out infinite',
+      }} />
+      <div className="absolute pointer-events-none" style={{
+        bottom: '15%', right: '10%', width: '320px', height: '320px',
+        background: 'radial-gradient(circle, rgba(180,140,30,0.08) 0%, transparent 70%)',
+        filter: 'blur(50px)',
+        animation: 'glow-pulse 10s ease-in-out infinite 3s',
+      }} />
+
+      {/* Logo */}
+      <div className="relative z-10 pt-12 pb-4 text-center">
+        <h1 className="text-4xl tracking-[0.35em] uppercase font-black"
+          style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+          <span className="text-white" style={{ textShadow: '0 2px 30px rgba(255,255,255,0.1)' }}>LIVE</span>
+          <span style={{
+            background: 'linear-gradient(135deg, #b8962e, #d4af37, #f0e080, #d4af37, #b8962e)',
+            backgroundSize: '200% auto',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            animation: 'chrome-shimmer 3s linear infinite',
+            filter: 'drop-shadow(0 0 12px rgba(212,175,55,0.5))',
+          }}>IN</span>
+          <span className="text-white" style={{ textShadow: '0 2px 30px rgba(255,255,255,0.1)' }}>BLACK</span>
+        </h1>
+        <div className="mt-2 flex items-center justify-center gap-3">
+          <div className="h-px w-12" style={{ background: 'linear-gradient(to right, transparent, rgba(212,175,55,0.4))' }} />
+          <p className="text-[10px] tracking-[0.25em] uppercase" style={{ color: 'rgba(200,180,100,0.6)' }}>
+            La Marketplace de l'Événementiel
+          </p>
+          <div className="h-px w-12" style={{ background: 'linear-gradient(to left, transparent, rgba(212,175,55,0.4))' }} />
         </div>
       </div>
 
-      {/* Logo */}
-      <div className="relative z-10 pt-10 pb-4 text-center">
-        <h1 className="text-4xl text-white tracking-[0.3em] uppercase" style={{ fontFamily: 'Bebas Neue, sans-serif', textShadow: '0 0 30px rgba(212,175,55,0.3)' }}>
-          LIVE<span className="text-[#d4af37]">IN</span>BLACK
-        </h1>
-        <p className="text-gray-600 text-xs tracking-widest mt-1 uppercase">La Marketplace de l'Événementiel</p>
-      </div>
-
       {/* Form */}
-      <div className="relative z-10 mt-auto md:my-auto px-6 pb-10 md:pb-16 md:w-full md:max-w-sm md:mx-auto">
-        <div className="glass p-6 rounded-3xl">
+      <div className="relative z-10 mt-auto md:my-auto px-5 pb-10 md:pb-16 md:w-full md:max-w-sm md:mx-auto">
+        <div className="p-6 rounded-3xl" style={{
+          background: 'linear-gradient(145deg, rgba(8,8,16,0.88) 0%, rgba(4,4,10,0.92) 100%)',
+          backdropFilter: 'blur(32px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+          border: '1px solid rgba(220,220,255,0.08)',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
+        }}>
 
           {/* ── Mode tabs ── */}
-          <div className="flex rounded-xl overflow-hidden mb-6 border border-[#222]">
+          <div className="flex rounded-xl overflow-hidden mb-6" style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(200,200,230,0.07)',
+          }}>
             <button onClick={() => { setMode('login'); setRegStep(1); setError('') }}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-all ${mode === 'login' ? 'bg-[#d4af37] text-black' : 'text-gray-500 hover:text-white'}`}>
+              className="flex-1 py-2.5 text-sm font-semibold transition-all rounded-l-xl"
+              style={mode === 'login' ? {
+                background: 'linear-gradient(105deg, #b8962e, #d4af37, #f0e080, #d4af37)',
+                backgroundSize: '200% auto',
+                animation: 'metal-shine 4s linear infinite',
+                color: '#000',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)',
+              } : { color: 'rgba(160,160,180,0.6)' }}>
               Connexion
             </button>
             <button onClick={() => { setMode('register'); setRegStep(1); setError('') }}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-all ${mode === 'register' ? 'bg-[#d4af37] text-black' : 'text-gray-500 hover:text-white'}`}>
+              className="flex-1 py-2.5 text-sm font-semibold transition-all rounded-r-xl"
+              style={mode === 'register' ? {
+                background: 'linear-gradient(105deg, #b8962e, #d4af37, #f0e080, #d4af37)',
+                backgroundSize: '200% auto',
+                animation: 'metal-shine 4s linear infinite',
+                color: '#000',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)',
+              } : { color: 'rgba(160,160,180,0.6)' }}>
               Inscription
             </button>
           </div>
@@ -625,14 +689,21 @@ export default function LoginPage() {
           {mode === 'login' && (
             <div className="mt-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex-1 h-px bg-[#222]" />
-                <span className="text-gray-600 text-xs">ou continuer avec</span>
-                <div className="flex-1 h-px bg-[#222]" />
+                <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(200,200,230,0.12))' }} />
+                <span className="text-[10px] tracking-widest uppercase" style={{ color: 'rgba(140,140,170,0.6)' }}>ou continuer avec</span>
+                <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, transparent, rgba(200,200,230,0.12))' }} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={handleGoogle} disabled={loading}
-                  className="flex items-center justify-center gap-2 border border-[#222] rounded-xl py-2.5 text-sm text-gray-400 hover:border-white/20 hover:text-white transition-all disabled:opacity-50">
-                  <svg width="16" height="16" viewBox="0 0 24 24">
+                  className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(20,20,32,0.9), rgba(12,12,20,0.95))',
+                    border: '1px solid rgba(200,200,230,0.09)',
+                    borderTop: '1px solid rgba(255,255,255,0.07)',
+                    color: 'rgba(200,200,220,0.75)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                  }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -641,8 +712,15 @@ export default function LoginPage() {
                   Google
                 </button>
                 <button onClick={handleApple} disabled={loading}
-                  className="flex items-center justify-center gap-2 border border-[#222] rounded-xl py-2.5 text-sm text-gray-400 hover:border-white/20 hover:text-white transition-all disabled:opacity-50">
-                  <svg width="16" height="16" viewBox="0 0 814 1000" fill="currentColor">
+                  className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(20,20,32,0.9), rgba(12,12,20,0.95))',
+                    border: '1px solid rgba(200,200,230,0.09)',
+                    borderTop: '1px solid rgba(255,255,255,0.07)',
+                    color: 'rgba(200,200,220,0.75)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                  }}>
+                  <svg width="15" height="15" viewBox="0 0 814 1000" fill="currentColor">
                     <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 383.8 1 261 1 148.9 1 78.7 25.4 12.7 73.5-21.3c43.7-31.1 93.1-47.1 145.3-47.1 82.8 0 138.4 44.7 186.7 44.7 46.5 0 119.5-47.4 215.8-47.4zm-97.5-161.1c-5.8 27.5-28.9 75.3-73.7 113.5-47.8 40.8-99.4 61-150.2 61-5.8 0-11.6-.6-17.4-1.3 0-3.8-.6-7.7-.6-12.2 0-26.3 7.1-74.1 47.8-115 40.8-40.8 100.2-68 152.7-68 5.8 0 11.6.6 17.4 1.3-.6 7.1-.6 14.8-.6 20.7z"/>
                   </svg>
                   Apple
