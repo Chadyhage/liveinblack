@@ -44,7 +44,10 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ user, setUser }}>
       <BrowserRouter>
-        <div className="min-h-screen bg-[#080808] relative">
+        <div className="min-h-screen bg-[#04040b] relative">
+          {/* Ambient metallic orbs */}
+          <div className="pointer-events-none fixed top-0 right-0 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-[120px] z-0" style={{ background: 'radial-gradient(circle, #d4af37 0%, #b8902a 40%, transparent 70%)' }} />
+          <div className="pointer-events-none fixed bottom-0 left-0 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-[100px] z-0" style={{ background: 'radial-gradient(circle, #c0c0d0 0%, #8090a0 40%, transparent 70%)' }} />
           <Routes>
             <Route path="/" element={user ? <Navigate to="/accueil" /> : <LoginPage />} />
             <Route path="/accueil" element={user ? <HomePage /> : <Navigate to="/" />} />

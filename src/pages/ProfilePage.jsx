@@ -140,7 +140,7 @@ export default function ProfilePage() {
     return (
       <button
         onClick={() => { setPanel(null); setSettingsMsg(null) }}
-        className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 text-lg"
+        className="w-8 h-8 rounded-full bg-[#0e0e18] flex items-center justify-center text-gray-400 text-lg"
       >
         ‹
       </button>
@@ -204,7 +204,7 @@ export default function ProfilePage() {
             </div>
 
             {needsCurrentPassword && (
-              <div className="space-y-3 pt-2 border-t border-[#1a1a1a]">
+              <div className="space-y-3 pt-2 border-t border-white/[0.05]">
                 <h3 className="text-orange-400 text-xs uppercase tracking-widest">Confirmation requise</h3>
                 <div>
                   <label className="text-gray-500 text-xs mb-1.5 block">Mot de passe actuel</label>
@@ -348,7 +348,7 @@ export default function ProfilePage() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex justify-between text-sm border-t border-[#222] pt-2">
+                  <div className="flex justify-between text-sm border-t border-white/[0.07] pt-2">
                     <span className="text-gray-400">Total commande</span>
                     <span className="text-[#d4af37] font-bold">{b.preorderSummary.reduce((s, i) => s + i.price * b.preorderItems[i.name], 0)}€</span>
                   </div>
@@ -403,7 +403,7 @@ export default function ProfilePage() {
                         </div>
                       ))}
                     </div>
-                    <div className="flex justify-between text-sm border-t border-[#222] pt-2">
+                    <div className="flex justify-between text-sm border-t border-white/[0.07] pt-2">
                       <span className="text-gray-400">Total payé</span>
                       <span className="text-[#d4af37] font-bold">{order.subtotal.toFixed(2)}€</span>
                     </div>
@@ -624,7 +624,7 @@ function EventTicketGroup({ group }) {
       </div>
 
       {/* Expand / collapse tickets */}
-      <div className="border-t border-[#1a1a1a]">
+      <div className="border-t border-white/[0.05]">
         <button
           onClick={() => setExpanded(v => !v)}
           className="w-full px-4 py-2.5 flex items-center justify-between text-[#d4af37] text-xs font-semibold hover:bg-white/[0.02] transition-colors"
@@ -660,7 +660,7 @@ function SingleTicketCard({ booking: b, index }) {
   }
 
   return (
-    <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl overflow-hidden">
+    <div className="bg-[#08080f] border border-white/[0.05] rounded-xl overflow-hidden">
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="w-6 h-6 rounded-full bg-[#d4af37]/20 flex items-center justify-center text-[#d4af37] text-[10px] font-bold flex-shrink-0">
@@ -692,7 +692,7 @@ function SingleTicketCard({ booking: b, index }) {
       )}
 
       {showQr && qrUrl && (
-        <div className="border-t border-[#1a1a1a] p-4 flex flex-col items-center gap-3">
+        <div className="border-t border-white/[0.05] p-4 flex flex-col items-center gap-3">
           <div className="p-3 bg-white rounded-xl inline-block">
             <QRCodeSVG value={qrUrl} size={150} level="H" />
           </div>
@@ -740,7 +740,7 @@ function AvatarUpload({ user, setUser }) {
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       <button
         onClick={() => inputRef.current?.click()}
-        className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-[#1a1a1a] hover:border-[#d4af37]/50 transition-colors group"
+        className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white/[0.05] hover:border-[#d4af37]/50 transition-colors group"
       >
         {user?.avatar ? (
           <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />

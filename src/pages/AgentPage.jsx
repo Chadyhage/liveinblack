@@ -162,9 +162,9 @@ export default function AgentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808]">
+    <div className="min-h-screen bg-[#04040b]">
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-40 bg-[#0a0a0a] border-b border-[#1a1a1a] px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-40 bg-[#08080f] border-b border-white/[0.05] px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate('/accueil')} className="text-gray-600 hover:text-white text-xl">←</button>
         <div>
           <h1 className="text-white font-black tracking-widest uppercase text-sm" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
@@ -181,7 +181,7 @@ export default function AgentPage() {
       </div>
 
       {/* ── Nav tabs ── */}
-      <div className="flex border-b border-[#1a1a1a] overflow-x-auto">
+      <div className="flex border-b border-white/[0.05] overflow-x-auto">
         {[
           { key: 'dashboard',   icon: '📊', label: 'Dashboard' },
           { key: 'users',       icon: '👥', label: 'Comptes' },
@@ -231,8 +231,8 @@ export default function AgentPage() {
               <div className="space-y-2">
                 {[...accounts].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 5).map(u => (
                   <button key={u.uid} onClick={() => { setSelectedUser(u); setTab('users') }}
-                    className="w-full flex items-center gap-3 p-3 bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl hover:border-[#333] transition-all text-left">
-                    <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
+                    className="w-full flex items-center gap-3 p-3 bg-[#08080f] border border-white/[0.05] rounded-xl hover:border-white/[0.08] transition-all text-left">
+                    <div className="w-8 h-8 rounded-full bg-[#0e0e18] flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
                       {u.name?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -261,7 +261,7 @@ export default function AgentPage() {
                     <div key={key} className="flex items-center gap-3">
                       <span className="text-sm w-5">{r.icon}</span>
                       <span className="text-gray-400 text-xs flex-1">{r.label}</span>
-                      <div className="flex-1 bg-[#111] rounded-full h-1.5 overflow-hidden">
+                      <div className="flex-1 bg-[#08080f] rounded-full h-1.5 overflow-hidden">
                         <div className="h-full rounded-full transition-all" style={{ width: totalUsers ? `${(count / totalUsers) * 100}%` : '0%', background: r.color }} />
                       </div>
                       <span className="text-white text-xs font-bold w-5 text-right">{count}</span>
@@ -294,7 +294,7 @@ export default function AgentPage() {
                   { key: 'agent', label: '🔑 Agents' },
                 ].map(f => (
                   <button key={f.key} onClick={() => setRoleFilter(f.key)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-semibold border transition-all ${roleFilter === f.key ? 'bg-[#d4af37] text-black border-[#d4af37]' : 'border-[#222] text-gray-500'}`}>
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-semibold border transition-all ${roleFilter === f.key ? 'bg-[#d4af37] text-black border-[#d4af37]' : 'border-white/[0.07] text-gray-500'}`}>
                     {f.label}
                   </button>
                 ))}
@@ -302,7 +302,7 @@ export default function AgentPage() {
               <div className="flex gap-2">
                 {['all', 'active', 'pending', 'rejected', 'banned'].map(s => (
                   <button key={s} onClick={() => setStatusFilter(s)}
-                    className={`flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${statusFilter === s ? 'bg-white/10 border-white/20 text-white' : 'border-[#222] text-gray-600'}`}>
+                    className={`flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${statusFilter === s ? 'bg-white/10 border-white/20 text-white' : 'border-white/[0.07] text-gray-600'}`}>
                     {s === 'all' ? 'Tous statuts' : s}
                   </button>
                 ))}
@@ -315,9 +315,9 @@ export default function AgentPage() {
             <div className="space-y-2">
               {filtered.map(u => (
                 <button key={u.uid} onClick={() => setSelectedUser(u)}
-                  className="w-full flex items-center gap-3 p-3 bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl hover:border-[#333] transition-all text-left">
+                  className="w-full flex items-center gap-3 p-3 bg-[#08080f] border border-white/[0.05] rounded-xl hover:border-white/[0.08] transition-all text-left">
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: u.role === 'agent' ? '#d4af3722' : '#1a1a1a', color: u.role === 'agent' ? '#d4af37' : '#fff' }}>
+                    style={{ background: u.role === 'agent' ? '#d4af3722' : '#0e0e18', color: u.role === 'agent' ? '#d4af37' : '#fff' }}>
                     {u.name?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -349,9 +349,9 @@ export default function AgentPage() {
                 <p className="text-gray-600 text-sm">Tous les comptes ont été traités.</p>
               </div>
             ) : pending.map(u => (
-              <div key={u.uid} className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-4 space-y-3">
+              <div key={u.uid} className="bg-[#08080f] border border-white/[0.05] rounded-2xl p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-[#0e0e18] flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
                     {u.name?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div className="flex-1">
@@ -361,7 +361,7 @@ export default function AgentPage() {
                     <div className="flex items-center gap-2 mt-1.5">
                       <RoleBadge role={u.role} small />
                       {u.prestataireType && (
-                        <span className="text-[10px] text-gray-400 bg-[#111] border border-[#222] px-1.5 py-0.5 rounded-full">
+                        <span className="text-[10px] text-gray-400 bg-[#08080f] border border-white/[0.07] px-1.5 py-0.5 rounded-full">
                           {PRESTATAIRE_TYPES.find(t => t.key === u.prestataireType)?.label || u.prestataireType}
                         </span>
                       )}
@@ -396,11 +396,11 @@ export default function AgentPage() {
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedUser(null)} />
-          <div className="relative w-full max-w-lg bg-[#0d0d0d] border border-[#1a1a1a] rounded-t-3xl max-h-[85vh] overflow-y-auto pb-8">
-            <div className="p-5 border-b border-[#1a1a1a] sticky top-0 bg-[#0d0d0d] z-10">
-              <div className="w-10 h-1 bg-[#333] rounded-full mx-auto mb-4" />
+          <div className="relative w-full max-w-lg bg-[#08080f] border border-white/[0.05] rounded-t-3xl max-h-[85vh] overflow-y-auto pb-8">
+            <div className="p-5 border-b border-white/[0.05] sticky top-0 bg-[#08080f] z-10">
+              <div className="w-10 h-1 bg-white/[0.08] rounded-full mx-auto mb-4" />
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#1a1a1a] flex items-center justify-center text-lg font-bold text-white">
+                <div className="w-12 h-12 rounded-full bg-[#0e0e18] flex items-center justify-center text-lg font-bold text-white">
                   {selectedUser.name?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="flex-1">
@@ -441,11 +441,11 @@ export default function AgentPage() {
                             type={f.type} value={editField.value}
                             onChange={e => setEditField(ef => ({ ...ef, value: e.target.value }))} />
                           <button onClick={handleSaveEdit} className="px-3 py-2 bg-[#d4af37] text-black text-xs font-bold rounded-xl">✓</button>
-                          <button onClick={() => setEditField(null)} className="px-3 py-2 border border-[#333] text-gray-500 text-xs rounded-xl">✕</button>
+                          <button onClick={() => setEditField(null)} className="px-3 py-2 border border-white/[0.08] text-gray-500 text-xs rounded-xl">✕</button>
                         </div>
                       ) : (
                         <button onClick={() => setEditField({ uid: selectedUser.uid, field: f.field, value: selectedUser[f.field] || '' })}
-                          className="w-full flex items-center justify-between p-2.5 rounded-xl border border-[#222] hover:border-[#333] text-left">
+                          className="w-full flex items-center justify-between p-2.5 rounded-xl border border-white/[0.07] hover:border-white/[0.08] text-left">
                           <span className="text-gray-500 text-xs">{f.label}</span>
                           <span className="text-gray-400 text-xs">{selectedUser[f.field] || '—'} <span className="text-gray-700">✏</span></span>
                         </button>
@@ -457,7 +457,7 @@ export default function AgentPage() {
 
               {/* Wallet */}
               <Section title="Portefeuille">
-                <div className="flex items-center justify-between p-3 bg-[#111] rounded-xl border border-[#1a1a1a]">
+                <div className="flex items-center justify-between p-3 bg-[#08080f] rounded-xl border border-white/[0.05]">
                   <span className="text-gray-400 text-sm">Solde actuel</span>
                   <span className="text-[#d4af37] font-bold">{getBalance(selectedUser.uid)}€</span>
                 </div>
@@ -469,12 +469,12 @@ export default function AgentPage() {
                       value={balanceAdjust.reason} onChange={e => setBalanceAdjust(b => ({ ...b, reason: e.target.value }))} />
                     <div className="flex gap-2">
                       <button onClick={handleBalanceAdjust} className="flex-1 py-2 bg-[#d4af37] text-black text-xs font-bold rounded-xl">Appliquer</button>
-                      <button onClick={() => setBalanceAdjust({ uid: null, amount: '', reason: '' })} className="px-4 py-2 border border-[#333] text-gray-500 text-xs rounded-xl">Annuler</button>
+                      <button onClick={() => setBalanceAdjust({ uid: null, amount: '', reason: '' })} className="px-4 py-2 border border-white/[0.08] text-gray-500 text-xs rounded-xl">Annuler</button>
                     </div>
                   </div>
                 ) : (
                   <button onClick={() => setBalanceAdjust(b => ({ ...b, uid: selectedUser.uid }))}
-                    className="w-full mt-2 py-2 border border-[#333] text-gray-400 text-xs rounded-xl hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-colors">
+                    className="w-full mt-2 py-2 border border-white/[0.08] text-gray-400 text-xs rounded-xl hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-colors">
                     💰 Ajuster le solde
                   </button>
                 )}
@@ -482,7 +482,7 @@ export default function AgentPage() {
 
               {/* Mot de passe (démo only) */}
               <Section title="Mot de passe">
-                <div className="flex items-center justify-between p-3 bg-[#111] rounded-xl border border-[#1a1a1a]">
+                <div className="flex items-center justify-between p-3 bg-[#08080f] rounded-xl border border-white/[0.05]">
                   <span className="text-gray-400 text-sm">Générer un nouveau mdp</span>
                   <button onClick={() => {
                     const newPwd = 'LIB' + Math.random().toString(36).slice(2, 8).toUpperCase()
@@ -525,7 +525,7 @@ export default function AgentPage() {
       {confirmAction && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
           <div className="absolute inset-0 bg-black/90" onClick={() => setConfirmAction(null)} />
-          <div className="relative bg-[#0d0d0d] border border-[#222] rounded-2xl p-5 w-full max-w-xs space-y-4 text-center">
+          <div className="relative bg-[#08080f] border border-white/[0.07] rounded-2xl p-5 w-full max-w-xs space-y-4 text-center">
             <p className="text-4xl">
               {confirmAction.type === 'approve' ? '✅' : confirmAction.type === 'reject' ? '❌' : confirmAction.type === 'ban' ? '🚫' : '🗑'}
             </p>
@@ -536,7 +536,7 @@ export default function AgentPage() {
               {confirmAction.type === 'delete'  && `Supprimer définitivement le compte de ${confirmAction.name} ?`}
             </p>
             <div className="flex gap-2">
-              <button onClick={() => setConfirmAction(null)} className="flex-1 py-2.5 rounded-xl border border-[#333] text-gray-400 text-sm">Annuler</button>
+              <button onClick={() => setConfirmAction(null)} className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-gray-400 text-sm">Annuler</button>
               <button
                 onClick={() => {
                   if (confirmAction.type === 'approve') handleApprove(confirmAction.uid)
@@ -578,7 +578,7 @@ function Section({ title, children }) {
 
 function InfoRow({ label, value, mono }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-[#111] last:border-0">
+    <div className="flex items-center justify-between py-2 border-b border-white/[0.05] last:border-0">
       <span className="text-gray-500 text-xs">{label}</span>
       <span className={`text-gray-300 text-xs ${mono ? 'font-mono text-[10px]' : ''} max-w-[60%] text-right truncate`}>{value}</span>
     </div>

@@ -67,7 +67,7 @@ export default function WalletPage() {
               <button
                 key={a}
                 onClick={() => handleAdd(a)}
-                className="py-3 rounded-2xl text-sm font-bold border border-[#222] text-white hover:border-[#d4af37] hover:text-[#d4af37] active:scale-95 transition-all"
+                className="py-3 rounded-2xl text-sm font-bold border border-white/[0.07] text-white hover:border-[#d4af37] hover:text-[#d4af37] active:scale-95 transition-all"
               >
                 {a}€
               </button>
@@ -76,7 +76,7 @@ export default function WalletPage() {
           {!showCustom ? (
             <button
               onClick={() => setShowCustom(true)}
-              className="w-full py-3 rounded-2xl border border-dashed border-[#333] text-gray-500 text-sm hover:border-[#555] transition-colors"
+              className="w-full py-3 rounded-2xl border border-dashed border-white/[0.08] text-gray-500 text-sm hover:border-white/20 transition-colors"
             >
               + Montant personnalisé
             </button>
@@ -127,7 +127,7 @@ export default function WalletPage() {
           ) : (
             <div className="space-y-2">
               {wallet.transactions.map(tx => (
-                <div key={tx.id} className="flex items-center gap-3 p-3 bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl">
+                <div key={tx.id} className="flex items-center gap-3 p-3 bg-[#08080f] border border-white/[0.05] rounded-xl">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center text-base flex-shrink-0 ${tx.type === 'credit' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
                     {tx.type === 'credit' ? '↓' : '↑'}
                   </div>

@@ -100,7 +100,7 @@ export default function HomePage() {
     <Layout>
       {/* Geo-detection toast */}
       {geoToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#1a1a1a] border border-[#d4af37]/30 text-[#d4af37] text-xs font-semibold shadow-lg animate-fade-in-up">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#0e0e18] border border-[#d4af37]/30 text-[#d4af37] text-xs font-semibold shadow-lg animate-fade-in-up">
           {geoToast}
         </div>
       )}
@@ -142,7 +142,7 @@ export default function HomePage() {
                   className="relative rounded-2xl overflow-hidden border transition-all duration-300 hover:scale-[1.02]"
                   style={{
                     borderColor: event.color + '33',
-                    background: `linear-gradient(135deg, #0d0d0d 0%, ${event.color}15 100%)`,
+                    background: `linear-gradient(135deg, #08080f 0%, ${event.color}15 100%)`,
                   }}
                 >
                   {/* Rank badge */}

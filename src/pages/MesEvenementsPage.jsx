@@ -311,7 +311,7 @@ export default function MesEvenementsPage() {
               </div>
             </button>
             <button onClick={() => navigate('/scanner')} className="flex-shrink-0">
-              <div className="rounded-2xl border border-[#333] bg-[#111] p-5 text-center hover:border-[#555] transition-all flex flex-col items-center gap-2 justify-center" style={{ width: 90 }}>
+              <div className="rounded-2xl border border-white/[0.08] bg-[#08080f] p-5 text-center hover:border-white/20 transition-all flex flex-col items-center gap-2 justify-center" style={{ width: 90 }}>
                 <span className="text-3xl">📷</span>
                 <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider leading-tight">Scanner</p>
               </div>
@@ -321,7 +321,7 @@ export default function MesEvenementsPage() {
           <div>
             <h3 className="text-gray-500 text-xs uppercase tracking-widest mb-3">Mes soirées en cours</h3>
             {createdEvents.length === 0 ? (
-              <div className="border border-[#1a1a1a] rounded-2xl p-8 text-center">
+              <div className="border border-white/[0.05] rounded-2xl p-8 text-center">
                 <p className="text-3xl mb-2">📋</p>
                 <p className="text-gray-600 text-sm">Tu n'as pas encore d'événement créé.</p>
                 <p className="text-gray-700 text-xs mt-1">Lance-toi !</p>
@@ -360,7 +360,7 @@ export default function MesEvenementsPage() {
                       {ev.isPrivate && (
                         <button
                           onClick={() => { setCodesTargetEvent(ev); setGeneratedCodes(null); setCodesQty(10); setShowCodesModal(true) }}
-                          className="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-400 text-sm hover:bg-white/5 transition-all"
+                          className="w-8 h-8 rounded-lg bg-[#0e0e18] border border-white/[0.08] flex items-center justify-center text-gray-400 text-sm hover:bg-white/5 transition-all"
                           title="Codes d'accès"
                         >
                           🔑
@@ -420,7 +420,7 @@ export default function MesEvenementsPage() {
             style={{ maxWidth: 280 }}
           >
             <div
-              className="glass p-4 rounded-2xl border border-purple-500/40 bg-[#0d0d0d] shadow-2xl cursor-pointer hover:border-purple-500/70 transition-all"
+              className="glass p-4 rounded-2xl border border-purple-500/40 bg-[#08080f] shadow-2xl cursor-pointer hover:border-purple-500/70 transition-all"
               onClick={() => {
                 clearTimeout(toastTimerRef.current)
                 setShowBoostToast(false)
@@ -492,7 +492,7 @@ export default function MesEvenementsPage() {
                   </div>
                   <div className="space-y-1 max-h-60 overflow-y-auto">
                     {generatedCodes.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between p-2 bg-[#1a1a1a] rounded-lg">
+                      <div key={i} className="flex items-center justify-between p-2 bg-[#0e0e18] rounded-lg">
                         <span className="font-mono text-[#d4af37] text-sm tracking-widest">{c.code}</span>
                         <span className="text-gray-600 text-[10px]">1 utilisation</span>
                       </div>
@@ -518,7 +518,7 @@ export default function MesEvenementsPage() {
       {/* ── Crop modal ── */}
       {showCropper && (
         <div className="fixed inset-0 z-[60] flex flex-col bg-black">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a1a1a]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
             <button onClick={() => setShowCropper(false)} className="text-gray-400 text-sm">Annuler</button>
             <p className="text-white text-sm font-semibold">Recadrer l'image</p>
             <button onClick={applyCrop} className="text-[#d4af37] text-sm font-semibold">Valider ✓</button>
@@ -534,7 +534,7 @@ export default function MesEvenementsPage() {
               onCropComplete={onCropComplete}
             />
           </div>
-          <div className="px-6 py-4 border-t border-[#1a1a1a] space-y-2">
+          <div className="px-6 py-4 border-t border-white/[0.05] space-y-2">
             <p className="text-gray-500 text-xs text-center">Pinch / molette pour zoomer</p>
             <input
               type="range"
@@ -553,7 +553,7 @@ export default function MesEvenementsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => createStep === 0 ? setView('dashboard') : setCreateStep(s => s - 1)}
-            className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400"
+            className="w-8 h-8 rounded-full bg-[#0e0e18] flex items-center justify-center text-gray-400"
           >
             ‹
           </button>
@@ -566,7 +566,7 @@ export default function MesEvenementsPage() {
         {/* Progress */}
         <div className="flex gap-1">
           {CREATION_STEPS.map((s, i) => (
-            <div key={s} className="flex-1 h-1 rounded-full" style={{ background: i <= createStep ? '#d4af37' : '#1a1a1a' }} />
+            <div key={s} className="flex-1 h-1 rounded-full" style={{ background: i <= createStep ? '#d4af37' : '#0e0e18' }} />
           ))}
         </div>
 
@@ -577,7 +577,7 @@ export default function MesEvenementsPage() {
             <div>
               <label className="text-gray-500 text-xs mb-1.5 block">Affiche / Photo de l'événement</label>
               <div
-                className={`relative border-2 border-dashed rounded-2xl overflow-hidden cursor-pointer transition-all ${imagePreview ? 'border-[#d4af37]/40' : 'border-[#222] hover:border-[#444]'}`}
+                className={`relative border-2 border-dashed rounded-2xl overflow-hidden cursor-pointer transition-all ${imagePreview ? 'border-[#d4af37]/40' : 'border-white/[0.07] hover:border-white/20'}`}
                 style={{ aspectRatio: '16/9' }}
                 onClick={() => imageInputRef.current?.click()}
               >
@@ -649,7 +649,7 @@ export default function MesEvenementsPage() {
                   </div>
                   <button
                     onClick={() => setShowArtistSection(v => !v)}
-                    className={`w-10 h-5 rounded-full transition-all flex items-center flex-shrink-0 ${showArtistSection ? 'bg-[#d4af37] justify-end' : 'bg-[#222] justify-start'}`}
+                    className={`w-10 h-5 rounded-full transition-all flex items-center flex-shrink-0 ${showArtistSection ? 'bg-[#d4af37] justify-end' : 'bg-white/[0.08] justify-start'}`}
                   >
                     <span className="w-4 h-4 rounded-full bg-white mx-0.5 block" />
                   </button>
@@ -661,7 +661,7 @@ export default function MesEvenementsPage() {
                         <select
                           value={a.role}
                           onChange={e => setArtists(prev => prev.map((x, xi) => xi === i ? { ...x, role: e.target.value } : x))}
-                          className="bg-[#111] border border-[#222] text-white text-xs rounded-lg px-2 py-2 focus:outline-none focus:border-[#d4af37]/40 flex-shrink-0"
+                          className="bg-[#08080f] border border-white/[0.07] text-white text-xs rounded-lg px-2 py-2 focus:outline-none focus:border-[#d4af37]/40 flex-shrink-0"
                         >
                           {['DJ', 'Artiste', 'MC', 'Live', 'Guest'].map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
@@ -692,7 +692,7 @@ export default function MesEvenementsPage() {
                   <button
                     key={t}
                     onClick={() => { setEventType(t); setErrors(e => ({ ...e, eventType: null })) }}
-                    className={`p-3 rounded-xl border text-center transition-all ${eventType === t ? 'border-[#d4af37] bg-[#d4af37]/10' : 'border-[#222]'}`}
+                    className={`p-3 rounded-xl border text-center transition-all ${eventType === t ? 'border-[#d4af37] bg-[#d4af37]/10' : 'border-white/[0.07]'}`}
                   >
                     <p className="text-lg mb-1">{t === 'public' ? '🌍' : '🔒'}</p>
                     <p className="text-white text-xs font-semibold">{t === 'public' ? 'Public' : 'Privé'}</p>
@@ -723,7 +723,7 @@ export default function MesEvenementsPage() {
                   <button
                     key={g}
                     onClick={() => setCategory(g)}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all ${category === g ? 'border-[#d4af37] bg-[#d4af37]/10 text-[#d4af37]' : 'border-[#222] text-gray-500 hover:border-[#333]'}`}
+                    className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all ${category === g ? 'border-[#d4af37] bg-[#d4af37]/10 text-[#d4af37]' : 'border-white/[0.07] text-gray-500 hover:border-white/[0.08]'}`}
                   >
                     {g}
                   </button>
@@ -805,7 +805,7 @@ export default function MesEvenementsPage() {
                   </div>
                   <div
                     onClick={() => setPlaces(places.map((p, j) => j === i ? { ...p, auction: !p.auction, minBid: p.minBid || '' } : p))}
-                    className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${place.auction ? 'bg-[#d4af37]' : 'bg-[#222]'}`}
+                    className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${place.auction ? 'bg-[#d4af37]' : 'bg-white/[0.08]'}`}
                   >
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${place.auction ? 'left-6' : 'left-1'}`} />
                   </div>
@@ -837,14 +837,14 @@ export default function MesEvenementsPage() {
                 )}
 
                 {/* Group type toggle */}
-                <div className="flex items-center justify-between border-t border-[#1a1a1a] pt-3">
+                <div className="flex items-center justify-between border-t border-white/[0.05] pt-3">
                   <div>
                     <p className="text-gray-400 text-sm">Place de groupe</p>
                     <p className="text-gray-600 text-xs">Réservation pour plusieurs personnes</p>
                   </div>
                   <div
                     onClick={() => setPlaces(places.map((p, j) => j === i ? { ...p, groupType: p.groupType === 'group' ? 'solo' : 'group' } : p))}
-                    className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${place.groupType === 'group' ? 'bg-[#d4af37]' : 'bg-[#222]'}`}
+                    className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${place.groupType === 'group' ? 'bg-[#d4af37]' : 'bg-white/[0.08]'}`}
                   >
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${place.groupType === 'group' ? 'left-6' : 'left-1'}`} />
                   </div>
@@ -945,7 +945,7 @@ export default function MesEvenementsPage() {
                 </div>
                 <div
                   onClick={() => setOptions(o => ({ ...o, [opt.key]: !o[opt.key] }))}
-                  className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${options[opt.key] ? 'bg-[#d4af37]' : 'bg-[#222]'}`}
+                  className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${options[opt.key] ? 'bg-[#d4af37]' : 'bg-white/[0.08]'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${options[opt.key] ? 'left-6' : 'left-1'}`} />
                 </div>
@@ -1066,7 +1066,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
       <div className="flex items-center gap-2">
         {item.imageUrl ? (
           <div className="relative flex-shrink-0">
-            <img src={item.imageUrl} alt="" className="w-12 h-12 rounded-xl object-cover border border-[#333]" />
+            <img src={item.imageUrl} alt="" className="w-12 h-12 rounded-xl object-cover border border-white/[0.08]" />
             <button
               onClick={() => u('imageUrl', null)}
               className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center"
@@ -1083,7 +1083,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
         )}
         <button
           onClick={() => photoRef.current?.click()}
-          className="text-[10px] text-gray-500 border border-[#222] px-2 py-1 rounded-lg hover:border-[#d4af37]/30 hover:text-gray-400 transition-colors"
+          className="text-[10px] text-gray-500 border border-white/[0.07] px-2 py-1 rounded-lg hover:border-[#d4af37]/30 hover:text-gray-400 transition-colors"
         >
           {item.imageUrl ? '📷 Changer photo' : '📷 Ajouter photo'}
         </button>
@@ -1131,14 +1131,14 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
       )}
 
       {/* Show toggle */}
-      <div className="flex items-center justify-between pt-1 border-t border-[#1a1a1a]">
+      <div className="flex items-center justify-between pt-1 border-t border-white/[0.05]">
         <div>
           <p className="text-white text-xs font-semibold">🎆 Option Show</p>
           <p className="text-gray-600 text-[10px]">Mise en scène spéciale à la livraison</p>
         </div>
         <button
           onClick={() => u('hasShow', !item.hasShow)}
-          className={`w-10 h-5 rounded-full transition-all flex items-center ${item.hasShow ? 'bg-[#d4af37] justify-end' : 'bg-[#222] justify-start'}`}
+          className={`w-10 h-5 rounded-full transition-all flex items-center ${item.hasShow ? 'bg-[#d4af37] justify-end' : 'bg-white/[0.08] justify-start'}`}
         >
           <span className="w-4 h-4 rounded-full bg-white mx-0.5 block" />
         </button>
@@ -1149,10 +1149,10 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
         <div className="space-y-2 pl-2 border-l-2 border-[#d4af37]/20">
           <p className="text-gray-500 text-[10px]">Définis les shows disponibles pour cet article :</p>
           {(item.showOptions || []).map(opt => (
-            <div key={opt.id} className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl p-2.5 space-y-2">
+            <div key={opt.id} className="bg-[#08080f] border border-white/[0.05] rounded-xl p-2.5 space-y-2">
               <div className="flex items-center gap-2">
                 <input
-                  className="flex-1 bg-[#111] border border-[#222] text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#d4af37]/40 placeholder-gray-600"
+                  className="flex-1 bg-[#0e0e18] border border-white/[0.07] text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#d4af37]/40 placeholder-gray-600"
                   placeholder="Ex: Pancartes + feu d'artifices"
                   value={opt.label}
                   onChange={e => updateShowOption(opt.id, 'label', e.target.value)}
@@ -1163,14 +1163,14 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
                 <p className="text-gray-600 text-[10px]">Nécessite des infos client</p>
                 <button
                   onClick={() => updateShowOption(opt.id, 'requiresInfo', !opt.requiresInfo)}
-                  className={`w-8 h-4 rounded-full transition-all flex items-center ${opt.requiresInfo ? 'bg-[#d4af37] justify-end' : 'bg-[#222] justify-start'}`}
+                  className={`w-8 h-4 rounded-full transition-all flex items-center ${opt.requiresInfo ? 'bg-[#d4af37] justify-end' : 'bg-white/[0.08] justify-start'}`}
                 >
                   <span className="w-3 h-3 rounded-full bg-white mx-0.5 block" />
                 </button>
               </div>
               {opt.requiresInfo && (
                 <input
-                  className="w-full bg-[#111] border border-[#222] text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#d4af37]/40 placeholder-gray-600"
+                  className="w-full bg-[#0e0e18] border border-white/[0.07] text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#d4af37]/40 placeholder-gray-600"
                   placeholder="Question à poser au client (ex: Prénom sur la pancarte ?)"
                   value={opt.infoPrompt}
                   onChange={e => updateShowOption(opt.id, 'infoPrompt', e.target.value)}
@@ -1189,7 +1189,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
 
       {/* Place exclusion */}
       {placeTypes.length > 1 && (
-        <div className="pt-2 border-t border-[#1a1a1a] space-y-1.5">
+        <div className="pt-2 border-t border-white/[0.05] space-y-1.5">
           <p className="text-gray-600 text-[10px]">Exclure de certaines places (cet article n'y apparaîtra pas) :</p>
           <div className="flex flex-wrap gap-1.5">
             {placeTypes.map(pt => {
@@ -1204,7 +1204,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
                   className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
                     isExcluded
                       ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                      : 'bg-[#111] border-[#222] text-gray-500 hover:border-[#333] hover:text-gray-400'
+                      : 'bg-[#08080f] border-white/[0.07] text-gray-500 hover:border-white/[0.08] hover:text-gray-400'
                   }`}
                 >
                   {isExcluded ? '✕ ' : ''}{pt}
@@ -1253,9 +1253,9 @@ function BookingsPanel({ event, onClose }) {
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#080808]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#04040b]">
       {/* Header */}
-      <div className="px-4 py-4 border-b border-[#1a1a1a] flex items-center gap-3">
+      <div className="px-4 py-4 border-b border-white/[0.05] flex items-center gap-3">
         <button onClick={onClose} className="text-gray-400 hover:text-white p-1">←</button>
         <div className="flex-1 min-w-0">
           <h2 className="text-white font-bold text-sm truncate">{event.name}</h2>
@@ -1328,7 +1328,7 @@ function BookingsPanel({ event, onClose }) {
                     <span className="text-[#d4af37] text-xs font-bold">{b.totalPrice}€</span>
                   </div>
                   {b.preorderSummary?.length > 0 && (
-                    <div className="space-y-1 pl-2 border-l-2 border-[#1a1a1a]">
+                    <div className="space-y-1 pl-2 border-l-2 border-white/[0.05]">
                       {b.preorderSummary.map(item => {
                         const sel = b.preorderShowSelections?.[item.name]
                         return (

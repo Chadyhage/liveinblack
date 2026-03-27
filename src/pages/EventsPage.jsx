@@ -164,7 +164,7 @@ export default function EventsPage() {
               className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                 activeCategory === cat
                   ? 'bg-[#d4af37] text-black border-[#d4af37]'
-                  : 'border-[#222] text-gray-500 hover:border-gray-500'
+                  : 'border-white/[0.07] text-gray-500 hover:border-gray-500'
               }`}
             >
               {cat}
@@ -236,7 +236,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
     <button onClick={onClick} className="w-full text-left group">
       <div
         className={`relative rounded-2xl overflow-hidden border transition-all duration-300 group-hover:scale-[1.01] ${shared ? 'opacity-60 scale-[0.99]' : ''}`}
-        style={{ borderColor: shareMode ? '#d4af3766' : event.color + '33', background: '#0d0d0d' }}
+        style={{ borderColor: shareMode ? '#d4af3766' : event.color + '33', background: '#08080f' }}
       >
         {shareMode && !shared && (
           <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-2xl">
@@ -314,7 +314,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
                 {event.name}
               </h3>
               <p className="text-gray-500 text-xs">{event.subtitle}</p>
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#1a1a1a]">
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/[0.05]">
                 <div className="flex items-center gap-1.5">
                   <span className="text-gray-600 text-sm">📅</span>
                   <span className="text-gray-400 text-xs">{event.dateDisplay}</span>

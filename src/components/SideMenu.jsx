@@ -49,12 +49,12 @@ export default function SideMenu({ open, onClose }) {
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 left-0 bottom-0 z-50 w-72 bg-[#0d0d0d] border-r border-[#1e1e1e] flex flex-col transition-transform duration-300 ${
+        className={`fixed top-0 left-0 bottom-0 z-50 w-72 bg-[#08080f] border-r border-white/[0.07] flex flex-col transition-transform duration-300 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="p-6 border-b border-[#1e1e1e]">
+        <div className="p-6 border-b border-white/[0.07]">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-full bg-[#d4af37] flex items-center justify-center text-black font-bold text-lg">
               {user?.name?.[0]?.toUpperCase() || '?'}
@@ -101,7 +101,7 @@ export default function SideMenu({ open, onClose }) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#1e1e1e]">
+        <div className="p-4 border-t border-white/[0.07]">
           <button
             onClick={() => setConfirmLogout(true)}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-gray-600 hover:text-red-400 hover:bg-red-400/5 transition-all"
@@ -123,7 +123,7 @@ export default function SideMenu({ open, onClose }) {
             <div className="flex gap-3 pt-1">
               <button
                 onClick={() => setConfirmLogout(false)}
-                className="flex-1 py-2.5 rounded-xl border border-[#333] text-gray-400 text-sm hover:border-white/20 hover:text-white transition-all"
+                className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-gray-400 text-sm hover:border-white/20 hover:text-white transition-all"
               >
                 Annuler
               </button>
