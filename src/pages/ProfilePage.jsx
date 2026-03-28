@@ -714,30 +714,79 @@ function SingleTicketCard({ booking: b, index }) {
 }
 
 function AvatarUpload({ user, setUser }) {
-  const inputRef = useRef(null)
+  const inputRef   = useRef(null)
+  const canvasRef  = useRef(null)
+  const [cropData, setCropData] = useState(null)
+  const [offset,   setOffset]   = useState({ x: 0, y: 0 })
+  const [zoom,     setZoom]     = useState(1)
+  const [dragging, setDragging] = useState(false)
+  const [dragStart,setDragStart]= useState({ mx: 0, my: 0, ox: 0, oy: 0 })
+
+  const PREVIEW = 192
+  const OUTPUT  = 300
 
   function handleFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
     reader.onload = ev => {
-      const avatar = ev.target.result
-      setUser({ ...user, avatar })
+      setCropData({ dataUrl: ev.target.result })
+      setOffset({ x: 0, y: 0 })
+      setZoom(1)
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  function onPointerDown(e) {
+    setDragging(true)
+    setDragStart({ mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y })
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  function onPointerMove(e) {
+    if (!dragging) return
+    setOffset({ x: dragStart.ox + (e.clientX - dragStart.mx), y: dragStart.oy + (e.clientY - dragStart.my) })
+  }
+  function onPointerUp() { setDragging(false) }
+
+  function saveAvatar() {
+    const canvas = canvasRef.current
+    const ctx    = canvas.getContext('2d')
+    const img    = new Image()
+    img.onload = () => {
+      ctx.clearRect(0, 0, OUTPUT, OUTPUT)
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(OUTPUT / 2, OUTPUT / 2, OUTPUT / 2, 0, Math.PI * 2)
+      ctx.clip()
+      const coverScale = Math.max(OUTPUT / img.width, OUTPUT / img.height)
+      const totalScale = coverScale * zoom
+      const iw = img.width  * totalScale
+      const ih = img.height * totalScale
+      const ratio = OUTPUT / PREVIEW
+      ctx.drawImage(img,
+        OUTPUT / 2 - iw / 2 + offset.x * ratio,
+        OUTPUT / 2 - ih / 2 + offset.y * ratio,
+        iw, ih
+      )
+      ctx.restore()
+      const avatar = canvas.toDataURL('image/jpeg', 0.88)
+      setUser(u => ({ ...u, avatar }))
       try {
         const users = JSON.parse(localStorage.getItem('lib_users') || '[]')
         const idx = users.findIndex(u => u.id === user.id || u.email === user.email)
-        if (idx >= 0) {
-          users[idx] = { ...users[idx], avatar }
-          localStorage.setItem('lib_users', JSON.stringify(users))
-        }
+        if (idx >= 0) { users[idx] = { ...users[idx], avatar }; localStorage.setItem('lib_users', JSON.stringify(users)) }
       } catch {}
+      setCropData(null)
     }
-    reader.readAsDataURL(file)
+    img.src = cropData.dataUrl
   }
 
   return (
     <div className="inline-block mx-auto">
+      <canvas ref={canvasRef} width={OUTPUT} height={OUTPUT} className="hidden" />
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+
       <button
         onClick={() => inputRef.current?.click()}
         className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white/[0.05] hover:border-[#d4af37]/50 transition-colors group"
@@ -753,6 +802,61 @@ function AvatarUpload({ user, setUser }) {
           <span className="text-white text-xl">📷</span>
         </div>
       </button>
+
+      {cropData && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/90" onClick={() => setCropData(null)} />
+          <div className="relative bg-[#08080f] border border-white/[0.08] rounded-2xl p-6 w-full max-w-sm space-y-5 z-10">
+            <div className="text-center">
+              <p className="text-white font-semibold text-sm">Recadrer la photo</p>
+              <p className="text-gray-600 text-xs mt-1">Glisse pour repositionner</p>
+            </div>
+
+            <div
+              className="relative mx-auto rounded-full overflow-hidden border-4 border-[#d4af37]/40"
+              style={{ width: PREVIEW, height: PREVIEW, touchAction: 'none', userSelect: 'none', cursor: dragging ? 'grabbing' : 'grab' }}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+            >
+              <img
+                src={cropData.dataUrl}
+                alt="recadrage"
+                draggable={false}
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+                  transformOrigin: 'center center',
+                  pointerEvents: 'none',
+                }}
+              />
+            </div>
+
+            <div>
+              <p className="text-gray-500 text-xs text-center mb-2">Zoom</p>
+              <input type="range" min="0.8" max="3" step="0.01"
+                value={zoom}
+                onChange={e => setZoom(parseFloat(e.target.value))}
+                className="w-full accent-[#d4af37]"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setCropData(null)}
+                className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-gray-400 text-sm">
+                Annuler
+              </button>
+              <button onClick={saveAvatar}
+                className="flex-1 py-2.5 rounded-xl bg-[#d4af37] text-black text-sm font-bold">
+                Valider
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

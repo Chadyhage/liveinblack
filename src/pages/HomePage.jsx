@@ -10,6 +10,14 @@ import { getActiveBoosts } from '../utils/ticket'
 
 const EVENT_EMOJIS = ['⚡', '🔥', '👑']
 
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h >= 5  && h < 12) return 'Bonjour,'
+  if (h >= 12 && h < 18) return 'Bon après-midi,'
+  if (h >= 18 && h < 22) return 'Bonsoir,'
+  return 'Bonne nuit,'
+}
+
 export default function HomePage() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -107,9 +115,9 @@ export default function HomePage() {
       <div className="px-4 py-6 space-y-8">
         {/* Greeting */}
         <div className="animate-fade-in-up">
-          <p className="text-gray-500 text-sm uppercase tracking-widest">Bonsoir,</p>
+          <p className="text-gray-500 text-sm uppercase tracking-widest">{getGreeting()}</p>
           <h2 className="text-2xl font-bold mt-1">
-            {user?.name || 'Toi'} <span className="text-[#d4af37]">✦</span>
+            {user?.name || 'Toi'}
           </h2>
         </div>
 
@@ -122,9 +130,9 @@ export default function HomePage() {
             onRegionClick={() => setShowRegionSelector(true)}
           />
           <p className="text-gray-600 text-xs mt-8 uppercase tracking-widest">
-            Top événements {selectedRegion ? 'à' : ''}{' '}
+            Top 3 événements de ta région —{' '}
             <span className="text-[#d4af37]/70">
-              {selectedRegion ? selectedRegion.name : 'dans le monde'}
+              {selectedRegion ? selectedRegion.name : 'Monde'}
             </span>
           </p>
         </div>
