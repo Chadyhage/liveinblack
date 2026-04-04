@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { saveBoost } from '../utils/ticket'
+import { saveBoost, isBoostSlotTaken } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
 import { getBalance, deductFunds } from '../utils/wallet'
 
@@ -9,9 +9,8 @@ const BOOST_PLANS = [
   {
     position: 1,
     label: 'Top 1',
-    emoji: '🥇',
     desc: 'Position n°1 · Visibilité maximale',
-    color: '#FFD700',
+    color: '#c8a96e',
     tiers: [
       { label: '1 jour', price: 9.99, days: 1 },
       { label: '3 jours', price: 24.99, days: 3 },
@@ -22,9 +21,8 @@ const BOOST_PLANS = [
   {
     position: 2,
     label: 'Top 2',
-    emoji: '🥈',
     desc: 'Position n°2 · Très haute visibilité',
-    color: '#b0c4d8',
+    color: 'rgba(255,255,255,0.65)',
     tiers: [
       { label: '1 jour', price: 6.99, days: 1 },
       { label: '3 jours', price: 16.99, days: 3 },
@@ -35,9 +33,8 @@ const BOOST_PLANS = [
   {
     position: 3,
     label: 'Top 3',
-    emoji: '🥉',
     desc: 'Position n°3 · Haute visibilité',
-    color: '#cd7f32',
+    color: 'rgba(200,169,110,0.6)',
     tiers: [
       { label: '1 jour', price: 3.99, days: 1 },
       { label: '3 jours', price: 9.99, days: 3 },
@@ -46,6 +43,87 @@ const BOOST_PLANS = [
     ],
   },
 ]
+
+// SVG rank badge icons
+function RankIcon({ position, size = 20 }) {
+  const colors = {
+    1: '#c8a96e',
+    2: 'rgba(255,255,255,0.65)',
+    3: 'rgba(200,169,110,0.6)',
+  }
+  const color = colors[position] || '#c8a96e'
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill={color} stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+      <text x="12" y="15" textAnchor="middle" fontSize="8" fill={position === 2 ? '#111' : '#111'} fontFamily="monospace" fontWeight="bold">{position}</text>
+    </svg>
+  )
+}
+
+// SVG rocket icon
+function RocketIcon({ size = 40, color = '#4ee8c8' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+    </svg>
+  )
+}
+
+// SVG wallet icon
+function WalletIcon({ size = 18, color = '#c8a96e' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
+      <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
+      <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
+    </svg>
+  )
+}
+
+const S = {
+  card: {
+    background: 'rgba(8,10,20,0.55)',
+    backdropFilter: 'blur(22px) saturate(1.6)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 12,
+    padding: '16px',
+  },
+  btnGold: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+    border: '1px solid rgba(200,169,110,0.45)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: '#c8a96e',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnGhost: {
+    padding: '12px 20px',
+    background: 'transparent',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.15em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.5)',
+    cursor: 'pointer',
+  },
+  label: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 9,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.42)',
+  },
+}
 
 export default function BoostModal({ event, onClose, onBoostDone }) {
   const navigate = useNavigate()
@@ -78,119 +156,265 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-[#0d0d0d] rounded-t-3xl border-t border-[#1f1f1f] max-h-[90vh] overflow-y-auto">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)' }}
+        onClick={onClose}
+      />
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth: 512,
+        background: 'rgba(4,5,12,0.97)',
+        borderTop: '1px solid rgba(255,255,255,0.10)',
+        borderLeft: '1px solid rgba(255,255,255,0.07)',
+        borderRight: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '16px 16px 0 0',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+      }}>
 
         {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-[#333]" />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+          <div style={{ width: 40, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
         </div>
 
-        <div className="px-5 pb-8">
+        <div style={{ padding: '4px 20px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           {/* Header */}
-          <div className="flex items-center justify-between mb-5 pt-2">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h2 className="text-white font-bold text-lg">Booster mon événement</h2>
-              <p className="text-gray-500 text-xs mt-0.5 truncate max-w-[200px]">{event.name}</p>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 24, color: 'white', margin: 0 }}>
+                Booster mon événement
+              </h2>
+              <p style={{ ...S.label, marginTop: 4, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {event.name}
+              </p>
             </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 text-xl">×</button>
+            <button
+              onClick={onClose}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 16,
+                color: 'rgba(255,255,255,0.5)',
+                cursor: 'pointer',
+              }}
+            >
+              ×
+            </button>
           </div>
 
           {step === 'done' ? (
-            <div className="text-center py-10 space-y-4">
-              <div className="w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500/40 flex items-center justify-center text-4xl mx-auto">🚀</div>
-              <p className="text-white text-xl font-bold">Événement boosté !</p>
-              <p className="text-gray-400 text-sm">
-                <strong className="text-[#d4af37]">{event.name}</strong> apparaît désormais en{' '}
-                <strong className="text-white">{chosen?.label}</strong> pendant{' '}
-                <strong className="text-white">{chosenTier?.label}</strong>.
+            <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: 'rgba(78,232,200,0.08)',
+                border: '1px solid rgba(78,232,200,0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <RocketIcon size={36} color="#4ee8c8" />
+              </div>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 26, color: 'white', margin: 0 }}>
+                Événement boosté !
               </p>
-              <p className="text-gray-600 text-xs">Ton événement sera visible dans le Top 3 de ta région.</p>
-              <button onClick={() => { onBoostDone?.(); onClose() }} className="btn-gold w-full mt-2">
-                Parfait !
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
+                <span style={{ color: '#c8a96e' }}>{event.name}</span> apparaît désormais en{' '}
+                <span style={{ color: 'white' }}>{chosen?.label}</span> pendant{' '}
+                <span style={{ color: 'white' }}>{chosenTier?.label}</span>.
+              </p>
+              <p style={{ ...S.label, marginTop: -8 }}>
+                Ton événement sera visible dans le Top 3 de ta région.
+              </p>
+              <button onClick={() => { onBoostDone?.(); onClose() }} style={{ ...S.btnGold, marginTop: 8 }}>
+                Parfait
               </button>
             </div>
+
           ) : step === 'pay' ? (
-            <div className="space-y-5">
-              <div className="glass p-4 rounded-2xl border border-[#d4af37]/20">
-                <p className="text-[#d4af37] text-xs uppercase tracking-widest mb-3">Récapitulatif</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Position</span>
-                    <span className="text-white font-semibold">{chosen?.emoji} {chosen?.label}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Summary */}
+              <div style={{ ...S.card, borderColor: 'rgba(200,169,110,0.20)' }}>
+                <p style={{ ...S.label, marginBottom: 14, color: '#c8a96e' }}>Récapitulatif</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>Position</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <RankIcon position={chosen?.position} size={16} />
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{chosen?.label}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Durée</span>
-                    <span className="text-white font-semibold">{chosenTier?.label}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>Durée</span>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{chosenTier?.label}</span>
                   </div>
-                  <div className="flex justify-between text-sm border-t border-[#222] pt-2 mt-1">
-                    <span className="text-white font-bold">Total</span>
-                    <span className="text-[#d4af37] font-bold text-lg">{chosenTier?.price}€</span>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderTop: '1px solid rgba(255,255,255,0.07)',
+                    paddingTop: 10,
+                    marginTop: 4,
+                  }}>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white', letterSpacing: '0.1em' }}>Total</span>
+                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 24, color: '#c8a96e' }}>
+                      {chosenTier?.price}€
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className={`glass p-4 rounded-2xl space-y-3 ${!canAfford ? 'border border-red-500/30' : ''}`}>
-                <p className="text-gray-500 text-xs uppercase tracking-widest">Paiement via portefeuille</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">💰</span>
-                    <p className="text-gray-400 text-sm">Solde disponible</p>
+              {/* Wallet */}
+              <div style={{
+                ...S.card,
+                borderColor: !canAfford ? 'rgba(220,50,50,0.35)' : 'rgba(255,255,255,0.10)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}>
+                <p style={{ ...S.label }}>Paiement via portefeuille</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <WalletIcon size={16} color="#c8a96e" />
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>
+                      Solde disponible
+                    </span>
                   </div>
-                  <p className={`font-bold ${canAfford ? 'text-green-400' : 'text-red-400'}`}>{walletBalance.toFixed(2)}€</p>
+                  <span style={{
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontWeight: 300,
+                    fontSize: 20,
+                    color: canAfford ? '#4ee8c8' : 'rgba(220,100,100,0.9)',
+                  }}>
+                    {walletBalance.toFixed(2)}€
+                  </span>
                 </div>
                 {!canAfford && (
-                  <div className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl p-3 space-y-1">
-                    <p>Solde insuffisant — il te manque {(chosenTier.price - walletBalance).toFixed(2)}€</p>
-                    <button onClick={() => { onClose(); navigate('/portefeuille') }} className="underline">Recharger →</button>
+                  <div style={{
+                    background: 'rgba(220,50,50,0.08)',
+                    border: '1px solid rgba(220,50,50,0.25)',
+                    borderRadius: 6,
+                    padding: '10px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                  }}>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0 }}>
+                      Solde insuffisant — il te manque {(chosenTier.price - walletBalance).toFixed(2)}€
+                    </p>
+                    <button
+                      onClick={() => { onClose(); navigate('/portefeuille') }}
+                      style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', textAlign: 'left' }}
+                    >
+                      Recharger →
+                    </button>
                   </div>
                 )}
                 {walletError && canAfford && (
-                  <p className="text-red-400 text-xs">Erreur lors du paiement. Réessaie.</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0 }}>
+                    Erreur lors du paiement. Réessaie.
+                  </p>
                 )}
               </div>
 
-              <div className="flex gap-2">
-                <button onClick={() => setStep('pick')} className="btn-outline flex-1 text-sm">← Retour</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setStep('pick')} style={{ ...S.btnGhost, flex: 1 }}>
+                  ← Retour
+                </button>
                 <button
                   onClick={confirmBoost}
                   disabled={paying || !canAfford}
-                  className="btn-gold flex-1 text-sm disabled:opacity-50"
+                  style={{
+                    ...S.btnGold,
+                    flex: 1,
+                    width: 'auto',
+                    opacity: (paying || !canAfford) ? 0.4 : 1,
+                    cursor: (paying || !canAfford) ? 'not-allowed' : 'pointer',
+                  }}
                 >
-                  {paying ? '⏳ Traitement...' : `Payer ${chosenTier?.price}€`}
+                  {paying ? 'Traitement…' : `Payer ${chosenTier?.price}€`}
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="space-y-5">
-              <p className="text-gray-400 text-sm">Choisis la position et la durée de ton boost dans le Top 3 régional.</p>
 
-              {BOOST_PLANS.map(plan => (
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', letterSpacing: '0.05em', margin: 0 }}>
+                Choisis la position et la durée de ton boost dans le Top 3 régional.
+              </p>
+
+              {BOOST_PLANS.map(plan => {
+                const slotTaken = isBoostSlotTaken(plan.position, event.id)
+                return (
                 <div key={plan.position}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">{plan.emoji}</span>
-                    <div>
-                      <p className="text-white text-sm font-bold">{plan.label}</p>
-                      <p className="text-gray-500 text-xs">{plan.desc}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: slotTaken ? 6 : 10 }}>
+                    <RankIcon position={plan.position} size={20} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white', margin: 0, letterSpacing: '0.1em' }}>
+                        {plan.label}
+                      </p>
+                      <p style={{ ...S.label, marginTop: 2 }}>{plan.desc}</p>
                     </div>
+                    {slotTaken && (
+                      <span style={{
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 8,
+                        letterSpacing: '0.15em',
+                        color: 'rgba(220,100,100,0.8)',
+                        background: 'rgba(220,50,50,0.08)',
+                        border: '1px solid rgba(220,50,50,0.22)',
+                        padding: '2px 7px',
+                        borderRadius: 3,
+                        flexShrink: 0,
+                      }}>OCCUPÉ</span>
+                    )}
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  {slotTaken && (
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginBottom: 8, lineHeight: 1.6 }}>
+                      Ce slot est actuellement occupé. Ton boost le remplacera immédiatement à l'achat.
+                    </p>
+                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     {plan.tiers.map((tier, idx) => {
                       const isSelected = selectedPlan?.position === plan.position && selectedPlan?.tierIdx === idx
                       return (
                         <button
                           key={idx}
                           onClick={() => setSelectedPlan({ position: plan.position, tierIdx: idx })}
-                          className={`p-3 rounded-xl border text-left transition-all ${
-                            isSelected
-                              ? 'border-[#d4af37] bg-[#d4af37]/10'
-                              : 'border-[#222] hover:border-[#333]'
-                          }`}
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: 4,
+                            border: isSelected ? '1px solid rgba(200,169,110,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                            background: isSelected
+                              ? 'linear-gradient(135deg, rgba(200,169,110,0.15), rgba(200,169,110,0.04))'
+                              : 'rgba(255,255,255,0.03)',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                          }}
                         >
-                          <p className="text-white text-sm font-semibold">{tier.label}</p>
-                          <p style={{ color: isSelected ? '#d4af37' : plan.color }} className="font-bold text-lg">
+                          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: isSelected ? 'white' : 'rgba(255,255,255,0.5)', margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                            {tier.label}
+                          </p>
+                          <p style={{
+                            fontFamily: "'Cormorant Garamond', serif",
+                            fontWeight: 300,
+                            fontSize: 22,
+                            color: isSelected ? '#c8a96e' : plan.color,
+                            margin: '4px 0 0',
+                          }}>
                             {tier.price}€
                           </p>
                         </button>
@@ -198,12 +422,17 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
                     })}
                   </div>
                 </div>
-              ))}
+              )})}
+
 
               <button
                 onClick={() => selectedPlan && setStep('pay')}
                 disabled={!selectedPlan}
-                className="btn-gold w-full disabled:opacity-40"
+                style={{
+                  ...S.btnGold,
+                  opacity: !selectedPlan ? 0.4 : 1,
+                  cursor: !selectedPlan ? 'not-allowed' : 'pointer',
+                }}
               >
                 {selectedPlan
                   ? `Booster en ${BOOST_PLANS.find(p => p.position === selectedPlan.position)?.label} — ${BOOST_PLANS.find(p => p.position === selectedPlan.position)?.tiers[selectedPlan.tierIdx]?.price}€`

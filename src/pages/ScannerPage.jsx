@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import jsQR from 'jsqr'
 import { verifyTicketToken } from '../utils/ticket'
@@ -12,16 +12,37 @@ const MOCK_TICKETS = {
 }
 
 const MOCK_ORDERS = {
-  'LIB-001-A3X7KP': { holder: 'Jordan M.',  place: 'VIP Gold',  event: 'NEON NIGHT Vol.3', items: [{ name: 'Bouteille Champagne', emoji: '🍾', qty: 1, price: 90 }, { name: 'Pack Cocktails x5', emoji: '🍹', qty: 2, price: 55 }] },
-  'LIB-002-CW4NRX': { holder: 'Moussa D.', place: 'Carré VIP', event: 'AFRO KINGS',        items: [{ name: 'Chicha Premium', emoji: '💨', qty: 1, price: 40 }, { name: 'Pack Bières x6', emoji: '🍺', qty: 1, price: 25 }] },
+  'LIB-001-A3X7KP': { holder: 'Jordan M.',  place: 'VIP Gold',  event: 'NEON NIGHT Vol.3', items: [{ name: 'Bouteille Champagne', emoji: '', qty: 1, price: 90 }, { name: 'Pack Cocktails x5', emoji: '', qty: 2, price: 55 }] },
+  'LIB-002-CW4NRX': { holder: 'Moussa D.', place: 'Carré VIP', event: 'AFRO KINGS',        items: [{ name: 'Chicha Premium', emoji: '', qty: 1, price: 40 }, { name: 'Pack Bières x6', emoji: '', qty: 1, price: 25 }] },
   'LIB-003-Y9TP6L': { holder: 'Aminata K.',place: 'Standard',  event: 'ABIDJAN NUIT',      items: [] },
 }
 
+// ─── Design tokens ────────────────────────────────────────────────────────
+const CARD = {
+  background: 'rgba(8,10,20,0.55)',
+  backdropFilter: 'blur(22px) saturate(1.6)',
+  border: '1px solid rgba(255,255,255,0.10)',
+  borderRadius: 12,
+}
+
+const FONTS = {
+  display: "'Cormorant Garamond', Georgia, serif",
+  mono: "'DM Mono', 'Fira Mono', monospace",
+}
+
+const COLORS = {
+  teal: '#4ee8c8',
+  pink: '#e05aaa',
+  gold: '#c8a96e',
+  muted: 'rgba(255,255,255,0.42)',
+  dim: 'rgba(255,255,255,0.22)',
+}
+
 const STATUS = {
-  valid:          { bg: 'border-green-500/40 bg-green-500/10',   icon: '✓', color: 'text-green-400',  label: 'VALIDE',         sub: 'Accès autorisé' },
-  just_validated: { bg: 'border-green-500/40 bg-green-500/10',   icon: '✓', color: 'text-green-400',  label: 'VALIDÉ',         sub: 'Billet marqué comme utilisé' },
-  used:           { bg: 'border-orange-500/40 bg-orange-500/10', icon: '⚠', color: 'text-orange-400', label: 'DÉJÀ UTILISÉ',   sub: 'Ce billet a déjà été scanné' },
-  invalid:        { bg: 'border-red-500/40 bg-red-500/10',       icon: '✕', color: 'text-red-400',    label: 'INVALIDE',       sub: 'QR code non reconnu' },
+  valid:          { borderColor: 'rgba(78,232,200,0.40)',  bg: 'rgba(78,232,200,0.07)',  iconColor: COLORS.teal, label: 'VALIDE',         sub: 'Accès autorisé' },
+  just_validated: { borderColor: 'rgba(78,232,200,0.40)',  bg: 'rgba(78,232,200,0.07)',  iconColor: COLORS.teal, label: 'VALIDÉ',         sub: 'Billet marqué comme utilisé' },
+  used:           { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'DÉJÀ UTILISÉ',   sub: 'Ce billet a déjà été scanné' },
+  invalid:        { borderColor: 'rgba(224,90,170,0.40)',  bg: 'rgba(224,90,170,0.07)',  iconColor: COLORS.pink, label: 'INVALIDE',       sub: 'QR code non reconnu' },
 }
 
 // ── Camera component ────────────────────────────────────────────────
@@ -83,19 +104,33 @@ function CameraScanner({ active, onScan, onError }) {
 
   return (
     <>
-      <video ref={videoRef} playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-      <canvas ref={canvasRef} className="hidden" />
+      <video ref={videoRef} playsInline muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
       {/* Scanning overlay */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="relative w-52 h-52">
-          <div className="absolute inset-0 border-2 border-[#d4af37]/30 rounded-xl" />
-          {[['top-0 left-0','border-t-2 border-l-2'],['top-0 right-0','border-t-2 border-r-2'],['bottom-0 left-0','border-b-2 border-l-2'],['bottom-0 right-0','border-b-2 border-r-2']].map(([pos, border], i) => (
-            <div key={i} className={`absolute w-7 h-7 border-[#d4af37] ${pos} ${border}`} />
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ position: 'relative', width: 200, height: 200 }}>
+          {/* Corner brackets */}
+          {[
+            { top: 0, left: 0,    borderTop: `2px solid ${COLORS.teal}`, borderLeft: `2px solid ${COLORS.teal}` },
+            { top: 0, right: 0,   borderTop: `2px solid ${COLORS.teal}`, borderRight: `2px solid ${COLORS.teal}` },
+            { bottom: 0, left: 0, borderBottom: `2px solid ${COLORS.teal}`, borderLeft: `2px solid ${COLORS.teal}` },
+            { bottom: 0, right: 0,borderBottom: `2px solid ${COLORS.teal}`, borderRight: `2px solid ${COLORS.teal}` },
+          ].map((s, i) => (
+            <div key={i} style={{ position: 'absolute', width: 24, height: 24, ...s }} />
           ))}
-          <div className="absolute left-2 right-2 h-0.5 bg-[#d4af37]/80" style={{ animation: 'scanLine 1.5s ease-in-out infinite', top: '10%' }} />
+          <div style={{
+            position: 'absolute', left: 6, right: 6, height: 1.5,
+            background: `linear-gradient(90deg, transparent, ${COLORS.teal}, transparent)`,
+            animation: 'scanLine 1.5s ease-in-out infinite', top: '10%',
+          }} />
         </div>
       </div>
-      <p className="absolute bottom-4 left-0 right-0 text-center text-[#d4af37] text-xs tracking-widest uppercase animate-pulse">
+      <p style={{
+        position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center',
+        fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal,
+        letterSpacing: '0.12em', textTransform: 'uppercase',
+        animation: 'pulse 2s infinite',
+      }}>
         Lecture en cours...
       </p>
     </>
@@ -165,7 +200,7 @@ export default function ScannerPage() {
           code: clean,
           status: isUsed ? 'used' : 'valid',
           ticket: { holder: booking.userName || 'Participant', type: booking.place, event: booking.eventName, date: booking.eventDate, price: `${booking.totalPrice}€` },
-          preorders: (booking.preorderSummary || []).map(i => ({ n: i.name, e: i.emoji || '•', q: (booking.preorderItems || {})[i.name] || 0, p: i.price })),
+          preorders: (booking.preorderSummary || []).map(i => ({ n: i.name, e: i.emoji || '', q: (booking.preorderItems || {})[i.name] || 0, p: i.price })),
         })
         return
       }
@@ -198,8 +233,7 @@ export default function ScannerPage() {
       const { valid, data } = verifyTicketToken(tokenMatch[1])
       if (!valid || !data) { setServiceOrder({ code: val, order: null }); return }
       const tc = data.tc
-      // Build order from token preorder data
-      const items = (data.po || []).map(i => ({ name: i.n, emoji: i.e || '•', qty: i.q, price: i.p })).filter(i => i.qty > 0)
+      const items = (data.po || []).map(i => ({ name: i.n, emoji: i.e || '', qty: i.q, price: i.p })).filter(i => i.qty > 0)
       setServiceOrder({ code: tc, order: { holder: 'Participant', place: data.pl, event: data.en, items } })
       return
     }
@@ -212,7 +246,7 @@ export default function ScannerPage() {
       const booking = bookings.find(b => b.ticketCode === clean)
       if (booking) {
         const items = (booking.preorderSummary || []).map(i => ({
-          name: i.name, emoji: i.emoji || '•',
+          name: i.name, emoji: i.emoji || '',
           qty: (booking.preorderItems || {})[i.name] || 0, price: i.price
         })).filter(i => i.qty > 0)
         setServiceOrder({ code: clean, order: { holder: booking.userName || 'Participant', place: booking.place, event: booking.eventName, items } })
@@ -254,29 +288,69 @@ export default function ScannerPage() {
 
   const validatedCount = usedCodes.size
 
+  // Shared input style
+  const inputStyle = {
+    width: '100%', boxSizing: 'border-box',
+    background: 'rgba(8,10,20,0.70)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 6, color: '#fff',
+    fontFamily: FONTS.mono, fontSize: 12,
+    padding: '9px 12px', outline: 'none',
+  }
+
   return (
-    <div className="min-h-screen bg-[#080808] flex flex-col" style={{ maxWidth: 480, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto' }}>
+
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-[#1a1a1a]">
-        <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400">‹</button>
-        <div>
-          <h1 className="text-white font-bold text-base">Scanner LIVEINBLACK</h1>
-          <p className="text-gray-600 text-xs">{scanMode === 'entry' ? 'Interface videur' : 'Interface serveur'}</p>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '14px 16px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(4,4,14,0.85)', backdropFilter: 'blur(20px)',
+      }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: COLORS.muted, fontSize: 18, lineHeight: 1,
+          }}>‹</button>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 17, color: '#fff', margin: 0, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Scanner LIVEINBLACK
+          </h1>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
+            {scanMode === 'entry' ? 'Interface videur' : 'Interface serveur'}
+          </p>
         </div>
-        <div className="ml-auto w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.teal, boxShadow: `0 0 6px ${COLORS.teal}`, animation: 'pulse 2s infinite' }} />
       </div>
 
       {/* Mode toggle */}
-      <div className="flex mx-4 mt-4 bg-[#111] rounded-xl p-1 gap-1">
-        {[['entry','🚪 Contrôle entrée'],['service','🛒 Service commandes']].map(([m, label]) => (
+      <div style={{
+        display: 'flex', margin: '14px 16px 0',
+        background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 3, gap: 3,
+      }}>
+        {[['entry', 'Contrôle entrée'], ['service', 'Service commandes']].map(([m, label]) => (
           <button key={m} onClick={() => switchMode(m)}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${scanMode === m ? 'bg-[#d4af37] text-black' : 'text-gray-500 hover:text-gray-300'}`}>
+            style={{
+              flex: 1, padding: '8px 0', borderRadius: 6, cursor: 'pointer',
+              fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
+              transition: 'all 0.2s',
+              background: scanMode === m
+                ? 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.08))'
+                : 'transparent',
+              border: scanMode === m ? '1px solid rgba(200,169,110,0.40)' : '1px solid transparent',
+              color: scanMode === m ? COLORS.gold : COLORS.dim,
+            }}>
             {label}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 px-4 py-5 space-y-5">
+      <div style={{ flex: 1, padding: '16px 16px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* ── ENTRY MODE ── */}
         {scanMode === 'entry' && (
@@ -284,55 +358,90 @@ export default function ScannerPage() {
             {!result && (
               <>
                 {/* Camera viewport */}
-                <div className="relative rounded-2xl overflow-hidden" style={{ height: 260, background: '#0d0d0d', border: '1px solid #1a1a1a' }}>
+                <div style={{
+                  position: 'relative', height: 260, overflow: 'hidden',
+                  ...CARD,
+                }}>
                   {cameraActive ? (
                     <CameraScanner active onScan={handleCameraResult} onError={handleCameraError} />
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-                      <div className="relative w-36 h-36 opacity-30">
-                        <div className="absolute inset-0 border-2 border-white/20 rounded-xl" />
-                        {[['top-0 left-0','border-t-2 border-l-2'],['top-0 right-0','border-t-2 border-r-2'],['bottom-0 left-0','border-b-2 border-l-2'],['bottom-0 right-0','border-b-2 border-r-2']].map(([pos, border], i) => (
-                          <div key={i} className={`absolute w-5 h-5 border-gray-500 ${pos} ${border}`} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, padding: '0 24px', textAlign: 'center' }}>
+                      {/* Placeholder corners */}
+                      <div style={{ position: 'relative', width: 120, height: 120, opacity: 0.25 }}>
+                        {[
+                          { top: 0, left: 0,    borderTop: '2px solid #fff', borderLeft: '2px solid #fff' },
+                          { top: 0, right: 0,   borderTop: '2px solid #fff', borderRight: '2px solid #fff' },
+                          { bottom: 0, left: 0, borderBottom: '2px solid #fff', borderLeft: '2px solid #fff' },
+                          { bottom: 0, right: 0,borderBottom: '2px solid #fff', borderRight: '2px solid #fff' },
+                        ].map((s, i) => (
+                          <div key={i} style={{ position: 'absolute', width: 18, height: 18, ...s }} />
                         ))}
-                        <div className="absolute inset-0 flex items-center justify-center"><span className="text-4xl">📷</span></div>
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                          </svg>
+                        </div>
                       </div>
-                      <p className="text-gray-600 text-xs">Appuie sur le bouton pour ouvrir la caméra</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim }}>
+                        Appuie sur le bouton pour ouvrir la caméra
+                      </p>
                     </div>
                   )}
                 </div>
 
                 {cameraError && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
-                    <p className="text-red-400 text-xs font-semibold">Caméra inaccessible</p>
-                    <p className="text-gray-500 text-[10px] mt-0.5">{cameraError}</p>
+                  <div style={{
+                    background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.30)',
+                    borderRadius: 8, padding: '12px 14px', textAlign: 'center',
+                  }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(220,100,100,0.9)', margin: '0 0 3px', fontWeight: 600 }}>Caméra inaccessible</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0 }}>{cameraError}</p>
                   </div>
                 )}
 
                 <button
                   onClick={() => { setCameraError(''); setCameraActive(v => !v) }}
-                  className="w-full py-4 rounded-2xl font-bold text-black text-sm transition-all active:scale-95"
-                  style={{ background: cameraActive ? '#555' : 'linear-gradient(135deg, #d4af37, #f0c940)' }}
-                >
-                  {cameraActive ? '⏹ Arrêter la caméra' : '📷 Scanner un QR Code'}
+                  style={{
+                    width: '100%', padding: '14px 0', borderRadius: 4, cursor: 'pointer',
+                    fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+                    transition: 'all 0.2s', border: 'none',
+                    background: cameraActive
+                      ? 'rgba(255,255,255,0.08)'
+                      : 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
+                    color: cameraActive ? COLORS.muted : COLORS.teal,
+                    outline: cameraActive ? '1px solid rgba(255,255,255,0.15)' : `1px solid rgba(78,232,200,0.35)`,
+                  }}>
+                  {cameraActive ? 'Arrêter la caméra' : 'Scanner un QR Code'}
                 </button>
 
                 {/* Manual entry */}
-                <div className="space-y-2">
-                  <label className="text-gray-600 text-xs uppercase tracking-widest">Saisie manuelle du code</label>
-                  <div className="flex gap-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    Saisie manuelle du code
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <input
-                      className="input-dark flex-1 font-mono text-sm uppercase"
+                      style={{ ...inputStyle, flex: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }}
                       placeholder="LIB-001-XXXXXX"
                       value={manualCode}
                       onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === 'Enter' && manualCode && processCode(manualCode)}
                     />
-                    <button onClick={() => manualCode && processCode(manualCode)} disabled={!manualCode}
-                      className="px-4 py-2 rounded-xl bg-[#d4af37] text-black font-bold text-sm disabled:opacity-40 transition-all">
+                    <button
+                      onClick={() => manualCode && processCode(manualCode)}
+                      disabled={!manualCode}
+                      style={{
+                        padding: '0 16px', borderRadius: 4, cursor: manualCode ? 'pointer' : 'default',
+                        background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                        border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold,
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em',
+                        opacity: manualCode ? 1 : 0.4, transition: 'opacity 0.2s',
+                      }}>
                       OK
                     </button>
                   </div>
-                  <p className="text-gray-700 text-[10px]">Format : LIB-XXX-XXXXXX</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)' }}>Format : LIB-XXX-XXXXXX</p>
                 </div>
               </>
             )}
@@ -340,20 +449,37 @@ export default function ScannerPage() {
             {/* Result card */}
             {result && (() => {
               const cfg = STATUS[result.status]
+              const isValid = result.status === 'valid'
+              const isJustValidated = result.status === 'just_validated'
+              const isTeal = isValid || isJustValidated
+
               return (
-                <div className={`rounded-2xl border p-5 space-y-4 ${cfg.bg}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-3xl font-black bg-black/30 ${cfg.color}`}>
-                      {cfg.icon}
+                <div style={{
+                  borderRadius: 12, border: `1px solid ${cfg.borderColor}`,
+                  background: cfg.bg, backdropFilter: 'blur(22px)',
+                  padding: 20, display: 'flex', flexDirection: 'column', gap: 16,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{
+                      width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
+                      background: 'rgba(0,0,0,0.30)',
+                      border: `2px solid ${cfg.iconColor}44`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {isTeal && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>}
+                      {result.status === 'used' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>}
+                      {result.status === 'invalid' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
                     </div>
                     <div>
-                      <p className={`text-2xl font-black uppercase tracking-wider ${cfg.color}`}>{cfg.label}</p>
-                      <p className="text-gray-500 text-xs">{cfg.sub}</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 20, fontWeight: 700, color: cfg.iconColor, margin: 0, letterSpacing: '0.06em' }}>
+                        {cfg.label}
+                      </p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '3px 0 0' }}>{cfg.sub}</p>
                     </div>
                   </div>
 
                   {result.ticket && (
-                    <div className="space-y-2 border-t border-white/10 pt-3">
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {[
                         { label: 'Titulaire',     val: result.ticket.holder },
                         { label: 'Type de place', val: result.ticket.type },
@@ -362,37 +488,54 @@ export default function ScannerPage() {
                         { label: 'Montant payé',  val: result.ticket.price },
                         { label: 'Code billet',   val: result.code, mono: true },
                       ].map(row => (
-                        <div key={row.label} className="flex justify-between items-center">
-                          <span className="text-gray-500 text-xs">{row.label}</span>
-                          <span className={`text-white text-xs font-semibold ${row.mono ? 'font-mono text-[#d4af37]' : ''}`}>{row.val}</span>
+                        <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>{row.label}</span>
+                          <span style={{
+                            fontFamily: row.mono ? FONTS.mono : FONTS.display,
+                            fontWeight: row.mono ? 400 : 300,
+                            fontSize: row.mono ? 11 : 14,
+                            color: row.mono ? COLORS.gold : '#fff',
+                            letterSpacing: row.mono ? '0.06em' : 0,
+                          }}>{row.val}</span>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Preorders attached to ticket */}
+                  {/* Preorders */}
                   {result.preorders?.length > 0 && (
-                    <div className="border-t border-white/10 pt-3 space-y-1">
-                      <p className="text-gray-500 text-[10px] uppercase tracking-widest mb-2">Précommandes</p>
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                        Précommandes
+                      </p>
                       {result.preorders.map((p, i) => (
-                        <div key={i} className="flex justify-between text-xs">
-                          <span className="text-gray-300">{p.e} {p.n} ×{p.q}</span>
-                          <span className="text-[#d4af37]">{p.p * p.q}€</span>
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>{p.n} ×{p.q}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold }}>{p.p * p.q}€</span>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-1">
-                    {result.status === 'valid' && (
-                      <button onClick={validateEntry}
-                        className="flex-1 py-3 rounded-xl bg-green-500 text-black font-bold text-sm active:scale-95 transition-all">
-                        ✓ Valider l'entrée
+                  <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+                    {isValid && (
+                      <button onClick={validateEntry} style={{
+                        flex: 1, padding: '12px 0', borderRadius: 4, cursor: 'pointer',
+                        background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
+                        border: '1px solid rgba(78,232,200,0.35)', color: COLORS.teal,
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+                        transition: 'all 0.2s',
+                      }}>
+                        Valider l'entrée
                       </button>
                     )}
-                    <button onClick={reset}
-                      className={`${result.status === 'valid' ? 'w-12' : 'flex-1'} py-3 rounded-xl bg-[#1a1a1a] text-gray-400 text-sm hover:bg-[#222] transition-all active:scale-95`}>
-                      {result.status === 'valid' ? '✕' : 'Scanner suivant →'}
+                    <button onClick={reset} style={{
+                      width: isValid ? 44 : '100%', padding: '12px 0', borderRadius: 4, cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
+                      color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
+                      transition: 'all 0.2s',
+                    }}>
+                      {isValid ? '✕' : 'Scanner suivant'}
                     </button>
                   </div>
                 </div>
@@ -401,15 +544,15 @@ export default function ScannerPage() {
 
             {/* Stats */}
             {!result && (
-              <div className="grid grid-cols-3 gap-2">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {[
-                  { label: 'Validés', val: validatedCount, color: 'text-green-400' },
-                  { label: 'Billets demo', val: Object.keys(MOCK_TICKETS).length, color: 'text-white' },
-                  { label: 'Capacité', val: '350', color: 'text-gray-500' },
+                  { label: 'Validés',      val: validatedCount,                    color: COLORS.teal },
+                  { label: 'Billets demo', val: Object.keys(MOCK_TICKETS).length,  color: '#fff' },
+                  { label: 'Capacité',     val: '350',                             color: COLORS.dim },
                 ].map(s => (
-                  <div key={s.label} className="glass p-3 rounded-xl text-center">
-                    <p className={`text-xl font-black ${s.color}`}>{s.val}</p>
-                    <p className="text-gray-600 text-[10px] uppercase tracking-wider mt-0.5">{s.label}</p>
+                  <div key={s.label} style={{ ...CARD, padding: 12, textAlign: 'center' }}>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 28, color: s.color, margin: 0 }}>{s.val}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -419,50 +562,87 @@ export default function ScannerPage() {
 
         {/* ── SERVICE MODE ── */}
         {scanMode === 'service' && (
-          <div className="space-y-5">
-            <div className="p-4 bg-[#0d0d0d] rounded-2xl border border-[#d4af37]/20">
-              <p className="text-[#d4af37] text-xs uppercase tracking-widest mb-1">Mode serveur</p>
-              <p className="text-gray-400 text-xs">Scanne le QR du client pour voir sa précommande et marquer les articles comme servis.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{
+              ...CARD,
+              borderColor: 'rgba(200,169,110,0.22)',
+              padding: '12px 14px',
+            }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>
+                Mode serveur
+              </p>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>
+                Scanne le QR du client pour voir sa précommande et marquer les articles comme servis.
+              </p>
             </div>
 
             {!serviceOrder && (
               <>
                 {/* Camera viewport */}
-                <div className="relative rounded-2xl overflow-hidden" style={{ height: 220, background: '#0d0d0d', border: '1px solid #1a1a1a' }}>
+                <div style={{ position: 'relative', height: 220, overflow: 'hidden', ...CARD }}>
                   {cameraActive ? (
                     <CameraScanner active onScan={handleCameraResult} onError={handleCameraError} />
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-                      <span className="text-4xl opacity-30">📷</span>
-                      <p className="text-gray-600 text-xs">Scanne le QR code du client</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, textAlign: 'center' }}>
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                      </svg>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim }}>Scanne le QR code du client</p>
                     </div>
                   )}
                 </div>
 
                 {cameraError && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
-                    <p className="text-red-400 text-xs font-semibold">Caméra inaccessible</p>
-                    <p className="text-gray-500 text-[10px] mt-0.5">{cameraError}</p>
+                  <div style={{
+                    background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.30)',
+                    borderRadius: 8, padding: '12px 14px', textAlign: 'center',
+                  }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(220,100,100,0.9)', margin: '0 0 3px', fontWeight: 600 }}>Caméra inaccessible</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0 }}>{cameraError}</p>
                   </div>
                 )}
 
                 <button
                   onClick={() => { setCameraError(''); setCameraActive(v => !v) }}
-                  className="w-full py-3.5 rounded-2xl font-bold text-black text-sm transition-all active:scale-95"
-                  style={{ background: cameraActive ? '#555' : 'linear-gradient(135deg, #d4af37, #f0c940)' }}
-                >
-                  {cameraActive ? '⏹ Arrêter' : '📷 Scanner le QR Client'}
+                  style={{
+                    width: '100%', padding: '13px 0', borderRadius: 4, cursor: 'pointer',
+                    fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+                    border: 'none', transition: 'all 0.2s',
+                    background: cameraActive
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
+                    color: cameraActive ? COLORS.muted : COLORS.teal,
+                    outline: cameraActive ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(78,232,200,0.35)',
+                  }}>
+                  {cameraActive ? 'Arrêter' : 'Scanner le QR Client'}
                 </button>
 
                 {/* Manual entry */}
-                <div className="space-y-2">
-                  <label className="text-gray-600 text-xs uppercase tracking-widest">Ou saisir le code</label>
-                  <div className="flex gap-2">
-                    <input className="input-dark flex-1 font-mono text-sm uppercase" placeholder="LIB-001-XXXXXX"
-                      value={serviceCode} onChange={(e) => setServiceCode(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === 'Enter' && serviceCode && lookupOrder(serviceCode)} />
-                    <button onClick={() => serviceCode && lookupOrder(serviceCode)} disabled={!serviceCode}
-                      className="px-4 py-2 rounded-xl bg-[#d4af37] text-black font-bold text-sm disabled:opacity-40 transition-all">OK</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    Ou saisir le code
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      style={{ ...inputStyle, flex: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                      placeholder="LIB-001-XXXXXX"
+                      value={serviceCode}
+                      onChange={(e) => setServiceCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === 'Enter' && serviceCode && lookupOrder(serviceCode)}
+                    />
+                    <button
+                      onClick={() => serviceCode && lookupOrder(serviceCode)}
+                      disabled={!serviceCode}
+                      style={{
+                        padding: '0 16px', borderRadius: 4, cursor: serviceCode ? 'pointer' : 'default',
+                        background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                        border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold,
+                        fontFamily: FONTS.mono, fontSize: 11,
+                        opacity: serviceCode ? 1 : 0.4, transition: 'opacity 0.2s',
+                      }}>
+                      OK
+                    </button>
                   </div>
                 </div>
               </>
@@ -472,67 +652,122 @@ export default function ScannerPage() {
             {serviceOrder && (() => {
               if (!serviceOrder.order) {
                 return (
-                  <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-center space-y-3">
-                    <p className="text-5xl">✕</p>
-                    <p className="text-red-400 font-bold text-lg">Code inconnu</p>
-                    <p className="text-gray-500 text-xs">Aucune réservation trouvée pour ce code.</p>
-                    <p className="font-mono text-[10px] text-gray-600">{serviceOrder.code}</p>
-                    <button onClick={() => { setServiceOrder(null); setServiceCode('') }}
-                      className="mt-1 text-xs text-gray-500 underline">Réessayer</button>
+                  <div style={{
+                    borderRadius: 12, border: 'rgba(224,90,170,0.40)',
+                    background: 'rgba(224,90,170,0.07)', backdropFilter: 'blur(22px)',
+                    padding: 24, textAlign: 'center',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+                    borderWidth: 1, borderStyle: 'solid',
+                  }}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: COLORS.pink, margin: 0 }}>Code inconnu</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: 0 }}>Aucune réservation trouvée pour ce code.</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, letterSpacing: '0.06em' }}>{serviceOrder.code}</p>
+                    <button
+                      onClick={() => { setServiceOrder(null); setServiceCode('') }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, textDecoration: 'underline', marginTop: 4 }}>
+                      Réessayer
+                    </button>
                   </div>
                 )
               }
               const { order, code } = serviceOrder
               const allServed = order.items.length > 0 && order.items.every(i => servedItems[code]?.has(i.name))
               return (
-                <div className="space-y-3">
-                  <div className="rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/5 p-4 space-y-3">
-                    <div className="flex justify-between items-start">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{
+                    ...CARD,
+                    borderColor: 'rgba(200,169,110,0.28)',
+                    padding: 16, display: 'flex', flexDirection: 'column', gap: 14,
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <p className="text-white font-semibold">{order.holder}</p>
-                        <p className="text-gray-500 text-xs">{order.place} · {order.event}</p>
+                        <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 18, color: '#fff', margin: 0 }}>{order.holder}</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '3px 0 0' }}>{order.place} · {order.event}</p>
                       </div>
-                      <span className="font-mono text-[#d4af37] text-[10px]">{code}</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.gold, letterSpacing: '0.06em' }}>{code}</span>
                     </div>
 
                     {order.items.length === 0 ? (
-                      <div className="text-center py-3">
-                        <p className="text-gray-500 text-sm">Aucune précommande</p>
-                        <p className="text-gray-600 text-xs mt-1">Ce client n'a pas commandé de consommations</p>
+                      <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>Aucune précommande</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '4px 0 0' }}>Ce client n'a pas commandé de consommations</p>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        <p className="text-gray-500 text-xs uppercase tracking-widest">Précommande</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Précommande</p>
                         {order.items.map(item => {
                           const served = servedItems[code]?.has(item.name)
                           return (
-                            <div key={item.name}
-                              className={`flex items-center justify-between p-3 rounded-xl border transition-all ${served ? 'border-green-500/30 bg-green-500/5 opacity-60' : 'border-[#222] bg-black/30'}`}>
-                              <div className="flex items-center gap-3">
-                                <span className="text-xl">{item.emoji}</span>
+                            <div key={item.name} style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              padding: '10px 12px', borderRadius: 8,
+                              border: served ? '1px solid rgba(78,232,200,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                              background: served ? 'rgba(78,232,200,0.04)' : 'rgba(0,0,0,0.20)',
+                              opacity: served ? 0.6 : 1,
+                              transition: 'all 0.2s',
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{
+                                  width: 30, height: 30, borderRadius: 6, flexShrink: 0,
+                                  background: 'rgba(255,255,255,0.05)',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.gold} strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                  </svg>
+                                </div>
                                 <div>
-                                  <p className={`text-sm font-semibold ${served ? 'text-gray-500 line-through' : 'text-white'}`}>{item.name}</p>
-                                  <p className="text-gray-600 text-xs">×{item.qty} · {item.price * item.qty}€</p>
+                                  <p style={{
+                                    fontFamily: FONTS.mono, fontSize: 12,
+                                    color: served ? COLORS.dim : '#fff', margin: 0,
+                                    textDecoration: served ? 'line-through' : 'none',
+                                  }}>{item.name}</p>
+                                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
+                                    ×{item.qty} · {item.price * item.qty}€
+                                  </p>
                                 </div>
                               </div>
-                              <button onClick={() => toggleServed(code, item.name)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${served ? 'bg-green-500/20 border border-green-500/40 text-green-400' : 'bg-[#d4af37] text-black hover:bg-[#f0c940]'}`}>
-                                {served ? '✓ Servi' : 'Marquer servi'}
+                              <button
+                                onClick={() => toggleServed(code, item.name)}
+                                style={{
+                                  padding: '6px 10px', borderRadius: 4, cursor: 'pointer',
+                                  fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.04em',
+                                  textTransform: 'uppercase', transition: 'all 0.2s',
+                                  ...(served
+                                    ? { background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.30)', color: COLORS.teal }
+                                    : { background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold }
+                                  ),
+                                }}>
+                                {served ? 'Servi' : 'Marquer servi'}
                               </button>
                             </div>
                           )
                         })}
                         {allServed && (
-                          <div className="p-2 bg-green-500/10 border border-green-500/20 rounded-xl text-center">
-                            <p className="text-green-400 text-xs font-semibold">✓ Toute la commande a été servie</p>
+                          <div style={{
+                            padding: '9px 12px', background: 'rgba(78,232,200,0.06)',
+                            border: '1px solid rgba(78,232,200,0.22)', borderRadius: 6, textAlign: 'center',
+                          }}>
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, margin: 0, letterSpacing: '0.06em' }}>
+                              Toute la commande a été servie
+                            </p>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                  <button onClick={() => { setServiceOrder(null); setServiceCode('') }}
-                    className="w-full py-3 rounded-xl bg-[#1a1a1a] text-gray-400 text-sm hover:bg-[#222] transition-all">
-                    Client suivant →
+                  <button
+                    onClick={() => { setServiceOrder(null); setServiceCode('') }}
+                    style={{
+                      width: '100%', padding: '12px 0', borderRadius: 4, cursor: 'pointer',
+                      background: 'transparent', border: '1px solid rgba(255,255,255,0.10)',
+                      color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11,
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                    }}>
+                    Client suivant
                   </button>
                 </div>
               )
@@ -546,6 +781,10 @@ export default function ScannerPage() {
           0%   { top: 10%; }
           50%  { top: 85%; }
           100% { top: 10%; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
       `}</style>
     </div>

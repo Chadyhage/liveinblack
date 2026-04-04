@@ -1,16 +1,30 @@
-// ─── Demo users pre-seeded in the app ───────────────────────────────────────
+// ─── Demo users ───────────────────────────────────────────────────────────────
 export const DEMO_USERS = [
-  { id: 'u_alex',  name: 'Alex Martin',   email: 'alex@lib.com',   avatar: null, online: true  },
-  { id: 'u_sarah', name: 'Sarah Koné',    email: 'sarah@lib.com',  avatar: null, online: false },
-  { id: 'u_tom',   name: 'Tom Becker',    email: 'tom@lib.com',    avatar: null, online: true  },
-  { id: 'u_julie', name: 'Julie Roy',     email: 'julie@lib.com',  avatar: null, online: false },
-  { id: 'u_karim', name: 'Karim Diallo',  email: 'karim@lib.com',  avatar: null, online: true  },
-  { id: 'u_ines',  name: 'Inès Larbi',   email: 'ines@lib.com',   avatar: null, online: false },
-  { id: 'u_marco', name: 'Marco Silva',   email: 'marco@lib.com',  avatar: null, online: true  },
-  { id: 'u_laure', name: 'Laureen Mbaye', email: 'laure@lib.com',  avatar: null, online: false },
+  { id: 'u_alex',  name: 'Alex Martin',   username: 'alex.martin',   email: 'alex@lib.com',   avatar: null },
+  { id: 'u_sarah', name: 'Sarah Koné',    username: 'sarah.kone',    email: 'sarah@lib.com',  avatar: null },
+  { id: 'u_tom',   name: 'Tom Becker',    username: 'tom.becker',    email: 'tom@lib.com',    avatar: null },
+  { id: 'u_julie', name: 'Julie Roy',     username: 'julie.roy',     email: 'julie@lib.com',  avatar: null },
+  { id: 'u_karim', name: 'Karim Diallo',  username: 'karim.diallo',  email: 'karim@lib.com',  avatar: null },
+  { id: 'u_ines',  name: 'Inès Larbi',   username: 'ines.larbi',    email: 'ines@lib.com',   avatar: null },
+  { id: 'u_marco', name: 'Marco Silva',   username: 'marco.silva',   email: 'marco@lib.com',  avatar: null },
+  { id: 'u_laure', name: 'Laureen Mbaye', username: 'laure.mbaye',   email: 'laure@lib.com',  avatar: null },
 ]
 
-// ─── User identity ───────────────────────────────────────────────────────────
+// ─── Username helpers ─────────────────────────────────────────────────────────
+function generateUsername(name) {
+  return (name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '.').replace(/\.+/g, '.').replace(/^\.|\.$/, '')
+}
+
+function ensureUniqueUsername(base, existingUsers) {
+  let username = base
+  let n = 1
+  while (existingUsers.some(u => u.username === username)) {
+    username = `${base}${n++}`
+  }
+  return username
+}
+
+// ─── User identity ────────────────────────────────────────────────────────────
 export function getUserId(user) {
   if (!user) return null
   if (user.id) return user.id
@@ -29,7 +43,15 @@ export function initUsers(currentUser) {
   const myId = getUserId(currentUser)
   const existing = getAllUsers()
   if (existing && existing.find(u => u.id === myId)) return existing
-  const me = { id: myId, name: currentUser.name, email: currentUser.email, avatar: currentUser.avatar || null }
+  const baseUsername = generateUsername(currentUser.name || currentUser.email?.split('@')[0] || 'user')
+  const username = ensureUniqueUsername(baseUsername, existing || DEMO_USERS)
+  const me = {
+    id: myId,
+    name: currentUser.name,
+    email: currentUser.email,
+    avatar: currentUser.avatar || null,
+    username,
+  }
   const all = existing ? [...existing.filter(u => u.id !== myId), me] : [...DEMO_USERS, me]
   localStorage.setItem('lib_users', JSON.stringify(all))
   return all
@@ -40,9 +62,75 @@ export function getUserById(id) {
   return all.find(u => u.id === id) || null
 }
 
+export function getUserByUsername(username) {
+  const all = getAllUsers() || DEMO_USERS
+  return all.find(u => u.username === username?.toLowerCase()) || null
+}
+
+export function searchUsers(query) {
+  if (!query?.trim()) return []
+  const q = query.toLowerCase()
+  const all = getAllUsers() || DEMO_USERS
+  return all.filter(u =>
+    u.name?.toLowerCase().includes(q) ||
+    u.username?.toLowerCase().includes(q) ||
+    u.email?.toLowerCase().includes(q)
+  )
+}
+
+export function updateUserProfile(userId, updates) {
+  try {
+    const all = getAllUsers() || DEMO_USERS
+    const updated = all.map(u => u.id === userId ? { ...u, ...updates } : u)
+    localStorage.setItem('lib_users', JSON.stringify(updated))
+  } catch {}
+}
+
 export function getUserAvatar(userId) {
   const u = getUserById(userId)
   return u?.avatar || null
+}
+
+// ─── Online status ────────────────────────────────────────────────────────────
+export function setOnline(userId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_online') || '{}')
+    all[userId] = Date.now()
+    localStorage.setItem('lib_online', JSON.stringify(all))
+  } catch {}
+}
+
+export function isOnline(userId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_online') || '{}')
+    const ts = all[userId]
+    return ts && (Date.now() - ts) < 90000 // 90 seconds
+  } catch { return false }
+}
+
+// ─── Typing indicator ─────────────────────────────────────────────────────────
+export function setTyping(convId, userId, isTyping) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_typing') || '{}')
+    const key = `${convId}__${userId}`
+    if (isTyping) {
+      all[key] = Date.now()
+    } else {
+      delete all[key]
+    }
+    localStorage.setItem('lib_typing', JSON.stringify(all))
+  } catch {}
+}
+
+export function getTypingUsers(convId, myId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_typing') || '{}')
+    const now = Date.now()
+    return Object.entries(all)
+      .filter(([key, ts]) => key.startsWith(convId + '__') && (now - ts) < 4000)
+      .map(([key]) => key.replace(convId + '__', ''))
+      .filter(uid => uid !== myId)
+  } catch { return [] }
 }
 
 // ─── Friends ─────────────────────────────────────────────────────────────────
@@ -68,7 +156,7 @@ export function removeFriend(myId, friendId) {
   } catch {}
 }
 
-// ─── Friend requests ─────────────────────────────────────────────────────────
+// ─── Friend requests ──────────────────────────────────────────────────────────
 export function getFriendRequests(toId) {
   try { return JSON.parse(localStorage.getItem('lib_friend_requests') || '[]').filter(r => r.toId === toId) } catch { return [] }
 }
@@ -130,6 +218,7 @@ export function createDirectConversation(myId, myName, otherId, otherName) {
     names: { [myId]: myName, [otherId]: otherName },
     updatedAt: new Date().toISOString(),
     lastMessage: '',
+    pinnedMessageId: null,
   }
   saveConversation(conv)
   return conv
@@ -152,10 +241,67 @@ export function createGroup(name, creatorId, creatorName, memberIds, memberNames
     members,
     updatedAt: new Date().toISOString(),
     lastMessage: `Groupe créé par ${creatorName}`,
+    pinnedMessageId: null,
   }
   saveConversation(conv)
   sendMessage(conv.id, creatorId, creatorName, 'system', `${creatorName} a créé le groupe "${name}"`)
   return conv
+}
+
+export function leaveGroup(convId, userId, userName) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
+    const idx = all.findIndex(c => c.id === convId)
+    if (idx < 0) return
+    const conv = all[idx]
+    const remaining = conv.members.filter(m => m.userId !== userId)
+    if (remaining.length === 0) {
+      // Delete group if empty
+      all.splice(idx, 1)
+    } else {
+      // If admin left, promote oldest member
+      const wasAdmin = conv.members.find(m => m.userId === userId)?.role === 'admin'
+      if (wasAdmin && !remaining.some(m => m.role === 'admin')) {
+        remaining[0].role = 'admin'
+      }
+      all[idx] = { ...conv, members: remaining }
+    }
+    localStorage.setItem('lib_conversations', JSON.stringify(all))
+    if (remaining.length > 0) {
+      sendMessage(convId, userId, userName, 'system', `${userName} a quitté le groupe`)
+    }
+  } catch {}
+}
+
+export function deleteGroup(convId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
+    localStorage.setItem('lib_conversations', JSON.stringify(all.filter(c => c.id !== convId)))
+    // Also remove messages
+    const msgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
+    delete msgs[convId]
+    localStorage.setItem('lib_messages', JSON.stringify(msgs))
+  } catch {}
+}
+
+export function updateGroupInfo(convId, updates) {
+  try {
+    const conv = getConversationById(convId)
+    if (!conv) return
+    saveConversation({ ...conv, ...updates })
+  } catch {}
+}
+
+export function pinMessage(convId, msgId) {
+  const conv = getConversationById(convId)
+  if (!conv) return
+  saveConversation({ ...conv, pinnedMessageId: msgId })
+}
+
+export function unpinMessage(convId) {
+  const conv = getConversationById(convId)
+  if (!conv) return
+  saveConversation({ ...conv, pinnedMessageId: null })
 }
 
 // ─── Messages ─────────────────────────────────────────────────────────────────
@@ -171,96 +317,137 @@ function saveMessages(convId, msgs) {
   } catch {}
 }
 
-export function sendMessage(convId, senderId, senderName, type, content) {
+// extra: { replyTo: { id, senderName, preview }, forwardedFrom: { senderName, convName } }
+export function sendMessage(convId, senderId, senderName, type, content, extra = {}) {
   const msgs = getMessages(convId)
-  const msg = { id: Date.now().toString() + Math.random().toString(36).slice(2), senderId, senderName, type, content, timestamp: new Date().toISOString(), votes: {} }
+  const msg = {
+    id: Date.now().toString() + Math.random().toString(36).slice(2),
+    senderId,
+    senderName,
+    type,
+    content,
+    timestamp: new Date().toISOString(),
+    reactions: {},       // { emoji: [userId, ...] }
+    readBy: {},          // { userId: timestamp }
+    deletedForAll: false,
+    deletedForSelf: [],  // array of userIds who deleted for themselves
+    pinned: false,
+    ...(extra.replyTo ? { replyTo: extra.replyTo } : {}),
+    ...(extra.forwardedFrom ? { forwardedFrom: extra.forwardedFrom } : {}),
+  }
   saveMessages(convId, [...msgs, msg])
   try {
     const all = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
     const idx = all.findIndex(c => c.id === convId)
     if (idx >= 0) {
       all[idx].updatedAt = msg.timestamp
-      all[idx].lastMessage = type === 'text' ? content : type === 'event' ? '🎟 Événement partagé' : type === 'group_booking' ? '👥 Réservation de groupe' : type === 'group_auction_bid' ? '🔨 Enchère de groupe' : type === 'purchase_proposal' ? '🛒 Proposition d\'achat' : type === 'auction_vote' ? '🔨 Vote enchère' : '📎'
+      all[idx].lastMessage = type === 'text' ? content
+        : type === 'image' ? '📷 Photo'
+        : type === 'voice' ? '🎤 Vocal'
+        : type === 'story' ? '📰 Article'
+        : type === 'poll' ? '📊 Sondage'
+        : type === 'event' ? '🎟 Événement'
+        : type === 'group_booking' ? '👥 Réservation groupe'
+        : type === 'system' ? content
+        : '📎'
       localStorage.setItem('lib_conversations', JSON.stringify(all))
     }
   } catch {}
   return msg
 }
 
-export function voteOnMessage(convId, msgId, userId, vote) {
+export function reactToMessage(convId, msgId, userId, emoji) {
   const msgs = getMessages(convId)
-  const updated = msgs.map(m => m.id === msgId ? { ...m, votes: { ...m.votes, [userId]: vote } } : m)
+  const updated = msgs.map(m => {
+    if (m.id !== msgId || m.deletedForAll) return m
+    const reactions = { ...(m.reactions || {}) }
+    // Remove user from any existing reaction first
+    Object.keys(reactions).forEach(e => {
+      reactions[e] = (reactions[e] || []).filter(uid => uid !== userId)
+      if (reactions[e].length === 0) delete reactions[e]
+    })
+    // Toggle: if user already had this emoji, it was removed above — otherwise add
+    const had = (m.reactions?.[emoji] || []).includes(userId)
+    if (!had) {
+      reactions[emoji] = [...(reactions[emoji] || []), userId]
+    }
+    return { ...m, reactions }
+  })
   saveMessages(convId, updated)
 }
 
-export function deleteMessage(convId, msgId) {
+export function deleteMessageForSelf(convId, msgId, userId) {
   const msgs = getMessages(convId)
-  saveMessages(convId, msgs.filter(m => m.id !== msgId))
+  const updated = msgs.map(m =>
+    m.id === msgId
+      ? { ...m, deletedForSelf: [...new Set([...(m.deletedForSelf || []), userId])] }
+      : m
+  )
+  saveMessages(convId, updated)
 }
 
-// ─── Seed demo data on first run ─────────────────────────────────────────────
-export function seedDemoData(myId, myName) {
-  const key = 'lib_seeded_' + myId
-  if (localStorage.getItem(key)) return
-  const t = ms => new Date(Date.now() - ms).toISOString()
-
-  const dmId = 'conv_dm_alex_' + myId
-  const grpId = 'conv_grp_squad_' + myId
-
-  const conversations = [
-    {
-      id: dmId, type: 'direct',
-      participants: [myId, 'u_alex'],
-      names: { [myId]: myName, 'u_alex': 'Alex Martin' },
-      updatedAt: t(1000*60*20), lastMessage: 'On devrait y aller 🔥',
-    },
-    {
-      id: grpId, type: 'group', name: 'Squad LIVEINBLACK 🔥', avatar: null,
-      members: [
-        { userId: myId, name: myName, role: 'admin', contributionPct: 40 },
-        { userId: 'u_alex', name: 'Alex Martin', role: 'member', contributionPct: 30 },
-        { userId: 'u_sarah', name: 'Sarah Koné', role: 'member', contributionPct: 30 },
-      ],
-      updatedAt: t(1000*60*5), lastMessage: 'Prêts pour ce soir ?',
-    },
-  ]
-
-  const existingConvs = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
-  const filtered = existingConvs.filter(c => c.id !== dmId && c.id !== grpId)
-  localStorage.setItem('lib_conversations', JSON.stringify([...conversations, ...filtered]))
-
-  const allMsgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
-  allMsgs[dmId] = [
-    { id: 'dm1', senderId: 'u_alex', senderName: 'Alex Martin', type: 'text', content: "Yo t'as vu la soirée NEON NOIR ?", timestamp: t(1000*60*35), votes: {} },
-    { id: 'dm2', senderId: 'u_alex', senderName: 'Alex Martin', type: 'text', content: 'On devrait y aller 🔥', timestamp: t(1000*60*20), votes: {} },
-  ]
-  allMsgs[grpId] = [
-    { id: 'g1', senderId: 'u_alex', senderName: 'Alex Martin', type: 'text', content: 'Salut tout le monde ! 🎉', timestamp: t(1000*60*60), votes: {} },
-    { id: 'g2', senderId: 'u_sarah', senderName: 'Sarah Koné', type: 'text', content: 'On réserve les places pour NEON NOIR ?', timestamp: t(1000*60*30), votes: {} },
-    { id: 'g3', senderId: 'u_alex', senderName: 'Alex Martin', type: 'text', content: 'Prêts pour ce soir ?', timestamp: t(1000*60*5), votes: {} },
-  ]
-  localStorage.setItem('lib_messages', JSON.stringify(allMsgs))
-
-  saveFriend(myId, 'u_alex')
-  saveFriend(myId, 'u_sarah')
-  saveFriend(myId, 'u_tom')
-
-  localStorage.setItem(key, '1')
+export function deleteMessageForAll(convId, msgId) {
+  const msgs = getMessages(convId)
+  const updated = msgs.map(m =>
+    m.id === msgId
+      ? { ...m, deletedForAll: true, content: '', reactions: {}, replyTo: undefined, forwardedFrom: undefined }
+      : m
+  )
+  saveMessages(convId, updated)
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-export function formatTime(iso) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const now = new Date()
-  const diff = now - d
-  if (diff < 1000*60*60) return `${Math.max(1, Math.floor(diff / 60000))}min`
-  if (diff < 1000*60*60*24) return d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })
-  return d.toLocaleDateString('fr', { day: '2-digit', month: 'short' })
+export function markMessagesRead(convId, userId) {
+  const msgs = getMessages(convId)
+  const now = new Date().toISOString()
+  const updated = msgs.map(m =>
+    m.senderId !== userId && !(m.readBy?.[userId])
+      ? { ...m, readBy: { ...(m.readBy || {}), [userId]: now } }
+      : m
+  )
+  saveMessages(convId, updated)
 }
 
-export function getInitials(name) {
-  return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+export function getUnreadCount(convId, userId) {
+  const msgs = getMessages(convId)
+  return msgs.filter(m =>
+    m.senderId !== userId &&
+    !m.deletedForAll &&
+    !(m.deletedForSelf || []).includes(userId) &&
+    !(m.readBy?.[userId])
+  ).length
+}
+
+export function voteOnPoll(convId, msgId, optionId, userId) {
+  const msgs = getMessages(convId)
+  const updated = msgs.map(m => {
+    if (m.id !== msgId || (m.type !== 'poll' && m.type !== 'event_poll')) return m
+    let poll
+    try { poll = typeof m.content === 'string' ? JSON.parse(m.content) : m.content } catch { return m }
+    // Remove previous vote
+    const options = poll.options.map(o => ({
+      ...o,
+      votes: { ...(o.votes || {}) }
+    }))
+    options.forEach(o => { delete o.votes[userId] })
+    // Add new vote (toggle)
+    const opt = options.find(o => o.id === optionId)
+    if (opt) {
+      const alreadyVoted = (m.content?.options || poll.options).find(o => o.id === optionId)?.votes?.[userId]
+      if (!alreadyVoted) opt.votes[userId] = true
+    }
+    const newPoll = { ...poll, options }
+    return { ...m, content: JSON.stringify(newPoll) }
+  })
+  saveMessages(convId, updated)
+}
+
+// Legacy compatibility
+export function voteOnMessage(convId, msgId, userId, vote) {
+  voteOnPoll(convId, msgId, vote, userId)
+}
+
+export function deleteMessage(convId, msgId) {
+  deleteMessageForAll(convId, msgId)
 }
 
 // ─── Group Bookings ───────────────────────────────────────────────────────────
@@ -278,64 +465,27 @@ export function getGroupBookingById(id) {
   return getGroupBookings()[id] || null
 }
 
-export function approveGroupBooking(bookingId, userId) {
+// Step 1: validate (agree to participate, no payment yet)
+export function validateGroupBooking(bookingId, userId) {
   const all = getGroupBookings()
   if (!all[bookingId]) return null
-  all[bookingId].approvals = { ...(all[bookingId].approvals || {}), [userId]: true }
+  all[bookingId].validations = { ...(all[bookingId].validations || {}), [userId]: true }
   localStorage.setItem('lib_group_bookings', JSON.stringify(all))
   return all[bookingId]
 }
 
-// ─── Group Auction Bids ───────────────────────────────────────────────────────
-export function getGroupAuctionBids() {
-  try { return JSON.parse(localStorage.getItem('lib_group_auction_bids') || '{}') } catch { return {} }
+// Step 2: pay share (only after all validated)
+export function payGroupBookingShare(bookingId, userId) {
+  const all = getGroupBookings()
+  if (!all[bookingId]) return null
+  all[bookingId].payments = { ...(all[bookingId].payments || {}), [userId]: true }
+  localStorage.setItem('lib_group_bookings', JSON.stringify(all))
+  return all[bookingId]
 }
 
-export function saveGroupAuctionBid(bid) {
-  const all = getGroupAuctionBids()
-  all[bid.id] = bid
-  localStorage.setItem('lib_group_auction_bids', JSON.stringify(all))
-}
-
-export function approveGroupAuctionBid(bidId, userId) {
-  const all = getGroupAuctionBids()
-  if (!all[bidId]) return null
-  all[bidId].approvals = { ...(all[bidId].approvals || {}), [userId]: true }
-  localStorage.setItem('lib_group_auction_bids', JSON.stringify(all))
-  return all[bidId]
-}
-
-export function placeGroupAuctionBid(bidId, userId, userName) {
-  const all = getGroupAuctionBids()
-  if (!all[bidId]) return false
-  const bid = all[bidId]
-  // Save to lib_bids
-  try {
-    const saved = JSON.parse(localStorage.getItem('lib_bids') || '[]')
-    saved.unshift({
-      eventId: bid.eventId,
-      eventName: bid.eventName,
-      placeType: bid.placeName,
-      amount: bid.bidAmount,
-      time: new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }),
-      date: new Date().toLocaleDateString('fr-FR'),
-      group: true,
-      placedBy: userName,
-    })
-    localStorage.setItem('lib_bids', JSON.stringify(saved))
-  } catch {}
-  all[bidId].status = 'placed'
-  localStorage.setItem('lib_group_auction_bids', JSON.stringify(all))
-  return bid
-}
-
-export function getCurrentAuctionPrice(eventId, placeName) {
-  try {
-    const bids = JSON.parse(localStorage.getItem('lib_bids') || '[]')
-    const matching = bids.filter(b => b.eventId === eventId && b.placeType === placeName)
-    if (matching.length === 0) return 0
-    return Math.max(...matching.map(b => b.amount))
-  } catch { return 0 }
+// Legacy compatibility — keep for EventDetailPage
+export function approveGroupBooking(bookingId, userId) {
+  return validateGroupBooking(bookingId, userId)
 }
 
 export function addSongToGroupBooking(bookingId, userId, song) {
@@ -344,4 +494,144 @@ export function addSongToGroupBooking(bookingId, userId, song) {
   all[bookingId].songSelections = { ...(all[bookingId].songSelections || {}), [userId]: song }
   localStorage.setItem('lib_group_bookings', JSON.stringify(all))
   return all[bookingId]
+}
+
+// ─── Seed demo data ───────────────────────────────────────────────────────────
+export function seedDemoData(myId, myName) {
+  const key = 'lib_seeded_' + myId
+  if (localStorage.getItem(key)) return
+  const t = ms => new Date(Date.now() - ms).toISOString()
+
+  const dmId  = 'conv_dm_alex_' + myId
+  const grpId = 'conv_grp_squad_' + myId
+
+  const conversations = [
+    {
+      id: dmId, type: 'direct',
+      participants: [myId, 'u_alex'],
+      names: { [myId]: myName, 'u_alex': 'Alex Martin' },
+      updatedAt: t(1000 * 60 * 20), lastMessage: 'On devrait y aller 🔥',
+      pinnedMessageId: null,
+    },
+    {
+      id: grpId, type: 'group', name: 'Squad LIVEINBLACK 🔥', avatar: null,
+      members: [
+        { userId: myId,     name: myName,        role: 'admin',  contributionPct: 40 },
+        { userId: 'u_alex', name: 'Alex Martin', role: 'member', contributionPct: 30 },
+        { userId: 'u_sarah',name: 'Sarah Koné',  role: 'member', contributionPct: 30 },
+      ],
+      updatedAt: t(1000 * 60 * 5), lastMessage: 'Prêts pour ce soir ?',
+      pinnedMessageId: null,
+    },
+  ]
+
+  const existingConvs = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
+  const filtered = existingConvs.filter(c => c.id !== dmId && c.id !== grpId)
+  localStorage.setItem('lib_conversations', JSON.stringify([...conversations, ...filtered]))
+
+  const allMsgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
+  allMsgs[dmId] = [
+    { id: 'dm1', senderId: 'u_alex', senderName: 'Alex Martin', type: 'text', content: "Yo t'as vu la soirée NEON NOIR ?", timestamp: t(1000 * 60 * 35), reactions: {}, readBy: {}, deletedForAll: false, deletedForSelf: [] },
+    { id: 'dm2', senderId: 'u_alex', senderName: 'Alex Martin', type: 'text', content: 'On devrait y aller 🔥', timestamp: t(1000 * 60 * 20), reactions: { '🔥': ['u_alex'] }, readBy: {}, deletedForAll: false, deletedForSelf: [] },
+  ]
+  allMsgs[grpId] = [
+    { id: 'g1', senderId: 'u_alex',  senderName: 'Alex Martin', type: 'text', content: 'Salut tout le monde ! 🎉', timestamp: t(1000 * 60 * 60), reactions: {}, readBy: {}, deletedForAll: false, deletedForSelf: [] },
+    { id: 'g2', senderId: 'u_sarah', senderName: 'Sarah Koné',  type: 'text', content: 'On réserve les places pour NEON NOIR ?', timestamp: t(1000 * 60 * 30), reactions: { '❤️': ['u_alex', myId] }, readBy: {}, deletedForAll: false, deletedForSelf: [] },
+    { id: 'g3', senderId: 'u_alex',  senderName: 'Alex Martin', type: 'text', content: 'Prêts pour ce soir ?', timestamp: t(1000 * 60 * 5), reactions: {}, readBy: {}, deletedForAll: false, deletedForSelf: [] },
+  ]
+  localStorage.setItem('lib_messages', JSON.stringify(allMsgs))
+
+  saveFriend(myId, 'u_alex')
+  saveFriend(myId, 'u_sarah')
+  saveFriend(myId, 'u_tom')
+
+  localStorage.setItem(key, '1')
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+export function formatTime(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const now = new Date()
+  const diff = now - d
+  if (diff < 1000 * 60 * 60) return `${Math.max(1, Math.floor(diff / 60000))}min`
+  if (diff < 1000 * 60 * 60 * 24) return d.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString('fr', { day: '2-digit', month: 'short' })
+}
+
+export function formatMsgTime(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })
+}
+
+export function formatDateSeparator(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  if (d.toDateString() === today.toDateString()) return "Aujourd'hui"
+  if (d.toDateString() === yesterday.toDateString()) return 'Hier'
+  return d.toLocaleDateString('fr', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+export function getInitials(name) {
+  return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+}
+
+export function isSameDay(isoA, isoB) {
+  if (!isoA || !isoB) return false
+  return new Date(isoA).toDateString() === new Date(isoB).toDateString()
+}
+
+// ─── Total unread (all conversations) ────────────────────────────────────────
+export function getTotalUnreadCount(myId) {
+  if (!myId) return 0
+  try {
+    const convs = getConversations(myId)
+    return convs.reduce((sum, c) => sum + getUnreadCount(c.id, myId), 0)
+  } catch { return 0 }
+}
+
+// ─── Block / Unblock ─────────────────────────────────────────────────────────
+export function getBlockedUsers(myId) {
+  try { return JSON.parse(localStorage.getItem('lib_blocked') || '{}')[myId] || [] } catch { return [] }
+}
+
+export function blockUser(myId, userId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_blocked') || '{}')
+    all[myId] = [...new Set([...(all[myId] || []), userId])]
+    localStorage.setItem('lib_blocked', JSON.stringify(all))
+  } catch {}
+}
+
+export function unblockUser(myId, userId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_blocked') || '{}')
+    all[myId] = (all[myId] || []).filter(id => id !== userId)
+    localStorage.setItem('lib_blocked', JSON.stringify(all))
+  } catch {}
+}
+
+export function isBlocked(myId, userId) {
+  return getBlockedUsers(myId).includes(userId)
+}
+
+// ─── Reports ─────────────────────────────────────────────────────────────────
+export function reportUser(fromId, fromName, targetId, targetName, reason) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_reports') || '[]')
+    all.push({ id: Date.now().toString(), fromId, fromName, targetId, targetName, reason, reportedAt: new Date().toISOString() })
+    localStorage.setItem('lib_reports', JSON.stringify(all))
+  } catch {}
+}
+
+// ─── Delete conversation history ─────────────────────────────────────────────
+export function deleteConversationHistory(convId) {
+  try {
+    const msgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
+    delete msgs[convId]
+    localStorage.setItem('lib_messages', JSON.stringify(msgs))
+  } catch {}
 }

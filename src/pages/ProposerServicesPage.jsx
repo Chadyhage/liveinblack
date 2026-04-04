@@ -11,11 +11,12 @@ import {
   getProviderProfile, saveProviderProfile, getAllProviderProfiles,
   CATALOG_CATEGORIES, ORDER_STATUS_LABELS,
 } from '../utils/services'
+import { requestAdditionalRole, PRESTATAIRE_TYPES, cancelRoleRequest } from '../utils/accounts'
 
 const CATEGORIES = [
   {
     id: 'salle',
-    icon: '🏛',
+    icon: 'building',
     title: "J'ai une salle / un lieu à louer",
     color: '#7b2fff',
     desc: "Propriétaires d'espaces, salles, terrains pour événements",
@@ -32,7 +33,7 @@ const CATEGORIES = [
   },
   {
     id: 'prestation',
-    icon: '🎤',
+    icon: 'mic',
     title: 'Je donne des prestations',
     color: '#ff6b1a',
     desc: 'Artistes, animateurs, DJs, cracheurs de feu, comédiens...',
@@ -49,7 +50,7 @@ const CATEGORIES = [
   },
   {
     id: 'materiel',
-    icon: '🔊',
+    icon: 'speaker',
     title: "J'ai du matériel à louer",
     color: '#00c9a7',
     desc: 'Sono, lumières, scènes, mobilier événementiel...',
@@ -66,9 +67,9 @@ const CATEGORIES = [
   },
   {
     id: 'supermarche',
-    icon: '🛒',
+    icon: 'cart',
     title: 'Je suis un supermarché',
-    color: '#d4af37',
+    color: '#c8a96e',
     desc: 'Fournisseurs de boissons, alcools, consommables événementiels',
     fields: [
       { label: "Nom de l'enseigne", placeholder: 'Ex: Nicolas, Carrefour Pro...', type: 'text', required: true },
@@ -84,13 +85,13 @@ const CATEGORIES = [
 
 const STATIC_PROVIDERS = [
   ...services.salles.map(s => ({
-    id: `salle_${s.id}`, type: 'salle', icon: '🏛', color: '#7b2fff',
+    id: `salle_${s.id}`, type: 'salle', icon: 'building', color: '#7b2fff',
     name: s.name, typeLabel: 'Salle / Lieu', description: s.description,
     price: s.price, location: `${s.owner} · ${s.location}`, capacity: `${s.capacity} pers.`,
     rating: s.rating, tags: s.tags, pending: false,
   })),
   ...services.prestations.map(p => ({
-    id: `presta_${p.id}`, type: 'prestation', icon: '🎤', color: '#ff6b1a',
+    id: `presta_${p.id}`, type: 'prestation', icon: 'mic', color: '#ff6b1a',
     name: p.name, typeLabel: p.type, description: '', price: p.price,
     location: '', rating: p.rating, tags: p.tags, pending: false,
   })),
@@ -100,16 +101,154 @@ function getCreatedProviders() {
   try { return JSON.parse(localStorage.getItem('lib_created_providers') || '[]') } catch { return [] }
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// ── Style tokens ───────────────────────────────────────────────────────────────
+const S = {
+  card: {
+    background: 'rgba(8,10,20,0.55)',
+    backdropFilter: 'blur(22px) saturate(1.6)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 12,
+  },
+  inputBase: {
+    background: 'rgba(6,8,16,0.6)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+    padding: '10px 14px',
+    width: '100%',
+    outline: 'none',
+    boxSizing: 'border-box',
+  },
+  label: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 9,
+    letterSpacing: '0.35em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.28)',
+    display: 'block',
+    marginBottom: 6,
+  },
+  btnGold: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+    border: '1px solid rgba(200,169,110,0.45)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: '#c8a96e',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnGhost: {
+    padding: '13px 28px',
+    background: 'transparent',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.5)',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnPrimary: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 50%, rgba(78,232,200,0.12) 100%)',
+    border: '1px solid rgba(255,255,255,0.28)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'white',
+    cursor: 'pointer',
+    width: '100%',
+  },
+}
+
+// ── Eyebrow heading helper ──────────────────────────────────────────────────────
+function Eyebrow({ children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <div style={{ width: 28, height: 1, background: '#4ee8c8', flexShrink: 0 }} />
+      <span style={{
+        fontFamily: "'DM Mono', monospace",
+        fontSize: 9,
+        letterSpacing: '0.4em',
+        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.25)',
+      }}>{children}</span>
+    </div>
+  )
+}
+
+// ── SVG icon map ───────────────────────────────────────────────────────────────
+function CatIcon({ id, color = 'currentColor', size = 22 }) {
+  const icons = {
+    building: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><rect x="2" y="3" width="20" height="18" rx="1"/><path d="M9 21V12h6v9"/><path d="M2 9h20"/></svg>,
+    mic: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+    speaker: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><circle cx="12" cy="8" r="1" fill={color}/></svg>,
+    cart: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/></svg>,
+  }
+  return icons[id] || icons.mic
+}
+
+function FocusInput({ style = {}, ...props }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <input
+      {...props}
+      style={{
+        ...S.inputBase,
+        borderColor: focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)',
+        boxShadow: focused ? '0 0 0 3px rgba(78,232,200,0.06)' : 'none',
+        ...style,
+      }}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+    />
+  )
+}
+
+function Toggle({ value, onChange }) {
+  return (
+    <div
+      onClick={onChange}
+      style={{
+        width: 44, height: 24, borderRadius: 12,
+        background: value ? '#4ee8c8' : 'rgba(255,255,255,0.08)',
+        position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0,
+      }}
+    >
+      <div style={{
+        position: 'absolute', top: 4, width: 16, height: 16,
+        background: 'white', borderRadius: '50%', transition: 'left 0.2s',
+        left: value ? 24 : 4, boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+      }} />
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Main component
+// ══════════════════════════════════════════════════════════════════════════════
 
 export default function ProposerServicesPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const uid = getUserId(user)
 
-  // If prestataire → show their dashboard
   if (user?.role === 'prestataire' || user?.role === 'organisateur') {
     return <PrestataireDashboard user={user} navigate={navigate} />
+  }
+
+  if (user?.role === 'agent') {
+    return <PublicServicesView user={user} uid={uid} navigate={navigate} agentMode />
   }
 
   return <PublicServicesView user={user} uid={uid} navigate={navigate} />
@@ -133,7 +272,6 @@ function PrestataireDashboard({ user, navigate }) {
   const [toast, setToast] = useState(null)
   const photoInputRef = useRef(null)
 
-  // If no profile yet, show the profile setup form
   const [profileFormMode, setProfileFormMode] = useState(!profile)
   const [profileForm, setProfileForm] = useState(profile || {
     name: user?.name || '',
@@ -159,7 +297,7 @@ function PrestataireDashboard({ user, navigate }) {
     saveProviderProfile(saved)
     setProfile(saved)
     setProfileFormMode(false)
-    showToast('Profil mis à jour ✓')
+    showToast('Profil mis à jour')
   }
 
   function handleAddItem() {
@@ -168,7 +306,7 @@ function PrestataireDashboard({ user, navigate }) {
     setNewItem({ name: '', price: '', category: '', unit: 'unité', description: '', available: true })
     setShowAddItem(false)
     setCatalog(getCatalog(uid))
-    showToast('Article ajouté ✓')
+    showToast('Article ajouté')
   }
 
   function handleSaveEdit() {
@@ -176,7 +314,7 @@ function PrestataireDashboard({ user, navigate }) {
     updateCatalogItem(uid, editItem.id, editItem)
     setEditItem(null)
     setCatalog(getCatalog(uid))
-    showToast('Modifié ✓')
+    showToast('Modifié')
   }
 
   function handleDeleteItem(itemId) {
@@ -195,47 +333,69 @@ function PrestataireDashboard({ user, navigate }) {
 
   return (
     <Layout>
-      <div className="px-4 py-5 space-y-4">
+      <div style={{ position: 'relative', zIndex: 1, background: 'transparent', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: catConfig.color + '22', border: `1px solid ${catConfig.color}44` }}>
-            {catConfig.icon}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 8,
+            background: catConfig.color + '18', border: `1px solid ${catConfig.color}40`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <CatIcon id={catConfig.icon} color={catConfig.color} size={22} />
           </div>
-          <div className="flex-1">
-            <h2 className="text-white font-black text-lg">{profile?.name || user?.name}</h2>
-            <p className="text-gray-500 text-xs">{catConfig.title.replace("J'ai", '').replace("Je suis", '').replace("Je donne des", '').trim()}</p>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+              {profile?.name || user?.name}
+            </p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 2, margin: 0 }}>
+              {catConfig.title.replace("J'ai", '').replace("Je suis", '').replace("Je donne des", '').trim()}
+            </p>
           </div>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${
-            user?.status === 'active' ? 'text-green-400 border-green-500/30 bg-green-500/10' : 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10'
-          }`}>
-            {user?.status === 'active' ? 'Actif' : 'En attente'}
+          <span style={{
+            fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em',
+            padding: '3px 10px', borderRadius: 3, border: '1px solid',
+            ...(user?.status === 'active'
+              ? { color: '#4ee8c8', borderColor: 'rgba(78,232,200,0.30)', background: 'rgba(78,232,200,0.06)' }
+              : { color: '#c8a96e', borderColor: 'rgba(200,169,110,0.30)', background: 'rgba(200,169,110,0.06)' }),
+          }}>
+            {user?.status === 'active' ? 'ACTIF' : 'EN ATTENTE'}
           </span>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
           {[
-            { label: 'Articles', value: catalog.length, icon: '📦' },
-            { label: 'Commandes', value: orders.length, icon: '📋', alert: pendingOrders },
-            { label: 'Revenus', value: `${revenue.toFixed(0)}€`, icon: '💰' },
+            { label: 'Articles', value: catalog.length },
+            { label: 'Commandes', value: orders.length, alert: pendingOrders },
+            { label: 'Revenus', value: `${revenue.toFixed(0)}€` },
           ].map(s => (
-            <div key={s.label} className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl p-3 text-center">
-              <p className="text-lg">{s.icon}</p>
-              <p className="text-white font-bold text-lg">{s.value}{s.alert > 0 && <span className="text-yellow-400 text-xs ml-1">+{s.alert}</span>}</p>
-              <p className="text-gray-600 text-[10px]">{s.label}</p>
+            <div key={s.label} style={{ ...S.card, padding: 14, textAlign: 'center' }}>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                {s.value}
+                {s.alert > 0 && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', marginLeft: 4 }}>+{s.alert}</span>}
+              </p>
+              <p style={{ ...S.label, marginBottom: 0, marginTop: 4 }}>{s.label}</p>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-[#111] p-1 rounded-xl">
+        <div style={{ display: 'flex', gap: 4, background: 'rgba(6,8,16,0.6)', padding: 4, borderRadius: 8 }}>
           {[
             { key: 'profil', label: 'Profil' },
             { key: 'catalogue', label: `Catalogue (${catalog.length})` },
-            { key: 'commandes', label: `Commandes${pendingOrders > 0 ? ` ●` : ''}` },
+            { key: 'commandes', label: `Commandes${pendingOrders > 0 ? ' •' : ''}` },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${tab === t.key ? 'bg-[#d4af37] text-black' : 'text-gray-500'}`}>
+              style={{
+                flex: 1, padding: '8px 4px', borderRadius: 4, border: 'none', cursor: 'pointer',
+                fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.1em',
+                transition: 'all 0.2s',
+                ...(tab === t.key
+                  ? { background: 'rgba(200,169,110,0.18)', color: '#c8a96e', border: '1px solid rgba(200,169,110,0.28)' }
+                  : { background: 'transparent', color: 'rgba(255,255,255,0.42)' }),
+              }}>
               {t.label}
             </button>
           ))}
@@ -243,26 +403,44 @@ function PrestataireDashboard({ user, navigate }) {
 
         {/* ── PROFIL TAB ── */}
         {tab === 'profil' && (
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {profileFormMode ? (
-              <div className="space-y-3">
-                <p className="text-gray-400 text-sm font-semibold">Complète ton profil prestataire</p>
-                <input className="input-dark" placeholder="Nom commercial / enseigne" value={profileForm.name} onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
-                <textarea className="input-dark resize-none h-20 text-sm" placeholder="Description de tes services..." value={profileForm.description} onChange={e => setProfileForm(f => ({ ...f, description: e.target.value }))} />
-                <input className="input-dark" placeholder="Adresse / Zone d'activité" value={profileForm.location} onChange={e => setProfileForm(f => ({ ...f, location: e.target.value }))} />
-                <input className="input-dark" placeholder="Site web ou Instagram (optionnel)" value={profileForm.website} onChange={e => setProfileForm(f => ({ ...f, website: e.target.value }))} />
-                <button onClick={handleSaveProfile} className="btn-gold w-full">Enregistrer le profil</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <Eyebrow>Profil prestataire</Eyebrow>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.05em', margin: 0 }}>Complète ton profil prestataire</p>
+                <FocusInput placeholder="Nom commercial / enseigne" value={profileForm.name} onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
+                <textarea
+                  style={{ ...S.inputBase, resize: 'none', height: 80 }}
+                  placeholder="Description de tes services..."
+                  value={profileForm.description}
+                  onChange={e => setProfileForm(f => ({ ...f, description: e.target.value }))}
+                  onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
+                />
+                <FocusInput placeholder="Adresse / Zone d'activité" value={profileForm.location} onChange={e => setProfileForm(f => ({ ...f, location: e.target.value }))} />
+                <FocusInput placeholder="Site web ou Instagram (optionnel)" value={profileForm.website} onChange={e => setProfileForm(f => ({ ...f, website: e.target.value }))} />
+                <button onClick={handleSaveProfile} style={S.btnGold}>Enregistrer le profil</button>
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-4 space-y-3">
-                  <p className="text-white font-semibold">{profile.name}</p>
-                  {profile.description && <p className="text-gray-400 text-sm">{profile.description}</p>}
-                  {profile.location && <p className="text-gray-500 text-xs">📍 {profile.location}</p>}
-                  {profile.website && <p className="text-gray-500 text-xs">🔗 {profile.website}</p>}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{profile.name}</p>
+                  {profile.description && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: 0 }}>{profile.description}</p>}
+                  {profile.location && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>{profile.location}</p>
+                    </div>
+                  )}
+                  {profile.website && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>{profile.website}</p>
+                    </div>
+                  )}
                 </div>
-                <button onClick={() => setProfileFormMode(true)} className="w-full py-2.5 border border-[#333] text-gray-400 text-sm rounded-xl hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-colors">
-                  ✏ Modifier le profil
+                <button onClick={() => setProfileFormMode(true)} style={S.btnGhost}>
+                  Modifier le profil
                 </button>
               </div>
             )}
@@ -271,81 +449,115 @@ function PrestataireDashboard({ user, navigate }) {
 
         {/* ── CATALOGUE TAB ── */}
         {tab === 'catalogue' && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-gray-500 text-xs">{catalog.length} article{catalog.length !== 1 ? 's' : ''}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', margin: 0 }}>
+                {catalog.length} article{catalog.length !== 1 ? 's' : ''}
+              </p>
               <button onClick={() => setShowAddItem(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#d4af37] text-black text-xs font-bold">
+                style={{
+                  fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase',
+                  padding: '6px 14px', borderRadius: 4,
+                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                  border: '1px solid rgba(200,169,110,0.45)', color: '#c8a96e', cursor: 'pointer',
+                }}>
                 + Ajouter
               </button>
             </div>
 
-            {/* Add item form */}
             {showAddItem && (
-              <div className="bg-[#0d0d0d] border border-[#d4af37]/30 rounded-2xl p-4 space-y-3">
-                <p className="text-white font-semibold text-sm">Nouvel article</p>
-                <input className="input-dark text-sm" placeholder="Nom du produit / service *" value={newItem.name} onChange={e => setNewItem(i => ({ ...i, name: e.target.value }))} />
-                <div className="grid grid-cols-2 gap-2">
-                  <input className="input-dark text-sm" type="number" placeholder="Prix (€) *" value={newItem.price} onChange={e => setNewItem(i => ({ ...i, price: e.target.value }))} />
-                  <select className="input-dark text-sm" value={newItem.unit} onChange={e => setNewItem(i => ({ ...i, unit: e.target.value }))}>
+              <div style={{ ...S.card, padding: 16, borderColor: 'rgba(200,169,110,0.20)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Nouvel article</p>
+                <FocusInput placeholder="Nom du produit / service *" value={newItem.name} onChange={e => setNewItem(i => ({ ...i, name: e.target.value }))} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <FocusInput type="number" placeholder="Prix (€) *" value={newItem.price} onChange={e => setNewItem(i => ({ ...i, price: e.target.value }))} />
+                  <select style={{ ...S.inputBase }} value={newItem.unit} onChange={e => setNewItem(i => ({ ...i, unit: e.target.value }))}>
                     {['unité', 'lot', 'kg', 'L', 'bouteille', 'caisse', 'heure', 'soirée', 'jour'].map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
                 </div>
-                <select className="input-dark text-sm" value={newItem.category} onChange={e => setNewItem(i => ({ ...i, category: e.target.value }))}>
+                <select style={{ ...S.inputBase }} value={newItem.category} onChange={e => setNewItem(i => ({ ...i, category: e.target.value }))}>
                   <option value="">Catégorie (optionnel)</option>
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
-                <textarea className="input-dark text-sm resize-none h-16" placeholder="Description (optionnel)" value={newItem.description} onChange={e => setNewItem(i => ({ ...i, description: e.target.value }))} />
-                <div className="flex gap-2">
-                  <button onClick={handleAddItem} className="flex-1 py-2 bg-[#d4af37] text-black text-xs font-bold rounded-xl">Ajouter</button>
+                <textarea style={{ ...S.inputBase, resize: 'none', height: 64 }} placeholder="Description (optionnel)" value={newItem.description} onChange={e => setNewItem(i => ({ ...i, description: e.target.value }))}
+                  onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={handleAddItem} style={{ ...S.btnGold, flex: 1 }}>Ajouter</button>
                   <button onClick={() => { setShowAddItem(false); setNewItem({ name: '', price: '', category: '', unit: 'unité', description: '', available: true }) }}
-                    className="px-4 py-2 border border-[#333] text-gray-500 text-xs rounded-xl">Annuler</button>
+                    style={{ ...S.btnGhost, flex: '0 0 auto', width: 'auto', padding: '13px 16px' }}>Annuler</button>
                 </div>
               </div>
             )}
 
-            {/* Catalog items */}
             {catalog.length === 0 ? (
-              <div className="text-center py-12 space-y-2">
-                <p className="text-4xl">📦</p>
-                <p className="text-white font-semibold text-sm">Catalogue vide</p>
-                <p className="text-gray-600 text-xs">Ajoute tes produits ou services pour qu'ils apparaissent sur ton profil public.</p>
+              <div style={{ textAlign: 'center', padding: '48px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ marginBottom: 4 }}>
+                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                </svg>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.42)', margin: 0 }}>Catalogue vide</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7, maxWidth: 240, textAlign: 'center', margin: 0 }}>
+                  Ajoute tes produits ou services pour qu'ils apparaissent sur ton profil public.
+                </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {catalog.map(item => (
                   <div key={item.id}>
                     {editItem?.id === item.id ? (
-                      <div className="bg-[#0d0d0d] border border-[#d4af37]/30 rounded-xl p-3 space-y-2">
-                        <input className="input-dark text-sm" value={editItem.name} onChange={e => setEditItem(i => ({ ...i, name: e.target.value }))} />
-                        <div className="grid grid-cols-2 gap-2">
-                          <input className="input-dark text-sm" type="number" value={editItem.price} onChange={e => setEditItem(i => ({ ...i, price: parseFloat(e.target.value) }))} />
-                          <select className="input-dark text-sm" value={editItem.unit} onChange={e => setEditItem(i => ({ ...i, unit: e.target.value }))}>
+                      <div style={{ ...S.card, padding: 12, borderColor: 'rgba(200,169,110,0.20)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <FocusInput value={editItem.name} onChange={e => setEditItem(i => ({ ...i, name: e.target.value }))} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                          <FocusInput type="number" value={editItem.price} onChange={e => setEditItem(i => ({ ...i, price: parseFloat(e.target.value) }))} />
+                          <select style={{ ...S.inputBase }} value={editItem.unit} onChange={e => setEditItem(i => ({ ...i, unit: e.target.value }))}>
                             {['unité', 'lot', 'kg', 'L', 'bouteille', 'caisse', 'heure', 'soirée', 'jour'].map(u => <option key={u} value={u}>{u}</option>)}
                           </select>
                         </div>
-                        <div className="flex gap-2">
-                          <button onClick={handleSaveEdit} className="flex-1 py-1.5 bg-[#d4af37] text-black text-xs font-bold rounded-lg">✓ Sauver</button>
-                          <button onClick={() => setEditItem(null)} className="px-3 py-1.5 border border-[#333] text-gray-500 text-xs rounded-lg">Annuler</button>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={handleSaveEdit} style={{ ...S.btnGold, flex: 1, padding: '8px' }}>Sauver</button>
+                          <button onClick={() => setEditItem(null)} style={{ ...S.btnGhost, flex: '0 0 auto', width: 'auto', padding: '8px 14px' }}>Annuler</button>
                         </div>
                       </div>
                     ) : (
-                      <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.available ? 'bg-[#0d0d0d] border-[#1a1a1a]' : 'bg-[#080808] border-[#111] opacity-60'}`}>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-white text-sm font-semibold truncate">{item.name}</p>
-                            {item.category && <span className="text-[10px] text-gray-500 bg-[#111] px-1.5 py-0.5 rounded-full flex-shrink-0">{item.category}</span>}
+                      <div style={{
+                        ...S.card,
+                        padding: '12px 14px',
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        opacity: item.available ? 1 : 0.5,
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{item.name}</p>
+                            {item.category && (
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8', background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', padding: '1px 7px', borderRadius: 3, flexShrink: 0, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{item.category}</span>
+                            )}
                           </div>
-                          <p className="text-[#d4af37] text-xs font-bold">{item.price}€ <span className="text-gray-600 font-normal">/ {item.unit}</span></p>
-                          {item.description && <p className="text-gray-600 text-[10px] truncate">{item.description}</p>}
+                          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: '#c8a96e', marginTop: 3, margin: '3px 0 0' }}>
+                            {item.price}€ <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.42)' }}>/ {item.unit}</span>
+                          </p>
+                          {item.description && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '2px 0 0' }}>{item.description}</p>}
                         </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <button onClick={() => handleToggleAvailability(item)}
-                            className={`w-8 h-5 rounded-full transition-all ${item.available ? 'bg-green-500' : 'bg-[#333]'}`}>
-                            <div className={`w-3.5 h-3.5 bg-white rounded-full transition-all mx-auto ${item.available ? 'translate-x-1.5' : '-translate-x-1.5'}`} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                          <div
+                            onClick={() => handleToggleAvailability(item)}
+                            style={{
+                              width: 32, height: 18, borderRadius: 9,
+                              background: item.available ? '#4ee8c8' : 'rgba(255,255,255,0.08)',
+                              position: 'relative', cursor: 'pointer', transition: 'background 0.2s',
+                            }}
+                          >
+                            <div style={{
+                              position: 'absolute', top: 3, width: 12, height: 12,
+                              background: 'white', borderRadius: '50%', transition: 'left 0.2s',
+                              left: item.available ? 17 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                            }} />
+                          </div>
+                          <button onClick={() => setEditItem({ ...item })} style={{ width: 28, height: 28, borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           </button>
-                          <button onClick={() => setEditItem({ ...item })} className="w-7 h-7 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-gray-500 hover:text-white">✏</button>
-                          <button onClick={() => handleDeleteItem(item.id)} className="w-7 h-7 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-gray-600 hover:text-red-400">🗑</button>
+                          <button onClick={() => handleDeleteItem(item.id)} style={{ width: 28, height: 28, borderRadius: 4, background: 'rgba(220,50,50,0.06)', border: '1px solid rgba(220,50,50,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                          </button>
                         </div>
                       </div>
                     )}
@@ -358,52 +570,74 @@ function PrestataireDashboard({ user, navigate }) {
 
         {/* ── COMMANDES TAB ── */}
         {tab === 'commandes' && (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {orders.length === 0 ? (
-              <div className="text-center py-12 space-y-2">
-                <p className="text-4xl">📋</p>
-                <p className="text-white font-semibold text-sm">Aucune commande</p>
-                <p className="text-gray-600 text-xs">Les commandes passées depuis ton profil apparaîtront ici.</p>
+              <div style={{ textAlign: 'center', padding: '48px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ marginBottom: 4 }}>
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>
+                </svg>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.42)', margin: 0 }}>Aucune commande</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7, maxWidth: 240, textAlign: 'center', margin: 0 }}>
+                  Les commandes passées depuis ton profil apparaîtront ici.
+                </p>
               </div>
             ) : (
               orders.map(order => {
-                const st = ORDER_STATUS_LABELS[order.status] || { label: order.status, color: '#6b7280' }
+                const st = ORDER_STATUS_LABELS[order.status] || { label: order.status, color: 'rgba(255,255,255,0.3)' }
+                const statusStyle = order.status === 'pending'
+                  ? { color: '#c8a96e', borderColor: 'rgba(200,169,110,0.44)', background: 'rgba(200,169,110,0.11)' }
+                  : order.status === 'confirmed'
+                  ? { color: '#4ee8c8', borderColor: 'rgba(78,232,200,0.44)', background: 'rgba(78,232,200,0.08)' }
+                  : { color: 'rgba(255,255,255,0.3)', borderColor: 'rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)' }
                 return (
-                  <div key={order.id} className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-4 space-y-3">
-                    <div className="flex items-start justify-between">
+                  <div key={order.id} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                       <div>
-                        <p className="text-white font-semibold text-sm">{order.buyerName}</p>
-                        <p className="text-gray-600 text-xs">{new Date(order.createdAt).toLocaleDateString('fr-FR')}</p>
+                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{order.buyerName}</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2, margin: '2px 0 0' }}>{new Date(order.createdAt).toLocaleDateString('fr-FR')}</p>
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full border font-semibold"
-                        style={{ color: st.color, borderColor: st.color + '44', background: st.color + '11' }}>
+                      <span style={{
+                        fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em',
+                        padding: '3px 10px', borderRadius: 3, border: '1px solid',
+                        ...statusStyle,
+                      }}>
                         {st.label}
                       </span>
                     </div>
-                    <div className="space-y-1">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {order.items.map((it, i) => (
-                        <div key={i} className="flex justify-between text-xs">
-                          <span className="text-gray-400">{it.name} × {it.qty}</span>
-                          <span className="text-white">{(it.price * it.qty).toFixed(2)}€</span>
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{it.name} × {it.qty}</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{(it.price * it.qty).toFixed(2)}€</span>
                         </div>
                       ))}
                     </div>
-                    <div className="pt-2 border-t border-[#111] flex items-center justify-between">
+                    <div style={{ paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <p className="text-gray-500 text-xs">Commission LIVEINBLACK : <span className="text-red-400">{order.commission.toFixed(2)}€</span></p>
-                        <p className="text-white font-bold text-sm">Tu reçois : {order.sellerReceives.toFixed(2)}€</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>
+                          Commission : <span style={{ color: 'rgba(220,100,100,0.8)' }}>{order.commission.toFixed(2)}€</span>
+                        </p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', marginTop: 2, margin: '2px 0 0' }}>
+                          Tu reçois : <span style={{ color: '#c8a96e' }}>{order.sellerReceives.toFixed(2)}€</span>
+                        </p>
                       </div>
                       {order.status === 'pending' && (
-                        <div className="flex gap-1.5">
+                        <div style={{ display: 'flex', gap: 6 }}>
                           <button onClick={() => { updateOrderStatus(order.id, 'confirmed'); setOrders(getOrdersForSeller(uid)) }}
-                            className="px-3 py-1.5 bg-[#d4af37] text-black text-xs font-bold rounded-lg">Confirmer</button>
+                            style={{ padding: '7px 14px', background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: '#c8a96e', cursor: 'pointer' }}>
+                            Confirmer
+                          </button>
                           <button onClick={() => { updateOrderStatus(order.id, 'cancelled'); setOrders(getOrdersForSeller(uid)) }}
-                            className="px-3 py-1.5 border border-red-500/30 text-red-400 text-xs rounded-lg">Refuser</button>
+                            style={{ padding: '7px 14px', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.35)', borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(220,100,100,0.9)', cursor: 'pointer' }}>
+                            Refuser
+                          </button>
                         </div>
                       )}
                       {order.status === 'confirmed' && (
                         <button onClick={() => { updateOrderStatus(order.id, 'done'); setOrders(getOrdersForSeller(uid)) }}
-                          className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg">Terminé</button>
+                          style={{ padding: '7px 14px', background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.35)', borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: '#4ee8c8', cursor: 'pointer' }}>
+                          Terminé
+                        </button>
                       )}
                     </div>
                   </div>
@@ -415,7 +649,13 @@ function PrestataireDashboard({ user, navigate }) {
       </div>
 
       {toast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#d4af37] text-black px-4 py-2.5 rounded-2xl text-sm font-bold shadow-xl">
+        <div style={{
+          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 50,
+          background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+          border: '1px solid rgba(200,169,110,0.45)', borderRadius: 4,
+          padding: '10px 20px', fontFamily: "'DM Mono', monospace", fontSize: 11,
+          color: '#c8a96e', letterSpacing: '0.15em', whiteSpace: 'nowrap',
+        }}>
           {toast}
         </div>
       )}
@@ -424,10 +664,11 @@ function PrestataireDashboard({ user, navigate }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PUBLIC SERVICES VIEW (for regular users)
+// PUBLIC SERVICES VIEW
 // ══════════════════════════════════════════════════════════════════════════════
 
-function PublicServicesView({ user, uid, navigate }) {
+function PublicServicesView({ user, uid, navigate, agentMode }) {
+  const { setUser } = useAuth()
   const photoInputRef = useRef(null)
   const [mode, setMode] = useState('landing')
   const [selected, setSelected] = useState(null)
@@ -439,19 +680,21 @@ function PublicServicesView({ user, uid, navigate }) {
   const [photoPreviews, setPhotoPreviews] = useState([])
   const [formErrors, setFormErrors] = useState({})
   const [createdProviders, setCreatedProviders] = useState(getCreatedProviders)
+  const [roleRequestState, setRoleRequestState] = useState('idle')
+  const [roleRequestType, setRoleRequestType] = useState(null)
+  const [roleRequestPrestType, setRoleRequestPrestType] = useState(null)
   const [contact, setContact] = useState({ open: false, provider: null, sent: false, name: '', message: '' })
   const [browseSearch, setBrowseSearch] = useState('')
   const [browseCat, setBrowseCat] = useState('tous')
-  // Ordering
-  const [orderModal, setOrderModal] = useState(null) // { provider }
-  const [cart, setCart] = useState([]) // [{ item, qty }]
+  const [orderModal, setOrderModal] = useState(null)
+  const [cart, setCart] = useState([])
   const [orderSuccess, setOrderSuccess] = useState(false)
 
   const cat = CATEGORIES.find(c => c.id === selected)
   const allProviders = [...STATIC_PROVIDERS, ...createdProviders, ...getAllProviderProfiles().map(p => ({
     id: `account_${p.userId}`, userId: p.userId,
-    type: p.prestataireType, icon: CATEGORIES.find(c => c.id === p.prestataireType)?.icon || '🎤',
-    color: CATEGORIES.find(c => c.id === p.prestataireType)?.color || '#d4af37',
+    type: p.prestataireType, icon: CATEGORIES.find(c => c.id === p.prestataireType)?.icon || 'mic',
+    color: CATEGORIES.find(c => c.id === p.prestataireType)?.color || '#c8a96e',
     name: p.name, typeLabel: CATEGORIES.find(c => c.id === p.prestataireType)?.title?.replace("J'ai ", '').replace("Je suis un ", '').replace("Je donne des ", '') || p.prestataireType,
     description: p.description, location: p.location, tags: [], rating: 0, pending: false,
     hasCatalog: getCatalog(p.userId).filter(i => i.available).length > 0,
@@ -497,13 +740,17 @@ function PublicServicesView({ user, uid, navigate }) {
     setCreatedProviders(prev => [...prev, newProvider])
     setStep(4)
   }
-  function startRegister(catId) {
-    setSelected(catId); setStep(1); setFormValues({}); setExtras([]);
-    setPhotoPreviews([]); setFormErrors({}); setShowCustomInput(false); setCustomOptionInput('')
-    setMode('register')
+  function startRoleRequest(catId) {
+    if (!user) { navigate('/connexion?mode=register'); return }
+    const isPending = catId === 'organisateur'
+      ? user?.orgStatus === 'pending'
+      : user?.prestStatus === 'pending'
+    setRoleRequestType(catId === 'organisateur' ? 'organisateur' : 'prestataire')
+    setRoleRequestPrestType(catId === 'organisateur' ? null : catId)
+    setRoleRequestState(isPending ? 'already_pending' : 'confirming')
+    setMode('request')
   }
 
-  // ── Cart helpers ──
   function cartQty(itemId) { return cart.find(c => c.item.id === itemId)?.qty || 0 }
   function setCartQty(item, qty) {
     if (qty <= 0) { setCart(c => c.filter(ci => ci.item.id !== item.id)); return }
@@ -531,40 +778,94 @@ function PublicServicesView({ user, uid, navigate }) {
   if (mode === 'landing') {
     return (
       <Layout>
-        <div className="px-4 py-6 space-y-5">
+        <div style={{ position: 'relative', zIndex: 1, background: 'transparent', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+          {/* Page header */}
           <div>
-            <h2 className="text-3xl font-black uppercase" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-              Services <span className="text-[#d4af37]">& Prestataires</span>
+            <p style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 9,
+              letterSpacing: '0.4em',
+              textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.25)',
+              marginBottom: 8,
+              margin: '0 0 8px',
+            }}>Marketplace</p>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 8px', lineHeight: 1.1 }}>
+              Services <span style={{ color: '#c8a96e' }}>& Prestataires</span>
             </h2>
-            <p className="text-gray-500 text-sm mt-1">Marketplace des professionnels de l'événementiel</p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', margin: 0, letterSpacing: '0.04em' }}>
+              Marketplace des professionnels de l'événementiel
+            </p>
           </div>
-          <button onClick={() => setMode('browse')} className="w-full text-left">
-            <div className="relative overflow-hidden rounded-2xl border border-[#d4af37]/30 bg-gradient-to-r from-[#d4af37]/10 to-transparent p-5 hover:border-[#d4af37]/60 transition-all">
-              <p className="text-[#d4af37] text-xs uppercase tracking-widest mb-1">Annuaire</p>
-              <p className="text-white text-lg font-bold">Parcourir les prestataires</p>
-              <p className="text-gray-500 text-sm mt-1">{allProviders.length} profil{allProviders.length > 1 ? 's' : ''} · Salles, DJs, artistes, matériel...</p>
-              <span className="absolute right-5 top-1/2 -translate-y-1/2 text-4xl opacity-20">🔍</span>
+
+          {/* Browse banner */}
+          <button onClick={() => setMode('browse')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+            <div style={{
+              position: 'relative', overflow: 'hidden', borderRadius: 12,
+              border: '1px solid rgba(200,169,110,0.30)',
+              background: 'linear-gradient(135deg, rgba(200,169,110,0.08) 0%, transparent 60%)',
+              padding: 20,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <div style={{ width: 28, height: 1, background: '#c8a96e' }} />
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Annuaire</p>
+              </div>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Parcourir les prestataires</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>
+                {allProviders.length} profil{allProviders.length > 1 ? 's' : ''} · Salles, DJs, artistes, matériel...
+              </p>
+              <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', opacity: 0.12 }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
             </div>
           </button>
-          <div>
-            <p className="text-gray-500 text-xs uppercase tracking-widest mb-3">Tu veux rejoindre la marketplace ?</p>
-            <div className="space-y-3">
-              {CATEGORIES.map(cat => (
-                <button key={cat.id} onClick={() => startRegister(cat.id)} className="w-full text-left">
-                  <div className="p-4 rounded-2xl border transition-all hover:scale-[1.01] active:scale-[0.99]" style={{ borderColor: cat.color + '33', background: cat.color + '08' }}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: cat.color + '22', border: `1px solid ${cat.color}44` }}>{cat.icon}</div>
-                      <div className="flex-1">
-                        <p className="text-white font-semibold text-sm">{cat.title}</p>
-                        <p className="text-gray-500 text-xs mt-0.5">{cat.desc}</p>
-                      </div>
-                      <span style={{ color: cat.color }} className="text-lg">›</span>
+
+          {/* Category list */}
+          {!agentMode && (
+            <div>
+              <Eyebrow>Rejoindre la marketplace</Eyebrow>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Organisateur card */}
+                <button onClick={() => startRoleRequest('organisateur')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                  <div style={{
+                    padding: 16, borderRadius: 12,
+                    border: '1px solid #3b82f628',
+                    background: '#3b82f606',
+                    display: 'flex', alignItems: 'center', gap: 16,
+                  }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 8, background: '#3b82f618', border: '1px solid #3b82f635', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>
+                      🎪
                     </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Je veux organiser des événements</p>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 3, lineHeight: 1.5, margin: '3px 0 0' }}>Crée et gère tes propres événements sur LIVEINBLACK</p>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" style={{ flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
                   </div>
                 </button>
-              ))}
+                {CATEGORIES.map(cat => (
+                  <button key={cat.id} onClick={() => startRoleRequest(cat.id)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                    <div style={{
+                      padding: 16, borderRadius: 12,
+                      border: `1px solid ${cat.color}28`,
+                      background: cat.color + '06',
+                      display: 'flex', alignItems: 'center', gap: 16,
+                    }}>
+                      <div style={{ width: 48, height: 48, borderRadius: 8, background: cat.color + '18', border: `1px solid ${cat.color}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <CatIcon id={cat.icon} color={cat.color} size={20} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>{cat.title}</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 3, lineHeight: 1.5, margin: '3px 0 0' }}>{cat.desc}</p>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={cat.color} strokeWidth="2" style={{ flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </Layout>
     )
@@ -573,9 +874,11 @@ function PublicServicesView({ user, uid, navigate }) {
   // ── BROWSE ──
   if (mode === 'browse') {
     const BROWSE_CATS = [
-      { id: 'tous', label: 'Tous' }, { id: 'salle', label: '🏛 Salles' },
-      { id: 'prestation', label: '🎤 Prestataires' }, { id: 'materiel', label: '🔊 Matériel' },
-      { id: 'supermarche', label: '🛒 Supermarché' },
+      { id: 'tous', label: 'Tous' },
+      { id: 'salle', label: 'Salles' },
+      { id: 'prestation', label: 'Prestataires' },
+      { id: 'materiel', label: 'Matériel' },
+      { id: 'supermarche', label: 'Supermarché' },
     ]
     const filteredProviders = allProviders.filter(p => {
       const matchSearch = !browseSearch || p.name.toLowerCase().includes(browseSearch.toLowerCase()) || p.typeLabel?.toLowerCase().includes(browseSearch.toLowerCase()) || p.tags?.some(t => t.toLowerCase().includes(browseSearch.toLowerCase()))
@@ -585,85 +888,140 @@ function PublicServicesView({ user, uid, navigate }) {
 
     return (
       <Layout>
-        <div className="px-4 py-5 space-y-4">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setMode('landing')} className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400">‹</button>
+        <div style={{ position: 'relative', zIndex: 1, background: 'transparent', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Browse header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => setMode('landing')} style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
             <div>
-              <h2 className="text-white font-bold">Prestataires</h2>
-              <p className="text-gray-600 text-xs">{filteredProviders.length} profil(s)</p>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Prestataires</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 2, margin: '2px 0 0' }}>{filteredProviders.length} profil(s)</p>
             </div>
           </div>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600">🔍</span>
-            <input className="input-dark pl-10" placeholder="Recherche par nom, type, tags..."
-              value={browseSearch} onChange={e => setBrowseSearch(e.target.value)} />
-            {browseSearch && <button onClick={() => setBrowseSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white">✕</button>}
+
+          {/* Search */}
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <FocusInput
+              placeholder="Recherche par nom, type, tags..."
+              value={browseSearch}
+              onChange={e => setBrowseSearch(e.target.value)}
+              style={{ paddingLeft: 36 }}
+            />
+            {browseSearch && (
+              <button onClick={() => setBrowseSearch('')} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.42)', fontSize: 16, lineHeight: 1 }}>×</button>
+            )}
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+
+          {/* Category filter pills */}
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
             {BROWSE_CATS.map(bc => (
               <button key={bc.id} onClick={() => setBrowseCat(bc.id)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${browseCat === bc.id ? 'bg-[#d4af37] text-black border-[#d4af37]' : 'border-[#222] text-gray-500 hover:border-gray-500'}`}>
+                style={{
+                  flexShrink: 0, padding: '6px 14px', borderRadius: 4, cursor: 'pointer',
+                  fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase',
+                  border: '1px solid', transition: 'all 0.2s',
+                  ...(browseCat === bc.id
+                    ? { background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', borderColor: 'rgba(200,169,110,0.45)', color: '#c8a96e' }
+                    : { background: 'transparent', borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.42)' }),
+                }}>
                 {bc.label}
               </button>
             ))}
           </div>
 
-          <div className="space-y-4">
+          {/* Provider cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {filteredProviders.length === 0 ? (
-              <div className="text-center py-16 text-gray-600"><p className="text-4xl mb-3">🔎</p><p>Aucun prestataire trouvé</p></div>
+              <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.28)' }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, margin: 0 }}>Aucun prestataire trouvé</p>
+              </div>
             ) : filteredProviders.map(prov => {
               const provCatalog = prov.userId ? getCatalog(prov.userId).filter(i => i.available) : []
               return (
-                <div key={prov.id} className="card-dark p-4 rounded-2xl space-y-3">
+                <div key={prov.id} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {prov.photos?.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {prov.photos.map((src, i) => <img key={i} src={src} alt="" className="w-20 h-20 rounded-xl object-cover flex-shrink-0" />)}
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                      {prov.photos.map((src, i) => <img key={i} src={src} alt="" style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />)}
                     </div>
                   )}
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: (prov.color || '#d4af37') + '22', border: `1px solid ${(prov.color || '#d4af37')}44` }}>{prov.icon}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-white font-semibold text-sm">{prov.name}</h3>
-                        {prov.rating > 0 && <span className="text-[#d4af37] text-xs flex-shrink-0">★ {prov.rating}</span>}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 8, background: (prov.color || '#c8a96e') + '18', border: `1px solid ${(prov.color || '#c8a96e')}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CatIcon id={prov.icon} color={prov.color || '#c8a96e'} size={20} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{prov.name}</p>
+                        {prov.rating > 0 && (
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="#c8a96e" stroke="#c8a96e" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                            {prov.rating}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-gray-500 text-xs">{prov.typeLabel}</p>
-                      {prov.location && <p className="text-gray-600 text-xs mt-0.5">📍 {prov.location}</p>}
-                      {prov.capacity && <p className="text-gray-600 text-xs">👥 {prov.capacity}</p>}
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 2, margin: '2px 0 0' }}>{prov.typeLabel}</p>
+                      {prov.location && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{prov.location}</p>
+                        </div>
+                      )}
+                      {prov.capacity && (
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2, margin: '2px 0 0' }}>{prov.capacity}</p>
+                      )}
                     </div>
                   </div>
-                  {prov.description ? <p className="text-gray-400 text-xs leading-relaxed">{prov.description}</p> : null}
+
+                  {prov.description ? (
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: 0 }}>{prov.description}</p>
+                  ) : null}
+
                   {prov.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {prov.tags.map(t => <span key={t} className="text-[10px] px-2 py-0.5 rounded-full border text-gray-400 border-[#333]">{t}</span>)}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {prov.tags.map(t => (
+                        <span key={t} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 8px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.42)' }}>{t}</span>
+                      ))}
                     </div>
                   )}
 
-                  {/* Catalog preview (supermarchés only) */}
                   {provCatalog.length > 0 && (
-                    <div className="bg-[#111] rounded-xl p-3 space-y-1.5">
-                      <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-2">Aperçu du catalogue</p>
+                    <div style={{ ...S.card, padding: 12, background: 'rgba(6,8,16,0.6)' }}>
+                      <Eyebrow>Aperçu du catalogue</Eyebrow>
                       {provCatalog.slice(0, 3).map(item => (
-                        <div key={item.id} className="flex justify-between text-xs">
-                          <span className="text-gray-400 truncate">{item.name}</span>
-                          <span className="text-[#d4af37] font-semibold flex-shrink-0 ml-2">{item.price}€/{item.unit}</span>
+                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.80)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#c8a96e', flexShrink: 0, marginLeft: 8 }}>{item.price}€/{item.unit}</span>
                         </div>
                       ))}
-                      {provCatalog.length > 3 && <p className="text-gray-600 text-[10px]">+{provCatalog.length - 3} autres articles</p>}
+                      {provCatalog.length > 3 && (
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 4, margin: '4px 0 0' }}>+{provCatalog.length - 3} autres articles</p>
+                      )}
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-1 border-t border-[#1a1a1a] gap-2">
-                    <span className="text-white font-semibold text-sm truncate">{prov.price || ''}</span>
-                    <div className="flex gap-2 flex-shrink-0">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', gap: 8 }}>
+                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prov.price || ''}</span>
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                       <button onClick={() => setContact({ open: true, provider: prov, sent: false, name: '', message: '' })}
-                        className="border border-[#333] text-gray-400 text-xs py-1.5 px-3 rounded-xl hover:border-white/20 hover:text-white transition-all">
+                        style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
                         Contacter
                       </button>
                       {(prov.userId || prov.type === 'supermarche') && (
                         <button onClick={() => { setOrderModal(prov); setCart([]); setOrderSuccess(false) }}
-                          className="btn-gold text-xs py-1.5 px-3">
-                          {prov.type === 'supermarche' ? '🛒 Commander' : '📅 Réserver'}
+                          style={{
+                            padding: '7px 14px', borderRadius: 4, cursor: 'pointer',
+                            background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                            border: '1px solid rgba(200,169,110,0.45)',
+                            fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: '#c8a96e',
+                          }}>
+                          {prov.type === 'supermarche' ? 'Commander' : 'Réserver'}
                         </button>
                       )}
                     </div>
@@ -676,23 +1034,33 @@ function PublicServicesView({ user, uid, navigate }) {
 
         {/* Contact Modal */}
         {contact.open && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={e => e.target === e.currentTarget && setContact(c => ({ ...c, open: false }))}>
-            <div className="w-full bg-[#0d0d0d] rounded-t-3xl p-6 space-y-4 border-t border-[#222]" style={{ maxWidth: 480, margin: '0 auto' }}>
-              <div className="flex items-center justify-between">
-                <h3 className="text-white font-bold">Contacter {contact.provider?.name}</h3>
-                <button onClick={() => setContact(c => ({ ...c, open: false }))} className="text-gray-500 text-xl w-8 h-8 flex items-center justify-center">✕</button>
+          <div
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+            onClick={e => e.target === e.currentTarget && setContact(c => ({ ...c, open: false }))}
+          >
+            <div style={{ width: '100%', maxWidth: 480, background: 'rgba(8,10,20,0.98)', backdropFilter: 'blur(22px)', borderTop: '1px solid rgba(255,255,255,0.10)', borderRadius: '12px 12px 0 0', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Contacter {contact.provider?.name}</p>
+                <button onClick={() => setContact(c => ({ ...c, open: false }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.42)', fontSize: 20, lineHeight: 1, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
               </div>
               {contact.sent ? (
-                <div className="text-center py-6">
-                  <p className="text-4xl mb-3">✉️</p>
-                  <p className="text-white font-semibold">Message envoyé !</p>
-                  <p className="text-gray-400 text-sm mt-1">Le prestataire recevra ta demande sous 24-48h.</p>
-                  <button onClick={() => setContact(c => ({ ...c, open: false }))} className="btn-gold mt-4 text-sm">Fermer</button>
+                <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Message envoyé</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>Le prestataire recevra ta demande sous 24-48h.</p>
+                  <button onClick={() => setContact(c => ({ ...c, open: false }))} style={{ ...S.btnGold, marginTop: 8 }}>Fermer</button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <input className="input-dark" placeholder="Ton nom" value={contact.name} onChange={e => setContact(c => ({ ...c, name: e.target.value }))} />
-                  <textarea className="input-dark resize-none h-28 text-sm" placeholder="Décris ton événement, ta date, tes besoins..." value={contact.message} onChange={e => setContact(c => ({ ...c, message: e.target.value }))} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <FocusInput placeholder="Ton nom" value={contact.name} onChange={e => setContact(c => ({ ...c, name: e.target.value }))} />
+                  <textarea
+                    style={{ ...S.inputBase, resize: 'none', height: 112 }}
+                    placeholder="Décris ton événement, ta date, tes besoins..."
+                    value={contact.message}
+                    onChange={e => setContact(c => ({ ...c, message: e.target.value }))}
+                    onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
+                  />
                   <button onClick={() => {
                     if (!contact.name || !contact.message) return
                     const myName = user?.name || contact.name
@@ -700,7 +1068,8 @@ function PublicServicesView({ user, uid, navigate }) {
                     const conv = createDirectConversation(uid, myName, providerId, contact.provider?.name || 'Prestataire')
                     if (conv) sendMessage(conv.id, uid, myName, 'text', contact.message)
                     navigate('/messagerie')
-                  }} className={`btn-gold w-full ${(!contact.name || !contact.message) ? 'opacity-50' : ''}`}>
+                  }}
+                    style={{ ...S.btnGold, opacity: (!contact.name || !contact.message) ? 0.5 : 1 }}>
                     Envoyer la demande
                   </button>
                 </div>
@@ -711,50 +1080,55 @@ function PublicServicesView({ user, uid, navigate }) {
 
         {/* Order Modal */}
         {orderModal && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { if (!orderSuccess) { setOrderModal(null); setCart([]) } }} />
-            <div className="relative w-full max-w-lg bg-[#0d0d0d] border border-[#1a1a1a] rounded-t-3xl max-h-[85vh] overflow-y-auto pb-8">
-              <div className="p-4 border-b border-[#1a1a1a] sticky top-0 bg-[#0d0d0d] z-10">
-                <div className="w-10 h-1 bg-[#333] rounded-full mx-auto mb-3" />
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { if (!orderSuccess) { setOrderModal(null); setCart([]) } }} />
+            <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: 'rgba(8,10,20,0.98)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px 12px 0 0', maxHeight: '85vh', overflowY: 'auto' }}>
+              <div style={{ padding: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', position: 'sticky', top: 0, background: 'rgba(8,10,20,0.98)', zIndex: 10 }}>
+                <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,0.12)', borderRadius: 2, margin: '0 auto 12px' }} />
                 {orderSuccess ? (
-                  <div className="text-center py-4 space-y-3">
-                    <p className="text-4xl">✅</p>
-                    <p className="text-white font-bold">Commande envoyée !</p>
-                    <p className="text-gray-400 text-sm">Ta commande a été transmise à <span className="text-white">{orderModal.name}</span>. Tu seras notifié(e) dès confirmation.</p>
-                    <p className="text-[#d4af37] text-sm font-bold">{cartTotal.toFixed(2)}€ débités de ton portefeuille</p>
-                    <button onClick={() => { setOrderModal(null); setCart([]) }} className="btn-gold w-full mt-2">Fermer</button>
+                  <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Commande envoyée</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>
+                      Ta commande a été transmise à <span style={{ color: 'rgba(255,255,255,0.90)' }}>{orderModal.name}</span>. Tu seras notifié(e) dès confirmation.
+                    </p>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: '#c8a96e', margin: 0 }}>{cartTotal.toFixed(2)}€ débités de ton portefeuille</p>
+                    <button onClick={() => { setOrderModal(null); setCart([]) }} style={{ ...S.btnGold, marginTop: 8 }}>Fermer</button>
                   </div>
                 ) : (
-                  <>
-                    <h3 className="text-white font-bold text-center">{orderModal.type === 'supermarche' ? '🛒 Commander' : '📅 Réserver'} — {orderModal.name}</h3>
-                  </>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', textAlign: 'center', margin: 0 }}>
+                    {orderModal.type === 'supermarche' ? 'Commander' : 'Réserver'} — {orderModal.name}
+                  </p>
                 )}
               </div>
 
               {!orderSuccess && (
-                <div className="p-4 space-y-4">
-                  {/* Catalog items */}
+                <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {orderModal.userId ? (
                     <>
                       {getCatalog(orderModal.userId).filter(i => i.available).length === 0 ? (
-                        <p className="text-gray-600 text-sm text-center py-8">Catalogue vide pour le moment.</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.35)', textAlign: 'center', padding: '32px 0', margin: 0 }}>Catalogue vide pour le moment.</p>
                       ) : (
-                        <div className="space-y-2">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {getCatalog(orderModal.userId).filter(i => i.available).map(item => (
-                            <div key={item.id} className="flex items-center gap-3 p-3 bg-[#111] rounded-xl">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-white text-sm font-semibold truncate">{item.name}</p>
-                                <p className="text-[#d4af37] text-xs">{item.price}€ / {item.unit}</p>
-                                {item.category && <p className="text-gray-600 text-[10px]">{item.category}</p>}
+                            <div key={item.id} style={{ ...S.card, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{item.name}</p>
+                                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: '#c8a96e', marginTop: 2, margin: '2px 0 0' }}>{item.price}€ / {item.unit}</p>
+                                {item.category && (
+                                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8', background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', padding: '1px 7px', borderRadius: 3, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'inline-block', marginTop: 3 }}>{item.category}</span>
+                                )}
                               </div>
-                              <div className="flex items-center gap-2 flex-shrink-0">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                                 {cartQty(item.id) > 0 && (
                                   <>
-                                    <button onClick={() => setCartQty(item, cartQty(item.id) - 1)} className="w-7 h-7 rounded-lg bg-[#1a1a1a] text-white font-bold flex items-center justify-center">−</button>
-                                    <span className="text-white font-bold text-sm w-5 text-center">{cartQty(item.id)}</span>
+                                    <button onClick={() => setCartQty(item, cartQty(item.id) - 1)}
+                                      style={{ width: 28, height: 28, borderRadius: 4, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.90)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono', monospace", fontSize: 16 }}>−</button>
+                                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: 'rgba(255,255,255,0.90)', width: 20, textAlign: 'center' }}>{cartQty(item.id)}</span>
                                   </>
                                 )}
-                                <button onClick={() => setCartQty(item, cartQty(item.id) + 1)} className="w-7 h-7 rounded-lg bg-[#d4af37] text-black font-bold flex items-center justify-center">+</button>
+                                <button onClick={() => setCartQty(item, cartQty(item.id) + 1)}
+                                  style={{ width: 28, height: 28, borderRadius: 4, background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', color: '#c8a96e', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono', monospace", fontSize: 16 }}>+</button>
                               </div>
                             </div>
                           ))}
@@ -762,32 +1136,33 @@ function PublicServicesView({ user, uid, navigate }) {
                       )}
                     </>
                   ) : (
-                    <div className="bg-[#111] rounded-xl p-4 space-y-2">
-                      <p className="text-gray-400 text-sm">Décris ta demande de prestation</p>
-                      <textarea className="input-dark resize-none h-20 text-sm" placeholder="Date, durée, type d'événement, budget..." />
+                    <div style={{ ...S.card, padding: 16 }}>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 10, margin: '0 0 10px' }}>Décris ta demande de prestation</p>
+                      <textarea style={{ ...S.inputBase, resize: 'none', height: 80 }} placeholder="Date, durée, type d'événement, budget..."
+                        onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }} />
                     </div>
                   )}
 
-                  {/* Cart summary */}
                   {cart.length > 0 && (
-                    <div className="bg-[#111] rounded-2xl p-4 space-y-2 border border-[#d4af37]/20">
-                      <p className="text-gray-500 text-xs uppercase tracking-wider">Récapitulatif</p>
+                    <div style={{ ...S.card, padding: 16, borderColor: 'rgba(200,169,110,0.18)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <Eyebrow>Récapitulatif</Eyebrow>
                       {cart.map((ci, i) => (
-                        <div key={i} className="flex justify-between text-xs">
-                          <span className="text-gray-400">{ci.item.name} × {ci.qty}</span>
-                          <span className="text-white">{(ci.item.price * ci.qty).toFixed(2)}€</span>
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>{ci.item.name} × {ci.qty}</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{(ci.item.price * ci.qty).toFixed(2)}€</span>
                         </div>
                       ))}
-                      <div className="pt-2 border-t border-[#1a1a1a] space-y-1">
-                        <div className="flex justify-between text-xs text-gray-600">
-                          <span>Commission LIVEINBLACK (10%)</span>
-                          <span>{commission.toFixed(2)}€</span>
+                      <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Commission LIVEINBLACK (10%)</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{commission.toFixed(2)}€</span>
                         </div>
-                        <div className="flex justify-between text-sm font-bold">
-                          <span className="text-white">Total à payer</span>
-                          <span className="text-[#d4af37]">{cartTotal.toFixed(2)}€</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)' }}>Total à payer</span>
+                          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: '#c8a96e' }}>{cartTotal.toFixed(2)}€</span>
                         </div>
-                        <p className="text-gray-700 text-[10px]">Solde disponible : {getBalance(uid).toFixed(0)}€</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', margin: 0 }}>Solde disponible : {getBalance(uid).toFixed(0)}€</p>
                       </div>
                     </div>
                   )}
@@ -795,9 +1170,9 @@ function PublicServicesView({ user, uid, navigate }) {
                   <button
                     onClick={handlePlaceOrder}
                     disabled={cart.length === 0}
-                    className="btn-gold w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ ...S.btnGold, opacity: cart.length === 0 ? 0.4 : 1, cursor: cart.length === 0 ? 'not-allowed' : 'pointer' }}
                   >
-                    {cart.length === 0 ? 'Ajoute des articles pour commander' : `Confirmer la commande — ${cartTotal.toFixed(2)}€`}
+                    {cart.length === 0 ? 'Ajoute des articles' : `Confirmer — ${cartTotal.toFixed(2)}€`}
                   </button>
                 </div>
               )}
@@ -808,142 +1183,154 @@ function PublicServicesView({ user, uid, navigate }) {
     )
   }
 
-  // ── REGISTER FLOW ──
-  return (
-    <Layout>
-      <div className="px-4 py-5 space-y-5">
-        <div className="flex items-center gap-3">
-          <button onClick={() => step > 1 ? setStep(s => s - 1) : setMode('landing')}
-            className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white transition-colors">‹</button>
-          <div>
-            <h2 className="text-white font-bold text-sm">{cat?.title}</h2>
-            <p className="text-gray-600 text-xs">Étape {step}/4</p>
-          </div>
-        </div>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4].map(s => <div key={s} className="flex-1 h-1 rounded-full transition-all" style={{ background: s <= step ? cat?.color : '#222' }} />)}
-        </div>
+  // ── REQUEST ROLE FLOW ──
+  if (mode === 'request') {
+    const isOrg = roleRequestType === 'organisateur'
+    const prestCat = PRESTATAIRE_TYPES.find(t => t.key === roleRequestPrestType)
+    const roleColor = isOrg ? '#3b82f6' : (CATEGORIES.find(c => c.id === roleRequestPrestType)?.color || '#8b5cf6')
+    const roleLabel = isOrg ? 'Organisateur' : `Prestataire — ${prestCat?.label || ''}`
+    const roleIcon = isOrg ? '🎪' : prestCat?.icon
+    const legalDocs = isOrg ? ["Pièce d'identité", 'Justificatif de domicile', 'RCS ou SIRET si applicable'] : CATEGORIES.find(c => c.id === roleRequestPrestType)?.legalDocs || []
 
-        {step === 1 && (
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-white font-semibold">Documents légaux requis</h3>
-              <p className="text-gray-500 text-xs mt-1">Pour garantir la sécurité de tous.</p>
-            </div>
-            <div className="space-y-3">
-              {cat?.legalDocs.map(doc => (
-                <div key={doc} className="flex items-start gap-3 p-3 glass rounded-xl">
-                  <span style={{ color: cat.color }} className="mt-0.5 flex-shrink-0">✓</span>
-                  <p className="text-gray-300 text-sm">{doc}</p>
-                </div>
-              ))}
-            </div>
-            <div className="glass p-4 rounded-xl border border-yellow-500/20">
-              <p className="text-yellow-400 text-xs">⚠ Ton profil sera visible après validation sous 48h.</p>
-            </div>
-            <button onClick={() => setStep(2)} className="btn-gold w-full" style={{ background: cat?.color }}>
-              J'ai compris — Continuer
+    const contentBg = {
+      background: 'rgba(4,4,11,0.72)',
+      backdropFilter: 'blur(18px) saturate(1.4)',
+      WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
+      borderRadius: 14,
+      padding: '20px 16px',
+    }
+
+    return (
+      <Layout>
+        <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px 40px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => { setMode('landing'); setRoleRequestState('idle') }}
+              style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4">
-            <h3 className="text-white font-semibold">Tes informations</h3>
-            <div className="space-y-3">
-              {cat?.fields.map(field => (
-                <div key={field.label}>
-                  <label className="text-gray-500 text-xs mb-1.5 block">{field.label} {field.required && <span className="text-red-400">*</span>}</label>
-                  {field.type === 'textarea' ? (
-                    <textarea className={`input-dark resize-none h-24 ${formErrors[field.label] ? 'border-red-500/60' : ''}`}
-                      placeholder={field.placeholder} value={formValues[field.label] || ''}
-                      onChange={e => setFormValues(v => ({ ...v, [field.label]: e.target.value }))} />
-                  ) : (
-                    <input className={`input-dark ${formErrors[field.label] ? 'border-red-500/60' : ''}`}
-                      type={field.type} placeholder={field.placeholder} value={formValues[field.label] || ''}
-                      onChange={e => setFormValues(v => ({ ...v, [field.label]: e.target.value }))} />
-                  )}
-                  {formErrors[field.label] && <p className="text-red-400 text-xs mt-0.5">{formErrors[field.label]}</p>}
-                </div>
-              ))}
-            </div>
-            <button onClick={() => { if (validateStep2()) setStep(3) }} className="btn-gold w-full">Suivant →</button>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-4">
             <div>
-              <h3 className="text-white font-semibold">Options & photos</h3>
-              <p className="text-gray-500 text-xs mt-1">Sélectionne ce qui s'applique.</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Rejoindre la marketplace</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', margin: '2px 0 0' }}>Demande de compte professionnel</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {cat?.extras.map(ex => (
-                <button key={ex} onClick={() => toggleExtra(ex)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${extras.includes(ex) ? 'text-white border-transparent' : 'text-gray-500 border-[#222] hover:border-gray-500'}`}
-                  style={extras.includes(ex) ? { background: cat.color, borderColor: cat.color } : {}}>
-                  {ex}
-                </button>
-              ))}
-              {extras.filter(e => !cat?.extras.includes(e)).map(ex => (
-                <button key={ex} onClick={() => toggleExtra(ex)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border text-white"
-                  style={{ background: cat?.color + 'cc', borderColor: cat?.color }}>
-                  {ex} ✕
-                </button>
-              ))}
-              {showCustomInput ? (
-                <div className="flex items-center gap-2 w-full mt-1">
-                  <input className="input-dark flex-1 text-sm" placeholder="Option personnalisée..." value={customOptionInput}
-                    onChange={e => setCustomOptionInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomOption()} autoFocus />
-                  <button onClick={addCustomOption} className="px-3 py-2 rounded-xl text-xs font-bold text-white" style={{ background: cat?.color }}>Ajouter</button>
-                  <button onClick={() => { setShowCustomInput(false); setCustomOptionInput('') }} className="text-gray-500">✕</button>
-                </div>
-              ) : (
-                <button onClick={() => setShowCustomInput(true)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-[#444] text-gray-500 hover:border-gray-400">
-                  + Ajouter une option
-                </button>
-              )}
-            </div>
-            <div>
-              <label className="text-gray-500 text-xs mb-2 block">Photos (profil / portfolio)</label>
-              <div className="flex gap-2 flex-wrap">
-                {photoPreviews.map((src, i) => (
-                  <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src={src} alt="" className="w-full h-full object-cover" />
-                    <button onClick={() => setPhotoPreviews(prev => prev.filter((_, j) => j !== i))}
-                      className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full text-white text-[10px] flex items-center justify-center">✕</button>
-                  </div>
-                ))}
-                {photoPreviews.length < 5 && (
-                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-[#222] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#444] flex-shrink-0"
-                    onClick={() => photoInputRef.current?.click()}>
-                    <p className="text-xl">📸</p>
-                    <p className="text-[10px] text-gray-600">Ajouter</p>
-                  </div>
-                )}
+          </div>
+
+          {/* Already pending state */}
+          {roleRequestState === 'already_pending' && (
+            <div style={{ ...contentBg, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize: 32 }}>⏳</span>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Candidature en cours</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
+                  Ta demande de compte <span style={{ color: '#c8a96e' }}>{roleLabel}</span> est en cours de traitement. Tu seras notifié(e) sous 24h.
+                </p>
               </div>
-              <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
-              <p className="text-gray-700 text-[10px] mt-1">JPG, PNG — max 5 photos · 5 MB</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button
+                  onClick={() => { setRoleRequestState('confirming') }}
+                  style={{ ...S.btnGold }}>
+                  Modifier ma candidature
+                </button>
+                <button
+                  onClick={async () => {
+                    await cancelRoleRequest(uid, roleRequestType)
+                    // Mettre à jour le contexte utilisateur
+                    try {
+                      const updated = JSON.parse(localStorage.getItem('lib_user') || 'null')
+                      if (updated) setUser(updated)
+                    } catch {}
+                    setMode('landing')
+                    setRoleRequestState('idle')
+                  }}
+                  style={{ ...S.btnGhost, borderColor: 'rgba(220,50,50,0.3)', color: 'rgba(220,100,100,0.8)' }}>
+                  Annuler ma candidature
+                </button>
+              </div>
             </div>
-            <button onClick={handlePublishProvider} className="btn-gold w-full">Créer mon profil →</button>
-          </div>
-        )}
+          )}
 
-        {step === 4 && (
-          <div className="text-center py-8 space-y-4">
-            <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl"
-              style={{ background: cat?.color + '22', border: `2px solid ${cat?.color}` }}>
-              {cat?.icon}
+          {/* Done state */}
+          {roleRequestState === 'done' && (
+            <div style={{ ...contentBg, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+              <span style={{ fontSize: 32 }}>✅</span>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Candidature envoyée</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
+                Ta demande de compte <span style={{ color: '#4ee8c8' }}>{roleLabel}</span> a été transmise. Ton compte Client reste actif. Tu recevras une confirmation sous <strong style={{ color: 'white' }}>24h</strong>.
+              </p>
+              <button onClick={() => { setMode('landing'); setRoleRequestState('idle') }} style={{ ...S.btnGold, maxWidth: 280, marginTop: 4 }}>Retour à la marketplace</button>
             </div>
-            <h3 className="text-white text-xl font-bold">Inscription envoyée !</h3>
-            <p className="text-gray-400 text-sm">Notre équipe valide les documents sous <strong className="text-white">48h</strong>.</p>
-            <button onClick={() => setMode('browse')} className="btn-gold w-full">Voir les prestataires →</button>
-            <button onClick={() => { setMode('landing'); setStep(1) }} className="btn-outline w-full">Proposer un autre service</button>
-          </div>
-        )}
-      </div>
-    </Layout>
-  )
+          )}
+
+          {/* Confirming / submitting state */}
+          {(roleRequestState === 'confirming' || roleRequestState === 'submitting') && (
+            <div style={{ ...contentBg, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Role badge */}
+              <div style={{ padding: '14px', background: roleColor + '12', border: `1px solid ${roleColor}30`, borderRadius: 10, display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 8, background: roleColor + '18', border: `1px solid ${roleColor}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+                  {roleIcon}
+                </div>
+                <div>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>{roleLabel}</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
+                    {isOrg ? 'Crée et gère tes propres événements' : CATEGORIES.find(c => c.id === roleRequestPrestType)?.desc || ''}
+                  </p>
+                </div>
+              </div>
+
+              {/* Validation notice */}
+              <div style={{ padding: '12px 14px', background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.25)', borderRadius: 6 }}>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#c8a96e', margin: '0 0 4px' }}>
+                  {isOrg ? '🎪 Espace Organisateur' : '🎤 Espace Prestataire'}
+                </p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: 0 }}>
+                  Ton compte <span style={{ color: 'rgba(255,255,255,0.75)' }}>Client</span> reste actif. L'accès à l'espace <span style={{ color: '#c8a96e' }}>{isOrg ? 'Organisateur' : 'Prestataire'}</span> sera activé après validation par l'équipe LIVEINBLACK (généralement moins de 24h).
+                </p>
+              </div>
+
+              {/* Documents à préparer */}
+              {legalDocs.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Eyebrow>Documents à préparer</Eyebrow>
+                  {legalDocs.map(doc => (
+                    <div key={doc} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={roleColor} strokeWidth="2" style={{ marginTop: 1, flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, margin: 0 }}>{doc}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                disabled={roleRequestState === 'submitting'}
+                onClick={async () => {
+                  setRoleRequestState('submitting')
+                  try {
+                    // Si modification d'une candidature existante, annuler l'ancienne d'abord
+                    const isPrevPending = roleRequestType === 'organisateur'
+                      ? user?.orgStatus === 'pending'
+                      : user?.prestStatus === 'pending'
+                    if (isPrevPending) await cancelRoleRequest(uid, roleRequestType)
+                    await requestAdditionalRole(user, roleRequestType, roleRequestPrestType)
+                    // Mettre à jour la session
+                    try {
+                      const updated = JSON.parse(localStorage.getItem('lib_user') || 'null')
+                      if (updated) setUser(updated)
+                    } catch {}
+                    setRoleRequestState('done')
+                  } catch {
+                    setRoleRequestState('confirming')
+                  }
+                }}
+                style={{ ...S.btnGold, background: roleColor + '22', borderColor: roleColor + '55', color: roleColor, opacity: roleRequestState === 'submitting' ? 0.6 : 1 }}>
+                {roleRequestState === 'submitting' ? 'Envoi en cours…' : 'Envoyer ma candidature →'}
+              </button>
+            </div>
+          )}
+        </div>
+      </Layout>
+    )
+  }
 }

@@ -1,24 +1,32 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { USE_REAL_FIREBASE } from '../firebase'
 import {
-  saveAccount, getAccountByEmail, addPendingValidation,
-  checkPasswordStrength, validatePassword, ROLES, PRESTATAIRE_TYPES,
+  saveAccount, getAccountByEmail, getAllAccountsByEmail, getAccountByEmailAndRole,
+  addPendingValidation, checkPasswordStrength, validatePassword, ROLES, PRESTATAIRE_TYPES,
+  requestAdditionalRole, getAccountByPhone, updateAccount, deleteAccount,
 } from '../utils/accounts'
 
 // ─── Auth adapters ────────────────────────────────────────────────────────
 
-async function doEmailLogin(email, password) {
+// role = null means single-account login (old behaviour), role = 'organisateur' etc = targeted
+async function doEmailLogin(email, password, role = null) {
   if (!USE_REAL_FIREBASE) {
-    const saved = getAccountByEmail(email)
-    if (saved && saved.password === password) {
-      if (saved.status === 'pending') throw { code: 'auth/account-pending', role: saved.role }
-      if (saved.status === 'rejected') throw { code: 'auth/account-rejected' }
-      return saved
-    }
+    const saved = role
+      ? getAccountByEmailAndRole(email, role)
+      : getAccountByEmail(email)
     if (!saved) throw { code: 'auth/user-not-found' }
-    throw { code: 'auth/wrong-password' }
+    // Check status before password so rejected/pending accounts get the right message
+    if (saved.status === 'rejected') throw { code: 'auth/account-rejected' }
+    if (saved.status === 'pending') throw { code: 'auth/account-pending', role: saved.role }
+    if (saved.password !== password) throw { code: 'auth/wrong-password' }
+    // Mark email as verified on first successful login
+    if (!saved.emailVerified) {
+      updateAccount(saved.uid, { emailVerified: true })
+      return { ...saved, emailVerified: true }
+    }
+    return saved
   }
   const { signInWithEmailAndPassword } = await import('firebase/auth')
   const { auth, db } = await import('../firebase')
@@ -33,64 +41,161 @@ async function doEmailLogin(email, password) {
     const profile = snap.data()
     if (profile.status === 'pending') throw { code: 'auth/account-pending', role: profile.role }
     if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
+    // Email was verified by Firebase — persist that flag so phone is now "locked"
+    if (!profile.emailVerified) {
+      const { updateDoc } = await import('firebase/firestore')
+      await updateDoc(doc(db, 'users', cred.user.uid), { emailVerified: true })
+      return { ...profile, emailVerified: true }
+    }
     return profile
   }
-  return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', status: 'active' }
+  return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', status: 'active', emailVerified: true }
 }
 
 const SUPER_ADMIN_EMAIL = 'hagechady4@gmail.com'
 
 async function doEmailRegister(data) {
   const { email, password, name, phone, role, prestataireType } = data
+  const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+
+  // Everyone registers as 'client' (except super admin who becomes 'agent').
+  // Organisateur / Prestataire choices create a client account FIRST,
+  // then submit a pending role request for admin validation.
+  const wantsExtraRole  = !isSuperAdmin && (role === 'organisateur' || role === 'prestataire')
+  const baseRole        = isSuperAdmin ? 'agent' : 'client'
+  const initialStatus   = 'active' // client accounts are always active instantly
+
   if (!USE_REAL_FIREBASE) {
-    const existing = getAccountByEmail(email)
-    if (existing) throw { code: 'auth/email-already-in-use' }
+    // Block duplicate email — only if the existing account has been verified
+    const existingClient = getAccountByEmail(email)
+    if (existingClient) {
+      if (existingClient.emailVerified === true) {
+        throw { code: 'auth/email-already-in-use' }
+      } else {
+        // Ghost account (registered but never logged in) — delete it and proceed
+        deleteAccount(existingClient.uid)
+      }
+    }
+
+    // Block duplicate phone number — only if the existing account has been verified (logged in at least once)
+    if (phone) {
+      const phoneOwner = getAccountByPhone(phone)
+      if (phoneOwner) {
+        if (phoneOwner.emailVerified === true) {
+          throw { code: 'auth/phone-already-in-use' }
+        } else {
+          // Ghost account (never logged in) — delete it so the phone is free
+          deleteAccount(phoneOwner.uid)
+        }
+      }
+    }
+
     const uid = 'local-' + Date.now()
-    const isAgent = role === 'agent'
-    const isPrest = role === 'prestataire'
-    // Super admin email is always approved instantly, whatever the role
-    const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
-    const needsValidation = (isAgent || isPrest) && !isSuperAdmin
     const user = {
       uid, name, email, phone,
       password,
-      role: isSuperAdmin ? 'agent' : role, // super admin is always agent
-      prestataireType: isPrest ? prestataireType : null,
-      status: needsValidation ? 'pending' : 'active',
+      role: baseRole,
+      activeRole: baseRole,
+      enabledRoles: [baseRole],
+      prestataireType: null,
+      orgStatus: 'none',
+      prestStatus: 'none',
+      status: initialStatus,
+      emailVerified: false,
       createdAt: Date.now(),
     }
-    if (needsValidation) {
-      addPendingValidation(user)
-    }
     saveAccount(user)
+
+    // Submit role request if the user chose org or prest
+    if (wantsExtraRole) {
+      await requestAdditionalRole(user, role, prestataireType || null)
+      return { ...user, _pendingRole: role }
+    }
     return user
   }
+
+  // ── Firebase path ──
   const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
   const { auth, db } = await import('../firebase')
-  const { doc, setDoc } = await import('firebase/firestore')
-  const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
-  const isAgent = role === 'agent'
-  const isPrest = role === 'prestataire'
-  const needsValidation = (isAgent || isPrest) && !isSuperAdmin
-  const finalRole = isSuperAdmin ? 'agent' : role
-  const cred = await createUserWithEmailAndPassword(auth, email, password)
+  const { doc, setDoc, collection, query, where, getDocs } = await import('firebase/firestore')
+
+  // Block duplicate phone number in Firestore — only if the existing account's email is verified
+  if (phone) {
+    const normalizedPhone = phone.replace(/\D/g, '')
+    const phoneQuery = query(collection(db, 'users'), where('phoneNormalized', '==', normalizedPhone))
+    const phoneSnap = await getDocs(phoneQuery)
+    if (!phoneSnap.empty) {
+      const hasVerifiedAccount = phoneSnap.docs.some(d => d.data().emailVerified === true)
+      if (hasVerifiedAccount) throw { code: 'auth/phone-already-in-use' }
+      // Ghost accounts (unverified) — delete them from Firestore so phone is free
+      const { deleteDoc } = await import('firebase/firestore')
+      await Promise.all(phoneSnap.docs.map(d => deleteDoc(doc(db, 'users', d.id))))
+    }
+  }
+
+  // Check for ghost account with same email in Firestore (registered but never verified)
+  const emailQuery = query(collection(db, 'users'), where('email', '==', email), where('emailVerified', '==', false))
+  const emailGhostSnap = await getDocs(emailQuery)
+  if (!emailGhostSnap.empty) {
+    const { deleteDoc } = await import('firebase/firestore')
+    await Promise.all(emailGhostSnap.docs.map(d => deleteDoc(doc(db, 'users', d.id))))
+  }
+
+  let cred
+  try {
+    cred = await createUserWithEmailAndPassword(auth, email, password)
+  } catch (err) {
+    if (err.code === 'auth/email-already-in-use') {
+      // Firebase Auth still holds an unverified account — user can recover via password reset
+      throw { code: 'auth/email-unverified-ghost' }
+    }
+    throw err
+  }
   if (name) await updateProfile(cred.user, { displayName: name })
+
   // Send email verification (skip for super admin)
   if (!isSuperAdmin) {
     const { sendEmailVerification } = await import('firebase/auth')
     await sendEmailVerification(cred.user)
   }
+
   const userObj = {
     uid: cred.user.uid, name, email, phone,
-    role: finalRole,
-    prestataireType: isPrest ? prestataireType : null,
-    status: needsValidation ? 'pending' : 'active',
+    phoneNormalized: phone ? phone.replace(/\D/g, '') : '',
+    role: baseRole,
+    activeRole: baseRole,
+    enabledRoles: [baseRole],
+    prestataireType: null,
+    orgStatus: 'none',
+    prestStatus: 'none',
+    status: initialStatus,
+    emailVerified: false,
     createdAt: Date.now(),
   }
   await setDoc(doc(db, 'users', cred.user.uid), userObj)
-  if (needsValidation) {
-    await setDoc(doc(db, 'pending_validations', cred.user.uid), { ...userObj, requestedAt: Date.now() })
+
+  // Submit role request if needed
+  if (wantsExtraRole) {
+    const reqId = 'req-' + Date.now()
+    const roleRequest = {
+      id: reqId,
+      uid: cred.user.uid,
+      email, name,
+      requestedRole: role,
+      prestataireType: prestataireType || null,
+      requestedAt: Date.now(),
+      status: 'pending',
+      type: 'role_request',
+    }
+    const patch = role === 'organisateur'
+      ? { orgStatus: 'pending', orgRequestedAt: Date.now() }
+      : { prestStatus: 'pending', prestataireType, prestRequestedAt: Date.now() }
+    const { updateDoc } = await import('firebase/firestore')
+    await updateDoc(doc(db, 'users', cred.user.uid), patch)
+    await setDoc(doc(db, 'pending_validations', reqId), roleRequest)
+    return isSuperAdmin ? userObj : { ...userObj, ...patch, _pendingRole: role, _needsEmailVerification: true }
   }
+
   return isSuperAdmin ? userObj : { ...userObj, _needsEmailVerification: true }
 }
 
@@ -156,9 +261,92 @@ const COUNTRY_CODES = [
   { code: 'CA', dial: '+1',   flag: '🇨🇦', name: 'Canada' },
 ]
 
+// ─── Design tokens ────────────────────────────────────────────────────────
+
+const S = {
+  card: {
+    background: 'rgba(8,10,20,0.55)',
+    backdropFilter: 'blur(22px)',
+    WebkitBackdropFilter: 'blur(22px)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: '12px',
+  },
+  input: {
+    background: 'rgba(6,8,16,0.6)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: '4px',
+    fontFamily: "'DM Mono', monospace",
+    fontSize: '13px',
+    color: 'rgba(255,255,255,0.9)',
+    padding: '11px 14px',
+    width: '100%',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  },
+  btnPrimary: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(78,232,200,0.12))',
+    border: '1px solid rgba(255,255,255,0.28)',
+    borderRadius: '4px',
+    fontFamily: "'DM Mono', monospace",
+    fontSize: '11px',
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'white',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnGold: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+    border: '1px solid rgba(200,169,110,0.45)',
+    borderRadius: '4px',
+    fontFamily: "'DM Mono', monospace",
+    fontSize: '11px',
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: '#c8a96e',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnGhost: {
+    padding: '13px 28px',
+    background: 'transparent',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: '4px',
+    fontFamily: "'DM Mono', monospace",
+    fontSize: '11px',
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.5)',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  label: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: '9px',
+    letterSpacing: '0.35em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.42)',
+    display: 'block',
+    marginBottom: '5px',
+  },
+  errorText: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: '10px',
+    color: '#e05aaa',
+  },
+  successText: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: '10px',
+    color: '#4ee8c8',
+  },
+}
+
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
+  const location = useLocation()
   const [mode, setMode] = useState('login') // 'login' | 'register'
   const [regStep, setRegStep] = useState(1)  // 1 = choose role, 2 = fill form
 
@@ -166,6 +354,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd] = useState(false)
+  // Multi-account login: list of accounts for this email, selected role
+  const [loginAccounts, setLoginAccounts] = useState(null) // null = not checked yet
+  const [loginRole, setLoginRole] = useState(null)         // chosen role for login
 
   // Register fields
   const [regRole, setRegRole] = useState(null)
@@ -196,22 +387,51 @@ export default function LoginPage() {
   const pwdStrength = checkPasswordStrength(regPwd)
   const pwdErrors = validatePassword(regPwd)
 
+  // ── Read URL params once on mount ──
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const urlMode = params.get('mode')
+    const urlRole = params.get('role')
+    if (urlMode === 'register') {
+      setMode('register')
+      if (urlRole) {
+        setRegRole(urlRole)
+        setRegStep(2)
+      } else {
+        setRegStep(1)
+      }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Login ──
   async function handleLogin(e) {
     e.preventDefault()
     setError('')
+
+    // Multi-account: if we haven't checked yet, look up all accounts for this email
+    if (!USE_REAL_FIREBASE && loginAccounts === null) {
+      const accounts = getAllAccountsByEmail(email)
+      if (accounts.length > 1) {
+        setLoginAccounts(accounts)
+        return // show role picker
+      }
+      setLoginAccounts([]) // single or none — proceed normally
+    }
+
     setLoading(true)
     try {
-      const userData = await doEmailLogin(email, password)
+      const userData = await doEmailLogin(email, password, loginRole)
       setUser(userData)
-      navigate(userData.role === 'agent' ? '/agent' : '/accueil')
+      const params = new URLSearchParams(location.search)
+      const next = params.get('next')
+      navigate(next || (userData.role === 'agent' ? '/agent' : '/accueil'))
     } catch (err) {
       if (err.code === 'auth/account-pending') {
         setPendingInfo({ role: err.role })
       } else if (err.code === 'auth/email-not-verified') {
         setUnverifiedEmail(email)
       } else if (
-        (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') &&
+        err.code === 'auth/user-not-found' &&
         email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
       ) {
         // Super admin hasn't created their account yet → switch to registration pre-filled
@@ -251,8 +471,16 @@ export default function LoginPage() {
         name: regName.trim(), phone: (regDialCode + ' ' + regPhone.trim()).trim(),
         role: regRole, prestataireType: regPrestType,
       })
-      if (userData.status === 'pending') {
-        setPendingInfo({ role: userData.role })
+      if (userData._pendingRole && userData._needsEmailVerification) {
+        // Org/prest on Firebase: verify email first, then show pending for extra role
+        setUnverifiedEmail(regEmail)
+      } else if (userData._pendingRole) {
+        // Org/prest on local: client account created, role request pending
+        // Log them in as client immediately
+        const clientUser = { ...userData }
+        delete clientUser._pendingRole
+        setUser(clientUser)
+        setPendingInfo({ role: userData._pendingRole, isRoleRequest: true })
       } else if (userData._needsEmailVerification) {
         setUnverifiedEmail(regEmail)
       } else {
@@ -272,7 +500,8 @@ export default function LoginPage() {
     try {
       const userData = await doGoogleLogin()
       setUser(userData)
-      navigate('/accueil')
+      const params = new URLSearchParams(location.search)
+      navigate(params.get('next') || '/accueil')
     } catch (err) {
       setError(getFirebaseError(err.code))
     } finally {
@@ -286,7 +515,8 @@ export default function LoginPage() {
     try {
       const userData = await doAppleLogin()
       setUser(userData)
-      navigate('/accueil')
+      const params = new URLSearchParams(location.search)
+      navigate(params.get('next') || '/accueil')
     } catch (err) {
       setError(getFirebaseError(err.code))
     } finally {
@@ -327,29 +557,49 @@ export default function LoginPage() {
   // ── "Email not verified" screen ──
   if (unverifiedEmail) {
     return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center px-6 login-bg">
-        <div className="relative z-10 p-8 rounded-3xl text-center max-w-sm w-full space-y-4" style={{
-          background: 'linear-gradient(145deg, rgba(8,8,16,0.9), rgba(4,4,10,0.95))',
-          backdropFilter: 'blur(28px)',
-          border: '1px solid rgba(220,220,255,0.08)',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)',
-        }}>
-          <div className="text-5xl mb-2">📧</div>
-          <h2 className="text-white font-black text-xl">Vérifie ton email</h2>
-          <p className="text-gray-400 text-sm">
-            Un lien de confirmation a été envoyé à <span className="text-white font-semibold">{unverifiedEmail}</span>.
-          </p>
-          <div className="text-left bg-[#1a1a1a] rounded-xl p-3 space-y-1.5">
-            <p className="text-gray-300 text-xs font-semibold">Comment ça marche :</p>
-            <p className="text-gray-500 text-xs">① Ouvre ta boîte mail</p>
-            <p className="text-gray-500 text-xs">② Cherche un email de <span className="text-gray-300">noreply@liveinblack-15d30.firebaseapp.com</span></p>
-            <p className="text-gray-500 text-xs">③ Clique sur le lien dans cet email</p>
-            <p className="text-gray-500 text-xs">④ Reviens ici et connecte-toi</p>
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-6">
+        <div className="relative z-10 p-8 text-center max-w-sm w-full space-y-4" style={S.card}>
+          {/* Mail SVG icon */}
+          <div className="flex justify-center mb-2">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M2 7l10 7 10-7"/>
+            </svg>
           </div>
-          <p className="text-gray-600 text-[10px]">L'email peut arriver dans les spams / courriers indésirables.</p>
-          {resendSent && <p className="text-green-400 text-xs">Email renvoyé ✓</p>}
-          <button onClick={handleResendVerification} className="w-full text-[#d4af37] text-xs hover:underline">
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
+            Vérifie ton email
+          </h2>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+            Un lien de confirmation a été envoyé à{' '}
+            <span style={{ color: 'white' }}>{unverifiedEmail}</span>.
+          </p>
+          <div style={{
+            textAlign: 'left',
+            background: 'rgba(6,8,16,0.6)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '4px',
+            padding: '12px',
+          }}>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: '8px' }}>
+              Comment ça marche
+            </p>
+            {[
+              '1. Ouvre ta boîte mail',
+              '2. Cherche un email de noreply@liveinblack-15d30.firebaseapp.com',
+              '3. Clique sur le lien dans cet email',
+              '4. Reviens ici et connecte-toi',
+            ].map((step) => (
+              <p key={step} style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.8' }}>{step}</p>
+            ))}
+          </div>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>
+            L'email peut arriver dans les spams / courriers indésirables.
+          </p>
+          {resendSent && (
+            <p style={S.successText}>Email renvoyé — OK</p>
+          )}
+          <button onClick={handleResendVerification}
+            style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
             Renvoyer l'email
           </button>
           <button
@@ -360,9 +610,9 @@ export default function LoginPage() {
               setEmail(savedEmail)
               setError('Email vérifié ? Entre ton mot de passe pour te connecter.')
             }}
-            className="btn-gold w-full mt-2"
+            style={{ ...S.btnGold, marginTop: '8px' }}
           >
-            J'ai cliqué sur le lien → Me connecter
+            J'ai cliqué sur le lien — Me connecter
           </button>
         </div>
       </div>
@@ -372,144 +622,163 @@ export default function LoginPage() {
   // ── "Account pending validation" screen ──
   if (pendingInfo) {
     const roleLabel = ROLES[pendingInfo.role]?.label || pendingInfo.role
+    const isRoleReq  = pendingInfo.isRoleRequest
     return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center px-6 login-bg">
-        <div className="relative z-10 p-8 rounded-3xl text-center max-w-sm w-full space-y-4" style={{
-          background: 'linear-gradient(145deg, rgba(8,8,16,0.9), rgba(4,4,10,0.95))',
-          backdropFilter: 'blur(28px)',
-          border: '1px solid rgba(220,220,255,0.08)',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)',
-        }}>
-          <div className="text-5xl mb-2">⏳</div>
-          <h2 className="text-white font-black text-xl">Validation en cours</h2>
-          <p className="text-gray-400 text-sm">
-            Ton compte <span className="text-[#d4af37] font-semibold">{roleLabel}</span> est en attente de validation par l'équipe LIVEINBLACK.
-          </p>
-          <p className="text-gray-600 text-xs">Tu recevras une confirmation dès que ton compte sera activé. Cela prend généralement moins de 24h.</p>
-          <button
-            onClick={() => { setPendingInfo(null); setMode('login') }}
-            className="btn-gold w-full mt-2"
-          >
-            Retour à la connexion
-          </button>
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-6">
+        <div className="relative z-10 p-8 text-center max-w-sm w-full space-y-4" style={S.card}>
+          {/* Clock SVG icon */}
+          <div className="flex justify-center mb-2">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
+            {isRoleReq ? 'Demande envoyée !' : 'Validation en cours'}
+          </h2>
+          {isRoleReq ? (
+            <>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+                Ta demande d'accès à l'espace{' '}
+                <span style={{ color: '#c8a96e' }}>{roleLabel}</span>{' '}
+                a été transmise à l'équipe LIVEINBLACK.
+              </p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
+                Ton compte <span style={{ color: 'white' }}>Client</span> est actif et tu peux déjà utiliser l'app. Tu recevras une notification dès que ton espace sera validé.
+              </p>
+              <button
+                onClick={() => { setPendingInfo(null); navigate('/accueil') }}
+                style={{ ...S.btnGold, marginTop: '8px' }}
+              >
+                Accéder à mon compte
+              </button>
+            </>
+          ) : (
+            <>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+                Ton compte{' '}
+                <span style={{ color: '#c8a96e' }}>{roleLabel}</span>{' '}
+                est en attente de validation par l'équipe LIVEINBLACK.
+              </p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
+                Tu recevras une confirmation dès que ton compte sera activé. Cela prend généralement moins de 24h.
+              </p>
+              <button
+                onClick={() => { setPendingInfo(null); setMode('login') }}
+                style={{ ...S.btnGold, marginTop: '8px' }}
+              >
+                Retour à la connexion
+              </button>
+            </>
+          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col" style={{ background: '#04040b' }}>
-
-      {/* ── CSS Liquid Metal Background (no video — pure CSS) ── */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: `
-          radial-gradient(ellipse 80% 60% at 20% 20%, rgba(100,90,60,0.18) 0%, transparent 60%),
-          radial-gradient(ellipse 70% 50% at 80% 70%, rgba(60,60,90,0.15) 0%, transparent 60%),
-          radial-gradient(ellipse 50% 40% at 50% 50%, rgba(30,25,15,0.4) 0%, transparent 70%),
-          linear-gradient(135deg, #030309 0%, #06060e 40%, #04040b 100%)
-        `,
-      }} />
-      {/* Animated metallic shimmer lines */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: `
-          repeating-linear-gradient(
-            105deg,
-            transparent 0px,
-            transparent 80px,
-            rgba(212,175,55,0.025) 80px,
-            rgba(212,175,55,0.025) 81px
-          )
-        `,
-        animation: 'chrome-shimmer 12s linear infinite',
-        backgroundSize: '200% 100%',
-      }} />
-      {/* Vignette */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.7) 100%)',
-      }} />
-
-      {/* ── Ambient chrome orbs ── */}
-      <div className="absolute pointer-events-none" style={{
-        top: '10%', left: '15%', width: '280px', height: '280px',
-        background: 'radial-gradient(circle, rgba(100,100,160,0.12) 0%, transparent 70%)',
-        filter: 'blur(40px)',
-        animation: 'glow-pulse 8s ease-in-out infinite',
-      }} />
-      <div className="absolute pointer-events-none" style={{
-        bottom: '15%', right: '10%', width: '320px', height: '320px',
-        background: 'radial-gradient(circle, rgba(180,140,30,0.08) 0%, transparent 70%)',
-        filter: 'blur(50px)',
-        animation: 'glow-pulse 10s ease-in-out infinite 3s',
-      }} />
+    <div className="relative min-h-screen overflow-hidden flex flex-col">
 
       {/* Logo */}
       <div className="relative z-10 pt-12 pb-4 text-center">
-        <h1 className="text-4xl tracking-[0.35em] uppercase font-black"
-          style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-          <span className="text-white" style={{ textShadow: '0 2px 30px rgba(255,255,255,0.1)' }}>LIVE</span>
-          <span style={{
-            background: 'linear-gradient(135deg, #b8962e, #d4af37, #f0e080, #d4af37, #b8962e)',
-            backgroundSize: '200% auto',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            animation: 'chrome-shimmer 3s linear infinite',
-            filter: 'drop-shadow(0 0 12px rgba(212,175,55,0.5))',
-          }}>IN</span>
-          <span className="text-white" style={{ textShadow: '0 2px 30px rgba(255,255,255,0.1)' }}>BLACK</span>
+        <h1 style={{ letterSpacing: '0.05em', lineHeight: 1 }}>
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '40px', color: 'white', letterSpacing: '0.1em' }}>
+            L
+          </span>
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '40px', color: '#c8a96e', letterSpacing: '0.1em' }}>
+            |
+          </span>
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '40px', color: 'white', letterSpacing: '0.1em' }}>
+            VE IN{' '}
+          </span>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '38px', color: 'white', letterSpacing: '0.05em' }}>
+            BLACK
+          </span>
         </h1>
-        <div className="mt-2 flex items-center justify-center gap-3">
-          <div className="h-px w-12" style={{ background: 'linear-gradient(to right, transparent, rgba(212,175,55,0.4))' }} />
-          <p className="text-[10px] tracking-[0.25em] uppercase" style={{ color: 'rgba(200,180,100,0.6)' }}>
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <div className="h-px w-12" style={{ background: 'linear-gradient(to right, transparent, rgba(200,169,110,0.4))' }} />
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.55)' }}>
             La Marketplace de l'Événementiel
           </p>
-          <div className="h-px w-12" style={{ background: 'linear-gradient(to left, transparent, rgba(212,175,55,0.4))' }} />
+          <div className="h-px w-12" style={{ background: 'linear-gradient(to left, transparent, rgba(200,169,110,0.4))' }} />
         </div>
       </div>
 
-      {/* Form */}
+      {/* Form card */}
       <div className="relative z-10 mt-auto md:my-auto px-5 pb-10 md:pb-16 md:w-full md:max-w-sm md:mx-auto">
-        <div className="p-6 rounded-3xl" style={{
-          background: 'linear-gradient(145deg, rgba(8,8,16,0.88) 0%, rgba(4,4,10,0.92) 100%)',
-          backdropFilter: 'blur(32px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(32px) saturate(180%)',
-          border: '1px solid rgba(220,220,255,0.08)',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
-        }}>
+        <div style={{ ...S.card, padding: '28px 24px' }}>
 
           {/* ── Mode tabs ── */}
-          <div className="flex rounded-xl overflow-hidden mb-6" style={{
+          <div style={{
+            display: 'flex',
             background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(200,200,230,0.07)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            marginBottom: '24px',
           }}>
-            <button onClick={() => { setMode('login'); setRegStep(1); setError('') }}
-              className="flex-1 py-2.5 text-sm font-semibold transition-all rounded-l-xl"
-              style={mode === 'login' ? {
-                background: 'linear-gradient(105deg, #b8962e, #d4af37, #f0e080, #d4af37)',
-                backgroundSize: '200% auto',
-                animation: 'metal-shine 4s linear infinite',
-                color: '#000',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)',
-              } : { color: 'rgba(160,160,180,0.6)' }}>
+            <button
+              onClick={() => { setMode('login'); setRegStep(1); setError('') }}
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontFamily: "'DM Mono', monospace",
+                fontSize: '10px',
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                ...(mode === 'login' ? {
+                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                  borderBottom: '1px solid rgba(200,169,110,0.45)',
+                  color: '#c8a96e',
+                } : {
+                  background: 'transparent',
+                  color: 'rgba(255,255,255,0.28)',
+                }),
+              }}>
               Connexion
             </button>
-            <button onClick={() => { setMode('register'); setRegStep(1); setError('') }}
-              className="flex-1 py-2.5 text-sm font-semibold transition-all rounded-r-xl"
-              style={mode === 'register' ? {
-                background: 'linear-gradient(105deg, #b8962e, #d4af37, #f0e080, #d4af37)',
-                backgroundSize: '200% auto',
-                animation: 'metal-shine 4s linear infinite',
-                color: '#000',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)',
-              } : { color: 'rgba(160,160,180,0.6)' }}>
+            <button
+              onClick={() => { setMode('register'); setRegStep(1); setError('') }}
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontFamily: "'DM Mono', monospace",
+                fontSize: '10px',
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                ...(mode === 'register' ? {
+                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                  borderBottom: '1px solid rgba(200,169,110,0.45)',
+                  color: '#c8a96e',
+                } : {
+                  background: 'transparent',
+                  color: 'rgba(255,255,255,0.28)',
+                }),
+              }}>
               Inscription
             </button>
           </div>
 
           {/* ── Error ── */}
           {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs text-center">
+            <div style={{
+              marginBottom: '16px',
+              padding: '10px 14px',
+              background: 'rgba(224,90,170,0.08)',
+              border: '1px solid rgba(224,90,170,0.25)',
+              borderRadius: '4px',
+              fontFamily: "'DM Mono', monospace",
+              fontSize: '10px',
+              color: '#e05aaa',
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}>
               {error}
             </div>
           )}
@@ -518,28 +787,98 @@ export default function LoginPage() {
               LOGIN FORM
           ══════════════════════════════════════════════════ */}
           {mode === 'login' && (
-            <form onSubmit={handleLogin} className="space-y-3">
-              <input className="input-dark" type="email" placeholder="Email" required
-                value={email} onChange={e => setEmail(e.target.value)} />
-              <div className="relative">
-                <input className="input-dark pr-12" type={showPwd ? 'text' : 'password'}
-                  placeholder="Mot de passe" required
-                  value={password} onChange={e => setPassword(e.target.value)} />
-                <button type="button" onClick={() => setShowPwd(v => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 text-xs">
-                  {showPwd ? 'Cacher' : 'Voir'}
-                </button>
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={S.label}>Email</label>
+                <FocusInput type="email" placeholder="ton@email.com" required value={email}
+                  onChange={e => { setEmail(e.target.value); setLoginAccounts(null); setLoginRole(null) }} />
               </div>
-              <button type="submit" disabled={loading} className="btn-gold w-full mt-2 disabled:opacity-60">
-                {loading ? <Spinner text="Connexion..." /> : 'Se connecter'}
-              </button>
+
+              {/* Multi-account role picker */}
+              {loginAccounts && loginAccounts.length > 1 && !loginRole && (
+                <div>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: 8 }}>
+                    Plusieurs comptes détectés — lequel ?
+                  </p>
+                  {loginAccounts.map(acc => (
+                    <button key={acc.uid} type="button"
+                      onClick={() => setLoginRole(acc.role)}
+                      style={{
+                        width: '100%', marginBottom: 6, padding: '11px 14px', borderRadius: 4,
+                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left',
+                      }}>
+                      <span style={{
+                        padding: '2px 8px', borderRadius: 3, fontSize: 9,
+                        fontFamily: "'DM Mono', monospace", letterSpacing: '0.15em', textTransform: 'uppercase',
+                        background: (ROLES[acc.role]?.color || '#fff') + '14',
+                        border: `1px solid ${ROLES[acc.role]?.color || '#fff'}44`,
+                        color: ROLES[acc.role]?.color || '#fff',
+                      }}>
+                        {ROLES[acc.role]?.label || acc.role}
+                      </span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
+                        {acc.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Password field — shown once role is chosen (or single account) */}
+              {(!loginAccounts || loginAccounts.length <= 1 || loginRole) && (
+                <>
+                  {loginRole && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: -4 }}>
+                      <span style={{
+                        padding: '2px 8px', borderRadius: 3, fontSize: 9,
+                        fontFamily: "'DM Mono', monospace", letterSpacing: '0.15em', textTransform: 'uppercase',
+                        background: (ROLES[loginRole]?.color || '#fff') + '14',
+                        border: `1px solid ${ROLES[loginRole]?.color || '#fff'}44`,
+                        color: ROLES[loginRole]?.color || '#fff',
+                      }}>
+                        {ROLES[loginRole]?.label || loginRole}
+                      </span>
+                      <button type="button" onClick={() => setLoginRole(null)}
+                        style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                        Changer
+                      </button>
+                    </div>
+                  )}
+                  <div>
+                    <label style={S.label}>Mot de passe</label>
+                    <div style={{ position: 'relative' }}>
+                      <FocusInput type={showPwd ? 'text' : 'password'} placeholder="Mot de passe" required
+                        value={password} onChange={e => setPassword(e.target.value)}
+                        style={{ paddingRight: '56px' }} />
+                      <button type="button" onClick={() => setShowPwd(v => !v)}
+                        style={{
+                          position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                          fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.15em',
+                          color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase',
+                        }}>
+                        {showPwd ? 'Cacher' : 'Voir'}
+                      </button>
+                    </div>
+                  </div>
+                  <button type="submit" disabled={loading} style={{ ...S.btnPrimary, marginTop: '4px', opacity: loading ? 0.6 : 1 }}>
+                    {loading ? <Spinner text="Connexion..." /> : 'Se connecter'}
+                  </button>
+                </>
+              )}
             </form>
           )}
 
           {mode === 'login' && (
-            <button type="button" onClick={() => { setResetEmail(email); setResetSent(false); setShowResetModal(true) }}
-              className="w-full text-center text-gray-600 text-xs mt-2 hover:text-gray-400 transition-colors">
-              Mot de passe oublié ?
+            <button type="button"
+              onClick={() => { setResetEmail(email); setResetSent(false); setShowResetModal(true) }}
+              style={{
+                width: '100%', textAlign: 'center', marginTop: '10px',
+                fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.2em',
+                textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)',
+                background: 'none', border: 'none', cursor: 'pointer',
+              }}>
+              Mot de passe oublié
             </button>
           )}
 
@@ -547,25 +886,51 @@ export default function LoginPage() {
               REGISTER — STEP 1: Choose role
           ══════════════════════════════════════════════════ */}
           {mode === 'register' && regStep === 1 && (
-            <div className="space-y-3">
-              <p className="text-gray-400 text-xs text-center mb-4">Quel type de compte veux-tu créer ?</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', textAlign: 'center', marginBottom: '8px' }}>
+                Quel type de compte veux-tu créer ?
+              </p>
               {[
-                { role: 'user',         icon: '👤', title: 'Utilisateur',  desc: 'Découvre des événements, réserve, vote' },
-                { role: 'prestataire',  icon: '🎤', title: 'Prestataire',  desc: 'DJ, salle, matériel, traiteur...' },
-                { role: 'organisateur', icon: '🎪', title: 'Organisateur', desc: 'Crée et gère tes propres événements' },
-                { role: 'agent',        icon: '🔑', title: 'Agent',        desc: 'Administration — validation requise' },
-              ].map(({ role, icon, title, desc }) => (
+                { role: 'user',         title: 'Client',       desc: 'Découvre des événements et réserve tes places', badge: null },
+                { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements',           badge: 'Validation requise' },
+                { role: 'prestataire',  title: 'Prestataire',  desc: 'DJ, salle, matériel, traiteur...',              badge: 'Validation requise' },
+              ].map(({ role, title, desc, badge }) => (
                 <button key={role} type="button"
                   onClick={() => { setRegRole(role); setRegStep(2) }}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left hover:scale-[1.01] active:scale-[0.99]"
-                  style={{ borderColor: regRole === role ? '#d4af37' : '#222', background: regRole === role ? 'rgba(212,175,55,0.08)' : 'transparent' }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                    padding: '14px',
+                    background: regRole === role ? 'rgba(200,169,110,0.08)' : 'rgba(6,8,16,0.4)',
+                    border: `1px solid ${regRole === role ? 'rgba(200,169,110,0.45)' : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: '4px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#1a1a1a] flex items-center justify-center text-xl flex-shrink-0">{icon}</div>
-                  <div>
-                    <p className="text-white font-semibold text-sm">{title}</p>
-                    <p className="text-gray-600 text-xs">{desc}</p>
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '4px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <RoleIcon role={role} />
                   </div>
-                  <span className="ml-auto text-gray-600">›</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '2px' }}>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', margin: 0 }}>{title}</p>
+                      {badge && (
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '7px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c8a96e', padding: '1px 5px', borderRadius: 3, border: '1px solid rgba(200,169,110,0.3)', background: 'rgba(200,169,110,0.06)' }}>
+                          {badge}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{desc}</p>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
                 </button>
               ))}
             </div>
@@ -575,99 +940,189 @@ export default function LoginPage() {
               REGISTER — STEP 2: Fill form
           ══════════════════════════════════════════════════ */}
           {mode === 'register' && regStep === 2 && (
-            <form onSubmit={handleRegister} className="space-y-3">
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {/* Back + role badge */}
-              <div className="flex items-center gap-2 mb-1">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                 <button type="button" onClick={() => { setRegStep(1); setError('') }}
-                  className="text-gray-600 hover:text-white text-sm">← Retour</button>
-                <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full border border-[#333] text-gray-400 capitalize">
-                  {ROLES[regRole]?.icon} {ROLES[regRole]?.label}
+                  style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.2em',
+                    textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)',
+                    background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                  }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M15 18l-6-6 6-6"/>
+                  </svg>
+                  Retour
+                </button>
+                <span style={{
+                  marginLeft: 'auto',
+                  fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.2em',
+                  textTransform: 'uppercase', color: '#c8a96e',
+                  padding: '3px 8px',
+                  border: '1px solid rgba(200,169,110,0.3)',
+                  borderRadius: '4px',
+                }}>
+                  {ROLES[regRole]?.label}
                 </span>
               </div>
 
+              {/* Validation notice for org/prest */}
+              {(regRole === 'organisateur' || regRole === 'prestataire') && (
+                <div style={{
+                  padding: '10px 14px',
+                  background: 'rgba(200,169,110,0.06)',
+                  border: '1px solid rgba(200,169,110,0.25)',
+                  borderRadius: '4px',
+                }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>
+                    {regRole === 'organisateur' ? '🎪 Espace Organisateur' : '🎤 Espace Prestataire'}
+                  </p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
+                    Un compte <span style={{ color: 'rgba(255,255,255,0.6)' }}>Client</span> sera créé immédiatement. L'accès à l'espace <span style={{ color: '#c8a96e' }}>{ROLES[regRole]?.label}</span> sera activé après validation par l'équipe LIVEINBLACK (généralement moins de 24h).
+                  </p>
+                </div>
+              )}
               {/* Agent warning */}
               {regRole === 'agent' && (
-                <div className="p-3 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-xl">
-                  <p className="text-[#d4af37] text-xs font-semibold">Compte Agent</p>
-                  <p className="text-gray-500 text-[10px] mt-0.5">Ton compte sera soumis à validation. Tu recevras une confirmation sous 24h.</p>
+                <div style={{
+                  padding: '10px 14px',
+                  background: 'rgba(200,169,110,0.06)',
+                  border: '1px solid rgba(200,169,110,0.25)',
+                  borderRadius: '4px',
+                }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>Compte Agent</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
+                    Ton compte sera soumis à validation. Tu recevras une confirmation sous 24h.
+                  </p>
                 </div>
               )}
 
-              <input className="input-dark" type="text" placeholder="Prénom & nom" required
-                value={regName} onChange={e => setRegName(e.target.value)} />
-              <input className="input-dark" type="email" placeholder="Adresse email" required
-                value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+              <div>
+                <label style={S.label}>Prénom &amp; nom</label>
+                <FocusInput type="text" placeholder="Jean Dupont" required value={regName} onChange={e => setRegName(e.target.value)} />
+              </div>
+              <div>
+                <label style={S.label}>Adresse email</label>
+                <FocusInput type="email" placeholder="ton@email.com" required value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+              </div>
+
               {/* Phone with country code picker */}
-              <div className="relative flex gap-2">
-                {/* Dial code button */}
-                <div className="relative">
-                  <button type="button"
-                    onClick={() => setShowDialPicker(v => !v)}
-                    className="input-dark flex items-center gap-1.5 px-3 whitespace-nowrap text-sm min-w-[80px]">
-                    <span>{COUNTRY_CODES.find(c => c.dial === regDialCode)?.flag || '🌍'}</span>
-                    <span className="text-gray-300">{regDialCode}</span>
-                    <span className="text-gray-600 text-[10px]">▾</span>
-                  </button>
-                  {showDialPicker && (
-                    <div className="absolute top-full left-0 mt-1 z-50 bg-[#111] border border-[#333] rounded-xl shadow-xl max-h-52 overflow-y-auto w-56">
-                      {COUNTRY_CODES.map(c => (
-                        <button key={c.code + c.dial} type="button"
-                          onClick={() => { setRegDialCode(c.dial); setShowDialPicker(false) }}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-[#1a1a1a] transition-colors text-left ${regDialCode === c.dial && COUNTRY_CODES.find(x => x.dial === regDialCode)?.code === c.code ? 'text-[#d4af37]' : 'text-gray-300'}`}>
-                          <span className="text-base">{c.flag}</span>
-                          <span className="flex-1 text-xs">{c.name}</span>
-                          <span className="text-gray-500 text-xs">{c.dial}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+              <div>
+                <label style={S.label}>Téléphone</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ position: 'relative' }}>
+                    <button type="button"
+                      onClick={() => setShowDialPicker(v => !v)}
+                      style={{
+                        ...S.input,
+                        width: 'auto',
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        paddingLeft: '10px', paddingRight: '10px',
+                        whiteSpace: 'nowrap', minWidth: '80px',
+                        cursor: 'pointer',
+                      }}>
+                      <span style={{ fontSize: '14px' }}>{COUNTRY_CODES.find(c => c.dial === regDialCode)?.flag || '🌍'}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>{regDialCode}</span>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </button>
+                    {showDialPicker && (
+                      <div style={{
+                        position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50,
+                        background: 'rgba(8,10,20,0.97)',
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        borderRadius: '4px',
+                        boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
+                        maxHeight: '200px', overflowY: 'auto', width: '220px',
+                      }}>
+                        {COUNTRY_CODES.map(c => (
+                          <button key={c.code + c.dial} type="button"
+                            onClick={() => { setRegDialCode(c.dial); setShowDialPicker(false) }}
+                            style={{
+                              width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                              padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none',
+                              cursor: 'pointer', transition: 'background 0.15s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            <span style={{ fontSize: '14px' }}>{c.flag}</span>
+                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.6)', flex: 1 }}>{c.name}</span>
+                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: regDialCode === c.dial ? '#c8a96e' : 'rgba(255,255,255,0.3)' }}>{c.dial}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <FocusInput type="tel" placeholder="06 00 00 00 00" required value={regPhone} onChange={e => setRegPhone(e.target.value)} style={{ flex: 1 }} />
                 </div>
-                <input className="input-dark flex-1" type="tel" placeholder="Numéro de téléphone" required
-                  value={regPhone} onChange={e => setRegPhone(e.target.value)} />
               </div>
 
               {/* Prestataire type */}
               {regRole === 'prestataire' && (
-                <div className="grid grid-cols-2 gap-2">
-                  {PRESTATAIRE_TYPES.map(t => (
-                    <button key={t.key} type="button"
-                      onClick={() => setRegPrestType(t.key)}
-                      className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs transition-all ${regPrestType === t.key ? 'border-[#d4af37]/60 bg-[#d4af37]/10 text-white' : 'border-[#222] text-gray-500'}`}>
-                      <span className="text-base">{t.icon}</span>
-                      <span className="text-left leading-tight">{t.label}</span>
-                    </button>
-                  ))}
+                <div>
+                  <label style={S.label}>Type de service</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                    {PRESTATAIRE_TYPES.map(t => (
+                      <button key={t.key} type="button"
+                        onClick={() => setRegPrestType(t.key)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                          padding: '10px',
+                          background: regPrestType === t.key ? 'rgba(200,169,110,0.10)' : 'rgba(6,8,16,0.5)',
+                          border: `1px solid ${regPrestType === t.key ? 'rgba(200,169,110,0.45)' : 'rgba(255,255,255,0.07)'}`,
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          textAlign: 'left',
+                        }}>
+                        <span style={{ fontSize: '14px' }}>{t.icon}</span>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: regPrestType === t.key ? '#c8a96e' : 'rgba(255,255,255,0.45)', lineHeight: 1.3 }}>{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {/* Password */}
-              <div className="relative">
-                <input className="input-dark pr-12" type={showRegPwd ? 'text' : 'password'}
-                  placeholder="Mot de passe" required
-                  value={regPwd} onChange={e => setRegPwd(e.target.value)} />
-                <button type="button" onClick={() => setShowRegPwd(v => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 text-xs">
-                  {showRegPwd ? 'Cacher' : 'Voir'}
-                </button>
+              <div>
+                <label style={S.label}>Mot de passe</label>
+                <div style={{ position: 'relative' }}>
+                  <FocusInput type={showRegPwd ? 'text' : 'password'} placeholder="Mot de passe" required
+                    value={regPwd} onChange={e => setRegPwd(e.target.value)}
+                    style={{ paddingRight: '56px' }} />
+                  <button type="button" onClick={() => setShowRegPwd(v => !v)}
+                    style={{
+                      position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                      fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.15em',
+                      color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase',
+                    }}>
+                    {showRegPwd ? 'Cacher' : 'Voir'}
+                  </button>
+                </div>
               </div>
 
               {/* Password strength */}
               {regPwd.length > 0 && (
-                <div className="space-y-1.5 -mt-1">
-                  <div className="flex gap-1">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '-4px' }}>
+                  <div style={{ display: 'flex', gap: '4px' }}>
                     {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="flex-1 h-1 rounded-full transition-all"
-                        style={{ background: i <= pwdStrength.score ? pwdStrength.color : '#222' }} />
+                      <div key={i} style={{
+                        flex: 1, height: '3px', borderRadius: '2px',
+                        background: i <= pwdStrength.score ? pwdStrength.color : 'rgba(255,255,255,0.08)',
+                        transition: 'background 0.3s',
+                      }} />
                     ))}
                   </div>
-                  <p className="text-[10px]" style={{ color: pwdStrength.color }}>{pwdStrength.label}</p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: pwdStrength.color }}>{pwdStrength.label}</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
                     {[
-                      { ok: regPwd.length >= 8, text: '8 caractères min.' },
-                      { ok: /[A-Z]/.test(regPwd), text: 'Une majuscule' },
-                      { ok: /[0-9]/.test(regPwd), text: 'Un chiffre' },
+                      { ok: regPwd.length >= 8, text: '8 car. min.' },
+                      { ok: /[A-Z]/.test(regPwd), text: 'Majuscule' },
+                      { ok: /[0-9]/.test(regPwd), text: 'Chiffre' },
                     ].map(r => (
-                      <span key={r.text} className="text-[10px]" style={{ color: r.ok ? '#22c55e' : '#4b5563' }}>
+                      <span key={r.text} style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: r.ok ? '#4ee8c8' : 'rgba(255,255,255,0.2)' }}>
                         {r.ok ? '✓' : '○'} {r.text}
                       </span>
                     ))}
@@ -675,13 +1130,15 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <input className="input-dark" type="password" placeholder="Confirmer le mot de passe" required
-                value={regPwdConfirm} onChange={e => setRegPwdConfirm(e.target.value)} />
+              <div>
+                <label style={S.label}>Confirmer le mot de passe</label>
+                <FocusInput type="password" placeholder="Mot de passe" required value={regPwdConfirm} onChange={e => setRegPwdConfirm(e.target.value)} />
+              </div>
               {regPwdConfirm && regPwd !== regPwdConfirm && (
-                <p className="text-red-400 text-[10px] -mt-1">Les mots de passe ne correspondent pas</p>
+                <p style={{ ...S.errorText, marginTop: '-6px' }}>Les mots de passe ne correspondent pas</p>
               )}
 
-              <button type="submit" disabled={loading} className="btn-gold w-full mt-2 disabled:opacity-60">
+              <button type="submit" disabled={loading} style={{ ...S.btnPrimary, marginTop: '4px', opacity: loading ? 0.6 : 1 }}>
                 {loading ? <Spinner text="Création..." /> : regRole === 'agent' ? 'Soumettre la demande' : 'Créer mon compte'}
               </button>
             </form>
@@ -689,23 +1146,25 @@ export default function LoginPage() {
 
           {/* ── OAuth (login mode only) ── */}
           {mode === 'login' && (
-            <div className="mt-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(200,200,230,0.12))' }} />
-                <span className="text-[10px] tracking-widest uppercase" style={{ color: 'rgba(140,140,170,0.6)' }}>ou continuer avec</span>
-                <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, transparent, rgba(200,200,230,0.12))' }} />
+            <div style={{ marginTop: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.08))' }} />
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap' }}>ou continuer avec</span>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, rgba(255,255,255,0.08))' }} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <button onClick={handleGoogle} disabled={loading}
-                  className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
                   style={{
-                    background: 'linear-gradient(145deg, rgba(20,20,32,0.9), rgba(12,12,20,0.95))',
-                    border: '1px solid rgba(200,200,230,0.09)',
-                    borderTop: '1px solid rgba(255,255,255,0.07)',
-                    color: 'rgba(200,200,220,0.75)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    padding: '11px',
+                    background: 'rgba(6,8,16,0.6)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: '4px',
+                    fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.1em',
+                    color: 'rgba(255,255,255,0.55)',
+                    cursor: 'pointer', opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s',
                   }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24">
+                  <svg width="14" height="14" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -714,15 +1173,17 @@ export default function LoginPage() {
                   Google
                 </button>
                 <button onClick={handleApple} disabled={loading}
-                  className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
                   style={{
-                    background: 'linear-gradient(145deg, rgba(20,20,32,0.9), rgba(12,12,20,0.95))',
-                    border: '1px solid rgba(200,200,230,0.09)',
-                    borderTop: '1px solid rgba(255,255,255,0.07)',
-                    color: 'rgba(200,200,220,0.75)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    padding: '11px',
+                    background: 'rgba(6,8,16,0.6)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: '4px',
+                    fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.1em',
+                    color: 'rgba(255,255,255,0.55)',
+                    cursor: 'pointer', opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s',
                   }}>
-                  <svg width="15" height="15" viewBox="0 0 814 1000" fill="currentColor">
+                  <svg width="14" height="14" viewBox="0 0 814 1000" fill="rgba(255,255,255,0.7)">
                     <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 383.8 1 261 1 148.9 1 78.7 25.4 12.7 73.5-21.3c43.7-31.1 93.1-47.1 145.3-47.1 82.8 0 138.4 44.7 186.7 44.7 46.5 0 119.5-47.4 215.8-47.4zm-97.5-161.1c-5.8 27.5-28.9 75.3-73.7 113.5-47.8 40.8-99.4 61-150.2 61-5.8 0-11.6-.6-17.4-1.3 0-3.8-.6-7.7-.6-12.2 0-26.3 7.1-74.1 47.8-115 40.8-40.8 100.2-68 152.7-68 5.8 0 11.6.6 17.4 1.3-.6 7.1-.6 14.8-.6 20.7z"/>
                   </svg>
                   Apple
@@ -732,10 +1193,11 @@ export default function LoginPage() {
           )}
 
           {mode === 'register' && regStep === 1 && (
-            <p className="text-center text-gray-700 text-[10px] mt-4">
+            <p style={{ textAlign: 'center', fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.2)', marginTop: '16px', lineHeight: 1.6 }}>
               En t'inscrivant tu acceptes nos{' '}
-              <span className="text-gray-500 underline cursor-pointer" onClick={() => navigate('/cgu')}>CGU</span> et notre{' '}
-              <span className="text-gray-500 underline cursor-pointer" onClick={() => navigate('/cgu')}>Politique de confidentialité</span>
+              <span style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/cgu')}>CGU</span>{' '}
+              et notre{' '}
+              <span style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/cgu')}>Politique de confidentialité</span>
             </p>
           )}
         </div>
@@ -743,27 +1205,44 @@ export default function LoginPage() {
 
       {/* ── Reset password modal ── */}
       {showResetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowResetModal(false)} />
-          <div className="relative glass rounded-2xl p-6 w-full max-w-sm space-y-4">
-            <h3 className="text-white font-bold">Mot de passe oublié</h3>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }}
+            onClick={() => setShowResetModal(false)} />
+          <div style={{ position: 'relative', ...S.card, padding: '28px 24px', width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: '20px', letterSpacing: '0.04em', color: 'white', margin: 0 }}>
+              Mot de passe oublié
+            </h3>
             {!resetSent ? (
               <>
-                <p className="text-gray-400 text-sm">Entre ton adresse email et on t'envoie un lien de réinitialisation.</p>
-                <input className="input-dark" type="email" placeholder="ton@email.com"
-                  value={resetEmail} onChange={e => { setResetEmail(e.target.value); setResetError('') }} />
-                {resetError && <p className="text-red-400 text-xs">{resetError}</p>}
-                <button onClick={handleSendReset} disabled={resetLoading} className="btn-gold w-full disabled:opacity-60">
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+                  Entre ton adresse email et on t'envoie un lien de réinitialisation.
+                </p>
+                <div>
+                  <label style={S.label}>Email</label>
+                  <FocusInput type="email" placeholder="ton@email.com"
+                    value={resetEmail} onChange={e => { setResetEmail(e.target.value); setResetError('') }} />
+                </div>
+                {resetError && <p style={S.errorText}>{resetError}</p>}
+                <button onClick={handleSendReset} disabled={resetLoading} style={{ ...S.btnGold, opacity: resetLoading ? 0.6 : 1 }}>
                   {resetLoading ? <Spinner text="Envoi..." /> : 'Envoyer'}
                 </button>
-                <button onClick={() => setShowResetModal(false)} className="w-full text-center text-gray-600 text-xs hover:text-gray-400 transition-colors">Annuler</button>
+                <button onClick={() => setShowResetModal(false)} style={{ ...S.btnGhost }}>
+                  Annuler
+                </button>
               </>
             ) : (
-              <div className="text-center py-4 space-y-3">
-                <p className="text-4xl">📧</p>
-                <p className="text-green-400 font-semibold text-sm">Email envoyé !</p>
-                <p className="text-gray-400 text-xs">Un lien a été envoyé à <span className="text-white">{resetEmail}</span>.</p>
-                <button onClick={() => setShowResetModal(false)} className="btn-gold w-full">Fermer</button>
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '12px', padding: '8px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="M2 7l10 7 10-7"/>
+                  </svg>
+                </div>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#4ee8c8' }}>Email envoyé</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
+                  Un lien a été envoyé à <span style={{ color: 'white' }}>{resetEmail}</span>.
+                </p>
+                <button onClick={() => setShowResetModal(false)} style={S.btnGold}>Fermer</button>
               </div>
             )}
           </div>
@@ -773,11 +1252,70 @@ export default function LoginPage() {
   )
 }
 
+// ── Focus-aware input (teal border on focus) ──────────────────────────────
+function FocusInput({ style = {}, ...props }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <input
+      {...props}
+      onFocus={e => { setFocused(true); props.onFocus?.(e) }}
+      onBlur={e => { setFocused(false); props.onBlur?.(e) }}
+      style={{
+        background: 'rgba(6,8,16,0.6)',
+        border: `1px solid ${focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)'}`,
+        borderRadius: '4px',
+        fontFamily: "'DM Mono', monospace",
+        fontSize: '13px',
+        color: 'rgba(255,255,255,0.9)',
+        padding: '11px 14px',
+        width: '100%',
+        outline: 'none',
+        transition: 'border-color 0.2s',
+        boxSizing: 'border-box',
+        ...style,
+      }}
+    />
+  )
+}
+
+// ── Role icon SVG ─────────────────────────────────────────────────────────
+function RoleIcon({ role }) {
+  const color = 'rgba(255,255,255,0.45)'
+  if (role === 'user') return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+  )
+  if (role === 'prestataire') return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+    </svg>
+  )
+  if (role === 'organisateur') return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  )
+  if (role === 'agent') return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+  )
+  return null
+}
+
 // ── Spinner helper ─────────────────────────────────────────────────────────
 function Spinner({ text }) {
   return (
-    <span className="flex items-center justify-center gap-2">
-      <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+      <span style={{
+        width: '14px', height: '14px',
+        border: '2px solid rgba(255,255,255,0.15)',
+        borderTopColor: 'rgba(255,255,255,0.7)',
+        borderRadius: '50%',
+        animation: 'spin 0.7s linear infinite',
+        display: 'inline-block',
+      }} />
       {text}
     </span>
   )
@@ -789,7 +1327,9 @@ function getFirebaseError(code) {
     'auth/user-not-found': 'Aucun compte associé à cet email.',
     'auth/wrong-password': 'Mot de passe incorrect. Rappel : le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre.',
     'auth/invalid-credential': 'Email ou mot de passe incorrect. Rappel : au moins 8 caractères, une majuscule et un chiffre.',
-    'auth/email-already-in-use': 'Cet email est déjà utilisé.',
+    'auth/email-already-in-use': 'Cet email est déjà utilisé par un compte actif.',
+    'auth/email-unverified-ghost': "Cet email est associé à un compte non vérifié. Utilise \"Mot de passe oublié\" sur la page de connexion pour récupérer l'accès.",
+    'auth/phone-already-in-use': 'Ce numéro de téléphone est déjà associé à un compte actif.',
     'auth/weak-password': 'Le mot de passe est trop faible. Il doit contenir au moins 8 caractères, une majuscule et un chiffre.',
     'auth/invalid-email': 'Adresse email invalide.',
     'auth/too-many-requests': 'Trop de tentatives. Réessaie dans quelques minutes.',

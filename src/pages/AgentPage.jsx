@@ -4,9 +4,14 @@ import { useAuth } from '../context/AuthContext'
 import {
   getAllAccounts, updateAccount, deleteAccount,
   getPendingValidations, approveValidation, rejectValidation,
+  getPendingRoleRequests, approveRoleRequest, rejectRoleRequest,
   ROLES, PRESTATAIRE_TYPES,
 } from '../utils/accounts'
 import { getBalance, deductFunds, addFunds } from '../utils/wallet'
+import {
+  getAllApplications, updateApplicationStatus,
+  APPLICATION_STATUSES, getCompleteness, DOCUMENT_LABELS,
+} from '../utils/applications'
 
 const ADMIN_EMAIL = 'hagechady4@gmail.com'
 
@@ -26,26 +31,57 @@ function formatDate(ts) {
   return new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+// ─── Design tokens ────────────────────────────────────────────────────────
+const CARD = {
+  background: 'rgba(8,10,20,0.55)',
+  backdropFilter: 'blur(22px) saturate(1.6)',
+  border: '1px solid rgba(255,255,255,0.10)',
+  borderRadius: 12,
+}
+
+const FONTS = {
+  display: "'Cormorant Garamond', Georgia, serif",
+  mono: "'DM Mono', 'Fira Mono', monospace",
+}
+
+const COLORS = {
+  teal: '#4ee8c8',
+  pink: '#e05aaa',
+  gold: '#c8a96e',
+  muted: 'rgba(255,255,255,0.42)',
+  dim: 'rgba(255,255,255,0.22)',
+}
+
 function RoleBadge({ role, small }) {
-  const r = ROLES[role] || { label: role, icon: '?', color: '#6b7280' }
+  const r = ROLES[role] || { label: role, icon: '', color: COLORS.muted }
+  const size = small ? { fontSize: 9, padding: '2px 6px' } : { fontSize: 10, padding: '3px 8px' }
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border font-semibold ${small ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-0.5'}`}
-      style={{ color: r.color, borderColor: r.color + '44', background: r.color + '11' }}>
-      {r.icon} {r.label}
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 3,
+      borderRadius: 4, border: `1px solid ${r.color}44`,
+      background: r.color + '11', color: r.color,
+      fontFamily: FONTS.mono, fontWeight: 600, letterSpacing: '0.04em',
+      ...size,
+    }}>
+      {r.label}
     </span>
   )
 }
 
 function StatusBadge({ status }) {
   const cfg = {
-    active:   { label: 'Actif',     color: '#22c55e' },
-    pending:  { label: 'En attente', color: '#f59e0b' },
-    rejected: { label: 'Refusé',    color: '#ef4444' },
-    banned:   { label: 'Banni',     color: '#6b7280' },
-  }[status] || { label: status, color: '#6b7280' }
+    active:   { label: 'ACTIF',      color: '#4ee8c8' },
+    pending:  { label: 'EN ATTENTE', color: '#c8a96e' },
+    rejected: { label: 'REFUSÉ',     color: '#e05aaa' },
+    banned:   { label: 'BANNI',      color: COLORS.muted },
+  }[status] || { label: status.toUpperCase(), color: COLORS.muted }
   return (
-    <span className="text-[10px] px-1.5 py-0.5 rounded-full border font-semibold"
-      style={{ color: cfg.color, borderColor: cfg.color + '44', background: cfg.color + '11' }}>
+    <span style={{
+      fontFamily: FONTS.mono, fontSize: 9, padding: '2px 6px',
+      borderRadius: 4, border: `1px solid ${cfg.color}44`,
+      background: cfg.color + '11', color: cfg.color,
+      fontWeight: 600, letterSpacing: '0.06em',
+    }}>
       {cfg.label}
     </span>
   )
@@ -54,24 +90,32 @@ function StatusBadge({ status }) {
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function AgentPage() {
   const isAgent = useAgentGuard()
-  const { user, setUser } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState('dashboard')
   const [accounts, setAccounts] = useState([])
   const [pending, setPending] = useState([])
+  const [roleRequests, setRoleRequests] = useState([])
+  const [applications, setApplications] = useState([])
+  const [selectedApp, setSelectedApp] = useState(null)
+  const [appNote, setAppNote] = useState('')
+  const [dossierFilter, setDossierFilter] = useState(null)
+  const [roleRejectReason, setRoleRejectReason] = useState('')
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedUser, setSelectedUser] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
-  const [confirmAction, setConfirmAction] = useState(null) // { type, uid, name }
-  const [editField, setEditField] = useState(null) // { uid, field, value }
+  const [confirmAction, setConfirmAction] = useState(null)
+  const [editField, setEditField] = useState(null)
   const [balanceAdjust, setBalanceAdjust] = useState({ uid: null, amount: '', reason: '' })
   const [toast, setToast] = useState(null)
 
   function refresh() {
     setAccounts(getAllAccounts())
     setPending(getPendingValidations())
+    setRoleRequests(getPendingRoleRequests().filter(r => r.status === 'pending'))
+    setApplications(getAllApplications())
   }
 
   useEffect(() => { refresh() }, [])
@@ -83,14 +127,15 @@ export default function AgentPage() {
 
   if (!isAgent) return null
 
-  // ── Stats ──
-  const totalUsers       = accounts.length
-  const totalActive      = accounts.filter(a => a.status === 'active').length
+  const totalUsers        = accounts.length
+  const totalActive       = accounts.filter(a => a.status === 'active').length
   const totalPrestataires = accounts.filter(a => a.role === 'prestataire').length
-  const totalOrgas       = accounts.filter(a => a.role === 'organisateur').length
-  const totalPending     = pending.length
+  const totalOrgas        = accounts.filter(a => a.role === 'organisateur').length
+  const totalPending      = pending.length
+  const totalRoleReqs     = roleRequests.length
+  const totalAppsSubmitted = applications.filter(a => a.status === 'submitted' || a.status === 'under_review').length
+  const totalAllPending   = totalPending + totalRoleReqs + totalAppsSubmitted
 
-  // ── Filtered list ──
   const filtered = accounts.filter(a => {
     const matchSearch = !search ||
       a.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -101,11 +146,10 @@ export default function AgentPage() {
     return matchSearch && matchRole && matchStatus
   })
 
-  // ── Actions ──
   function handleApprove(uid) {
     approveValidation(uid)
     refresh()
-    showToast('Compte validé ✓')
+    showToast('Compte validé')
     setConfirmAction(null)
   }
 
@@ -133,10 +177,25 @@ export default function AgentPage() {
     setSelectedUser(null)
   }
 
+  async function handleApproveRoleRequest(requestId) {
+    await approveRoleRequest(requestId)
+    refresh()
+    showToast('Accès activé')
+    setConfirmAction(null)
+  }
+
+  async function handleRejectRoleRequest(requestId) {
+    await rejectRoleRequest(requestId, roleRejectReason)
+    setRoleRejectReason('')
+    refresh()
+    showToast('Demande refusée', 'error')
+    setConfirmAction(null)
+  }
+
   function handleReactivate(uid) {
     updateAccount(uid, { status: 'active' })
     refresh()
-    showToast('Compte réactivé ✓')
+    showToast('Compte réactivé')
     setSelectedUser(u => u?.uid === uid ? { ...u, status: 'active' } : u)
   }
 
@@ -146,7 +205,7 @@ export default function AgentPage() {
     refresh()
     setSelectedUser(u => u?.uid === editField.uid ? { ...u, [editField.field]: editField.value } : u)
     setEditField(null)
-    showToast('Mis à jour ✓')
+    showToast('Mis à jour')
   }
 
   function handleBalanceAdjust() {
@@ -157,114 +216,186 @@ export default function AgentPage() {
     } else {
       addFunds(balanceAdjust.uid, amt, balanceAdjust.reason || 'Ajustement admin')
     }
-    showToast('Solde ajusté ✓')
+    showToast('Solde ajusté')
     setBalanceAdjust({ uid: null, amount: '', reason: '' })
   }
 
+  async function handleAppAction(appId, status, note) {
+    await updateApplicationStatus(appId, status, user?.uid, user?.name || 'Agent', note)
+    refresh()
+    setSelectedApp(apps => apps ? { ...apps, status, ...(status === 'approved' ? { approvedAt: Date.now() } : {}), ...(status === 'rejected' ? { rejectionReason: note } : {}), ...(status === 'needs_changes' ? { requestedChanges: note } : {}) } : null)
+    showToast(status === 'approved' ? 'Dossier approuvé' : status === 'rejected' ? 'Dossier refusé' : status === 'needs_changes' ? 'Corrections demandées' : status === 'under_review' ? 'Dossier en révision' : 'Dossier mis à jour')
+    setAppNote('')
+    setConfirmAction(null)
+  }
+
+  // ── Shared input style ──
+  const inputStyle = {
+    width: '100%', boxSizing: 'border-box',
+    background: 'rgba(8,10,20,0.7)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 6, color: '#fff',
+    fontFamily: FONTS.mono, fontSize: 12,
+    padding: '9px 12px',
+    outline: 'none',
+  }
+
   return (
-    <div className="min-h-screen bg-[#04040b]">
+    <div style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-40 bg-[#08080f] border-b border-white/[0.05] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/accueil')} className="text-gray-600 hover:text-white text-xl">←</button>
-        <div>
-          <h1 className="text-white font-black tracking-widest uppercase text-sm" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-            LIVE<span className="text-[#d4af37]">IN</span>BLACK — Interface Agent
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        background: 'rgba(4,4,14,0.92)', backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        <button
+          onClick={() => navigate('/accueil')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: COLORS.muted, fontSize: 20, lineHeight: 1 }}
+        >←</button>
+        <div style={{ flex: 1 }}>
+          <h1 style={{
+            fontFamily: FONTS.display, fontWeight: 300,
+            fontSize: 17, letterSpacing: '0.12em', color: '#fff', margin: 0,
+            textTransform: 'uppercase',
+          }}>
+            LIVE<span style={{ color: COLORS.gold }}>IN</span>BLACK
+            <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, marginLeft: 8, letterSpacing: '0.08em' }}>
+              Interface Agent
+            </span>
           </h1>
-          <p className="text-gray-600 text-[10px]">{user?.name} · {user?.email}</p>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
+            {user?.name} · {user?.email}
+          </p>
         </div>
-        {totalPending > 0 && (
-          <button onClick={() => setTab('validations')}
-            className="ml-auto flex items-center gap-1.5 bg-[#d4af37] text-black text-xs font-bold px-3 py-1.5 rounded-full animate-pulse">
-            ⚠ {totalPending} en attente
+        {totalAllPending > 0 && (
+          <button
+            onClick={() => setTab(totalPending > 0 ? 'validations' : 'role-requests')}
+            style={{
+              fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em',
+              background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.45)',
+              color: COLORS.gold, borderRadius: 4, padding: '5px 10px',
+              cursor: 'pointer', animation: 'pulse 2s infinite',
+            }}>
+            {totalAllPending} EN ATTENTE
           </button>
         )}
       </div>
 
       {/* ── Nav tabs ── */}
-      <div className="flex border-b border-white/[0.05] overflow-x-auto">
+      <div style={{
+        display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        overflowX: 'auto',
+      }}>
         {[
-          { key: 'dashboard',   icon: '📊', label: 'Dashboard' },
-          { key: 'users',       icon: '👥', label: 'Comptes' },
-          { key: 'validations', icon: '✅', label: `Validations${totalPending > 0 ? ` (${totalPending})` : ''}` },
+          { key: 'dashboard',     label: 'Dashboard' },
+          { key: 'users',         label: 'Comptes' },
+          { key: 'validations',   label: `Valid.${totalPending > 0 ? ` (${totalPending})` : ''}` },
+          { key: 'role-requests', label: `Rôles${totalRoleReqs > 0 ? ` (${totalRoleReqs})` : ''}` },
+          { key: 'dossiers',      label: `Dossiers${totalAppsSubmitted > 0 ? ` (${totalAppsSubmitted})` : ''}` },
         ].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${
-              tab === t.key ? 'border-[#d4af37] text-[#d4af37]' : 'border-transparent text-gray-500 hover:text-white'
-            }`}>
-            {t.icon} {t.label}
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            style={{
+              flexShrink: 0, padding: '12px 20px',
+              fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.08em',
+              textTransform: 'uppercase', cursor: 'pointer',
+              background: 'none',
+              borderBottom: tab === t.key ? `2px solid ${COLORS.gold}` : '2px solid transparent',
+              borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+              color: tab === t.key ? COLORS.gold : COLORS.dim,
+              transition: 'color 0.2s',
+            }}>
+            {t.label}
           </button>
         ))}
       </div>
 
-      <div className="p-4 pb-20 max-w-lg mx-auto">
+      <div style={{ padding: '16px 16px 80px', maxWidth: 520, margin: '0 auto' }}>
 
         {/* ══════════════════════════════════════════════
             DASHBOARD
         ══════════════════════════════════════════════ */}
         {tab === 'dashboard' && (
-          <div className="space-y-5 mt-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 8 }}>
+
             {/* Stat grid */}
-            <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { label: 'Comptes total', value: totalUsers, icon: '👥', color: '#3b82f6' },
-                { label: 'Actifs',        value: totalActive, icon: '✅', color: '#22c55e' },
-                { label: 'Prestataires', value: totalPrestataires, icon: '🎤', color: '#8b5cf6' },
-                { label: 'En attente',   value: totalPending, icon: '⏳', color: '#f59e0b', alert: totalPending > 0 },
+                { label: 'Comptes total', value: totalUsers,        color: '#4ee8c8' },
+                { label: 'Actifs',        value: totalActive,       color: '#4ee8c8' },
+                { label: 'Prestataires', value: totalPrestataires,  color: COLORS.gold },
+                { label: 'En attente',   value: totalAllPending,    color: totalAllPending > 0 ? COLORS.pink : COLORS.muted, alert: totalAllPending > 0 },
               ].map(s => (
-                <div key={s.label}
-                  className="p-4 rounded-2xl border transition-all"
-                  style={{ borderColor: s.color + (s.alert ? '66' : '22'), background: s.color + (s.alert ? '14' : '08') }}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-gray-500 text-[10px] uppercase tracking-wider">{s.label}</p>
-                      <p className="text-white font-black text-3xl mt-1" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{s.value}</p>
-                    </div>
-                    <span className="text-2xl">{s.icon}</span>
-                  </div>
+                <div key={s.label} style={{
+                  ...CARD,
+                  padding: 16,
+                  borderColor: s.alert ? `${s.color}55` : 'rgba(255,255,255,0.10)',
+                }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
+                    {s.label}
+                  </p>
+                  <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 38, color: s.color, margin: 0, lineHeight: 1 }}>
+                    {s.value}
+                  </p>
                 </div>
               ))}
             </div>
 
             {/* Recent registrations */}
             <div>
-              <h3 className="text-gray-500 text-xs uppercase tracking-widest mb-3">Inscriptions récentes</h3>
-              <div className="space-y-2">
+              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+                Inscriptions récentes
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {[...accounts].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 5).map(u => (
                   <button key={u.uid} onClick={() => { setSelectedUser(u); setTab('users') }}
-                    className="w-full flex items-center gap-3 p-3 bg-[#08080f] border border-white/[0.05] rounded-xl hover:border-white/[0.08] transition-all text-left">
-                    <div className="w-8 h-8 rounded-full bg-[#0e0e18] flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
+                    style={{
+                      ...CARD, display: 'flex', alignItems: 'center', gap: 12,
+                      padding: 12, cursor: 'pointer', width: '100%', textAlign: 'left',
+                      transition: 'border-color 0.2s',
+                    }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+                      background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: FONTS.mono, fontSize: 12, color: COLORS.teal, fontWeight: 700,
+                    }}>
                       {u.name?.[0]?.toUpperCase() || '?'}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-xs font-semibold truncate">{u.name}</p>
-                      <p className="text-gray-600 text-[10px] truncate">{u.email}</p>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.email}</p>
                     </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                       <RoleBadge role={u.role} small />
                       <StatusBadge status={u.status} />
                     </div>
                   </button>
                 ))}
                 {accounts.length === 0 && (
-                  <p className="text-gray-600 text-sm text-center py-8">Aucun compte enregistré</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, textAlign: 'center', padding: '32px 0' }}>Aucun compte enregistré</p>
                 )}
               </div>
             </div>
 
             {/* Breakdown by role */}
             <div>
-              <h3 className="text-gray-500 text-xs uppercase tracking-widest mb-3">Répartition par rôle</h3>
-              <div className="space-y-2">
+              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+                Répartition par rôle
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {Object.entries(ROLES).map(([key, r]) => {
                   const count = accounts.filter(a => a.role === key).length
                   return (
-                    <div key={key} className="flex items-center gap-3">
-                      <span className="text-sm w-5">{r.icon}</span>
-                      <span className="text-gray-400 text-xs flex-1">{r.label}</span>
-                      <div className="flex-1 bg-[#08080f] rounded-full h-1.5 overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: totalUsers ? `${(count / totalUsers) * 100}%` : '0%', background: r.color }} />
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, width: 80, flexShrink: 0 }}>{r.label}</span>
+                      <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: 99, height: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', borderRadius: 99, transition: 'width 0.4s', width: totalUsers ? `${(count / totalUsers) * 100}%` : '0%', background: r.color }} />
                       </div>
-                      <span className="text-white text-xs font-bold w-5 text-right">{count}</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', width: 16, textAlign: 'right' }}>{count}</span>
                     </div>
                   )
                 })}
@@ -277,61 +408,103 @@ export default function AgentPage() {
             USERS / ACCOUNTS
         ══════════════════════════════════════════════ */}
         {tab === 'users' && (
-          <div className="space-y-4 mt-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
+
             {/* Search + filters */}
-            <div className="space-y-2">
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600">🔍</span>
-                <input className="input-dark pl-10 text-sm" placeholder="Nom, email, téléphone..."
-                  value={search} onChange={e => setSearch(e.target.value)} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ position: 'relative' }}>
+                <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: COLORS.dim, pointerEvents: 'none' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  style={{ ...inputStyle, paddingLeft: 34 }}
+                  placeholder="Nom, email, téléphone..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+
+              {/* Role filters */}
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
                 {[
-                  { key: 'all',  label: 'Tous' },
-                  { key: 'user', label: '👤 Utilisateurs' },
-                  { key: 'prestataire', label: '🎤 Presta' },
-                  { key: 'organisateur', label: '🎪 Orgas' },
-                  { key: 'agent', label: '🔑 Agents' },
+                  { key: 'all',          label: 'Tous' },
+                  { key: 'user',         label: 'Utilisateurs' },
+                  { key: 'prestataire',  label: 'Presta' },
+                  { key: 'organisateur', label: 'Orgas' },
+                  { key: 'agent',        label: 'Agents' },
                 ].map(f => (
                   <button key={f.key} onClick={() => setRoleFilter(f.key)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-semibold border transition-all ${roleFilter === f.key ? 'bg-[#d4af37] text-black border-[#d4af37]' : 'border-white/[0.07] text-gray-500'}`}>
+                    style={{
+                      flexShrink: 0, padding: '4px 10px', borderRadius: 4,
+                      fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em',
+                      textTransform: 'uppercase', cursor: 'pointer',
+                      background: roleFilter === f.key ? 'rgba(200,169,110,0.18)' : 'transparent',
+                      border: roleFilter === f.key ? '1px solid rgba(200,169,110,0.45)' : '1px solid rgba(255,255,255,0.10)',
+                      color: roleFilter === f.key ? COLORS.gold : COLORS.dim,
+                      transition: 'all 0.15s',
+                    }}>
                     {f.label}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-2">
+
+              {/* Status filters */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {['all', 'active', 'pending', 'rejected', 'banned'].map(s => (
                   <button key={s} onClick={() => setStatusFilter(s)}
-                    className={`flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${statusFilter === s ? 'bg-white/10 border-white/20 text-white' : 'border-white/[0.07] text-gray-600'}`}>
+                    style={{
+                      flexShrink: 0, padding: '3px 8px', borderRadius: 4,
+                      fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em',
+                      textTransform: 'uppercase', cursor: 'pointer',
+                      background: statusFilter === s ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      border: statusFilter === s ? '1px solid rgba(255,255,255,0.20)' : '1px solid rgba(255,255,255,0.08)',
+                      color: statusFilter === s ? '#fff' : COLORS.dim,
+                      transition: 'all 0.15s',
+                    }}>
                     {s === 'all' ? 'Tous statuts' : s}
                   </button>
                 ))}
               </div>
             </div>
 
-            <p className="text-gray-600 text-xs">{filtered.length} compte{filtered.length !== 1 ? 's' : ''}</p>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>
+              {filtered.length} compte{filtered.length !== 1 ? 's' : ''}
+            </p>
 
             {/* List */}
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {filtered.map(u => (
                 <button key={u.uid} onClick={() => setSelectedUser(u)}
-                  className="w-full flex items-center gap-3 p-3 bg-[#08080f] border border-white/[0.05] rounded-xl hover:border-white/[0.08] transition-all text-left">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: u.role === 'agent' ? '#d4af3722' : '#0e0e18', color: u.role === 'agent' ? '#d4af37' : '#fff' }}>
+                  style={{
+                    ...CARD, display: 'flex', alignItems: 'center', gap: 12,
+                    padding: 12, cursor: 'pointer', width: '100%', textAlign: 'left',
+                  }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                    background: u.role === 'agent' ? 'rgba(200,169,110,0.12)' : 'rgba(255,255,255,0.05)',
+                    border: u.role === 'agent' ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
+                    color: u.role === 'agent' ? COLORS.gold : '#fff',
+                  }}>
                     {u.name?.[0]?.toUpperCase() || '?'}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-semibold truncate">{u.name}</p>
-                    <p className="text-gray-600 text-[10px] truncate">{u.email}{u.phone ? ` · ${u.phone}` : ''}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {u.email}{u.phone ? ` · ${u.phone}` : ''}
+                    </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                     <RoleBadge role={u.role} small />
                     <StatusBadge status={u.status} />
                   </div>
                 </button>
               ))}
               {filtered.length === 0 && (
-                <p className="text-center text-gray-600 py-10">Aucun compte trouvé</p>
+                <p style={{ textAlign: 'center', fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, padding: '40px 0' }}>
+                  Aucun compte trouvé
+                </p>
               )}
             </div>
           </div>
@@ -341,51 +514,277 @@ export default function AgentPage() {
             VALIDATIONS
         ══════════════════════════════════════════════ */}
         {tab === 'validations' && (
-          <div className="space-y-4 mt-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
             {pending.length === 0 ? (
-              <div className="text-center py-16 space-y-3">
-                <p className="text-4xl">✅</p>
-                <p className="text-white font-semibold">Aucune validation en attente</p>
-                <p className="text-gray-600 text-sm">Tous les comptes ont été traités.</p>
+              <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: 0 }}>
+                  Aucune validation en attente
+                </p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Tous les comptes ont été traités.</p>
               </div>
             ) : pending.map(u => (
-              <div key={u.uid} className="bg-[#08080f] border border-white/[0.05] rounded-2xl p-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#0e0e18] flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+              <div key={u.uid} style={{ ...CARD, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                    background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.20)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: FONTS.mono, fontSize: 14, fontWeight: 700, color: COLORS.teal,
+                  }}>
                     {u.name?.[0]?.toUpperCase() || '?'}
                   </div>
-                  <div className="flex-1">
-                    <p className="text-white font-semibold text-sm">{u.name}</p>
-                    <p className="text-gray-500 text-xs">{u.email}</p>
-                    {u.phone && <p className="text-gray-600 text-[10px]">📞 {u.phone}</p>}
-                    <div className="flex items-center gap-2 mt-1.5">
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 17, color: '#fff', margin: '0 0 2px' }}>{u.name}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 4px' }}>{u.email}</p>
+                    {u.phone && (
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '0 0 6px' }}>{u.phone}</p>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                       <RoleBadge role={u.role} small />
                       {u.prestataireType && (
-                        <span className="text-[10px] text-gray-400 bg-[#08080f] border border-white/[0.07] px-1.5 py-0.5 rounded-full">
+                        <span style={{
+                          fontFamily: FONTS.mono, fontSize: 9,
+                          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
+                          borderRadius: 4, padding: '2px 6px', color: COLORS.dim,
+                        }}>
                           {PRESTATAIRE_TYPES.find(t => t.key === u.prestataireType)?.label || u.prestataireType}
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-700 text-[10px] mt-1">Demande le {formatDate(u.requestedAt)}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
+                      Demande le {formatDate(u.requestedAt)}
+                    </p>
                   </div>
                 </div>
 
-                {/* Reject reason input */}
-                <input className="input-dark text-xs" placeholder="Motif de refus (optionnel)"
-                  value={rejectReason} onChange={e => setRejectReason(e.target.value)} />
+                <input
+                  style={inputStyle}
+                  placeholder="Motif de refus (optionnel)"
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                />
 
-                <div className="flex gap-2">
-                  <button onClick={() => setConfirmAction({ type: 'reject', uid: u.uid, name: u.name })}
-                    className="flex-1 py-2 rounded-xl border border-red-500/30 text-red-400 text-xs font-semibold hover:bg-red-500/10 transition-colors">
-                    ✕ Refuser
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => setConfirmAction({ type: 'reject', uid: u.uid, name: u.name })}
+                    style={{
+                      flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
+                      border: '1px solid rgba(220,50,50,0.35)',
+                      background: 'rgba(220,50,50,0.10)',
+                      color: 'rgba(220,100,100,0.9)',
+                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                    Refuser
                   </button>
-                  <button onClick={() => setConfirmAction({ type: 'approve', uid: u.uid, name: u.name })}
-                    className="flex-1 py-2 rounded-xl bg-[#d4af37] text-black text-xs font-bold hover:bg-[#c9a227] transition-colors">
-                    ✓ Valider
+                  <button
+                    onClick={() => setConfirmAction({ type: 'approve', uid: u.uid, name: u.name })}
+                    style={{
+                      flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
+                      background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
+                      border: '1px solid rgba(78,232,200,0.35)',
+                      color: COLORS.teal,
+                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                    Valider
                   </button>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════
+            ROLE REQUESTS
+        ══════════════════════════════════════════════ */}
+        {tab === 'role-requests' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
+            {roleRequests.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: 0 }}>
+                  Aucune demande de rôle
+                </p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>
+                  Les demandes d'accès organisateur/prestataire apparaissent ici.
+                </p>
+              </div>
+            ) : roleRequests.map(req => {
+              const roleCfg = ROLES[req.requestedRole] || { label: req.requestedRole, color: '#fff', icon: '' }
+              return (
+                <div key={req.id} style={{ ...CARD, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                      background: roleCfg.color + '14', border: `1px solid ${roleCfg.color}44`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: FONTS.mono, fontSize: 14, fontWeight: 700, color: roleCfg.color,
+                    }}>
+                      {req.name?.[0]?.toUpperCase() || '?'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 17, color: '#fff', margin: '0 0 2px' }}>{req.name}</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 6px' }}>{req.email}</p>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        {/* Current role (client) */}
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 9, padding: '2px 6px', borderRadius: 4, border: '1px solid rgba(34,197,94,0.35)', background: 'rgba(34,197,94,0.08)', color: '#22c55e' }}>
+                          Client
+                        </span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                        {/* Requested role */}
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 9, padding: '2px 6px', borderRadius: 4, border: `1px solid ${roleCfg.color}44`, background: roleCfg.color + '14', color: roleCfg.color }}>
+                          {roleCfg.label}
+                        </span>
+                        {req.prestataireType && (
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '2px 6px', color: COLORS.dim }}>
+                            {PRESTATAIRE_TYPES.find(t => t.key === req.prestataireType)?.label || req.prestataireType}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
+                        Demandé le {formatDate(req.requestedAt)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <input
+                    style={inputStyle}
+                    placeholder="Motif de refus (optionnel)"
+                    value={roleRejectReason}
+                    onChange={e => setRoleRejectReason(e.target.value)}
+                  />
+
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => setConfirmAction({ type: 'rejectRole', id: req.id, name: req.name, role: roleCfg.label })}
+                      style={{
+                        flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
+                        border: '1px solid rgba(220,50,50,0.35)',
+                        background: 'rgba(220,50,50,0.10)',
+                        color: 'rgba(220,100,100,0.9)',
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}>
+                      Refuser
+                    </button>
+                    <button
+                      onClick={() => setConfirmAction({ type: 'approveRole', id: req.id, name: req.name, role: roleCfg.label })}
+                      style={{
+                        flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
+                        background: `linear-gradient(135deg, ${roleCfg.color}33, ${roleCfg.color}11)`,
+                        border: `1px solid ${roleCfg.color}55`,
+                        color: roleCfg.color,
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}>
+                      Activer
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════
+            DOSSIERS
+        ══════════════════════════════════════════════ */}
+        {tab === 'dossiers' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
+
+            {/* Filter chips */}
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+              {['all', 'submitted', 'under_review', 'needs_changes', 'approved', 'rejected'].map(s => {
+                const cfg = APPLICATION_STATUSES[s]
+                const count = s === 'all' ? applications.length : applications.filter(a => a.status === s).length
+                const active = (dossierFilter || 'all') === s
+                return (
+                  <button key={s} onClick={() => setDossierFilter(s === 'all' ? null : s)}
+                    style={{
+                      flexShrink: 0, padding: '4px 10px', borderRadius: 4,
+                      fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      background: active ? (cfg?.bg || 'rgba(255,255,255,0.08)') : 'transparent',
+                      border: `1px solid ${active ? (cfg?.color || 'rgba(255,255,255,0.20)') + '55' : 'rgba(255,255,255,0.10)'}`,
+                      color: active ? (cfg?.color || '#fff') : COLORS.dim,
+                      transition: 'all 0.15s',
+                    }}>
+                    {s === 'all' ? `Tous (${count})` : `${cfg?.label} (${count})`}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* List */}
+            {(dossierFilter ? applications.filter(a => a.status === dossierFilter) : applications).length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 8px' }}>Aucun dossier</p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Les candidatures organisateurs et prestataires apparaissent ici.</p>
+              </div>
+            ) : (dossierFilter ? applications.filter(a => a.status === dossierFilter) : applications)
+              .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+              .map(app => {
+                const statusCfg = APPLICATION_STATUSES[app.status] || {}
+                const score = getCompleteness(app)
+                return (
+                  <button key={app.id} onClick={() => { setSelectedApp(app); setAppNote('') }}
+                    style={{
+                      ...CARD, display: 'flex', flexDirection: 'column', gap: 10,
+                      padding: 14, cursor: 'pointer', width: '100%', textAlign: 'left',
+                      borderColor: statusCfg.color ? statusCfg.color + '33' : 'rgba(255,255,255,0.10)',
+                      transition: 'border-color 0.2s',
+                    }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                        background: (statusCfg.color || COLORS.dim) + '14',
+                        border: `1px solid ${(statusCfg.color || COLORS.dim)}33`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
+                        color: statusCfg.color || COLORS.dim,
+                      }}>
+                        {app.name?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {app.formData?.nomCommercial || app.name}
+                        </p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: 0 }}>
+                          {app.type === 'organisateur' ? 'Organisateur' : `Prestataire · ${app.formData?.prestataireType || ''}`}
+                          {' · '}{app.email}
+                        </p>
+                      </div>
+                      <span style={{
+                        fontFamily: FONTS.mono, fontSize: 9, padding: '3px 7px', borderRadius: 4,
+                        border: `1px solid ${statusCfg.color || COLORS.dim}44`,
+                        background: statusCfg.bg || 'transparent',
+                        color: statusCfg.color || COLORS.dim, flexShrink: 0,
+                        textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600,
+                      }}>
+                        {statusCfg.label || app.status}
+                      </span>
+                    </div>
+                    {/* completeness bar */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: 99,
+                          width: `${score}%`,
+                          background: score >= 80 ? COLORS.teal : score >= 50 ? COLORS.gold : COLORS.pink,
+                        }} />
+                      </div>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0 }}>{score}%</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0 }}>
+                        {new Date(app.updatedAt).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })
+            }
           </div>
         )}
       </div>
@@ -394,27 +793,45 @@ export default function AgentPage() {
           USER DETAIL SLIDE-UP
       ══════════════════════════════════════════════ */}
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedUser(null)} />
-          <div className="relative w-full max-w-lg bg-[#08080f] border border-white/[0.05] rounded-t-3xl max-h-[85vh] overflow-y-auto pb-8">
-            <div className="p-5 border-b border-white/[0.05] sticky top-0 bg-[#08080f] z-10">
-              <div className="w-10 h-1 bg-white/[0.08] rounded-full mx-auto mb-4" />
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#0e0e18] flex items-center justify-center text-lg font-bold text-white">
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }} onClick={() => setSelectedUser(null)} />
+          <div style={{
+            position: 'relative', width: '100%', maxWidth: 520,
+            background: 'rgba(8,10,20,0.97)', backdropFilter: 'blur(28px)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: '16px 16px 0 0',
+            maxHeight: '85vh', overflowY: 'auto',
+            paddingBottom: 32,
+          }}>
+            {/* Handle + header */}
+            <div style={{
+              padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+              position: 'sticky', top: 0,
+              background: 'rgba(8,10,20,0.97)', zIndex: 10,
+            }}>
+              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '0 auto 14px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+                  background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: FONTS.mono, fontSize: 18, fontWeight: 700, color: COLORS.teal,
+                }}>
                   {selectedUser.name?.[0]?.toUpperCase() || '?'}
                 </div>
-                <div className="flex-1">
-                  <p className="text-white font-bold">{selectedUser.name}</p>
-                  <p className="text-gray-500 text-xs">{selectedUser.email}</p>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 19, color: '#fff', margin: 0 }}>{selectedUser.name}</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>{selectedUser.email}</p>
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
                   <RoleBadge role={selectedUser.role} />
                   <StatusBadge status={selectedUser.status} />
                 </div>
               </div>
             </div>
 
-            <div className="p-5 space-y-5">
+            <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
               {/* Info */}
               <Section title="Informations">
                 <InfoRow label="UID" value={selectedUser.uid} mono />
@@ -428,7 +845,7 @@ export default function AgentPage() {
 
               {/* Edit fields */}
               <Section title="Modifier">
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
                     { field: 'name',  label: 'Nom', type: 'text' },
                     { field: 'email', label: 'Email', type: 'email' },
@@ -436,18 +853,38 @@ export default function AgentPage() {
                   ].map(f => (
                     <div key={f.field}>
                       {editField?.field === f.field && editField.uid === selectedUser.uid ? (
-                        <div className="flex gap-2">
-                          <input className="input-dark flex-1 text-sm"
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <input
+                            style={{ ...inputStyle, flex: 1 }}
                             type={f.type} value={editField.value}
-                            onChange={e => setEditField(ef => ({ ...ef, value: e.target.value }))} />
-                          <button onClick={handleSaveEdit} className="px-3 py-2 bg-[#d4af37] text-black text-xs font-bold rounded-xl">✓</button>
-                          <button onClick={() => setEditField(null)} className="px-3 py-2 border border-white/[0.08] text-gray-500 text-xs rounded-xl">✕</button>
+                            onChange={e => setEditField(ef => ({ ...ef, value: e.target.value }))}
+                          />
+                          <button onClick={handleSaveEdit} style={{
+                            padding: '0 12px', borderRadius: 4, cursor: 'pointer',
+                            background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
+                            border: '1px solid rgba(78,232,200,0.35)', color: COLORS.teal,
+                            fontFamily: FONTS.mono, fontSize: 12,
+                          }}>✓</button>
+                          <button onClick={() => setEditField(null)} style={{
+                            padding: '0 12px', borderRadius: 4, cursor: 'pointer',
+                            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                            color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 12,
+                          }}>✕</button>
                         </div>
                       ) : (
-                        <button onClick={() => setEditField({ uid: selectedUser.uid, field: f.field, value: selectedUser[f.field] || '' })}
-                          className="w-full flex items-center justify-between p-2.5 rounded-xl border border-white/[0.07] hover:border-white/[0.08] text-left">
-                          <span className="text-gray-500 text-xs">{f.label}</span>
-                          <span className="text-gray-400 text-xs">{selectedUser[f.field] || '—'} <span className="text-gray-700">✏</span></span>
+                        <button
+                          onClick={() => setEditField({ uid: selectedUser.uid, field: f.field, value: selectedUser[f.field] || '' })}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '9px 12px', borderRadius: 6, cursor: 'pointer',
+                            background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
+                            textAlign: 'left',
+                          }}>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>{f.label}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted }}>
+                            {selectedUser[f.field] || '—'}
+                            <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6 }}>✏</span>
+                          </span>
                         </button>
                       )}
                     </div>
@@ -457,62 +894,114 @@ export default function AgentPage() {
 
               {/* Wallet */}
               <Section title="Portefeuille">
-                <div className="flex items-center justify-between p-3 bg-[#08080f] rounded-xl border border-white/[0.05]">
-                  <span className="text-gray-400 text-sm">Solde actuel</span>
-                  <span className="text-[#d4af37] font-bold">{getBalance(selectedUser.uid)}€</span>
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '12px 14px', ...CARD,
+                }}>
+                  <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>Solde actuel</span>
+                  <span style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: COLORS.gold }}>
+                    {getBalance(selectedUser.uid)}€
+                  </span>
                 </div>
                 {balanceAdjust.uid === selectedUser.uid ? (
-                  <div className="space-y-2 mt-2">
-                    <input className="input-dark text-sm" type="number" placeholder="Montant (négatif pour déduire)"
-                      value={balanceAdjust.amount} onChange={e => setBalanceAdjust(b => ({ ...b, amount: e.target.value }))} />
-                    <input className="input-dark text-sm" placeholder="Raison (ex: remboursement, bonus)"
-                      value={balanceAdjust.reason} onChange={e => setBalanceAdjust(b => ({ ...b, reason: e.target.value }))} />
-                    <div className="flex gap-2">
-                      <button onClick={handleBalanceAdjust} className="flex-1 py-2 bg-[#d4af37] text-black text-xs font-bold rounded-xl">Appliquer</button>
-                      <button onClick={() => setBalanceAdjust({ uid: null, amount: '', reason: '' })} className="px-4 py-2 border border-white/[0.08] text-gray-500 text-xs rounded-xl">Annuler</button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                    <input
+                      style={inputStyle} type="number"
+                      placeholder="Montant (négatif pour déduire)"
+                      value={balanceAdjust.amount}
+                      onChange={e => setBalanceAdjust(b => ({ ...b, amount: e.target.value }))}
+                    />
+                    <input
+                      style={inputStyle}
+                      placeholder="Raison (ex: remboursement, bonus)"
+                      value={balanceAdjust.reason}
+                      onChange={e => setBalanceAdjust(b => ({ ...b, reason: e.target.value }))}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={handleBalanceAdjust} style={{
+                        flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                        background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                        border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold,
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}>Appliquer</button>
+                      <button onClick={() => setBalanceAdjust({ uid: null, amount: '', reason: '' })} style={{
+                        padding: '9px 16px', borderRadius: 4, cursor: 'pointer',
+                        background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                        color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
+                      }}>Annuler</button>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => setBalanceAdjust(b => ({ ...b, uid: selectedUser.uid }))}
-                    className="w-full mt-2 py-2 border border-white/[0.08] text-gray-400 text-xs rounded-xl hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-colors">
-                    💰 Ajuster le solde
+                  <button
+                    onClick={() => setBalanceAdjust(b => ({ ...b, uid: selectedUser.uid }))}
+                    style={{
+                      width: '100%', marginTop: 8, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                      background: 'transparent', border: '1px solid rgba(255,255,255,0.10)',
+                      color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 11,
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                      transition: 'border-color 0.2s, color 0.2s',
+                    }}>
+                    Ajuster le solde
                   </button>
                 )}
               </Section>
 
-              {/* Mot de passe (démo only) */}
+              {/* Password */}
               <Section title="Mot de passe">
-                <div className="flex items-center justify-between p-3 bg-[#08080f] rounded-xl border border-white/[0.05]">
-                  <span className="text-gray-400 text-sm">Générer un nouveau mdp</span>
-                  <button onClick={() => {
-                    const newPwd = 'LIB' + Math.random().toString(36).slice(2, 8).toUpperCase()
-                    updateAccount(selectedUser.uid, { password: newPwd })
-                    showToast(`Nouveau mdp : ${newPwd}`)
-                    refresh()
-                  }} className="text-[#d4af37] text-xs font-semibold hover:underline">
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '12px 14px', ...CARD,
+                }}>
+                  <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>Générer un nouveau mdp</span>
+                  <button
+                    onClick={() => {
+                      const newPwd = 'LIB' + Math.random().toString(36).slice(2, 8).toUpperCase()
+                      updateAccount(selectedUser.uid, { password: newPwd })
+                      showToast(`Nouveau mdp : ${newPwd}`)
+                      refresh()
+                    }}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold,
+                      textDecoration: 'underline',
+                    }}>
                     Réinitialiser →
                   </button>
                 </div>
-                <p className="text-gray-700 text-[10px] mt-1">Le nouveau mot de passe s'affichera dans la notification.</p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
+                  Le nouveau mot de passe s'affichera dans la notification.
+                </p>
               </Section>
 
               {/* Account actions */}
               <Section title="Actions compte">
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {selectedUser.status === 'banned' ? (
-                    <button onClick={() => handleReactivate(selectedUser.uid)}
-                      className="w-full py-2.5 rounded-xl border border-green-500/30 text-green-400 text-sm font-semibold hover:bg-green-500/10 transition-colors">
-                      ✓ Réactiver le compte
+                    <button onClick={() => handleReactivate(selectedUser.uid)} style={{
+                      width: '100%', padding: '11px 0', borderRadius: 4, cursor: 'pointer',
+                      background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.30)',
+                      color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 11,
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                    }}>
+                      Réactiver le compte
                     </button>
                   ) : selectedUser.status === 'active' ? (
-                    <button onClick={() => setConfirmAction({ type: 'ban', uid: selectedUser.uid, name: selectedUser.name })}
-                      className="w-full py-2.5 rounded-xl border border-orange-500/30 text-orange-400 text-sm font-semibold hover:bg-orange-500/10 transition-colors">
-                      🚫 Suspendre le compte
+                    <button onClick={() => setConfirmAction({ type: 'ban', uid: selectedUser.uid, name: selectedUser.name })} style={{
+                      width: '100%', padding: '11px 0', borderRadius: 4, cursor: 'pointer',
+                      background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.30)',
+                      color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 11,
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                    }}>
+                      Suspendre le compte
                     </button>
                   ) : null}
-                  <button onClick={() => setConfirmAction({ type: 'delete', uid: selectedUser.uid, name: selectedUser.name })}
-                    className="w-full py-2.5 rounded-xl border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition-colors">
-                    🗑 Supprimer le compte
+                  <button onClick={() => setConfirmAction({ type: 'delete', uid: selectedUser.uid, name: selectedUser.name })} style={{
+                    width: '100%', padding: '11px 0', borderRadius: 4, cursor: 'pointer',
+                    background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.35)',
+                    color: 'rgba(220,100,100,0.9)', fontFamily: FONTS.mono, fontSize: 11,
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                  }}>
+                    Supprimer le compte
                   </button>
                 </div>
               </Section>
@@ -521,32 +1010,316 @@ export default function AgentPage() {
         </div>
       )}
 
+      {/* ══════════════════════════════════════════════
+          DOSSIER DETAIL SLIDE-UP
+      ══════════════════════════════════════════════ */}
+      {selectedApp && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }} onClick={() => setSelectedApp(null)} />
+          <div style={{
+            position: 'relative', width: '100%', maxWidth: 520,
+            background: 'rgba(8,10,20,0.97)', backdropFilter: 'blur(28px)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: '16px 16px 0 0',
+            maxHeight: '88vh', overflowY: 'auto',
+            paddingBottom: 32,
+          }}>
+            {/* Handle */}
+            <div style={{
+              padding: '14px 20px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+              position: 'sticky', top: 0, background: 'rgba(8,10,20,0.97)', zIndex: 10,
+            }}>
+              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '0 auto 12px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 18, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {selectedApp.formData?.nomCommercial || selectedApp.name}
+                  </p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
+                    {selectedApp.email} · {selectedApp.type}
+                  </p>
+                </div>
+                {(() => {
+                  const cfg = APPLICATION_STATUSES[selectedApp.status] || {}
+                  return (
+                    <span style={{
+                      fontFamily: FONTS.mono, fontSize: 9, padding: '3px 8px', borderRadius: 4,
+                      border: `1px solid ${cfg.color || COLORS.dim}44`,
+                      background: cfg.bg || 'transparent',
+                      color: cfg.color || COLORS.dim,
+                      textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, flexShrink: 0,
+                    }}>{cfg.label || selectedApp.status}</span>
+                  )
+                })()}
+              </div>
+            </div>
+
+            <div style={{ padding: '16px 20px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* Completeness */}
+              {(() => {
+                const score = getCompleteness(selectedApp)
+                const color = score >= 80 ? COLORS.teal : score >= 50 ? COLORS.gold : COLORS.pink
+                return (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>Complétude</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, color }}>{score}%</span>
+                    </div>
+                    <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: 99, width: `${score}%`, background: `linear-gradient(90deg, ${color}88, ${color})` }} />
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Form data summary */}
+              <Section title="Informations formulaire">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  {Object.entries(selectedApp.formData || {}).slice(0, 12).map(([k, v]) => (
+                    <div key={k} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0, minWidth: 100 }}>{k}</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.muted, wordBreak: 'break-all' }}>
+                        {typeof v === 'boolean' ? (v ? 'oui' : 'non') : String(v)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+
+              {/* Documents */}
+              <Section title="Documents déposés">
+                {Object.keys(selectedApp.documents || {}).length === 0 ? (
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim }}>Aucun document</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {Object.entries(selectedApp.documents || {}).map(([key, entry]) => (
+                      <div key={key} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '9px 12px', borderRadius: 7,
+                        background: 'rgba(78,232,200,0.04)',
+                        border: '1px solid rgba(78,232,200,0.15)',
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {DOCUMENT_LABELS[key]?.label || key}
+                          </p>
+                          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {entry.name}
+                          </p>
+                        </div>
+                        {entry.url && (
+                          <a href={entry.url} target="_blank" rel="noreferrer"
+                            style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, textDecoration: 'none' }}>
+                            Voir →
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Section>
+
+              {/* Admin note input */}
+              <Section title="Note / Motif">
+                <textarea
+                  value={appNote}
+                  onChange={e => setAppNote(e.target.value)}
+                  placeholder="Note interne, motif de refus ou corrections requises..."
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: 'rgba(8,10,20,0.7)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: 6, color: '#fff',
+                    fontFamily: FONTS.mono, fontSize: 11,
+                    padding: '10px 12px', outline: 'none', resize: 'vertical',
+                    minHeight: 72, lineHeight: 1.5,
+                  }}
+                />
+              </Section>
+
+              {/* Action buttons */}
+              {(selectedApp.status === 'submitted' || selectedApp.status === 'under_review') && (
+                <Section title="Actions">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <button
+                      onClick={() => setConfirmAction({ type: 'appApprove', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                      style={{
+                        width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
+                        background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))',
+                        border: '1px solid rgba(34,197,94,0.35)', color: '#22c55e',
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}>
+                      ✓ Approuver le dossier
+                    </button>
+                    <button
+                      onClick={() => setConfirmAction({ type: 'appChanges', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                      style={{
+                        width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
+                        background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.35)',
+                        color: '#f59e0b',
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}>
+                      ⚠ Demander des corrections
+                    </button>
+                    {selectedApp.status === 'submitted' && (
+                      <button
+                        onClick={() => handleAppAction(selectedApp.id, 'under_review', appNote)}
+                        style={{
+                          width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
+                          background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.35)',
+                          color: '#3b82f6',
+                          fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                        }}>
+                        → Passer en révision
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setConfirmAction({ type: 'appReject', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                      style={{
+                        width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
+                        background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.35)',
+                        color: COLORS.pink,
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}>
+                      ✕ Refuser le dossier
+                    </button>
+                  </div>
+                </Section>
+              )}
+
+              {selectedApp.status === 'approved' && (
+                <Section title="Actions">
+                  <button
+                    onClick={() => setConfirmAction({ type: 'appSuspend', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                    style={{
+                      width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
+                      background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.35)',
+                      color: '#ef4444',
+                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                    Suspendre le compte
+                  </button>
+                </Section>
+              )}
+
+              {/* Audit log */}
+              {selectedApp.auditLog?.length > 0 && (
+                <Section title="Historique">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {[...selectedApp.auditLog].reverse().map((entry, i) => {
+                      const cfg = APPLICATION_STATUSES[entry.action]
+                      const color = cfg?.color || COLORS.dim
+                      return (
+                        <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i < selectedApp.auditLog.length - 1 ? 14 : 0, position: 'relative' }}>
+                          {i < selectedApp.auditLog.length - 1 && (
+                            <div style={{ position: 'absolute', left: 10, top: 20, bottom: 0, width: 1, background: 'rgba(255,255,255,0.06)' }} />
+                          )}
+                          <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, border: `1px solid ${color}44`, background: color + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+                            <div style={{ width: 5, height: 5, borderRadius: '50%', background: color }} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: '1px 0 1px', fontWeight: 600 }}>
+                              {cfg?.label || entry.action}
+                            </p>
+                            {entry.note && <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.muted, margin: '0 0 1px' }}>{entry.note}</p>}
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: 0 }}>
+                              {entry.byName} · {new Date(entry.at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Section>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Confirm Dialog ── */}
       {confirmAction && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-black/90" onClick={() => setConfirmAction(null)} />
-          <div className="relative bg-[#08080f] border border-white/[0.07] rounded-2xl p-5 w-full max-w-xs space-y-4 text-center">
-            <p className="text-4xl">
-              {confirmAction.type === 'approve' ? '✅' : confirmAction.type === 'reject' ? '❌' : confirmAction.type === 'ban' ? '🚫' : '🗑'}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.90)' }} onClick={() => setConfirmAction(null)} />
+          <div style={{
+            position: 'relative', ...CARD, padding: 24, width: '100%', maxWidth: 320,
+            display: 'flex', flexDirection: 'column', gap: 16, textAlign: 'center',
+          }}>
+            {/* Icon */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              {(confirmAction.type === 'approve' || confirmAction.type === 'approveRole' || confirmAction.type === 'appApprove') && (
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              {confirmAction.type === 'appChanges' && (
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              )}
+              {(confirmAction.type === 'reject' || confirmAction.type === 'rejectRole' || confirmAction.type === 'appReject' || confirmAction.type === 'appSuspend') && (
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              {confirmAction.type === 'ban' && (
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={COLORS.gold} strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              )}
+              {confirmAction.type === 'delete' && (
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              )}
+            </div>
+
+            <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 17, color: '#fff', margin: 0 }}>
+              {confirmAction.type === 'approve'     && `Valider le compte de ${confirmAction.name} ?`}
+              {confirmAction.type === 'reject'      && `Refuser le compte de ${confirmAction.name} ?`}
+              {confirmAction.type === 'ban'         && `Suspendre le compte de ${confirmAction.name} ?`}
+              {confirmAction.type === 'delete'      && `Supprimer définitivement le compte de ${confirmAction.name} ?`}
+              {confirmAction.type === 'approveRole' && `Activer l\u2019espace ${confirmAction.role} pour ${confirmAction.name} ?`}
+              {confirmAction.type === 'rejectRole'  && `Refuser la demande ${confirmAction.role} de ${confirmAction.name} ?`}
+              {confirmAction.type === 'appApprove'  && `Approuver le dossier de ${confirmAction.name} ?`}
+              {confirmAction.type === 'appChanges'  && `Demander des corrections pour le dossier de ${confirmAction.name} ?`}
+              {confirmAction.type === 'appReject'   && `Refuser le dossier de ${confirmAction.name} ?`}
+              {confirmAction.type === 'appSuspend'  && `Suspendre le dossier de ${confirmAction.name} ?`}
             </p>
-            <p className="text-white font-bold text-sm">
-              {confirmAction.type === 'approve' && `Valider le compte de ${confirmAction.name} ?`}
-              {confirmAction.type === 'reject'  && `Refuser le compte de ${confirmAction.name} ?`}
-              {confirmAction.type === 'ban'     && `Suspendre le compte de ${confirmAction.name} ?`}
-              {confirmAction.type === 'delete'  && `Supprimer définitivement le compte de ${confirmAction.name} ?`}
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => setConfirmAction(null)} className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-gray-400 text-sm">Annuler</button>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setConfirmAction(null)} style={{
+                flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
+                background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
+              }}>Annuler</button>
               <button
                 onClick={() => {
-                  if (confirmAction.type === 'approve') handleApprove(confirmAction.uid)
-                  if (confirmAction.type === 'reject')  handleReject(confirmAction.uid)
-                  if (confirmAction.type === 'ban')     handleBan(confirmAction.uid)
-                  if (confirmAction.type === 'delete')  handleDelete(confirmAction.uid)
+                  if (confirmAction.type === 'approve')     handleApprove(confirmAction.uid)
+                  if (confirmAction.type === 'reject')      handleReject(confirmAction.uid)
+                  if (confirmAction.type === 'ban')         handleBan(confirmAction.uid)
+                  if (confirmAction.type === 'delete')      handleDelete(confirmAction.uid)
+                  if (confirmAction.type === 'approveRole') handleApproveRoleRequest(confirmAction.id)
+                  if (confirmAction.type === 'rejectRole')  handleRejectRoleRequest(confirmAction.id)
+                  if (confirmAction.type === 'appApprove')  handleAppAction(confirmAction.appId, 'approved', appNote)
+                  if (confirmAction.type === 'appChanges')  handleAppAction(confirmAction.appId, 'needs_changes', appNote)
+                  if (confirmAction.type === 'appReject')   handleAppAction(confirmAction.appId, 'rejected', appNote)
+                  if (confirmAction.type === 'appSuspend')  handleAppAction(confirmAction.appId, 'suspended', appNote)
                 }}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold ${
-                  confirmAction.type === 'approve' ? 'bg-[#d4af37] text-black' : 'bg-red-500 text-white'
-                }`}>
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
+                  fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
+                  ...((confirmAction.type === 'approve' || confirmAction.type === 'approveRole' || confirmAction.type === 'appApprove')
+                    ? { background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))', border: '1px solid rgba(78,232,200,0.35)', color: COLORS.teal }
+                    : confirmAction.type === 'appChanges'
+                    ? { background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.40)', color: '#f59e0b' }
+                    : { background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.40)', color: 'rgba(220,100,100,0.9)' }
+                  ),
+                }}>
                 Confirmer
               </button>
             </div>
@@ -556,9 +1329,16 @@ export default function AgentPage() {
 
       {/* ── Toast ── */}
       {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-2xl text-sm font-semibold shadow-2xl transition-all ${
-          toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-[#d4af37] text-black'
-        }`}>
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 70, padding: '11px 20px', borderRadius: 6,
+          fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em',
+          backdropFilter: 'blur(20px)',
+          ...(toast.type === 'error'
+            ? { background: 'rgba(220,50,50,0.16)', border: '1px solid rgba(220,50,50,0.40)', color: 'rgba(220,100,100,0.95)' }
+            : { background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.40)', color: COLORS.teal }
+          ),
+        }}>
           {toast.msg}
         </div>
       )}
@@ -567,10 +1347,18 @@ export default function AgentPage() {
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────
+const FONTS_SUB = {
+  display: "'Cormorant Garamond', Georgia, serif",
+  mono: "'DM Mono', 'Fira Mono', monospace",
+}
+
 function Section({ title, children }) {
   return (
     <div>
-      <p className="text-gray-600 text-[10px] uppercase tracking-widest mb-2">{title}</p>
+      <p style={{
+        fontFamily: FONTS_SUB.mono, fontSize: 9, color: 'rgba(255,255,255,0.25)',
+        textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10,
+      }}>{title}</p>
       {children}
     </div>
   )
@@ -578,9 +1366,19 @@ function Section({ title, children }) {
 
 function InfoRow({ label, value, mono }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-white/[0.05] last:border-0">
-      <span className="text-gray-500 text-xs">{label}</span>
-      <span className={`text-gray-300 text-xs ${mono ? 'font-mono text-[10px]' : ''} max-w-[60%] text-right truncate`}>{value}</span>
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)',
+    }}>
+      <span style={{ fontFamily: FONTS_SUB.mono, fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{label}</span>
+      <span style={{
+        fontFamily: mono ? FONTS_SUB.mono : FONTS_SUB.display,
+        fontWeight: mono ? 400 : 300,
+        fontSize: mono ? 10 : 13,
+        color: 'rgba(255,255,255,0.72)',
+        maxWidth: '60%', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        letterSpacing: mono ? '0.04em' : 0,
+      }}>{value}</span>
     </div>
   )
 }

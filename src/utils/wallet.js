@@ -1,6 +1,13 @@
 // ─── Electronic Wallet (Portefeuille électronique) ───────────────────────────
+import { syncDoc } from './firestore-sync'
 
 function wKey(userId) { return `lib_wallet_${userId}` }
+
+function saveWallet(userId, wallet) {
+  localStorage.setItem(wKey(userId), JSON.stringify(wallet))
+  // Fire-and-forget Firestore sync
+  syncDoc(`wallets/${userId}`, wallet)
+}
 
 export function getWallet(userId) {
   if (!userId) return { balance: 0, transactions: [] }
@@ -21,7 +28,7 @@ export function addFunds(userId, amount, description = 'Rechargement') {
     { id: Date.now().toString(), type: 'credit', amount, description, date: new Date().toISOString() },
     ...(wallet.transactions || []).slice(0, 99),
   ]
-  localStorage.setItem(wKey(userId), JSON.stringify(wallet))
+  saveWallet(userId, wallet)
   return wallet
 }
 
@@ -35,7 +42,7 @@ export function deductFunds(userId, amount, description = 'Paiement') {
     { id: Date.now().toString(), type: 'debit', amount, description, date: new Date().toISOString() },
     ...(wallet.transactions || []).slice(0, 99),
   ]
-  localStorage.setItem(wKey(userId), JSON.stringify(wallet))
+  saveWallet(userId, wallet)
   return wallet
 }
 

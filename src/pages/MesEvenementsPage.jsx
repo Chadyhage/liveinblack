@@ -5,6 +5,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import BoostModal from '../components/BoostModal'
 import getCroppedImg from '../utils/cropImage'
+import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
 
 function generateCode(len = 8) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -31,9 +32,185 @@ function getCreatedEvents() {
   try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
 }
 
+// ── Shared style tokens ────────────────────────────────────────────────────────
+const S = {
+  card: {
+    background: 'rgba(8,10,20,0.55)',
+    backdropFilter: 'blur(22px) saturate(1.6)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 12,
+  },
+  inputBase: {
+    background: 'rgba(6,8,16,0.6)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+    padding: '10px 14px',
+    width: '100%',
+    outline: 'none',
+    boxSizing: 'border-box',
+  },
+  label: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 9,
+    letterSpacing: '0.35em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.28)',
+    display: 'block',
+    marginBottom: 6,
+  },
+  btnPrimary: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(78,232,200,0.12))',
+    border: '1px solid rgba(255,255,255,0.28)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'white',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnGold: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+    border: '1px solid rgba(200,169,110,0.45)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: '#c8a96e',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnGhost: {
+    padding: '13px 28px',
+    background: 'transparent',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.5)',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnDanger: {
+    padding: '13px 28px',
+    background: 'rgba(220,50,50,0.10)',
+    border: '1px solid rgba(220,50,50,0.35)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'rgba(220,100,100,0.9)',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnTeal: {
+    padding: '13px 28px',
+    background: 'rgba(78,232,200,0.10)',
+    border: '1px solid rgba(78,232,200,0.35)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: '#4ee8c8',
+    cursor: 'pointer',
+    width: '100%',
+  },
+}
+
+// ── Eyebrow label with teal line ──────────────────────────────────────────────
+function Eyebrow({ children, style = {} }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, ...style }}>
+      <div style={{ width: 28, height: 1, background: '#4ee8c8', flexShrink: 0 }} />
+      <span style={{
+        fontFamily: "'DM Mono', monospace",
+        fontSize: 9,
+        letterSpacing: '0.4em',
+        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.25)',
+      }}>{children}</span>
+    </div>
+  )
+}
+
+function InputField({ label, value, onChange, placeholder, type = 'text', error, style = {} }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <div>
+      {label && <label style={S.label}>{label}</label>}
+      <input
+        type={type}
+        style={{
+          ...S.inputBase,
+          borderColor: error ? 'rgba(220,50,50,0.6)' : focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)',
+          boxShadow: focused ? '0 0 0 3px rgba(78,232,200,0.06)' : 'none',
+          ...style,
+        }}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+      />
+      {error && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{error}</p>}
+    </div>
+  )
+}
+
+function Toggle({ value, onChange }) {
+  return (
+    <div
+      onClick={onChange}
+      style={{
+        width: 44,
+        height: 24,
+        borderRadius: 12,
+        background: value ? '#4ee8c8' : 'rgba(255,255,255,0.08)',
+        position: 'relative',
+        cursor: 'pointer',
+        transition: 'background 0.2s',
+        flexShrink: 0,
+      }}
+    >
+      <div style={{
+        position: 'absolute',
+        top: 4,
+        width: 16,
+        height: 16,
+        background: 'white',
+        borderRadius: '50%',
+        transition: 'left 0.2s',
+        left: value ? 24 : 4,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+      }} />
+    </div>
+  )
+}
+
+// ── Close icon ────────────────────────────────────────────────────────────────
+function IconClose({ size = 12, color = 'rgba(255,255,255,0.5)' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  )
+}
+
 export default function MesEvenementsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const userCanCreate = canCreateEvent(user)
   const imageInputRef = useRef(null)
 
   const [view, setView] = useState('dashboard')
@@ -47,7 +224,7 @@ export default function MesEvenementsPage() {
   const toastTimerRef = useRef(null)
 
   // Step 0: Bases
-  const [form, setForm] = useState({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '' })
+  const [form, setForm] = useState({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18 })
   const [artists, setArtists] = useState([]) // [{ name: '', role: 'DJ' }]
   const [showArtistSection, setShowArtistSection] = useState(false)
   const [imagePreview, setImagePreview] = useState(null)
@@ -64,15 +241,14 @@ export default function MesEvenementsPage() {
   const onCropComplete = useCallback((_, cap) => setCroppedAreaPixels(cap), [])
 
   // Step 1: Places
-  const [places, setPlaces] = useState([{ type: 'Entrée libre', price: 0, qty: 100, auction: false, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
+  const [places, setPlaces] = useState([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
 
   // Step 2: Venue
   const [venue, setVenue] = useState({ name: '', address: '', city: '', country: '' })
 
   // Step 3: Options
   const [options, setOptions] = useState({ playlist: false, preorder: false, qr: true })
-  // Custom menu for preorder
-  const [menuItems, setMenuItems] = useState([{ name: '', emoji: '🍾', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [] }])
+  const [menuItems, setMenuItems] = useState([{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [] }])
 
   // Dashboard bookings panel
   const [showBookingsPanel, setShowBookingsPanel] = useState(false)
@@ -84,7 +260,6 @@ export default function MesEvenementsPage() {
   const [codesQty, setCodesQty] = useState(10)
   const [generatedCodes, setGeneratedCodes] = useState(null)
 
-  // Dashboard: created events from localStorage (state so it refreshes after publish)
   const [createdEvents, setCreatedEvents] = useState(getCreatedEvents)
 
   function handleImage(e) {
@@ -107,7 +282,6 @@ export default function MesEvenementsPage() {
     }
     reader.readAsDataURL(file)
     setErrors(err => ({ ...err, image: null }))
-    // Reset input so same file can be re-selected
     e.target.value = ''
   }
 
@@ -163,8 +337,8 @@ export default function MesEvenementsPage() {
       city: venue.city,
       region: venue.country || venue.city,
       imageUrl: imagePreview,
-      color: '#d4af37',
-      accentColor: '#f5d76e',
+      color: '#c8a96e',
+      accentColor: '#e8d49e',
       category: category || 'Autre',
       tags: [],
       organizer: user?.name || 'Organisateur',
@@ -174,15 +348,13 @@ export default function MesEvenementsPage() {
         price: Number(p.price) || 0,
         available: Number(p.qty) || 50,
         total: Number(p.qty) || 50,
-        icon: '🎟',
-        auctionEnabled: p.auction,
+        icon: '',
         maxPerAccount: Number(p.maxPerAccount) || 0,
         groupType: p.groupType || 'solo',
         groupMin: Number(p.groupMin) || 0,
         groupMax: Number(p.groupMax) || 0,
       })),
       playlist: options.playlist,
-      auction: places.some(p => p.auction),
       preorder: options.preorder,
       featured: false,
       rating: 0,
@@ -192,6 +364,7 @@ export default function MesEvenementsPage() {
         ? artists.filter(a => a.name.trim()).map(a => a.name.trim()).join(', ')
         : user?.name || 'Organisateur',
       performers: [],
+      minAge: form.minAge || 18,
       userCreated: true,
       isPrivate: eventType === 'private',
       privateCode: eventType === 'private' ? form.privateCode.trim() : null,
@@ -206,7 +379,6 @@ export default function MesEvenementsPage() {
     localStorage.setItem('lib_created_events', JSON.stringify(updated))
     setCreatedEvents(updated)
 
-    // If private with a master code, save it to lib_event_codes
     if (eventType === 'private' && form.privateCode.trim()) {
       const all = getEventCodes()
       const key = String(eventData.id)
@@ -221,7 +393,6 @@ export default function MesEvenementsPage() {
     if (!wasEditing) {
       setJustPublishedEvent(eventData)
       setView('dashboard')
-      // Show boost toast after short delay
       setTimeout(() => {
         setShowBoostToast(true)
         toastTimerRef.current = setTimeout(() => {
@@ -237,17 +408,17 @@ export default function MesEvenementsPage() {
   function startCreate() {
     setCreateStep(0)
     setEditingEventId(null)
-    setForm({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '' })
+    setForm({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18 })
     setArtists([])
     setShowArtistSection(false)
     setImagePreview(null)
     setEventType(null)
     setCategory(null)
     setErrors({})
-    setPlaces([{ type: 'Entrée libre', price: 0, qty: 100, auction: false, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
+    setPlaces([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
     setVenue({ name: '', address: '', city: '', country: '' })
     setOptions({ playlist: false, preorder: false, qr: true })
-    setMenuItems([{ name: '', emoji: '🍾', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
+    setMenuItems([{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
     setView('create')
   }
 
@@ -261,6 +432,7 @@ export default function MesEvenementsPage() {
       timeEnd: ev.endTime || '',
       description: ev.description || '',
       privateCode: ev.privateCode || '',
+      minAge: ev.minAge != null ? ev.minAge : 18,
     })
     const loadedArtists = ev.artists?.length ? ev.artists : []
     setArtists(loadedArtists)
@@ -276,9 +448,9 @@ export default function MesEvenementsPage() {
       city: ev.city || '',
       country: ev.region !== ev.city ? ev.region || '' : '',
     })
-    setPlaces(ev.places?.map(p => ({ type: p.type, price: p.price, qty: p.total, auction: p.auctionEnabled, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '' })) || [{ type: 'Entrée libre', price: 0, qty: 100, auction: false, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
+    setPlaces(ev.places?.map(p => ({ type: p.type, price: p.price, qty: p.total, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '' })) || [{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
     setOptions({ playlist: ev.playlist || false, preorder: ev.preorder || false, qr: true })
-    setMenuItems(ev.menu?.length ? ev.menu : [{ name: '', emoji: '🍾', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
+    setMenuItems(ev.menu?.length ? ev.menu : [{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
     setView('create')
   }
 
@@ -289,96 +461,147 @@ export default function MesEvenementsPage() {
     setDeleteConfirm(null)
   }
 
+  // ─── Role guard ──────────────────────────────────────────────────────────────
+  if (!userCanCreate) {
+    return (
+      <Layout>
+        <div style={{ padding: '60px 20px', textAlign: 'center', maxWidth: 400, margin: '0 auto' }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="rgba(255,255,255,0.08)" style={{ marginBottom: 16 }}>
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+          </svg>
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 300, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+            Accès restreint
+          </p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 20 }}>
+            {getCreateEventBlockedReason(user)}
+          </p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em', lineHeight: 1.6 }}>
+            Pour créer des événements, tu dois avoir un compte organisateur validé.
+          </p>
+        </div>
+      </Layout>
+    )
+  }
+
   // ─── Dashboard ───────────────────────────────────────────────────────────────
   if (view === 'dashboard') {
     return (
       <Layout>
-        <div className="px-4 py-5 space-y-5">
+        <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+          {/* Page header */}
           <div>
-            <h2 className="text-3xl font-black uppercase" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-              Mes <span className="text-[#d4af37]">Événements</span>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, letterSpacing: '0.02em', lineHeight: 1.1 }}>
+              Mes <span style={{ color: '#c8a96e' }}>Événements</span>
             </h2>
-            <p className="text-gray-500 text-xs mt-1">Crée et gère tes soirées</p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 6 }}>
+              Crée et gère tes soirées
+            </p>
           </div>
 
-          <div className="flex gap-3">
-            <button onClick={startCreate} className="flex-1">
-              <div className="relative overflow-hidden rounded-2xl border border-[#d4af37]/30 bg-gradient-to-r from-[#d4af37]/10 to-transparent p-5 text-left hover:border-[#d4af37]/60 transition-all h-full">
-                <p className="text-[#d4af37] text-xs uppercase tracking-widest mb-1">Nouveau</p>
-                <p className="text-white text-lg font-bold">Créer un événement</p>
-                <p className="text-gray-500 text-xs mt-1">De A à Z — lieux, places, enchères</p>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-4xl opacity-20">✦</div>
+          {/* Quick actions */}
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={startCreate} style={{ flex: 1, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+              <div style={{
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: 12,
+                border: '1px solid rgba(200,169,110,0.30)',
+                background: 'linear-gradient(135deg, rgba(200,169,110,0.08) 0%, transparent 60%)',
+                padding: 20,
+                height: '100%',
+              }}>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 4 }}>Nouveau</p>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Créer un événement</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>De A à Z — lieux, places, options</p>
+                <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.10 }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="#c8a96e"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+                </div>
               </div>
             </button>
-            <button onClick={() => navigate('/scanner')} className="flex-shrink-0">
-              <div className="rounded-2xl border border-white/[0.08] bg-[#08080f] p-5 text-center hover:border-white/20 transition-all flex flex-col items-center gap-2 justify-center" style={{ width: 90 }}>
-                <span className="text-3xl">📷</span>
-                <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider leading-tight">Scanner</p>
+            <button onClick={() => navigate('/scanner')} style={{ flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+              <div style={{ ...S.card, width: 90, padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5">
+                  <path d="M3 4h2v2H3V4zm4 0h1v2H7V4zM3 7h1v1H3V7zM3 9h3v3H3V9zM3 13h2v2H3v-2zm4 0h1v2H7v-2zM3 16h1v1H3v-1zM3 18h3v3H3v-3zM7 18h1v3H7v-3zM9 3h3v3H9V3zm4 0h2v2h-2V3zm3 0h1v2h-1V3zm-8 4h1v1H8V7zm4 0h1v1h-1V7zm4 0h1v1h-1V7zM9 9h3v3H9V9zm4 0h3v3h-3V9zm-4 4h1v1H9v-1zm4 0h3v3h-3v-3zm-4 3h3v3h-3v-3z"/>
+                </svg>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', lineHeight: 1.3, textAlign: 'center' }}>Scanner</p>
               </div>
             </button>
           </div>
 
+          {/* Events list */}
           <div>
-            <h3 className="text-gray-500 text-xs uppercase tracking-widest mb-3">Mes soirées en cours</h3>
+            <Eyebrow style={{ marginBottom: 14 }}>Mes soirées en cours</Eyebrow>
             {createdEvents.length === 0 ? (
-              <div className="border border-white/[0.05] rounded-2xl p-8 text-center">
-                <p className="text-3xl mb-2">📋</p>
-                <p className="text-gray-600 text-sm">Tu n'as pas encore d'événement créé.</p>
-                <p className="text-gray-700 text-xs mt-1">Lance-toi !</p>
+              <div style={{ ...S.card, padding: 40, textAlign: 'center' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                </svg>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>Tu n'as pas encore d'événement créé.</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 4 }}>Lance-toi !</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {createdEvents.map(ev => (
-                  <div key={ev.id} className="glass p-4 rounded-2xl flex items-center gap-3">
-                    <button onClick={() => navigate(`/evenements/${ev.id}`)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                  <div key={ev.id} style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button onClick={() => navigate(`/evenements/${ev.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
                       {ev.imageUrl ? (
-                        <img src={ev.imageUrl} alt={ev.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                        <img src={ev.imageUrl} alt={ev.name} style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
                       ) : (
-                        <div className="w-14 h-14 rounded-xl bg-[#d4af37]/20 flex items-center justify-center text-2xl flex-shrink-0">🎉</div>
+                        <div style={{ width: 52, height: 52, borderRadius: 8, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-semibold text-sm truncate">{ev.name}</p>
-                        <p className="text-gray-500 text-xs">{ev.dateDisplay} · {ev.city}</p>
-                        <span className="text-[10px] text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full mt-1 inline-block">✓ Publié</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: '#4ee8c8', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.18)', padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
+                          PUBLIE
+                        </span>
                       </div>
                     </button>
-                    <div className="flex flex-col gap-1 flex-shrink-0">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+                      {/* Reservations */}
                       <button
                         onClick={() => { setBookingsPanelEvent(ev); setShowBookingsPanel(true) }}
-                        className="w-8 h-8 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center text-[#d4af37] text-sm hover:bg-[#d4af37]/20 transition-all"
                         title="Voir les réservations"
+                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                       >
-                        📋
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
                       </button>
+                      {/* Boost */}
                       <button
                         onClick={() => { setBoostTargetEvent(ev); setShowBoostModal(true) }}
-                        className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-sm hover:bg-purple-500/20 transition-all"
                         title="Booster"
+                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                       >
-                        🚀
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="1.8"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M15 9v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
                       </button>
+                      {/* Private codes */}
                       {ev.isPrivate && (
                         <button
                           onClick={() => { setCodesTargetEvent(ev); setGeneratedCodes(null); setCodesQty(10); setShowCodesModal(true) }}
-                          className="w-8 h-8 rounded-lg bg-[#0e0e18] border border-white/[0.08] flex items-center justify-center text-gray-400 text-sm hover:bg-white/5 transition-all"
                           title="Codes d'accès"
+                          style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                         >
-                          🔑
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                         </button>
                       )}
+                      {/* Edit */}
                       <button
                         onClick={() => startEdit(ev)}
-                        className="w-8 h-8 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center text-[#d4af37] text-sm hover:bg-[#d4af37]/20 transition-all"
                         title="Modifier"
+                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                       >
-                        ✎
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
+                      {/* Delete */}
                       <button
                         onClick={() => setDeleteConfirm(ev.id)}
-                        className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 text-sm hover:bg-red-500/20 transition-all"
                         title="Supprimer"
+                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                       >
-                        ✕
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                       </button>
                     </div>
                   </div>
@@ -389,19 +612,16 @@ export default function MesEvenementsPage() {
 
           {/* Delete confirmation modal */}
           {deleteConfirm && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-              <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
-              <div className="relative glass rounded-2xl p-6 w-full max-w-sm space-y-4">
-                <h3 className="text-white font-bold">Supprimer l'événement ?</h3>
-                <p className="text-gray-400 text-sm">Cette action est irréversible. L'événement sera retiré de la liste.</p>
-                <div className="flex gap-2">
-                  <button onClick={() => setDeleteConfirm(null)} className="btn-outline flex-1">Annuler</button>
-                  <button
-                    onClick={() => deleteEvent(deleteConfirm)}
-                    className="flex-1 py-3 bg-red-500/20 border border-red-500/40 text-red-400 rounded-xl font-semibold hover:bg-red-500/30 transition-all"
-                  >
-                    Supprimer
-                  </button>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => setDeleteConfirm(null)} />
+              <div style={{ ...S.card, position: 'relative', padding: 24, width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Supprimer l'événement ?</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7 }}>
+                  Cette action est irréversible. L'événement sera retiré de la liste.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setDeleteConfirm(null)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
+                  <button onClick={() => deleteEvent(deleteConfirm)} style={{ ...S.btnDanger, flex: 1 }}>Supprimer</button>
                 </div>
               </div>
             </div>
@@ -413,14 +633,11 @@ export default function MesEvenementsPage() {
           <BookingsPanel event={bookingsPanelEvent} onClose={() => setShowBookingsPanel(false)} />
         )}
 
-        {/* Boost toast — slides in from right after publish */}
+        {/* Boost toast */}
         {showBoostToast && justPublishedEvent && (
-          <div
-            className="fixed bottom-24 right-4 z-50 animate-fade-in-up"
-            style={{ maxWidth: 280 }}
-          >
+          <div style={{ position: 'fixed', bottom: 96, right: 16, zIndex: 50, maxWidth: 280 }}>
             <div
-              className="glass p-4 rounded-2xl border border-purple-500/40 bg-[#08080f] shadow-2xl cursor-pointer hover:border-purple-500/70 transition-all"
+              style={{ ...S.card, padding: 16, borderColor: 'rgba(224,90,170,0.40)', cursor: 'pointer' }}
               onClick={() => {
                 clearTimeout(toastTimerRef.current)
                 setShowBoostToast(false)
@@ -428,20 +645,23 @@ export default function MesEvenementsPage() {
                 setShowBoostModal(true)
               }}
             >
-              <div className="flex items-start gap-3">
-                <span className="text-2xl flex-shrink-0">🚀</span>
-                <div className="flex-1">
-                  <p className="text-white text-sm font-bold">Booste ton événement !</p>
-                  <p className="text-gray-400 text-xs mt-0.5">
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+                  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/>
+                  <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/>
+                </svg>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>Booste ton événement</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>
                     Apparais dans le Top 3 régional et multiplie ta visibilité.
                   </p>
-                  <p className="text-purple-400 text-xs mt-1 font-semibold">Voir les offres →</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#e05aaa', marginTop: 6, letterSpacing: '0.1em' }}>Voir les offres</p>
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); clearTimeout(toastTimerRef.current); setShowBoostToast(false); navigate('/evenements') }}
-                  className="text-gray-600 hover:text-gray-400 text-lg flex-shrink-0"
+                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', flexShrink: 0, padding: 2, display: 'flex', alignItems: 'center' }}
                 >
-                  ×
+                  <IconClose size={14} color="rgba(255,255,255,0.4)" />
                 </button>
               </div>
             </div>
@@ -459,49 +679,55 @@ export default function MesEvenementsPage() {
 
         {/* Codes generation modal */}
         {showCodesModal && codesTargetEvent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setShowCodesModal(false); setGeneratedCodes(null) }} />
-            <div className="relative glass rounded-2xl p-6 w-full max-w-sm space-y-4 max-h-[80vh] overflow-y-auto">
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { setShowCodesModal(false); setGeneratedCodes(null) }} />
+            <div style={{ ...S.card, position: 'relative', padding: 24, width: '100%', maxWidth: 360, maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <h3 className="text-white font-bold">🔑 Codes d'accès</h3>
-                <p className="text-gray-500 text-xs mt-1">Génère des codes uniques à partager avec tes invités pour <span className="text-[#d4af37]">{codesTargetEvent.name}</span></p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Codes d'accès</p>
+                </div>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7 }}>
+                  Génère des codes uniques pour{' '}
+                  <span style={{ color: '#c8a96e' }}>{codesTargetEvent.name}</span>
+                </p>
               </div>
               {!generatedCodes ? (
                 <>
                   <div>
-                    <label className="text-gray-500 text-xs mb-1.5 block">Nombre de codes à générer</label>
-                    <input
-                      className="input-dark"
+                    <label style={S.label}>Nombre de codes à générer</label>
+                    <InputField
                       type="number"
-                      min="1"
-                      max="100"
                       value={codesQty}
                       onChange={e => setCodesQty(e.target.value)}
+                      placeholder="10"
                     />
-                    <p className="text-gray-600 text-xs mt-1">Max 100 codes par génération</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 4 }}>Max 100 codes par génération</p>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => setShowCodesModal(false)} className="btn-outline flex-1 text-sm">Annuler</button>
-                    <button onClick={generateCodes} className="btn-gold flex-1 text-sm">Générer →</button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => setShowCodesModal(false)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
+                    <button onClick={generateCodes} style={{ ...S.btnGold, flex: 1 }}>Générer</button>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20">
-                    <p className="text-green-400 text-xs font-semibold">✓ {generatedCodes.length} codes générés</p>
+                  <div style={{ background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.18)', borderRadius: 4, padding: '10px 14px' }}>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#4ee8c8' }}>{generatedCodes.length} codes générés</p>
                   </div>
-                  <div className="space-y-1 max-h-60 overflow-y-auto">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 240, overflowY: 'auto' }}>
                     {generatedCodes.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between p-2 bg-[#0e0e18] rounded-lg">
-                        <span className="font-mono text-[#d4af37] text-sm tracking-widest">{c.code}</span>
-                        <span className="text-gray-600 text-[10px]">1 utilisation</span>
+                      <div key={i} style={{ ...S.card, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: '#c8a96e', letterSpacing: '0.25em' }}>{c.code}</span>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>1 utilisation</span>
                       </div>
                     ))}
                   </div>
-                  <p className="text-gray-600 text-xs">Copie et envoie ces codes à tes invités. Chaque code ne peut être utilisé qu'une seule fois.</p>
-                  <div className="flex gap-2">
-                    <button onClick={() => setGeneratedCodes(null)} className="btn-outline flex-1 text-sm">Regénérer</button>
-                    <button onClick={() => { setShowCodesModal(false); setGeneratedCodes(null) }} className="btn-gold flex-1 text-sm">Fermer</button>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7 }}>
+                    Copie et envoie ces codes à tes invités. Chaque code ne peut être utilisé qu'une seule fois.
+                  </p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => setGeneratedCodes(null)} style={{ ...S.btnGhost, flex: 1 }}>Regénérer</button>
+                    <button onClick={() => { setShowCodesModal(false); setGeneratedCodes(null) }} style={{ ...S.btnGold, flex: 1 }}>Fermer</button>
                   </div>
                 </>
               )}
@@ -515,15 +741,15 @@ export default function MesEvenementsPage() {
   // ─── Create flow ─────────────────────────────────────────────────────────────
   return (
     <Layout>
-      {/* ── Crop modal ── */}
+      {/* Crop modal */}
       {showCropper && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-black">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
-            <button onClick={() => setShowCropper(false)} className="text-gray-400 text-sm">Annuler</button>
-            <p className="text-white text-sm font-semibold">Recadrer l'image</p>
-            <button onClick={applyCrop} className="text-[#d4af37] text-sm font-semibold">Valider ✓</button>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', background: 'black' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <button onClick={() => setShowCropper(false)} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}>Annuler</button>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.1em' }}>Recadrer l'image</p>
+            <button onClick={applyCrop} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}>Valider</button>
           </div>
-          <div className="flex-1 relative">
+          <div style={{ flex: 1, position: 'relative' }}>
             <Cropper
               image={cropSrc}
               crop={crop}
@@ -534,8 +760,8 @@ export default function MesEvenementsPage() {
               onCropComplete={onCropComplete}
             />
           </div>
-          <div className="px-6 py-4 border-t border-white/[0.05] space-y-2">
-            <p className="text-gray-500 text-xs text-center">Pinch / molette pour zoomer</p>
+          <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', textAlign: 'center', marginBottom: 8, letterSpacing: '0.1em' }}>Pinch / molette pour zoomer</p>
             <input
               type="range"
               min={1}
@@ -543,140 +769,135 @@ export default function MesEvenementsPage() {
               step={0.05}
               value={zoom}
               onChange={e => setZoom(Number(e.target.value))}
-              className="w-full accent-[#d4af37]"
+              style={{ width: '100%', accentColor: '#c8a96e' }}
             />
           </div>
         </div>
       )}
-      <div className="px-4 py-5 space-y-5">
+
+      <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
         {/* Header */}
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={() => createStep === 0 ? setView('dashboard') : setCreateStep(s => s - 1)}
-            className="w-8 h-8 rounded-full bg-[#0e0e18] flex items-center justify-center text-gray-400"
+            style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
-            ‹
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <div>
-            <h2 className="text-white font-bold">{editingEventId ? "Modifier l'événement" : 'Créer un événement'}</h2>
-            <p className="text-gray-600 text-xs">Étape {createStep + 1}/{CREATION_STEPS.length} — {CREATION_STEPS[createStep]}</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+              {editingEventId ? "Modifier l'événement" : 'Créer un événement'}
+            </p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+              Étape {createStep + 1}/{CREATION_STEPS.length} — {CREATION_STEPS[createStep]}
+            </p>
           </div>
         </div>
 
-        {/* Progress */}
-        <div className="flex gap-1">
+        {/* Progress bar */}
+        <div style={{ display: 'flex', gap: 4 }}>
           {CREATION_STEPS.map((s, i) => (
-            <div key={s} className="flex-1 h-1 rounded-full" style={{ background: i <= createStep ? '#d4af37' : '#0e0e18' }} />
+            <div key={s} style={{ flex: 1, height: 2, borderRadius: 2, background: i <= createStep ? '#c8a96e' : 'rgba(255,255,255,0.06)', transition: 'background 0.3s' }} />
           ))}
         </div>
 
         {/* ── Step 0: Bases ── */}
         {createStep === 0 && (
-          <div className="space-y-4 animate-fade-in">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
             {/* Image upload */}
             <div>
-              <label className="text-gray-500 text-xs mb-1.5 block">Affiche / Photo de l'événement</label>
+              <label style={S.label}>Affiche / Photo de l'événement</label>
               <div
-                className={`relative border-2 border-dashed rounded-2xl overflow-hidden cursor-pointer transition-all ${imagePreview ? 'border-[#d4af37]/40' : 'border-white/[0.07] hover:border-white/20'}`}
-                style={{ aspectRatio: '16/9' }}
+                style={{
+                  position: 'relative',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  aspectRatio: '16/9',
+                  border: imagePreview ? '1px solid rgba(200,169,110,0.35)' : '2px dashed rgba(255,255,255,0.07)',
+                  background: 'rgba(6,8,16,0.4)',
+                }}
                 onClick={() => imageInputRef.current?.click()}
               >
                 {imagePreview ? (
-                  <>
-                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-all">
-                      <p className="text-white text-sm font-semibold">Changer l'image</p>
-                    </div>
-                  </>
+                  <img src={imagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                    <p className="text-3xl">🖼</p>
-                    <p className="text-gray-400 text-sm font-medium">Clique pour ajouter l'affiche</p>
-                    <p className="text-gray-600 text-xs">Format recommandé : 1200 × 630 px</p>
-                    <p className="text-gray-700 text-[10px]">JPG · PNG · WEBP — max 5 MB</p>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>Clique pour ajouter l'affiche</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em' }}>Format recommandé : 1200 × 630 px</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.18)' }}>JPG · PNG · WEBP — max 5 MB</p>
                   </div>
                 )}
               </div>
-              <input ref={imageInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={handleImage} />
-              {errors.image && <p className="text-red-400 text-xs mt-1">{errors.image}</p>}
+              <input ref={imageInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" style={{ display: 'none' }} onChange={handleImage} />
+              {errors.image && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className="text-gray-500 text-xs mb-1.5 block">Nom de l'événement *</label>
-                <input
-                  className={`input-dark ${errors.name ? 'border-red-500/60' : ''}`}
-                  placeholder="Ex: NEON NIGHT Vol.3"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                />
-                {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+            {/* Basic fields */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <InputField label="Nom de l'événement *" placeholder="Ex: NEON NIGHT Vol.3" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} error={errors.name} />
+              <InputField label="Date *" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} error={errors.date} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} />
+                <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} />
               </div>
               <div>
-                <label className="text-gray-500 text-xs mb-1.5 block">Date *</label>
-                <input
-                  className={`input-dark ${errors.date ? 'border-red-500/60' : ''}`}
-                  type="date"
-                  value={form.date}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                />
-                {errors.date && <p className="text-red-400 text-xs mt-1">{errors.date}</p>}
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-gray-500 text-xs mb-1.5 block">Heure début</label>
-                  <input className="input-dark" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-gray-500 text-xs mb-1.5 block">Heure fin</label>
-                  <input className="input-dark" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} />
-                </div>
-              </div>
-              <div>
-                <label className="text-gray-500 text-xs mb-1.5 block">Description courte</label>
+                <label style={S.label}>Description courte</label>
                 <textarea
-                  className="input-dark resize-none h-20 text-sm"
+                  style={{ ...S.inputBase, resize: 'none', height: 80 }}
                   placeholder="Décris ta soirée en 2-3 phrases..."
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
                 />
               </div>
-              <div className="glass p-3 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
+
+              {/* Artists section */}
+              <div style={{ ...S.card, padding: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showArtistSection ? 12 : 0 }}>
                   <div>
-                    <p className="text-white text-sm font-semibold">DJs / Artistes</p>
-                    <p className="text-gray-600 text-[10px]">Affiché sur la playlist et la fiche événement</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.08em' }}>DJs / Artistes</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
                   </div>
-                  <button
-                    onClick={() => setShowArtistSection(v => !v)}
-                    className={`w-10 h-5 rounded-full transition-all flex items-center flex-shrink-0 ${showArtistSection ? 'bg-[#d4af37] justify-end' : 'bg-white/[0.08] justify-start'}`}
-                  >
-                    <span className="w-4 h-4 rounded-full bg-white mx-0.5 block" />
-                  </button>
+                  <Toggle value={showArtistSection} onChange={() => setShowArtistSection(v => !v)} />
                 </div>
                 {showArtistSection && (
-                  <div className="space-y-2 pt-1">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {artists.map((a, i) => (
-                      <div key={i} className="flex items-center gap-2">
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <select
                           value={a.role}
                           onChange={e => setArtists(prev => prev.map((x, xi) => xi === i ? { ...x, role: e.target.value } : x))}
-                          className="bg-[#08080f] border border-white/[0.07] text-white text-xs rounded-lg px-2 py-2 focus:outline-none focus:border-[#d4af37]/40 flex-shrink-0"
+                          style={{ ...S.inputBase, width: 'auto', flexShrink: 0 }}
                         >
                           {['DJ', 'Artiste', 'MC', 'Live', 'Guest'].map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                         <input
-                          className="input-dark text-sm flex-1"
+                          style={{ ...S.inputBase, flex: 1 }}
                           placeholder="Nom..."
                           value={a.name}
                           onChange={e => setArtists(prev => prev.map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))}
+                          onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                          onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
                         />
-                        <button onClick={() => setArtists(prev => prev.filter((_, xi) => xi !== i))} className="text-red-400 text-xs flex-shrink-0 hover:text-red-300">✕</button>
+                        <button
+                          onClick={() => setArtists(prev => prev.filter((_, xi) => xi !== i))}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}
+                        >
+                          <IconClose size={13} color="rgba(220,100,100,0.9)" />
+                        </button>
                       </div>
                     ))}
                     <button
                       onClick={() => setArtists(prev => [...prev, { name: '', role: 'DJ' }])}
-                      className="w-full py-1.5 text-xs text-[#d4af37] border border-[#d4af37]/20 rounded-xl hover:bg-[#d4af37]/5 transition-colors"
+                      style={{ padding: '8px', fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 4, background: 'transparent', cursor: 'pointer', letterSpacing: '0.1em' }}
                     >
                       + Ajouter un DJ / artiste
                     </button>
@@ -685,45 +906,76 @@ export default function MesEvenementsPage() {
               </div>
             </div>
 
+            {/* Event type */}
             <div>
-              <label className="text-gray-500 text-xs mb-2 block">Type d'événement *</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label style={{ ...S.label, marginBottom: 8 }}>Type d'événement *</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {['public', 'private'].map((t) => (
                   <button
                     key={t}
                     onClick={() => { setEventType(t); setErrors(e => ({ ...e, eventType: null })) }}
-                    className={`p-3 rounded-xl border text-center transition-all ${eventType === t ? 'border-[#d4af37] bg-[#d4af37]/10' : 'border-white/[0.07]'}`}
+                    style={{
+                      ...S.card,
+                      padding: 12,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      borderColor: eventType === t ? 'rgba(200,169,110,0.55)' : 'rgba(255,255,255,0.07)',
+                      background: eventType === t ? 'rgba(200,169,110,0.08)' : 'rgba(8,10,20,0.55)',
+                    }}
                   >
-                    <p className="text-lg mb-1">{t === 'public' ? '🌍' : '🔒'}</p>
-                    <p className="text-white text-xs font-semibold">{t === 'public' ? 'Public' : 'Privé'}</p>
-                    <p className="text-gray-600 text-[10px] mt-0.5">{t === 'public' ? 'Visible par tous' : 'Accès par code'}</p>
+                    <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'center' }}>
+                      {t === 'public' ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.42)'} strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.42)'} strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                      )}
+                    </div>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.90)', letterSpacing: '0.1em' }}>
+                      {t === 'public' ? 'Public' : 'Privé'}
+                    </p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>
+                      {t === 'public' ? 'Visible par tous' : 'Accès par code'}
+                    </p>
                   </button>
                 ))}
               </div>
-              {errors.eventType && <p className="text-red-400 text-xs mt-1">{errors.eventType}</p>}
+              {errors.eventType && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.eventType}</p>}
               {eventType === 'private' && (
-                <div className="mt-2 space-y-2">
-                  <label className="text-gray-500 text-xs mb-1.5 block">Code d'accès maître (optionnel)</label>
-                  <input
-                    className="input-dark font-mono uppercase tracking-widest"
+                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <InputField
+                    label="Code d'accès maître (optionnel)"
                     placeholder="Ex: NEON2026"
                     value={form.privateCode}
                     onChange={e => setForm(f => ({ ...f, privateCode: e.target.value.toUpperCase() }))}
-                    maxLength={20}
+                    style={{ fontFamily: "'DM Mono', monospace", letterSpacing: '0.25em', textTransform: 'uppercase' }}
                   />
-                  <p className="text-gray-600 text-[10px]">Tu pourras aussi générer des codes individuels depuis ton tableau de bord après publication.</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6 }}>
+                    Tu pourras aussi générer des codes individuels depuis ton tableau de bord après publication.
+                  </p>
                 </div>
               )}
             </div>
 
+            {/* Genre */}
             <div>
-              <label className="text-gray-500 text-xs mb-2 block">Genre musical</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label style={{ ...S.label, marginBottom: 8 }}>Genre musical</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {['Afrobeat', 'Rap', 'Électronique', 'R&B', 'Reggaeton', 'Dancehall', 'House', 'Autre'].map((g) => (
                   <button
                     key={g}
                     onClick={() => setCategory(g)}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all ${category === g ? 'border-[#d4af37] bg-[#d4af37]/10 text-[#d4af37]' : 'border-white/[0.07] text-gray-500 hover:border-white/[0.08]'}`}
+                    style={{
+                      padding: '10px',
+                      borderRadius: 4,
+                      border: category === g ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.07)',
+                      background: category === g ? 'rgba(200,169,110,0.08)' : 'transparent',
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 10,
+                      letterSpacing: '0.1em',
+                      color: category === g ? '#c8a96e' : 'rgba(255,255,255,0.5)',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                    }}
                   >
                     {g}
                   </button>
@@ -731,232 +983,178 @@ export default function MesEvenementsPage() {
               </div>
             </div>
 
-            <button onClick={() => validateAndNext(0)} className="btn-gold w-full">Suivant →</button>
+            {/* Âge légal */}
+            <div>
+              <label style={S.label}>Âge minimum requis</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[0, 16, 18, 21].map(age => (
+                  <button
+                    key={age}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, minAge: age }))}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: 4,
+                      border: form.minAge === age ? '1px solid #4ee8c8' : '1px solid rgba(255,255,255,0.10)',
+                      background: form.minAge === age ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.6)',
+                      color: form.minAge === age ? '#4ee8c8' : 'rgba(255,255,255,0.4)',
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 11,
+                      letterSpacing: '0.15em',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {age === 0 ? 'TOUT PUBLIC' : `${age}+`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={() => validateAndNext(0)} style={S.btnGold}>Suivant</button>
           </div>
         )}
 
         {/* ── Step 1: Places & Prix ── */}
         {createStep === 1 && (
-          <div className="space-y-4 animate-fade-in">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <h3 className="text-white font-semibold mb-1">Tes types de places</h3>
-              <p className="text-gray-500 text-xs">Configure chaque type de place que tu veux proposer.</p>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Tes types de places</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Configure chaque type de place que tu veux proposer.</p>
             </div>
 
             {places.map((place, i) => (
-              <div key={i} className="glass p-4 rounded-2xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-[#d4af37] text-xs uppercase tracking-wider">Place {i + 1}</p>
+              <div key={i} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e' }}>Place {i + 1}</p>
                   {i > 0 && (
-                    <button onClick={() => setPlaces(places.filter((_, j) => j !== i))} className="text-red-400 text-xs">Supprimer</button>
+                    <button onClick={() => setPlaces(places.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(220,100,100,0.9)', letterSpacing: '0.1em' }}>Supprimer</button>
                   )}
                 </div>
-                <div className={`grid gap-2 ${place.auction ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <div>
-                    <label className="text-gray-500 text-xs mb-1 block">Nom du type *</label>
-                    <input
-                      className={`input-dark text-sm ${errors[`place_${i}`] ? 'border-red-500/60' : ''}`}
+                    <InputField
+                      label="Nom du type *"
                       placeholder="Ex: Carré VIP"
                       value={place.type}
                       onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, type: e.target.value } : p))}
+                      error={errors[`place_${i}`]}
                     />
-                    {errors[`place_${i}`] && <p className="text-red-400 text-xs mt-0.5">{errors[`place_${i}`]}</p>}
                   </div>
-                  {!place.auction && (
-                    <div>
-                      <label className="text-gray-500 text-xs mb-1 block">Prix (€)</label>
-                      <input
-                        className="input-dark text-sm"
-                        type="number"
-                        placeholder="0 = gratuit"
-                        value={place.price}
-                        onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, price: e.target.value } : p))}
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-gray-500 text-xs mb-1 block">Quantité disponible</label>
-                    <input
-                      className="input-dark text-sm"
+                    <InputField
+                      label="Prix (€)"
                       type="number"
-                      placeholder="Ex: 100"
-                      value={place.qty}
-                      onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, qty: e.target.value } : p))}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-gray-500 text-xs mb-1 block">Max/compte</label>
-                    <input
-                      className="input-dark text-sm"
-                      type="number"
-                      placeholder="0 = illimité"
-                      min="0"
-                      value={place.maxPerAccount || ''}
-                      onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, maxPerAccount: e.target.value } : p))}
+                      placeholder="0 = gratuit"
+                      value={place.price}
+                      onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, price: e.target.value } : p))}
                     />
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm">Activer les enchères</p>
-                    <p className="text-gray-600 text-xs">La place se vend au plus offrant</p>
-                  </div>
-                  <div
-                    onClick={() => setPlaces(places.map((p, j) => j === i ? { ...p, auction: !p.auction, minBid: p.minBid || '' } : p))}
-                    className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${place.auction ? 'bg-[#d4af37]' : 'bg-white/[0.08]'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${place.auction ? 'left-6' : 'left-1'}`} />
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <InputField label="Quantité disponible" type="number" placeholder="Ex: 100" value={place.qty} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, qty: e.target.value } : p))} />
+                  <InputField label="Max/compte" type="number" placeholder="0 = illimité" value={place.maxPerAccount || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, maxPerAccount: e.target.value } : p))} />
                 </div>
-                {place.auction && (
-                  <div className="animate-fade-in border-t border-[#d4af37]/20 pt-3 space-y-3">
-                    <div>
-                      <label className="text-[#d4af37] text-xs mb-1.5 block">🔨 Prix de départ (€)</label>
-                      <input
-                        className="input-dark text-sm"
-                        type="number"
-                        placeholder="Ex: 50"
-                        value={place.price}
-                        onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, price: e.target.value } : p))}
-                      />
-                      <p className="text-gray-600 text-xs mt-1">Montant minimum pour commencer à enchérir</p>
-                    </div>
-                    <div>
-                      <label className="text-[#d4af37] text-xs mb-1.5 block">📈 Incrément minimum (€)</label>
-                      <input
-                        className="input-dark text-sm"
-                        type="number"
-                        placeholder="Ex: 20"
-                        value={place.minBid || ''}
-                        onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, minBid: e.target.value } : p))}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Group type toggle */}
-                <div className="flex items-center justify-between border-t border-white/[0.05] pt-3">
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <p className="text-gray-400 text-sm">Place de groupe</p>
-                    <p className="text-gray-600 text-xs">Réservation pour plusieurs personnes</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.70)' }}>Place de groupe</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
                   </div>
-                  <div
-                    onClick={() => setPlaces(places.map((p, j) => j === i ? { ...p, groupType: p.groupType === 'group' ? 'solo' : 'group' } : p))}
-                    className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${place.groupType === 'group' ? 'bg-[#d4af37]' : 'bg-white/[0.08]'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${place.groupType === 'group' ? 'left-6' : 'left-1'}`} />
-                  </div>
+                  <Toggle
+                    value={place.groupType === 'group'}
+                    onChange={() => setPlaces(places.map((p, j) => j === i ? { ...p, groupType: p.groupType === 'group' ? 'solo' : 'group' } : p))}
+                  />
                 </div>
                 {place.groupType === 'group' && (
-                  <div className="animate-fade-in space-y-2">
-                    <p className="text-blue-400 text-xs font-semibold">👥 Capacité du groupe</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-gray-500 text-xs mb-1 block">Min personnes</label>
-                        <input
-                          className="input-dark text-sm"
-                          type="number"
-                          min="2"
-                          placeholder="Ex: 8"
-                          value={place.groupMin || ''}
-                          onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMin: e.target.value } : p))}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-gray-500 text-xs mb-1 block">Max personnes</label>
-                        <input
-                          className="input-dark text-sm"
-                          type="number"
-                          min="2"
-                          placeholder="Ex: 12"
-                          value={place.groupMax || ''}
-                          onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMax: e.target.value } : p))}
-                        />
-                      </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <p style={{ ...S.label, color: '#4ee8c8' }}>Capacité du groupe</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <InputField label="Min personnes" type="number" placeholder="Ex: 8" value={place.groupMin || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMin: e.target.value } : p))} />
+                      <InputField label="Max personnes" type="number" placeholder="Ex: 12" value={place.groupMax || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMax: e.target.value } : p))} />
                     </div>
-                    <p className="text-gray-700 text-[10px]">Validé dès le min atteint · accepté jusqu'au max avec marge</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Validé dès le min atteint · accepté jusqu'au max avec marge</p>
                   </div>
                 )}
               </div>
             ))}
 
-            <button onClick={() => setPlaces(p => [...p, { type: '', price: 0, qty: 50, auction: false }])} className="btn-outline w-full text-sm">
+            <button onClick={() => setPlaces(p => [...p, { type: '', price: 0, qty: 50 }])} style={S.btnGhost}>
               + Ajouter un type de place
             </button>
-            <button onClick={() => validateAndNext(1)} className="btn-gold w-full">Suivant →</button>
+            <button onClick={() => validateAndNext(1)} style={S.btnGold}>Suivant</button>
           </div>
         )}
 
         {/* ── Step 2: Lieu & Infos pratiques ── */}
         {createStep === 2 && (
-          <div className="space-y-4 animate-fade-in">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <h3 className="text-white font-semibold">Lieu & Infos pratiques</h3>
-              <p className="text-gray-500 text-xs mt-1">Indique où se déroulera ton événement.</p>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Lieu & Infos pratiques</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Indique où se déroulera ton événement.</p>
             </div>
-
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
                 { key: 'name', label: 'Nom du lieu', placeholder: 'Ex: Club Le Baroque, Salle des Fêtes...' },
                 { key: 'address', label: 'Adresse', placeholder: 'Ex: 12 rue de la Paix' },
                 { key: 'city', label: 'Ville *', placeholder: 'Ex: Paris, Lomé, Abidjan...' },
                 { key: 'country', label: 'Pays', placeholder: "Ex: France, Togo, Côte d'Ivoire..." },
               ].map((f) => (
-                <div key={f.key}>
-                  <label className="text-gray-500 text-xs mb-1.5 block">{f.label}</label>
-                  <input
-                    className={`input-dark ${f.key === 'city' && errors.city ? 'border-red-500/60' : ''}`}
-                    placeholder={f.placeholder}
-                    value={venue[f.key]}
-                    onChange={e => setVenue(v => ({ ...v, [f.key]: e.target.value }))}
-                  />
-                  {f.key === 'city' && errors.city && <p className="text-red-400 text-xs mt-1">{errors.city}</p>}
-                </div>
+                <InputField
+                  key={f.key}
+                  label={f.label}
+                  placeholder={f.placeholder}
+                  value={venue[f.key]}
+                  onChange={e => setVenue(v => ({ ...v, [f.key]: e.target.value }))}
+                  error={f.key === 'city' ? errors.city : undefined}
+                />
               ))}
             </div>
-
-            <div className="flex items-start gap-3 p-4 rounded-2xl border border-[#d4af37]/20 bg-[#d4af37]/5">
-              <span className="text-xl flex-shrink-0">🎤</span>
+            <div style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.18)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5" style={{ flexShrink: 0, marginTop: 1 }}>
+                <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+              </svg>
               <div>
-                <p className="text-[#d4af37] text-sm font-semibold">Tu cherches une salle ou des prestataires ?</p>
-                <p className="text-gray-500 text-xs mt-0.5">DJs, artistes, sono, lumières — tout est disponible dans l'onglet Services.</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#c8a96e', letterSpacing: '0.05em' }}>Tu cherches une salle ou des prestataires ?</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>DJs, artistes, sono, lumières — tout est disponible dans l'onglet Services.</p>
               </div>
             </div>
-
-            <button onClick={() => validateAndNext(2)} className="btn-gold w-full">Suivant →</button>
+            <button onClick={() => validateAndNext(2)} style={S.btnGold}>Suivant</button>
           </div>
         )}
 
         {/* ── Step 3: Options avancées ── */}
         {createStep === 3 && (
-          <div className="space-y-4 animate-fade-in">
-            <h3 className="text-white font-semibold">Options avancées</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Options avancées</p>
+            {/* QR Code — toujours actif, non modifiable */}
+            <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(78,232,200,0.15)' }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>QR Code billet</p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l'entrée — obligatoire</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8', letterSpacing: '0.15em' }}>INCLUS</span>
+              </div>
+            </div>
             {[
               { key: 'playlist', label: 'Playlist interactive', desc: '1 son par ticket — vote par likes' },
               { key: 'preorder', label: 'Précommande de consommations', desc: "Clients commandent à l'avance" },
-              { key: 'qr', label: 'QR Code billet', desc: "Billet numérique unique envoyé par email — scanné à l'entrée" },
             ].map((opt) => (
-              <div key={opt.key} className="flex items-start justify-between p-4 glass rounded-xl">
-                <div className="pr-4">
-                  <p className="text-white text-sm font-semibold">{opt.label}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{opt.desc}</p>
+              <div key={opt.key} style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>{opt.label}</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>{opt.desc}</p>
                 </div>
-                <div
-                  onClick={() => setOptions(o => ({ ...o, [opt.key]: !o[opt.key] }))}
-                  className={`w-11 h-6 rounded-full relative cursor-pointer transition-all flex-shrink-0 ${options[opt.key] ? 'bg-[#d4af37]' : 'bg-white/[0.08]'}`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${options[opt.key] ? 'left-6' : 'left-1'}`} />
-                </div>
+                <Toggle value={options[opt.key]} onChange={() => setOptions(o => ({ ...o, [opt.key]: !o[opt.key] }))} />
               </div>
             ))}
-            {/* Custom menu when preorder enabled */}
             {options.preorder && (
-              <div className="space-y-3 animate-fade-in">
-                <div className="border-t border-[#d4af37]/20 pt-4">
-                  <h4 className="text-[#d4af37] text-xs uppercase tracking-widest mb-1">Définir ta carte / menu</h4>
-                  <p className="text-gray-500 text-xs mb-3">Ajoute les articles que tes clients pourront précommander.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ borderTop: '1px solid rgba(200,169,110,0.15)', paddingTop: 16 }}>
+                  <p style={{ ...S.label, color: '#c8a96e', marginBottom: 4 }}>Définir ta carte / menu</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
                   {menuItems.map((item, i) => (
                     <MenuItemEditor
                       key={i}
@@ -968,54 +1166,78 @@ export default function MesEvenementsPage() {
                     />
                   ))}
                   <button
-                    onClick={() => setMenuItems(m => [...m, { name: '', emoji: '🍹', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [] }])}
-                    className="btn-outline w-full text-xs"
+                    onClick={() => setMenuItems(m => [...m, { name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [] }])}
+                    style={S.btnGhost}
                   >
                     + Ajouter un article
                   </button>
                 </div>
               </div>
             )}
-
-            <button onClick={() => setCreateStep(4)} className="btn-gold w-full">Suivant →</button>
+            {options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0 && (
+              <div style={{
+                padding: '10px 14px',
+                background: 'rgba(220,50,50,0.07)',
+                border: '1px solid rgba(220,50,50,0.25)',
+                borderRadius: 6,
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 10,
+                color: 'rgba(220,100,100,0.9)',
+                lineHeight: 1.7,
+              }}>
+                La précommande est activée mais aucun article n'a été renseigné. Ajoute au moins un article avec un nom et un prix, ou désactive la précommande.
+              </div>
+            )}
+            <button
+              onClick={() => {
+                if (options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0) return
+                setCreateStep(4)
+              }}
+              style={{
+                ...S.btnGold,
+                opacity: (options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0) ? 0.4 : 1,
+                cursor: (options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0) ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Suivant
+            </button>
           </div>
         )}
 
         {/* ── Step 4: Récapitulatif & Publier ── */}
         {createStep === 4 && (
-          <div className="space-y-4 animate-fade-in">
-            <h3 className="text-white font-semibold">Récapitulatif & Publication</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Récapitulatif & Publication</p>
 
             {imagePreview && (
-              <div className="rounded-2xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                <img src={imagePreview} alt="affiche" className="w-full h-full object-cover" />
+              <div style={{ borderRadius: 8, overflow: 'hidden', aspectRatio: '16/9' }}>
+                <img src={imagePreview} alt="affiche" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
 
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {[
                 { label: 'Événement', val: form.name || '—' },
                 { label: 'Date', val: formatDateDisplay(form.date) || '—' },
                 { label: 'Horaires', val: form.timeStart ? `${form.timeStart} → ${form.timeEnd || '?'}` : '—' },
                 { label: 'DJ / Artiste', val: artists.filter(a => a.name?.trim()).map(a => a.name.trim()).join(', ') || user?.name || '—' },
-                { label: 'Visibilité', val: eventType === 'private' ? '🔒 Privé (codes requis)' : '🌍 Public' },
+                { label: 'Visibilité', val: eventType === 'private' ? 'Privé (codes requis)' : 'Public' },
                 { label: 'Genre musical', val: category || 'Autre' },
                 { label: 'Types de places', val: `${places.length} type(s)` },
-                { label: 'Lieu', val: venue.name ? `📍 ${venue.name}, ${venue.city}` : venue.city ? `📍 ${venue.city}` : '—' },
-                { label: 'Playlist interactive', val: options.playlist ? '✓ Activée' : '✕ Désactivée' },
-                { label: 'Places aux enchères', val: places.filter(p => p.auction).length > 0 ? `✓ ${places.filter(p => p.auction).length} type(s)` : '✕ Aucune' },
-                { label: 'Précommande conso', val: options.preorder ? `✓ Activée (${menuItems.filter(i => i.name.trim()).length} articles)` : '✕ Désactivée' },
-                { label: 'QR Code billet', val: options.qr ? '✓ Activé' : '✕ Désactivé' },
+                { label: 'Lieu', val: venue.name ? `${venue.name}, ${venue.city}` : venue.city ? venue.city : '—' },
+                { label: 'Playlist interactive', val: options.playlist ? 'Activée' : 'Désactivée' },
+                { label: 'Précommande conso', val: options.preorder ? `Activée (${menuItems.filter(i => i.name.trim()).length} articles)` : 'Désactivée' },
+                { label: 'QR Code billet', val: 'Activé — obligatoire' },
               ].map((r) => (
-                <div key={r.label} className="flex justify-between p-3 glass rounded-xl">
-                  <span className="text-gray-500 text-sm">{r.label}</span>
-                  <span className="text-white text-sm font-semibold">{r.val}</span>
+                <div key={r.label} style={{ ...S.card, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', flexShrink: 0 }}>{r.label}</span>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', textAlign: 'right' }}>{r.val}</span>
                 </div>
               ))}
             </div>
 
-            <button className="btn-gold w-full" onClick={handlePublish}>
-              {editingEventId ? '✓ Enregistrer les modifications' : '🚀 Publier mon événement'}
+            <button style={S.btnGold} onClick={handlePublish}>
+              {editingEventId ? 'Enregistrer les modifications' : 'Publier mon événement'}
             </button>
           </div>
         )}
@@ -1055,132 +1277,150 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
   }
 
   return (
-    <div className="glass p-3 rounded-xl mb-2 space-y-2.5">
+    <div style={{ ...S.card, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <p className="text-gray-500 text-xs">Article {index + 1}</p>
-        {onRemove && <button onClick={onRemove} className="text-red-400 text-xs hover:text-red-300">✕</button>}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)' }}>Article {index + 1}</p>
+        {onRemove && (
+          <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 2 }}>
+            <IconClose size={12} color="rgba(220,100,100,0.9)" />
+          </button>
+        )}
       </div>
 
-      {/* Photo / Emoji toggle */}
-      <div className="flex items-center gap-2">
+      {/* Photo / Symbol row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {item.imageUrl ? (
-          <div className="relative flex-shrink-0">
-            <img src={item.imageUrl} alt="" className="w-12 h-12 rounded-xl object-cover border border-white/[0.08]" />
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <img src={item.imageUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.08)' }} />
             <button
               onClick={() => u('imageUrl', null)}
-              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center"
-            >✕</button>
+              style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: '50%', background: 'rgba(220,50,50,0.9)', border: 'none', color: 'white', fontSize: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <IconClose size={8} color="white" />
+            </button>
           </div>
         ) : (
           <input
-            className="input-dark text-sm text-center w-14 flex-shrink-0"
-            placeholder="🍾"
+            style={{ ...S.inputBase, width: 56, textAlign: 'center', flexShrink: 0, padding: '8px 6px' }}
+            placeholder="icon"
             value={item.emoji}
             onChange={e => u('emoji', e.target.value)}
             maxLength={4}
+            onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+            onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
           />
         )}
         <button
           onClick={() => photoRef.current?.click()}
-          className="text-[10px] text-gray-500 border border-white/[0.07] px-2 py-1 rounded-lg hover:border-[#d4af37]/30 hover:text-gray-400 transition-colors"
+          style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '6px 10px', background: 'transparent', cursor: 'pointer', letterSpacing: '0.05em', flexShrink: 0 }}
         >
-          {item.imageUrl ? '📷 Changer photo' : '📷 Ajouter photo'}
+          {item.imageUrl ? 'Changer photo' : 'Ajouter photo'}
         </button>
-        <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
-        <div className="flex-1 min-w-0">
+        <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
+        <div style={{ flex: 1, minWidth: 0 }}>
           <input
-            className="input-dark text-sm w-full"
+            style={{ ...S.inputBase }}
             placeholder="Nom de l'article"
             value={item.name}
             onChange={e => u('name', e.target.value)}
+            onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+            onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
           />
         </div>
       </div>
 
       {/* Price + Category */}
-      <div className="grid grid-cols-2 gap-2">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
-          <label className="text-gray-600 text-[10px] mb-1 block">Prix (€)</label>
-          <input className="input-dark text-sm" type="number" placeholder="0" min="0" value={item.price} onChange={e => u('price', Math.max(0, parseFloat(e.target.value) || 0))} />
+          <label style={S.label}>Prix (€)</label>
+          <input style={{ ...S.inputBase }} type="number" placeholder="0" min="0" value={item.price} onChange={e => u('price', Math.max(0, parseFloat(e.target.value) || 0))}
+            onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+            onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }} />
         </div>
         <div>
-          <label className="text-gray-600 text-[10px] mb-1 block">Catégorie</label>
-          <select className="input-dark text-sm" value={item.category} onChange={e => u('category', e.target.value)}>
-            {['Boissons', 'Snacks', 'VIP', 'Autre'].map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <label style={S.label}>Catégorie</label>
+          <input
+            style={{ ...S.inputBase }}
+            placeholder="Ex: Boissons, VIP, Snacks…"
+            value={item.category}
+            onChange={e => u('category', e.target.value)}
+            onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+            onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
+          />
         </div>
       </div>
 
       {/* Description toggle */}
       {!showDesc ? (
-        <button onClick={() => setShowDesc(true)} className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors">
+        <button onClick={() => setShowDesc(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', textAlign: 'left', letterSpacing: '0.1em' }}>
           + Ajouter une description
         </button>
       ) : (
         <div>
-          <label className="text-gray-600 text-[10px] mb-1 block">Description (optionnelle)</label>
+          <label style={S.label}>Description (optionnelle)</label>
           <textarea
-            className="input-dark text-xs resize-none"
+            style={{ ...S.inputBase, resize: 'none' }}
             rows={2}
             placeholder="Ex: Bouteille 75cl servie avec glaçons et pailles dorées..."
             value={item.description}
             onChange={e => u('description', e.target.value)}
+            onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+            onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
           />
         </div>
       )}
 
       {/* Show toggle */}
-      <div className="flex items-center justify-between pt-1 border-t border-white/[0.05]">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <div>
-          <p className="text-white text-xs font-semibold">🎆 Option Show</p>
-          <p className="text-gray-600 text-[10px]">Mise en scène spéciale à la livraison</p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>Option Show</p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
         </div>
-        <button
-          onClick={() => u('hasShow', !item.hasShow)}
-          className={`w-10 h-5 rounded-full transition-all flex items-center ${item.hasShow ? 'bg-[#d4af37] justify-end' : 'bg-white/[0.08] justify-start'}`}
-        >
-          <span className="w-4 h-4 rounded-full bg-white mx-0.5 block" />
-        </button>
+        <Toggle value={item.hasShow} onChange={() => u('hasShow', !item.hasShow)} />
       </div>
 
       {/* Show options editor */}
       {item.hasShow && (
-        <div className="space-y-2 pl-2 border-l-2 border-[#d4af37]/20">
-          <p className="text-gray-500 text-[10px]">Définis les shows disponibles pour cet article :</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Définis les shows disponibles pour cet article :</p>
           {(item.showOptions || []).map(opt => (
-            <div key={opt.id} className="bg-[#08080f] border border-white/[0.05] rounded-xl p-2.5 space-y-2">
-              <div className="flex items-center gap-2">
+            <div key={opt.id} style={{ ...S.card, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input
-                  className="flex-1 bg-[#0e0e18] border border-white/[0.07] text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#d4af37]/40 placeholder-gray-600"
+                  style={{ ...S.inputBase, flex: 1, fontSize: 12 }}
                   placeholder="Ex: Pancartes + feu d'artifices"
                   value={opt.label}
                   onChange={e => updateShowOption(opt.id, 'label', e.target.value)}
+                  onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
                 />
-                <button onClick={() => removeShowOption(opt.id)} className="text-red-400 text-xs flex-shrink-0 hover:text-red-300">✕</button>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-gray-600 text-[10px]">Nécessite des infos client</p>
                 <button
-                  onClick={() => updateShowOption(opt.id, 'requiresInfo', !opt.requiresInfo)}
-                  className={`w-8 h-4 rounded-full transition-all flex items-center ${opt.requiresInfo ? 'bg-[#d4af37] justify-end' : 'bg-white/[0.08] justify-start'}`}
+                  onClick={() => removeShowOption(opt.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}
                 >
-                  <span className="w-3 h-3 rounded-full bg-white mx-0.5 block" />
+                  <IconClose size={12} color="rgba(220,100,100,0.9)" />
                 </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Nécessite des infos client</p>
+                <Toggle value={opt.requiresInfo} onChange={() => updateShowOption(opt.id, 'requiresInfo', !opt.requiresInfo)} />
               </div>
               {opt.requiresInfo && (
                 <input
-                  className="w-full bg-[#0e0e18] border border-white/[0.07] text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#d4af37]/40 placeholder-gray-600"
+                  style={{ ...S.inputBase, fontSize: 12 }}
                   placeholder="Question à poser au client (ex: Prénom sur la pancarte ?)"
                   value={opt.infoPrompt}
                   onChange={e => updateShowOption(opt.id, 'infoPrompt', e.target.value)}
+                  onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
                 />
               )}
             </div>
           ))}
           <button
             onClick={addShowOption}
-            className="w-full py-1.5 text-[10px] text-[#d4af37] border border-[#d4af37]/20 rounded-xl hover:bg-[#d4af37]/5 transition-colors"
+            style={{ padding: '7px', fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 4, background: 'transparent', cursor: 'pointer', letterSpacing: '0.1em' }}
           >
             + Ajouter un show
           </button>
@@ -1189,9 +1429,9 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
 
       {/* Place exclusion */}
       {placeTypes.length > 1 && (
-        <div className="pt-2 border-t border-white/[0.05] space-y-1.5">
-          <p className="text-gray-600 text-[10px]">Exclure de certaines places (cet article n'y apparaîtra pas) :</p>
-          <div className="flex flex-wrap gap-1.5">
+        <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginBottom: 8 }}>Exclure de certaines places :</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {placeTypes.map(pt => {
               const isExcluded = (item.excludedPlaces || []).includes(pt)
               return (
@@ -1201,13 +1441,23 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
                     const excl = item.excludedPlaces || []
                     u('excludedPlaces', isExcluded ? excl.filter(x => x !== pt) : [...excl, pt])
                   }}
-                  className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                    isExcluded
-                      ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                      : 'bg-[#08080f] border-white/[0.07] text-gray-500 hover:border-white/[0.08] hover:text-gray-400'
-                  }`}
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 9,
+                    padding: '3px 10px',
+                    borderRadius: 3,
+                    border: isExcluded ? '1px solid rgba(220,50,50,0.30)' : '1px solid rgba(255,255,255,0.07)',
+                    background: isExcluded ? 'rgba(220,50,50,0.08)' : 'rgba(6,8,16,0.6)',
+                    color: isExcluded ? 'rgba(220,100,100,0.9)' : 'rgba(255,255,255,0.42)',
+                    cursor: 'pointer',
+                  }}
                 >
-                  {isExcluded ? '✕ ' : ''}{pt}
+                  {isExcluded ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      {pt}
+                    </span>
+                  ) : pt}
                 </button>
               )
             })}
@@ -1225,14 +1475,12 @@ function BookingsPanel({ event, onClose }) {
   })()
   const eventBookings = allBookings.filter(b => String(b.eventId) === String(event.id))
 
-  // Group by place type
   const byPlace = eventBookings.reduce((acc, b) => {
     if (!acc[b.place]) acc[b.place] = []
     acc[b.place].push(b)
     return acc
   }, {})
 
-  // Item totals
   const itemTotals = {}
   eventBookings.forEach(b => {
     if (b.preorderSummary?.length) {
@@ -1240,7 +1488,6 @@ function BookingsPanel({ event, onClose }) {
         const qty = b.preorderItems?.[item.name] || 0
         if (!itemTotals[item.name]) itemTotals[item.name] = { emoji: item.emoji, qty: 0, shows: {} }
         itemTotals[item.name].qty += qty
-        // Count shows
         const sel = b.preorderShowSelections?.[item.name]
         if (sel?.showLabel) {
           const k = sel.showLabel
@@ -1253,55 +1500,61 @@ function BookingsPanel({ event, onClose }) {
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#04040b]">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'rgba(4,4,11,0.98)', backdropFilter: 'blur(20px)' }}>
       {/* Header */}
-      <div className="px-4 py-4 border-b border-white/[0.05] flex items-center gap-3">
-        <button onClick={onClose} className="text-gray-400 hover:text-white p-1">←</button>
-        <div className="flex-1 min-w-0">
-          <h2 className="text-white font-bold text-sm truncate">{event.name}</h2>
-          <p className="text-gray-500 text-xs">Réservations · {eventBookings.length} billet{eventBookings.length !== 1 ? 's' : ''}</p>
+      <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', padding: 4, display: 'flex', alignItems: 'center' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+            Réservations · {eventBookings.length} billet{eventBookings.length !== 1 ? 's' : ''}
+          </p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-5">
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 20 }}>
         {eventBookings.length === 0 ? (
-          <div className="text-center py-16 text-gray-600">
-            <p className="text-4xl mb-3">📋</p>
-            <p className="text-sm">Aucune réservation pour l'instant.</p>
+          <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.28)' }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
+              <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+            </svg>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11 }}>Aucune réservation pour l'instant.</p>
           </div>
         ) : (
           <>
             {/* Summary by place */}
-            <div className="space-y-2">
-              <p className="text-[#d4af37] text-xs uppercase tracking-widest font-semibold">Résumé par type de place</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <Eyebrow style={{ marginBottom: 8 }}>Résumé par type de place</Eyebrow>
               {Object.entries(byPlace).map(([place, bks]) => (
-                <div key={place} className="flex items-center justify-between p-3 glass rounded-xl">
-                  <span className="text-white text-sm font-semibold">{place}</span>
-                  <span className="text-[#d4af37] text-sm font-bold">{bks.length} billet{bks.length !== 1 ? 's' : ''}</span>
+                <div key={place} style={{ ...S.card, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{place}</span>
+                  <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: '#c8a96e' }}>{bks.length}</span>
                 </div>
               ))}
             </div>
 
             {/* Item totals + shows */}
             {Object.keys(itemTotals).length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[#d4af37] text-xs uppercase tracking-widest font-semibold">Précommandes (stock à prévoir)</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Eyebrow style={{ marginBottom: 8 }}>Précommandes (stock à prévoir)</Eyebrow>
                 {Object.entries(itemTotals).map(([name, data]) => (
-                  <div key={name} className="glass p-3 rounded-xl space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-white text-sm font-semibold">{data.emoji} {name}</span>
-                      <span className="text-[#d4af37] font-bold text-sm">×{data.qty}</span>
+                  <div key={name} style={{ ...S.card, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{data.emoji} {name}</span>
+                      <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: '#c8a96e' }}>x{data.qty}</span>
                     </div>
                     {Object.entries(data.shows).map(([showLabel, showData]) => (
-                      <div key={showLabel} className="pl-3 border-l-2 border-[#d4af37]/20">
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-400 text-xs">🎆 {showLabel}</span>
-                          <span className="text-gray-500 text-xs">×{showData.count}</span>
+                      <div key={showLabel} style={{ paddingLeft: 12, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{showLabel}</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>x{showData.count}</span>
                         </div>
                         {showData.infos.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {showData.infos.map((info, idx) => (
-                              <span key={idx} className="text-[10px] bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 px-2 py-0.5 rounded-full">
+                              <span key={idx} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, background: 'rgba(200,169,110,0.08)', color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', padding: '2px 8px', borderRadius: 3 }}>
                                 {info}
                               </span>
                             ))}
@@ -1315,31 +1568,31 @@ function BookingsPanel({ event, onClose }) {
             )}
 
             {/* Per-ticket details */}
-            <div className="space-y-2">
-              <p className="text-[#d4af37] text-xs uppercase tracking-widest font-semibold">Détail par billet</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <Eyebrow style={{ marginBottom: 8 }}>Détail par billet</Eyebrow>
               {eventBookings.map((b, idx) => (
-                <div key={b.id || idx} className="glass p-3 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between">
+                <div key={b.id || idx} style={{ ...S.card, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <p className="text-white text-xs font-bold font-mono">{b.ticketCode}</p>
-                      <p className="text-gray-500 text-[10px]">{b.place} · {b.placePrice}€</p>
-                      {b.userName && <p className="text-gray-600 text-[10px]">👤 {b.userName}</p>}
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.15em' }}>{b.ticketCode}</p>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>{b.place} · {b.placePrice}€</p>
+                      {b.userName && <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 14, fontWeight: 300, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>{b.userName}</p>}
                     </div>
-                    <span className="text-[#d4af37] text-xs font-bold">{b.totalPrice}€</span>
+                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: '#c8a96e' }}>{b.totalPrice}€</span>
                   </div>
                   {b.preorderSummary?.length > 0 && (
-                    <div className="space-y-1 pl-2 border-l-2 border-white/[0.05]">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 8, borderLeft: '2px solid rgba(255,255,255,0.05)' }}>
                       {b.preorderSummary.map(item => {
                         const sel = b.preorderShowSelections?.[item.name]
                         return (
                           <div key={item.name}>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-gray-400">{item.emoji} {item.name}</span>
-                              <span className="text-gray-600">×{b.preorderItems?.[item.name]}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{item.emoji} {item.name}</span>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>x{b.preorderItems?.[item.name]}</span>
                             </div>
                             {sel?.showLabel && (
-                              <p className="text-[10px] text-[#d4af37] pl-2">
-                                🎆 {sel.showLabel}{sel.showInfo ? ` — ${sel.showInfo}` : ''}
+                              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#c8a96e', paddingLeft: 8, marginTop: 2 }}>
+                                {sel.showLabel}{sel.showInfo ? ` — ${sel.showInfo}` : ''}
                               </p>
                             )}
                           </div>

@@ -79,7 +79,7 @@ export default function EventsPage() {
         }
 
         found = true
-        setCodeMsg({ type: 'success', text: '✓ Code valide ! Événement débloqué.' })
+        setCodeMsg({ type: 'success', text: 'Code valide — événement débloqué.' })
         setTimeout(() => {
           setShowCodeModal(false)
           setCodeInput('')
@@ -99,56 +99,137 @@ export default function EventsPage() {
           break
         }
       }
-      setCodeMsg({ type: 'error', text: alreadyUsed ? '⚠ Ce code a déjà été utilisé.' : '⚠ Code invalide ou expiré.' })
+      setCodeMsg({ type: 'error', text: alreadyUsed ? 'Ce code a déjà été utilisé.' : 'Code invalide ou expiré.' })
     }
   }
 
   return (
     <Layout>
-      <div className="px-4 py-5 space-y-5">
+      <div style={{ position: 'relative', zIndex: 1, background: 'transparent', padding: '20px 16px 32px' }}>
+
         {/* Share mode banner */}
         {shareConvId && (
-          <div className="flex items-center gap-3 p-3 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-2xl">
-            <div className="w-9 h-9 rounded-xl bg-[#d4af37]/20 flex items-center justify-center flex-shrink-0 text-lg">📤</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-bold">Mode partage</p>
-              <p className="text-gray-500 text-xs">Appuie sur un événement pour l'envoyer dans la conversation</p>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '12px 16px',
+            background: 'rgba(200,169,110,0.08)',
+            border: '1px solid rgba(200,169,110,0.28)',
+            borderRadius: 12,
+            marginBottom: 20,
+          }}>
+            <div style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
+              background: 'rgba(200,169,110,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
             </div>
-            <button onClick={() => navigate('/messagerie')} className="text-gray-600 hover:text-white text-lg flex-shrink-0">✕</button>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Mode partage</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '3px 0 0' }}>Appuie sur un événement pour l'envoyer dans la conversation</p>
+            </div>
+            <button
+              onClick={() => navigate('/messagerie')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.28)', fontSize: 16, flexShrink: 0, padding: 4, lineHeight: 1 }}
+            >
+              ✕
+            </button>
           </div>
         )}
 
         {/* Title + Code button */}
-        <div className="flex items-end justify-between">
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
-            <h2 className="section-title text-3xl text-gold-gradient" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: '0 0 6px' }}>
+              Découvrir
+            </p>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 34, color: 'white', margin: 0, lineHeight: 1 }}>
               Événements
             </h2>
-            <p className="text-gray-500 text-xs mt-1">{visibleEvents.length} soirées disponibles</p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '6px 0 0' }}>
+              {visibleEvents.length} soirées disponibles
+            </p>
           </div>
           {!shareConvId && (
             <button
               onClick={() => setShowCodeModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] text-xs font-semibold hover:bg-[#d4af37]/20 transition-all"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
+                padding: '10px 16px',
+                background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                border: '1px solid rgba(200,169,110,0.45)',
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 10,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: '#c8a96e',
+                transition: 'all 0.2s',
+              }}
             >
-              🔑 J'ai un code
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              J'ai un code
             </button>
           )}
         </div>
 
         {/* Search */}
-        <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600">🔍</span>
+        <div style={{ position: 'relative', marginBottom: 16 }}>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.25)', pointerEvents: 'none' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
           <input
-            className="input-dark pl-10"
+            style={{
+              width: '100%',
+              padding: '12px 14px 12px 38px',
+              background: 'rgba(6,8,16,0.6)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              borderRadius: 4,
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 13,
+              color: 'white',
+              outline: 'none',
+              boxSizing: 'border-box',
+              transition: 'border-color 0.2s',
+            }}
             placeholder="Recherche par nom, ville, style..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onFocus={e => e.target.style.borderColor = '#4ee8c8'}
+            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.10)'}
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white"
+              style={{
+                position: 'absolute',
+                right: 14,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'rgba(255,255,255,0.3)',
+                fontSize: 14,
+                padding: 0,
+                lineHeight: 1,
+              }}
             >
               ✕
             </button>
@@ -156,16 +237,25 @@ export default function EventsPage() {
         </div>
 
         {/* Categories */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 24, scrollbarWidth: 'none' }}>
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                activeCategory === cat
-                  ? 'bg-[#d4af37] text-black border-[#d4af37]'
-                  : 'border-white/[0.07] text-gray-500 hover:border-gray-500'
-              }`}
+              style={{
+                flexShrink: 0,
+                padding: '7px 18px',
+                background: activeCategory === cat ? 'rgba(78,232,200,0.10)' : 'rgba(255,255,255,0.07)',
+                border: `1px solid ${activeCategory === cat ? '#4ee8c8' : 'rgba(255,255,255,0.13)'}`,
+                borderRadius: 999,
+                cursor: 'pointer',
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 10,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: activeCategory === cat ? '#4ee8c8' : 'rgba(255,255,255,0.45)',
+                transition: 'all 0.2s',
+              }}
             >
               {cat}
             </button>
@@ -173,11 +263,15 @@ export default function EventsPage() {
         </div>
 
         {/* Events list */}
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {filtered.length === 0 ? (
-            <div className="text-center py-16 text-gray-600">
-              <p className="text-4xl mb-3">🔎</p>
-              <p>Aucun événement trouvé</p>
+            <div style={{ textAlign: 'center', padding: '64px 0' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px' }}>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: 0 }}>
+                Aucun événement trouvé
+              </p>
             </div>
           ) : (
             filtered.map((event) => (
@@ -195,33 +289,131 @@ export default function EventsPage() {
 
       {/* Code modal */}
       {showCodeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setShowCodeModal(false); setCodeInput(''); setCodeMsg(null) }} />
-          <div className="relative glass rounded-2xl p-6 w-full max-w-sm space-y-4">
-            <div className="text-center">
-              <span className="text-3xl">🔑</span>
-              <h3 className="text-white font-bold mt-2">Code d'accès privé</h3>
-              <p className="text-gray-500 text-xs mt-1">Entre le code reçu de l'organisateur pour débloquer la soirée.</p>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+          <div
+            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(8px)' }}
+            onClick={() => { setShowCodeModal(false); setCodeInput(''); setCodeMsg(null) }}
+          />
+          <div style={{
+            position: 'relative',
+            background: 'rgba(8,10,20,0.92)',
+            backdropFilter: 'blur(22px)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 12,
+            padding: '32px 28px',
+            width: '100%',
+            maxWidth: 360,
+          }}>
+            {/* Modal header */}
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                background: 'rgba(200,169,110,0.12)',
+                border: '1px solid rgba(200,169,110,0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 22, color: 'white', margin: '0 0 8px' }}>
+                Code d'accès privé
+              </h3>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.28)', margin: 0, lineHeight: 1.6 }}>
+                Entre le code reçu de l'organisateur pour débloquer la soirée.
+              </p>
             </div>
+
+            {/* Code input */}
             <input
-              className="input-dark text-center tracking-[0.25em] font-mono uppercase text-lg"
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                background: 'rgba(6,8,16,0.6)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: 4,
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 16,
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                color: 'white',
+                textAlign: 'center',
+                outline: 'none',
+                boxSizing: 'border-box',
+                marginBottom: 12,
+                transition: 'border-color 0.2s',
+              }}
               placeholder="EX: NEON2026"
               value={codeInput}
               onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeMsg(null) }}
               onKeyDown={e => e.key === 'Enter' && handleCodeSubmit()}
+              onFocus={e => e.target.style.borderColor = '#4ee8c8'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.10)'}
               maxLength={20}
             />
+
+            {/* Feedback message */}
             {codeMsg && (
-              <div className={`p-3 rounded-xl text-xs text-center ${codeMsg.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: 6,
+                marginBottom: 12,
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 10,
+                letterSpacing: '0.15em',
+                textAlign: 'center',
+                background: codeMsg.type === 'success' ? 'rgba(78,232,200,0.08)' : 'rgba(224,90,170,0.08)',
+                border: `1px solid ${codeMsg.type === 'success' ? 'rgba(78,232,200,0.25)' : 'rgba(224,90,170,0.25)'}`,
+                color: codeMsg.type === 'success' ? '#4ee8c8' : '#e05aaa',
+              }}>
                 {codeMsg.text}
               </div>
             )}
-            <div className="flex gap-2">
-              <button onClick={() => { setShowCodeModal(false); setCodeInput(''); setCodeMsg(null) }} className="btn-outline flex-1 text-sm">
+
+            {/* Modal buttons */}
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button
+                onClick={() => { setShowCodeModal(false); setCodeInput(''); setCodeMsg(null) }}
+                style={{
+                  flex: 1,
+                  padding: '13px 16px',
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 10,
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.6)',
+                  transition: 'all 0.2s',
+                }}
+              >
                 Annuler
               </button>
-              <button onClick={handleCodeSubmit} className="btn-gold flex-1 text-sm">
-                Valider →
+              <button
+                onClick={handleCodeSubmit}
+                style={{
+                  flex: 1,
+                  padding: '13px 16px',
+                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                  border: '1px solid rgba(200,169,110,0.45)',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 10,
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  color: '#c8a96e',
+                  transition: 'all 0.2s',
+                }}
+              >
+                Valider
               </button>
             </div>
           </div>
@@ -232,100 +424,249 @@ export default function EventsPage() {
 }
 
 function EventCard({ event, onClick, shareMode, shared }) {
+  const [hovered, setHovered] = useState(false)
+
   return (
-    <button onClick={onClick} className="w-full text-left group">
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+    >
       <div
-        className={`relative rounded-2xl overflow-hidden border transition-all duration-300 group-hover:scale-[1.01] ${shared ? 'opacity-60 scale-[0.99]' : ''}`}
-        style={{ borderColor: shareMode ? '#d4af3766' : event.color + '33', background: '#08080f' }}
+        style={{
+          position: 'relative',
+          background: 'rgba(8,10,20,0.55)',
+          backdropFilter: 'blur(22px)',
+          border: shareMode ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(255,255,255,0.10)',
+          borderRadius: 12,
+          overflow: 'hidden',
+          transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+          transform: hovered && !shared ? 'translateY(-4px)' : 'none',
+          boxShadow: hovered && !shared ? '0 12px 40px rgba(0,0,0,0.45)' : 'none',
+          opacity: shared ? 0.6 : 1,
+        }}
       >
-        {shareMode && !shared && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-2xl">
-            <div className="flex items-center gap-2 bg-[#d4af37] text-black font-bold px-5 py-2.5 rounded-xl text-sm">
-              📤 Partager dans la conversation
+        {/* Iridescent top edge on hover */}
+        {hovered && !shared && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 1,
+            background: 'linear-gradient(90deg, #4ee8c8, #e05aaa, #c8a96e)',
+            zIndex: 2,
+          }} />
+        )}
+
+        {/* Share overlay */}
+        {shareMode && !shared && hovered && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.6)',
+            borderRadius: 12,
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 20px',
+              background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+              border: '1px solid rgba(200,169,110,0.45)',
+              borderRadius: 4,
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 10,
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: '#c8a96e',
+            }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              Partager dans la conversation
             </div>
           </div>
         )}
+
+        {/* Sent confirmation overlay */}
         {shared && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 rounded-2xl">
-            <div className="flex items-center gap-2 bg-green-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm">
-              ✓ Envoyé !
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.65)',
+            borderRadius: 12,
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 20px',
+              background: 'rgba(78,232,200,0.10)',
+              border: '1px solid rgba(78,232,200,0.35)',
+              borderRadius: 4,
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 10,
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: '#4ee8c8',
+            }}>
+              Envoyé
             </div>
           </div>
         )}
-        {/* Color banner */}
-        <div className="h-1.5 w-full" style={{ background: `linear-gradient(to right, ${event.color}, ${event.accentColor})` }} />
+
+        {/* Color accent bar */}
+        <div style={{ height: 2, width: '100%', background: `linear-gradient(to right, ${event.color}, ${event.accentColor})` }} />
 
         {event.imageUrl ? (
-          /* ── Image card (user-created events with photo) ── */
+          /* Image card (user-created events with photo) */
           <>
-            <div className="w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
+            <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
               <img
                 src={event.imageUrl}
                 alt={event.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transition: 'transform 0.5s ease',
+                  transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                }}
               />
             </div>
-            <div className="p-3 flex items-center justify-between">
+            <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <h3
-                  className="font-black text-lg uppercase leading-tight"
-                  style={{ fontFamily: 'Bebas Neue, sans-serif', color: event.accentColor }}
-                >
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 20, color: event.accentColor, margin: '0 0 4px', lineHeight: 1.2 }}>
                   {event.name}
                 </h3>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-gray-500 text-xs">📅 {event.dateDisplay}</span>
-                  <span className="text-gray-500 text-xs">📍 {event.city}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.1em' }}>
+                    {event.dateDisplay}
+                  </span>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.1em' }}>
+                    {event.city}
+                  </span>
                 </div>
               </div>
               {event.userCreated && (
-                <span className="text-[10px] text-[#d4af37] bg-[#d4af37]/10 border border-[#d4af37]/20 px-2 py-0.5 rounded-full flex-shrink-0 ml-2">
+                <span style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 9,
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  color: '#c8a96e',
+                  background: 'rgba(200,169,110,0.10)',
+                  border: '1px solid rgba(200,169,110,0.25)',
+                  padding: '4px 10px',
+                  borderRadius: 4,
+                  flexShrink: 0,
+                  marginLeft: 12,
+                }}>
                   Mon event
                 </span>
               )}
             </div>
           </>
         ) : (
-          /* ── Gradient card (static events) ── */
+          /* Gradient card (static events) */
           <>
             <div
-              className="h-32 relative overflow-hidden"
-              style={{ background: `linear-gradient(135deg, ${event.color}22 0%, ${event.color}08 100%)` }}
+              style={{
+                height: 120,
+                position: 'relative',
+                overflow: 'hidden',
+                background: `linear-gradient(135deg, ${event.color}22 0%, ${event.color}08 100%)`,
+              }}
             >
-              <div
-                className="absolute inset-0 opacity-10"
-                style={{ backgroundImage: `radial-gradient(circle at 20% 50%, ${event.color} 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${event.accentColor} 0%, transparent 40%)` }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-5xl font-black uppercase tracking-wider opacity-30" style={{ fontFamily: 'Bebas Neue, sans-serif', color: event.color }}>
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: 0.12,
+                backgroundImage: `radial-gradient(circle at 20% 50%, ${event.color} 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${event.accentColor} 0%, transparent 40%)`,
+              }} />
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontWeight: 300,
+                  fontSize: 38,
+                  letterSpacing: '0.08em',
+                  opacity: 0.18,
+                  color: event.color,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  maxWidth: '90%',
+                  textOverflow: 'ellipsis',
+                }}>
                   {event.name}
                 </span>
               </div>
-              <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+              {/* Tags */}
+              <div style={{ position: 'absolute', top: 12, left: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {event.tags.map((tag) => (
-                  <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full border" style={{ color: event.accentColor, borderColor: event.color + '44', background: event.color + '11' }}>
+                  <span key={tag} style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 9,
+                    letterSpacing: '0.2em',
+                    textTransform: 'uppercase',
+                    padding: '3px 10px',
+                    borderRadius: 999,
+                    border: `1px solid ${event.color}44`,
+                    background: `${event.color}11`,
+                    color: event.accentColor,
+                  }}>
                     {tag}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="p-4">
-              <h3 className="font-black text-xl uppercase leading-tight" style={{ fontFamily: 'Bebas Neue, sans-serif', color: event.accentColor }}>
+
+            {/* Card body */}
+            <div style={{ padding: '14px 16px' }}>
+              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 22, color: event.accentColor, margin: '0 0 4px', lineHeight: 1.2 }}>
                 {event.name}
               </h3>
-              <p className="text-gray-500 text-xs">{event.subtitle}</p>
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/[0.05]">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-gray-600 text-sm">📅</span>
-                  <span className="text-gray-400 text-xs">{event.dateDisplay}</span>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.30)', margin: '0 0 12px', letterSpacing: '0.08em' }}>
+                {event.subtitle}
+              </p>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                paddingTop: 12,
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+              }}>
+                {/* Date */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.08em' }}>{event.dateDisplay}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-gray-600 text-sm">🕐</span>
-                  <span className="text-gray-400 text-xs">{event.time}</span>
+                {/* Time */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.08em' }}>{event.time}</span>
                 </div>
-                <div className="flex items-center gap-1.5 ml-auto">
-                  <span className="text-gray-600 text-sm">📍</span>
-                  <span className="text-gray-400 text-xs truncate max-w-24">{event.city}</span>
+                {/* City */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.08em', maxWidth: 96, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {event.city}
+                  </span>
                 </div>
               </div>
             </div>

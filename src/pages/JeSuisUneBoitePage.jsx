@@ -4,11 +4,96 @@ import Layout from '../components/Layout'
 const STEPS = ['Infos boîte', 'Options', 'Louer ma salle', 'Confirmation']
 
 const OPTION_DEFAULTS = {
-  auction: true,
   playlist: true,
   preorder: true,
   qr: true,
   featured: false,
+}
+
+// ── Shared inline style constants ──────────────────────────────────────────────
+const S = {
+  card: {
+    background: 'rgba(8,10,20,0.55)',
+    backdropFilter: 'blur(22px) saturate(1.6)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 12,
+  },
+  inputBase: {
+    background: 'rgba(6,8,16,0.6)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+    padding: '10px 14px',
+    width: '100%',
+    outline: 'none',
+    boxSizing: 'border-box',
+  },
+  label: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 9,
+    letterSpacing: '0.35em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.28)',
+    display: 'block',
+    marginBottom: 6,
+  },
+  btnGold: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+    border: '1px solid rgba(200,169,110,0.45)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: '#c8a96e',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnGhost: {
+    padding: '13px 28px',
+    background: 'transparent',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.5)',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  btnPrimary: {
+    padding: '13px 28px',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 50%, rgba(78,232,200,0.12) 100%)',
+    border: '1px solid rgba(255,255,255,0.28)',
+    borderRadius: 4,
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11,
+    letterSpacing: '0.25em',
+    textTransform: 'uppercase',
+    color: 'white',
+    cursor: 'pointer',
+    width: '100%',
+  },
+}
+
+// ── Eyebrow heading helper ──────────────────────────────────────────────────────
+function Eyebrow({ children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <div style={{ width: 28, height: 1, background: '#4ee8c8', flexShrink: 0 }} />
+      <span style={{
+        fontFamily: "'DM Mono', monospace",
+        fontSize: 9,
+        letterSpacing: '0.4em',
+        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.25)',
+      }}>{children}</span>
+    </div>
+  )
 }
 
 export default function JeSuisUneBoitePage() {
@@ -16,7 +101,6 @@ export default function JeSuisUneBoitePage() {
   const [wantsToRent, setWantsToRent] = useState(null)
   const [submitted, setSubmitted] = useState(false)
 
-  // Controlled form state
   const [boiteForm, setBoiteForm] = useState({
     name: '',
     siret: '',
@@ -27,10 +111,8 @@ export default function JeSuisUneBoitePage() {
     website: '',
   })
 
-  // Controlled toggles
   const [toggles, setToggles] = useState(OPTION_DEFAULTS)
 
-  // Rental form
   const [rentForm, setRentForm] = useState({
     capacity: '',
     priceMon: '',
@@ -40,13 +122,41 @@ export default function JeSuisUneBoitePage() {
   })
 
   const features = [
-    { icon: '🎟', label: 'Vendre des places', desc: 'Billetterie intégrée avec tous types de places' },
-    { icon: '🔨', label: "Système d'enchères", desc: 'Mets aux enchères tes carrés et VIP' },
-    { icon: '🎵', label: 'Playlist interactive', desc: 'Laisse tes clients voter pour les sons' },
-    { icon: '📊', label: 'Dashboard analytics', desc: 'Suis tes ventes et ta performance en temps réel' },
-    { icon: '🌟', label: 'Mise en avant', desc: 'Passe en top 3 de ta région (payant)' },
-    { icon: '🛒', label: 'Précommande de conso', desc: "Tes clients commandent à l'avance" },
+    { icon: 'ticket', label: 'Vendre des places', desc: 'Billetterie intégrée avec tous types de places' },
+    { icon: 'music', label: 'Playlist interactive', desc: 'Laisse tes clients voter pour les sons' },
+    { icon: 'chart', label: 'Dashboard analytics', desc: 'Suis tes ventes et ta performance en temps réel' },
+    { icon: 'star', label: 'Mise en avant', desc: 'Passe en top 3 de ta région (payant)' },
+    { icon: 'cart', label: 'Précommande de conso', desc: "Tes clients commandent à l'avance" },
   ]
+
+  const featureIcons = {
+    ticket: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5">
+        <path d="M2 9a1 1 0 011-1h1a2 2 0 100-4H3a1 1 0 01-1-1V4a2 2 0 012-2h14a2 2 0 012 2v1a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v1a2 2 0 01-2 2H4a2 2 0 01-2-2V9z"/>
+      </svg>
+    ),
+    music: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5">
+        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+      </svg>
+    ),
+    chart: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5">
+        <path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-6"/>
+      </svg>
+    ),
+    star: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5">
+        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+      </svg>
+    ),
+    cart: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/>
+      </svg>
+    ),
+  }
 
   function handleSubmit() {
     const registration = {
@@ -64,13 +174,22 @@ export default function JeSuisUneBoitePage() {
 
   return (
     <Layout>
-      <div className="px-4 py-6 space-y-6">
+      <div style={{ position: 'relative', zIndex: 1, background: 'transparent', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
         {/* Header */}
         <div>
-          <h2 className="text-3xl font-black uppercase" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-            Je suis <span className="text-[#d4af37]">une boîte</span>
+          <p style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 9,
+            letterSpacing: '0.4em',
+            textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.25)',
+            marginBottom: 8,
+          }}>Inscription professionnelle</p>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, letterSpacing: '0.02em', lineHeight: 1.1 }}>
+            Je suis <span style={{ color: '#c8a96e' }}>une boîte</span>
           </h2>
-          <p className="text-gray-500 text-sm mt-1">
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', marginTop: 8, letterSpacing: '0.04em', lineHeight: 1.6 }}>
             Pour les organisateurs d'événements, sociétés d'événementiel, discothèques.
           </p>
         </div>
@@ -78,33 +197,49 @@ export default function JeSuisUneBoitePage() {
         {!submitted ? (
           <>
             {/* Progress */}
-            <div className="flex gap-1">
+            <div style={{ display: 'flex', gap: 6 }}>
               {STEPS.map((s, i) => (
-                <div key={s} className="flex-1">
-                  <div className="h-1 rounded-full mb-1" style={{ background: i <= step ? '#d4af37' : '#1a1a1a' }} />
-                  <p className={`text-[10px] truncate ${i === step ? 'text-[#d4af37]' : 'text-gray-700'}`}>{s}</p>
+                <div key={s} style={{ flex: 1 }}>
+                  <div style={{ height: 2, borderRadius: 2, marginBottom: 5, background: i <= step ? '#c8a96e' : 'rgba(255,255,255,0.06)', transition: 'background 0.3s' }} />
+                  <p style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 9,
+                    letterSpacing: '0.2em',
+                    textTransform: 'uppercase',
+                    color: i === step ? '#c8a96e' : 'rgba(255,255,255,0.18)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    margin: 0,
+                  }}>{s}</p>
                 </div>
               ))}
             </div>
 
             {/* Step 0: Infos boîte */}
             {step === 0 && (
-              <div className="space-y-5 animate-fade-in">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                {/* Features grid */}
                 <div>
-                  <h3 className="text-gray-500 text-xs uppercase tracking-widest mb-3">Ce qu'on t'offre</h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <Eyebrow>Ce qu'on t'offre</Eyebrow>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     {features.map((f) => (
-                      <div key={f.label} className="glass p-3 rounded-xl">
-                        <span className="text-xl">{f.icon}</span>
-                        <p className="text-white text-xs font-semibold mt-1">{f.label}</p>
-                        <p className="text-gray-600 text-[10px] mt-0.5">{f.desc}</p>
+                      <div key={f.label} style={{ ...S.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {featureIcons[f.icon]}
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.03em', margin: 0 }}>{f.label}</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.32)', lineHeight: 1.5, margin: 0 }}>{f.desc}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="text-white font-semibold">Informations de la structure</h3>
+                {/* Form */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <Eyebrow>Informations de la structure</Eyebrow>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
+                    Informations de la structure
+                  </p>
                   {[
                     { key: 'name', label: 'Nom de la boîte / société', placeholder: 'Ex: Club Neon, SARL Events...' },
                     { key: 'siret', label: "SIRET / Numéro d'entreprise", placeholder: 'Ex: 123 456 789 00012' },
@@ -115,92 +250,144 @@ export default function JeSuisUneBoitePage() {
                     { key: 'website', label: 'Site web (optionnel)', placeholder: 'https://...' },
                   ].map((f) => (
                     <div key={f.key}>
-                      <label className="text-gray-500 text-xs mb-1.5 block">{f.label}</label>
+                      <label style={S.label}>{f.label}</label>
                       <input
-                        className="input-dark"
+                        style={S.inputBase}
                         placeholder={f.placeholder}
                         value={boiteForm[f.key]}
                         onChange={e => setBoiteForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                        onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
                       />
                     </div>
                   ))}
                 </div>
 
-                <div className="glass p-3 rounded-xl border border-blue-500/20">
-                  <p className="text-blue-400 text-xs">
-                    ℹ Tu peux t'inscrire maintenant et compléter les autres informations plus tard.
+                <div style={{ ...S.card, padding: 14, borderColor: 'rgba(78,232,200,0.18)' }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#4ee8c8', lineHeight: 1.6, letterSpacing: '0.03em', margin: 0 }}>
+                    Tu peux t'inscrire maintenant et compléter les autres informations plus tard.
                   </p>
                 </div>
 
-                <button onClick={() => setStep(1)} className="btn-gold w-full">
-                  Continuer →
+                <button onClick={() => setStep(1)} style={S.btnGold}>
+                  Continuer
                 </button>
               </div>
             )}
 
             {/* Step 1: Options */}
             {step === 1 && (
-              <div className="space-y-5 animate-fade-in">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <h3 className="text-white font-semibold">Configuration de ta page</h3>
-                  <p className="text-gray-500 text-xs mt-1">Tu pourras tout modifier après inscription.</p>
+                  <Eyebrow>Configuration</Eyebrow>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
+                    Configuration de ta page
+                  </p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', marginTop: 4, margin: 0 }}>
+                    Tu pourras tout modifier après inscription.
+                  </p>
                 </div>
 
-                {[
-                  { label: "Système d'enchères sur les places VIP", key: 'auction' },
-                  { label: 'Playlist interactive pour les acheteurs', key: 'playlist' },
-                  { label: 'Précommande de consommations', key: 'preorder' },
-                  { label: 'QR Code billet automatique', key: 'qr' },
-                  { label: 'Mise en avant (Top 3 région)', key: 'featured' },
-                ].map((opt) => (
-                  <div key={opt.key} className="flex items-center justify-between p-3 glass rounded-xl">
-                    <p className="text-gray-300 text-sm pr-4">{opt.label}</p>
-                    <div
-                      onClick={() => setToggles(t => ({ ...t, [opt.key]: !t[opt.key] }))}
-                      className={`w-11 h-6 rounded-full relative cursor-pointer transition-all ${toggles[opt.key] ? 'bg-[#d4af37]' : 'bg-[#222]'}`}
-                    >
-                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${toggles[opt.key] ? 'left-6' : 'left-1'}`} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { label: 'Playlist interactive pour les acheteurs', key: 'playlist' },
+                    { label: 'Précommande de consommations', key: 'preorder' },
+                    { label: 'QR Code billet automatique', key: 'qr' },
+                    { label: 'Mise en avant (Top 3 région)', key: 'featured' },
+                  ].map((opt) => (
+                    <div key={opt.key} style={{ ...S.card, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.7)', flex: 1, margin: 0 }}>{opt.label}</p>
+                      <div
+                        onClick={() => setToggles(t => ({ ...t, [opt.key]: !t[opt.key] }))}
+                        style={{
+                          width: 44,
+                          height: 24,
+                          borderRadius: 12,
+                          background: toggles[opt.key] ? '#4ee8c8' : 'rgba(255,255,255,0.08)',
+                          position: 'relative',
+                          cursor: 'pointer',
+                          transition: 'background 0.2s',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div style={{
+                          position: 'absolute',
+                          top: 4,
+                          width: 16,
+                          height: 16,
+                          background: 'white',
+                          borderRadius: '50%',
+                          transition: 'left 0.2s',
+                          left: toggles[opt.key] ? 24 : 4,
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+                        }} />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
 
-                <div className="flex gap-2">
-                  <button onClick={() => setStep(0)} className="btn-outline flex-1">← Retour</button>
-                  <button onClick={() => setStep(2)} className="btn-gold flex-1">Suivant →</button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setStep(0)} style={{ ...S.btnGhost, flex: 1 }}>Retour</button>
+                  <button onClick={() => setStep(2)} style={{ ...S.btnGold, flex: 1 }}>Suivant</button>
                 </div>
               </div>
             )}
 
             {/* Step 2: Louer ma salle */}
             {step === 2 && (
-              <div className="space-y-5 animate-fade-in">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <h3 className="text-white font-semibold">Veux-tu louer ta salle ?</h3>
-                  <p className="text-gray-500 text-xs mt-1">Propose ta boîte à la location pour des soirées privées.</p>
+                  <Eyebrow>Location</Eyebrow>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
+                    Veux-tu louer ta salle ?
+                  </p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', marginTop: 4, margin: 0 }}>
+                    Propose ta boîte à la location pour des soirées privées.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <button
                     onClick={() => setWantsToRent(true)}
-                    className={`p-4 rounded-2xl border text-center transition-all ${wantsToRent === true ? 'border-[#d4af37] bg-[#d4af37]/10' : 'border-[#222] hover:border-[#333]'}`}
+                    style={{
+                      ...S.card,
+                      padding: 18,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      borderColor: wantsToRent === true ? 'rgba(200,169,110,0.6)' : 'rgba(255,255,255,0.08)',
+                      background: wantsToRent === true ? 'rgba(200,169,110,0.08)' : 'rgba(8,10,20,0.55)',
+                      transition: 'all 0.2s',
+                    }}
                   >
-                    <p className="text-2xl mb-2">✓</p>
-                    <p className="text-white text-sm font-semibold">Oui</p>
-                    <p className="text-gray-500 text-xs">Je veux louer ma salle</p>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5" style={{ margin: '0 auto 10px', display: 'block' }}>
+                      <polyline points="20,6 9,17 4,12"/>
+                    </svg>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', fontWeight: 600, margin: 0 }}>Oui</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, margin: '4px 0 0' }}>Je veux louer ma salle</p>
                   </button>
                   <button
                     onClick={() => setWantsToRent(false)}
-                    className={`p-4 rounded-2xl border text-center transition-all ${wantsToRent === false ? 'border-gray-500 bg-white/5' : 'border-[#222] hover:border-[#333]'}`}
+                    style={{
+                      ...S.card,
+                      padding: 18,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      borderColor: wantsToRent === false ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)',
+                      background: wantsToRent === false ? 'rgba(255,255,255,0.04)' : 'rgba(8,10,20,0.55)',
+                      transition: 'all 0.2s',
+                    }}
                   >
-                    <p className="text-2xl mb-2">✕</p>
-                    <p className="text-white text-sm font-semibold">Non</p>
-                    <p className="text-gray-500 text-xs">Pas pour l'instant</p>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="1.5" style={{ margin: '0 auto 10px', display: 'block' }}>
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', fontWeight: 600, margin: 0 }}>Non</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, margin: '4px 0 0' }}>Pas pour l'instant</p>
                   </button>
                 </div>
 
                 {wantsToRent && (
-                  <div className="space-y-3 animate-fade-in">
-                    <h4 className="text-[#d4af37] text-xs uppercase tracking-widest">Infos de location</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <Eyebrow>Infos de location</Eyebrow>
                     {[
                       { key: 'capacity', label: 'Capacité max pour location privée', placeholder: 'Ex: 200 personnes' },
                       { key: 'priceMon', label: 'Tarif lundi-jeudi (€/soir)', placeholder: 'Ex: 1500' },
@@ -209,26 +396,28 @@ export default function JeSuisUneBoitePage() {
                       { key: 'conditions', label: 'Conditions particulières', placeholder: 'Caution, délai minimum...' },
                     ].map((f) => (
                       <div key={f.key}>
-                        <label className="text-gray-500 text-xs mb-1.5 block">{f.label}</label>
+                        <label style={S.label}>{f.label}</label>
                         <input
-                          className="input-dark"
+                          style={S.inputBase}
                           placeholder={f.placeholder}
                           value={rentForm[f.key]}
                           onChange={e => setRentForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                          onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                          onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
                         />
                       </div>
                     ))}
                   </div>
                 )}
 
-                <div className="flex gap-2">
-                  <button onClick={() => setStep(1)} className="btn-outline flex-1">← Retour</button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setStep(1)} style={{ ...S.btnGhost, flex: 1 }}>Retour</button>
                   <button
                     onClick={() => setStep(3)}
                     disabled={wantsToRent === null}
-                    className="btn-gold flex-1 disabled:opacity-40"
+                    style={{ ...S.btnGold, flex: 1, opacity: wantsToRent === null ? 0.4 : 1, cursor: wantsToRent === null ? 'not-allowed' : 'pointer' }}
                   >
-                    Finaliser →
+                    Finaliser
                   </button>
                 </div>
               </div>
@@ -236,28 +425,32 @@ export default function JeSuisUneBoitePage() {
 
             {/* Step 3: Confirm */}
             {step === 3 && (
-              <div className="space-y-4 animate-fade-in">
-                <h3 className="text-white font-semibold">Récapitulatif</h3>
-                <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <Eyebrow>Vérification</Eyebrow>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                    Récapitulatif
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {[
                     { label: 'Structure', val: boiteForm.name || '(non renseigné)' },
                     { label: 'Responsable', val: boiteForm.manager || '(non renseigné)' },
                     { label: 'Email', val: boiteForm.email || '(non renseigné)' },
-                    { label: 'Système enchères', val: toggles.auction ? 'Activé' : 'Désactivé' },
                     { label: 'Playlist interactive', val: toggles.playlist ? 'Activée' : 'Désactivée' },
                     { label: 'Précommande conso', val: toggles.preorder ? 'Activée' : 'Désactivée' },
                     { label: 'Louer ma salle', val: wantsToRent ? 'Oui' : 'Non' },
                     { label: 'Statut', val: 'En attente de vérification' },
                   ].map((r) => (
-                    <div key={r.label} className="flex justify-between p-3 glass rounded-xl">
-                      <span className="text-gray-500 text-sm">{r.label}</span>
-                      <span className="text-white text-sm font-semibold">{r.val}</span>
+                    <div key={r.label} style={{ ...S.card, padding: '11px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)' }}>{r.label}</span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.9)' }}>{r.val}</span>
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setStep(2)} className="btn-outline flex-1">← Retour</button>
-                  <button onClick={handleSubmit} className="btn-gold flex-1">
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setStep(2)} style={{ ...S.btnGhost, flex: 1 }}>Retour</button>
+                  <button onClick={handleSubmit} style={{ ...S.btnGold, flex: 1 }}>
                     Valider l'inscription
                   </button>
                 </div>
@@ -265,16 +458,31 @@ export default function JeSuisUneBoitePage() {
             )}
           </>
         ) : (
-          <div className="text-center py-10 space-y-4 animate-fade-in">
-            <div className="w-24 h-24 rounded-full bg-[#d4af37]/10 border-2 border-[#d4af37] flex items-center justify-center text-4xl mx-auto">
-              🏢
+          /* Success state */
+          <div style={{ textAlign: 'center', padding: '48px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+            <div style={{
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              background: 'rgba(200,169,110,0.08)',
+              border: '2px solid rgba(200,169,110,0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1">
+                <rect x="1" y="3" width="22" height="18" rx="2"/><path d="M1 9h22"/>
+                <path d="M8 3v6"/><path d="M16 3v6"/>
+              </svg>
             </div>
-            <h3 className="text-white text-xl font-bold">Bienvenue dans la famille !</h3>
-            <p className="text-gray-400 text-sm">
-              Ton compte boîte est en cours de validation. Notre équipe vérifie tes documents sous{' '}
-              <strong className="text-white">48h</strong>.
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+              Bienvenue dans la famille !
             </p>
-            <p className="text-gray-500 text-xs">
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, maxWidth: 280, margin: 0 }}>
+              Ton compte boîte est en cours de validation. Notre équipe vérifie tes documents sous{' '}
+              <strong style={{ color: 'rgba(255,255,255,0.90)' }}>48h</strong>.
+            </p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.05em', margin: 0 }}>
               Tu pourras créer ton premier événement dès validation.
             </p>
           </div>

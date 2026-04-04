@@ -73,7 +73,69 @@ export function saveBoost(eventId, position, days, price) {
       expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
     }
     const all = JSON.parse(localStorage.getItem('lib_boosts') || '[]')
-    const filtered = all.filter(b => b.eventId !== eventId)
+    // Remove any existing boost for this event OR for this position (slot conflict)
+    const filtered = all.filter(b => b.eventId !== eventId && b.position !== position)
     localStorage.setItem('lib_boosts', JSON.stringify([...filtered, boost]))
   } catch {}
+}
+
+// Check if a given position slot is already occupied by another event
+export function isBoostSlotTaken(position, excludeEventId = null) {
+  try {
+    const active = getActiveBoosts()
+    return active.some(b => b.position === position && b.eventId !== excludeEventId)
+  } catch { return false }
+}
+
+// Get the event name occupying a slot (for conflict messaging)
+export function getBoostSlotOccupant(position, allEvents = []) {
+  try {
+    const active = getActiveBoosts()
+    const b = active.find(b => b.position === position)
+    if (!b) return null
+    const ev = allEvents.find(e => e.id === b.eventId)
+    return ev ? ev.name : 'un autre événement'
+  } catch { return null }
+}
+
+// ─── Bookings helpers ─────────────────────────────────────────────────────────
+export function getMyBookings(userId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+    return all.filter(b => b.userId === userId || b.userEmail)
+  } catch { return [] }
+}
+
+function parseDateTime(dateISO, timeStr) {
+  // dateISO: "2026-04-18", timeStr: "23:00"
+  if (!dateISO || !timeStr) return 0
+  const [h, m] = (timeStr || '00:00').split(':').map(Number)
+  const d = new Date(dateISO + 'T00:00:00')
+  d.setHours(h, m, 0, 0)
+  return d.getTime()
+}
+
+// Returns the conflicting booking if there's a time overlap, or null
+export function checkScheduleConflict(userId, newDateISO, newStart, newEnd) {
+  try {
+    const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+      .filter(b => b.userId === userId && b.eventDateISO && b.eventStartTime && b.eventEndTime)
+
+    const ns = parseDateTime(newDateISO, newStart)
+    let ne = parseDateTime(newDateISO, newEnd)
+    // If end < start → crosses midnight → add 1 day
+    if (ne <= ns) ne += 24 * 60 * 60 * 1000
+
+    for (const b of bookings) {
+      const es = parseDateTime(b.eventDateISO, b.eventStartTime)
+      let ee = parseDateTime(b.eventDateISO, b.eventEndTime)
+      if (ee <= es) ee += 24 * 60 * 60 * 1000
+
+      // Overlap: not (ne <= es || ns >= ee)
+      if (!(ne <= es || ns >= ee)) {
+        return b // conflict
+      }
+    }
+    return null
+  } catch { return null }
 }
