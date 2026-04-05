@@ -74,8 +74,16 @@ export function getPendingValidations() {
 
 export function addPendingValidation(userObj) {
   const list = getPendingValidations()
-  list.push({ ...userObj, requestedAt: Date.now() })
+  const entry = { ...userObj, requestedAt: Date.now(), type: 'validation' }
+  list.push(entry)
   localStorage.setItem(PENDING_KEY, JSON.stringify(list))
+  // Fire-and-forget sync to Firestore so admin sees it cross-device
+  import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
+    if (!USE_REAL_FIREBASE) return
+    import('firebase/firestore').then(({ doc, setDoc }) => {
+      setDoc(doc(db, 'pending_validations', userObj.uid), entry).catch(() => {})
+    }).catch(() => {})
+  }).catch(() => {})
 }
 
 export function removePendingValidation(uid) {

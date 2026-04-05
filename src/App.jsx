@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import EventsPage from './pages/EventsPage'
@@ -38,6 +38,15 @@ function usePersistedUser() {
     }
     setUserState(val)
   }
+
+  // Sync Firestore → localStorage whenever uid changes (login, app reload with existing session)
+  useEffect(() => {
+    const uid = user?.uid
+    if (!uid) return
+    import('./utils/firestore-sync').then(({ syncOnLogin }) => {
+      syncOnLogin(uid).catch(() => {})
+    }).catch(() => {})
+  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { user, setUser }
 }

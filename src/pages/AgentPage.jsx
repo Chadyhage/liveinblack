@@ -118,7 +118,34 @@ export default function AgentPage() {
     setApplications(getAllApplications())
   }
 
-  useEffect(() => { refresh() }, [])
+  useEffect(() => {
+    refresh() // immediate local data
+    // Then pull fresh data from Firestore
+    async function fetchFromFirestore() {
+      try {
+        const { loadCollection } = await import('../utils/firestore-sync')
+        const { fetchApplicationsFromFirestore } = await import('../utils/applications')
+        const [apps, pendingSnap] = await Promise.all([
+          fetchApplicationsFromFirestore(),
+          loadCollection('pending_validations'),
+        ])
+        if (pendingSnap.length) {
+          const validations = pendingSnap.filter(p => p.type !== 'role_request')
+          const roleReqs = pendingSnap.filter(p => p.type === 'role_request')
+          if (validations.length) localStorage.setItem('lib_pending_validations', JSON.stringify(validations))
+          if (roleReqs.length) {
+            const existing = JSON.parse(localStorage.getItem('lib_role_requests') || '[]')
+            const merged = [...roleReqs, ...existing.filter(e => !roleReqs.find(r => r.id === e.id))]
+            localStorage.setItem('lib_role_requests', JSON.stringify(merged))
+          }
+        }
+        setApplications(apps)
+        setPending(getPendingValidations())
+        setRoleRequests(getPendingRoleRequests().filter(r => r.status === 'pending'))
+      } catch {}
+    }
+    fetchFromFirestore()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type })

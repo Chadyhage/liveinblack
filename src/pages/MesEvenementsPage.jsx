@@ -381,6 +381,14 @@ export default function MesEvenementsPage() {
     localStorage.setItem('lib_created_events', JSON.stringify(updated))
     setCreatedEvents(updated)
 
+    // Sync event to shared Firestore collection so all users see it cross-device
+    import('../utils/firestore-sync').then(({ syncDoc }) => {
+      const eventToSync = { ...eventData, createdBy: user?.uid, organizerId: user?.uid, organizerName: user?.name || 'Organisateur' }
+      syncDoc(`events/${eventData.id}`, eventToSync)
+      // Also keep in organizer's personal collection for their dashboard
+      syncDoc(`user_events/${user?.uid}`, { items: updated })
+    }).catch(() => {})
+
     if (eventType === 'private' && form.privateCode.trim()) {
       const all = getEventCodes()
       const key = String(eventData.id)
@@ -462,6 +470,11 @@ export default function MesEvenementsPage() {
     localStorage.setItem('lib_created_events', JSON.stringify(updated))
     setCreatedEvents(updated)
     setDeleteConfirm(null)
+    // Remove from shared Firestore collection too
+    import('../utils/firestore-sync').then(({ syncDelete, syncDoc }) => {
+      syncDelete(`events/${id}`)
+      syncDoc(`user_events/${user?.uid}`, { items: updated })
+    }).catch(() => {})
   }
 
   // ─── Role guard ──────────────────────────────────────────────────────────────

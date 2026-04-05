@@ -265,80 +265,80 @@ const COUNTRY_CODES = [
 
 const S = {
   card: {
-    background: 'rgba(8,10,20,0.55)',
-    backdropFilter: 'blur(22px)',
-    WebkitBackdropFilter: 'blur(22px)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: '12px',
+    background: 'linear-gradient(180deg, rgba(18,10,32,0.92), rgba(10,8,20,0.96))',
+    backdropFilter: 'blur(28px) saturate(1.5)',
+    WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
+    border: '1px solid rgba(255,255,255,0.09)',
+    borderRadius: '20px',
+    boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
   },
   input: {
-    background: 'rgba(6,8,16,0.6)',
+    background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: '4px',
-    fontFamily: "'DM Mono', monospace",
-    fontSize: '13px',
+    borderRadius: '10px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '14px',
     color: 'rgba(255,255,255,0.9)',
-    padding: '11px 14px',
+    padding: '12px 14px',
     width: '100%',
     outline: 'none',
-    transition: 'border-color 0.2s',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    boxSizing: 'border-box',
   },
   btnPrimary: {
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(78,232,200,0.12))',
-    border: '1px solid rgba(255,255,255,0.28)',
-    borderRadius: '4px',
-    fontFamily: "'DM Mono', monospace",
-    fontSize: '11px',
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
+    padding: '14px 28px',
+    background: 'linear-gradient(135deg, rgba(132,68,255,0.96), rgba(255,77,166,0.92))',
+    border: 'none',
+    borderRadius: '12px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '14px',
+    fontWeight: 600,
     color: 'white',
     cursor: 'pointer',
     width: '100%',
+    boxShadow: '0 4px 24px rgba(132,68,255,0.35)',
+    transition: 'opacity 0.2s',
   },
   btnGold: {
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-    border: '1px solid rgba(200,169,110,0.45)',
-    borderRadius: '4px',
-    fontFamily: "'DM Mono', monospace",
-    fontSize: '11px',
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
+    padding: '14px 28px',
+    background: 'linear-gradient(135deg, rgba(200,169,110,0.18), rgba(200,169,110,0.08))',
+    border: '1px solid rgba(200,169,110,0.40)',
+    borderRadius: '12px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '14px',
+    fontWeight: 600,
     color: '#c8a96e',
     cursor: 'pointer',
     width: '100%',
   },
   btnGhost: {
-    padding: '13px 28px',
-    background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.18)',
-    borderRadius: '4px',
-    fontFamily: "'DM Mono', monospace",
-    fontSize: '11px',
-    letterSpacing: '0.2em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.5)',
+    padding: '14px 28px',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '12px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '14px',
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.45)',
     cursor: 'pointer',
     width: '100%',
   },
   label: {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: '9px',
-    letterSpacing: '0.35em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.42)',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '12px',
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.45)',
     display: 'block',
-    marginBottom: '5px',
+    marginBottom: '6px',
   },
   errorText: {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: '10px',
-    color: '#e05aaa',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '12px',
+    color: '#ff6b9d',
   },
   successText: {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: '10px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '12px',
     color: '#4ee8c8',
   },
 }
@@ -422,6 +422,11 @@ export default function LoginPage() {
     try {
       const userData = await doEmailLogin(email, password, loginRole)
       setUser(userData)
+      // Fire-and-forget: push local data then pull Firestore
+      import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore }) => {
+        pushLocalToFirestore(userData.uid).catch(() => {})
+        syncOnLogin(userData.uid).catch(() => {})
+      }).catch(() => {})
       const params = new URLSearchParams(location.search)
       const next = params.get('next')
       navigate(next || (userData.role === 'agent' ? '/agent' : '/accueil'))
@@ -485,6 +490,10 @@ export default function LoginPage() {
         setUnverifiedEmail(regEmail)
       } else {
         setUser(userData)
+        import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore }) => {
+          pushLocalToFirestore(userData.uid).catch(() => {})
+          syncOnLogin(userData.uid).catch(() => {})
+        }).catch(() => {})
         navigate('/accueil')
       }
     } catch (err) {
@@ -500,6 +509,10 @@ export default function LoginPage() {
     try {
       const userData = await doGoogleLogin()
       setUser(userData)
+      import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore }) => {
+        pushLocalToFirestore(userData.uid).catch(() => {})
+        syncOnLogin(userData.uid).catch(() => {})
+      }).catch(() => {})
       const params = new URLSearchParams(location.search)
       navigate(params.get('next') || '/accueil')
     } catch (err) {
@@ -677,108 +690,47 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col">
+    <div className="relative min-h-screen overflow-hidden flex flex-col items-center justify-center px-5 py-10">
+
+      {/* Glow blobs */}
+      <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.15) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', bottom: '-5%', right: '-5%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,77,166,0.10) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* Logo */}
-      <div className="relative z-10 pt-12 pb-4 text-center">
-        <h1 style={{ letterSpacing: '0.05em', lineHeight: 1 }}>
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '40px', color: 'white', letterSpacing: '0.1em' }}>
-            L
-          </span>
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '40px', color: '#c8a96e', letterSpacing: '0.1em' }}>
-            |
-          </span>
-          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '40px', color: 'white', letterSpacing: '0.1em' }}>
-            VE IN{' '}
-          </span>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: '38px', color: 'white', letterSpacing: '0.05em' }}>
-            BLACK
-          </span>
-        </h1>
-        <div className="mt-3 flex items-center justify-center gap-3">
-          <div className="h-px w-12" style={{ background: 'linear-gradient(to right, transparent, rgba(200,169,110,0.4))' }} />
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.55)' }}>
-            La Marketplace de l'Événementiel
-          </p>
-          <div className="h-px w-12" style={{ background: 'linear-gradient(to left, transparent, rgba(200,169,110,0.4))' }} />
+      <div className="relative z-10 mb-8 text-center">
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <span style={{ width: 36, height: 36, borderRadius: 11, background: 'radial-gradient(circle at 28% 28%, rgba(255,255,255,0.85), transparent 18%), linear-gradient(135deg, rgba(132,68,255,0.98), rgba(255,77,166,0.94))', boxShadow: '0 0 24px rgba(132,68,255,0.45)', flexShrink: 0, display: 'inline-block' }} />
+          <h1 style={{ letterSpacing: '0.05em', lineHeight: 1, margin: 0 }}>
+            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '32px', color: 'white', letterSpacing: '0.1em' }}>L</span>
+            <span style={{ display: 'inline-block', width: '2px', height: '18px', background: 'white', margin: '0 3px 2px', verticalAlign: 'middle' }} />
+            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '32px', color: 'white', letterSpacing: '0.1em' }}>VE IN </span>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 900, fontSize: '30px', color: 'white', letterSpacing: '0.02em' }}>BLACK</span>
+          </h1>
         </div>
+        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px', color: 'rgba(255,255,255,0.28)', letterSpacing: '0.06em' }}>
+          La marketplace de l'événementiel
+        </p>
       </div>
 
       {/* Form card */}
-      <div className="relative z-10 mt-auto md:my-auto px-5 pb-10 md:pb-16 md:w-full md:max-w-sm md:mx-auto">
-        <div style={{ ...S.card, padding: '28px 24px' }}>
+      <div className="relative z-10 w-full" style={{ maxWidth: 400 }}>
+        <div style={{ ...S.card, padding: '32px 28px' }}>
 
           {/* ── Mode tabs ── */}
-          <div style={{
-            display: 'flex',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: '4px',
-            overflow: 'hidden',
-            marginBottom: '24px',
-          }}>
-            <button
-              onClick={() => { setMode('login'); setRegStep(1); setError('') }}
-              style={{
-                flex: 1,
-                padding: '10px',
-                fontFamily: "'DM Mono', monospace",
-                fontSize: '10px',
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                ...(mode === 'login' ? {
-                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                  borderBottom: '1px solid rgba(200,169,110,0.45)',
-                  color: '#c8a96e',
-                } : {
-                  background: 'transparent',
-                  color: 'rgba(255,255,255,0.28)',
-                }),
-              }}>
-              Connexion
-            </button>
-            <button
-              onClick={() => { setMode('register'); setRegStep(1); setError('') }}
-              style={{
-                flex: 1,
-                padding: '10px',
-                fontFamily: "'DM Mono', monospace",
-                fontSize: '10px',
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                ...(mode === 'register' ? {
-                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                  borderBottom: '1px solid rgba(200,169,110,0.45)',
-                  color: '#c8a96e',
-                } : {
-                  background: 'transparent',
-                  color: 'rgba(255,255,255,0.28)',
-                }),
-              }}>
-              Inscription
-            </button>
+          <div style={{ display: 'flex', gap: 6, padding: '4px', background: 'rgba(255,255,255,0.04)', borderRadius: '14px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.07)' }}>
+            {[['login', 'Connexion'], ['register', "S'inscrire"]].map(([m, label]) => (
+              <button key={m} onClick={() => { setMode(m); setRegStep(1); setError('') }}
+                style={{ flex: 1, padding: '9px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: 600, border: 'none', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.2s',
+                  ...(mode === m ? { background: 'linear-gradient(135deg, rgba(132,68,255,0.85), rgba(255,77,166,0.75))', color: '#fff', boxShadow: '0 2px 12px rgba(132,68,255,0.3)' }
+                  : { background: 'transparent', color: 'rgba(255,255,255,0.35)' }) }}>
+                {label}
+              </button>
+            ))}
           </div>
 
           {/* ── Error ── */}
           {error && (
-            <div style={{
-              marginBottom: '16px',
-              padding: '10px 14px',
-              background: 'rgba(224,90,170,0.08)',
-              border: '1px solid rgba(224,90,170,0.25)',
-              borderRadius: '4px',
-              fontFamily: "'DM Mono', monospace",
-              fontSize: '10px',
-              color: '#e05aaa',
-              textAlign: 'center',
-              lineHeight: 1.5,
-            }}>
+            <div style={{ marginBottom: '16px', padding: '11px 14px', background: 'rgba(255,77,166,0.08)', border: '1px solid rgba(255,77,166,0.22)', borderRadius: '10px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', color: '#ff6b9d', textAlign: 'center', lineHeight: 1.5 }}>
               {error}
             </div>
           )}
@@ -854,8 +806,8 @@ export default function LoginPage() {
                       <button type="button" onClick={() => setShowPwd(v => !v)}
                         style={{
                           position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                          fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.15em',
-                          color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase',
+                          fontFamily: 'Inter, system-ui, sans-serif', fontSize: '11px', fontWeight: 500,
+                          color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer',
                         }}>
                         {showPwd ? 'Cacher' : 'Voir'}
                       </button>
@@ -874,11 +826,11 @@ export default function LoginPage() {
               onClick={() => { setResetEmail(email); setResetSent(false); setShowResetModal(true) }}
               style={{
                 width: '100%', textAlign: 'center', marginTop: '10px',
-                fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.2em',
-                textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)',
+                fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px', fontWeight: 400,
+                color: 'rgba(255,255,255,0.28)',
                 background: 'none', border: 'none', cursor: 'pointer',
               }}>
-              Mot de passe oublié
+              Mot de passe oublié ?
             </button>
           )}
 
@@ -1095,8 +1047,8 @@ export default function LoginPage() {
                   <button type="button" onClick={() => setShowRegPwd(v => !v)}
                     style={{
                       position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                      fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.15em',
-                      color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase',
+                      fontFamily: 'Inter, system-ui, sans-serif', fontSize: '11px', fontWeight: 500,
+                      color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer',
                     }}>
                     {showRegPwd ? 'Cacher' : 'Voir'}
                   </button>
@@ -1149,7 +1101,7 @@ export default function LoginPage() {
             <div style={{ marginTop: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
                 <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.08))' }} />
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap' }}>ou continuer avec</span>
+                <span style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap' }}>ou continuer avec</span>
                 <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, rgba(255,255,255,0.08))' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -1157,11 +1109,11 @@ export default function LoginPage() {
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                     padding: '11px',
-                    background: 'rgba(6,8,16,0.6)',
+                    background: 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: '4px',
-                    fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.1em',
-                    color: 'rgba(255,255,255,0.55)',
+                    borderRadius: '10px',
+                    fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: 500,
+                    color: 'rgba(255,255,255,0.65)',
                     cursor: 'pointer', opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s',
                   }}>
                   <svg width="14" height="14" viewBox="0 0 24 24">
@@ -1176,11 +1128,11 @@ export default function LoginPage() {
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                     padding: '11px',
-                    background: 'rgba(6,8,16,0.6)',
+                    background: 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: '4px',
-                    fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.1em',
-                    color: 'rgba(255,255,255,0.55)',
+                    borderRadius: '10px',
+                    fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: 500,
+                    color: 'rgba(255,255,255,0.65)',
                     cursor: 'pointer', opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s',
                   }}>
                   <svg width="14" height="14" viewBox="0 0 814 1000" fill="rgba(255,255,255,0.7)">
@@ -1261,16 +1213,17 @@ function FocusInput({ style = {}, ...props }) {
       onFocus={e => { setFocused(true); props.onFocus?.(e) }}
       onBlur={e => { setFocused(false); props.onBlur?.(e) }}
       style={{
-        background: 'rgba(6,8,16,0.6)',
+        background: 'rgba(255,255,255,0.05)',
         border: `1px solid ${focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)'}`,
-        borderRadius: '4px',
-        fontFamily: "'DM Mono', monospace",
-        fontSize: '13px',
+        borderRadius: '10px',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        fontSize: '14px',
         color: 'rgba(255,255,255,0.9)',
-        padding: '11px 14px',
+        padding: '12px 14px',
         width: '100%',
         outline: 'none',
-        transition: 'border-color 0.2s',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
+        boxShadow: focused ? '0 0 0 3px rgba(78,232,200,0.08)' : 'none',
         boxSizing: 'border-box',
         ...style,
       }}

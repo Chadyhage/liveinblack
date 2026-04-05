@@ -67,6 +67,16 @@ export async function syncOnLogin(uid) {
   console.log('[sync] Full sync starting for', uid)
 
   try {
+    // ── 0. User profile (always restore latest from Firestore) ──
+    const userProfile = await loadDoc(`users/${uid}`)
+    if (userProfile) {
+      try {
+        const current = JSON.parse(localStorage.getItem('lib_user') || 'null')
+        const merged = current ? { ...current, ...userProfile } : userProfile
+        localStorage.setItem('lib_user', JSON.stringify(merged))
+      } catch {}
+    }
+
     // ── 1. Wallet ──
     const wallet = await loadDoc(`wallets/${uid}`)
     if (wallet && wallet.balance !== undefined) {
@@ -202,6 +212,28 @@ export async function syncOnLogin(uid) {
     // ── 14. Reports ──
     const reports = await loadCollection('reports')
     if (reports.length) localStorage.setItem('lib_reports', JSON.stringify(reports))
+
+    // ── 15. Public events (shared collection — all organizers) ──
+    const publicEvents = await loadCollection('events')
+    if (publicEvents.length) {
+      const localEvents = safeParseArray('lib_created_events')
+      localStorage.setItem('lib_created_events', JSON.stringify(mergeById(localEvents, publicEvents)))
+    }
+
+    // ── 16. Pending validations + role requests (all users: admin needs them) ──
+    const pendingSnap = await loadCollection('pending_validations')
+    if (pendingSnap.length) {
+      const validations = pendingSnap.filter(p => p.type !== 'role_request')
+      const roleReqs = pendingSnap.filter(p => p.type === 'role_request')
+      if (validations.length) {
+        const local = safeParseArray('lib_pending_validations')
+        localStorage.setItem('lib_pending_validations', JSON.stringify(mergeById(local, validations, 'uid')))
+      }
+      if (roleReqs.length) {
+        const local = safeParseArray('lib_role_requests')
+        localStorage.setItem('lib_role_requests', JSON.stringify(mergeById(local, roleReqs)))
+      }
+    }
 
     console.log('[sync] Full sync complete')
   } catch (e) {
