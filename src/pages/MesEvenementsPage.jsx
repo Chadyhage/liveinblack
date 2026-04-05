@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import BoostModal from '../components/BoostModal'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
+import { regions } from '../data/regions'
 
 function generateCode(len = 8) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -224,7 +225,7 @@ export default function MesEvenementsPage() {
   const toastTimerRef = useRef(null)
 
   // Step 0: Bases
-  const [form, setForm] = useState({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18 })
+  const [form, setForm] = useState({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18, region: '' })
   const [artists, setArtists] = useState([]) // [{ name: '', role: 'DJ' }]
   const [showArtistSection, setShowArtistSection] = useState(false)
   const [imagePreview, setImagePreview] = useState(null)
@@ -310,6 +311,7 @@ export default function MesEvenementsPage() {
     if (currentStep === 0) {
       if (!form.name.trim()) errs.name = 'Le nom est obligatoire'
       if (!form.date) errs.date = 'La date est obligatoire'
+      if (!form.region) errs.region = 'Choisis une région'
       if (!eventType) errs.eventType = "Choisis un type d'événement"
     }
     if (currentStep === 1) {
@@ -335,7 +337,7 @@ export default function MesEvenementsPage() {
       endTime: form.timeEnd || '05:00',
       location: [venue.name, venue.city].filter(Boolean).join(', '),
       city: venue.city,
-      region: venue.country || venue.city,
+      region: form.region || venue.country || venue.city,
       imageUrl: imagePreview,
       color: '#c8a96e',
       accentColor: '#e8d49e',
@@ -408,7 +410,7 @@ export default function MesEvenementsPage() {
   function startCreate() {
     setCreateStep(0)
     setEditingEventId(null)
-    setForm({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18 })
+    setForm({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18, region: '' })
     setArtists([])
     setShowArtistSection(false)
     setImagePreview(null)
@@ -433,6 +435,7 @@ export default function MesEvenementsPage() {
       description: ev.description || '',
       privateCode: ev.privateCode || '',
       minAge: ev.minAge != null ? ev.minAge : 18,
+      region: ev.region || '',
     })
     const loadedArtists = ev.artists?.length ? ev.artists : []
     setArtists(loadedArtists)
@@ -847,6 +850,36 @@ export default function MesEvenementsPage() {
                 <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} />
                 <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} />
               </div>
+              {/* Region selector */}
+              <div>
+                <label style={{ ...S.label, marginBottom: 8 }}>Région *</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {regions.map(r => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, region: r.name }))}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '8px 14px',
+                        borderRadius: 999,
+                        border: form.region === r.name ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                        background: form.region === r.name ? 'rgba(200,169,110,0.10)' : 'rgba(6,8,16,0.5)',
+                        color: form.region === r.name ? '#c8a96e' : 'rgba(255,255,255,0.45)',
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 11,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>{r.flag}</span>
+                      {r.name}
+                    </button>
+                  ))}
+                </div>
+                {errors.region && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
+              </div>
+
               <div>
                 <label style={S.label}>Description courte</label>
                 <textarea
