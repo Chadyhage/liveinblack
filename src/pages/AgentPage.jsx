@@ -313,7 +313,7 @@ export default function AgentPage() {
         ))}
       </div>
 
-      <div style={{ padding: '16px 16px 80px', maxWidth: 520, margin: '0 auto' }}>
+      <div style={{ padding: '16px 16px 8px', maxWidth: 520, margin: '0 auto' }}>
 
         {/* ══════════════════════════════════════════════
             DASHBOARD

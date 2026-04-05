@@ -241,7 +241,7 @@ export default function MonDossierPage() {
 
   return (
     <Layout>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 80px' }}>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
 
         {/* ── Header ── */}
         <div style={{ marginBottom: 20 }}>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import RegionSelector from '../components/RegionSelector'
@@ -6,7 +6,7 @@ import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { getActiveBoosts } from '../utils/ticket'
-import { getEnabledRoles, requestAdditionalRole } from '../utils/accounts'
+import { getEnabledRoles } from '../utils/accounts'
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -14,6 +14,36 @@ function getGreeting() {
   if (h >= 12 && h < 18) return 'Bon après-midi'
   if (h >= 18 && h < 22) return 'Bonsoir'
   return 'Bonne nuit'
+}
+
+// ── Scroll-reveal hook ───────────────────────────────────────────────────────
+function useReveal() {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    if (!ref.current) return
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
+      { threshold: 0.12 }
+    )
+    obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
+  return { ref, visible }
+}
+
+function RevealSection({ children, delay = 0, style = {} }) {
+  const { ref, visible } = useReveal()
+  return (
+    <div ref={ref} style={{
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(36px)',
+      transition: `opacity 0.72s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.72s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
+      ...style,
+    }}>
+      {children}
+    </div>
+  )
 }
 
 export default function HomePage() {
@@ -34,24 +64,11 @@ export default function HomePage() {
   })
   const [showRegionSelector, setShowRegionSelector] = useState(false)
   const [geoToast, setGeoToast] = useState('')
-  const [requestingRole, setRequestingRole] = useState(null)
-  const [requestedRoles, setRequestedRoles] = useState([]) // optimistic UI
 
   const enabledRoles  = user ? getEnabledRoles(user) : []
   const isClient      = user && (enabledRoles.includes('client') || enabledRoles.includes('user')) && !enabledRoles.includes('organisateur') && !enabledRoles.includes('prestataire') && user.role !== 'agent'
   const orgStatus     = user?.orgStatus  || 'none'
   const prestStatus   = user?.prestStatus || 'none'
-
-  async function handleRequestRole(role) {
-    if (!user || requestingRole || requestedRoles.includes(role)) return
-    setRequestingRole(role)
-    try {
-      await requestAdditionalRole(user, role)
-      setRequestedRoles(prev => [...prev, role])
-    } finally {
-      setRequestingRole(null)
-    }
-  }
 
   useEffect(() => {
     const alreadySaved = localStorage.getItem('lib_region')
@@ -89,7 +106,6 @@ export default function HomePage() {
   const activeBoosts = getActiveBoosts()
   const baseTopThree = selectedRegion ? getTopEventsByRegion(selectedRegion.name) : events.slice(0, 3)
 
-  // Build a map of position → boosted event (each slot holds at most one boost)
   const boostedByPosition = {}
   activeBoosts.forEach(b => {
     const ev = allEvents.find(e => e.id === b.eventId)
@@ -100,7 +116,6 @@ export default function HomePage() {
   const boostedIds = new Set(Object.values(boostedByPosition).map(e => e.id))
   const fallback   = baseTopThree.filter(e => !boostedIds.has(e.id))
 
-  // Place boosted events at their declared position; fill empty slots with fallback events
   const topThree = []
   let fallbackIdx = 0
   for (let pos = 1; pos <= 3; pos++) {
@@ -116,274 +131,409 @@ export default function HomePage() {
     localStorage.setItem('lib_region', JSON.stringify({ id: region.id }))
   }
 
-  // rank labels
   const RANK_LABEL = ['01', '02', '03']
+  const RANK_COLOR = ['var(--gold)', '#b0b8c8', '#a0714f']
 
   return (
     <Layout>
       {/* geo toast */}
       {geoToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up"
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
           style={{
             padding: '8px 20px',
             background: 'rgba(6,8,16,0.75)',
             backdropFilter: 'blur(16px)',
             border: '1px solid rgba(78,232,200,0.3)',
-            borderRadius: '4px',
+            borderRadius: 99,
             color: 'var(--teal)',
-            fontFamily: 'DM Mono, monospace',
-            fontSize: '10px',
-            letterSpacing: '0.25em',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '11px',
+            fontWeight: 600,
+            letterSpacing: '0.12em',
             textTransform: 'uppercase',
           }}>
           {geoToast}
         </div>
       )}
 
-      {/* ── Main content ── */}
-      <div className="relative animate-fade-in-up" style={{ zIndex: 1 }}>
+      <div style={{ paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))' }}>
 
-        {/* ── Greeting ── */}
-        <div className="px-4 pt-4 pb-6">
-          {/* eyebrow */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            marginBottom: 14,
+        {/* ── Hero ── */}
+        <div style={{ padding: '52px 0 48px' }}>
+          <p className="eyebrow" style={{ marginBottom: 20, color: 'var(--violet)', opacity: 1 }}>
+            {getGreeting()}
+          </p>
+          <h1 style={{
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontSize: 'clamp(42px, 11vw, 88px)',
+            fontWeight: 800,
+            lineHeight: 0.95,
+            letterSpacing: 'clamp(-1.5px, -0.04em, -3px)',
+            margin: 0,
           }}>
-            <span style={{
-              display: 'inline-block', width: 28, height: 1,
-              background: 'var(--teal)',
-              flexShrink: 0,
-            }} />
-            <span style={{
-              fontFamily: 'DM Mono, monospace',
-              fontSize: 9, letterSpacing: '0.4em',
-              textTransform: 'uppercase',
-              color: 'var(--teal)',
-            }}>
-              {getGreeting()}
-            </span>
-          </div>
-
-          {/* name */}
-          <h2 style={{
-            fontFamily: 'Cormorant Garamond, serif',
-            fontSize: 'clamp(2.4rem, 11vw, 3.8rem)',
-            fontWeight: 300,
-            lineHeight: 1.05,
-            letterSpacing: '0.04em',
-            color: 'rgba(255,255,255,0.92)',
+            {user ? (
+              <>
+                <span style={{ color: '#fff', display: 'block', wordBreak: 'break-word' }}>
+                  {user.name.split(' ')[0]}
+                </span>
+                {user.name.split(' ').length > 1 && (
+                  <span className="gradient-text" style={{ display: 'block', wordBreak: 'break-word' }}>
+                    {user.name.split(' ').slice(1).join(' ')}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="gradient-text" style={{ display: 'block' }}>Bienvenue.</span>
+            )}
+          </h1>
+          <p style={{
+            fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)',
+            color: 'rgba(255,255,255,0.38)', marginTop: 20, maxWidth: 420, lineHeight: 1.55,
           }}>
-            {user?.name || 'Bienvenue'}
-          </h2>
+            Découvre les meilleurs événements près de toi. Achète tes billets, booste tes soirées.
+          </p>
         </div>
 
-        {/* ── Role upgrade CTAs — only for pure clients ── */}
-        {isClient && (
-          <div className="px-4 pb-2">
-            <div style={{
-              display: 'flex', flexDirection: 'column', gap: 8,
-              padding: '16px',
-              background: 'rgba(8,10,20,0.45)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 12,
-              marginBottom: 8,
-            }}>
-              <p style={{ fontFamily: 'DM Mono, monospace', fontSize: 8, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.22)', marginBottom: 4 }}>
-                Élargis ton espace
-              </p>
-
-              {/* Organisateur CTA */}
-              {!enabledRoles.includes('organisateur') && (
-                <RoleCTA
-                  icon="🎪"
-                  label="Organiser un événement"
-                  desc="Crée tes événements et gère tes billets"
-                  color="#3b82f6"
-                  status={orgStatus}
-                  onRequest={() => navigate(orgStatus === 'pending' ? '/mon-dossier' : '/onboarding-organisateur')}
-                />
-              )}
-
-              {/* Prestataire CTA */}
-              {!enabledRoles.includes('prestataire') && (
-                <RoleCTA
-                  icon="🎤"
-                  label="Proposer mes services"
-                  desc="DJ, salle, matériel, traiteur…"
-                  color="#8b5cf6"
-                  status={prestStatus}
-                  onRequest={() => navigate(prestStatus === 'pending' ? '/mon-dossier' : '/onboarding-prestataire')}
-                />
-              )}
+        {/* ── Top 3 Events ── */}
+        <RevealSection delay={60}>
+          <div style={{ marginBottom: 56 }}>
+            {/* section header */}
+            <div style={{ marginBottom: 36 }}>
+              <p className="eyebrow" style={{ marginBottom: 12, color: 'rgba(255,255,255,0.35)' }}>Top 3 événements</p>
+              <button
+                onClick={() => setShowRegionSelector(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              >
+                <h2 style={{
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontSize: 'clamp(34px, 8vw, 60px)',
+                  fontWeight: 800,
+                  letterSpacing: '-2px',
+                  lineHeight: 1,
+                  margin: 0,
+                  color: '#fff',
+                }}>
+                  {selectedRegion?.name || 'Monde'}
+                </h2>
+                <span style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                  flexShrink: 0,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="rgba(255,255,255,0.5)" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </button>
             </div>
-          </div>
-        )}
 
-        {/* ── Events section ── */}
-        <div className="px-4 pb-10">
+            {/* Event cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {topThree.length > 0 ? topThree.map((event, i) => (
+                <RevealSection key={event.id} delay={100 + i * 80}>
+                  <button
+                    onClick={() => navigate(`/evenements/${event.id}`)}
+                    style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                  >
+                    <div style={{
+                      position: 'relative',
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255,255,255,0.09)',
+                      borderRadius: 24,
+                      overflow: 'hidden',
+                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(0,0,0,0.5)' }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}>
 
-          {/* section header */}
-          <div style={{ marginBottom: 24 }}>
-            <p style={{
-              fontFamily: 'DM Mono, monospace',
-              fontSize: 9, letterSpacing: '0.4em',
-              textTransform: 'uppercase',
-              color: 'var(--muted)',
-              marginBottom: 10,
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              paddingTop: 18,
-            }}>
-              Top 3 événements
-            </p>
-
-            <button
-              onClick={() => setShowRegionSelector(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-              }}
-            >
-              <h3 style={{
-                fontFamily: 'Cormorant Garamond, serif',
-                fontSize: 'clamp(2rem, 9vw, 2.8rem)',
-                fontWeight: 300,
-                letterSpacing: '0.04em',
-                color: 'rgba(255,255,255,0.88)',
-                lineHeight: 1,
-                borderBottom: '1px solid rgba(255,255,255,0.12)',
-                paddingBottom: 2,
-              }}>
-                {selectedRegion?.name || 'Monde'}
-              </h3>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"
-                strokeLinecap="round" strokeLinejoin="round"
-                style={{ flexShrink: 0, marginTop: 4 }}>
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {topThree.length > 0 ? (
-              topThree.map((event, i) => (
-                <button
-                  key={event.id}
-                  onClick={() => navigate(`/evenements/${event.id}`)}
-                  style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                >
-                  <div style={{
-                    position: 'relative',
-                    background: 'rgba(8,10,20,0.55)',
-                    backdropFilter: 'blur(22px)',
-                    border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: 12,
-                    overflow: 'hidden',
-                  }}>
-                    {/* Color accent bar */}
-                    <div style={{ height: 2, width: '100%', background: `linear-gradient(to right, ${event.color}, ${event.accentColor || event.color})` }} />
-
-                    {/* Banner */}
-                    {event.imageUrl ? (
-                      <div style={{ width: '100%', height: 120, overflow: 'hidden', position: 'relative' }}>
-                        <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    ) : (
-                      <div style={{
-                        height: 120, position: 'relative', overflow: 'hidden',
-                        background: `linear-gradient(135deg, ${event.color}22 0%, ${event.color}08 100%)`,
-                      }}>
+                      {/* Banner */}
+                      {event.imageUrl ? (
+                        <div style={{ width: '100%', height: 240, overflow: 'hidden', position: 'relative' }}>
+                          <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,6,10,0.8) 0%, transparent 60%)' }} />
+                        </div>
+                      ) : (
                         <div style={{
-                          position: 'absolute', inset: 0, opacity: 0.12,
-                          backgroundImage: `radial-gradient(circle at 20% 50%, ${event.color} 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${event.accentColor || event.color} 0%, transparent 40%)`,
-                        }} />
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          height: 240, position: 'relative', overflow: 'hidden',
+                          background: `radial-gradient(circle at 26% 34%, ${event.color}88 0%, transparent 45%), radial-gradient(circle at 72% 40%, ${event.accentColor || event.color}66 0%, transparent 42%), linear-gradient(165deg, #110e19, #08080f)`,
+                        }}>
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,6,10,0.75) 0%, transparent 55%)' }} />
+                          <div style={{ position: 'absolute', top: 16, left: 18, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            {event.tags?.map((tag) => (
+                              <span key={tag} style={{
+                                fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600,
+                                letterSpacing: '0.06em', textTransform: 'uppercase',
+                                padding: '4px 10px', borderRadius: 999,
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                background: 'rgba(255,255,255,0.08)',
+                                color: 'rgba(255,255,255,0.75)',
+                                backdropFilter: 'blur(8px)',
+                              }}>
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                            <span style={{
+                              fontFamily: 'Inter, sans-serif', fontWeight: 900,
+                              fontSize: 'clamp(26px, 8vw, 44px)',
+                              letterSpacing: '-1px', opacity: 0.10, color: '#fff',
+                              whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '88%', textOverflow: 'ellipsis',
+                            }}>
+                              {event.name}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Rank badge */}
+                      <div style={{
+                        position: 'absolute', top: 16, right: 18,
+                        fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800,
+                        letterSpacing: '0.08em',
+                        color: RANK_COLOR[i],
+                        background: 'rgba(5,6,10,0.6)',
+                        backdropFilter: 'blur(10px)',
+                        padding: '5px 10px', borderRadius: 999,
+                        border: '1px solid rgba(255,255,255,0.12)',
+                      }}>
+                        {RANK_LABEL[i]}
+                      </div>
+
+                      {/* Info */}
+                      <div style={{ padding: '20px 24px 24px' }}>
+                        <p style={{
+                          fontFamily: 'Inter, system-ui, sans-serif',
+                          fontWeight: 700, fontSize: 'clamp(20px, 5vw, 26px)',
+                          letterSpacing: '-0.5px',
+                          color: '#fff', margin: '0 0 6px', lineHeight: 1.15,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                          {event.name}
+                        </p>
+                        <p style={{
+                          fontFamily: 'Inter, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)',
+                          marginBottom: 16, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                          {event.subtitle}
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{
+                              fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
+                              color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textTransform: 'uppercase',
+                            }}>
+                              {event.dateDisplay}
+                            </span>
+                            <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 16 }}>·</span>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+                              {event.city}
+                            </span>
+                          </div>
                           <span style={{
-                            fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 38,
-                            letterSpacing: '0.08em', opacity: 0.18, color: event.color,
-                            whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '90%', textOverflow: 'ellipsis',
+                            fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700,
+                            color: 'var(--violet-end)',
                           }}>
-                            {event.name}
+                            {event.price > 0 ? `${event.price} €` : 'Gratuit'}
                           </span>
                         </div>
-                        {/* Tags */}
-                        <div style={{ position: 'absolute', top: 12, left: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          {event.tags?.map((tag) => (
-                            <span key={tag} style={{
-                              fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em',
-                              textTransform: 'uppercase', padding: '3px 10px', borderRadius: 999,
-                              border: `1px solid ${event.color}44`, background: `${event.color}11`,
-                              color: event.accentColor || event.color,
-                            }}>
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Rank badge overlay */}
-                    <div style={{
-                      position: 'absolute', top: 10, right: 14,
-                      fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 300,
-                      color: i === 0 ? '#c8a96e' : i === 1 ? '#b0b8c8' : '#a0714f',
-                      opacity: 0.75, letterSpacing: '-0.02em', lineHeight: 1,
-                    }}>
-                      {RANK_LABEL[i]}
-                    </div>
-
-                    {/* Info row */}
-                    <div style={{ padding: '12px 16px' }}>
-                      <p style={{
-                        fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 20,
-                        color: 'rgba(255,255,255,0.9)', margin: '0 0 4px', lineHeight: 1.2,
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>
-                        {event.name}
-                      </p>
-                      <p style={{
-                        fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'var(--muted)',
-                        letterSpacing: '0.05em', marginBottom: 8,
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>
-                        {event.subtitle}
-                      </p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                          {event.dateDisplay}
-                        </span>
-                        <span style={{ color: 'rgba(255,255,255,0.1)', fontSize: 8 }}>·</span>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>
-                          {event.city}
-                        </span>
                       </div>
                     </div>
-                  </div>
+                  </button>
+                </RevealSection>
+              )) : (
+                <div style={{ textAlign: 'center', padding: '80px 0' }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>
+                    Aucun événement dans cette zone
+                  </p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.15)' }}>
+                    Change de région ou explore tout
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* See all CTA */}
+            <RevealSection delay={400}>
+              <div style={{ marginTop: 28, textAlign: 'center' }}>
+                <button onClick={() => navigate('/evenements')}
+                  style={{
+                    padding: '13px 32px', borderRadius: 999,
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: 'rgba(255,255,255,0.55)',
+                    fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', letterSpacing: '0.04em',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                >
+                  Voir tous les événements →
                 </button>
-              ))
-            ) : (
-              <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <p style={{
-                  fontFamily: 'DM Mono, monospace',
-                  fontSize: 11, color: 'var(--muted)',
-                  letterSpacing: '0.15em', textTransform: 'uppercase',
+              </div>
+            </RevealSection>
+          </div>
+        </RevealSection>
+
+        {/* ── Élargis ton espace — bottom section ── */}
+        {isClient && (
+          <RevealSection delay={0}>
+            <div style={{
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+              paddingTop: 64,
+              paddingBottom: 64,
+            }}>
+              {/* Big heading */}
+              <div style={{ marginBottom: 48 }}>
+                <p className="eyebrow" style={{ marginBottom: 16, color: 'rgba(255,255,255,0.28)' }}>Pour toi</p>
+                <h2 style={{
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontSize: 'clamp(36px, 9vw, 64px)',
+                  fontWeight: 800,
+                  lineHeight: 0.94,
+                  letterSpacing: '-2.5px',
+                  margin: 0,
                 }}>
-                  Aucun événement dans cette zone
-                </p>
+                  <span style={{ color: '#fff', display: 'block' }}>Tu veux</span>
+                  <span className="gradient-text" style={{ display: 'block' }}>élargir</span>
+                  <span style={{ color: '#fff', display: 'block' }}>ton espace ?</span>
+                </h2>
                 <p style={{
-                  fontFamily: 'DM Mono, monospace',
-                  fontSize: 10, color: 'rgba(255,255,255,0.15)',
-                  marginTop: 6,
+                  fontFamily: 'Inter, sans-serif', fontSize: 16,
+                  color: 'rgba(255,255,255,0.35)', marginTop: 20, maxWidth: 440, lineHeight: 1.6,
                 }}>
-                  Change de région ou explore tout
+                  Rejoins la plateforme en tant qu'acteur de la nuit. Crée, propose, performe.
                 </p>
               </div>
-            )}
-          </div>
-        </div>
+
+              {/* Two big cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                {/* Organisateur card */}
+                {!enabledRoles.includes('organisateur') && (
+                  <RevealSection delay={100}>
+                    <button
+                      onClick={() => navigate(orgStatus === 'pending' ? '/mon-dossier' : '/onboarding-organisateur')}
+                      style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    >
+                      <div style={{
+                        position: 'relative', overflow: 'hidden',
+                        borderRadius: 24,
+                        background: 'linear-gradient(135deg, rgba(132,68,255,0.14) 0%, rgba(132,68,255,0.04) 100%)',
+                        border: '1px solid rgba(132,68,255,0.28)',
+                        padding: '36px 32px',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(132,68,255,0.2)' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}>
+                        {/* Glow */}
+                        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+                        <div style={{ fontSize: 36, marginBottom: 16 }}>🎪</div>
+                        <h3 style={{
+                          fontFamily: 'Inter, sans-serif', fontWeight: 800,
+                          fontSize: 'clamp(22px, 5vw, 30px)',
+                          letterSpacing: '-0.8px', lineHeight: 1.1,
+                          color: '#fff', margin: '0 0 12px',
+                        }}>
+                          Organiser<br />un événement
+                        </h3>
+                        <p style={{
+                          fontFamily: 'Inter, sans-serif', fontSize: 15,
+                          color: 'rgba(255,255,255,0.45)', lineHeight: 1.6,
+                          margin: '0 0 24px', maxWidth: 360,
+                        }}>
+                          Crée tes événements, gère la billetterie, booste ta visibilité et connecte avec les meilleurs prestataires.
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            padding: '10px 20px', borderRadius: 999,
+                            background: 'rgba(132,68,255,0.22)',
+                            border: '1px solid rgba(132,68,255,0.35)',
+                            fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c9b0ff',
+                          }}>
+                            {orgStatus === 'pending' ? 'Voir mon dossier' : 'Déposer une candidature'}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                          </span>
+                          {orgStatus === 'pending' && (
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
+                              En cours
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </RevealSection>
+                )}
+
+                {/* Prestataire card */}
+                {!enabledRoles.includes('prestataire') && (
+                  <RevealSection delay={180}>
+                    <button
+                      onClick={() => navigate(prestStatus === 'pending' ? '/mon-dossier' : '/onboarding-prestataire')}
+                      style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    >
+                      <div style={{
+                        position: 'relative', overflow: 'hidden',
+                        borderRadius: 24,
+                        background: 'linear-gradient(135deg, rgba(255,77,166,0.12) 0%, rgba(255,77,166,0.03) 100%)',
+                        border: '1px solid rgba(255,77,166,0.25)',
+                        padding: '36px 32px',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(255,77,166,0.18)' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}>
+                        {/* Glow */}
+                        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,77,166,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+                        <div style={{ fontSize: 36, marginBottom: 16 }}>🎤</div>
+                        <h3 style={{
+                          fontFamily: 'Inter, sans-serif', fontWeight: 800,
+                          fontSize: 'clamp(22px, 5vw, 30px)',
+                          letterSpacing: '-0.8px', lineHeight: 1.1,
+                          color: '#fff', margin: '0 0 12px',
+                        }}>
+                          Proposer<br />mes services
+                        </h3>
+                        <p style={{
+                          fontFamily: 'Inter, sans-serif', fontSize: 15,
+                          color: 'rgba(255,255,255,0.45)', lineHeight: 1.6,
+                          margin: '0 0 24px', maxWidth: 360,
+                        }}>
+                          DJ, salle, matériel, traiteur, photographe… Rejoins la plateforme et connecte avec les organisateurs.
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            padding: '10px 20px', borderRadius: 999,
+                            background: 'rgba(255,77,166,0.18)',
+                            border: '1px solid rgba(255,77,166,0.32)',
+                            fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#ffb3d9',
+                          }}>
+                            {prestStatus === 'pending' ? 'Voir mon dossier' : 'Déposer une candidature'}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                          </span>
+                          {prestStatus === 'pending' && (
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
+                              En cours
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </RevealSection>
+                )}
+              </div>
+            </div>
+          </RevealSection>
+        )}
+
       </div>
 
       <RegionSelector
@@ -393,47 +543,5 @@ export default function HomePage() {
         currentRegion={selectedRegion?.name}
       />
     </Layout>
-  )
-}
-
-// ── Role upgrade CTA card ──────────────────────────────────────────────────
-function RoleCTA({ icon, label, desc, color, status, onRequest }) {
-  const isPending  = status === 'pending'
-  const isRejected = status === 'rejected'
-
-  return (
-    <button
-      onClick={onRequest}
-      style={{
-        width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: 8,
-        background: isPending ? 'rgba(200,169,110,0.05)' : color + '08',
-        border: isPending ? '1px solid rgba(200,169,110,0.22)' : `1px solid ${color}28`,
-        display: 'flex', alignItems: 'center', gap: 12,
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-      }}>
-      <span style={{ fontSize: 20, flexShrink: 0 }}>{icon}</span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: isPending ? '#c8a96e' : color, margin: '0 0 2px' }}>
-          {isPending ? 'Dossier en cours…' : isRejected ? `${label} — refusé` : label}
-        </p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.05em', margin: 0 }}>
-          {isPending
-            ? 'Voir le statut de mon dossier →'
-            : isRejected
-              ? 'Soumettre un nouveau dossier'
-              : desc}
-        </p>
-      </div>
-      {isPending ? (
-        <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 7, letterSpacing: '0.1em', color: '#c8a96e', padding: '2px 6px', borderRadius: 3, border: '1px solid rgba(200,169,110,0.3)', background: 'rgba(200,169,110,0.06)', textTransform: 'uppercase', flexShrink: 0, whiteSpace: 'nowrap' }}>
-          En cours
-        </span>
-      ) : (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.6 }}>
-          <path d="M9 18l6-6-6-6"/>
-        </svg>
-      )}
-    </button>
   )
 }

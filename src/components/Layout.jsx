@@ -8,7 +8,7 @@ import { getTotalPendingCount } from '../utils/accounts'
 
 // ── Nav icons ──────────────────────────────────────────────────────────────────
 function NavIcon({ id, active }) {
-  const color = active ? 'var(--teal)' : 'rgba(255,255,255,0.28)'
+  const color = active ? 'var(--violet)' : 'rgba(255,255,255,0.28)'
   const s = active ? 1.5 : 1.3
   const props = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: s, strokeLinecap: 'round', strokeLinejoin: 'round' }
   if (id === '/accueil') return <svg {...props}><path d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
@@ -117,256 +117,280 @@ export default function Layout({ children, hideNav, chatMode }) {
   const avatarLetter = user?.name?.[0]?.toUpperCase() || '?'
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen">
 
-      {/* ── DESKTOP: Left Sidebar ── */}
-      <aside className="hidden md:flex flex-col w-56 min-h-screen sticky top-0 h-screen shrink-0"
-        style={{
-          background: 'rgba(4,4,10,0.62)',
-          backdropFilter: 'blur(24px) saturate(1.5)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-          borderRight: '1px solid rgba(255,255,255,0.07)',
-          zIndex: 10,
-          padding: '32px 0',
-        }}>
+      {/* ── DESKTOP: Top Floating Pill Navbar ── */}
+      {!chatMode && (
+        <div className="hidden md:block" style={{ position: 'sticky', top: 0, zIndex: 40, padding: '16px 24px 0', pointerEvents: 'none' }}>
+          <div style={{
+            maxWidth: 1320, margin: '0 auto', pointerEvents: 'all',
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '10px 16px',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04))',
+            backdropFilter: 'blur(24px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 28,
+            boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06) inset',
+          }}>
+            {/* Logo */}
+            <button onClick={() => navigate('/accueil')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, marginRight: 8 }}>
+              <span style={{
+                width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                background: 'radial-gradient(circle at 28% 28%, rgba(255,255,255,0.85), transparent 18%), linear-gradient(135deg, rgba(132,68,255,0.98), rgba(255,77,166,0.94))',
+                boxShadow: '0 0 20px rgba(132,68,255,0.4), 0 0 40px rgba(255,77,166,0.1)',
+              }} />
+              <span style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
+                <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', letterSpacing: '0.08em', lineHeight: 1, color: 'white' }}>L</span>
+                <span style={{ display: 'inline-block', width: '2px', height: '12px', background: 'white', margin: '0 2px 1px', flexShrink: 0, alignSelf: 'center' }} />
+                <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', letterSpacing: '0.08em', lineHeight: 1, color: 'white' }}>VE IN</span>
+                <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontWeight: 900, fontSize: '1.05rem', letterSpacing: '0.02em', lineHeight: 1, color: 'white', marginLeft: '4px', position: 'relative', top: '1px' }}>BLACK</span>
+              </span>
+            </button>
 
-        {/* Logo */}
-        <button onClick={() => navigate('/accueil')}
-          style={{ display: 'flex', alignItems: 'baseline', padding: '0 24px', marginBottom: 40 }}>
-          <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.15rem', letterSpacing: '0.1em', lineHeight: 1, color: 'white' }}>L</span>
-          <span style={{ display: 'inline-block', width: '2px', height: '13px', background: 'white', margin: '0 2px 1px', flexShrink: 0, alignSelf: 'center' }} />
-          <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.15rem', letterSpacing: '0.1em', lineHeight: 1, color: 'white' }}>VE IN</span>
-          <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontWeight: 900, fontSize: '1.1rem', letterSpacing: '0.02em', lineHeight: 1, color: 'white', marginLeft: '4px', position: 'relative', top: '1px' }}>BLACK</span>
-        </button>
-
-        {/* Nav items */}
-        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {navItems.map((item) => {
-            const active = location.pathname === item.path
-            const isMsgItem = item.path === '/messagerie'
-            return (
-              <button key={item.path} onClick={() => navigate(item.path)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 24px',
-                  background: active ? 'rgba(78,232,200,0.06)' : 'transparent',
-                  borderLeft: active ? '1px solid var(--teal)' : '1px solid transparent',
-                  borderRight: 'none', borderTop: 'none', borderBottom: 'none',
-                  transition: 'all 0.2s', cursor: 'pointer', textAlign: 'left',
-                }}>
-                <div style={{ position: 'relative' }}>
-                  <NavIcon id={item.path} active={active} />
-                  {isMsgItem && unreadMsgCount > 0 && (
-                    <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: '#e05aaa', color: '#fff', fontFamily: 'DM Mono, monospace', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: '1.5px solid #04040b' }}>
-                      {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
+            {/* Nav pills — centered */}
+            <nav style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+              {navItems.map((item) => {
+                const active = location.pathname === item.path
+                const isMsgItem = item.path === '/messagerie'
+                return (
+                  <button key={item.path} onClick={() => navigate(item.path)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 7,
+                      padding: '7px 16px',
+                      background: active ? 'rgba(132,68,255,0.18)' : 'transparent',
+                      border: `1px solid ${active ? 'rgba(132,68,255,0.28)' : 'transparent'}`,
+                      borderRadius: 999,
+                      boxShadow: active ? '0 0 20px rgba(132,68,255,0.2)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      position: 'relative',
+                    }}>
+                    <div style={{ position: 'relative' }}>
+                      <NavIcon id={item.path} active={active} />
+                      {isMsgItem && unreadMsgCount > 0 && (
+                        <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8444ff,#ff4da6)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                          {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{
+                      fontFamily: 'Inter, system-ui, sans-serif', fontSize: 13, fontWeight: active ? 600 : 400,
+                      color: active ? '#fff' : 'rgba(255,255,255,0.45)',
+                    }}>
+                      {item.label}
                     </span>
+                  </button>
+                )
+              })}
+
+              {isAgent && (
+                <button onClick={() => navigate('/agent')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    padding: '7px 16px',
+                    background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.22)',
+                    borderRadius: 999, cursor: 'pointer',
+                  }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                  </svg>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'var(--gold)' }}>Admin</span>
+                  {pendingCount > 0 && (
+                    <span style={{ fontSize: 9, fontFamily: 'Inter, sans-serif', padding: '2px 6px', borderRadius: 999, background: 'rgba(200,169,110,0.18)', color: 'var(--gold)' }}>{pendingCount}</span>
                   )}
-                </div>
-                <span style={{
-                  fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.2em',
-                  textTransform: 'uppercase',
-                  color: active ? 'var(--teal)' : 'rgba(255,255,255,0.35)',
-                  transition: 'color 0.2s',
-                }}>
-                  {item.label}
-                </span>
-              </button>
-            )
-          })}
-
-          {isAgent && (
-            <button onClick={() => navigate('/agent')}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '10px 24px',
-                background: 'transparent', border: 'none',
-                borderLeft: '1px solid rgba(200,169,110,0.35)',
-                cursor: 'pointer', marginTop: 4,
-              }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-              </svg>
-              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)' }}>Admin</span>
-              {pendingCount > 0 && (
-                <span style={{ marginLeft: 'auto', fontSize: 9, fontFamily: 'DM Mono, monospace', padding: '2px 6px', borderRadius: 2, background: 'rgba(200,169,110,0.15)', border: '1px solid rgba(200,169,110,0.35)', color: 'var(--gold)' }}>{pendingCount}</span>
+                </button>
               )}
-            </button>
-          )}
-        </nav>
+            </nav>
 
-        <div style={{ height: 1, margin: '16px 24px', background: 'rgba(255,255,255,0.06)' }} />
-
-        {/* Bottom area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {user ? (
-            <>
-              <button onClick={() => navigate('/portefeuille')}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
-                </svg>
-                <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.15em', color: 'var(--gold)' }}>
-                  {balance.toFixed(0)} €
-                </span>
-              </button>
-              <button onClick={() => navigate('/profil')}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                <span style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', fontFamily: 'DM Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-                  {user.avatar ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : avatarLetter}
-                </span>
-                <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.name || 'Profil'}
-                </span>
-              </button>
-            </>
-          ) : (
-            <button onClick={() => navigate('/connexion')}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(78,232,200,0.25)', cursor: 'pointer' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
-              </svg>
-              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--teal)' }}>Se connecter</span>
-            </button>
-          )}
-          <button onClick={() => setMenuOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 5, width: 16 }}>
-              <span style={{ width: 16, height: 1, background: 'rgba(255,255,255,0.25)' }} />
-              <span style={{ width: 10, height: 1, background: 'rgba(255,255,255,0.25)' }} />
-              <span style={{ width: 16, height: 1, background: 'rgba(255,255,255,0.25)' }} />
-            </span>
-            <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)' }}>Plus</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Main area ── */}
-      <div className="flex-1 flex flex-col min-h-screen min-w-0">
-
-        {/* MOBILE: Top Bar — hidden in chatMode, hide/reveal on scroll */}
-        <header
-          className="md:hidden sticky top-0 z-40"
-          style={{
-            background: 'transparent',
-            display: chatMode ? 'none' : undefined,
-            transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)',
-            transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
-            willChange: 'transform',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
-            <button onClick={() => setMenuOpen(true)}
-              style={{ display: 'flex', flexDirection: 'column', gap: 5, width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <span style={{ width: 20, height: 1, background: 'rgba(255,255,255,0.4)' }} />
-              <span style={{ width: 14, height: 1, background: 'rgba(255,255,255,0.4)' }} />
-              <span style={{ width: 20, height: 1, background: 'rgba(255,255,255,0.4)' }} />
-            </button>
-
-            <button onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'baseline', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.2rem', letterSpacing: '0.1em', lineHeight: 1, color: 'white' }}>L</span>
-              <span style={{ display: 'inline-block', width: '2px', height: '13px', background: 'white', margin: '0 2px 1px', flexShrink: 0, alignSelf: 'center' }} />
-              <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.2rem', letterSpacing: '0.1em', lineHeight: 1, color: 'white' }}>VE IN</span>
-              <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontWeight: 900, fontSize: '1.15rem', letterSpacing: '0.02em', color: 'white', marginLeft: '5px', lineHeight: 1, position: 'relative', top: '1px' }}>BLACK</span>
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Right: wallet + avatar / connexion + hamburger */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               {user ? (
                 <>
                   <button onClick={() => navigate('/portefeuille')}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'right' }}>
-                    <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 8, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.5)', lineHeight: 1, marginBottom: 2 }}>solde</div>
-                    <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 13, color: 'var(--gold)', lineHeight: 1 }}>{balance.toFixed(0)} €</div>
+                    style={{ background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.20)', borderRadius: 999, padding: '6px 14px', cursor: 'pointer' }}>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--gold)' }}>{balance.toFixed(0)} €</span>
                   </button>
                   <button onClick={() => navigate('/profil')}
-                    style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', cursor: 'pointer', fontFamily: 'DM Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+                    style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
                     {user.avatar ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : avatarLetter}
                   </button>
                 </>
               ) : (
                 <button onClick={() => navigate('/connexion')}
-                  style={{ padding: '7px 14px', borderRadius: 4, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.3)', color: 'var(--teal)', fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                  style={{ padding: '8px 18px', borderRadius: 999, background: 'linear-gradient(135deg, rgba(132,68,255,0.96), rgba(255,77,166,0.92))', border: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 20px rgba(132,68,255,0.3)' }}>
+                  Se connecter
+                </button>
+              )}
+              <button onClick={() => setMenuOpen(true)}
+                style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 34, height: 34, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 10, cursor: 'pointer', flexShrink: 0 }}>
+                <span style={{ width: 14, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.5)' }} />
+                <span style={{ width: 10, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.5)' }} />
+                <span style={{ width: 14, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.5)' }} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MOBILE: Top Bar — floating glass pill ── */}
+      {!chatMode && (
+        <header
+          className="md:hidden"
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0,
+            zIndex: 40, padding: '10px 12px',
+            transform: headerHidden ? 'translateY(-110%)' : 'translateY(0)',
+            transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+            willChange: 'transform',
+            pointerEvents: headerHidden ? 'none' : undefined,
+          }}
+        >
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 14px',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04))',
+            backdropFilter: 'blur(20px) saturate(1.5)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 26,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+          }}>
+            {/* Hamburger */}
+            <button onClick={() => setMenuOpen(true)}
+              style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 32, height: 32, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 10, cursor: 'pointer' }}>
+              <span style={{ width: 14, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.7)' }} />
+              <span style={{ width: 10, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.7)' }} />
+              <span style={{ width: 14, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.7)' }} />
+            </button>
+
+            {/* Logo */}
+            <button onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+              <span style={{
+                width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                background: 'radial-gradient(circle at 28% 28%, rgba(255,255,255,0.85), transparent 18%), linear-gradient(135deg, rgba(132,68,255,0.98), rgba(255,77,166,0.94))',
+                boxShadow: '0 0 16px rgba(132,68,255,0.4)',
+              }} />
+              <span style={{ display: 'flex', alignItems: 'baseline' }}>
+                <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.05rem', letterSpacing: '0.08em', lineHeight: 1, color: 'white' }}>L</span>
+                <span style={{ display: 'inline-block', width: '2px', height: '11px', background: 'white', margin: '0 2px 1px', flexShrink: 0, alignSelf: 'center' }} />
+                <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.05rem', letterSpacing: '0.08em', lineHeight: 1, color: 'white' }}>VE IN</span>
+                <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontWeight: 900, fontSize: '1rem', letterSpacing: '0.02em', color: 'white', marginLeft: '4px', lineHeight: 1, position: 'relative', top: '1px' }}>BLACK</span>
+              </span>
+            </button>
+
+            {/* Right: wallet + avatar / connexion */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {user ? (
+                <>
+                  <button onClick={() => navigate('/portefeuille')}
+                    style={{ background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.20)', borderRadius: 999, padding: '5px 10px', cursor: 'pointer' }}>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--gold)' }}>{balance.toFixed(0)} €</span>
+                  </button>
+                  <button onClick={() => navigate('/profil')}
+                    style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+                    {user.avatar ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : avatarLetter}
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => navigate('/connexion')}
+                  style={{ padding: '7px 14px', borderRadius: 999, background: 'linear-gradient(135deg, rgba(132,68,255,0.92), rgba(255,77,166,0.88))', border: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                   Connexion
                 </button>
               )}
             </div>
           </div>
         </header>
+      )}
 
-        {/* Agent banner — hidden in chatMode */}
-        {isAgent && !chatMode && (
-          <button onClick={() => navigate('/agent')}
-            className="md:hidden w-full flex items-center justify-center gap-2 py-1.5 transition-all"
-            style={{ background: 'linear-gradient(to right, rgba(212,175,55,0.07), rgba(212,175,55,0.12), rgba(212,175,55,0.07))', borderBottom: '1px solid rgba(212,175,55,0.15)' }}>
-            <span className="text-xs font-bold tracking-wider"
-              style={{ background: 'linear-gradient(135deg, #d4af37, #f0e080)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              🔑 INTERFACE ADMIN
+      {/* Agent banner — mobile only */}
+      {isAgent && !chatMode && (
+        <button onClick={() => navigate('/agent')}
+          className="md:hidden w-full flex items-center justify-center gap-2 py-1.5 transition-all"
+          style={{ background: 'rgba(200,169,110,0.07)', borderBottom: '1px solid rgba(200,169,110,0.12)', position: 'fixed', top: 70, left: 0, right: 0, zIndex: 39 }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.08em' }}>
+            🔑 Interface Admin
+          </span>
+          {pendingCount > 0 && (
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: 'rgba(200,169,110,0.18)', color: 'var(--gold)' }}>
+              {pendingCount}
             </span>
-            {pendingCount > 0 && (
-              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
-                style={{ background: 'linear-gradient(135deg, #d4af37, #f0e080)', color: '#000' }}>
-                {pendingCount}
-              </span>
-            )}
-          </button>
-        )}
+          )}
+        </button>
+      )}
 
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-        <main className={`flex-1${chatMode ? ' flex flex-col' : ''}`}>
-          <div className={`md:max-w-3xl md:mx-auto md:px-6 md:pb-0${!hideNav && !chatMode ? ' pb-20' : ''}${chatMode ? ' flex-1 flex flex-col' : ''}`}>
-            {children}
-          </div>
-        </main>
+      <main className={chatMode ? 'flex flex-col' : ''} style={chatMode ? { flex: 1 } : {}}>
+        <div style={{ maxWidth: chatMode ? undefined : 1320, margin: '0 auto', width: '100%' }}
+          className={`${!hideNav && !chatMode ? 'pb-28 pt-20 md:pt-8 md:pb-16' : chatMode ? '' : 'pt-20 md:pt-8'}${chatMode ? ' flex-1 flex flex-col' : ''}`}>
+          {children}
+        </div>
+      </main>
 
-        {/* MOBILE: Bottom Nav */}
-        {!hideNav && <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40"
-          style={{
-            background: 'rgba(4,5,12,0.78)',
-            backdropFilter: 'blur(24px) saturate(1.6)',
-            WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
-            borderTop: '1px solid rgba(255,255,255,0.07)',
-          }}>
-          <div className="flex">
-            {navItems.map((item) => {
-              const active = location.pathname === item.path
-              const isMsgItem = item.path === '/messagerie'
-              return (
-                <button key={item.path} onClick={() => navigate(item.path)}
-                  className={`flex-1 pt-3 pb-4 flex flex-col items-center gap-1.5 transition-all relative ${active ? 'nav-active-bounce' : ''}`}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                  {active && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-px"
-                      style={{ background: 'linear-gradient(to right, transparent, var(--teal), transparent)' }} />
+      {/* MOBILE: Bottom Nav — floating glass pill */}
+      {!hideNav && <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40"
+        style={{ padding: '0 12px 12px', pointerEvents: 'none' }}>
+        <div style={{
+          display: 'flex',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04))',
+          backdropFilter: 'blur(20px) saturate(1.5)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
+          border: '1px solid rgba(255,255,255,0.10)',
+          borderRadius: 26,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+          overflow: 'hidden',
+          pointerEvents: 'all',
+        }}>
+          {navItems.map((item) => {
+            const active = location.pathname === item.path
+            const isMsgItem = item.path === '/messagerie'
+            return (
+              <button key={item.path} onClick={() => navigate(item.path)}
+                className={`flex-1 ${active ? 'nav-active-bounce' : ''}`}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  padding: '12px 6px 10px',
+                  background: active ? 'rgba(132,68,255,0.12)' : 'transparent',
+                  border: 'none', cursor: 'pointer', position: 'relative',
+                  transition: 'background 0.2s',
+                }}>
+                {active && (
+                  <span style={{
+                    position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                    width: 28, height: 2, borderRadius: 999,
+                    background: 'linear-gradient(to right, var(--violet), var(--violet-end))',
+                  }} />
+                )}
+                <div style={{ position: 'relative' }}>
+                  <NavIcon id={item.path} active={active} />
+                  {isMsgItem && unreadMsgCount > 0 && (
+                    <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8444ff,#ff4da6)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                      {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
+                    </span>
                   )}
-                  <div style={{ position: 'relative' }}>
-                    <NavIcon id={item.path} active={active} />
-                    {isMsgItem && unreadMsgCount > 0 && (
-                      <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: '#e05aaa', color: '#fff', fontFamily: 'DM Mono, monospace', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: '1.5px solid rgba(4,5,12,0.9)' }}>
-                        {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
-                      </span>
-                    )}
-                  </div>
-                  <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 7, letterSpacing: '0.18em', textTransform: 'uppercase', color: active ? 'var(--teal)' : 'rgba(255,255,255,0.22)' }}>
-                    {item.label}
-                  </span>
-                </button>
-              )
-            })}
-
-            {/* Guest: show connexion button in bottom nav */}
-            {!user && (
-              <button onClick={() => navigate('/connexion')}
-                className="flex-1 pt-3 pb-4 flex flex-col items-center gap-1.5 transition-all"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
-                </svg>
-                <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 7, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--teal)' }}>Connexion</span>
+                </div>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.30)' }}>
+                  {item.label}
+                </span>
               </button>
-            )}
-          </div>
-        </nav>}
-      </div>
+            )
+          })}
+
+          {/* Guest: connexion button */}
+          {!user && (
+            <button onClick={() => navigate('/connexion')}
+              className="flex-1"
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 6px 10px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+              </svg>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'var(--violet)' }}>Connexion</span>
+            </button>
+          )}
+        </div>
+      </nav>}
     </div>
   )
 }

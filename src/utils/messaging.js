@@ -144,6 +144,12 @@ export function saveFriend(myId, friendId) {
     all[myId] = [...new Set([...(all[myId] || []), friendId])]
     all[friendId] = [...new Set([...(all[friendId] || []), myId])]
     localStorage.setItem('lib_friends', JSON.stringify(all))
+    // Sync both users' social data to Firestore
+    import('./firestore-sync').then(({ syncDoc }) => {
+      const blocked = JSON.parse(localStorage.getItem('lib_blocked') || '{}')
+      syncDoc(`user_social/${myId}`, { friends: all[myId] || [], blocked: blocked[myId] || [] })
+      syncDoc(`user_social/${friendId}`, { friends: all[friendId] || [], blocked: blocked[friendId] || [] })
+    }).catch(() => {})
   } catch {}
 }
 
@@ -153,6 +159,11 @@ export function removeFriend(myId, friendId) {
     all[myId] = (all[myId] || []).filter(id => id !== friendId)
     all[friendId] = (all[friendId] || []).filter(id => id !== myId)
     localStorage.setItem('lib_friends', JSON.stringify(all))
+    // Sync to Firestore so removal persists cross-device
+    import('./firestore-sync').then(({ syncDoc }) => {
+      const blocked = JSON.parse(localStorage.getItem('lib_blocked') || '{}')
+      syncDoc(`user_social/${myId}`, { friends: all[myId] || [], blocked: blocked[myId] || [] })
+    }).catch(() => {})
   } catch {}
 }
 
@@ -165,8 +176,13 @@ export function sendFriendRequest(fromId, fromName, toId) {
   try {
     const all = JSON.parse(localStorage.getItem('lib_friend_requests') || '[]')
     if (all.find(r => r.fromId === fromId && r.toId === toId)) return
-    all.push({ id: Date.now().toString(), fromId, fromName, toId, sentAt: new Date().toISOString() })
+    const req = { id: Date.now().toString(), fromId, fromName, toId, sentAt: new Date().toISOString() }
+    all.push(req)
     localStorage.setItem('lib_friend_requests', JSON.stringify(all))
+    // Sync to Firestore so recipient sees it on other devices
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`friend_requests/${req.id}`, req)
+    }).catch(() => {})
   } catch {}
 }
 
@@ -205,6 +221,8 @@ export function saveConversation(conv) {
     const idx = all.findIndex(c => c.id === conv.id)
     if (idx >= 0) all[idx] = conv; else all.push(conv)
     localStorage.setItem('lib_conversations', JSON.stringify(all))
+    // Fire-and-forget Firestore sync
+    import('./firestore-sync').then(({ syncDoc }) => syncDoc(`conversations/${conv.id}`, conv)).catch(() => {})
   } catch {}
 }
 
@@ -239,6 +257,7 @@ export function createGroup(name, creatorId, creatorName, memberIds, memberNames
     name,
     avatar: null,
     members,
+    participantIds: memberIds, // used by Firestore queries
     updatedAt: new Date().toISOString(),
     lastMessage: `Groupe créé par ${creatorName}`,
     pinnedMessageId: null,
@@ -335,7 +354,8 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
     ...(extra.replyTo ? { replyTo: extra.replyTo } : {}),
     ...(extra.forwardedFrom ? { forwardedFrom: extra.forwardedFrom } : {}),
   }
-  saveMessages(convId, [...msgs, msg])
+  const updatedMsgs = [...msgs, msg]
+  saveMessages(convId, updatedMsgs)
   try {
     const all = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
     const idx = all.findIndex(c => c.id === convId)
@@ -351,6 +371,12 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
         : type === 'system' ? content
         : '📎'
       localStorage.setItem('lib_conversations', JSON.stringify(all))
+      // Sync conv + messages to Firestore
+      const updatedConv = all[idx]
+      import('./firestore-sync').then(({ syncDoc }) => {
+        syncDoc(`conversations/${convId}`, updatedConv)
+        syncDoc(`conv_messages/${convId}`, { items: updatedMsgs })
+      }).catch(() => {})
     }
   } catch {}
   return msg
@@ -497,55 +523,25 @@ export function addSongToGroupBooking(bookingId, userId, song) {
 }
 
 // ─── Seed demo data ───────────────────────────────────────────────────────────
-export function seedDemoData(myId, myName) {
-  const key = 'lib_seeded_' + myId
-  if (localStorage.getItem(key)) return
-  const t = ms => new Date(Date.now() - ms).toISOString()
-
+export function seedDemoData(myId) {
+  // Demo data disabled — clean up any previously seeded data
+  const seedKey = 'lib_seeded_' + myId
+  if (!localStorage.getItem(seedKey)) return // nothing was ever seeded
   const dmId  = 'conv_dm_alex_' + myId
   const grpId = 'conv_grp_squad_' + myId
-
-  const conversations = [
-    {
-      id: dmId, type: 'direct',
-      participants: [myId, 'u_alex'],
-      names: { [myId]: myName, 'u_alex': 'Alex Martin' },
-      updatedAt: t(1000 * 60 * 20), lastMessage: 'On devrait y aller 🔥',
-      pinnedMessageId: null,
-    },
-    {
-      id: grpId, type: 'group', name: 'Squad LIVEINBLACK 🔥', avatar: null,
-      members: [
-        { userId: myId,     name: myName,        role: 'admin',  contributionPct: 40 },
-        { userId: 'u_alex', name: 'Alex Martin', role: 'member', contributionPct: 30 },
-        { userId: 'u_sarah',name: 'Sarah Koné',  role: 'member', contributionPct: 30 },
-      ],
-      updatedAt: t(1000 * 60 * 5), lastMessage: 'Prêts pour ce soir ?',
-      pinnedMessageId: null,
-    },
-  ]
-
-  const existingConvs = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
-  const filtered = existingConvs.filter(c => c.id !== dmId && c.id !== grpId)
-  localStorage.setItem('lib_conversations', JSON.stringify([...conversations, ...filtered]))
-
-  const allMsgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
-  allMsgs[dmId] = [
-    { id: 'dm1', senderId: 'u_alex', senderName: 'Alex Martin', type: 'text', content: "Yo t'as vu la soirée NEON NOIR ?", timestamp: t(1000 * 60 * 35), reactions: {}, readBy: {}, deletedForAll: false, deletedForSelf: [] },
-    { id: 'dm2', senderId: 'u_alex', senderName: 'Alex Martin', type: 'text', content: 'On devrait y aller 🔥', timestamp: t(1000 * 60 * 20), reactions: { '🔥': ['u_alex'] }, readBy: {}, deletedForAll: false, deletedForSelf: [] },
-  ]
-  allMsgs[grpId] = [
-    { id: 'g1', senderId: 'u_alex',  senderName: 'Alex Martin', type: 'text', content: 'Salut tout le monde ! 🎉', timestamp: t(1000 * 60 * 60), reactions: {}, readBy: {}, deletedForAll: false, deletedForSelf: [] },
-    { id: 'g2', senderId: 'u_sarah', senderName: 'Sarah Koné',  type: 'text', content: 'On réserve les places pour NEON NOIR ?', timestamp: t(1000 * 60 * 30), reactions: { '❤️': ['u_alex', myId] }, readBy: {}, deletedForAll: false, deletedForSelf: [] },
-    { id: 'g3', senderId: 'u_alex',  senderName: 'Alex Martin', type: 'text', content: 'Prêts pour ce soir ?', timestamp: t(1000 * 60 * 5), reactions: {}, readBy: {}, deletedForAll: false, deletedForSelf: [] },
-  ]
-  localStorage.setItem('lib_messages', JSON.stringify(allMsgs))
-
-  saveFriend(myId, 'u_alex')
-  saveFriend(myId, 'u_sarah')
-  saveFriend(myId, 'u_tom')
-
-  localStorage.setItem(key, '1')
+  // Remove seeded conversations
+  try {
+    const convs = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
+    localStorage.setItem('lib_conversations', JSON.stringify(convs.filter(c => c.id !== dmId && c.id !== grpId)))
+    const msgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
+    delete msgs[dmId]; delete msgs[grpId]
+    localStorage.setItem('lib_messages', JSON.stringify(msgs))
+    // Remove seeded demo friends
+    const friends = JSON.parse(localStorage.getItem('lib_friends') || '{}')
+    friends[myId] = (friends[myId] || []).filter(id => !['u_alex','u_sarah','u_tom'].includes(id))
+    localStorage.setItem('lib_friends', JSON.stringify(friends))
+  } catch {}
+  localStorage.removeItem(seedKey)
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

@@ -21,11 +21,13 @@ import { deductFunds, getBalance } from '../utils/wallet'
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
   teal: '#4ee8c8', pink: '#e05aaa', gold: '#c8a96e',
+  violet: '#8444ff', violetEnd: '#ff4da6',
   muted: 'rgba(255,255,255,0.42)', dim: 'rgba(255,255,255,0.22)',
-  dmMono: "'DM Mono', monospace", cormorant: "'Cormorant Garamond', serif",
+  // Keep old aliases for compat — all pointing to Inter now
+  dmMono: "'Inter', system-ui, sans-serif", cormorant: "'Inter', system-ui, sans-serif",
 }
-const CARD = { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }
-const INPUT_S = { background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 6, color: 'rgba(255,255,255,0.9)', fontFamily: T.dmMono, fontSize: 12, padding: '9px 12px', outline: 'none', width: '100%', boxSizing: 'border-box' }
+const CARD = { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }
+const INPUT_S = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 10, color: 'rgba(255,255,255,0.9)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, padding: '10px 14px', outline: 'none', width: '100%', boxSizing: 'border-box' }
 
 const EMOJIS = ['❤️','😂','😮','😢','😡','👍','👎','🔥','🎉','💀','🤣','😍','😭','🙏','💯','✅']
 
@@ -128,16 +130,61 @@ function MicIcon({ color = '#fff', size = 18 }) {
 }
 
 // ─── Voice bubble with waveform ────────────────────────────────────────────────
+const BAR_COUNT = 30
 function VoiceBubble({ content, isMe }) {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [bars, setBars] = useState(null) // null = loading, array = ready
   const audioRef = useRef(null)
+
+  // Decode real waveform via Web Audio API
+  useEffect(() => {
+    if (!content) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        // base64 data URL → ArrayBuffer
+        const res = await fetch(content)
+        const arrayBuf = await res.arrayBuffer()
+        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        const audioBuffer = await ctx.decodeAudioData(arrayBuf)
+        ctx.close()
+        if (cancelled) return
+        // Extract peaks: sample channel 0 into BAR_COUNT buckets
+        const channelData = audioBuffer.getChannelData(0)
+        const blockSize = Math.floor(channelData.length / BAR_COUNT)
+        const peaks = Array.from({ length: BAR_COUNT }, (_, i) => {
+          const start = i * blockSize
+          let max = 0
+          for (let j = 0; j < blockSize; j++) {
+            const abs = Math.abs(channelData[start + j] || 0)
+            if (abs > max) max = abs
+          }
+          return max
+        })
+        const maxPeak = Math.max(...peaks, 0.01)
+        setBars(peaks.map(p => Math.max(0.1, p / maxPeak)))
+        setDuration(Math.round(audioBuffer.duration))
+      } catch {
+        // Fallback to deterministic bars if decoding fails
+        if (!cancelled) setBars(
+          Array.from({ length: BAR_COUNT }, (_, i) => {
+            const seed = (content?.charCodeAt(i * 3 % (content?.length || 1)) || 80) + i * 17
+            return 0.2 + (seed % 80) / 100
+          })
+        )
+      }
+    })()
+    return () => { cancelled = true }
+  }, [content])
 
   function handlePlay() {
     if (!audioRef.current) {
       audioRef.current = new Audio(content)
-      audioRef.current.onloadedmetadata = () => setDuration(Math.round(audioRef.current.duration))
+      audioRef.current.onloadedmetadata = () => {
+        if (!duration) setDuration(Math.round(audioRef.current.duration))
+      }
       audioRef.current.ontimeupdate = () => {
         const d = audioRef.current.duration || 1
         setProgress(audioRef.current.currentTime / d)
@@ -153,14 +200,12 @@ function VoiceBubble({ content, isMe }) {
     }
   }
 
-  // Deterministic fake waveform bars from content hash
-  const bars = Array.from({ length: 28 }, (_, i) => {
+  const activeBars = bars ?? Array.from({ length: BAR_COUNT }, (_, i) => {
     const seed = (content?.charCodeAt(i * 3 % (content?.length || 1)) || 80) + i * 17
     return 0.2 + (seed % 80) / 100
   })
   const activeColor = isMe ? T.teal : '#fff'
   const dimColor = isMe ? 'rgba(78,232,200,0.25)' : 'rgba(255,255,255,0.18)'
-
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
   return (
@@ -172,19 +217,16 @@ function VoiceBubble({ content, isMe }) {
           : <svg width="12" height="12" viewBox="0 0 24 24" fill={activeColor}><polygon points="5 3 19 12 5 21 5 3"/></svg>
         }
       </button>
-      {/* Waveform bars */}
+      {/* Real waveform bars */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, height: 28 }}>
-        {bars.map((h, i) => {
-          const isPast = progress > 0 && i / bars.length <= progress
+        {activeBars.map((h, i) => {
+          const isPast = progress > 0 && i / activeBars.length <= progress
           return (
             <div key={i} style={{ width: 2.5, height: `${h * 100}%`, borderRadius: 2, background: isPast ? activeColor : dimColor, transition: 'background 0.1s' }} />
           )
         })}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
-        <MicIcon color={isMe ? T.teal : T.dim} size={11} />
-        <span style={{ fontFamily: T.dmMono, fontSize: 8, color: T.dim, marginTop: 2 }}>{duration > 0 ? fmt(duration) : ''}</span>
-      </div>
+      <span style={{ fontFamily: T.dmMono, fontSize: 8, color: T.dim, flexShrink: 0, minWidth: 28, textAlign: 'right' }}>{duration > 0 ? fmt(duration) : playing ? '…' : ''}</span>
     </div>
   )
 }
@@ -217,25 +259,32 @@ function EventPollCard({ msg, myId, convId, onVote }) {
   const yesCount = Object.keys(yesOpt?.votes || {}).length
   const noCount  = Object.keys(noOpt?.votes  || {}).length
   return (
-    <div style={{ minWidth: 220, maxWidth: 270 }}>
+    <div style={{ minWidth: 240, maxWidth: 300 }}>
+      {/* Affiche plein format */}
       {ev.image
-        ? <img src={ev.image} alt={ev.name} style={{ width: '100%', borderRadius: 6, maxHeight: 110, objectFit: 'cover', marginBottom: 8 }} />
-        : <div style={{ width: '100%', height: 64, borderRadius: 6, background: 'linear-gradient(135deg, rgba(200,169,110,0.15), rgba(78,232,200,0.08))', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, fontSize: 24 }}>🎟</div>
+        ? <img src={ev.image} alt={ev.name} style={{ width: '100%', borderRadius: '8px 8px 0 0', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+        : <div style={{ width: '100%', aspectRatio: '4/3', borderRadius: '8px 8px 0 0', background: 'linear-gradient(135deg, rgba(200,169,110,0.18), rgba(78,232,200,0.10))', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
+            🎟
+            {ev.name && <span style={{ fontFamily: T.cormorant, fontSize: 18, color: '#fff', marginTop: 8, textAlign: 'center', padding: '0 12px' }}>{ev.name}</span>}
+          </div>
       }
-      <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 14, color: '#fff', margin: '0 0 2px' }}>{ev.name}</p>
-      <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 10px' }}>{ev.date}{ev.price ? ` · ${ev.price}€` : ''}</p>
-      <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted, margin: '0 0 8px', fontWeight: 600 }}>{poll.question || 'On y va ?'}</p>
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button onClick={() => onVote(msg.id, 'yes')}
-          style={{ flex: 1, padding: '8px 6px', borderRadius: 5, cursor: 'pointer', border: `1px solid ${myVote === 'yes' ? 'rgba(34,197,94,0.5)' : 'rgba(255,255,255,0.10)'}`, background: myVote === 'yes' ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.04)', color: myVote === 'yes' ? '#22c55e' : T.muted, fontFamily: T.dmMono, fontSize: 10 }}>
-          ✓ Oui {yesCount > 0 && <span>({yesCount})</span>}
-        </button>
-        <button onClick={() => onVote(msg.id, 'no')}
-          style={{ flex: 1, padding: '8px 6px', borderRadius: 5, cursor: 'pointer', border: `1px solid ${myVote === 'no' ? 'rgba(220,50,50,0.5)' : 'rgba(255,255,255,0.10)'}`, background: myVote === 'no' ? 'rgba(220,50,50,0.12)' : 'rgba(255,255,255,0.04)', color: myVote === 'no' ? 'rgba(220,100,100,0.9)' : T.muted, fontFamily: T.dmMono, fontSize: 10 }}>
-          ✕ Non {noCount > 0 && <span>({noCount})</span>}
-        </button>
+      {/* Infos + vote */}
+      <div style={{ padding: '10px 12px 12px', background: 'rgba(4,4,14,0.85)', borderRadius: '0 0 8px 8px', border: '1px solid rgba(255,255,255,0.08)', borderTop: 'none' }}>
+        {ev.image && <p style={{ fontFamily: T.cormorant, fontWeight: 500, fontSize: 15, color: '#fff', margin: '0 0 2px' }}>{ev.name}</p>}
+        <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{ev.date}{ev.price ? ` · ${ev.price}€` : ''}</p>
+        <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted, margin: '0 0 8px', fontWeight: 600 }}>{poll.question || 'On y va ?'}</p>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={() => onVote(msg.id, 'yes')}
+            style={{ flex: 1, padding: '8px 6px', borderRadius: 5, cursor: 'pointer', border: `1px solid ${myVote === 'yes' ? 'rgba(34,197,94,0.5)' : 'rgba(255,255,255,0.10)'}`, background: myVote === 'yes' ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.04)', color: myVote === 'yes' ? '#22c55e' : T.muted, fontFamily: T.dmMono, fontSize: 10 }}>
+            ✓ Oui {yesCount > 0 && <span>({yesCount})</span>}
+          </button>
+          <button onClick={() => onVote(msg.id, 'no')}
+            style={{ flex: 1, padding: '8px 6px', borderRadius: 5, cursor: 'pointer', border: `1px solid ${myVote === 'no' ? 'rgba(220,50,50,0.5)' : 'rgba(255,255,255,0.10)'}`, background: myVote === 'no' ? 'rgba(220,50,50,0.12)' : 'rgba(255,255,255,0.04)', color: myVote === 'no' ? 'rgba(220,100,100,0.9)' : T.muted, fontFamily: T.dmMono, fontSize: 10 }}>
+            ✕ Non {noCount > 0 && <span>({noCount})</span>}
+          </button>
+        </div>
+        <p style={{ fontFamily: T.dmMono, fontSize: 8, color: T.dim, margin: '6px 0 0' }}>{totalVotes} réponse{totalVotes !== 1 ? 's' : ''}</p>
       </div>
-      <p style={{ fontFamily: T.dmMono, fontSize: 8, color: T.dim, margin: '6px 0 0' }}>{totalVotes} réponse{totalVotes !== 1 ? 's' : ''}</p>
     </div>
   )
 }
@@ -326,13 +375,17 @@ export default function MessagingPage() {
   // ── Voice recording ──
   const [isRecording, setIsRecording]     = useState(false)
   const [voiceLocked, setVoiceLocked]     = useState(false)
+  const [tapMode, setTapMode]             = useState(false)   // true = démarré par tap unique
   const [recDuration, setRecDuration]     = useState(0)
   const mediaRecorderRef  = useRef(null)
   const audioChunksRef    = useRef([])
   const recTimerRef       = useRef(null)
+  const holdTimerRef      = useRef(null)
   const voiceBtnRef       = useRef(null)
   const pointerStartYRef  = useRef(0)
+  const pressStartTimeRef = useRef(0)
   const isHoldingRef      = useRef(false)
+  const tapModeRef        = useRef(false)
 
   // ── Contacts / block / report ──
   const [contactSearch, setContactSearch]     = useState('')
@@ -340,6 +393,7 @@ export default function MessagingPage() {
   const [reportReason, setReportReason]       = useState('')
   const [blockedUsers, setBlockedUsers]       = useState([])
   const [prevRequestCount, setPrevRequestCount] = useState(0)
+  const prevUnreadRef = useRef(0)
 
   // ── Typing / online ──
   const [typingUsers, setTypingUsersState] = useState([])
@@ -347,9 +401,22 @@ export default function MessagingPage() {
 
   // ── Refs ──
   const messagesEndRef  = useRef(null)
+  const chatScrollRef   = useRef(null)
   const photoInputRef   = useRef(null)
   const storyImgRef     = useRef(null)
   const groupAvatarRef  = useRef(null)
+
+  // ── Scroll-to-bottom button ──
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
+  function handleChatScroll() {
+    if (!chatScrollRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = chatScrollRef.current
+    setShowScrollBtn(scrollHeight - scrollTop - clientHeight > 120)
+  }
+  function scrollToBottom() {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    setShowScrollBtn(false)
+  }
 
   // ── Notification sound ──
   const notifSound = useCallback(() => {
@@ -377,9 +444,12 @@ export default function MessagingPage() {
     refresh()
     const initialReqs = getFriendRequests(myId)
     setPrevRequestCount(initialReqs.length)
+    const initialConvs = getConversations(myId)
+    prevUnreadRef.current = initialConvs.reduce((s, c) => s + (c.unread || 0), 0)
     const interval = setInterval(() => {
       setOnline(myId)
-      setConversations(getConversations(myId))
+      const latestConvs = getConversations(myId)
+      setConversations(latestConvs)
       const newReqs = getFriendRequests(myId)
       setRequests(newReqs)
       // Detect new friend request → play sound + toast
@@ -388,6 +458,10 @@ export default function MessagingPage() {
         showToast(`📩 Nouvelle demande de contact de ${newReqs[newReqs.length - 1]?.fromName || 'quelqu\'un'}`)
       }
       setPrevRequestCount(newReqs.length)
+      // Detect new unread messages (from others) → play sound
+      const totalUnread = latestConvs.reduce((s, c) => s + (c.unread || 0), 0)
+      if (totalUnread > prevUnreadRef.current) notifSound()
+      prevUnreadRef.current = totalUnread
       if (activeConvId) {
         setMessages(getMessages(activeConvId))
         setTypingUsersState(getTypingUsers(activeConvId, myId))
@@ -405,7 +479,10 @@ export default function MessagingPage() {
   }
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Auto-scroll seulement si l'utilisateur est déjà en bas
+    if (!showScrollBtn) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages])
 
   // ── Open conversation ──
@@ -480,15 +557,40 @@ export default function MessagingPage() {
     setShowAttachMenu(false)
   }
 
-  // ── Voice recording ──
-  async function startRecordingCore() {
-    if (isRecording || mediaRecorderRef.current?.state === 'recording') return
+  // ── Voice recording core ──
+  async function startRecordingCore(isTap = false) {
+    if (mediaRecorderRef.current?.state === 'recording') return
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mr = new MediaRecorder(stream)
       audioChunksRef.current = []
       mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
       mr.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        clearInterval(recTimerRef.current)
+        setRecDuration(0)
+        setVoiceLocked(false)
+        setTapMode(false)
+        tapModeRef.current = false
+        isHoldingRef.current = false
+      }
+      mr._shouldSend = true
+      mr.start()
+      mediaRecorderRef.current = mr
+      setIsRecording(true)
+      setTapMode(isTap)
+      tapModeRef.current = isTap
+      setRecDuration(0)
+      clearInterval(recTimerRef.current)
+      recTimerRef.current = setInterval(() => setRecDuration(d => d + 1), 1000)
+    } catch {}
+  }
+
+  function stopAndSendRecording() {
+    const mr = mediaRecorderRef.current
+    if (!mr || mr.state !== 'recording') return
+    mr.onstop = () => {
+      if (mr._shouldSend && audioChunksRef.current.length > 0) {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         const reader = new FileReader()
         reader.onload = ev => {
@@ -499,42 +601,55 @@ export default function MessagingPage() {
           setConversations(getConversations(myId))
         }
         reader.readAsDataURL(blob)
-        stream.getTracks().forEach(t => t.stop())
-        clearInterval(recTimerRef.current)
-        setRecDuration(0)
-        setVoiceLocked(false)
-        isHoldingRef.current = false
       }
-      mr.start()
-      mediaRecorderRef.current = mr
-      setIsRecording(true)
-      setRecDuration(0)
+      mr.stream?.getTracks().forEach(t => t.stop())
       clearInterval(recTimerRef.current)
-      recTimerRef.current = setInterval(() => setRecDuration(d => d + 1), 1000)
-    } catch {}
-  }
-
-  function stopRecordingCore() {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.stop()
+      setRecDuration(0)
+      setVoiceLocked(false)
+      setTapMode(false)
+      tapModeRef.current = false
+      isHoldingRef.current = false
     }
+    mr.stop()
     setIsRecording(false)
   }
 
-  // Single tap: toggle on/off
-  function handleVoiceTap() {
-    if (isRecording) { stopRecordingCore() } else { startRecordingCore() }
+  function cancelRecording() {
+    const mr = mediaRecorderRef.current
+    if (!mr) return
+    mr._shouldSend = false
+    if (mr.state === 'recording') {
+      mr.onstop = () => {
+        mr.stream?.getTracks().forEach(t => t.stop())
+        clearInterval(recTimerRef.current)
+        setRecDuration(0)
+        setVoiceLocked(false)
+        setTapMode(false)
+        tapModeRef.current = false
+        isHoldingRef.current = false
+      }
+      mr.stop()
+    }
+    setIsRecording(false)
+    setVoiceLocked(false)
   }
 
-  // Pointer down: start recording + track position for lock gesture
+  // Pointer down: attend 250ms avant de démarrer (hold mode) ou détecte un tap sur pointerUp
   function handleVoicePointerDown(e) {
     e.preventDefault()
+    if (tapModeRef.current) return // déjà en mode tap, ignorer
+    pressStartTimeRef.current = Date.now()
     pointerStartYRef.current = e.clientY ?? e.touches?.[0]?.clientY ?? 0
     isHoldingRef.current = true
-    startRecordingCore()
+    // Démarre en mode hold après 250ms
+    holdTimerRef.current = setTimeout(() => {
+      if (isHoldingRef.current) {
+        startRecordingCore(false)
+      }
+    }, 250)
   }
 
-  // Pointer move: detect upward slide → lock
+  // Pointer move: slide up → verrouille l'enregistrement
   function handleVoicePointerMove(e) {
     if (!isHoldingRef.current || voiceLocked) return
     const currentY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
@@ -544,29 +659,27 @@ export default function MessagingPage() {
     }
   }
 
-  // Pointer up: send if not locked
+  // Pointer up: tap court → toggle, hold → stoppe et envoie
   function handleVoicePointerUp() {
-    if (!isHoldingRef.current) return
+    clearTimeout(holdTimerRef.current)
+    const pressDuration = Date.now() - pressStartTimeRef.current
+    if (!isHoldingRef.current && !mediaRecorderRef.current) return
     isHoldingRef.current = false
-    if (!voiceLocked) { stopRecordingCore() }
-  }
 
-  // Cancel recording
-  function cancelRecording() {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      // Override onstop to not send
-      mediaRecorderRef.current.onstop = () => {
-        const stream = mediaRecorderRef.current?.stream
-        stream?.getTracks().forEach(t => t.stop())
-        clearInterval(recTimerRef.current)
-        setRecDuration(0)
-        setVoiceLocked(false)
-        isHoldingRef.current = false
+    if (pressDuration < 250) {
+      // TAP: toggle
+      if (mediaRecorderRef.current?.state === 'recording') {
+        // 2e tap = stopper et envoyer
+        stopAndSendRecording()
+      } else {
+        // 1er tap = démarrer
+        startRecordingCore(true)
       }
-      mediaRecorderRef.current.stop()
+    } else if (!voiceLocked) {
+      // HOLD release = stopper et envoyer
+      stopAndSendRecording()
     }
-    setIsRecording(false)
-    setVoiceLocked(false)
+    // Si voiceLocked, l'utilisateur utilise les boutons Envoyer/Annuler
   }
 
   // ── Send poll ──
@@ -594,7 +707,7 @@ export default function MessagingPage() {
     setStoryTitle(''); setStoryText(''); setStoryImage(null); setShowStoryCreator(false)
   }
 
-  // ── Send event poll ──
+  // ── Send event poll (partager l'info, sondage oui/non) ──
   function handleSendEventPoll(event) {
     if (!activeConvId) return
     const poll = {
@@ -610,6 +723,49 @@ export default function MessagingPage() {
     setConversations(getConversations(myId))
     setShowEventPicker(false)
     showToast('Événement partagé dans la conversation')
+  }
+
+  // ── Send group booking proposal (réservation collective avec part par membre) ──
+  function handleSendGroupBooking(event) {
+    if (!activeConvId) return
+    const conv = activeConv
+    const members = conv?.members || []
+    const memberCount = Math.max(members.length, 1)
+    const evenPct = Math.floor(100 / memberCount)
+    const remainder = 100 - evenPct * memberCount
+    const bookingId = `grpbk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+    // Assign contribution % evenly; first member gets any remainder
+    const membersWithPct = members.map((m, i) => ({
+      ...m,
+      contributionPct: evenPct + (i === 0 ? remainder : 0),
+    }))
+    const booking = {
+      id: bookingId,
+      eventId: event.id,
+      eventName: event.name,
+      eventDate: event.date,
+      eventDateISO: null,
+      eventStartTime: null,
+      eventEndTime: null,
+      placeName: event.placeName || '',
+      placePrice: event.price || 0,
+      groupMin: memberCount,
+      groupMax: memberCount,
+      totalPrice: (event.price || 0) * memberCount,
+      members: membersWithPct,
+      validations: {},
+      payments: {},
+      songSelections: {},
+      createdBy: myId,
+      createdAt: new Date().toISOString(),
+    }
+    saveGroupBooking(booking)
+    sendMessage(activeConvId, myId, myName, 'group_booking', bookingId)
+    setGroupBookings(getGroupBookings())
+    setMessages(getMessages(activeConvId))
+    setConversations(getConversations(myId))
+    setShowEventPicker(false)
+    showToast('Proposition de réservation envoyée')
   }
 
   // ── Context menu actions ──
@@ -813,7 +969,7 @@ export default function MessagingPage() {
       ? `Retirer le rôle Admin à ${target?.name} ?`
       : `Nommer ${target?.name} administrateur·trice ?`
     setConfirmDialog({
-      action: 'set_admin', label,
+      action: 'set_admin', label, variant: isAlreadyAdmin ? 'danger' : 'safe',
       onConfirm: () => {
         const newRole = isAlreadyAdmin ? 'member' : 'admin'
         saveConversation({ ...activeConv, members: activeConv.members.map(m => m.userId === memberId ? { ...m, role: newRole } : m) })
@@ -992,7 +1148,7 @@ export default function MessagingPage() {
   // ── List view ──
   if (view === 'list') return (
     <Layout>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 0 80px' }}>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0' }}>
         {/* Header */}
         <div style={{ padding: '16px 16px 10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -1078,7 +1234,7 @@ export default function MessagingPage() {
   // ── User search / new DM ──
   if (view === 'search') return (
     <Layout>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 80px' }}>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <button onClick={() => setView('list')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0 }}>←</button>
           <h2 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0 }}>Nouveau message</h2>
@@ -1123,7 +1279,7 @@ export default function MessagingPage() {
   // ── New group ──
   if (view === 'new-group') return (
     <Layout>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 80px' }}>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => newGroupStep === 1 ? setView('list') : setNewGroupStep(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0 }}>←</button>
           <h2 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0 }}>
@@ -1198,7 +1354,7 @@ export default function MessagingPage() {
   // ── Contacts view ──
   if (view === 'contacts') return (
     <Layout>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 80px' }}>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <button onClick={() => setView('list')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0 }}>←</button>
           <h2 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0, flex: 1 }}>Contacts</h2>
@@ -1313,18 +1469,18 @@ export default function MessagingPage() {
 
   return (
     <Layout hideNav chatMode>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', maxWidth: 520, margin: '0 auto', position: 'relative' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', maxWidth: 520, margin: '0 auto', position: 'relative', overflow: 'hidden' }}>
 
         {/* ── Header ── */}
         <div style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(4,4,14,0.95)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => { setView('list'); setActiveConvId(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0, flexShrink: 0 }}>←</button>
           {convDisplay.isGroup ? <GroupAvatar conv={activeConv} size={38} /> : <Avatar user={convDisplay.user} size={38} showOnline />}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 17, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{convDisplay.name}</p>
-            <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '1px 0 0' }}>
+            <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{convDisplay.name}</p>
+            <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 11, color: T.dim, margin: '2px 0 0' }}>
               {convDisplay.isGroup
                 ? `${convDisplay.memberCount} membres`
-                : isOnline(convDisplay.otherId) ? '🟢 En ligne' : 'Hors ligne'
+                : isOnline(convDisplay.otherId) ? <span style={{ color: '#22c55e' }}>● En ligne</span> : 'Hors ligne'
               }
             </p>
           </div>
@@ -1377,60 +1533,64 @@ export default function MessagingPage() {
                   </>)}
                 </div>
               ))}
-              {/* Contribution percentages (admin only) */}
-              {amAdmin && (
-                <div style={{ marginTop: 20, marginBottom: 4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Parts de paiement</p>
-                    {!editContribPcts ? (
-                      <button onClick={() => {
-                        const init = {}
-                        const members = activeConv?.members || []
-                        members.forEach(m => { init[m.userId] = m.contributionPct ?? Math.round(100 / Math.max(members.length, 1)) })
-                        setEditContribPcts(init)
-                      }} style={{ background: 'none', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>
-                        Modifier
-                      </button>
-                    ) : (
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => setEditContribPcts(null)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.muted, fontFamily: T.dmMono, fontSize: 9 }}>Annuler</button>
-                        <button onClick={() => {
-                          const total = Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0)
-                          if (Math.abs(total - 100) > 1) { showToast(`Total: ${total}% — doit être 100%`, 'error'); return }
-                          const newMembers = (activeConv?.members || []).map(m => ({ ...m, contributionPct: Number(editContribPcts[m.userId]) || 0 }))
-                          saveConversation({ ...activeConv, members: newMembers })
-                          sendMessage(activeConvId, myId, myName, 'system', `${myName} a mis à jour les parts de paiement`)
-                          refresh(); setEditContribPcts(null)
-                        }} style={{ background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>Sauvegarder</button>
-                      </div>
-                    )}
-                  </div>
-                  {editContribPcts ? (
-                    <>
-                      {(activeConv?.members || []).map(m => (
-                        <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <span style={{ flex: 1, fontFamily: T.dmMono, fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{m.name}</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <input type="number" min={0} max={100} value={editContribPcts[m.userId] ?? ''} onChange={e => setEditContribPcts(prev => ({ ...prev, [m.userId]: Number(e.target.value) }))}
-                              style={{ width: 52, background: 'rgba(6,8,16,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, color: '#fff', fontFamily: T.dmMono, fontSize: 11, padding: '4px 6px', textAlign: 'right' }} />
-                            <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted }}>%</span>
-                          </div>
-                        </div>
-                      ))}
-                      <p style={{ fontFamily: T.dmMono, fontSize: 9, color: (() => { const t = Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0); return Math.abs(t - 100) <= 1 ? T.teal : 'rgba(220,100,100,0.8)' })(), margin: '6px 0 0', textAlign: 'right' }}>
-                        Total : {Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0)}%
-                      </p>
-                    </>
+              {/* Contribution percentages — visible to all, editable by admin */}
+              <div style={{ marginTop: 20, marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Parts de paiement</p>
+                  {amAdmin && (!editContribPcts ? (
+                    <button onClick={() => {
+                      const init = {}
+                      const members = activeConv?.members || []
+                      members.forEach(m => { init[m.userId] = m.contributionPct ?? Math.round(100 / Math.max(members.length, 1)) })
+                      setEditContribPcts(init)
+                    }} style={{ background: 'none', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>
+                      Modifier
+                    </button>
                   ) : (
-                    (activeConv?.members || []).map(m => (
-                      <div key={m.userId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                        <span style={{ fontFamily: T.dmMono, fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>{m.name}</span>
-                        <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.gold }}>{m.contributionPct ?? Math.round(100 / Math.max((activeConv?.members?.length || 1), 1))}%</span>
-                      </div>
-                    ))
-                  )}
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => setEditContribPcts(null)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.muted, fontFamily: T.dmMono, fontSize: 9 }}>Annuler</button>
+                      <button onClick={() => {
+                        const total = Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0)
+                        if (Math.abs(total - 100) > 1) { showToast(`Total: ${total}% — doit être 100%`, 'error'); return }
+                        const newMembers = (activeConv?.members || []).map(m => ({ ...m, contributionPct: Number(editContribPcts[m.userId]) || 0 }))
+                        saveConversation({ ...activeConv, members: newMembers })
+                        sendMessage(activeConvId, myId, myName, 'system', `${myName} a mis à jour les parts de paiement`)
+                        refresh(); setEditContribPcts(null)
+                      }} style={{ background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>Sauvegarder</button>
+                    </div>
+                  ))}
                 </div>
-              )}
+                {amAdmin && editContribPcts ? (
+                  <>
+                    {(activeConv?.members || []).map(m => (
+                      <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <span style={{ flex: 1, fontFamily: T.dmMono, fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{m.name}{m.userId === myId ? ' (moi)' : ''}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <input type="number" min={0} max={100} value={editContribPcts[m.userId] ?? ''} onChange={e => setEditContribPcts(prev => ({ ...prev, [m.userId]: Number(e.target.value) }))}
+                            style={{ width: 52, background: 'rgba(6,8,16,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, color: '#fff', fontFamily: T.dmMono, fontSize: 11, padding: '4px 6px', textAlign: 'right' }} />
+                          <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted }}>%</span>
+                        </div>
+                      </div>
+                    ))}
+                    <p style={{ fontFamily: T.dmMono, fontSize: 9, color: (() => { const t = Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0); return Math.abs(t - 100) <= 1 ? T.teal : 'rgba(220,100,100,0.8)' })(), margin: '6px 0 0', textAlign: 'right' }}>
+                      Total : {Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0)}%
+                    </p>
+                  </>
+                ) : (
+                  (activeConv?.members || []).map(m => {
+                    const pct = m.contributionPct ?? Math.round(100 / Math.max((activeConv?.members?.length || 1), 1))
+                    const isMe = m.userId === myId
+                    return (
+                      <div key={m.userId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <span style={{ fontFamily: T.dmMono, fontSize: 10, color: isMe ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.5)' }}>
+                          {m.name}{isMe ? ' (moi)' : ''}
+                        </span>
+                        <span style={{ fontFamily: T.dmMono, fontSize: 10, color: isMe ? T.teal : T.gold, fontWeight: isMe ? 600 : 400 }}>{pct}%</span>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
 
               {/* Leave / delete */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 24 }}>
@@ -1446,6 +1606,59 @@ export default function MessagingPage() {
                 )}
               </div>
             </>)}
+
+            {/* ── Direct conversation settings ── */}
+            {activeConv?.type === 'direct' && (() => {
+              const otherId = activeConv.participants?.find(id => id !== myId)
+              const other = getUserById(otherId) || allUsers.find(u => u.id === otherId) || { id: otherId, name: convDisplay.name }
+              const alreadyBlocked = blockedUsers.includes(otherId)
+              return (
+                <div>
+                  {/* Contact card */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                    <Avatar user={other} size={64} showOnline />
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 17, color: '#fff', margin: 0 }}>{other.name}</p>
+                    {other.username && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>@{other.username}</p>}
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: isOnline(otherId) ? '#22c55e' : 'rgba(255,255,255,0.25)', margin: 0 }}>
+                      {isOnline(otherId) ? '● En ligne' : '○ Hors ligne'}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <button
+                      onClick={() => setConfirmDialog({ action: 'clear_history', label: 'Effacer l\'historique de cette conversation ?' })}
+                      style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      Effacer l'historique
+                    </button>
+
+                    {alreadyBlocked ? (
+                      <button
+                        onClick={() => { handleUnblockUser(otherId, other.name); setChatSubView('messages') }}
+                        style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', color: 'rgba(34,197,94,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>
+                        Débloquer {other.name}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDialog({ action: 'block_user', label: `Bloquer ${other.name} ? Vous ne recevrez plus ses messages.`, userId: otherId, userName: other.name })}
+                        style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.2)', color: 'rgba(220,100,100,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        Bloquer {other.name}
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => setShowReportModal({ userId: otherId, userName: other.name })}
+                      style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(220,50,50,0.05)', border: '1px solid rgba(220,50,50,0.15)', color: 'rgba(220,100,100,0.6)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      Signaler {other.name}
+                    </button>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         ) : (
           <>
@@ -1464,7 +1677,10 @@ export default function MessagingPage() {
             )}
 
             {/* ── Messages area ── */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px 4px' }}>
+            <div
+              ref={chatScrollRef}
+              onScroll={handleChatScroll}
+              style={{ flex: 1, overflowY: 'auto', padding: '8px 10px 4px', position: 'relative' }}>
               {messages.map((msg, idx) => renderMessageBubble(msg, idx))}
 
               {/* Typing indicator */}
@@ -1480,6 +1696,16 @@ export default function MessagingPage() {
               )}
               <div ref={messagesEndRef} />
             </div>
+
+            {/* ── Scroll-to-bottom button ── */}
+            {showScrollBtn && (
+              <button onClick={scrollToBottom}
+                style={{ position: 'absolute', bottom: 80, right: 14, zIndex: 25, width: 36, height: 36, borderRadius: '50%', background: 'rgba(8,10,20,0.92)', border: '1px solid rgba(78,232,200,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.teal} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+            )}
 
             {/* ── Reply preview bar ── */}
             {replyTo && (
@@ -1528,13 +1754,13 @@ export default function MessagingPage() {
                 style={{ ...INPUT_S, flex: 1, resize: 'none', maxHeight: 100, lineHeight: 1.5, paddingTop: 8, paddingBottom: 8 }}
               />
 
-              {/* Voice button — tap once or hold (slide up to lock) */}
+              {/* Voice button — tap une fois ou maintenir (glisser vers le haut pour verrouiller) */}
               {isRecording && voiceLocked ? (
-                // Locked mode: show cancel + stop
+                // Mode verrouillé : annuler ou envoyer
                 <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
                   <button onClick={cancelRecording} style={{ background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.3)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 9 }}>✕</button>
                   <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.pink }}>🔴 {recDuration}s</span>
-                  <button onClick={stopRecordingCore} style={{ background: 'rgba(224,90,170,0.18)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: T.pink, fontFamily: T.dmMono, fontSize: 10 }}>Envoyer</button>
+                  <button onClick={stopAndSendRecording} style={{ background: 'rgba(224,90,170,0.18)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: T.pink, fontFamily: T.dmMono, fontSize: 10 }}>Envoyer</button>
                 </div>
               ) : (
                 <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -1543,12 +1769,14 @@ export default function MessagingPage() {
                     onPointerDown={handleVoicePointerDown}
                     onPointerMove={handleVoicePointerMove}
                     onPointerUp={handleVoicePointerUp}
-                    onClick={!isRecording ? undefined : stopRecordingCore}
                     style={{ width: 36, height: 36, borderRadius: '50%', background: isRecording ? 'rgba(224,90,170,0.25)' : 'rgba(255,255,255,0.06)', border: `1px solid ${isRecording ? 'rgba(224,90,170,0.45)' : 'rgba(255,255,255,0.10)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: isRecording ? T.pink : T.dim, transition: 'all 0.2s', touchAction: 'none' }}>
                     <MicIcon color={isRecording ? T.pink : T.dim} size={17} />
                   </button>
-                  {isRecording && !voiceLocked && (
+                  {isRecording && !tapMode && !voiceLocked && (
                     <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.dim, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>↑ verrouiller</span>
+                  )}
+                  {isRecording && tapMode && !voiceLocked && (
+                    <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.pink, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>tap = stop</span>
                   )}
                   {isRecording && <span style={{ position: 'absolute', bottom: -16, fontFamily: T.dmMono, fontSize: 8, color: T.pink }}>{recDuration}s</span>}
                 </div>
@@ -1556,8 +1784,8 @@ export default function MessagingPage() {
 
               {/* Send button */}
               <button onClick={handleSend} disabled={!inputText.trim()}
-                style={{ width: 36, height: 36, borderRadius: '50%', background: inputText.trim() ? 'linear-gradient(135deg, rgba(78,232,200,0.28), rgba(78,232,200,0.10))' : 'rgba(255,255,255,0.04)', border: `1px solid ${inputText.trim() ? 'rgba(78,232,200,0.40)' : 'rgba(255,255,255,0.08)'}`, cursor: inputText.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: inputText.trim() ? T.teal : T.dim, fontSize: 16, transition: 'all 0.2s' }}>
-                ↑
+                style={{ width: 36, height: 36, borderRadius: '50%', background: inputText.trim() ? 'linear-gradient(135deg, rgba(132,68,255,0.9), rgba(255,77,166,0.85))' : 'rgba(255,255,255,0.06)', border: 'none', cursor: inputText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontSize: 16, transition: 'all 0.2s', boxShadow: inputText.trim() ? '0 4px 16px rgba(132,68,255,0.3)' : 'none' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
           </>
@@ -1666,7 +1894,7 @@ export default function MessagingPage() {
 
         {/* ── Event picker modal ── */}
         {showEventPicker && (
-          <EventPickerModal onSelect={handleSendEventPoll} onClose={() => setShowEventPicker(false)} />
+          <EventPickerModal onSelectPoll={handleSendEventPoll} onSelectBooking={handleSendGroupBooking} onClose={() => setShowEventPicker(false)} />
         )}
 
         {/* ── Forward picker ── */}
@@ -1722,9 +1950,15 @@ export default function MessagingPage() {
                   if (confirmDialog.action === 'delete') handleDeleteGroup()
                   if (confirmDialog.onConfirm) confirmDialog.onConfirm()
                   if (confirmDialog.action === 'block_after_report') handleBlockUser(confirmDialog.userId, confirmDialog.userName)
+                  if (confirmDialog.action === 'block_user') { handleBlockUser(confirmDialog.userId, confirmDialog.userName); setChatSubView('messages'); setShowReportModal({ userId: confirmDialog.userId, userName: confirmDialog.userName }) }
+                  if (confirmDialog.action === 'clear_history') { deleteConversationHistory(activeConvId); setMessages([]); showToast('Historique effacé') }
                   setConfirmDialog(null)
                 }}
-                  style={{ flex: 1, padding: '10px', borderRadius: 6, cursor: 'pointer', background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.40)', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 10 }}>
+                  style={{ flex: 1, padding: '10px', borderRadius: 6, cursor: 'pointer',
+                    background: confirmDialog.variant === 'safe' ? 'rgba(78,232,200,0.12)' : 'rgba(220,50,50,0.14)',
+                    border: `1px solid ${confirmDialog.variant === 'safe' ? 'rgba(78,232,200,0.40)' : 'rgba(220,50,50,0.40)'}`,
+                    color: confirmDialog.variant === 'safe' ? T.teal : 'rgba(220,100,100,0.9)',
+                    fontFamily: T.dmMono, fontSize: 10 }}>
                   Confirmer
                 </button>
               </div>
@@ -1751,7 +1985,7 @@ export default function MessagingPage() {
 }
 
 // ─── Event Picker Modal ───────────────────────────────────────────────────────
-function EventPickerModal({ onSelect, onClose }) {
+function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
   const [search, setSearch] = useState('')
   const dmMono = "'DM Mono', monospace"
   const cormorant = "'Cormorant Garamond', serif"
@@ -1763,14 +1997,14 @@ function EventPickerModal({ onSelect, onClose }) {
       const seen = new Set()
       const unique = bookings
         .filter(b => b.eventId && !seen.has(b.eventId) && seen.add(b.eventId))
-        .map(b => ({ id: b.eventId, name: b.eventName, date: b.eventDate, price: b.placePrice, image: null }))
+        .map(b => ({ id: b.eventId, name: b.eventName, date: b.eventDate, price: b.placePrice, placeName: b.place || '', image: null }))
       if (unique.length > 0) return unique
     } catch {}
     // Demo fallback
     return [
-      { id: 'd1', name: 'NEON NOIR', date: 'SAM 20 AVR 2026', price: 25, image: null },
-      { id: 'd2', name: 'UNDERGROUND TECHNO', date: 'VEN 26 AVR 2026', price: 15, image: null },
-      { id: 'd3', name: 'LIB SUMMER FEST', date: 'SAM 14 JUN 2026', price: 50, image: null },
+      { id: 'd1', name: 'NEON NOIR', date: 'SAM 20 AVR 2026', price: 25, placeName: 'Club Obsidian', image: null },
+      { id: 'd2', name: 'UNDERGROUND TECHNO', date: 'VEN 26 AVR 2026', price: 15, placeName: 'Le Bunker', image: null },
+      { id: 'd3', name: 'LIB SUMMER FEST', date: 'SAM 14 JUN 2026', price: 50, placeName: 'Parc des Expos', image: null },
     ]
   }, [])
 
@@ -1779,23 +2013,37 @@ function EventPickerModal({ onSelect, onClose }) {
   return (
     <>
       <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={onClose} />
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: 'rgba(4,4,14,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '14px 14px 0 0', padding: '20px 20px 36px', maxHeight: '70vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: 'rgba(4,4,14,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '14px 14px 0 0', padding: '20px 20px 36px', maxHeight: '75vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 99, margin: '0 auto 16px' }} />
-        <h3 style={{ fontFamily: cormorant, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 12px' }}>🎟 Partager un événement</h3>
+        <h3 style={{ fontFamily: cormorant, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 4px' }}>Envoyer un événement</h3>
+        <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Partager l'info ou proposer une réservation de groupe</p>
         <input style={{ background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 6, color: 'rgba(255,255,255,0.9)', fontFamily: dmMono, fontSize: 12, padding: '9px 12px', outline: 'none', width: '100%', boxSizing: 'border-box', marginBottom: 12 }} placeholder="Rechercher un événement…" value={search} onChange={e => setSearch(e.target.value)} />
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtered.length === 0 && <p style={{ fontFamily: dmMono, fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '24px 0' }}>Aucun événement trouvé</p>}
           {filtered.map(ev => (
-            <button key={ev.id} onClick={() => onSelect(ev)}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 6, background: 'linear-gradient(135deg, rgba(200,169,110,0.15), rgba(78,232,200,0.08))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
-                {ev.image ? <img src={ev.image} alt={ev.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} /> : '🎟'}
+            <div key={ev.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, overflow: 'hidden' }}>
+              {/* Event header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 6, background: 'linear-gradient(135deg, rgba(200,169,110,0.18), rgba(78,232,200,0.10))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                  {ev.image ? <img src={ev.image} alt={ev.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} /> : '🎟'}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</p>
+                  <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{ev.date}{ev.price ? ` · ${ev.price}€/pers.` : ''}</p>
+                </div>
               </div>
-              <div>
-                <p style={{ fontFamily: cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: '0 0 2px' }}>{ev.name}</p>
-                <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{ev.date}{ev.price ? ` · ${ev.price}€` : ''}</p>
+              {/* Action buttons */}
+              <div style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <button onClick={() => onSelectPoll(ev)}
+                  style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', fontFamily: dmMono, fontSize: 10, color: 'rgba(78,232,200,0.85)', letterSpacing: '0.04em' }}>
+                  📢 Partager l'info
+                </button>
+                <button onClick={() => onSelectBooking(ev)}
+                  style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: dmMono, fontSize: 10, color: 'rgba(200,169,110,0.85)', letterSpacing: '0.04em' }}>
+                  🎟 Réserver en groupe
+                </button>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </div>

@@ -90,16 +90,30 @@ export async function syncOnLogin(uid) {
       localStorage.setItem('lib_created_events', JSON.stringify(mergeById(local, eventsDoc.items)))
     }
 
-    // ── 4. Conversations ──
-    const convsSnap = await loadCollection('conversations', [where('participants', 'array-contains', uid)])
-    if (convsSnap.length) {
+    // ── 4. Conversations (directs + groupes) ──
+    const [directConvsSnap, groupConvsSnap] = await Promise.all([
+      loadCollection('conversations', [where('participants', 'array-contains', uid)]),
+      loadCollection('conversations', [where('participantIds', 'array-contains', uid)]),
+    ])
+    const convsSnap = mergeById([...directConvsSnap, ...groupConvsSnap], [], 'id').length
+      ? mergeById(directConvsSnap, groupConvsSnap, '_docId')
+      : [...directConvsSnap, ...groupConvsSnap]
+    // Deduplicate by id
+    const seen = new Set()
+    const allConvsSnap = [...directConvsSnap, ...groupConvsSnap].filter(c => {
+      const id = c.id || c._docId
+      if (seen.has(id)) return false
+      seen.add(id)
+      return true
+    })
+    if (allConvsSnap.length) {
       const local = safeParseArray('lib_conversations')
-      localStorage.setItem('lib_conversations', JSON.stringify(mergeById(local, convsSnap)))
+      localStorage.setItem('lib_conversations', JSON.stringify(mergeById(local, allConvsSnap)))
     }
 
     // ── 5. Messages for each conversation ──
     const allMessages = safeParseObj('lib_messages')
-    const convIds = convsSnap.map(c => c.id || c._docId)
+    const convIds = allConvsSnap.map(c => c.id || c._docId)
     for (const cid of convIds) {
       const msgDoc = await loadDoc(`conv_messages/${cid}`)
       if (msgDoc?.items?.length) {
@@ -144,7 +158,28 @@ export async function syncOnLogin(uid) {
       localStorage.setItem('lib_provider_profiles', JSON.stringify(profiles))
     }
 
-    // ── 10. Service orders ──
+    // ── 10. Users (contacts cross-device) ──
+    const usersSnap = await loadCollection('users')
+    if (usersSnap.length) {
+      const localUsers = JSON.parse(localStorage.getItem('lib_users') || '[]')
+      const remoteIds = new Set(usersSnap.map(u => u.id))
+      const merged = [...usersSnap, ...localUsers.filter(u => !remoteIds.has(u.id))]
+      localStorage.setItem('lib_users', JSON.stringify(merged))
+    }
+    // Push current user profile to Firestore so others can find them
+    const currentUser = JSON.parse(localStorage.getItem('lib_user') || 'null')
+    if (currentUser && uid) {
+      const myProfile = {
+        id: uid,
+        name: currentUser.name || '',
+        email: currentUser.email || '',
+        avatar: currentUser.avatar || null,
+        username: currentUser.username || generateUsername(currentUser.name || currentUser.email || uid),
+      }
+      syncDoc(`users/${uid}`, myProfile)
+    }
+
+    // ── 10-bis. Service orders ──
     const orders = await loadCollection('service_orders')
     if (orders.length) localStorage.setItem('lib_service_orders', JSON.stringify(orders))
 
@@ -192,9 +227,17 @@ export async function pushLocalToFirestore(uid) {
     const events = safeParseArray('lib_created_events').filter(e => e.createdBy === uid || e.organizerId === uid)
     if (events.length) syncDoc(`user_events/${uid}`, { items: events })
 
-    // Conversations
-    const convs = safeParseArray('lib_conversations').filter(c => c.participants?.includes(uid))
-    for (const conv of convs) { syncDoc(`conversations/${conv.id}`, conv) }
+    // Conversations (directs + groupes)
+    const convs = safeParseArray('lib_conversations').filter(c =>
+      c.participants?.includes(uid) || c.members?.some(m => m.userId === uid)
+    )
+    for (const conv of convs) {
+      // Ensure participantIds exists for groups
+      const toSync = conv.type === 'group' && !conv.participantIds
+        ? { ...conv, participantIds: (conv.members || []).map(m => m.userId) }
+        : conv
+      syncDoc(`conversations/${conv.id}`, toSync)
+    }
 
     // Messages
     const allMsgs = safeParseObj('lib_messages')
@@ -244,6 +287,11 @@ export async function pushLocalToFirestore(uid) {
   } catch (e) {
     console.warn('[sync] push error:', e.message)
   }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function generateUsername(name) {
+  return (name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '.').replace(/\.+/g, '.').replace(/^\.|\.$/, '')
 }
 
 // ── Safe JSON parsers ─────────────────────────────────────────────────────────

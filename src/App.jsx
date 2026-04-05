@@ -18,7 +18,6 @@ import OnboardingOrganisateur from './pages/OnboardingOrganisateur'
 import OnboardingPrestataire from './pages/OnboardingPrestataire'
 import MonDossierPage from './pages/MonDossierPage'
 import { AuthContext } from './context/AuthContext'
-import LiquidMetalBg from './components/LiquidMetalBg'
 import AuthModal from './components/AuthModal'
 
 function usePersistedUser() {
@@ -63,6 +62,14 @@ function RequireOrganisateur({ user, children }) {
   return children
 }
 
+// Wrapper: Services — prestataire, organisateur, agent uniquement (pas client)
+function RequireServiceAccess({ user, children }) {
+  if (!user) return <Navigate to={`/connexion?next=${encodeURIComponent('/proposer')}`} replace />
+  const r = user.role
+  if (!r || r === 'client' || r === 'user') return <Navigate to="/accueil" replace />
+  return children
+}
+
 export default function App() {
   const { user, setUser } = usePersistedUser()
   const [authModal, setAuthModal] = useState({ open: false, reason: '', onSuccess: null })
@@ -77,10 +84,15 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ user, setUser, openAuthModal }}>
       <BrowserRouter>
-        <div className="min-h-screen bg-[#04040b] relative">
-          <LiquidMetalBg />
+        <div className="min-h-screen relative" style={{ background: 'linear-gradient(180deg, #0b0b12 0%, #05060a 100%)' }}>
+          {/* Nebula background */}
+          <div className="nebula-bg" aria-hidden="true">
+            <div className="nebula-blob nb1" />
+            <div className="nebula-blob nb2" />
+            <div className="nebula-blob nb3" />
+          </div>
 
-          {/* Couche de contenu au-dessus du canvas de fond */}
+          {/* Couche de contenu au-dessus du fond */}
           <div style={{ position: 'relative', zIndex: 1 }}>
 
           {/* Global auth modal — shown on top of any page */}
@@ -127,9 +139,9 @@ export default function App() {
               <RequireOrganisateur user={user}><MesEvenementsPage /></RequireOrganisateur>
             } />
 
-            {/* ── Services: accessible when logged in ── */}
+            {/* ── Services: prestataire / organisateur / agent only ── */}
             <Route path="/proposer" element={
-              <RequireAuth user={user} to="/proposer"><ProposerServicesPage /></RequireAuth>
+              <RequireServiceAccess user={user}><ProposerServicesPage /></RequireServiceAccess>
             } />
 
             {/* ── Onboarding candidatures ── */}
