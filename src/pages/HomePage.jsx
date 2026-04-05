@@ -399,9 +399,7 @@ export default function HomePage() {
                   letterSpacing: '-2.5px',
                   margin: 0,
                 }}>
-                  <span style={{ color: '#fff', display: 'block' }}>Tu veux</span>
-                  <span className="gradient-text" style={{ display: 'block' }}>élargir</span>
-                  <span style={{ color: '#fff', display: 'block' }}>ton espace ?</span>
+                  Tu veux <span className="gradient-text">élargir</span> ton espace ?
                 </h2>
                 <p style={{
                   fontFamily: 'Inter, sans-serif', fontSize: 16,
