@@ -1379,28 +1379,34 @@ export default function MessagingPage() {
         <div style={{ marginBottom: 20 }}>
           <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Ajouter un contact</p>
           <input style={{ ...INPUT_S, marginBottom: 8 }} placeholder="Nom ou @nomdecompte" value={userSearch} onChange={e => setUserSearch(e.target.value)} autoFocus />
-          {searchResults.length > 0 && searchResults.map(u => {
-            const isFriend = friends.includes(u.id)
-            const isBlockedUser = isBlocked(myId, u.id)
-            return (
-              <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <Avatar user={u} size={36} showOnline />
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
+          {searchResults.length > 0 && (() => {
+            const sentReqs = (() => { try { return JSON.parse(localStorage.getItem('lib_friend_requests') || '[]') } catch { return [] } })()
+            return searchResults.map(u => {
+              const isFriend = friends.includes(u.id)
+              const isBlockedUser = isBlocked(myId, u.id)
+              const hasPendingRequest = sentReqs.some(r => r.fromId === myId && r.toId === u.id)
+              return (
+                <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <Avatar user={u} size={36} showOnline />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
+                    <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
+                  </div>
+                  {isBlockedUser ? (
+                    <button onClick={() => handleUnblockUser(u.id, u.name)} style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.25)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 9 }}>Débloquer</button>
+                  ) : isFriend ? (
+                    <span style={{ fontFamily: T.dmMono, fontSize: 9, color: '#22c55e' }}>Ami ✓</span>
+                  ) : hasPendingRequest ? (
+                    <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, padding: '5px 10px', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4 }}>En attente...</span>
+                  ) : (
+                    <button onClick={() => handleSendRequest(u.id)} style={{ background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>
+                      Ajouter
+                    </button>
+                  )}
                 </div>
-                {isBlockedUser ? (
-                  <button onClick={() => handleUnblockUser(u.id, u.name)} style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.25)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 9 }}>Débloquer</button>
-                ) : isFriend ? (
-                  <span style={{ fontFamily: T.dmMono, fontSize: 9, color: '#22c55e' }}>Ami ✓</span>
-                ) : (
-                  <button onClick={() => handleSendRequest(u.id)} style={{ background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>
-                    Ajouter
-                  </button>
-                )}
-              </div>
-            )
-          })}
+              )
+            })
+          })()}
         </div>
 
         {/* Friends list */}
