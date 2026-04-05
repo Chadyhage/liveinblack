@@ -1633,6 +1633,15 @@ export default function MessagingPage() {
                       Effacer l'historique
                     </button>
 
+                    {friends.includes(otherId) && (
+                      <button
+                        onClick={() => setConfirmDialog({ action: 'remove_friend', label: `Retirer ${other.name} de tes amis ?`, onConfirm: () => { handleRemoveFriend(otherId); setChatSubView('messages') } })}
+                        style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(220,50,50,0.06)', border: '1px solid rgba(220,50,50,0.18)', color: 'rgba(220,100,100,0.75)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                        Retirer des amis
+                      </button>
+                    )}
+
                     {alreadyBlocked ? (
                       <button
                         onClick={() => { handleUnblockUser(otherId, other.name); setChatSubView('messages') }}
