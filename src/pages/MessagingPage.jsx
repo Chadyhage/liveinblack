@@ -510,12 +510,11 @@ export default function MessagingPage() {
           c.type === 'direct' ? c.participants?.includes(myId) : c.members?.some(m => m.userId === myId)
         ).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
       }
-      // 1. Friend requests (incoming)
+      // 1. Friend requests — Firestore is source of truth, no merge
+      // (merging would re-add accepted/declined requests before syncDelete confirms)
       unsubs.push(listenFriendRequests(myId, reqs => {
-        const local = safeArr('lib_friend_requests')
-        const merged = mergeById(local, reqs)
-        localStorage.setItem('lib_friend_requests', JSON.stringify(merged))
-        setRequests(merged.filter(r => r.toId === myId))
+        localStorage.setItem('lib_friend_requests', JSON.stringify(reqs))
+        setRequests(reqs.filter(r => r.toId === myId))
       }))
       // 2. My friends list
       unsubs.push(listenUserSocial(myId, social => {
@@ -628,21 +627,37 @@ export default function MessagingPage() {
     typingTimeoutRef.current = setTimeout(() => setTyping(activeConvId, myId, false), 2500)
   }
 
-  // ── Send photo ──
+  // ── Send photo (compressed to stay under Firestore 1MB limit) ──
   function handlePhotoSelect(e) {
     const file = e.target.files?.[0]
     if (!file || !activeConvId) return
     e.target.value = ''
+    setShowAttachMenu(false)
     const reader = new FileReader()
     reader.onload = ev => {
-      const extra = replyTo ? { replyTo } : {}
-      sendMessage(activeConvId, myId, myName, 'image', ev.target.result, extra)
-      setReplyTo(null)
-      setMessages(getMessages(activeConvId))
-      setConversations(getConversations(myId))
+      const img = new Image()
+      img.onload = () => {
+        const MAX = 900
+        let { width, height } = img
+        if (width > MAX || height > MAX) {
+          const ratio = Math.min(MAX / width, MAX / height)
+          width = Math.round(width * ratio)
+          height = Math.round(height * ratio)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        const compressed = canvas.toDataURL('image/jpeg', 0.75)
+        const extra = replyTo ? { replyTo } : {}
+        sendMessage(activeConvId, myId, myName, 'image', compressed, extra)
+        setReplyTo(null)
+        setMessages(getMessages(activeConvId))
+        setConversations(getConversations(myId))
+      }
+      img.src = ev.target.result
     }
     reader.readAsDataURL(file)
-    setShowAttachMenu(false)
   }
 
   // ── Voice recording core ──

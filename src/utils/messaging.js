@@ -359,13 +359,31 @@ function saveMessages(convId, msgs) {
     const all = JSON.parse(localStorage.getItem('lib_messages') || '{}')
     all[convId] = msgs
     localStorage.setItem('lib_messages', JSON.stringify(all))
-    // Sync to Firestore — only if non-empty (never overwrite Firestore with an empty array)
-    if (msgs.length > 0) {
-      import('./firestore-sync').then(({ syncDoc }) => {
-        syncDoc(`conv_messages/${convId}`, { items: msgs })
-      }).catch(() => {})
-    }
+    // NOTE: No Firestore sync here — callers that need cross-device sync
+    // (sendMessage, reactToMessage, deleteMessageForAll, voteOnPoll) do it explicitly.
+    // markMessagesRead intentionally does NOT sync to Firestore to prevent stale
+    // local state from overwriting newer messages written by the other participant.
   } catch {}
+}
+
+// Sync message array to Firestore — strips heavy base64 blobs before writing
+// to avoid exceeding Firestore's 1MB document limit.
+function syncMessagesToFirestore(convId, msgs) {
+  if (!msgs.length) return
+  import('./firestore-sync').then(({ syncDoc }) => {
+    const safe = msgs.map(m => {
+      if (m.type === 'image' && typeof m.content === 'string' && m.content.startsWith('data:')) {
+        // Store a placeholder — actual image stays in localStorage only
+        // TODO: replace with Firebase Storage URL when implemented
+        return { ...m, content: '[image]', _hasLocalImage: true }
+      }
+      if (m.type === 'voice' && typeof m.content === 'string' && m.content.startsWith('data:')) {
+        return { ...m, content: '[voice]', _hasLocalVoice: true }
+      }
+      return m
+    })
+    syncDoc(`conv_messages/${convId}`, { items: safe })
+  }).catch(() => {})
 }
 
 // extra: { replyTo: { id, senderName, preview }, forwardedFrom: { senderName, convName } }
@@ -407,8 +425,8 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
       const updatedConv = all[idx]
       import('./firestore-sync').then(({ syncDoc }) => {
         syncDoc(`conversations/${convId}`, updatedConv)
-        syncDoc(`conv_messages/${convId}`, { items: updatedMsgs })
       }).catch(() => {})
+      syncMessagesToFirestore(convId, updatedMsgs)
     }
   } catch {}
   return msg
@@ -419,19 +437,16 @@ export function reactToMessage(convId, msgId, userId, emoji) {
   const updated = msgs.map(m => {
     if (m.id !== msgId || m.deletedForAll) return m
     const reactions = { ...(m.reactions || {}) }
-    // Remove user from any existing reaction first
     Object.keys(reactions).forEach(e => {
       reactions[e] = (reactions[e] || []).filter(uid => uid !== userId)
       if (reactions[e].length === 0) delete reactions[e]
     })
-    // Toggle: if user already had this emoji, it was removed above — otherwise add
     const had = (m.reactions?.[emoji] || []).includes(userId)
-    if (!had) {
-      reactions[emoji] = [...(reactions[emoji] || []), userId]
-    }
+    if (!had) reactions[emoji] = [...(reactions[emoji] || []), userId]
     return { ...m, reactions }
   })
   saveMessages(convId, updated)
+  syncMessagesToFirestore(convId, updated)
 }
 
 export function deleteMessageForSelf(convId, msgId, userId) {
@@ -452,6 +467,7 @@ export function deleteMessageForAll(convId, msgId) {
       : m
   )
   saveMessages(convId, updated)
+  syncMessagesToFirestore(convId, updated)
 }
 
 export function markMessagesRead(convId, userId) {
@@ -497,6 +513,7 @@ export function voteOnPoll(convId, msgId, optionId, userId) {
     return { ...m, content: JSON.stringify(newPoll) }
   })
   saveMessages(convId, updated)
+  syncMessagesToFirestore(convId, updated)
 }
 
 // Legacy compatibility
