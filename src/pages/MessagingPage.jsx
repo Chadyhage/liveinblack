@@ -911,7 +911,7 @@ export default function MessagingPage() {
     // Find and delete conversation history
     const conv = conversations.find(c => c.type === 'direct' && c.participants?.includes(fid))
     if (conv) deleteConversationHistory(conv.id)
-    setFriends(getFriends(myId))
+    setFriends(prev => prev.filter(id => id !== fid))
     refresh()
     showToast('Contact supprimé')
   }
