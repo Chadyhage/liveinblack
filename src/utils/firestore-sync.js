@@ -4,7 +4,62 @@
 // On login → pull from Firestore into localStorage (async)
 
 import { db } from '../firebase'
-import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where } from 'firebase/firestore'
+import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
+
+// ── Real-time listeners ────────────────────────────────────────────────────────
+// Each returns an unsubscribe function. Call it on unmount to stop listening.
+
+export function listenDoc(path, callback) {
+  try {
+    const ref = doc(db, ...path.split('/'))
+    return onSnapshot(ref, snap => {
+      callback(snap.exists() ? snap.data() : null)
+    }, () => {})
+  } catch { return () => {} }
+}
+
+// Listen to incoming friend requests for a specific user
+export function listenFriendRequests(toId, callback) {
+  try {
+    const q = query(collection(db, 'friend_requests'), where('toId', '==', toId))
+    return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), _docId: d.id }))), () => {})
+  } catch { return () => {} }
+}
+
+// Listen to direct conversations for a user
+export function listenDirectConversations(uid, callback) {
+  try {
+    const q = query(collection(db, 'conversations'), where('participants', 'array-contains', uid))
+    return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), _docId: d.id }))), () => {})
+  } catch { return () => {} }
+}
+
+// Listen to group conversations for a user
+export function listenGroupConversations(uid, callback) {
+  try {
+    const q = query(collection(db, 'conversations'), where('participantIds', 'array-contains', uid))
+    return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), _docId: d.id }))), () => {})
+  } catch { return () => {} }
+}
+
+// Listen to messages for a specific conversation
+export function listenConvMessages(convId, callback) {
+  try {
+    const ref = doc(db, 'conv_messages', convId)
+    return onSnapshot(ref, snap => callback(snap.exists() ? snap.data() : null), () => {})
+  } catch { return () => {} }
+}
+
+// Listen to friends/social data for a user
+export function listenUserSocial(uid, callback) {
+  try {
+    const ref = doc(db, 'user_social', uid)
+    return onSnapshot(ref, snap => callback(snap.exists() ? snap.data() : null), () => {})
+  } catch { return () => {} }
+}
+
+// Exported so MessagingPage can use it for local merges
+export { mergeById }
 
 // ── Core helpers ──────────────────────────────────────────────────────────────
 

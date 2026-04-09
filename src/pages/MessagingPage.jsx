@@ -453,6 +453,7 @@ export default function MessagingPage() {
       setConversations(latestConvs)
       const newReqs = getFriendRequests(myId)
       setRequests(newReqs)
+      setFriends(getFriends(myId))
       // Detect new friend request → play sound + toast
       if (newReqs.length > prevRequestCount) {
         notifSound()
@@ -478,6 +479,64 @@ export default function MessagingPage() {
     setGroupBookings(getGroupBookings())
     if (activeConvId) setMessages(getMessages(activeConvId))
   }
+
+  // ── Firestore real-time listeners (cross-device sync) ──
+  useEffect(() => {
+    if (!myId) return
+    const unsubs = []
+    import('../utils/firestore-sync').then(({
+      listenFriendRequests, listenUserSocial,
+      listenDirectConversations, listenGroupConversations, mergeById,
+    }) => {
+      const safeArr = key => { try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] } }
+      const safeObj = key => { try { return JSON.parse(localStorage.getItem(key) || '{}') } catch { return {} } }
+      const mergeConvs = convs => {
+        const local = safeArr('lib_conversations')
+        const merged = mergeById(local, convs)
+        localStorage.setItem('lib_conversations', JSON.stringify(merged))
+        setConversations(merged.filter(c =>
+          c.type === 'direct' ? c.participants?.includes(myId) : c.members?.some(m => m.userId === myId)
+        ).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
+      }
+      // 1. Friend requests (incoming)
+      unsubs.push(listenFriendRequests(myId, reqs => {
+        const local = safeArr('lib_friend_requests')
+        const merged = mergeById(local, reqs)
+        localStorage.setItem('lib_friend_requests', JSON.stringify(merged))
+        setRequests(merged.filter(r => r.toId === myId))
+      }))
+      // 2. My friends list
+      unsubs.push(listenUserSocial(myId, social => {
+        if (!social?.friends) return
+        const f = safeObj('lib_friends')
+        f[myId] = social.friends
+        localStorage.setItem('lib_friends', JSON.stringify(f))
+        setFriends(social.friends)
+      }))
+      // 3. Direct conversations
+      unsubs.push(listenDirectConversations(myId, mergeConvs))
+      // 4. Group conversations
+      unsubs.push(listenGroupConversations(myId, mergeConvs))
+    }).catch(() => {})
+    return () => unsubs.forEach(u => u?.())
+  }, [myId])
+
+  // ── Active conversation: real-time messages ──
+  useEffect(() => {
+    if (!activeConvId) return
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenConvMessages, mergeById }) => {
+      unsub = listenConvMessages(activeConvId, data => {
+        if (!data?.items?.length) return
+        const allMsgs = (() => { try { return JSON.parse(localStorage.getItem('lib_messages') || '{}') } catch { return {} } })()
+        const merged = mergeById(allMsgs[activeConvId] || [], data.items)
+        allMsgs[activeConvId] = merged
+        localStorage.setItem('lib_messages', JSON.stringify(allMsgs))
+        setMessages([...merged])
+      })
+    }).catch(() => {})
+    return () => unsub()
+  }, [activeConvId])
 
   useEffect(() => {
     // Auto-scroll seulement si l'utilisateur est déjà en bas
