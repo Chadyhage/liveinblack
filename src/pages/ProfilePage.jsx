@@ -328,6 +328,12 @@ export default function ProfilePage() {
       setUser(updatedUser)
       updateAccount(uid, patch)
 
+      // Push the updated profile to Firestore users/{uid} so contacts see the new name cross-device
+      try {
+        const { syncUserProfile } = await import('../utils/firestore-sync')
+        syncUserProfile(uid, updatedUser)
+      } catch {}
+
       // Persist nameChangedAt to Firestore if Firebase active
       if (nameWasChanged) {
         try {
