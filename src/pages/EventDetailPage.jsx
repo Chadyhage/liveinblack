@@ -357,7 +357,13 @@ export default function EventDetailPage() {
         newBookings.push(booking)
       }
 
-      localStorage.setItem('lib_bookings', JSON.stringify([...prev, ...newBookings]))
+      const allBookings = [...prev, ...newBookings]
+      localStorage.setItem('lib_bookings', JSON.stringify(allBookings))
+      // Sync immediately to Firestore so the ticket is visible on other devices
+      import('../utils/firestore-sync').then(({ syncDoc }) => {
+        const myBookings = allBookings.filter(b => b.userId === uid)
+        if (myBookings.length) syncDoc(`user_bookings/${uid}`, { items: myBookings })
+      }).catch(() => {})
     } catch {}
 
     setBookedTickets(newTickets)

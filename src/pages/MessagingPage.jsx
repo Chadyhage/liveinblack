@@ -6,7 +6,7 @@ import {
   getUserId, initUsers, getAllUsers, getUserById, getUserByUsername, searchUsers,
   getInitials, formatTime, formatMsgTime, formatDateSeparator, isSameDay,
   getFriends, saveFriend, removeFriend,
-  getFriendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest,
+  getFriendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getNewContacts, clearNewContact,
   getConversations, getConversationById, saveConversation,
   createDirectConversation, createGroup, leaveGroup, deleteGroup, updateGroupInfo,
   getMessages, sendMessage, reactToMessage, deleteMessageForSelf, deleteMessageForAll,
@@ -326,6 +326,7 @@ export default function MessagingPage() {
   const [allUsers, setAllUsers]             = useState([])
   const [friends, setFriends]               = useState([])
   const [requests, setRequests]             = useState([])
+  const [newContacts, setNewContacts]       = useState(() => getNewContacts())
   const [groupBookings, setGroupBookings]   = useState({})
 
   // ── Input ──
@@ -904,8 +905,16 @@ export default function MessagingPage() {
 
   // ── Friend actions ──
   function handleSendRequest(userId) { sendFriendRequest(myId, myName, userId); refresh() }
-  function handleAccept(reqId) { acceptFriendRequest(reqId, myId); refresh(); setAllUsers(getAllUsers() || DEMO_USERS) }
-  function handleDecline(reqId) { declineFriendRequest(reqId); setRequests(getFriendRequests(myId)) }
+  function handleAccept(reqId) {
+    acceptFriendRequest(reqId, myId)
+    refresh()
+    setAllUsers(getAllUsers() || DEMO_USERS)
+    setNewContacts(getNewContacts())
+  }
+  function handleDecline(reqId) {
+    declineFriendRequest(reqId)
+    setRequests(getFriendRequests(myId))
+  }
   function handleRemoveFriend(fid) {
     removeFriend(myId, fid)
     // Find and delete conversation history
@@ -1395,12 +1404,12 @@ export default function MessagingPage() {
                   {isBlockedUser ? (
                     <button onClick={() => handleUnblockUser(u.id, u.name)} style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.25)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 9 }}>Débloquer</button>
                   ) : isFriend ? (
-                    <span style={{ fontFamily: T.dmMono, fontSize: 9, color: '#22c55e' }}>Ami ✓</span>
+                    <span style={{ fontFamily: T.dmMono, fontSize: 9, color: '#22c55e', padding: '5px 10px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 4 }}>✓ Ami</span>
                   ) : hasPendingRequest ? (
-                    <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, padding: '5px 10px', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4 }}>En attente...</span>
+                    <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.gold, padding: '5px 10px', background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.25)', borderRadius: 4, letterSpacing: '0.05em' }}>⏳ En attente</span>
                   ) : (
-                    <button onClick={() => handleSendRequest(u.id)} style={{ background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>
-                      Ajouter
+                    <button onClick={() => handleSendRequest(u.id)} style={{ background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.35)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9, fontWeight: 600, letterSpacing: '0.05em' }}>
+                      + Ajouter
                     </button>
                   )}
                 </div>
@@ -1415,11 +1424,16 @@ export default function MessagingPage() {
           {friends.map(fid => {
             const u = getUserById(fid) || allUsers.find(x => x.id === fid)
             if (!u) return null
+            const isNew = newContacts.includes(fid)
             return (
-              <div key={fid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={fid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                onClick={isNew ? () => { clearNewContact(fid); setNewContacts(getNewContacts()) } : undefined}>
                 <Avatar user={u} size={36} showOnline />
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
+                    {isNew && <span style={{ fontFamily: T.dmMono, fontSize: 8, color: T.teal, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.3)', borderRadius: 10, padding: '1px 6px', letterSpacing: '0.05em' }}>Nouveau</span>}
+                  </div>
                   <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
                 </div>
                 <button onClick={() => startDM(fid)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '5px 8px', cursor: 'pointer', color: T.muted, fontFamily: T.dmMono, fontSize: 9 }}>💬</button>

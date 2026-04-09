@@ -20,32 +20,55 @@ import MonDossierPage from './pages/MonDossierPage'
 import { AuthContext } from './context/AuthContext'
 import AuthModal from './components/AuthModal'
 
+// Normalize user: Firebase users have uid but no id — getUserId() needs user.id to match Firestore paths
+function normalizeUser(val) {
+  if (!val) return null
+  if (val.uid && !val.id) return { ...val, id: val.uid }
+  return val
+}
+
 function usePersistedUser() {
   const [user, setUserState] = useState(() => {
     try {
       const saved = localStorage.getItem('lib_user')
-      return saved ? JSON.parse(saved) : null
+      return normalizeUser(saved ? JSON.parse(saved) : null)
     } catch {
       return null
     }
   })
 
   function setUser(val) {
-    if (val) {
-      localStorage.setItem('lib_user', JSON.stringify(val))
+    const normalized = normalizeUser(val)
+    if (normalized) {
+      localStorage.setItem('lib_user', JSON.stringify(normalized))
     } else {
       localStorage.removeItem('lib_user')
     }
-    setUserState(val)
+    setUserState(normalized)
   }
 
-  // Sync Firestore → localStorage whenever uid changes (login, app reload with existing session)
+  // Sync Firestore → localStorage on login
   useEffect(() => {
     const uid = user?.uid
     if (!uid) return
     import('./utils/firestore-sync').then(({ syncOnLogin }) => {
       syncOnLogin(uid).catch(() => {})
     }).catch(() => {})
+  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-sync when tab regains focus — picks up changes made on other devices
+  useEffect(() => {
+    const uid = user?.uid
+    if (!uid) return
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        import('./utils/firestore-sync').then(({ syncOnLogin }) => {
+          syncOnLogin(uid).catch(() => {})
+        }).catch(() => {})
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { user, setUser }

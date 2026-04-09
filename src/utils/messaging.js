@@ -190,8 +190,19 @@ export function acceptFriendRequest(reqId, myId) {
   try {
     const all = JSON.parse(localStorage.getItem('lib_friend_requests') || '[]')
     const req = all.find(r => r.id === reqId)
-    if (req) saveFriend(myId, req.fromId)
+    if (req) {
+      saveFriend(myId, req.fromId)
+      // Mark as new contact so the UI can show a "Nouveau" badge
+      const newContacts = JSON.parse(localStorage.getItem('lib_new_contacts') || '[]')
+      if (!newContacts.includes(req.fromId)) {
+        localStorage.setItem('lib_new_contacts', JSON.stringify([...newContacts, req.fromId]))
+      }
+    }
     localStorage.setItem('lib_friend_requests', JSON.stringify(all.filter(r => r.id !== reqId)))
+    // Delete from Firestore so it doesn't reappear on next sync
+    import('./firestore-sync').then(({ syncDelete }) => {
+      syncDelete(`friend_requests/${reqId}`)
+    }).catch(() => {})
   } catch {}
 }
 
@@ -199,7 +210,22 @@ export function declineFriendRequest(reqId) {
   try {
     const all = JSON.parse(localStorage.getItem('lib_friend_requests') || '[]')
     localStorage.setItem('lib_friend_requests', JSON.stringify(all.filter(r => r.id !== reqId)))
+    // Delete from Firestore — sender can re-send without limit
+    import('./firestore-sync').then(({ syncDelete }) => {
+      syncDelete(`friend_requests/${reqId}`)
+    }).catch(() => {})
   } catch {}
+}
+
+export function clearNewContact(friendId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_new_contacts') || '[]')
+    localStorage.setItem('lib_new_contacts', JSON.stringify(all.filter(id => id !== friendId)))
+  } catch {}
+}
+
+export function getNewContacts() {
+  try { return JSON.parse(localStorage.getItem('lib_new_contacts') || '[]') } catch { return [] }
 }
 
 // ─── Conversations ────────────────────────────────────────────────────────────
