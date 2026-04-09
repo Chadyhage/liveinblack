@@ -568,6 +568,7 @@ export default function MessagingPage() {
     const msgs = getMessages(convId)
     setMessages(msgs)
     // Si localStorage vide (nouveau device), charger depuis Firestore immédiatement
+    // markMessagesRead est appelé APRÈS le chargement pour ne jamais écraser Firestore avec []
     if (!msgs.length) {
       import('../utils/firestore-sync').then(({ loadDoc }) => {
         loadDoc(`conv_messages/${convId}`).then(data => {
@@ -577,10 +578,12 @@ export default function MessagingPage() {
             localStorage.setItem('lib_messages', JSON.stringify(all))
             setMessages([...data.items])
           }
-        }).catch(() => {})
-      }).catch(() => {})
+          markMessagesRead(convId, myId)
+        }).catch(() => { markMessagesRead(convId, myId) })
+      }).catch(() => { markMessagesRead(convId, myId) })
+    } else {
+      markMessagesRead(convId, myId)
     }
-    markMessagesRead(convId, myId)
     setGroupBookings(getGroupBookings())
     const conv = getConversationById(convId)
     if (conv?.pinnedMessageId) {
