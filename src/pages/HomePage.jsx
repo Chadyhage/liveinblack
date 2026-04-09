@@ -47,11 +47,13 @@ function RevealSection({ children, delay = 0, style = {} }) {
   )
 }
 
+const VIOLET = '#8444ff'
+const WHITE  = '#ffffff'
+
 function HeroGooeyText({ user }) {
-  const texts = useMemo(() => {
+  const { texts, colors } = useMemo(() => {
     if (user?.name) {
       const parts = user.name.trim().split(' ').filter(Boolean)
-      // Cycle: greeting → first name → last name (if exists) → back
       const greeting = (() => {
         const h = new Date().getHours()
         if (h >= 5  && h < 12) return 'Bonjour'
@@ -59,24 +61,28 @@ function HeroGooeyText({ user }) {
         if (h >= 18 && h < 22) return 'Bonsoir'
         return 'Bonne nuit'
       })()
-      return parts.length > 1 ? [greeting, parts[0], parts.slice(1).join(' ')] : [greeting, parts[0]]
+      const txts = parts.length > 1 ? [greeting, parts[0], parts.slice(1).join(' ')] : [greeting, parts[0]]
+      const clrs = txts.map((_, i) => i === 0 ? VIOLET : WHITE)
+      return { texts: txts, colors: clrs }
     }
-    return ['Bienvenue.', 'L|VE IN', 'BLACK.']
+    return {
+      texts: ['Bienvenue.', 'L|VE IN', 'BLACK.'],
+      colors: [VIOLET, WHITE, WHITE],
+    }
   }, [user?.name])
 
-  // Height based on font size — enough room for the largest text
   return (
     <div style={{ position: 'relative', height: 'clamp(52px, 13vw, 100px)', marginBottom: 4 }}>
       <GooeyText
         texts={texts}
-        morphTime={1.2}
-        cooldownTime={2}
+        textColors={colors}
+        morphTime={0.8}
+        cooldownTime={1.5}
         className="w-full h-full"
         textClassName="font-extrabold leading-none tracking-tight"
         textStyle={{
           fontSize: 'clamp(42px, 11vw, 88px)',
           fontFamily: 'Inter, system-ui, sans-serif',
-          color: '#ffffff',
           letterSpacing: 'clamp(-1.5px, -0.04em, -3px)',
           lineHeight: 0.95,
         }}
@@ -199,9 +205,6 @@ export default function HomePage() {
 
         {/* ── Hero ── */}
         <div style={{ padding: '52px 0 48px' }}>
-          <p className="eyebrow" style={{ marginBottom: 20, color: 'var(--violet)', opacity: 1 }}>
-            {getGreeting()}
-          </p>
           <HeroGooeyText user={user} />
           <p style={{
             fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)',

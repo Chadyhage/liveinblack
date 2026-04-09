@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 export function GooeyText({
   texts,
+  textColors,
   morphTime = 1,
   cooldownTime = 0.25,
   className,
@@ -19,11 +20,16 @@ export function GooeyText({
     let cooldown = cooldownTime;
     let animId;
 
+    const applyColor = (idx1, idx2) => {
+      if (!textColors) return;
+      if (text1Ref.current) text1Ref.current.style.color = textColors[idx1 % textColors.length] || '';
+      if (text2Ref.current) text2Ref.current.style.color = textColors[(idx2) % textColors.length] || '';
+    };
+
     const setMorph = (fraction) => {
       if (text1Ref.current && text2Ref.current) {
         text2Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
         text2Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
-
         fraction = 1 - fraction;
         text1Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
         text1Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
@@ -44,12 +50,10 @@ export function GooeyText({
       morph -= cooldown;
       cooldown = 0;
       let fraction = morph / morphTime;
-
       if (fraction > 1) {
         cooldown = cooldownTime;
         fraction = 1;
       }
-
       setMorph(fraction);
     };
 
@@ -59,7 +63,6 @@ export function GooeyText({
       const shouldIncrementIndex = cooldown > 0;
       const dt = (newTime.getTime() - time.getTime()) / 1000;
       time = newTime;
-
       cooldown -= dt;
 
       if (cooldown <= 0) {
@@ -68,6 +71,7 @@ export function GooeyText({
           if (text1Ref.current && text2Ref.current) {
             text1Ref.current.textContent = texts[textIndex % texts.length];
             text2Ref.current.textContent = texts[(textIndex + 1) % texts.length];
+            applyColor(textIndex, textIndex + 1);
           }
         }
         doMorph();
@@ -81,7 +85,7 @@ export function GooeyText({
     return () => {
       if (animId) cancelAnimationFrame(animId);
     };
-  }, [texts, morphTime, cooldownTime]);
+  }, [texts, textColors, morphTime, cooldownTime]);
 
   return (
     <div className={cn("relative", className)}>
