@@ -58,19 +58,19 @@ export function initUsers(currentUser) {
 }
 
 export function getUserById(id) {
-  const all = getAllUsers() || DEMO_USERS
+  const all = getAllUsers() || []
   return all.find(u => u.id === id) || null
 }
 
 export function getUserByUsername(username) {
-  const all = getAllUsers() || DEMO_USERS
+  const all = getAllUsers() || []
   return all.find(u => u.username === username?.toLowerCase()) || null
 }
 
 export function searchUsers(query) {
   if (!query?.trim()) return []
   const q = query.toLowerCase()
-  const all = getAllUsers() || DEMO_USERS
+  const all = getAllUsers() || []
   return all.filter(u =>
     u.name?.toLowerCase().includes(q) ||
     u.username?.toLowerCase().includes(q) ||
@@ -80,7 +80,7 @@ export function searchUsers(query) {
 
 export function updateUserProfile(userId, updates) {
   try {
-    const all = getAllUsers() || DEMO_USERS
+    const all = getAllUsers() || []
     const updated = all.map(u => u.id === userId ? { ...u, ...updates } : u)
     localStorage.setItem('lib_users', JSON.stringify(updated))
   } catch {}

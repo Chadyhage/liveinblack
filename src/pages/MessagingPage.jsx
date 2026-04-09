@@ -438,7 +438,7 @@ export default function MessagingPage() {
   useEffect(() => {
     if (!user) return
     const users = initUsers(user)
-    setAllUsers(users || DEMO_USERS)
+    setAllUsers(users || [])
     seedDemoData(myId, myName)
     setOnline(myId)
     setBlockedUsers(getBlockedUsers(myId))
@@ -967,7 +967,7 @@ export default function MessagingPage() {
   function handleAccept(reqId) {
     acceptFriendRequest(reqId, myId)
     refresh()
-    setAllUsers(getAllUsers() || DEMO_USERS)
+    setAllUsers(getAllUsers() || [])
     setNewContacts(getNewContacts())
   }
   function handleDecline(reqId) {

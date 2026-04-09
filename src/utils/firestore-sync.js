@@ -254,14 +254,10 @@ export async function syncOnLogin(uid) {
     // This prevents a race: if syncOnLogin(A) is still running when the user logs in as B,
     // a stale read of lib_user (now containing B's data) would overwrite users/A with B's name.
     const usersSnap = await loadCollection('users')
-    if (usersSnap.length) {
-      // Normalize: Firestore user docs may use either `id` or `uid` as identifier
-      const normalized = usersSnap.map(u => ({ ...u, id: u.id || u.uid || u._docId }))
-      const localUsers = JSON.parse(localStorage.getItem('lib_users') || '[]')
-      const remoteIds = new Set(normalized.map(u => u.id))
-      const merged = [...normalized, ...localUsers.filter(u => !remoteIds.has(u.id))]
-      localStorage.setItem('lib_users', JSON.stringify(merged))
-    }
+    // Firestore est source de vérité — on écrase lib_users entièrement
+    // pour ne jamais afficher d'anciens comptes supprimés ou comptes démo
+    const normalizedUsers = usersSnap.map(u => ({ ...u, id: u.id || u.uid || u._docId }))
+    localStorage.setItem('lib_users', JSON.stringify(normalizedUsers))
 
     // ── 10-bis. Service orders ──
     const orders = await loadCollection('service_orders')
