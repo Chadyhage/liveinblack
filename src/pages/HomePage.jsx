@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import RegionSelector from '../components/RegionSelector'
@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { getActiveBoosts } from '../utils/ticket'
 import { getEnabledRoles } from '../utils/accounts'
+import { GooeyText } from '../components/ui/gooey-text-morphing'
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -42,6 +43,44 @@ function RevealSection({ children, delay = 0, style = {} }) {
       ...style,
     }}>
       {children}
+    </div>
+  )
+}
+
+function HeroGooeyText({ user }) {
+  const texts = useMemo(() => {
+    if (user?.name) {
+      const parts = user.name.trim().split(' ').filter(Boolean)
+      // Cycle: greeting → first name → last name (if exists) → back
+      const greeting = (() => {
+        const h = new Date().getHours()
+        if (h >= 5  && h < 12) return 'Bonjour'
+        if (h >= 12 && h < 18) return 'Bon après-midi'
+        if (h >= 18 && h < 22) return 'Bonsoir'
+        return 'Bonne nuit'
+      })()
+      return parts.length > 1 ? [greeting, parts[0], parts.slice(1).join(' ')] : [greeting, parts[0]]
+    }
+    return ['Bienvenue.', 'L|VE IN', 'BLACK.']
+  }, [user?.name])
+
+  // Height based on font size — enough room for the largest text
+  return (
+    <div style={{ position: 'relative', height: 'clamp(52px, 13vw, 100px)', marginBottom: 4 }}>
+      <GooeyText
+        texts={texts}
+        morphTime={1.2}
+        cooldownTime={2}
+        className="w-full h-full"
+        textClassName="font-extrabold leading-none tracking-tight"
+        textStyle={{
+          fontSize: 'clamp(42px, 11vw, 88px)',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          color: '#ffffff',
+          letterSpacing: 'clamp(-1.5px, -0.04em, -3px)',
+          lineHeight: 0.95,
+        }}
+      />
     </div>
   )
 }
@@ -163,29 +202,7 @@ export default function HomePage() {
           <p className="eyebrow" style={{ marginBottom: 20, color: 'var(--violet)', opacity: 1 }}>
             {getGreeting()}
           </p>
-          <h1 style={{
-            fontFamily: 'Inter, system-ui, sans-serif',
-            fontSize: 'clamp(42px, 11vw, 88px)',
-            fontWeight: 800,
-            lineHeight: 0.95,
-            letterSpacing: 'clamp(-1.5px, -0.04em, -3px)',
-            margin: 0,
-          }}>
-            {user ? (
-              <>
-                <span style={{ color: '#fff', display: 'block', wordBreak: 'break-word' }}>
-                  {user.name.split(' ')[0]}
-                </span>
-                {user.name.split(' ').length > 1 && (
-                  <span className="gradient-text" style={{ display: 'block', wordBreak: 'break-word' }}>
-                    {user.name.split(' ').slice(1).join(' ')}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="gradient-text" style={{ display: 'block' }}>Bienvenue.</span>
-            )}
-          </h1>
+          <HeroGooeyText user={user} />
           <p style={{
             fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)',
             color: 'rgba(255,255,255,0.38)', marginTop: 20, maxWidth: 420, lineHeight: 1.55,
