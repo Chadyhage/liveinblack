@@ -652,8 +652,12 @@ export function reportUser(fromId, fromName, targetId, targetName, reason) {
 // ─── Delete conversation history ─────────────────────────────────────────────
 export function deleteConversationHistory(convId) {
   try {
+    // Supprime les messages
     const msgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
     delete msgs[convId]
     localStorage.setItem('lib_messages', JSON.stringify(msgs))
+    // Supprime la conversation elle-même
+    const convs = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
+    localStorage.setItem('lib_conversations', JSON.stringify(convs.filter(c => c.id !== convId)))
   } catch {}
 }
