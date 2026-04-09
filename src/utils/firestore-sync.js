@@ -138,13 +138,23 @@ export async function syncOnLogin(uid) {
   console.log('[sync] Full sync starting for', uid)
 
   try {
-    // ── 0. User profile (always restore latest from Firestore) ──
+    // ── 0. User profile (metadata only — never email/name) ──
+    // Firebase Auth is the source of truth for email & name. LoginPage writes them
+    // to lib_user from auth.currentUser. We MUST NOT let Firestore overwrite them,
+    // because legacy corrupted users/{uid} docs (from the rename race bug) would
+    // re-poison lib_user on every login. Only merge safe metadata fields.
     const userProfile = await loadDoc(`users/${uid}`)
     if (userProfile) {
       try {
         const current = JSON.parse(localStorage.getItem('lib_user') || 'null')
-        const merged = current ? { ...current, ...userProfile } : userProfile
-        localStorage.setItem('lib_user', JSON.stringify(merged))
+        if (current) {
+          const safeMeta = {}
+          if (userProfile.avatar != null) safeMeta.avatar = userProfile.avatar
+          if (userProfile.username) safeMeta.username = userProfile.username
+          if (userProfile.nameChangedAt != null) safeMeta.nameChangedAt = userProfile.nameChangedAt
+          const merged = { ...current, ...safeMeta }
+          localStorage.setItem('lib_user', JSON.stringify(merged))
+        }
       } catch {}
     }
 
