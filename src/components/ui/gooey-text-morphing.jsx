@@ -13,7 +13,14 @@ export function GooeyText({
   const text1Ref = React.useRef(null);
   const text2Ref = React.useRef(null);
 
-  React.useEffect(() => {
+  // Texte initial rendu directement dans le JSX → visible dès la première frame
+  const initialIndex = texts.length - 1;
+  const initialText1 = texts[initialIndex % texts.length];
+  const initialText2 = texts[(initialIndex + 1) % texts.length];
+  const initialColor1 = textColors ? textColors[initialIndex % textColors.length] : undefined;
+  const initialColor2 = textColors ? textColors[(initialIndex + 1) % textColors.length] : undefined;
+
+  React.useLayoutEffect(() => {
     let textIndex = texts.length - 1;
     let time = new Date();
     let morph = 0;
@@ -122,13 +129,17 @@ export function GooeyText({
         <span
           ref={text1Ref}
           className={cn("absolute inline-block select-none text-left", textClassName)}
-          style={textStyle}
-        />
+          style={{ ...textStyle, opacity: 0, color: initialColor1 }}
+        >
+          {initialText1}
+        </span>
         <span
           ref={text2Ref}
           className={cn("absolute inline-block select-none text-left", textClassName)}
-          style={textStyle}
-        />
+          style={{ ...textStyle, opacity: 1, color: initialColor2 }}
+        >
+          {initialText2}
+        </span>
       </div>
     </div>
   );
