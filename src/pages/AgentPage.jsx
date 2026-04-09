@@ -88,11 +88,44 @@ function StatusBadge({ status }) {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
+// ── Local storage keys à vider lors d'un reset total ──────────────────────
+const LIB_KEYS = [
+  'lib_user', 'lib_accounts', 'lib_users', 'lib_bookings', 'lib_events',
+  'lib_conversations', 'lib_messages', 'lib_wallet', 'lib_social',
+  'lib_pending_validations', 'lib_role_requests', 'lib_applications',
+  'lib_catalog', 'lib_service_orders', 'lib_notifications',
+]
+
+async function resetAllData() {
+  // 1. Vider localStorage
+  LIB_KEYS.forEach(k => localStorage.removeItem(k))
+
+  // 2. Vider les collections Firestore (sauf users/admin)
+  try {
+    const { db } = await import('../firebase')
+    const { collection, getDocs, deleteDoc, doc } = await import('firebase/firestore')
+    const toDelete = [
+      'users', 'user_social', 'user_bookings', 'user_events', 'wallets',
+      'conversations', 'conv_messages', 'friend_requests',
+      'pending_validations', 'catalogs', 'providers', 'service_orders',
+      'group_bookings', 'applications',
+    ]
+    await Promise.all(toDelete.map(async col => {
+      const snap = await getDocs(collection(db, col))
+      await Promise.all(snap.docs.map(d => deleteDoc(doc(db, col, d.id))))
+    }))
+  } catch (e) {
+    console.error('Reset Firestore partiel :', e)
+  }
+}
+
 export default function AgentPage() {
   const isAgent = useAgentGuard()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState('dashboard')
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [accounts, setAccounts] = useState([])
   const [pending, setPending] = useState([])
   const [roleRequests, setRoleRequests] = useState([])
@@ -428,6 +461,69 @@ export default function AgentPage() {
                 })}
               </div>
             </div>
+
+            {/* ── Zone de danger — Reset total ── */}
+            <div style={{
+              ...CARD,
+              borderColor: 'rgba(239,68,68,0.30)',
+              padding: 16,
+            }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(239,68,68,0.7)', textTransform: 'uppercase', letterSpacing: '0.2em', margin: '0 0 8px' }}>
+                Zone de danger
+              </p>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '0 0 12px', lineHeight: 1.5 }}>
+                Supprime toutes les données (comptes, messages, wallets, événements) de localStorage ET de Firestore.
+                Les comptes Firebase Auth doivent être supprimés manuellement depuis la console Firebase.
+              </p>
+              {!showResetConfirm ? (
+                <button
+                  onClick={() => setShowResetConfirm(true)}
+                  style={{
+                    width: '100%', padding: '11px', borderRadius: 4, cursor: 'pointer',
+                    background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.35)',
+                    fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.12em',
+                    textTransform: 'uppercase', color: 'rgba(239,68,68,0.8)',
+                  }}
+                >
+                  Réinitialiser toutes les données
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: '#ef4444', margin: 0, textAlign: 'center' }}>
+                    ATTENTION — action irréversible. Confirmes-tu ?
+                  </p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => setShowResetConfirm(false)}
+                      style={{
+                        flex: 1, padding: '11px', borderRadius: 4, cursor: 'pointer',
+                        background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
+                        fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim,
+                      }}
+                    >Annuler</button>
+                    <button
+                      disabled={resetting}
+                      onClick={async () => {
+                        setResetting(true)
+                        await resetAllData()
+                        setResetting(false)
+                        setShowResetConfirm(false)
+                        refresh()
+                        showToast('Données réinitialisées — déconnecte et reconnecte chaque compte', 'success')
+                      }}
+                      style={{
+                        flex: 1, padding: '11px', borderRadius: 4, cursor: resetting ? 'wait' : 'pointer',
+                        background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.55)',
+                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.1em',
+                        textTransform: 'uppercase', color: '#ef4444',
+                        opacity: resetting ? 0.6 : 1,
+                      }}
+                    >{resetting ? 'En cours...' : 'Confirmer le reset'}</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         )}
 

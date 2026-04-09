@@ -36,11 +36,26 @@ async function doEmailLogin(email, password, role = null) {
   if (!cred.user.emailVerified && email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
     throw { code: 'auth/email-not-verified' }
   }
+  const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
   const snap = await getDoc(doc(db, 'users', cred.user.uid))
   if (snap.exists()) {
-    const profile = snap.data()
-    if (profile.status === 'pending') throw { code: 'auth/account-pending', role: profile.role }
-    if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
+    let profile = snap.data()
+    if (!isSuperAdmin) {
+      if (profile.status === 'pending') throw { code: 'auth/account-pending', role: profile.role }
+      if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
+    }
+    // Force agent role for super admin — override any corrupted data in Firestore
+    if (isSuperAdmin) {
+      const { updateDoc } = await import('firebase/firestore')
+      const agentPatch = {
+        role: 'agent', activeRole: 'agent', enabledRoles: ['agent'],
+        email: cred.user.email,
+        name: profile.name || cred.user.displayName || 'Admin',
+        emailVerified: true, status: 'active',
+      }
+      updateDoc(doc(db, 'users', cred.user.uid), agentPatch).catch(() => {})
+      return { ...profile, ...agentPatch, uid: cred.user.uid }
+    }
     // Email was verified by Firebase — persist that flag so phone is now "locked"
     if (!profile.emailVerified) {
       const { updateDoc } = await import('firebase/firestore')
@@ -48,6 +63,17 @@ async function doEmailLogin(email, password, role = null) {
       return { ...profile, emailVerified: true }
     }
     return profile
+  }
+  // No Firestore doc yet
+  if (isSuperAdmin) {
+    const { setDoc } = await import('firebase/firestore')
+    const agentObj = {
+      uid: cred.user.uid, name: cred.user.displayName || 'Admin',
+      email: cred.user.email, role: 'agent', activeRole: 'agent',
+      enabledRoles: ['agent'], status: 'active', emailVerified: true, createdAt: Date.now(),
+    }
+    setDoc(doc(db, 'users', cred.user.uid), agentObj).catch(() => {})
+    return agentObj
   }
   return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', status: 'active', emailVerified: true }
 }
