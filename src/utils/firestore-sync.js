@@ -306,6 +306,8 @@ export async function syncOnLogin(uid) {
     }
 
     console.log('[sync] Full sync complete')
+    // Notify UI components so they re-read from localStorage
+    window.dispatchEvent(new CustomEvent('lib:sync-complete', { detail: { uid } }))
   } catch (e) {
     console.warn('[sync] syncOnLogin error:', e.message)
   }

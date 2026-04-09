@@ -480,6 +480,18 @@ export default function MessagingPage() {
     if (activeConvId) setMessages(getMessages(activeConvId))
   }
 
+  // ── Refresh React state when syncOnLogin completes (new device) ──
+  useEffect(() => {
+    if (!myId) return
+    function onSyncComplete() {
+      setConversations(getConversations(myId))
+      setFriends(getFriends(myId))
+      if (activeConvId) setMessages(getMessages(activeConvId))
+    }
+    window.addEventListener('lib:sync-complete', onSyncComplete)
+    return () => window.removeEventListener('lib:sync-complete', onSyncComplete)
+  }, [myId, activeConvId])
+
   // ── Firestore real-time listeners (cross-device sync) ──
   useEffect(() => {
     if (!myId) return
@@ -555,6 +567,19 @@ export default function MessagingPage() {
     setContextMenu(null)
     const msgs = getMessages(convId)
     setMessages(msgs)
+    // Si localStorage vide (nouveau device), charger depuis Firestore immédiatement
+    if (!msgs.length) {
+      import('../utils/firestore-sync').then(({ loadDoc }) => {
+        loadDoc(`conv_messages/${convId}`).then(data => {
+          if (data?.items?.length) {
+            const all = JSON.parse(localStorage.getItem('lib_messages') || '{}')
+            all[convId] = data.items
+            localStorage.setItem('lib_messages', JSON.stringify(all))
+            setMessages([...data.items])
+          }
+        }).catch(() => {})
+      }).catch(() => {})
+    }
     markMessagesRead(convId, myId)
     setGroupBookings(getGroupBookings())
     const conv = getConversationById(convId)

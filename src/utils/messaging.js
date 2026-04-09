@@ -359,6 +359,10 @@ function saveMessages(convId, msgs) {
     const all = JSON.parse(localStorage.getItem('lib_messages') || '{}')
     all[convId] = msgs
     localStorage.setItem('lib_messages', JSON.stringify(all))
+    // Sync to Firestore so changes (reactions, read status, deletions) are visible cross-device
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`conv_messages/${convId}`, { items: msgs })
+    }).catch(() => {})
   } catch {}
 }
 
