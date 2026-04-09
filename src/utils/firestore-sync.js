@@ -61,6 +61,22 @@ export function listenUserSocial(uid, callback) {
 // Exported so MessagingPage can use it for local merges
 export { mergeById }
 
+// ── Explicit user profile push ───────────────────────────────────────────────
+// Call this EXPLICITLY at register/login/profile-update with the trusted userData.
+// Never reads from lib_user (which can be stale during account switching).
+export function syncUserProfile(uid, userData) {
+  if (!uid || !userData) return
+  const profile = {
+    id: uid,
+    uid, // legacy compat — some docs use uid
+    name: userData.name || '',
+    email: userData.email || '',
+    avatar: userData.avatar || null,
+    username: userData.username || generateUsername(userData.name || userData.email || uid),
+  }
+  syncDoc(`users/${uid}`, profile)
+}
+
 // ── Core helpers ──────────────────────────────────────────────────────────────
 
 // Fire-and-forget write (merge mode — won't overwrite fields not in data)
@@ -223,25 +239,18 @@ export async function syncOnLogin(uid) {
       localStorage.setItem('lib_provider_profiles', JSON.stringify(profiles))
     }
 
-    // ── 10. Users (contacts cross-device) ──
+    // ── 10. Users (contacts cross-device) — READ ONLY, never push here ──
+    // (Push is handled by syncUserProfile() called explicitly at login/register/profile-update)
+    // This prevents a race: if syncOnLogin(A) is still running when the user logs in as B,
+    // a stale read of lib_user (now containing B's data) would overwrite users/A with B's name.
     const usersSnap = await loadCollection('users')
     if (usersSnap.length) {
+      // Normalize: Firestore user docs may use either `id` or `uid` as identifier
+      const normalized = usersSnap.map(u => ({ ...u, id: u.id || u.uid || u._docId }))
       const localUsers = JSON.parse(localStorage.getItem('lib_users') || '[]')
-      const remoteIds = new Set(usersSnap.map(u => u.id))
-      const merged = [...usersSnap, ...localUsers.filter(u => !remoteIds.has(u.id))]
+      const remoteIds = new Set(normalized.map(u => u.id))
+      const merged = [...normalized, ...localUsers.filter(u => !remoteIds.has(u.id))]
       localStorage.setItem('lib_users', JSON.stringify(merged))
-    }
-    // Push current user profile to Firestore so others can find them
-    const currentUser = JSON.parse(localStorage.getItem('lib_user') || 'null')
-    if (currentUser && uid) {
-      const myProfile = {
-        id: uid,
-        name: currentUser.name || '',
-        email: currentUser.email || '',
-        avatar: currentUser.avatar || null,
-        username: currentUser.username || generateUsername(currentUser.name || currentUser.email || uid),
-      }
-      syncDoc(`users/${uid}`, myProfile)
     }
 
     // ── 10-bis. Service orders ──

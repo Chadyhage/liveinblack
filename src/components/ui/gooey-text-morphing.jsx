@@ -80,6 +80,17 @@ export function GooeyText({
       }
     }
 
+    // Initialise le contenu immédiatement — sans ça, les spans sont vides
+    // jusqu'à la fin du premier cooldown (→ délai visible au chargement)
+    if (text1Ref.current && text2Ref.current) {
+      text2Ref.current.textContent = texts[(textIndex + 1) % texts.length];
+      text2Ref.current.style.opacity = "100%";
+      text2Ref.current.style.filter = "";
+      text1Ref.current.textContent = texts[textIndex % texts.length];
+      text1Ref.current.style.opacity = "0%";
+      applyColor(textIndex, textIndex + 1);
+    }
+
     animate();
 
     return () => {

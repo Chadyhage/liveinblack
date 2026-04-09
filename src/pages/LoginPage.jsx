@@ -423,7 +423,8 @@ export default function LoginPage() {
       const userData = await doEmailLogin(email, password, loginRole)
       setUser(userData)
       // Fire-and-forget: push local data then pull Firestore
-      import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore }) => {
+      import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
+        syncUserProfile(userData.uid, userData)
         pushLocalToFirestore(userData.uid).catch(() => {})
         syncOnLogin(userData.uid).catch(() => {})
       }).catch(() => {})
@@ -490,7 +491,8 @@ export default function LoginPage() {
         setUnverifiedEmail(regEmail)
       } else {
         setUser(userData)
-        import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore }) => {
+        import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
+          syncUserProfile(userData.uid, userData)
           pushLocalToFirestore(userData.uid).catch(() => {})
           syncOnLogin(userData.uid).catch(() => {})
         }).catch(() => {})
@@ -509,7 +511,8 @@ export default function LoginPage() {
     try {
       const userData = await doGoogleLogin()
       setUser(userData)
-      import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore }) => {
+      import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
+        syncUserProfile(userData.uid, userData)
         pushLocalToFirestore(userData.uid).catch(() => {})
         syncOnLogin(userData.uid).catch(() => {})
       }).catch(() => {})
@@ -528,6 +531,11 @@ export default function LoginPage() {
     try {
       const userData = await doAppleLogin()
       setUser(userData)
+      import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
+        syncUserProfile(userData.uid, userData)
+        pushLocalToFirestore(userData.uid).catch(() => {})
+        syncOnLogin(userData.uid).catch(() => {})
+      }).catch(() => {})
       const params = new URLSearchParams(location.search)
       navigate(params.get('next') || '/accueil')
     } catch (err) {
