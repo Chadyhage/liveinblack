@@ -240,7 +240,33 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
   all[idx] = { ...all[idx], ...patch }
   _saveAll(all)
 
-  // Sync Firestore
+  // ── Approbation : upgrader le rôle + copier les permissions dans le profil ──
+  if (status === 'approved') {
+    const app = all[idx]
+    try {
+      const { updateAccount } = await import('./accounts')
+      const { syncDoc } = await import('./firestore-sync')
+
+      // Permissions dérivées du formulaire
+      const perms = {
+        role: app.type === 'organisateur' ? 'organisateur' : 'prestataire',
+        canSellAlcohol:   !!(app.formData?.alcool),
+        approvedAt:       now,
+        approvedBy:       adminName,
+      }
+      if (app.type === 'prestataire') {
+        perms.prestataireType = app.formData?.prestataireType || null
+      }
+
+      // Mettre à jour localStorage (lib_registered_users)
+      updateAccount(app.uid, perms)
+
+      // Sync Firestore profil utilisateur
+      syncDoc(`users/${app.uid}`, perms)
+    } catch {}
+  }
+
+  // Sync Firestore application
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
@@ -259,8 +285,8 @@ export function getCompleteness(app) {
   const type = app.type
 
   const coreFields = type === 'organisateur'
-    ? ['nomCommercial', 'siren', 'emailPro', 'telephonePro', 'responsableNom', 'ville']
-    : ['nomCommercial', 'emailPro', 'telephonePro', 'responsableNom', 'ville']
+    ? ['nomCommercial', 'emailPro', 'telephonePro', 'responsableNom', 'responsablePrenom', 'responsableEmail']
+    : ['nomCommercial', 'emailPro', 'telephonePro', 'responsableNom', 'responsablePrenom']
 
   const fieldScore = coreFields.filter(f => form[f] && String(form[f]).trim()).length / coreFields.length
 

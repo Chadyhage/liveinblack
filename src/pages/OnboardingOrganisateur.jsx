@@ -76,7 +76,7 @@ export default function OnboardingOrganisateur() {
     responsableEmail: '', responsableTelephone: '',
     // Step 2 — Activité
     typeEtablissement: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
-    horaires: '', alcool: false, evenementsPublics: false, evenementsPrives: false,
+    horaires: '', alcool: false,
     description: '',
     // Step 3 — Paiement
     titulaire: '', iban: '', responsableFinancier: '',
@@ -169,6 +169,11 @@ export default function OnboardingOrganisateur() {
   }
 
   async function handleSubmit() {
+    // Vérification : alcool déclaré → licence obligatoire
+    if (f.alcool && !app.documents?.alcohol_license) {
+      showToast('Licence alcool requise (vous avez déclaré vendre de l\'alcool)', 'error')
+      return
+    }
     setSubmitting(true)
     try {
       const result = await submitApplication(app.id, f)
@@ -434,10 +439,13 @@ export default function OnboardingOrganisateur() {
                   </Field>
                 </>
               )}
-              <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <Toggle value={f.alcool} onChange={v => update('alcool', v)} label="Alcool vendu sur place" />
-                <Toggle value={f.evenementsPublics} onChange={v => update('evenementsPublics', v)} label="Événements publics" />
-                <Toggle value={f.evenementsPrives} onChange={v => update('evenementsPrives', v)} label="Événements privés" />
+                {f.alcool && (
+                  <p style={{ fontFamily: DM, fontSize: 9, color: GOLD, letterSpacing: '0.06em', margin: '2px 0 0 46px' }}>
+                    → Une licence / justificatif alcool vous sera demandé à l'étape Documents
+                  </p>
+                )}
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <Field label="Description courte de l'activité">
@@ -506,11 +514,11 @@ export default function OnboardingOrganisateur() {
               )
             })}
 
-            {/* Conditional: alcool */}
+            {/* Alcool déclaré → document obligatoire */}
             {f.alcool && (
               <DocUploadRow
                 label="Licence / Justificatif de débit de boissons"
-                required={false}
+                required={true}
                 uploaded={app.documents?.alcohol_license}
                 status={uploadStatus.alcohol_license}
                 onChange={file => handleUpload('alcohol_license', file)}
