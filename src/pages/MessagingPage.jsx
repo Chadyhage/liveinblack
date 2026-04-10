@@ -182,22 +182,31 @@ function VoiceBubble({ content, isMe }) {
 
   function handlePlay() {
     if (!audioRef.current) {
-      audioRef.current = new Audio(content)
-      audioRef.current.onloadedmetadata = () => {
-        if (!duration) setDuration(Math.round(audioRef.current.duration))
+      const a = new Audio()
+      // Set crossOrigin before src to avoid CORS issues with Storage URLs
+      a.crossOrigin = 'anonymous'
+      a.src = content
+      a.onloadedmetadata = () => {
+        if (!duration) setDuration(Math.round(a.duration))
       }
-      audioRef.current.ontimeupdate = () => {
-        const d = audioRef.current.duration || 1
-        setProgress(audioRef.current.currentTime / d)
+      a.ontimeupdate = () => {
+        const d = a.duration || 1
+        setProgress(a.currentTime / d)
       }
-      audioRef.current.onended = () => { setPlaying(false); setProgress(0) }
+      a.onended = () => { setPlaying(false); setProgress(0) }
+      a.onerror = () => { setPlaying(false) }
+      audioRef.current = a
     }
     if (playing) {
       audioRef.current.pause()
       setPlaying(false)
     } else {
-      audioRef.current.play()
-      setPlaying(true)
+      const p = audioRef.current.play()
+      if (p && typeof p.then === 'function') {
+        p.then(() => setPlaying(true)).catch(() => setPlaying(false))
+      } else {
+        setPlaying(true)
+      }
     }
   }
 
@@ -464,6 +473,7 @@ export default function MessagingPage() {
   // ── Input ──
   const [inputText, setInputText]   = useState('')
   const [replyTo, setReplyTo]       = useState(null)     // { id, senderName, preview }
+  const [highlightedMsgId, setHighlightedMsgId] = useState(null) // message glow on reply-preview click
   const [forwardMsg, setForwardMsg] = useState(null)     // message to forward
 
   // ── Overlays ──
@@ -1368,7 +1378,7 @@ export default function MessagingPage() {
     const allReactions = Object.entries(reactions).filter(([, users]) => users.length > 0)
 
     return (
-      <div key={msg.id}>
+      <div key={msg.id} data-msg-id={msg.id}>
         {/* Date separator */}
         {showDateSep && (
           <div style={{ textAlign: 'center', padding: '12px 0 4px', position: 'relative' }}>
@@ -1404,13 +1414,21 @@ export default function MessagingPage() {
                 </span>
               )}
 
-              {/* Reply preview */}
+              {/* Reply preview — click to scroll to original */}
               {msg.replyTo && (
-                <div style={{
-                  background: 'rgba(255,255,255,0.05)', borderRadius: 4, padding: '4px 8px',
-                  borderLeft: `2px solid ${isMe ? T.teal : T.gold}`,
-                  maxWidth: 220,
-                }}>
+                <div
+                  onClick={() => {
+                    const el = document.querySelector(`[data-msg-id="${msg.replyTo.id}"]`)
+                    if (!el) return
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    setHighlightedMsgId(msg.replyTo.id)
+                    setTimeout(() => setHighlightedMsgId(null), 2000)
+                  }}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)', borderRadius: 4, padding: '4px 8px',
+                    borderLeft: `2px solid ${isMe ? T.teal : T.gold}`,
+                    maxWidth: 220, cursor: 'pointer',
+                  }}>
                   <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.muted, margin: 0 }}>{msg.replyTo.senderName}</p>
                   <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.replyTo.preview}</p>
                 </div>
@@ -1429,6 +1447,10 @@ export default function MessagingPage() {
                   maxWidth: '100%',
                   cursor: 'context-menu',
                   position: 'relative',
+                  transition: 'box-shadow 0.3s',
+                  boxShadow: highlightedMsgId === msg.id
+                    ? '0 0 0 2px rgba(255,255,255,0.75), 0 0 18px rgba(255,255,255,0.25)'
+                    : 'none',
                 }}>
                 {isDeleted ? (
                   <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim, fontStyle: 'italic' }}>
