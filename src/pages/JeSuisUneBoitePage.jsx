@@ -108,6 +108,7 @@ export default function JeSuisUneBoitePage() {
     email: '',
     phone: '',
     address: '',
+    noFixedAddress: false,
     website: '',
   })
 
@@ -161,6 +162,7 @@ export default function JeSuisUneBoitePage() {
   function handleSubmit() {
     const registration = {
       ...boiteForm,
+      address: boiteForm.noFixedAddress ? null : boiteForm.address,
       options: toggles,
       wantsToRent,
       rentDetails: wantsToRent ? rentForm : null,
@@ -236,18 +238,47 @@ export default function JeSuisUneBoitePage() {
 
                 {/* Form */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <Eyebrow>Informations de la structure</Eyebrow>
+                  <Eyebrow>Informations de l'établissement</Eyebrow>
                   <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
-                    Informations de la structure
+                    Informations de l'établissement
                   </p>
+
+                  {/* Nom de l'établissement */}
+                  <div>
+                    <label style={S.label}>Nom de l'établissement / commercial</label>
+                    <input
+                      style={S.inputBase}
+                      placeholder="Ex: Club Neon, L|VE Events..."
+                      value={boiteForm.name}
+                      onChange={e => setBoiteForm(prev => ({ ...prev, name: e.target.value }))}
+                      onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
+                    />
+                  </div>
+
+                  {/* Numéro SIRET avec note 000.000 */}
+                  <div>
+                    <label style={S.label}>
+                      Numéro SIRET / SIREN
+                      <span style={{ color: 'rgba(255,255,255,0.22)', marginLeft: 6, letterSpacing: '0.15em', fontStyle: 'normal' }}>
+                        — si pas de numéro, écrivez <span style={{ color: '#c8a96e' }}>000.000</span>
+                      </span>
+                    </label>
+                    <input
+                      style={S.inputBase}
+                      placeholder="Ex: 123 456 789 00012 — ou 000.000"
+                      value={boiteForm.siret}
+                      onChange={e => setBoiteForm(prev => ({ ...prev, siret: e.target.value }))}
+                      onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
+                    />
+                  </div>
+
+                  {/* Responsable + email + phone */}
                   {[
-                    { key: 'name', label: 'Nom de la boîte / société', placeholder: 'Ex: Club Neon, SARL Events...' },
-                    { key: 'siret', label: "SIRET / Numéro d'entreprise", placeholder: 'Ex: 123 456 789 00012' },
-                    { key: 'manager', label: 'Nom du responsable légal', placeholder: 'Prénom Nom' },
-                    { key: 'email', label: 'Email professionnel', placeholder: 'contact@maboite.fr' },
-                    { key: 'phone', label: 'Téléphone', placeholder: '+33 6 00 00 00 00' },
-                    { key: 'address', label: 'Adresse du siège', placeholder: 'Adresse complète' },
-                    { key: 'website', label: 'Site web (optionnel)', placeholder: 'https://...' },
+                    { key: 'manager', label: 'Nom du responsable', placeholder: 'Prénom Nom' },
+                    { key: 'email',   label: 'Email professionnel', placeholder: 'contact@monclub.fr' },
+                    { key: 'phone',   label: 'Téléphone',           placeholder: '+33 6 00 00 00 00' },
                   ].map((f) => (
                     <div key={f.key}>
                       <label style={S.label}>{f.label}</label>
@@ -261,6 +292,66 @@ export default function JeSuisUneBoitePage() {
                       />
                     </div>
                   ))}
+
+                  {/* Adresse de l'établissement + case "pas de lieu fixe" */}
+                  <div>
+                    <label style={S.label}>Adresse de l'établissement — lieu principal</label>
+
+                    {/* Toggle "Pas de lieu fixe" */}
+                    <div
+                      onClick={() => setBoiteForm(prev => ({ ...prev, noFixedAddress: !prev.noFixedAddress, address: prev.noFixedAddress ? prev.address : '' }))}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, cursor: 'pointer', userSelect: 'none' }}
+                    >
+                      <div style={{
+                        width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                        border: `1.5px solid ${boiteForm.noFixedAddress ? '#4ee8c8' : 'rgba(255,255,255,0.20)'}`,
+                        background: boiteForm.noFixedAddress ? 'rgba(78,232,200,0.15)' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.2s',
+                      }}>
+                        {boiteForm.noFixedAddress && (
+                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                            <polyline points="2,6 5,9 10,3" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: boiteForm.noFixedAddress ? '#4ee8c8' : 'rgba(255,255,255,0.45)', letterSpacing: '0.05em' }}>
+                        Pas de lieu fixe (établissement en ligne / itinérant)
+                      </span>
+                    </div>
+
+                    {!boiteForm.noFixedAddress && (
+                      <input
+                        style={S.inputBase}
+                        placeholder="Adresse complète de l'établissement"
+                        value={boiteForm.address}
+                        onChange={e => setBoiteForm(prev => ({ ...prev, address: e.target.value }))}
+                        onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
+                      />
+                    )}
+
+                    {boiteForm.noFixedAddress && (
+                      <div style={{ padding: '10px 14px', background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.18)', borderRadius: 4 }}>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(78,232,200,0.7)', letterSpacing: '0.04em' }}>
+                          ✓ Aucune adresse physique — établissement dématérialisé ou sans lieu fixe
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Site web */}
+                  <div>
+                    <label style={S.label}>Site web (optionnel)</label>
+                    <input
+                      style={S.inputBase}
+                      placeholder="https://..."
+                      value={boiteForm.website}
+                      onChange={e => setBoiteForm(prev => ({ ...prev, website: e.target.value }))}
+                      onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
+                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
+                    />
+                  </div>
                 </div>
 
                 <div style={{ ...S.card, padding: 14, borderColor: 'rgba(78,232,200,0.18)' }}>
@@ -434,9 +525,11 @@ export default function JeSuisUneBoitePage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {[
-                    { label: 'Structure', val: boiteForm.name || '(non renseigné)' },
+                    { label: 'Établissement', val: boiteForm.name || '(non renseigné)' },
+                    { label: 'SIRET / SIREN', val: boiteForm.siret || '(non renseigné)' },
                     { label: 'Responsable', val: boiteForm.manager || '(non renseigné)' },
                     { label: 'Email', val: boiteForm.email || '(non renseigné)' },
+                    { label: 'Adresse', val: boiteForm.noFixedAddress ? 'Aucun lieu fixe' : (boiteForm.address || '(non renseigné)') },
                     { label: 'Playlist interactive', val: toggles.playlist ? 'Activée' : 'Désactivée' },
                     { label: 'Précommande conso', val: toggles.preorder ? 'Activée' : 'Désactivée' },
                     { label: 'Louer ma salle', val: wantsToRent ? 'Oui' : 'Non' },
