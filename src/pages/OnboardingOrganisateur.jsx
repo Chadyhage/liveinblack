@@ -23,7 +23,7 @@ const S = {
   error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em' },
 }
 
-const TYPES_ETAB = ['Boîte / Club','Bar']
+const TYPES_ETAB = ['Boîte / Club','Bar','Autre']
 
 const STEPS = [
   { label: 'Entreprise',  icon: '🏢' },
@@ -75,7 +75,7 @@ export default function OnboardingOrganisateur() {
     responsableNom: '', responsablePrenom: '', responsableFonction: '',
     responsableEmail: '', responsableTelephone: '',
     // Step 2 — Activité
-    typeEtablissement: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
+    typeEtablissement: '', typeEtablissementCustom: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
     horaires: '', alcool: false,
     description: '',
     // Step 3 — Paiement
@@ -134,6 +134,7 @@ export default function OnboardingOrganisateur() {
     }
     if (s === 2) {
       if (!f.typeEtablissement) errs.typeEtablissement = 'Requis'
+      if (f.typeEtablissement === 'Autre' && !f.typeEtablissementCustom?.trim()) errs.typeEtablissementCustom = 'Précisez le type'
       if (!f.itinerant && !f.ville.trim()) errs.ville = 'Requis (ou cocher "Itinérant")'
     }
     if (s === 3) {
@@ -366,12 +367,27 @@ export default function OnboardingOrganisateur() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <Field label="Type d'établissement" required>
-                  <select style={{ ...S.select, borderColor: errors.typeEtablissement ? '#e05aaa' : undefined }} value={f.typeEtablissement} onChange={e => update('typeEtablissement', e.target.value)}>
+                  <select
+                    style={{ ...S.select, borderColor: errors.typeEtablissement ? '#e05aaa' : undefined }}
+                    value={f.typeEtablissement}
+                    onChange={e => update('typeEtablissement', e.target.value)}
+                  >
                     <option value="">Choisir...</option>
                     {TYPES_ETAB.map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
                   {errors.typeEtablissement && <p style={S.error}>{errors.typeEtablissement}</p>}
                 </Field>
+
+                {/* Champ libre si "Autre" sélectionné */}
+                {f.typeEtablissement === 'Autre' && (
+                  <input
+                    style={{ ...S.input, marginTop: 8, borderColor: errors.typeEtablissementCustom ? '#e05aaa' : undefined }}
+                    placeholder="Précisez le type d'établissement..."
+                    value={f.typeEtablissementCustom || ''}
+                    onChange={e => update('typeEtablissementCustom', e.target.value)}
+                    autoFocus
+                  />
+                )}
               </div>
               {/* Ville / Pays — ou itinérant */}
               <div style={{ gridColumn: '1 / -1' }}>
