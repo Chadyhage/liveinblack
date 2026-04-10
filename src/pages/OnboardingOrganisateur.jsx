@@ -23,7 +23,6 @@ const S = {
   error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em' },
 }
 
-const FORMES_JURIDIQUES = ['SARL','SAS','SASU','SA','EURL','EI','Micro-entreprise','Association','Autre']
 const TYPES_ETAB = ['Boîte / Club','Bar','Restaurant','Salle de spectacle','Salle polyvalente','Hôtel','Autre']
 
 const STEPS = [
@@ -70,8 +69,8 @@ export default function OnboardingOrganisateur() {
   // Form state — each section
   const [f, setF] = useState({
     // Step 0 — Entreprise
-    nomCommercial: '', raisonSociale: '', formeJuridique: '', siren: '', siret: '',
-    adresseSiege: '', adresseEtablissement: '', emailPro: '', telephonePro: '', siteWeb: '',
+    nomCommercial: '', siret: '', noFixedAddress: false,
+    adresseEtablissement: '', emailPro: '', telephonePro: '', siteWeb: '',
     // Step 1 — Responsable
     responsableNom: '', responsablePrenom: '', responsableFonction: '',
     responsableEmail: '', responsableTelephone: '',
@@ -124,10 +123,9 @@ export default function OnboardingOrganisateur() {
     const errs = {}
     if (s === 0) {
       if (!f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
-      if (!f.siren.trim()) errs.siren = 'Requis'
       if (!f.emailPro.trim() || !f.emailPro.includes('@')) errs.emailPro = 'Email invalide'
       if (!f.telephonePro.trim()) errs.telephonePro = 'Requis'
-      if (!f.adresseSiege.trim()) errs.adresseSiege = 'Requis'
+      if (!f.noFixedAddress && !f.adresseEtablissement.trim()) errs.adresseEtablissement = 'Requis (ou cocher "Pas de lieu fixe")'
     }
     if (s === 1) {
       if (!f.responsableNom.trim()) errs.responsableNom = 'Requis'
@@ -239,41 +237,29 @@ export default function OnboardingOrganisateur() {
         {/* ── STEP 0: Entreprise ── */}
         {step === 0 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>🏢 Informations de l'entreprise</p>
+            <p style={S.section}>🏢 Informations de l'établissement</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+
+              {/* Nom commercial */}
               <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Nom commercial" required>
-                  <input style={{ ...S.input, borderColor: errors.nomCommercial ? '#e05aaa' : undefined }} value={f.nomCommercial} onChange={e => update('nomCommercial', e.target.value)} placeholder="LIVEINBLACK Events" />
+                <Field label="Nom de l'établissement / commercial" required>
+                  <input style={{ ...S.input, borderColor: errors.nomCommercial ? '#e05aaa' : undefined }} value={f.nomCommercial} onChange={e => update('nomCommercial', e.target.value)} placeholder="Ex: Club Neon, L|VE Events..." />
                   {errors.nomCommercial && <p style={S.error}>{errors.nomCommercial}</p>}
                 </Field>
               </div>
-              <Field label="Raison sociale">
-                <input style={S.input} value={f.raisonSociale} onChange={e => update('raisonSociale', e.target.value)} placeholder="SAS EVENTS FRANCE" />
-              </Field>
-              <Field label="Forme juridique">
-                <select style={S.select} value={f.formeJuridique} onChange={e => update('formeJuridique', e.target.value)}>
-                  <option value="">Choisir...</option>
-                  {FORMES_JURIDIQUES.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-              </Field>
-              <Field label="SIREN" required>
-                <input style={{ ...S.input, borderColor: errors.siren ? '#e05aaa' : undefined }} value={f.siren} onChange={e => update('siren', e.target.value)} placeholder="123 456 789" maxLength={9} />
-                {errors.siren && <p style={S.error}>{errors.siren}</p>}
-              </Field>
-              <Field label="SIRET">
-                <input style={S.input} value={f.siret} onChange={e => update('siret', e.target.value)} placeholder="123 456 789 00012" maxLength={14} />
-              </Field>
+
+              {/* Numéro SIRET/SIREN — pleine largeur + note 000.000 */}
               <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Adresse du siège social" required>
-                  <input style={{ ...S.input, borderColor: errors.adresseSiege ? '#e05aaa' : undefined }} value={f.adresseSiege} onChange={e => update('adresseSiege', e.target.value)} placeholder="12 rue de la Paix, 75001 Paris" />
-                  {errors.adresseSiege && <p style={S.error}>{errors.adresseSiege}</p>}
-                </Field>
+                <label style={S.label}>
+                  Numéro SIRET / SIREN
+                  <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6, letterSpacing: '0.1em' }}>
+                    — si pas de numéro, indiquez <span style={{ color: GOLD }}>000.000</span>
+                  </span>
+                </label>
+                <input style={S.input} value={f.siret} onChange={e => update('siret', e.target.value)} placeholder="123 456 789 00012 — ou 000.000" />
               </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Adresse de l'établissement / lieu principal">
-                  <input style={S.input} value={f.adresseEtablissement} onChange={e => update('adresseEtablissement', e.target.value)} placeholder="(si différente du siège)" />
-                </Field>
-              </div>
+
+              {/* Email + Téléphone */}
               <Field label="Email professionnel" required>
                 <input type="email" style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined }} value={f.emailPro} onChange={e => update('emailPro', e.target.value)} placeholder="contact@monclub.fr" />
                 {errors.emailPro && <p style={S.error}>{errors.emailPro}</p>}
@@ -282,6 +268,54 @@ export default function OnboardingOrganisateur() {
                 <input style={{ ...S.input, borderColor: errors.telephonePro ? '#e05aaa' : undefined }} value={f.telephonePro} onChange={e => update('telephonePro', e.target.value)} placeholder="+33 6 00 00 00 00" />
                 {errors.telephonePro && <p style={S.error}>{errors.telephonePro}</p>}
               </Field>
+
+              {/* Adresse de l'établissement + case "Pas de lieu fixe" */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>Adresse de l'établissement — lieu principal{!f.noFixedAddress && <span style={{ color: '#e05aaa' }}> *</span>}</label>
+
+                {/* Checkbox pas de lieu fixe */}
+                <div
+                  onClick={() => update('noFixedAddress', !f.noFixedAddress)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <div style={{
+                    width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                    border: `1.5px solid ${f.noFixedAddress ? '#4ee8c8' : 'rgba(255,255,255,0.20)'}`,
+                    background: f.noFixedAddress ? 'rgba(78,232,200,0.15)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}>
+                    {f.noFixedAddress && (
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <polyline points="2,6 5,9 10,3" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ fontFamily: DM, fontSize: 11, color: f.noFixedAddress ? '#4ee8c8' : 'rgba(255,255,255,0.45)', letterSpacing: '0.05em' }}>
+                    Pas de lieu fixe (établissement en ligne / itinérant)
+                  </span>
+                </div>
+
+                {!f.noFixedAddress ? (
+                  <>
+                    <input
+                      style={{ ...S.input, borderColor: errors.adresseEtablissement ? '#e05aaa' : undefined }}
+                      value={f.adresseEtablissement}
+                      onChange={e => update('adresseEtablissement', e.target.value)}
+                      placeholder="Adresse complète de l'établissement"
+                    />
+                    {errors.adresseEtablissement && <p style={S.error}>{errors.adresseEtablissement}</p>}
+                  </>
+                ) : (
+                  <div style={{ padding: '10px 14px', background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.18)', borderRadius: 4 }}>
+                    <span style={{ fontFamily: DM, fontSize: 11, color: 'rgba(78,232,200,0.7)', letterSpacing: '0.04em' }}>
+                      ✓ Aucune adresse physique — établissement dématérialisé ou sans lieu fixe
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Site web */}
               <div style={{ gridColumn: '1 / -1' }}>
                 <Field label="Site web / Instagram (optionnel)">
                   <input style={S.input} value={f.siteWeb} onChange={e => update('siteWeb', e.target.value)} placeholder="https://... ou @nom" />
