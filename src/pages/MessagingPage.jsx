@@ -1894,7 +1894,6 @@ export default function MessagingPage() {
                     {[
                       { label: '📷 Photo', action: () => { photoInputRef.current?.click(); setShowAttachMenu(false) } },
                       { label: '📊 Sondage', action: () => { setShowPollCreator(true); setShowAttachMenu(false) } },
-                      { label: '📰 Article', action: () => { setShowStoryCreator(true); setShowAttachMenu(false) } },
                       { label: '🎟 Partager un événement', action: () => { setShowEventPicker(true); setShowAttachMenu(false) } },
                     ].map(item => (
                       <button key={item.label} onClick={item.action}
@@ -2171,20 +2170,29 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
 
   // Load events from localStorage bookings or use demo events
   const events = useMemo(() => {
+    const seen = new Set()
+    const result = []
     try {
+      // Billets achetés
       const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-      const seen = new Set()
-      const unique = bookings
-        .filter(b => b.eventId && !seen.has(b.eventId) && seen.add(b.eventId))
-        .map(b => ({ id: b.eventId, name: b.eventName, date: b.eventDate, price: b.placePrice, placeName: b.place || '', image: null }))
-      if (unique.length > 0) return unique
+      bookings.forEach(b => {
+        if (b.eventId && !seen.has(b.eventId)) {
+          seen.add(b.eventId)
+          result.push({ id: b.eventId, name: b.eventName, date: b.eventDate, price: b.placePrice, placeName: b.place || '', image: b.eventImage || null })
+        }
+      })
     } catch {}
-    // Demo fallback
-    return [
-      { id: 'd1', name: 'NEON NOIR', date: 'SAM 20 AVR 2026', price: 25, placeName: 'Club Obsidian', image: null },
-      { id: 'd2', name: 'UNDERGROUND TECHNO', date: 'VEN 26 AVR 2026', price: 15, placeName: 'Le Bunker', image: null },
-      { id: 'd3', name: 'LIB SUMMER FEST', date: 'SAM 14 JUN 2026', price: 50, placeName: 'Parc des Expos', image: null },
-    ]
+    try {
+      // Événements créés (organisateur)
+      const userEvents = JSON.parse(localStorage.getItem('lib_user_events') || '[]')
+      userEvents.forEach(ev => {
+        if (ev.id && !seen.has(ev.id)) {
+          seen.add(ev.id)
+          result.push({ id: ev.id, name: ev.name || ev.title, date: ev.date, price: ev.price, placeName: ev.place || ev.location || '', image: ev.image || ev.imageUrl || null })
+        }
+      })
+    } catch {}
+    return result
   }, [])
 
   const filtered = search.trim() ? events.filter(e => e.name.toLowerCase().includes(search.toLowerCase())) : events
@@ -2198,7 +2206,11 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
         <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Partager l'info ou proposer une réservation de groupe</p>
         <input style={{ background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 6, color: 'rgba(255,255,255,0.9)', fontFamily: dmMono, fontSize: 12, padding: '9px 12px', outline: 'none', width: '100%', boxSizing: 'border-box', marginBottom: 12 }} placeholder="Rechercher un événement…" value={search} onChange={e => setSearch(e.target.value)} />
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {filtered.length === 0 && <p style={{ fontFamily: dmMono, fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '24px 0' }}>Aucun événement trouvé</p>}
+          {filtered.length === 0 && (
+            <p style={{ fontFamily: dmMono, fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '32px 0', lineHeight: 1.8 }}>
+              {events.length === 0 ? "Aucun événement disponible.\nAchète un billet ou crée un événement pour pouvoir le partager ici." : "Aucun événement correspondant."}
+            </p>
+          )}
           {filtered.map(ev => (
             <div key={ev.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, overflow: 'hidden' }}>
               {/* Event header */}
