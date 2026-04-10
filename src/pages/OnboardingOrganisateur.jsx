@@ -29,7 +29,7 @@ const STEPS = [
   { label: 'Entreprise',  icon: '🏢' },
   { label: 'Responsable', icon: '👤' },
   { label: 'Activité',    icon: '🎪' },
-  { label: 'Paiement',    icon: '💳' },
+  { label: 'Revenus',     icon: '💳' },
   { label: 'Documents',   icon: '📎' },
 ]
 
@@ -78,8 +78,7 @@ export default function OnboardingOrganisateur() {
     typeEtablissement: '', typeEtablissementCustom: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
     horaires: '', alcool: false,
     description: '',
-    // Step 3 — Paiement
-    titulaire: '', iban: '', responsableFinancier: '',
+    // Step 3 — Revenus (informatif, pas de champs)
   })
 
   useEffect(() => {
@@ -137,10 +136,7 @@ export default function OnboardingOrganisateur() {
       if (f.typeEtablissement === 'Autre' && !f.typeEtablissementCustom?.trim()) errs.typeEtablissementCustom = 'Précisez le type'
       if (!f.itinerant && !f.ville.trim()) errs.ville = 'Requis (ou cocher "Itinérant")'
     }
-    if (s === 3) {
-      if (!f.titulaire.trim()) errs.titulaire = 'Requis'
-      if (!f.iban.trim()) errs.iban = 'Requis'
-    }
+    // Step 3 — Revenus : page informative, pas de validation
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -472,36 +468,64 @@ export default function OnboardingOrganisateur() {
           </div>
         )}
 
-        {/* ── STEP 3: Paiement ── */}
+        {/* ── STEP 3: Revenus ── */}
         {step === 3 && (
-          <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>💳 Coordonnées bancaires</p>
-            <div style={{
-              padding: '10px 14px', background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.2)', borderRadius: 6, marginBottom: 4,
-            }}>
-              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(200,169,110,0.8)', letterSpacing: '0.08em', margin: 0 }}>
-                Ces informations sont nécessaires pour les reversements de billetterie. Elles sont stockées de manière sécurisée et ne sont jamais visibles par d'autres utilisateurs.
+          <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <p style={S.section}>💳 Tes revenus</p>
+
+            {/* Explication principale */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ fontFamily: CG, fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                Comment tu seras payé
+              </p>
+              <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.8, margin: 0 }}>
+                LIVEINBLACK collecte les paiements de tes billets et te reverse ta part directement sur ton compte bancaire.
+                Les reversements sont gérés de façon entièrement automatique — tu n'as rien à faire manuellement.
               </p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <Field label="Titulaire du compte" required>
-                <input style={{ ...S.input, borderColor: errors.titulaire ? '#e05aaa' : undefined }} value={f.titulaire} onChange={e => update('titulaire', e.target.value)} placeholder="SAS EVENTS FRANCE" />
-                {errors.titulaire && <p style={S.error}>{errors.titulaire}</p>}
-              </Field>
-              <Field label="IBAN / RIB" required>
-                <input style={{ ...S.input, borderColor: errors.iban ? '#e05aaa' : undefined }} value={f.iban} onChange={e => update('iban', e.target.value.toUpperCase())} placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" />
-                {errors.iban && <p style={S.error}>{errors.iban}</p>}
-              </Field>
-              <Field label="Nom du responsable financier / gérant">
-                <input style={S.input} value={f.responsableFinancier} onChange={e => update('responsableFinancier', e.target.value)} placeholder="Jean Dupont" />
-              </Field>
-            </div>
-            <div style={{ marginTop: 8, padding: '12px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
-              <p style={{ fontFamily: DM, fontSize: 8, color: 'rgba(78,232,200,0.6)', letterSpacing: '0.1em', margin: '0 0 4px', textTransform: 'uppercase' }}>Stripe Connect</p>
-              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: 0, lineHeight: 1.6 }}>
-                Une fois ton compte validé, tu seras guidé pour connecter ton compte bancaire via Stripe Connect pour recevoir les reversements automatiquement.
+
+            {/* 3 étapes visuelles */}
+            {[
+              {
+                num: '01',
+                title: 'Dossier approuvé',
+                desc: 'Notre équipe valide ton dossier (sous 48h). Tu reçois une notification par email.',
+                color: GOLD,
+              },
+              {
+                num: '02',
+                title: 'Connexion Stripe',
+                desc: 'Tu reçois un lien pour connecter ton compte bancaire via Stripe — la référence mondiale du paiement en ligne. Stripe vérifie ton identité et tes coordonnées bancaires de façon sécurisée (nous ne voyons jamais ton IBAN).',
+                color: '#4ee8c8',
+              },
+              {
+                num: '03',
+                title: 'Reversements automatiques',
+                desc: 'À chaque vente de billet, ta part (après commission LIVEINBLACK) est automatiquement virée sur ton compte dans les 2–7 jours ouvrés.',
+                color: '#8444ff',
+              },
+            ].map(s => (
+              <div key={s.num} style={{ display: 'flex', gap: 14, padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
+                <div style={{ fontFamily: DM, fontSize: 20, fontWeight: 700, color: s.color, opacity: 0.5, flexShrink: 0, lineHeight: 1, paddingTop: 2 }}>
+                  {s.num}
+                </div>
+                <div>
+                  <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.85)', margin: '0 0 5px', letterSpacing: '0.05em' }}>{s.title}</p>
+                  <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.32)', margin: 0, lineHeight: 1.7 }}>{s.desc}</p>
+                </div>
+              </div>
+            ))}
+
+            {/* Note sécurité */}
+            <div style={{ padding: '10px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
+              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.55)', letterSpacing: '0.06em', margin: 0, lineHeight: 1.7 }}>
+                🔒 Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK. Stripe est certifié PCI-DSS niveau 1 (la norme de sécurité bancaire la plus élevée).
               </p>
             </div>
+
+            <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.18)', margin: 0, letterSpacing: '0.05em' }}>
+              Aucune information bancaire n'est demandée ici — tu configureras tout après approbation.
+            </p>
           </div>
         )}
 
