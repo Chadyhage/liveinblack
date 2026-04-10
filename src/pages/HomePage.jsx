@@ -61,7 +61,7 @@ function HeroGooeyText({ user }) {
         if (h >= 18 && h < 22) return 'Bonsoir'
         return 'Bonne nuit'
       })()
-      const txts = parts.length > 1 ? [greeting, parts[0], parts.slice(1).join(' ')] : [greeting, parts[0]]
+      const txts = [greeting, user.name.trim()]
       const clrs = txts.map((_, i) => i === 0 ? VIOLET : WHITE)
       return { texts: txts, colors: clrs }
     }
