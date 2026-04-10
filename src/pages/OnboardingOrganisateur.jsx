@@ -424,12 +424,16 @@ export default function OnboardingOrganisateur() {
                   </div>
                 )}
               </div>
-              <Field label="Capacité d'accueil déclarée">
-                <input type="number" style={S.input} value={f.capacite} onChange={e => update('capacite', e.target.value)} placeholder="ex: 500" min={0} />
-              </Field>
-              <Field label="Horaires habituels">
-                <input style={S.input} value={f.horaires} onChange={e => update('horaires', e.target.value)} placeholder="ex: Ven-Sam 23h-07h" />
-              </Field>
+              {!f.itinerant && (
+                <>
+                  <Field label="Capacité d'accueil déclarée">
+                    <input type="number" style={S.input} value={f.capacite} onChange={e => update('capacite', e.target.value)} placeholder="ex: 500" min={0} />
+                  </Field>
+                  <Field label="Horaires habituels">
+                    <input style={S.input} value={f.horaires} onChange={e => update('horaires', e.target.value)} placeholder="ex: Ven-Sam 23h-07h" />
+                  </Field>
+                </>
+              )}
               <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <Toggle value={f.alcool} onChange={v => update('alcool', v)} label="Alcool vendu sur place" />
                 <Toggle value={f.evenementsPublics} onChange={v => update('evenementsPublics', v)} label="Événements publics" />
