@@ -404,6 +404,7 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
     pinned: false,
     ...(extra.replyTo ? { replyTo: extra.replyTo } : {}),
     ...(extra.forwardedFrom ? { forwardedFrom: extra.forwardedFrom } : {}),
+    ...(extra.viewOnce ? { viewOnce: true, viewedBy: {} } : {}),
   }
   const updatedMsgs = [...msgs, msg]
   saveMessages(convId, updatedMsgs)
@@ -480,6 +481,15 @@ export function markMessagesRead(convId, userId) {
       : m
   )
   saveMessages(convId, updated)
+}
+
+export function markPhotoViewed(convId, msgId, userId) {
+  const msgs = getMessages(convId)
+  const updated = msgs.map(m =>
+    m.id === msgId ? { ...m, viewedBy: { ...(m.viewedBy || {}), [userId]: new Date().toISOString() } } : m
+  )
+  saveMessages(convId, updated)
+  syncMessagesToFirestore(convId, updated)
 }
 
 export function markMessagesDelivered(convId, userId) {
