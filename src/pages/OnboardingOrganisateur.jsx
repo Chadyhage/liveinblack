@@ -23,7 +23,7 @@ const S = {
   error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em' },
 }
 
-const TYPES_ETAB = ['Boîte / Club','Bar','Restaurant','Salle de spectacle','Salle polyvalente','Hôtel','Autre']
+const TYPES_ETAB = ['Boîte / Club','Bar']
 
 const STEPS = [
   { label: 'Entreprise',  icon: '🏢' },
