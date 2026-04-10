@@ -10,7 +10,7 @@ import {
   getConversations, getConversationById, saveConversation,
   createDirectConversation, createGroup, leaveGroup, deleteGroup, updateGroupInfo,
   getMessages, sendMessage, reactToMessage, deleteMessageForSelf, deleteMessageForAll,
-  markMessagesRead, getUnreadCount, voteOnPoll, pinMessage, unpinMessage,
+  markMessagesRead, markMessagesDelivered, getUnreadCount, voteOnPoll, pinMessage, unpinMessage,
   setTyping, getTypingUsers, setOnline, isOnline,
   seedDemoData, DEMO_USERS,
   getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking,
@@ -292,9 +292,14 @@ function EventPollCard({ msg, myId, convId, onVote }) {
 // ─── Read receipts ──────────────────────────────────────────────────────────────
 function ReadReceipt({ msg, myId, conv }) {
   if (!conv || msg.senderId !== myId || msg.deletedForAll) return null
-  const readers = Object.keys(msg.readBy || {}).filter(uid => uid !== myId)
-  if (readers.length === 0) return <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>✓</span>
-  return <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.teal }}>✓✓</span>
+  const others = conv.type === 'direct'
+    ? (conv.participants || []).filter(id => id !== myId)
+    : (conv.members || []).map(m => m.userId).filter(id => id !== myId)
+  const readByOthers  = others.some(id => msg.readBy?.[id])
+  const delivToOthers = others.some(id => msg.deliveredTo?.[id])
+  if (readByOthers)  return <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.teal }}>✓✓</span>
+  if (delivToOthers) return <span style={{ fontFamily: T.dmMono, fontSize: 9, color: 'rgba(255,255,255,0.45)' }}>✓✓</span>
+  return <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>✓</span>
 }
 
 // ─── Typing indicator ──────────────────────────────────────────────────────────
@@ -345,6 +350,7 @@ export default function MessagingPage() {
   const [songInput, setSongInput]                 = useState({ title: '', artist: '' })
   const [confirmDialog, setConfirmDialog]         = useState(null)
   const [toast, setToast]                         = useState(null)
+  const [photoViewer, setPhotoViewer]             = useState(null) // null | { src }
 
   // ── New DM search ──
   const [userSearch, setUserSearch]         = useState('')
@@ -544,6 +550,7 @@ export default function MessagingPage() {
         allMsgs[activeConvId] = merged
         localStorage.setItem('lib_messages', JSON.stringify(allMsgs))
         setMessages([...merged])
+        markMessagesDelivered(activeConvId, myId)
       })
     }).catch(() => {})
     return () => unsub()
@@ -577,10 +584,12 @@ export default function MessagingPage() {
             localStorage.setItem('lib_messages', JSON.stringify(all))
             setMessages([...data.items])
           }
+          markMessagesDelivered(convId, myId)
           markMessagesRead(convId, myId)
-        }).catch(() => { markMessagesRead(convId, myId) })
-      }).catch(() => { markMessagesRead(convId, myId) })
+        }).catch(() => { markMessagesDelivered(convId, myId); markMessagesRead(convId, myId) })
+      }).catch(() => { markMessagesDelivered(convId, myId); markMessagesRead(convId, myId) })
     } else {
+      markMessagesDelivered(convId, myId)
       markMessagesRead(convId, myId)
     }
     setGroupBookings(getGroupBookings())
@@ -627,37 +636,58 @@ export default function MessagingPage() {
     typingTimeoutRef.current = setTimeout(() => setTyping(activeConvId, myId, false), 2500)
   }
 
-  // ── Send photo (compressed to stay under Firestore 1MB limit) ──
-  function handlePhotoSelect(e) {
+  // ── Compress image to Blob ──
+  function compressImage(file, maxSize = 900, quality = 0.78) {
+    return new Promise(resolve => {
+      const reader = new FileReader()
+      reader.onload = ev => {
+        const img = new Image()
+        img.onload = () => {
+          let { width, height } = img
+          if (width > maxSize || height > maxSize) {
+            const r = Math.min(maxSize / width, maxSize / height)
+            width = Math.round(width * r); height = Math.round(height * r)
+          }
+          const canvas = document.createElement('canvas')
+          canvas.width = width; canvas.height = height
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+          canvas.toBlob(blob => resolve(blob || file), 'image/jpeg', quality)
+        }
+        img.src = ev.target.result
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  // ── Send photo — uploads to Firebase Storage, falls back to base64 ──
+  async function handlePhotoSelect(e) {
     const file = e.target.files?.[0]
     if (!file || !activeConvId) return
     e.target.value = ''
     setShowAttachMenu(false)
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const img = new Image()
-      img.onload = () => {
-        const MAX = 900
-        let { width, height } = img
-        if (width > MAX || height > MAX) {
-          const ratio = Math.min(MAX / width, MAX / height)
-          width = Math.round(width * ratio)
-          height = Math.round(height * ratio)
-        }
-        const canvas = document.createElement('canvas')
-        canvas.width = width
-        canvas.height = height
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
-        const compressed = canvas.toDataURL('image/jpeg', 0.75)
-        const extra = replyTo ? { replyTo } : {}
-        sendMessage(activeConvId, myId, myName, 'image', compressed, extra)
-        setReplyTo(null)
-        setMessages(getMessages(activeConvId))
-        setConversations(getConversations(myId))
+
+    const compressed = await compressImage(file)
+    const extra = replyTo ? { replyTo } : {}
+
+    try {
+      const { storage } = await import('../firebase')
+      const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+      const path = `messages/${activeConvId}/${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`
+      const snap = await uploadBytes(ref(storage, path), compressed)
+      const url = await getDownloadURL(snap.ref)
+      sendMessage(activeConvId, myId, myName, 'image', url, extra)
+    } catch {
+      // Fallback: send compressed base64 (local only — won't sync cross-device)
+      const reader = new FileReader()
+      reader.onload = ev => {
+        sendMessage(activeConvId, myId, myName, 'image', ev.target.result, extra)
       }
-      img.src = ev.target.result
+      reader.readAsDataURL(compressed)
     }
-    reader.readAsDataURL(file)
+
+    setReplyTo(null)
+    setMessages(getMessages(activeConvId))
+    setConversations(getConversations(myId))
   }
 
   // ── Voice recording core ──
@@ -1201,7 +1231,9 @@ export default function MessagingPage() {
                 ) : msg.type === 'text' ? (
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.88)', margin: 0, wordBreak: 'break-word', lineHeight: 1.5 }}>{msg.content}</p>
                 ) : msg.type === 'image' ? (
-                  <img src={msg.content} alt="photo" style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, display: 'block' }} />
+                  <img src={msg.content} alt="photo"
+                    onClick={() => msg.content && msg.content !== '[image]' && setPhotoViewer({ src: msg.content })}
+                    style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, display: 'block', cursor: msg.content && msg.content !== '[image]' ? 'zoom-in' : 'default' }} />
                 ) : msg.type === 'voice' ? (
                   <VoiceBubble content={msg.content} isMe={isMe} />
                 ) : msg.type === 'event_poll' ? (
@@ -2111,6 +2143,22 @@ export default function MessagingPage() {
           }
         `}</style>
       </div>
+
+      {/* ── Photo viewer (fullscreen) ── */}
+      {photoViewer && (
+        <div onClick={() => setPhotoViewer(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src={photoViewer.src} alt="photo"
+            style={{ maxWidth: '95vw', maxHeight: '90vh', borderRadius: 8, objectFit: 'contain' }} />
+          <button onClick={() => setPhotoViewer(null)}
+            style={{ position: 'absolute', top: 16, right: 16, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 36, height: 36, color: '#fff', fontSize: 20, cursor: 'pointer', lineHeight: '36px', textAlign: 'center' }}>×</button>
+          <a href={photoViewer.src} download="photo.jpg"
+            onClick={e => e.stopPropagation()}
+            style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', letterSpacing: '0.15em' }}>
+            ↓ TÉLÉCHARGER
+          </a>
+        </div>
+      )}
     </Layout>
   )
 }

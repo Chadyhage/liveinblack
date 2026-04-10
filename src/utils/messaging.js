@@ -398,6 +398,7 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
     timestamp: new Date().toISOString(),
     reactions: {},       // { emoji: [userId, ...] }
     readBy: {},          // { userId: timestamp }
+    deliveredTo: {},     // { userId: timestamp }
     deletedForAll: false,
     deletedForSelf: [],  // array of userIds who deleted for themselves
     pinned: false,
@@ -479,6 +480,19 @@ export function markMessagesRead(convId, userId) {
       : m
   )
   saveMessages(convId, updated)
+}
+
+export function markMessagesDelivered(convId, userId) {
+  const msgs = getMessages(convId)
+  let changed = false
+  const updated = msgs.map(m => {
+    if (m.senderId === userId || m.deletedForAll || m.deliveredTo?.[userId]) return m
+    changed = true
+    return { ...m, deliveredTo: { ...(m.deliveredTo || {}), [userId]: new Date().toISOString() } }
+  })
+  if (!changed) return
+  saveMessages(convId, updated)
+  syncMessagesToFirestore(convId, updated)
 }
 
 export function getUnreadCount(convId, userId) {
