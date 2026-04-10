@@ -369,17 +369,20 @@ function SwipeableMessage({ onReply, children }) {
   )
 }
 
-// ─── Image bubble (URL / Firestore photoId / view-once) ───────────────────────
-function ImageBubble({ msg, myId, convId, onViewOnce, setPhotoViewer }) {
+// ─── Image bubble (URL / Firestore photoId / 24h expiration) ─────────────────
+function ImageBubble({ msg, myId, setPhotoViewer }) {
   const [imgSrc, setImgSrc] = useState(null)
   const [loading, setLoading] = useState(false)
   const content = msg.content
   const isMe = msg.senderId === myId
-  const isViewOnce = !!msg.viewOnce
-  const hasViewed = isViewOnce && !!msg.viewedBy?.[myId]
   const isUrl = content && (content.startsWith('http') || content.startsWith('data:'))
   const isPhotoId = content && content.startsWith('ph_')
   const isMissing = !content || content === '[image]'
+
+  // 24h expiration
+  const expiresAt = new Date(msg.timestamp).getTime() + 24 * 3600 * 1000
+  const isExpired = Date.now() > expiresAt
+  const hoursLeft = Math.ceil((expiresAt - Date.now()) / 3600000)
 
   useEffect(() => {
     if (isUrl) { setImgSrc(content); return }
@@ -401,48 +404,38 @@ function ImageBubble({ msg, myId, convId, onViewOnce, setPhotoViewer }) {
 
   if (isMissing) return <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim }}>📷 Photo</span>
 
-  // View-once — sender sees confirmation
-  if (isViewOnce && isMe) {
-    return (
-      <div style={{ width: 160, height: 90, borderRadius: 8, background: 'rgba(78,232,200,0.07)', border: '1px solid rgba(78,232,200,0.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-        <span style={{ fontSize: 18 }}>👁</span>
-        <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.teal, letterSpacing: '0.06em' }}>VUE UNIQUE</span>
-      </div>
-    )
-  }
-  // View-once — already viewed
-  if (isViewOnce && hasViewed) {
-    return (
-      <div style={{ width: 160, height: 90, borderRadius: 8, background: 'rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-        <span style={{ fontSize: 18 }}>🔥</span>
-        <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>Photo expirée</span>
-      </div>
-    )
-  }
-  // View-once — tap to view (recipient, not yet viewed)
-  if (isViewOnce && !isMe && !hasViewed) {
-    return (
-      <button onClick={() => imgSrc && onViewOnce(msg, imgSrc)}
-        style={{ width: 160, height: 90, borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', cursor: imgSrc ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, position: 'relative', overflow: 'hidden' }}>
-        {imgSrc && <img src={imgSrc} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, filter: 'blur(14px)', opacity: 0.35 }} />}
-        <span style={{ fontSize: 20, position: 'relative' }}>👁</span>
-        <span style={{ fontFamily: T.dmMono, fontSize: 9, color: '#fff', position: 'relative', letterSpacing: '0.05em' }}>
-          {loading ? 'Chargement…' : 'Appuyer pour voir'}
-        </span>
-      </button>
-    )
-  }
-  // Loading
-  if (loading && !imgSrc) {
-    return <div style={{ width: 160, height: 90, borderRadius: 8, background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  if (isExpired) return (
+    <div style={{ width: 180, height: 90, borderRadius: 8, background: 'rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+      <span style={{ fontSize: 18 }}>⏱</span>
+      <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>Photo expirée</span>
+    </div>
+  )
+
+  if (loading && !imgSrc) return (
+    <div style={{ width: 180, height: 100, borderRadius: 8, background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>Chargement…</span>
     </div>
-  }
-  // Normal image
+  )
+
   return (
-    <img src={imgSrc} alt="photo"
-      onClick={() => imgSrc && setPhotoViewer({ src: imgSrc })}
-      style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, display: 'block', cursor: imgSrc ? 'zoom-in' : 'default' }} />
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <img src={imgSrc} alt="photo"
+        onClick={() => imgSrc && setPhotoViewer({ src: imgSrc })}
+        style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, display: 'block', cursor: imgSrc ? 'zoom-in' : 'default' }} />
+      {/* Expiry badge */}
+      {hoursLeft <= 23 && (
+        <span style={{ position: 'absolute', top: 5, left: 5, background: 'rgba(0,0,0,0.55)', borderRadius: 4, padding: '2px 5px', fontFamily: T.dmMono, fontSize: 8, color: 'rgba(255,255,255,0.7)' }}>
+          ⏱ {hoursLeft}h
+        </span>
+      )}
+      {/* Download button — recipient only */}
+      {!isMe && imgSrc && (
+        <a href={imgSrc} download="photo.jpg" onClick={e => e.stopPropagation()}
+          style={{ position: 'absolute', bottom: 5, right: 5, background: 'rgba(0,0,0,0.55)', borderRadius: 6, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', color: '#fff', fontSize: 14 }}>
+          ↓
+        </a>
+      )}
+    </div>
   )
 }
 
@@ -794,23 +787,30 @@ export default function MessagingPage() {
   }
 
   // ── Select photo → show preview modal first ──
-  async function handlePhotoSelect(e) {
+  function handlePhotoSelect(e) {
     const file = e.target.files?.[0]
     if (!file || !activeConvId) return
-    e.target.value = ''
-    setShowAttachMenu(false)
-    const blob = await compressImage(file)
+    // Read original immediately for preview (no async chain that can silently fail on mobile)
     const reader = new FileReader()
-    reader.onload = ev => setPhotoPreview({ dataUrl: ev.target.result, blob, viewOnce: false })
-    reader.readAsDataURL(blob)
+    reader.onload = ev => {
+      setPhotoPreview({ dataUrl: ev.target.result, file })
+      setShowAttachMenu(false)
+    }
+    reader.onerror = () => setShowAttachMenu(false)
+    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   // ── Send photo from preview (Storage → conv_photos Firestore doc fallback) ──
   async function handleSendPhoto() {
     if (!photoPreview) return
-    const { dataUrl, blob, viewOnce } = photoPreview
+    const { dataUrl, file } = photoPreview
     setPhotoPreview(null)
-    const extra = { ...(replyTo ? { replyTo } : {}), ...(viewOnce ? { viewOnce: true } : {}) }
+    const extra = replyTo ? { replyTo } : {}
+
+    // Compress before upload
+    let blob = file
+    try { blob = await compressImage(file) } catch {}
 
     // Try Firebase Storage first
     let sent = false
@@ -831,7 +831,7 @@ export default function MessagingPage() {
       cache[photoId] = { data: dataUrl }
       localStorage.setItem('lib_photo_cache', JSON.stringify(cache))
       import('../utils/firestore-sync').then(({ syncDocOverwrite }) => {
-        syncDocOverwrite(`conv_photos/${photoId}`, { data: dataUrl, convId: activeConvId, senderId: myId, viewOnce, timestamp: new Date().toISOString() })
+        syncDocOverwrite(`conv_photos/${photoId}`, { data: dataUrl, convId: activeConvId, senderId: myId, timestamp: new Date().toISOString() })
       }).catch(() => {})
       sendMessage(activeConvId, myId, myName, 'image', photoId, extra)
     }
@@ -839,13 +839,6 @@ export default function MessagingPage() {
     setReplyTo(null)
     setMessages(getMessages(activeConvId))
     setConversations(getConversations(myId))
-  }
-
-  // ── View once photo ──
-  function handleViewOnce(msg, imgSrc) {
-    setPhotoViewer({ src: imgSrc, viewOnce: true })
-    markPhotoViewed(activeConvId, msg.id, myId)
-    setTimeout(() => setMessages(getMessages(activeConvId)), 100)
   }
 
   // ── Voice recording core ──
@@ -1390,7 +1383,7 @@ export default function MessagingPage() {
                 ) : msg.type === 'text' ? (
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.88)', margin: 0, wordBreak: 'break-word', lineHeight: 1.5 }}>{msg.content}</p>
                 ) : msg.type === 'image' ? (
-                  <ImageBubble msg={msg} myId={myId} convId={activeConvId} onViewOnce={handleViewOnce} setPhotoViewer={setPhotoViewer} />
+                  <ImageBubble msg={msg} myId={myId} setPhotoViewer={setPhotoViewer} />
                 ) : msg.type === 'voice' ? (
                   <VoiceBubble content={msg.content} isMe={isMe} />
                 ) : msg.type === 'event_poll' ? (
@@ -2303,15 +2296,10 @@ export default function MessagingPage() {
 
       {/* ── Photo preview before send ── */}
       {photoPreview && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(0,0,0,0.94)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(0,0,0,0.94)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
           <img src={photoPreview.dataUrl} alt="preview"
-            style={{ maxWidth: '88vw', maxHeight: '60vh', borderRadius: 10, objectFit: 'contain' }} />
-          {/* View once toggle */}
-          <button onClick={() => setPhotoPreview(p => ({ ...p, viewOnce: !p.viewOnce }))}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, background: photoPreview.viewOnce ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.07)', border: `1px solid ${photoPreview.viewOnce ? 'rgba(78,232,200,0.4)' : 'rgba(255,255,255,0.15)'}`, borderRadius: 20, padding: '7px 16px', cursor: 'pointer', color: photoPreview.viewOnce ? T.teal : 'rgba(255,255,255,0.6)', fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.06em', transition: 'all 0.2s' }}>
-            <span style={{ fontSize: 14 }}>👁</span>
-            {photoPreview.viewOnce ? 'VUE UNIQUE ACTIVÉE' : 'VUE UNIQUE'}
-          </button>
+            style={{ maxWidth: '88vw', maxHeight: '65vh', borderRadius: 10, objectFit: 'contain' }} />
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em' }}>⏱ EXPIRE DANS 24H — LE DESTINATAIRE PEUT LA TÉLÉCHARGER</span>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={() => setPhotoPreview(null)}
               style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', fontFamily: "'DM Mono', monospace", fontSize: 11 }}>
