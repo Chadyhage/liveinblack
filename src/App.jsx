@@ -54,6 +54,28 @@ function usePersistedUser() {
     import('./utils/firestore-sync').then(({ syncOnLogin }) => {
       syncOnLogin(uid).catch(() => {})
     }).catch(() => {})
+
+    // Register service worker + FCM token for background push notifications
+    if ('serviceWorker' in navigator && typeof Notification !== 'undefined') {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js').then(async reg => {
+        try {
+          if (Notification.permission !== 'granted') return
+          const { getMessaging, getToken } = await import('firebase/messaging')
+          const { app } = await import('./firebase')
+          const messaging = getMessaging(app)
+          // VAPID key — à remplacer par ta vraie clé VAPID Firebase Cloud Messaging
+          const token = await getToken(messaging, {
+            vapidKey: 'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM1x6CrHOg3FfvbOgbNHwX0HFmIxAT6Gz0LI0E3sEX9RVjIHaH',
+            serviceWorkerRegistration: reg,
+          })
+          if (token) {
+            import('./utils/firestore-sync').then(({ syncDoc }) => {
+              syncDoc(`users/${uid}`, { fcmToken: token })
+            }).catch(() => {})
+          }
+        } catch {} // FCM setup fails silently if not configured
+      }).catch(() => {})
+    }
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-sync when tab regains focus — picks up changes made on other devices

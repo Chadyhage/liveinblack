@@ -305,6 +305,19 @@ export async function syncOnLogin(uid) {
       }
     }
 
+    // ── 17. Last-read timestamps ──
+    const readStatus = await loadDoc(`user_read_status/${uid}`)
+    if (readStatus) {
+      try {
+        const current = JSON.parse(localStorage.getItem('lib_last_read') || '{}')
+        // Take the LATER of local vs Firestore (don't un-read things)
+        Object.entries(readStatus).forEach(([cid, ts]) => {
+          if (!current[cid] || ts > current[cid]) current[cid] = ts
+        })
+        localStorage.setItem('lib_last_read', JSON.stringify(current))
+      } catch {}
+    }
+
     console.log('[sync] Full sync complete')
     // Notify UI components so they re-read from localStorage
     window.dispatchEvent(new CustomEvent('lib:sync-complete', { detail: { uid } }))

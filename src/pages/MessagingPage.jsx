@@ -10,7 +10,8 @@ import {
   getConversations, getConversationById, saveConversation,
   createDirectConversation, createGroup, leaveGroup, deleteGroup, updateGroupInfo,
   getMessages, sendMessage, reactToMessage, deleteMessageForSelf, deleteMessageForAll,
-  markMessagesRead, markMessagesDelivered, markPhotoViewed, getUnreadCount, voteOnPoll, pinMessage, unpinMessage,
+  markMessagesRead, markMessagesDelivered, markPhotoViewed, setLastRead, getLastRead,
+  getUnreadCount, voteOnPoll, pinMessage, unpinMessage,
   setTyping, getTypingUsers, setOnline, isOnline,
   seedDemoData, DEMO_USERS,
   getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking,
@@ -534,9 +535,11 @@ export default function MessagingPage() {
   const typingTimeoutRef = useRef(null)
 
   // ── Refs ──
-  const messagesEndRef  = useRef(null)
-  const chatScrollRef   = useRef(null)
-  const photoInputRef   = useRef(null)
+  const messagesEndRef      = useRef(null)
+  const chatScrollRef       = useRef(null)
+  const photoInputRef       = useRef(null)
+  const activeConvIdRef     = useRef(null)
+  const lastConvUpdatedRef  = useRef({}) // { [convId]: updatedAt ISO } — détecte les nouveaux messages
   const storyImgRef     = useRef(null)
   const groupAvatarRef  = useRef(null)
 
@@ -567,6 +570,20 @@ export default function MessagingPage() {
     } catch {}
   }, [])
 
+  // ── Mirror activeConvId into ref (safe to use inside closures) ──
+  useEffect(() => { activeConvIdRef.current = activeConvId }, [activeConvId])
+
+  // ── Request push notification permission once ──
+  useEffect(() => {
+    if (!user) return
+    if (typeof Notification === 'undefined') return
+    if (Notification.permission === 'default') {
+      // Wait a moment so it doesn't feel intrusive
+      const t = setTimeout(() => Notification.requestPermission().catch(() => {}), 3500)
+      return () => clearTimeout(t)
+    }
+  }, [!!user])
+
   // ── Init ──
   useEffect(() => {
     if (!user) return
@@ -578,8 +595,6 @@ export default function MessagingPage() {
     refresh()
     const initialReqs = getFriendRequests(myId)
     setPrevRequestCount(initialReqs.length)
-    const initialConvs = getConversations(myId)
-    prevUnreadRef.current = initialConvs.reduce((s, c) => s + (c.unread || 0), 0)
     const interval = setInterval(() => {
       setOnline(myId)
       const latestConvs = getConversations(myId)
@@ -587,23 +602,18 @@ export default function MessagingPage() {
       const newReqs = getFriendRequests(myId)
       setRequests(newReqs)
       setFriends(getFriends(myId))
-      // Detect new friend request → play sound + toast
       if (newReqs.length > prevRequestCount) {
         notifSound()
         showToast(`📩 Nouvelle demande de contact de ${newReqs[newReqs.length - 1]?.fromName || 'quelqu\'un'}`)
       }
       setPrevRequestCount(newReqs.length)
-      // Detect new unread messages (from others) → play sound
-      const totalUnread = latestConvs.reduce((s, c) => s + (c.unread || 0), 0)
-      if (totalUnread > prevUnreadRef.current) notifSound()
-      prevUnreadRef.current = totalUnread
-      if (activeConvId) {
-        setMessages(getMessages(activeConvId))
-        setTypingUsersState(getTypingUsers(activeConvId, myId))
+      if (activeConvIdRef.current) {
+        setMessages(getMessages(activeConvIdRef.current))
+        setTypingUsersState(getTypingUsers(activeConvIdRef.current, myId))
       }
     }, 2000)
     return () => clearInterval(interval)
-  }, [myId, activeConvId, prevRequestCount])
+  }, [myId, prevRequestCount])
 
   function refresh() {
     setConversations(getConversations(myId))
@@ -635,10 +645,52 @@ export default function MessagingPage() {
     }) => {
       const safeArr = key => { try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] } }
       const safeObj = key => { try { return JSON.parse(localStorage.getItem(key) || '{}') } catch { return {} } }
+      // ── Helper: browser notification ──
+      function triggerPushNotif(title, body) {
+        try {
+          if (typeof Notification === 'undefined') return
+          if (Notification.permission !== 'granted') return
+          const n = new Notification(title, {
+            body,
+            icon: '/logo192.png',
+            badge: '/logo192.png',
+            tag: 'liveinblack-msg', // regroupe les notifs
+          })
+          n.onclick = () => { window.focus(); n.close() }
+        } catch {}
+      }
+
       const mergeConvs = convs => {
         const local = safeArr('lib_conversations')
         const merged = mergeById(local, convs)
         localStorage.setItem('lib_conversations', JSON.stringify(merged))
+
+        // ── Detect new messages → notification ──
+        convs.forEach(incoming => {
+          const prev = lastConvUpdatedRef.current[incoming.id]
+          const isNewer = !prev || incoming.updatedAt > prev
+          const notMyMessage = incoming.lastSenderId && incoming.lastSenderId !== myId
+          const isActive = incoming.id === activeConvIdRef.current && document.visibilityState === 'visible'
+          if (isNewer && incoming.lastMessage && !isActive) {
+            const lastRead = getLastRead(incoming.id)
+            const hasUnread = !lastRead || incoming.updatedAt > lastRead
+            if (hasUnread) {
+              // Sender name
+              const senderName = incoming.type === 'group'
+                ? incoming.name || 'Groupe'
+                : incoming.names
+                  ? (Object.entries(incoming.names).find(([id]) => id !== myId)?.[1] || 'Message')
+                  : 'Message'
+              triggerPushNotif(senderName, incoming.lastMessage)
+              notifSound()
+            }
+          }
+          // Always update our "last seen" tracker
+          if (!prev || incoming.updatedAt > prev) {
+            lastConvUpdatedRef.current[incoming.id] = incoming.updatedAt
+          }
+        })
+
         setConversations(merged.filter(c =>
           c.type === 'direct' ? c.participants?.includes(myId) : c.members?.some(m => m.userId === myId)
         ).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
@@ -713,12 +765,14 @@ export default function MessagingPage() {
           }
           markMessagesDelivered(convId, myId)
           markMessagesRead(convId, myId)
-        }).catch(() => { markMessagesDelivered(convId, myId); markMessagesRead(convId, myId) })
-      }).catch(() => { markMessagesDelivered(convId, myId); markMessagesRead(convId, myId) })
+          setLastRead(convId, myId)
+        }).catch(() => { markMessagesDelivered(convId, myId); markMessagesRead(convId, myId); setLastRead(convId, myId) })
+      }).catch(() => { markMessagesDelivered(convId, myId); markMessagesRead(convId, myId); setLastRead(convId, myId) })
     } else {
       markMessagesDelivered(convId, myId)
       markMessagesRead(convId, myId)
     }
+    setLastRead(convId, myId)
     setGroupBookings(getGroupBookings())
     const conv = getConversationById(convId)
     if (conv?.pinnedMessageId) {

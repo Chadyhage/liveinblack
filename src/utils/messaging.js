@@ -413,6 +413,7 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
     const idx = all.findIndex(c => c.id === convId)
     if (idx >= 0) {
       all[idx].updatedAt = msg.timestamp
+      all[idx].lastSenderId = senderId
       all[idx].lastMessage = type === 'text' ? content
         : type === 'image' ? '📷 Photo'
         : type === 'voice' ? '🎤 Vocal'
@@ -483,6 +484,23 @@ export function markMessagesRead(convId, userId) {
   saveMessages(convId, updated)
 }
 
+// ── Last-read timestamp per conversation (persists across Firestore merges) ──
+export function setLastRead(convId, userId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_last_read') || '{}')
+    all[convId] = new Date().toISOString()
+    localStorage.setItem('lib_last_read', JSON.stringify(all))
+    // Sync cross-device
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`user_read_status/${userId}`, { [convId]: all[convId] })
+    }).catch(() => {})
+  } catch {}
+}
+
+export function getLastRead(convId) {
+  try { return JSON.parse(localStorage.getItem('lib_last_read') || '{}')[convId] || null } catch { return null }
+}
+
 export function markPhotoViewed(convId, msgId, userId) {
   const msgs = getMessages(convId)
   const updated = msgs.map(m =>
@@ -506,13 +524,16 @@ export function markMessagesDelivered(convId, userId) {
 }
 
 export function getUnreadCount(convId, userId) {
-  const msgs = getMessages(convId)
-  return msgs.filter(m =>
-    m.senderId !== userId &&
-    !m.deletedForAll &&
-    !(m.deletedForSelf || []).includes(userId) &&
-    !(m.readBy?.[userId])
-  ).length
+  try {
+    const msgs = getMessages(convId)
+    const lastRead = getLastRead(convId)
+    return msgs.filter(m =>
+      m.senderId !== userId &&
+      !m.deletedForAll &&
+      !(m.deletedForSelf || []).includes(userId) &&
+      (!lastRead || new Date(m.timestamp) > new Date(lastRead))
+    ).length
+  } catch { return 0 }
 }
 
 export function voteOnPoll(convId, msgId, optionId, userId) {
