@@ -75,7 +75,7 @@ export default function OnboardingOrganisateur() {
     responsableNom: '', responsablePrenom: '', responsableFonction: '',
     responsableEmail: '', responsableTelephone: '',
     // Step 2 — Activité
-    typeEtablissement: '', ville: '', pays: 'France', capacite: '',
+    typeEtablissement: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
     horaires: '', alcool: false, evenementsPublics: false, evenementsPrives: false,
     description: '',
     // Step 3 — Paiement
@@ -133,8 +133,8 @@ export default function OnboardingOrganisateur() {
       if (!f.responsableEmail.trim()) errs.responsableEmail = 'Requis'
     }
     if (s === 2) {
-      if (!f.ville.trim()) errs.ville = 'Requis'
       if (!f.typeEtablissement) errs.typeEtablissement = 'Requis'
+      if (!f.itinerant && !f.ville.trim()) errs.ville = 'Requis (ou cocher "Itinérant")'
     }
     if (s === 3) {
       if (!f.titulaire.trim()) errs.titulaire = 'Requis'
@@ -368,13 +368,62 @@ export default function OnboardingOrganisateur() {
                   {errors.typeEtablissement && <p style={S.error}>{errors.typeEtablissement}</p>}
                 </Field>
               </div>
-              <Field label="Ville" required>
-                <input style={{ ...S.input, borderColor: errors.ville ? '#e05aaa' : undefined }} value={f.ville} onChange={e => update('ville', e.target.value)} placeholder="Paris" />
-                {errors.ville && <p style={S.error}>{errors.ville}</p>}
-              </Field>
-              <Field label="Pays">
-                <input style={S.input} value={f.pays} onChange={e => update('pays', e.target.value)} placeholder="France" />
-              </Field>
+              {/* Ville / Pays — ou itinérant */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>
+                  Localisation principale{!f.itinerant && <span style={{ color: '#e05aaa' }}> *</span>}
+                </label>
+
+                {/* Toggle itinérant */}
+                <div
+                  onClick={() => update('itinerant', !f.itinerant)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <div style={{
+                    width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                    border: `1.5px solid ${f.itinerant ? '#4ee8c8' : 'rgba(255,255,255,0.20)'}`,
+                    background: f.itinerant ? 'rgba(78,232,200,0.15)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}>
+                    {f.itinerant && (
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <polyline points="2,6 5,9 10,3" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ fontFamily: DM, fontSize: 11, color: f.itinerant ? '#4ee8c8' : 'rgba(255,255,255,0.45)', letterSpacing: '0.05em' }}>
+                    Itinérant — j'organise dans plusieurs villes / pays
+                  </span>
+                </div>
+
+                {f.itinerant ? (
+                  <>
+                    <input
+                      style={S.input}
+                      value={f.zonesActivite}
+                      onChange={e => update('zonesActivite', e.target.value)}
+                      placeholder="Ex: Paris, Lyon, Bruxelles, Montréal..."
+                    />
+                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: '6px 0 0', letterSpacing: '0.04em' }}>
+                      Indique les principales villes ou pays où tu opères (optionnel)
+                    </p>
+                  </>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <input
+                        style={{ ...S.input, borderColor: errors.ville ? '#e05aaa' : undefined }}
+                        value={f.ville}
+                        onChange={e => update('ville', e.target.value)}
+                        placeholder="Paris"
+                      />
+                      {errors.ville && <p style={S.error}>{errors.ville}</p>}
+                    </div>
+                    <input style={S.input} value={f.pays} onChange={e => update('pays', e.target.value)} placeholder="France" />
+                  </div>
+                )}
+              </div>
               <Field label="Capacité d'accueil déclarée">
                 <input type="number" style={S.input} value={f.capacite} onChange={e => update('capacite', e.target.value)} placeholder="ex: 500" min={0} />
               </Field>
