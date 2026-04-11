@@ -112,8 +112,9 @@ export default function HomePage() {
 
   const enabledRoles  = user ? getEnabledRoles(user) : []
   const isClient      = user && (enabledRoles.includes('client') || enabledRoles.includes('user')) && !enabledRoles.includes('organisateur') && !enabledRoles.includes('prestataire') && user.role !== 'agent'
-  const orgStatus     = user?.orgStatus  || 'none'
-  const prestStatus   = user?.prestStatus || 'none'
+  // org/prest accounts are separate — check the user's own role/status
+  const orgStatus  = user?.role === 'organisateur' ? (user?.status || 'pending') : 'none'
+  const prestStatus = user?.role === 'prestataire'  ? (user?.status || 'pending') : 'none'
 
   useEffect(() => {
     const alreadySaved = localStorage.getItem('lib_region')
@@ -401,7 +402,7 @@ export default function HomePage() {
         </RevealSection>
 
         {/* ── Élargis ton espace — bottom section ── */}
-        {isClient && (
+        {(!user || isClient) && (
           <RevealSection delay={0}>
             <div style={{
               borderTop: '1px solid rgba(255,255,255,0.06)',
@@ -436,7 +437,7 @@ export default function HomePage() {
                 {!enabledRoles.includes('organisateur') && (
                   <RevealSection delay={100}>
                     <button
-                      onClick={() => navigate(orgStatus === 'pending' ? '/mon-dossier' : '/onboarding-organisateur')}
+                      onClick={() => navigate(orgStatus !== 'none' ? '/mon-dossier' : '/connexion?mode=register&role=organisateur')}
                       style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                     >
                       <div style={{
@@ -476,12 +477,12 @@ export default function HomePage() {
                             border: '1px solid rgba(132,68,255,0.35)',
                             fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c9b0ff',
                           }}>
-                            {orgStatus === 'pending' ? 'Voir mon dossier' : 'Déposer une candidature'}
+                            {orgStatus !== 'none' ? 'Voir mon dossier →' : 'Créer un compte organisateur'}
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
                           </span>
                           {orgStatus === 'pending' && (
                             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
-                              En cours
+                              En attente
                             </span>
                           )}
                         </div>
@@ -494,7 +495,7 @@ export default function HomePage() {
                 {!enabledRoles.includes('prestataire') && (
                   <RevealSection delay={180}>
                     <button
-                      onClick={() => navigate(prestStatus === 'pending' ? '/mon-dossier' : '/onboarding-prestataire')}
+                      onClick={() => navigate(prestStatus !== 'none' ? '/mon-dossier' : '/connexion?mode=register&role=prestataire')}
                       style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                     >
                       <div style={{
@@ -534,12 +535,12 @@ export default function HomePage() {
                             border: '1px solid rgba(255,77,166,0.32)',
                             fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#ffb3d9',
                           }}>
-                            {prestStatus === 'pending' ? 'Voir mon dossier' : 'Déposer une candidature'}
+                            {prestStatus !== 'none' ? 'Voir mon dossier →' : 'Créer un compte prestataire'}
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
                           </span>
                           {prestStatus === 'pending' && (
                             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
-                              En cours
+                              En attente
                             </span>
                           )}
                         </div>

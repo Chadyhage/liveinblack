@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { USE_REAL_FIREBASE } from '../firebase'
@@ -84,12 +84,12 @@ async function doEmailRegister(data) {
   const { email, password, name, phone, role, prestataireType } = data
   const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
 
-  // Everyone registers as 'client' (except super admin who becomes 'agent').
-  // Organisateur / Prestataire choices create a client account FIRST,
-  // then submit a pending role request for admin validation.
-  const wantsExtraRole  = !isSuperAdmin && (role === 'organisateur' || role === 'prestataire')
-  const baseRole        = isSuperAdmin ? 'agent' : 'client'
-  const initialStatus   = 'active' // client accounts are always active instantly
+  // Each role creates a DEDICATED account — no upgrades.
+  // organisateur/prestataire → status:'pending' until admin approves.
+  // client/agent → status:'active' immediately.
+  const baseRole     = isSuperAdmin ? 'agent' : (role || 'client')
+  const isDedicated  = baseRole === 'organisateur' || baseRole === 'prestataire'
+  const initialStatus = isDedicated ? 'pending' : 'active'
 
   if (!USE_REAL_FIREBASE) {
     // Block duplicate email — only if the existing account has been verified
@@ -123,19 +123,18 @@ async function doEmailRegister(data) {
       role: baseRole,
       activeRole: baseRole,
       enabledRoles: [baseRole],
-      prestataireType: null,
-      orgStatus: 'none',
-      prestStatus: 'none',
+      prestataireType: isDedicated && baseRole === 'prestataire' ? (prestataireType || null) : null,
       status: initialStatus,
       emailVerified: false,
       createdAt: Date.now(),
     }
     saveAccount(user)
 
-    // Submit role request if the user chose org or prest
-    if (wantsExtraRole) {
-      await requestAdditionalRole(user, role, prestataireType || null)
-      return { ...user, _pendingRole: role }
+    // For org/prest: create the candidature application immediately
+    if (isDedicated) {
+      const { createApplication } = await import('../utils/applications')
+      createApplication(uid, email, name, baseRole)
+      return { ...user, _pendingOrgOnboarding: baseRole }
     }
     return user
   }
@@ -191,35 +190,28 @@ async function doEmailRegister(data) {
     role: baseRole,
     activeRole: baseRole,
     enabledRoles: [baseRole],
-    prestataireType: null,
-    orgStatus: 'none',
-    prestStatus: 'none',
+    prestataireType: isDedicated && baseRole === 'prestataire' ? (prestataireType || null) : null,
     status: initialStatus,
     emailVerified: false,
     createdAt: Date.now(),
   }
   await setDoc(doc(db, 'users', cred.user.uid), userObj)
 
-  // Submit role request if needed
-  if (wantsExtraRole) {
+  // For org/prest: create the candidature application in Firestore
+  if (isDedicated) {
+    const { createApplication } = await import('../utils/applications')
+    createApplication(cred.user.uid, email, name, baseRole)
+    // Also write a pending_validations entry so the admin can see the new account
     const reqId = 'req-' + Date.now()
-    const roleRequest = {
-      id: reqId,
-      uid: cred.user.uid,
-      email, name,
-      requestedRole: role,
+    await setDoc(doc(db, 'pending_validations', reqId), {
+      id: reqId, uid: cred.user.uid, email, name,
+      requestedRole: baseRole,
       prestataireType: prestataireType || null,
       requestedAt: Date.now(),
       status: 'pending',
-      type: 'role_request',
-    }
-    const patch = role === 'organisateur'
-      ? { orgStatus: 'pending', orgRequestedAt: Date.now() }
-      : { prestStatus: 'pending', prestataireType, prestRequestedAt: Date.now() }
-    const { updateDoc } = await import('firebase/firestore')
-    await updateDoc(doc(db, 'users', cred.user.uid), patch)
-    await setDoc(doc(db, 'pending_validations', reqId), roleRequest)
-    return isSuperAdmin ? userObj : { ...userObj, ...patch, _pendingRole: role, _needsEmailVerification: true }
+      type: 'new_account',
+    })
+    return isSuperAdmin ? userObj : { ...userObj, _pendingOrgOnboarding: baseRole, _needsEmailVerification: true }
   }
 
   return isSuperAdmin ? userObj : { ...userObj, _needsEmailVerification: true }
@@ -407,6 +399,18 @@ export default function LoginPage() {
   const [resendSent, setResendSent] = useState(false)
   const [pendingInfo, setPendingInfo] = useState(null) // { role } — account waiting validation
 
+  // Phone OTP verification (org/prest only)
+  const [phoneVerified, setPhoneVerified] = useState(false)
+  const [phoneConfirmResult, setPhoneConfirmResult] = useState(null)
+  const [otpCode, setOtpCode] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [otpError, setOtpError] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0) // seconds remaining before resend allowed
+  const [resendCount, setResendCount] = useState(0)       // how many times resend was clicked
+  const recaptchaVerifierRef = useRef(null)
+  const cooldownTimerRef = useRef(null)
+
   const { setUser } = useAuth()
   const navigate = useNavigate()
 
@@ -428,6 +432,107 @@ export default function LoginPage() {
       }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cooldown augmente à chaque renvoi : 60s, 120s, 300s, puis bloqué
+  const COOLDOWN_STEPS = [60, 120, 300]
+  function startResendCooldown(count) {
+    if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current)
+    const seconds = COOLDOWN_STEPS[Math.min(count, COOLDOWN_STEPS.length - 1)]
+    setResendCooldown(seconds)
+    cooldownTimerRef.current = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(cooldownTimerRef.current); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  // Reset OTP state when phone number changes
+  function handlePhoneChange(val) {
+    setRegPhone(val)
+    if (phoneVerified || otpSent) {
+      setPhoneVerified(false)
+      setOtpSent(false)
+      setOtpCode('')
+      setOtpError('')
+      setPhoneConfirmResult(null)
+    }
+  }
+
+  // ── Send OTP ──
+  async function handleSendOTP() {
+    setOtpError('')
+    const phoneRegex = /^(\+?\d[\d\s\-]{7,})$/
+    if (!phoneRegex.test(regPhone.replace(/\s/g, ''))) {
+      setOtpError('Numéro invalide.')
+      return
+    }
+    if (!USE_REAL_FIREBASE) {
+      // Local/demo mode — skip real SMS, any 6-digit code will work
+      const newCount = resendCount + 1
+      setResendCount(newCount)
+      setOtpSent(true)
+      startResendCooldown(newCount)
+      return
+    }
+    setOtpLoading(true)
+    try {
+      const { RecaptchaVerifier, signInWithPhoneNumber } = await import('firebase/auth')
+      const { auth } = await import('../firebase')
+      // Disable reCAPTCHA on localhost for testing (Firebase test phone numbers still work)
+      if (import.meta.env.DEV) {
+        auth.settings.appVerificationDisabledForTesting = true
+      }
+      if (recaptchaVerifierRef.current) {
+        try { recaptchaVerifierRef.current.clear() } catch {}
+      }
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' })
+      const fullPhone = (regDialCode + regPhone.trim()).replace(/\s/g, '')
+      const confirmResult = await signInWithPhoneNumber(auth, fullPhone, recaptchaVerifierRef.current)
+      setPhoneConfirmResult(confirmResult)
+      const newCount = resendCount + 1
+      setResendCount(newCount)
+      setOtpSent(true)
+      startResendCooldown(newCount)
+    } catch (err) {
+      setOtpError(getFirebaseError(err.code) || 'Impossible d\'envoyer le code. Vérifie le numéro.')
+      if (recaptchaVerifierRef.current) {
+        try { recaptchaVerifierRef.current.clear() } catch {}
+        recaptchaVerifierRef.current = null
+      }
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  // ── Verify OTP ──
+  async function handleVerifyOTP() {
+    setOtpError('')
+    if (!USE_REAL_FIREBASE) {
+      if (otpCode.length === 6) {
+        setPhoneVerified(true)
+        setOtpSent(false)
+      } else {
+        setOtpError('Entrez un code à 6 chiffres.')
+      }
+      return
+    }
+    if (!phoneConfirmResult) return
+    setOtpLoading(true)
+    try {
+      await phoneConfirmResult.confirm(otpCode)
+      // Sign out the temporary phone-auth session before creating the real account
+      const { auth } = await import('../firebase')
+      const { signOut } = await import('firebase/auth')
+      await signOut(auth)
+      setPhoneVerified(true)
+      setOtpSent(false)
+    } catch {
+      setOtpError('Code incorrect. Réessaie.')
+    } finally {
+      setOtpLoading(false)
+    }
+  }
 
   // ── Login ──
   async function handleLogin(e) {
@@ -489,8 +594,8 @@ export default function LoginPage() {
     if (!regName.trim()) { setError('Le nom est requis.'); return }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(regEmail)) { setError('Adresse email invalide.'); return }
-    const phoneRegex = /^(\+?\d[\d\s\-]{7,})$/
-    if (!phoneRegex.test(regPhone.replace(/\s/g, ''))) { setError('Numéro de téléphone invalide.'); return }
+    const isDedicatedRole = regRole === 'organisateur' || regRole === 'prestataire'
+    if (isDedicatedRole && !phoneVerified) { setError('Vérifie ton numéro de téléphone avant de continuer.'); return }
     const pwdErrs = validatePassword(regPwd)
     if (pwdErrs.length > 0) { setError(pwdErrs[0]); return }
     if (regPwd !== regPwdConfirm) { setError('Les mots de passe ne correspondent pas.'); return }
@@ -500,19 +605,23 @@ export default function LoginPage() {
     try {
       const userData = await doEmailRegister({
         email: regEmail, password: regPwd,
-        name: regName.trim(), phone: (regDialCode + ' ' + regPhone.trim()).trim(),
+        name: regName.trim(), phone: (regRole === 'organisateur' || regRole === 'prestataire') ? (regDialCode + regPhone.trim()).replace(/\s/g, '') : '',
         role: regRole, prestataireType: regPrestType,
       })
-      if (userData._pendingRole && userData._needsEmailVerification) {
-        // Org/prest on Firebase: verify email first, then show pending for extra role
+      if (userData._pendingOrgOnboarding && userData._needsEmailVerification) {
+        // Org/prest on Firebase: verify email first, then redirect to onboarding
         setUnverifiedEmail(regEmail)
-      } else if (userData._pendingRole) {
-        // Org/prest on local: client account created, role request pending
-        // Log them in as client immediately
-        const clientUser = { ...userData }
-        delete clientUser._pendingRole
-        setUser(clientUser)
-        setPendingInfo({ role: userData._pendingRole, isRoleRequest: true })
+      } else if (userData._pendingOrgOnboarding) {
+        // Org/prest on local: log them in and redirect to onboarding form
+        const cleanUser = { ...userData }
+        delete cleanUser._pendingOrgOnboarding
+        setUser(cleanUser)
+        import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
+          syncUserProfile(cleanUser.uid, cleanUser)
+          pushLocalToFirestore(cleanUser.uid).catch(() => {})
+          syncOnLogin(cleanUser.uid).catch(() => {})
+        }).catch(() => {})
+        navigate(userData._pendingOrgOnboarding === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire')
       } else if (userData._needsEmailVerification) {
         setUnverifiedEmail(regEmail)
       } else {
@@ -964,7 +1073,7 @@ export default function LoginPage() {
                     {regRole === 'organisateur' ? '🎪 Espace Organisateur' : '🎤 Espace Prestataire'}
                   </p>
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                    Un compte <span style={{ color: 'rgba(255,255,255,0.6)' }}>Client</span> sera créé immédiatement. L'accès à l'espace <span style={{ color: '#c8a96e' }}>{ROLES[regRole]?.label}</span> sera activé après validation par l'équipe LIVEINBLACK (généralement moins de 24h).
+                    Un compte <span style={{ color: '#c8a96e' }}>{ROLES[regRole]?.label}</span> dédié sera créé. Il sera activé après validation par l'équipe LIVEINBLACK (généralement moins de 24h). Tu pourras continuer à utiliser ton compte client séparément.
                   </p>
                 </div>
               )}
@@ -992,58 +1101,141 @@ export default function LoginPage() {
                 <FocusInput type="email" placeholder="ton@email.com" required value={regEmail} onChange={e => setRegEmail(e.target.value)} />
               </div>
 
-              {/* Phone with country code picker */}
-              <div>
-                <label style={S.label}>Téléphone</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <div style={{ position: 'relative' }}>
-                    <button type="button"
-                      onClick={() => setShowDialPicker(v => !v)}
-                      style={{
-                        ...S.input,
-                        width: 'auto',
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        paddingLeft: '10px', paddingRight: '10px',
-                        whiteSpace: 'nowrap', minWidth: '80px',
-                        cursor: 'pointer',
-                      }}>
-                      <span style={{ fontSize: '14px' }}>{COUNTRY_CODES.find(c => c.dial === regDialCode)?.flag || '🌍'}</span>
-                      <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>{regDialCode}</span>
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round">
-                        <path d="M6 9l6 6 6-6"/>
-                      </svg>
-                    </button>
-                    {showDialPicker && (
-                      <div style={{
-                        position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50,
-                        background: 'rgba(8,10,20,0.97)',
-                        border: '1px solid rgba(255,255,255,0.10)',
-                        borderRadius: '4px',
-                        boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
-                        maxHeight: '200px', overflowY: 'auto', width: '220px',
-                      }}>
-                        {COUNTRY_CODES.map(c => (
-                          <button key={c.code + c.dial} type="button"
-                            onClick={() => { setRegDialCode(c.dial); setShowDialPicker(false) }}
+              {/* Phone — org/prest only, with OTP verification */}
+              {(regRole === 'organisateur' || regRole === 'prestataire') && (
+                <div>
+                  <label style={S.label}>
+                    Téléphone
+                    {phoneVerified && <span style={{ marginLeft: 8, color: '#4ee8c8', fontStyle: 'normal', textTransform: 'none', letterSpacing: 0 }}>✓ Vérifié</span>}
+                  </label>
+
+                  {phoneVerified ? (
+                    /* Verified state */
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', borderRadius: '4px' }}>
+                      <span style={{ color: '#4ee8c8', fontSize: 16 }}>✓</span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{regDialCode} {regPhone}</span>
+                      <button type="button"
+                        onClick={() => { setPhoneVerified(false); setRegPhone(''); setOtpCode(''); setOtpError(''); setOtpSent(false) }}
+                        style={{ marginLeft: 'auto', fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                        Changer
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Phone input row */}
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ position: 'relative' }}>
+                          <button type="button"
+                            onClick={() => setShowDialPicker(v => !v)}
                             style={{
-                              width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                              padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none',
-                              cursor: 'pointer', transition: 'background 0.15s',
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                          >
-                            <span style={{ fontSize: '14px' }}>{c.flag}</span>
-                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.6)', flex: 1 }}>{c.name}</span>
-                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: regDialCode === c.dial ? '#c8a96e' : 'rgba(255,255,255,0.3)' }}>{c.dial}</span>
+                              ...S.input,
+                              width: 'auto',
+                              display: 'flex', alignItems: 'center', gap: '6px',
+                              paddingLeft: '10px', paddingRight: '10px',
+                              whiteSpace: 'nowrap', minWidth: '80px',
+                              cursor: 'pointer',
+                            }}>
+                            <span style={{ fontSize: '14px' }}>{COUNTRY_CODES.find(c => c.dial === regDialCode)?.flag || '🌍'}</span>
+                            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>{regDialCode}</span>
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
                           </button>
-                        ))}
+                          {showDialPicker && (
+                            <div style={{
+                              position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50,
+                              background: 'rgba(8,10,20,0.97)',
+                              border: '1px solid rgba(255,255,255,0.10)',
+                              borderRadius: '4px',
+                              boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
+                              maxHeight: '200px', overflowY: 'auto', width: '220px',
+                            }}>
+                              {COUNTRY_CODES.map(c => (
+                                <button key={c.code + c.dial} type="button"
+                                  onClick={() => { setRegDialCode(c.dial); setShowDialPicker(false) }}
+                                  style={{
+                                    width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                                    padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none',
+                                    cursor: 'pointer', transition: 'background 0.15s',
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                                >
+                                  <span style={{ fontSize: '14px' }}>{c.flag}</span>
+                                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.6)', flex: 1 }}>{c.name}</span>
+                                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: regDialCode === c.dial ? '#c8a96e' : 'rgba(255,255,255,0.3)' }}>{c.dial}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <FocusInput type="tel" placeholder="06 00 00 00 00" value={regPhone} onChange={e => handlePhoneChange(e.target.value)} style={{ flex: 1 }} />
+                        <button type="button" onClick={handleSendOTP} disabled={otpLoading || otpSent || resendCooldown > 0}
+                          style={{
+                            padding: '0 14px', borderRadius: '4px', border: '1px solid rgba(78,232,200,0.35)',
+                            background: otpSent ? 'rgba(78,232,200,0.04)' : 'rgba(78,232,200,0.12)',
+                            color: otpSent ? 'rgba(78,232,200,0.4)' : '#4ee8c8',
+                            fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.1em',
+                            cursor: (otpLoading || otpSent || resendCooldown > 0) ? 'default' : 'pointer',
+                            whiteSpace: 'nowrap', flexShrink: 0,
+                          }}>
+                          {otpLoading ? '...' : otpSent ? 'Envoyé ✓' : 'Envoyer le code'}
+                        </button>
                       </div>
-                    )}
-                  </div>
-                  <FocusInput type="tel" placeholder="06 00 00 00 00" required value={regPhone} onChange={e => setRegPhone(e.target.value)} style={{ flex: 1 }} />
+
+                      {/* OTP input — shown after code is sent */}
+                      {otpSent && (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <FocusInput
+                            type="text" inputMode="numeric" placeholder="Code à 6 chiffres" maxLength={6}
+                            value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                            style={{ flex: 1, letterSpacing: '0.3em', textAlign: 'center', fontSize: 16 }}
+                          />
+                          <button type="button" onClick={handleVerifyOTP} disabled={otpLoading || otpCode.length < 6}
+                            style={{
+                              padding: '0 14px', borderRadius: '4px', border: '1px solid rgba(78,232,200,0.35)',
+                              background: otpCode.length === 6 ? 'rgba(78,232,200,0.18)' : 'rgba(78,232,200,0.04)',
+                              color: otpCode.length === 6 ? '#4ee8c8' : 'rgba(78,232,200,0.3)',
+                              fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.1em',
+                              cursor: otpCode.length === 6 ? 'pointer' : 'default', whiteSpace: 'nowrap', flexShrink: 0,
+                            }}>
+                            {otpLoading ? '...' : 'Vérifier'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Re-send + change number */}
+                      {otpSent && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+                          {/* Resend with cooldown */}
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
+                            Pas reçu ?{' '}
+                            {resendCooldown > 0 ? (
+                              <span style={{ color: 'rgba(78,232,200,0.35)' }}>Renvoyer ({resendCooldown}s)</span>
+                            ) : (
+                              <button type="button"
+                                onClick={() => { setOtpCode(''); setOtpError(''); handleSendOTP() }}
+                                style={{ background: 'none', border: 'none', color: 'rgba(78,232,200,0.7)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }}>
+                                Renvoyer le code
+                              </button>
+                            )}
+                          </span>
+                          {/* Change number */}
+                          <button type="button"
+                            onClick={() => { setOtpSent(false); setOtpCode(''); setOtpError(''); setResendCooldown(0); setResendCount(0); if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current) }}
+                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: 10, textDecoration: 'underline', padding: 0 }}>
+                            Changer le numéro
+                          </button>
+                        </div>
+                      )}
+
+                      {/* OTP error */}
+                      {otpError && <p style={{ ...S.errorText, marginTop: 6 }}>{otpError}</p>}
+
+                      {/* Hidden reCAPTCHA container */}
+                      <div id="recaptcha-container" />
+                    </>
+                  )}
                 </div>
-              </div>
+              )}
 
               {/* Prestataire type */}
               {regRole === 'prestataire' && (

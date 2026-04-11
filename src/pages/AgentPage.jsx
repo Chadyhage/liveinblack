@@ -229,8 +229,16 @@ export default function AgentPage() {
     setSelectedUser(null)
   }
 
-  function handleDelete(uid) {
+  async function handleDelete(uid) {
+    // 1. Supprimer du localStorage
     deleteAccount(uid)
+    // 2. Supprimer Firestore : profil + toutes les collections liées
+    try {
+      const { db } = await import('../firebase')
+      const { doc, deleteDoc } = await import('firebase/firestore')
+      const collections = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social', 'catalogs', 'providers']
+      await Promise.allSettled(collections.map(col => deleteDoc(doc(db, col, uid))))
+    } catch {}
     refresh()
     showToast('Compte supprimé', 'error')
     setConfirmAction(null)

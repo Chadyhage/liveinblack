@@ -182,22 +182,25 @@ export default function OnboardingOrganisateur() {
     }
     setSubmitting(true)
     try {
-      // Re-upload les fichiers encore en local (url === null) avant de soumettre
+      // Vérifier qu'aucun fichier n'est resté "local uniquement" (upload échoué)
       const freshApp = getApplicationByUser(user.uid, 'organisateur')
       const allDocs = freshApp?.documents || {}
-      let hadLocalFiles = false
+      const failedDocs = []
       for (const [docKey, entries] of Object.entries(allDocs)) {
         const arr = Array.isArray(entries) ? entries : [entries]
-        for (const entry of arr) {
-          if (entry && !entry.url) {
-            hadLocalFiles = true
-            // On ne peut pas re-uploader sans le File objet (déjà perdu) — on signale
-          }
+        const hasFailure = arr.some(e => e && !e.url)
+        if (hasFailure) {
+          const label = DOCUMENT_LABELS[docKey]?.label || docKey
+          failedDocs.push(label)
         }
       }
-      if (hadLocalFiles) {
-        showToast('⚠ Certains fichiers ne sont pas encore synchronisés. Soumission en cours quand même.', 'error')
-        await new Promise(r => setTimeout(r, 1500))
+      if (failedDocs.length > 0) {
+        setSubmitting(false)
+        showToast(
+          `Certains fichiers n'ont pas pu être envoyés. Retire-les et rajoute-les : ${failedDocs.join(', ')}`,
+          'error'
+        )
+        return
       }
 
       const result = await submitApplication(app.id, f)
@@ -672,6 +675,51 @@ export default function OnboardingOrganisateur() {
   )
 }
 
+// ── File row (inside DocUploadRow list) ──────────────────────────────────────
+function FileRow({ file, onRemove }) {
+  const failed = !file.url
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      padding: '8px 10px', borderRadius: 6,
+      background: failed ? 'rgba(224,90,170,0.06)' : 'rgba(78,232,200,0.05)',
+      border: `1px solid ${failed ? 'rgba(224,90,170,0.25)' : 'rgba(78,232,200,0.12)'}`,
+    }}>
+      <span style={{ fontSize: 14, flexShrink: 0 }}>{failed ? '⚠' : '📄'}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span style={{
+          fontFamily: "'DM Mono', monospace", fontSize: 10,
+          color: failed ? 'rgba(224,90,170,0.9)' : 'rgba(255,255,255,0.8)',
+          display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {file.name}
+        </span>
+        <span style={{
+          fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.04em',
+          color: failed ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.3)',
+        }}>
+          {failed
+            ? 'Envoi échoué — retire et rajoute ce fichier'
+            : file.size != null
+              ? file.size < 1024 * 1024
+                ? `${(file.size / 1024).toFixed(0)} Ko`
+                : `${(file.size / (1024 * 1024)).toFixed(1)} Mo`
+              : ''}
+        </span>
+      </div>
+      <button
+        onClick={onRemove}
+        style={{
+          background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.25)',
+          cursor: 'pointer', color: '#e05aaa', fontSize: 13, lineHeight: 1,
+          padding: '3px 7px', borderRadius: 4, flexShrink: 0,
+        }}
+        title="Retirer ce fichier"
+      >✕</button>
+    </div>
+  )
+}
+
 // ── Document upload row ───────────────────────────────────────────────────────
 function DocUploadRow({ label, required, files = [], status, onChange, onRemove }) {
   const hasFiles    = files.length > 0
@@ -766,45 +814,7 @@ function DocUploadRow({ label, required, files = [], status, onChange, onRemove 
           display: 'flex', flexDirection: 'column', gap: 6,
         }}>
           {files.map((file, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '8px 10px', borderRadius: 6,
-              background: 'rgba(78,232,200,0.05)',
-              border: '1px solid rgba(78,232,200,0.12)',
-            }}>
-              <span style={{ fontSize: 14, flexShrink: 0 }}>📄</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <span style={{
-                  fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.8)',
-                  display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>
-                  {file.name}
-                </span>
-                {/* Indicateur cloud vs local */}
-                {file.url
-                  ? <span style={{ fontFamily: DM, fontSize: 8, color: 'rgba(78,232,200,0.55)', letterSpacing: '0.05em' }}>☁ synchronisé</span>
-                  : <span style={{ fontFamily: DM, fontSize: 8, color: 'rgba(245,158,11,0.65)', letterSpacing: '0.05em' }}>⚠ local uniquement — sera envoyé à la soumission</span>
-                }
-              </div>
-              {file.size != null && (
-                <span style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>
-                  {file.size < 1024 * 1024
-                    ? `${(file.size / 1024).toFixed(0)} Ko`
-                    : `${(file.size / (1024 * 1024)).toFixed(1)} Mo`}
-                </span>
-              )}
-              <button
-                onClick={() => onRemove(i)}
-                style={{
-                  background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.25)',
-                  cursor: 'pointer', color: '#e05aaa', fontSize: 13, lineHeight: 1,
-                  padding: '3px 7px', borderRadius: 4, flexShrink: 0,
-                }}
-                title="Retirer ce fichier"
-              >
-                ✕
-              </button>
-            </div>
+            <FileRow key={i} file={file} onRemove={() => onRemove(i)} />
           ))}
         </div>
       )}

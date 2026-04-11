@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
@@ -116,6 +116,14 @@ function RequireOrganisateur({ user, children }) {
   return children
 }
 
+// Wrapper: /connexion — allow logged-in users when ?mode= is present (creating a 2nd account)
+function ConnexionRoute({ user }) {
+  const location = useLocation()
+  const mode = new URLSearchParams(location.search).get('mode')
+  if (user && !mode) return <Navigate to="/accueil" replace />
+  return <LoginPage />
+}
+
 // Wrapper: Services — prestataire, organisateur, agent uniquement (pas client)
 function RequireServiceAccess({ user, children }) {
   if (!user) return <Navigate to={`/connexion?next=${encodeURIComponent('/proposer')}`} replace />
@@ -161,8 +169,9 @@ export default function App() {
             {/* ── Root: always go to accueil ── */}
             <Route path="/" element={<Navigate to="/accueil" replace />} />
 
-            {/* ── Auth: /connexion is the login/register page ── */}
-            <Route path="/connexion" element={user ? <Navigate to="/accueil" replace /> : <LoginPage />} />
+            {/* ── Auth: /connexion is the login/register page ──
+                Allow access even when logged in if ?mode=register (creating a 2nd account) */}
+            <Route path="/connexion" element={<ConnexionRoute user={user} />} />
 
             {/* ── Public routes — accessible without account ── */}
             <Route path="/accueil" element={<HomePage />} />
