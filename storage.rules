@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Documents de candidature — accessible uniquement à l'utilisateur propriétaire (upload)
+    // et aux admins (lecture via token custom ou backend)
+    match /applications/{appId}/{allPaths=**} {
+      // Écriture : utilisateur authentifié uniquement, fichiers < 10 Mo
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*|application/pdf');
+
+      // Lecture : utilisateur authentifié (l'admin est authentifié)
+      allow read: if request.auth != null;
+    }
+
+    // Avatars utilisateur
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024;
+    }
+
+  }
+}

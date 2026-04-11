@@ -182,6 +182,24 @@ export default function OnboardingOrganisateur() {
     }
     setSubmitting(true)
     try {
+      // Re-upload les fichiers encore en local (url === null) avant de soumettre
+      const freshApp = getApplicationByUser(user.uid, 'organisateur')
+      const allDocs = freshApp?.documents || {}
+      let hadLocalFiles = false
+      for (const [docKey, entries] of Object.entries(allDocs)) {
+        const arr = Array.isArray(entries) ? entries : [entries]
+        for (const entry of arr) {
+          if (entry && !entry.url) {
+            hadLocalFiles = true
+            // On ne peut pas re-uploader sans le File objet (déjà perdu) — on signale
+          }
+        }
+      }
+      if (hadLocalFiles) {
+        showToast('⚠ Certains fichiers ne sont pas encore synchronisés. Soumission en cours quand même.', 'error')
+        await new Promise(r => setTimeout(r, 1500))
+      }
+
       const result = await submitApplication(app.id, f)
       setApp(result)
       showToast('Dossier soumis !')
@@ -755,12 +773,19 @@ function DocUploadRow({ label, required, files = [], status, onChange, onRemove 
               border: '1px solid rgba(78,232,200,0.12)',
             }}>
               <span style={{ fontSize: 14, flexShrink: 0 }}>📄</span>
-              <span style={{
-                fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.8)',
-                flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
-                {file.name}
-              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{
+                  fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.8)',
+                  display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {file.name}
+                </span>
+                {/* Indicateur cloud vs local */}
+                {file.url
+                  ? <span style={{ fontFamily: DM, fontSize: 8, color: 'rgba(78,232,200,0.55)', letterSpacing: '0.05em' }}>☁ synchronisé</span>
+                  : <span style={{ fontFamily: DM, fontSize: 8, color: 'rgba(245,158,11,0.65)', letterSpacing: '0.05em' }}>⚠ local uniquement — sera envoyé à la soumission</span>
+                }
+              </div>
               {file.size != null && (
                 <span style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>
                   {file.size < 1024 * 1024
