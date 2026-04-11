@@ -166,9 +166,12 @@ export default function OnboardingOrganisateur() {
   }
 
   async function handleSubmit() {
-    // Vérification : alcool déclaré → licence obligatoire
-    if (f.alcool && !app.documents?.alcohol_license) {
-      showToast('Licence alcool requise (vous avez déclaré vendre de l\'alcool)', 'error')
+    // Vérification des documents obligatoires avant soumission
+    const missingDocs = []
+    if (!app.documents?.identity)                    missingDocs.push('Pièce d\'identité')
+    if (f.alcool && !app.documents?.alcohol_license) missingDocs.push('Licence alcool')
+    if (missingDocs.length > 0) {
+      showToast(`Document(s) manquant(s) : ${missingDocs.join(', ')}`, 'error')
       return
     }
     setSubmitting(true)
@@ -568,19 +571,45 @@ export default function OnboardingOrganisateur() {
             )}
 
             {/* Submit section */}
-            <div style={{ marginTop: 8, padding: '16px', background: 'rgba(200,169,110,0.05)', border: '1px solid rgba(200,169,110,0.15)', borderRadius: 8 }}>
-              <p style={{ fontFamily: DM, fontSize: 9, color: GOLD, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Prêt à soumettre ?</p>
-              <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, marginBottom: 16 }}>
-                Une fois soumis, ton dossier sera examiné par l'équipe LIVEINBLACK. Tu peux suivre l'avancement dans <strong style={{ color: 'rgba(255,255,255,0.55)' }}>Mon Dossier</strong>.
-              </p>
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                style={{ ...S.btnGold, opacity: submitting ? 0.6 : 1 }}
-              >
-                {submitting ? 'Soumission...' : 'Soumettre mon dossier'}
-              </button>
-            </div>
+            {(() => {
+              const missing = []
+              if (!app.documents?.identity)                    missing.push('Pièce d\'identité')
+              if (f.alcool && !app.documents?.alcohol_license) missing.push('Licence alcool')
+              const canSubmit = missing.length === 0
+              return (
+                <div style={{ marginTop: 8, padding: '16px', background: canSubmit ? 'rgba(200,169,110,0.05)' : 'rgba(224,90,170,0.04)', border: `1px solid ${canSubmit ? 'rgba(200,169,110,0.15)' : 'rgba(224,90,170,0.2)'}`, borderRadius: 8 }}>
+                  {!canSubmit ? (
+                    <>
+                      <p style={{ fontFamily: DM, fontSize: 9, color: '#e05aaa', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+                        Documents requis manquants
+                      </p>
+                      {missing.map(d => (
+                        <p key={d} style={{ fontFamily: DM, fontSize: 10, color: 'rgba(224,90,170,0.7)', margin: '0 0 4px', letterSpacing: '0.04em' }}>
+                          ✗ {d}
+                        </p>
+                      ))}
+                      <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.2)', margin: '10px 0 0', lineHeight: 1.6 }}>
+                        Télécharge les documents ci-dessus pour débloquer la soumission.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ fontFamily: DM, fontSize: 9, color: GOLD, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Prêt à soumettre ✓</p>
+                      <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, marginBottom: 16 }}>
+                        Une fois soumis, ton dossier sera examiné par l'équipe LIVEINBLACK. Tu peux suivre l'avancement dans <strong style={{ color: 'rgba(255,255,255,0.55)' }}>Mon Dossier</strong>.
+                      </p>
+                    </>
+                  )}
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting || !canSubmit}
+                    style={{ ...S.btnGold, opacity: (submitting || !canSubmit) ? 0.35 : 1, cursor: !canSubmit ? 'not-allowed' : 'pointer', marginTop: canSubmit ? 0 : 12 }}
+                  >
+                    {submitting ? 'Soumission...' : 'Soumettre mon dossier'}
+                  </button>
+                </div>
+              )
+            })()}
           </div>
         )}
 
