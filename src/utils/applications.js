@@ -65,6 +65,25 @@ export function getApplicationByUser(uid, type) {
   return _getAll().find(a => a.uid === uid && a.type === type) || null
 }
 
+// ─── Suppression dossier ──────────────────────────────────────────────────────
+
+export async function deleteApplication(id) {
+  const all = _getAll()
+  const filtered = all.filter(a => a.id !== id)
+  _saveAll(filtered)
+
+  // Sync Firestore
+  try {
+    const { USE_REAL_FIREBASE, db } = await import('../firebase')
+    if (USE_REAL_FIREBASE) {
+      const { doc, deleteDoc } = await import('firebase/firestore')
+      await deleteDoc(doc(db, 'applications', id))
+    }
+  } catch {}
+
+  return true
+}
+
 // ─── Stripe Connect fields (structure prête, non implémentée) ─────────────────
 
 function stripeDefaults() {

@@ -8,6 +8,7 @@ import {
   getRequiredDocs,
   getCompleteness,
   uploadDocument,
+  deleteApplication,
 } from '../utils/applications'
 import Layout from '../components/Layout'
 
@@ -180,6 +181,7 @@ export default function MonDossierPage() {
   const [tab, setTab] = useState('status')
   const [uploadStatus, setUploadStatus] = useState({}) // { [docKey]: 'uploading'|'done'|'error' }
   const [toast, setToast] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type })
@@ -198,6 +200,12 @@ export default function MonDossierPage() {
       setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
       showToast('Erreur lors de l\'upload', 'error')
     }
+  }
+
+  async function handleDelete() {
+    if (!app) return
+    await deleteApplication(app.id)
+    navigate('/')
   }
 
   useEffect(() => {
@@ -365,7 +373,7 @@ export default function MonDossierPage() {
           </div>
         )}
 
-        {/* ── CTA edit ── */}
+        {/* ── CTA edit (brouillon / corrections) ── */}
         {isEditable && (
           <button
             onClick={() => navigate(editPath)}
@@ -379,6 +387,73 @@ export default function MonDossierPage() {
             }}>
             {app.status === 'needs_changes' ? '✏  Corriger mon dossier' : '✏  Compléter mon dossier'}
           </button>
+        )}
+
+        {/* ── Info suivi (dossier soumis / en cours) ── */}
+        {(app.status === 'submitted' || app.status === 'under_review') && (
+          <div style={{
+            ...CARD, padding: 14, marginBottom: 16,
+            borderColor: 'rgba(78,232,200,0.18)',
+            background: 'rgba(78,232,200,0.04)',
+          }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, margin: '0 0 4px', fontWeight: 600 }}>
+              Dossier verrouillé — en attente de validation
+            </p>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>
+              Notre équipe examine ton dossier. Le statut ci-dessus sera mis à jour dès qu&apos;une décision sera prise. Si des corrections sont nécessaires, tu pourras modifier et renvoyer.
+            </p>
+          </div>
+        )}
+
+        {/* ── Supprimer le dossier ── */}
+        {!confirmDelete ? (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            style={{
+              width: '100%', padding: '11px 0', borderRadius: 8, cursor: 'pointer',
+              background: 'transparent',
+              border: '1px solid rgba(239,68,68,0.22)',
+              color: 'rgba(239,68,68,0.55)', fontFamily: FONTS.mono, fontSize: 10,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              marginBottom: 16,
+            }}>
+            Supprimer le dossier
+          </button>
+        ) : (
+          <div style={{
+            ...CARD, padding: 16, marginBottom: 16,
+            borderColor: 'rgba(239,68,68,0.35)',
+            background: 'rgba(239,68,68,0.06)',
+          }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#fff', margin: '0 0 4px', fontWeight: 600 }}>
+              Supprimer définitivement ce dossier ?
+            </p>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.5 }}>
+              Cette action est irréversible. Tu devras soumettre un nouveau dossier pour candidater à nouveau.
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={handleDelete}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
+                  background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.45)',
+                  color: '#ef4444', fontFamily: FONTS.mono, fontSize: 10,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}>
+                Oui, supprimer
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
+                  color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 10,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}>
+                Annuler
+              </button>
+            </div>
+          </div>
         )}
 
         {/* ── Tabs ── */}
@@ -464,8 +539,17 @@ export default function MonDossierPage() {
         {/* ── Tab: Documents ── */}
         {tab === 'documents' && (
           <div>
-            {/* Docs requis manquants — alerte */}
-            {requiredDocs.some(k => !app.documents?.[k]) && (
+            {/* Dossier verrouillé */}
+            {!isEditable && (
+              <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, marginBottom: 12 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, letterSpacing: '0.04em' }}>
+                  🔒 Dossier verrouillé — les documents ne peuvent pas être modifiés après soumission.
+                </p>
+              </div>
+            )}
+
+            {/* Docs requis manquants — alerte (seulement si éditable) */}
+            {isEditable && requiredDocs.some(k => !app.documents?.[k]) && (
               <div style={{ padding: '10px 14px', background: 'rgba(224,90,170,0.06)', border: '1px solid rgba(224,90,170,0.2)', borderRadius: 8, marginBottom: 12 }}>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.pink, margin: 0, letterSpacing: '0.04em' }}>
                   ⚠ Des documents obligatoires sont manquants. Ajoute-les pour que ton dossier puisse être traité.
@@ -480,22 +564,19 @@ export default function MonDossierPage() {
                 docKey={key}
                 entry={app.documents?.[key]}
                 required
-                onUpload={file => handleUpload(key, file)}
+                onUpload={isEditable ? (file => handleUpload(key, file)) : undefined}
                 uploading={uploadStatus[key] === 'uploading'}
               />
             ))}
 
             {/* Doc optionnel : business_doc */}
-            {['business_doc'].map(key => (
-              <DocRow
-                key={key}
-                docKey={key}
-                entry={app.documents?.[key]}
-                required={false}
-                onUpload={file => handleUpload(key, file)}
-                uploading={uploadStatus[key] === 'uploading'}
-              />
-            ))}
+            <DocRow
+              docKey="business_doc"
+              entry={app.documents?.business_doc}
+              required={false}
+              onUpload={isEditable ? (file => handleUpload('business_doc', file)) : undefined}
+              uploading={uploadStatus.business_doc === 'uploading'}
+            />
 
             {/* Doc conditionnel : licence alcool */}
             {app.formData?.alcool && (
@@ -503,14 +584,16 @@ export default function MonDossierPage() {
                 docKey="alcohol_license"
                 entry={app.documents?.alcohol_license}
                 required
-                onUpload={file => handleUpload('alcohol_license', file)}
+                onUpload={isEditable ? (file => handleUpload('alcohol_license', file)) : undefined}
                 uploading={uploadStatus.alcohol_license === 'uploading'}
               />
             )}
 
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '12px 0 0', letterSpacing: '0.04em' }}>
-              Formats acceptés : PDF, JPG, PNG
-            </p>
+            {isEditable && (
+              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '12px 0 0', letterSpacing: '0.04em' }}>
+                Formats acceptés : PDF, JPG, PNG
+              </p>
+            )}
           </div>
         )}
 
