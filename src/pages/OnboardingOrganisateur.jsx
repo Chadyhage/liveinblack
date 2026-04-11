@@ -534,44 +534,38 @@ export default function OnboardingOrganisateur() {
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>📎 Documents justificatifs</p>
             <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, margin: 0 }}>
-              Télécharge les documents nécessaires. Les fichiers sont stockés de manière privée et ne sont accessibles qu'à l'équipe LIVEINBLACK.
+              Ces documents nous permettent de vérifier ton identité et la légitimité de ton activité.
+              Stockés de façon privée, accessibles uniquement à l'équipe LIVEINBLACK.
             </p>
 
-            {/* Required docs */}
-            {requiredDocs.map(docKey => {
-              const cfg     = DOCUMENT_LABELS[docKey]
-              const uploaded = app.documents?.[docKey]
-              const status   = uploadStatus[docKey]
-              return (
-                <DocUploadRow
-                  key={docKey}
-                  label={cfg?.label || docKey}
-                  required
-                  uploaded={uploaded}
-                  status={status}
-                  onChange={file => handleUpload(docKey, file)}
-                />
-              )
-            })}
+            {/* ── Obligatoire : pièce d'identité ── */}
+            <DocUploadRow
+              label="Pièce d'identité du responsable"
+              required
+              uploaded={app.documents?.identity}
+              status={uploadStatus.identity}
+              onChange={file => handleUpload('identity', file)}
+            />
 
-            {/* Alcool déclaré → document obligatoire */}
+            {/* ── Optionnel : document officiel entreprise ── */}
+            <DocUploadRow
+              label="Document officiel de l'entreprise (KBIS, statuts, récépissé INSEE…)"
+              required={false}
+              uploaded={app.documents?.business_doc}
+              status={uploadStatus.business_doc}
+              onChange={file => handleUpload('business_doc', file)}
+            />
+
+            {/* ── Conditionnel : alcool ── */}
             {f.alcool && (
               <DocUploadRow
                 label="Licence / Justificatif de débit de boissons"
-                required={true}
+                required
                 uploaded={app.documents?.alcohol_license}
                 status={uploadStatus.alcohol_license}
                 onChange={file => handleUpload('alcohol_license', file)}
               />
             )}
-
-            <DocUploadRow
-              label="Justificatif montrant le lien avec le lieu (bail, titre de propriété...)"
-              required={false}
-              uploaded={app.documents?.venue_proof}
-              status={uploadStatus.venue_proof}
-              onChange={file => handleUpload('venue_proof', file)}
-            />
 
             {/* Submit section */}
             <div style={{ marginTop: 8, padding: '16px', background: 'rgba(200,169,110,0.05)', border: '1px solid rgba(200,169,110,0.15)', borderRadius: 8 }}>

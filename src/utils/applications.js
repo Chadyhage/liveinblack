@@ -19,21 +19,19 @@ export const APPLICATION_STATUSES = {
 // ─── Documents requis par type ────────────────────────────────────────────────
 
 export const DOCUMENT_LABELS = {
-  identity:          { label: 'Pièce d\'identité du responsable',   required: true  },
-  rib:               { label: 'RIB / IBAN',                         required: true  },
-  kbis:              { label: 'Extrait KBIS ou équivalent',         required: true  },
-  alcohol_license:   { label: 'Licence / Justificatif alcool',      required: false },
-  venue_proof:       { label: 'Justificatif lien avec le lieu',     required: false },
-  activity_proof:    { label: 'Justificatif d\'activité',           required: true  },
-  insurance:         { label: 'Attestation d\'assurance',           required: false },
-  exploitation_proof:{ label: 'Document exploitation du lieu',      required: false },
-  billing_proof:     { label: 'Statut de facturation / SIRET',      required: false },
-  rc_pro:            { label: 'Attestation RC Pro',                  required: false },
+  identity:          { label: 'Pièce d\'identité du responsable',                    required: true  },
+  business_doc:      { label: 'Document officiel de l\'entreprise (KBIS, statuts, récépissé INSEE…)', required: false },
+  alcohol_license:   { label: 'Licence / Justificatif de débit de boissons',         required: false },
+  activity_proof:    { label: 'Justificatif d\'activité',                            required: true  },
+  insurance:         { label: 'Attestation d\'assurance',                            required: false },
+  exploitation_proof:{ label: 'Document exploitation du lieu',                       required: false },
+  billing_proof:     { label: 'Statut de facturation / SIRET',                       required: false },
+  rc_pro:            { label: 'Attestation RC Pro',                                   required: false },
 }
 
 export function getRequiredDocs(type, prestataireType = null) {
   if (type === 'organisateur') {
-    return ['identity', 'rib', 'kbis']
+    return ['identity']   // Stripe gère les coords bancaires — on ne demande que l'identité
   }
   if (type === 'prestataire') {
     const base = ['identity', 'rib', 'activity_proof']
