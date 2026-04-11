@@ -486,7 +486,18 @@ export default function LoginPage() {
       if (recaptchaVerifierRef.current) {
         try { recaptchaVerifierRef.current.clear() } catch {}
       }
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' })
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'normal',
+        callback: () => {}, // reCAPTCHA solved — signInWithPhoneNumber can proceed
+        'expired-callback': () => {
+          if (recaptchaVerifierRef.current) {
+            try { recaptchaVerifierRef.current.clear() } catch {}
+            recaptchaVerifierRef.current = null
+          }
+          setOtpError('Le reCAPTCHA a expiré. Réessaie.')
+        },
+      })
+      await recaptchaVerifierRef.current.render()
       const fullPhone = (regDialCode + regPhone.trim()).replace(/\s/g, '')
       const confirmResult = await signInWithPhoneNumber(auth, fullPhone, recaptchaVerifierRef.current)
       setPhoneConfirmResult(confirmResult)
@@ -495,7 +506,7 @@ export default function LoginPage() {
       setOtpSent(true)
       startResendCooldown(newCount)
     } catch (err) {
-      setOtpError(getFirebaseError(err.code) || 'Impossible d\'envoyer le code. Vérifie le numéro.')
+      setOtpError(getFirebaseError(err.code) || `Erreur : ${err.code || err.message || 'inconnue'}`)
       if (recaptchaVerifierRef.current) {
         try { recaptchaVerifierRef.current.clear() } catch {}
         recaptchaVerifierRef.current = null
@@ -1230,8 +1241,8 @@ export default function LoginPage() {
                       {/* OTP error */}
                       {otpError && <p style={{ ...S.errorText, marginTop: 6 }}>{otpError}</p>}
 
-                      {/* Hidden reCAPTCHA container */}
-                      <div id="recaptcha-container" />
+                      {/* reCAPTCHA container — visible checkbox, shown only when needed */}
+                      <div id="recaptcha-container" style={{ marginTop: 8, minHeight: otpSent ? 0 : undefined }} />
                     </>
                   )}
                 </div>
