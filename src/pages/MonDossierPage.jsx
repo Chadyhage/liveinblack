@@ -7,6 +7,7 @@ import {
   DOCUMENT_LABELS,
   getRequiredDocs,
   getCompleteness,
+  uploadDocument,
 } from '../utils/applications'
 import Layout from '../components/Layout'
 
@@ -122,48 +123,50 @@ function AuditLog({ log }) {
 }
 
 // ─── Document row ───────────────────────────────────────────────────────────
-function DocRow({ docKey, entry }) {
-  const label = DOCUMENT_LABELS[docKey]?.label || docKey
+function DocRow({ docKey, entry, required, onUpload, uploading }) {
+  const label    = DOCUMENT_LABELS[docKey]?.label || docKey
   const uploaded = !!entry
+  const missing  = required && !uploaded
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
-      padding: '10px 12px', borderRadius: 8,
-      background: uploaded ? 'rgba(78,232,200,0.04)' : 'rgba(255,255,255,0.03)',
-      border: `1px solid ${uploaded ? 'rgba(78,232,200,0.18)' : 'rgba(255,255,255,0.07)'}`,
-      marginBottom: 6,
+      padding: '10px 12px', borderRadius: 8, marginBottom: 6,
+      background: uploaded ? 'rgba(78,232,200,0.04)' : missing ? 'rgba(224,90,170,0.04)' : 'rgba(255,255,255,0.03)',
+      border: `1px solid ${uploaded ? 'rgba(78,232,200,0.18)' : missing ? 'rgba(224,90,170,0.22)' : 'rgba(255,255,255,0.07)'}`,
     }}>
       <div style={{
         width: 28, height: 28, borderRadius: 6, flexShrink: 0,
-        background: uploaded ? 'rgba(78,232,200,0.10)' : 'rgba(255,255,255,0.04)',
-        border: `1px solid ${uploaded ? 'rgba(78,232,200,0.25)' : 'rgba(255,255,255,0.08)'}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: uploaded ? 'rgba(78,232,200,0.10)' : missing ? 'rgba(224,90,170,0.08)' : 'rgba(255,255,255,0.04)',
+        border: `1px solid ${uploaded ? 'rgba(78,232,200,0.25)' : missing ? 'rgba(224,90,170,0.25)' : 'rgba(255,255,255,0.08)'}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
+        color: uploaded ? COLORS.teal : missing ? COLORS.pink : COLORS.dim,
+        fontWeight: 700,
       }}>
-        {uploaded ? (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        ) : (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.dim} strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
-        )}
+        {uploaded ? '✓' : missing ? '!' : '○'}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: uploaded ? '#fff' : COLORS.dim, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {label}
+        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: uploaded ? '#fff' : missing ? COLORS.pink : COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {label}{missing && <span style={{ color: COLORS.pink }}> — requis</span>}
         </p>
         {entry?.name && (
-          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {entry.name}
           </p>
         )}
       </div>
-      {uploaded && (
-        <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, flexShrink: 0 }}>✓</span>
-      )}
-      {!uploaded && (
-        <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0 }}>—</span>
+      {onUpload && (
+        <label style={{ cursor: 'pointer', flexShrink: 0 }}>
+          <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
+            onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
+          <span style={{
+            fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+            padding: '4px 9px', borderRadius: 4, cursor: 'pointer',
+            color: uploaded ? COLORS.teal : COLORS.pink,
+            border: `1px solid ${uploaded ? 'rgba(78,232,200,0.3)' : 'rgba(224,90,170,0.4)'}`,
+          }}>
+            {uploading ? '…' : uploaded ? 'Modifier' : 'Ajouter'}
+          </span>
+        </label>
       )}
     </div>
   )
@@ -174,7 +177,28 @@ export default function MonDossierPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [app, setApp] = useState(null)
-  const [tab, setTab] = useState('status') // status | documents | history
+  const [tab, setTab] = useState('status')
+  const [uploadStatus, setUploadStatus] = useState({}) // { [docKey]: 'uploading'|'done'|'error' }
+  const [toast, setToast] = useState(null)
+
+  function showToast(msg, type = 'success') {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  async function handleUpload(docKey, file) {
+    if (!app || !file) return
+    setUploadStatus(s => ({ ...s, [docKey]: 'uploading' }))
+    const res = await uploadDocument(app.id, docKey, file)
+    if (res.ok) {
+      setUploadStatus(s => ({ ...s, [docKey]: 'done' }))
+      setApp(getApplicationByUser(user.uid, app.type))
+      showToast('Document enregistré ✓')
+    } else {
+      setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
+      showToast('Erreur lors de l\'upload', 'error')
+    }
+  }
 
   useEffect(() => {
     if (!user) { navigate('/connexion'); return }
@@ -400,7 +424,7 @@ export default function MonDossierPage() {
                   { label: 'Responsable',      value: app.formData?.responsableNom },
                   { label: 'Ville',            value: app.formData?.ville          },
                   app.type === 'organisateur'
-                    ? { label: 'SIREN',        value: app.formData?.siren          }
+                    ? { label: 'SIRET',        value: app.formData?.siret          }
                     : { label: 'Type activité', value: app.formData?.prestataireType },
                 ].filter(f => f?.value).map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
@@ -440,24 +464,53 @@ export default function MonDossierPage() {
         {/* ── Tab: Documents ── */}
         {tab === 'documents' && (
           <div>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '0 0 12px' }}>
-              {Object.keys(app.documents || {}).length} document{Object.keys(app.documents || {}).length !== 1 ? 's' : ''} déposé{Object.keys(app.documents || {}).length !== 1 ? 's' : ''}
-            </p>
-            {allDocKeys.map(key => (
-              <DocRow key={key} docKey={key} entry={app.documents?.[key]} />
-            ))}
-            {isEditable && (
-              <button
-                onClick={() => navigate(editPath)}
-                style={{
-                  width: '100%', marginTop: 14, padding: '11px 0', borderRadius: 6, cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
-                  color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11,
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                }}>
-                Ajouter / modifier des documents →
-              </button>
+            {/* Docs requis manquants — alerte */}
+            {requiredDocs.some(k => !app.documents?.[k]) && (
+              <div style={{ padding: '10px 14px', background: 'rgba(224,90,170,0.06)', border: '1px solid rgba(224,90,170,0.2)', borderRadius: 8, marginBottom: 12 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.pink, margin: 0, letterSpacing: '0.04em' }}>
+                  ⚠ Des documents obligatoires sont manquants. Ajoute-les pour que ton dossier puisse être traité.
+                </p>
+              </div>
             )}
+
+            {/* Docs requis */}
+            {requiredDocs.map(key => (
+              <DocRow
+                key={key}
+                docKey={key}
+                entry={app.documents?.[key]}
+                required
+                onUpload={file => handleUpload(key, file)}
+                uploading={uploadStatus[key] === 'uploading'}
+              />
+            ))}
+
+            {/* Doc optionnel : business_doc */}
+            {['business_doc'].map(key => (
+              <DocRow
+                key={key}
+                docKey={key}
+                entry={app.documents?.[key]}
+                required={false}
+                onUpload={file => handleUpload(key, file)}
+                uploading={uploadStatus[key] === 'uploading'}
+              />
+            ))}
+
+            {/* Doc conditionnel : licence alcool */}
+            {app.formData?.alcool && (
+              <DocRow
+                docKey="alcohol_license"
+                entry={app.documents?.alcohol_license}
+                required
+                onUpload={file => handleUpload('alcohol_license', file)}
+                uploading={uploadStatus.alcohol_license === 'uploading'}
+              />
+            )}
+
+            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '12px 0 0', letterSpacing: '0.04em' }}>
+              Formats acceptés : PDF, JPG, PNG
+            </p>
           </div>
         )}
 
@@ -472,6 +525,23 @@ export default function MonDossierPage() {
         )}
 
       </div>
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 999, padding: '10px 20px', borderRadius: 8,
+          background: toast.type === 'error' ? 'rgba(224,90,170,0.15)' : 'rgba(78,232,200,0.12)',
+          border: `1px solid ${toast.type === 'error' ? 'rgba(224,90,170,0.4)' : 'rgba(78,232,200,0.35)'}`,
+          backdropFilter: 'blur(16px)',
+          fontFamily: FONTS.mono, fontSize: 11,
+          color: toast.type === 'error' ? COLORS.pink : COLORS.teal,
+          letterSpacing: '0.04em', whiteSpace: 'nowrap',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+        }}>
+          {toast.msg}
+        </div>
+      )}
     </Layout>
   )
 }
