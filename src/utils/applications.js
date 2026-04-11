@@ -195,8 +195,13 @@ export async function uploadDocument(appId, docKey, file) {
 
         const path = `applications/${appId}/${docKey}/${Date.now()}_${file.name}`
         const storageRef = ref(storage, path)
-        await uploadBytes(storageRef, file)
-        const url = await getDownloadURL(storageRef)
+
+        // Timeout 10s — si Firebase Storage ne répond pas, on bascule en local
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('storage_timeout')), 5000)
+        )
+        await Promise.race([uploadBytes(storageRef, file), timeout])
+        const url = await Promise.race([getDownloadURL(storageRef), timeout])
         docEntry.url = url
 
         // Update Firestore (append to array)
@@ -205,7 +210,7 @@ export async function uploadDocument(appId, docKey, file) {
           updatedAt: Date.now(),
         })
       } catch {
-        // Firebase Storage indisponible — on sauvegarde localement uniquement
+        // Firebase Storage indisponible ou timeout — fallback local uniquement
       }
     }
 
