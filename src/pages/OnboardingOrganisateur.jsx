@@ -660,93 +660,124 @@ function DocUploadRow({ label, required, files = [], status, onChange, onRemove 
   const isUploading = status === 'uploading'
   const missing     = required && !hasFiles
 
+  const borderColor = hasFiles
+    ? 'rgba(78,232,200,0.25)'
+    : missing ? 'rgba(224,90,170,0.35)' : 'rgba(255,255,255,0.10)'
+  const bgColor = hasFiles
+    ? 'rgba(78,232,200,0.04)'
+    : missing ? 'rgba(224,90,170,0.04)' : 'rgba(255,255,255,0.02)'
+  const iconColor = hasFiles ? '#4ee8c8' : missing ? '#e05aaa' : 'rgba(255,255,255,0.25)'
+  const btnColor  = hasFiles ? 'rgba(78,232,200,0.7)' : missing ? '#e05aaa' : 'rgba(200,169,110,0.7)'
+  const btnBorder = hasFiles ? 'rgba(78,232,200,0.3)' : missing ? 'rgba(224,90,170,0.4)' : 'rgba(200,169,110,0.3)'
+
   return (
     <div style={{
-      borderRadius: 8, marginBottom: 10, overflow: 'hidden',
-      border: `1px solid ${hasFiles ? 'rgba(78,232,200,0.22)' : missing ? 'rgba(224,90,170,0.28)' : 'rgba(255,255,255,0.08)'}`,
-      background: hasFiles ? 'rgba(78,232,200,0.03)' : missing ? 'rgba(224,90,170,0.03)' : 'rgba(255,255,255,0.02)',
+      borderRadius: 10, marginBottom: 12, overflow: 'hidden',
+      border: `1px solid ${borderColor}`,
+      background: bgColor,
     }}>
-
       {/* ─ Header ─ */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 16px' }}>
+        {/* Icon */}
         <div style={{
-          width: 30, height: 30, borderRadius: 6, flexShrink: 0,
+          width: 40, height: 40, borderRadius: 8, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 13, fontWeight: 700,
-          background: hasFiles ? 'rgba(78,232,200,0.10)' : missing ? 'rgba(224,90,170,0.08)' : 'rgba(255,255,255,0.04)',
-          border: `1px solid ${hasFiles ? 'rgba(78,232,200,0.25)' : missing ? 'rgba(224,90,170,0.25)' : 'rgba(255,255,255,0.08)'}`,
-          color: hasFiles ? '#4ee8c8' : missing ? '#e05aaa' : 'rgba(255,255,255,0.25)',
+          fontSize: 16, fontWeight: 700,
+          background: hasFiles ? 'rgba(78,232,200,0.10)' : missing ? 'rgba(224,90,170,0.10)' : 'rgba(255,255,255,0.05)',
+          border: `1px solid ${borderColor}`,
+          color: iconColor,
         }}>
-          {isUploading ? '…' : hasFiles ? '✓' : missing ? '!' : '○'}
+          {isUploading ? (
+            <span style={{ fontSize: 12, opacity: 0.6 }}>···</span>
+          ) : hasFiles ? '✓' : missing ? '!' : '○'}
         </div>
 
+        {/* Label + status */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{
-            fontFamily: DM, fontSize: 10, margin: 0, letterSpacing: '0.04em',
-            color: hasFiles ? '#fff' : missing ? '#e05aaa' : 'rgba(255,255,255,0.55)',
+            fontFamily: DM, fontSize: 11, margin: 0, letterSpacing: '0.03em',
+            color: hasFiles ? '#fff' : missing ? '#e05aaa' : 'rgba(255,255,255,0.6)',
+            fontWeight: hasFiles ? 500 : 400,
           }}>
             {label}
             {required && <span style={{ color: '#e05aaa', marginLeft: 4 }}>*</span>}
           </p>
-          {!hasFiles && (
-            <p style={{ fontFamily: DM, fontSize: 9, margin: '2px 0 0', color: missing ? 'rgba(224,90,170,0.5)' : 'rgba(255,255,255,0.2)' }}>
-              {missing ? 'Document requis — aucun fichier ajouté' : 'Optionnel'}
-            </p>
-          )}
+          <p style={{
+            fontFamily: DM, fontSize: 9, margin: '3px 0 0',
+            color: hasFiles
+              ? 'rgba(78,232,200,0.6)'
+              : missing ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.22)',
+          }}>
+            {isUploading
+              ? 'Enregistrement en cours…'
+              : hasFiles
+                ? `${files.length} fichier${files.length > 1 ? 's' : ''} ajouté${files.length > 1 ? 's' : ''}`
+                : missing ? 'Obligatoire — aucun fichier' : 'Optionnel'}
+          </p>
         </div>
 
         {/* Add button */}
-        <label style={{ cursor: 'pointer', flexShrink: 0 }}>
+        <label style={{ cursor: isUploading ? 'wait' : 'pointer', flexShrink: 0 }}>
           <input
             type="file"
             multiple
+            disabled={isUploading}
             style={{ display: 'none' }}
             accept=".pdf,.jpg,.jpeg,.png"
             onChange={e => Array.from(e.target.files || []).forEach(f => onChange(f))}
           />
           <span style={{
-            fontFamily: DM, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
-            padding: '5px 10px', borderRadius: 4, cursor: 'pointer',
-            color: hasFiles ? 'rgba(78,232,200,0.65)' : missing ? 'rgba(224,90,170,0.8)' : 'rgba(200,169,110,0.65)',
-            border: `1px solid ${hasFiles ? 'rgba(78,232,200,0.2)' : missing ? 'rgba(224,90,170,0.35)' : 'rgba(200,169,110,0.25)'}`,
+            display: 'inline-block',
+            fontFamily: DM, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+            padding: '7px 14px', borderRadius: 5,
+            color: isUploading ? 'rgba(255,255,255,0.25)' : btnColor,
+            border: `1px solid ${isUploading ? 'rgba(255,255,255,0.08)' : btnBorder}`,
+            background: 'transparent',
+            whiteSpace: 'nowrap',
           }}>
-            {isUploading ? 'Ajout…' : hasFiles ? '+ Ajouter' : 'Choisir'}
+            {isUploading ? '···' : hasFiles ? '+ Ajouter' : 'Choisir'}
           </span>
         </label>
       </div>
 
       {/* ─ File list ─ */}
       {hasFiles && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '8px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <div style={{
+          borderTop: '1px solid rgba(78,232,200,0.08)',
+          padding: '10px 16px 12px',
+          display: 'flex', flexDirection: 'column', gap: 6,
+        }}>
           {files.map((file, i) => (
             <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '6px 8px', borderRadius: 5,
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 10px', borderRadius: 6,
               background: 'rgba(78,232,200,0.05)',
-              border: '1px solid rgba(78,232,200,0.10)',
+              border: '1px solid rgba(78,232,200,0.12)',
             }}>
-              <span style={{ fontSize: 10, flexShrink: 0 }}>📄</span>
+              <span style={{ fontSize: 14, flexShrink: 0 }}>📄</span>
               <span style={{
-                fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.75)',
+                fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.8)',
                 flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {file.name}
               </span>
-              {file.size && (
-                <span style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.22)', flexShrink: 0 }}>
-                  {(file.size / 1024).toFixed(0)} Ko
+              {file.size != null && (
+                <span style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>
+                  {file.size < 1024 * 1024
+                    ? `${(file.size / 1024).toFixed(0)} Ko`
+                    : `${(file.size / (1024 * 1024)).toFixed(1)} Mo`}
                 </span>
               )}
               <button
                 onClick={() => onRemove(i)}
                 style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'rgba(224,90,170,0.5)', fontSize: 14, lineHeight: 1,
-                  padding: '0 2px', flexShrink: 0,
+                  background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.25)',
+                  cursor: 'pointer', color: '#e05aaa', fontSize: 13, lineHeight: 1,
+                  padding: '3px 7px', borderRadius: 4, flexShrink: 0,
                 }}
-                title="Supprimer ce fichier"
+                title="Retirer ce fichier"
               >
-                ×
+                ✕
               </button>
             </div>
           ))}

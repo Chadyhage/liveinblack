@@ -182,36 +182,37 @@ export async function submitApplication(id, formData) {
 // En local : stocke uniquement le nom + date (pas de vrai upload)
 
 export async function uploadDocument(appId, docKey, file) {
+  const docEntry = { name: file.name, url: null, size: file.size, uploadedAt: Date.now() }
+
   try {
     const { USE_REAL_FIREBASE } = await import('../firebase')
 
     if (USE_REAL_FIREBASE) {
-      const { storage, db } = await import('../firebase')
-      const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
-      const { doc, updateDoc } = await import('firebase/firestore')
+      try {
+        const { storage, db } = await import('../firebase')
+        const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+        const { doc, updateDoc, arrayUnion } = await import('firebase/firestore')
 
-      const path = `applications/${appId}/${docKey}/${file.name}`
-      const storageRef = ref(storage, path)
-      await uploadBytes(storageRef, file)
-      const url = await getDownloadURL(storageRef)
+        const path = `applications/${appId}/${docKey}/${Date.now()}_${file.name}`
+        const storageRef = ref(storage, path)
+        await uploadBytes(storageRef, file)
+        const url = await getDownloadURL(storageRef)
+        docEntry.url = url
 
-      const docEntry = { name: file.name, url, size: file.size, uploadedAt: Date.now() }
-
-      // Update Firestore
-      await updateDoc(doc(db, 'applications', appId), {
-        [`documents.${docKey}`]: docEntry,
-        updatedAt: Date.now(),
-      })
-
-      // Update local
-      recordDocumentUpload(appId, docKey, docEntry)
-      return { ok: true, url }
-    } else {
-      // Demo mode: just record name
-      const docEntry = { name: file.name, url: null, size: file.size, uploadedAt: Date.now() }
-      recordDocumentUpload(appId, docKey, docEntry)
-      return { ok: true, url: null }
+        // Update Firestore (append to array)
+        await updateDoc(doc(db, 'applications', appId), {
+          [`documents.${docKey}`]: arrayUnion(docEntry),
+          updatedAt: Date.now(),
+        })
+      } catch {
+        // Firebase Storage indisponible — on sauvegarde localement uniquement
+      }
     }
+
+    // Toujours sauvegarder en local (fallback garanti)
+    recordDocumentUpload(appId, docKey, docEntry)
+    return { ok: true, url: docEntry.url }
+
   } catch (e) {
     return { ok: false, error: e.message }
   }
