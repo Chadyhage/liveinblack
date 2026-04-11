@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import {
   createApplication, saveDraft, submitApplication,
   uploadDocument, getApplicationByUser, DOCUMENT_LABELS, getRequiredDocs,
+  hasDoc, getDocFiles, removeDocumentFile,
 } from '../utils/applications'
 
 const DM = "'DM Mono', monospace"
@@ -158,18 +159,23 @@ export default function OnboardingOrganisateur() {
     if (res.ok) {
       setUploadStatus(s => ({ ...s, [docKey]: 'done' }))
       setApp(getApplicationByUser(user.uid, 'organisateur'))
-      showToast('Document enregistré')
     } else {
       setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
-      showToast('Erreur upload', 'error')
+      showToast('Erreur lors de l\'ajout', 'error')
     }
+  }
+
+  async function handleRemove(docKey, index) {
+    if (!app) return
+    await removeDocumentFile(app.id, docKey, index)
+    setApp(getApplicationByUser(user.uid, 'organisateur'))
   }
 
   async function handleSubmit() {
     // Vérification des documents obligatoires avant soumission
     const missingDocs = []
-    if (!app.documents?.identity)                    missingDocs.push('Pièce d\'identité')
-    if (f.alcool && !app.documents?.alcohol_license) missingDocs.push('Licence alcool')
+    if (!hasDoc(app, 'identity'))                    missingDocs.push('Pièce d\'identité')
+    if (f.alcool && !hasDoc(app, 'alcohol_license')) missingDocs.push('Licence alcool')
     if (missingDocs.length > 0) {
       showToast(`Document(s) manquant(s) : ${missingDocs.join(', ')}`, 'error')
       return
@@ -545,18 +551,20 @@ export default function OnboardingOrganisateur() {
             <DocUploadRow
               label="Pièce d'identité du responsable"
               required
-              uploaded={app.documents?.identity}
+              files={getDocFiles(app, 'identity')}
               status={uploadStatus.identity}
               onChange={file => handleUpload('identity', file)}
+              onRemove={i => handleRemove('identity', i)}
             />
 
             {/* ── Optionnel : document officiel entreprise ── */}
             <DocUploadRow
               label="Document officiel de l'entreprise (KBIS, statuts, récépissé INSEE…)"
               required={false}
-              uploaded={app.documents?.business_doc}
+              files={getDocFiles(app, 'business_doc')}
               status={uploadStatus.business_doc}
               onChange={file => handleUpload('business_doc', file)}
+              onRemove={i => handleRemove('business_doc', i)}
             />
 
             {/* ── Conditionnel : alcool ── */}
@@ -564,17 +572,18 @@ export default function OnboardingOrganisateur() {
               <DocUploadRow
                 label="Licence / Justificatif de débit de boissons"
                 required
-                uploaded={app.documents?.alcohol_license}
+                files={getDocFiles(app, 'alcohol_license')}
                 status={uploadStatus.alcohol_license}
                 onChange={file => handleUpload('alcohol_license', file)}
+                onRemove={i => handleRemove('alcohol_license', i)}
               />
             )}
 
             {/* Submit section */}
             {(() => {
               const missing = []
-              if (!app.documents?.identity)                    missing.push('Pièce d\'identité')
-              if (f.alcool && !app.documents?.alcohol_license) missing.push('Licence alcool')
+              if (!hasDoc(app, 'identity'))                    missing.push('Pièce d\'identité')
+              if (f.alcool && !hasDoc(app, 'alcohol_license')) missing.push('Licence alcool')
               const canSubmit = missing.length === 0
               return (
                 <div style={{ marginTop: 8, padding: '16px', background: canSubmit ? 'rgba(200,169,110,0.05)' : 'rgba(224,90,170,0.04)', border: `1px solid ${canSubmit ? 'rgba(200,169,110,0.15)' : 'rgba(224,90,170,0.2)'}`, borderRadius: 8 }}>
@@ -646,31 +655,103 @@ export default function OnboardingOrganisateur() {
 }
 
 // ── Document upload row ───────────────────────────────────────────────────────
-function DocUploadRow({ label, required, uploaded, status, onChange }) {
-  const isDone = status === 'done' || !!uploaded
+function DocUploadRow({ label, required, files = [], status, onChange, onRemove }) {
+  const hasFiles    = files.length > 0
   const isUploading = status === 'uploading'
+  const missing     = required && !hasFiles
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: isDone ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)', border: `1px solid ${isDone ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 6 }}>
-      <div style={{ width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDone ? 'rgba(34,197,94,0.10)' : 'rgba(255,255,255,0.04)', border: `1px solid ${isDone ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.08)'}`, fontSize: 14, flexShrink: 0 }}>
-        {isUploading ? '⏳' : isDone ? '✓' : '📄'}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: DM, fontSize: 10, color: isDone ? '#4ee8c8' : 'rgba(255,255,255,0.6)', margin: '0 0 2px', letterSpacing: '0.04em' }}>
-          {label} {required && <span style={{ color: '#e05aaa' }}>*</span>}
-        </p>
-        {uploaded && (
-          <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {uploaded.name}
+    <div style={{
+      borderRadius: 8, marginBottom: 10, overflow: 'hidden',
+      border: `1px solid ${hasFiles ? 'rgba(78,232,200,0.22)' : missing ? 'rgba(224,90,170,0.28)' : 'rgba(255,255,255,0.08)'}`,
+      background: hasFiles ? 'rgba(78,232,200,0.03)' : missing ? 'rgba(224,90,170,0.03)' : 'rgba(255,255,255,0.02)',
+    }}>
+
+      {/* ─ Header ─ */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px' }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 6, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 13, fontWeight: 700,
+          background: hasFiles ? 'rgba(78,232,200,0.10)' : missing ? 'rgba(224,90,170,0.08)' : 'rgba(255,255,255,0.04)',
+          border: `1px solid ${hasFiles ? 'rgba(78,232,200,0.25)' : missing ? 'rgba(224,90,170,0.25)' : 'rgba(255,255,255,0.08)'}`,
+          color: hasFiles ? '#4ee8c8' : missing ? '#e05aaa' : 'rgba(255,255,255,0.25)',
+        }}>
+          {isUploading ? '…' : hasFiles ? '✓' : missing ? '!' : '○'}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontFamily: DM, fontSize: 10, margin: 0, letterSpacing: '0.04em',
+            color: hasFiles ? '#fff' : missing ? '#e05aaa' : 'rgba(255,255,255,0.55)',
+          }}>
+            {label}
+            {required && <span style={{ color: '#e05aaa', marginLeft: 4 }}>*</span>}
           </p>
-        )}
+          {!hasFiles && (
+            <p style={{ fontFamily: DM, fontSize: 9, margin: '2px 0 0', color: missing ? 'rgba(224,90,170,0.5)' : 'rgba(255,255,255,0.2)' }}>
+              {missing ? 'Document requis — aucun fichier ajouté' : 'Optionnel'}
+            </p>
+          )}
+        </div>
+
+        {/* Add button */}
+        <label style={{ cursor: 'pointer', flexShrink: 0 }}>
+          <input
+            type="file"
+            multiple
+            style={{ display: 'none' }}
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={e => Array.from(e.target.files || []).forEach(f => onChange(f))}
+          />
+          <span style={{
+            fontFamily: DM, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+            padding: '5px 10px', borderRadius: 4, cursor: 'pointer',
+            color: hasFiles ? 'rgba(78,232,200,0.65)' : missing ? 'rgba(224,90,170,0.8)' : 'rgba(200,169,110,0.65)',
+            border: `1px solid ${hasFiles ? 'rgba(78,232,200,0.2)' : missing ? 'rgba(224,90,170,0.35)' : 'rgba(200,169,110,0.25)'}`,
+          }}>
+            {isUploading ? 'Ajout…' : hasFiles ? '+ Ajouter' : 'Choisir'}
+          </span>
+        </label>
       </div>
-      <label style={{ cursor: 'pointer', flexShrink: 0 }}>
-        <input type="file" style={{ display: 'none' }} accept=".pdf,.jpg,.jpeg,.png" onChange={e => e.target.files?.[0] && onChange(e.target.files[0])} />
-        <span style={{ fontFamily: DM, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: isDone ? 'rgba(78,232,200,0.6)' : 'rgba(200,169,110,0.7)', padding: '5px 10px', border: `1px solid ${isDone ? 'rgba(78,232,200,0.25)' : 'rgba(200,169,110,0.3)'}`, borderRadius: 4, background: 'transparent' }}>
-          {isDone ? 'Modifier' : 'Choisir'}
-        </span>
-      </label>
+
+      {/* ─ File list ─ */}
+      {hasFiles && (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '8px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {files.map((file, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 8px', borderRadius: 5,
+              background: 'rgba(78,232,200,0.05)',
+              border: '1px solid rgba(78,232,200,0.10)',
+            }}>
+              <span style={{ fontSize: 10, flexShrink: 0 }}>📄</span>
+              <span style={{
+                fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.75)',
+                flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {file.name}
+              </span>
+              {file.size && (
+                <span style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.22)', flexShrink: 0 }}>
+                  {(file.size / 1024).toFixed(0)} Ko
+                </span>
+              )}
+              <button
+                onClick={() => onRemove(i)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'rgba(224,90,170,0.5)', fontSize: 14, lineHeight: 1,
+                  padding: '0 2px', flexShrink: 0,
+                }}
+                title="Supprimer ce fichier"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

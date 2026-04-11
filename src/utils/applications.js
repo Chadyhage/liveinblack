@@ -217,16 +217,63 @@ export async function uploadDocument(appId, docKey, file) {
   }
 }
 
+// hasDoc — vérifie qu'au moins un fichier est présent pour ce slot (supporte ancien format objet + nouveau format tableau)
+export function hasDoc(app, key) {
+  const d = app?.documents?.[key]
+  if (!d) return false
+  return Array.isArray(d) ? d.length > 0 : true
+}
+
+// getDocFiles — renvoie toujours un tableau (compat ancien format)
+export function getDocFiles(app, key) {
+  const d = app?.documents?.[key]
+  if (!d) return []
+  return Array.isArray(d) ? d : [d]
+}
+
 export function recordDocumentUpload(appId, docKey, entry) {
   const all = _getAll()
   const idx = all.findIndex(a => a.id === appId)
   if (idx < 0) return null
+  const existing = all[idx].documents?.[docKey]
+  const prev = Array.isArray(existing) ? existing : (existing ? [existing] : [])
   all[idx] = {
     ...all[idx],
-    documents: { ...all[idx].documents, [docKey]: entry },
+    documents: { ...all[idx].documents, [docKey]: [...prev, entry] },
     updatedAt: Date.now(),
   }
   _saveAll(all)
+  return all[idx]
+}
+
+export async function removeDocumentFile(appId, docKey, index) {
+  const all = _getAll()
+  const idx = all.findIndex(a => a.id === appId)
+  if (idx < 0) return null
+  const existing = all[idx].documents?.[docKey]
+  const arr = Array.isArray(existing) ? existing : (existing ? [existing] : [])
+  const updated = arr.filter((_, i) => i !== index)
+  all[idx] = {
+    ...all[idx],
+    documents: {
+      ...all[idx].documents,
+      [docKey]: updated.length > 0 ? updated : undefined,
+    },
+    updatedAt: Date.now(),
+  }
+  _saveAll(all)
+
+  try {
+    const { USE_REAL_FIREBASE, db } = await import('../firebase')
+    if (USE_REAL_FIREBASE) {
+      const { doc, updateDoc } = await import('firebase/firestore')
+      await updateDoc(doc(db, 'applications', appId), {
+        [`documents.${docKey}`]: updated.length > 0 ? updated : null,
+        updatedAt: Date.now(),
+      })
+    }
+  } catch {}
+
   return all[idx]
 }
 
