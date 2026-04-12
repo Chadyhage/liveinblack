@@ -525,7 +525,19 @@ export default function LoginPage() {
         navigate('/accueil')
       }
     } catch (err) {
-      setError(getFirebaseError(err.code))
+      if (err.code === 'auth/email-unverified-ghost') {
+        // Firebase Auth still holds a ghost account for this email — send a reset so user can reclaim it
+        try {
+          const { sendPasswordResetEmail } = await import('firebase/auth')
+          const { auth } = await import('../firebase')
+          await sendPasswordResetEmail(auth, regEmail)
+          setError(`Un email de récupération a été envoyé à ${regEmail}. Clique sur le lien dans cet email pour définir ton mot de passe, puis connecte-toi.`)
+        } catch {
+          setError(`Cet email est déjà utilisé par un compte non vérifié. Va sur "Mot de passe oublié" pour récupérer l'accès.`)
+        }
+      } else {
+        setError(getFirebaseError(err.code))
+      }
     } finally {
       setLoading(false)
     }
