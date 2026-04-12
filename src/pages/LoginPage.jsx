@@ -81,7 +81,7 @@ async function doEmailLogin(email, password, role = null) {
 const SUPER_ADMIN_EMAIL = 'hagechady4@gmail.com'
 
 async function doEmailRegister(data) {
-  const { email, password, name, phone, role, prestataireType } = data
+  const { email, password, name, phone, orgName, ville, role, prestataireType } = data
   const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
 
   // Each role creates a DEDICATED account — no upgrades.
@@ -119,6 +119,8 @@ async function doEmailRegister(data) {
     const uid = 'local-' + Date.now()
     const user = {
       uid, name, email, phone,
+      orgName: orgName || '',
+      ville: ville || '',
       password,
       role: baseRole,
       activeRole: baseRole,
@@ -187,6 +189,8 @@ async function doEmailRegister(data) {
   const userObj = {
     uid: cred.user.uid, name, email, phone,
     phoneNormalized: phone ? phone.replace(/\D/g, '') : '',
+    orgName: orgName || '',
+    ville: ville || '',
     role: baseRole,
     activeRole: baseRole,
     enabledRoles: [baseRole],
@@ -205,7 +209,13 @@ async function doEmailRegister(data) {
     const reqId = 'req-' + Date.now()
     await setDoc(doc(db, 'pending_validations', reqId), {
       id: reqId, uid: cred.user.uid, email, name,
+      role: baseRole,
+      activeRole: baseRole,
+      enabledRoles: [baseRole],
       requestedRole: baseRole,
+      orgName: orgName || '',
+      ville: ville || '',
+      phone: phone || '',
       prestataireType: prestataireType || null,
       requestedAt: Date.now(),
       status: 'pending',
@@ -383,6 +393,8 @@ export default function LoginPage() {
   const [regPhone, setRegPhone] = useState('')
   const [regDialCode, setRegDialCode] = useState('+33')
   const [showDialPicker, setShowDialPicker] = useState(false)
+  const [regOrgName, setRegOrgName] = useState('')
+  const [regVille, setRegVille] = useState('')
   const [regPrestType, setRegPrestType] = useState('')
   const [regPwd, setRegPwd] = useState('')
   const [regPwdConfirm, setRegPwdConfirm] = useState('')
@@ -483,6 +495,8 @@ export default function LoginPage() {
     if (!emailRegex.test(regEmail)) { setError('Adresse email invalide.'); return }
     const isDedicatedRole = regRole === 'organisateur' || regRole === 'prestataire'
     if (isDedicatedRole) {
+      if (!regOrgName.trim()) { setError('Le nom de la structure est requis.'); return }
+      if (!regVille.trim()) { setError('La ville est requise.'); return }
       if (!regPhone.trim()) { setError('Le numéro de téléphone est requis.'); return }
       if (!/^\d[\d\s\-]{5,}$/.test(regPhone.trim())) { setError('Numéro de téléphone invalide.'); return }
     }
@@ -495,7 +509,10 @@ export default function LoginPage() {
     try {
       const userData = await doEmailRegister({
         email: regEmail, password: regPwd,
-        name: regName.trim(), phone: (regRole === 'organisateur' || regRole === 'prestataire') ? (regDialCode + regPhone.trim()).replace(/\s/g, '') : '',
+        name: regName.trim(),
+        phone: isDedicatedRole ? (regDialCode + regPhone.trim()).replace(/\s/g, '') : '',
+        orgName: isDedicatedRole ? regOrgName.trim() : '',
+        ville: isDedicatedRole ? regVille.trim() : '',
         role: regRole, prestataireType: regPrestType,
       })
       if (userData._pendingOrgOnboarding && userData._needsEmailVerification) {
@@ -986,6 +1003,21 @@ export default function LoginPage() {
                 <label style={S.label}>Prénom &amp; nom</label>
                 <FocusInput type="text" placeholder="Jean Dupont" required value={regName} onChange={e => setRegName(e.target.value)} />
               </div>
+
+              {/* Nom de structure + Ville — org/prest only */}
+              {(regRole === 'organisateur' || regRole === 'prestataire') && (
+                <>
+                  <div>
+                    <label style={S.label}>{regRole === 'organisateur' ? 'Nom de l\'organisation / structure' : 'Nom commercial / marque'}</label>
+                    <FocusInput type="text" placeholder={regRole === 'organisateur' ? 'Ex : The Next Play, Club Lumière…' : 'Ex : DJ Alex, Studio Son Pro…'} value={regOrgName} onChange={e => setRegOrgName(e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={S.label}>Ville d'activité principale</label>
+                    <FocusInput type="text" placeholder="Ex : Lomé, Paris, Abidjan…" value={regVille} onChange={e => setRegVille(e.target.value)} />
+                  </div>
+                </>
+              )}
+
               <div>
                 <label style={S.label}>Adresse email</label>
                 <FocusInput type="email" placeholder="ton@email.com" required value={regEmail} onChange={e => setRegEmail(e.target.value)} />

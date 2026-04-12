@@ -94,18 +94,39 @@ export function removePendingValidation(uid) {
 export async function approveValidation(uid) {
   const pending = getPendingValidations().find(u => u.uid === uid)
   if (!pending) return null
-  const approved = { ...pending, status: 'active', approvedAt: Date.now() }
+
+  // Derive the real role — Firebase-path pending docs use `requestedRole`, local ones use `role`
+  const resolvedRole = pending.role || pending.requestedRole
+  const approved = {
+    ...pending,
+    role: resolvedRole,
+    activeRole: resolvedRole,
+    enabledRoles: pending.enabledRoles?.length ? pending.enabledRoles : [resolvedRole],
+    status: 'active',
+    approvedAt: Date.now(),
+  }
   saveAccount(approved)
   removePendingValidation(uid)
+
   // Sync to Firestore if Firebase is active
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
-      await setDoc(doc(db, 'users', uid), approved)
-      await deleteDoc(doc(db, 'pending_validations', uid))
+      const { doc, updateDoc, deleteDoc } = await import('firebase/firestore')
+      // Use updateDoc (not setDoc) to preserve the original users/{uid} document fields
+      await updateDoc(doc(db, 'users', uid), {
+        status: 'active',
+        approvedAt: Date.now(),
+        role: resolvedRole,
+        activeRole: resolvedRole,
+        enabledRoles: approved.enabledRoles,
+      })
+      // Doc ID might be pending.id (reqId) or uid depending on which path created it
+      const pendingDocId = pending.id || uid
+      await deleteDoc(doc(db, 'pending_validations', pendingDocId))
     }
   } catch {}
+
   // Mark in session if it's the current user
   try {
     const current = JSON.parse(localStorage.getItem('lib_user') || 'null')

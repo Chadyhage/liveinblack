@@ -402,7 +402,7 @@ export default function HomePage() {
         </RevealSection>
 
         {/* ── Élargis ton espace — bottom section ── */}
-        {(!user || isClient) && (
+        {user?.role !== 'agent' && (!enabledRoles.includes('organisateur') || !enabledRoles.includes('prestataire')) && (
           <RevealSection delay={0}>
             <div style={{
               borderTop: '1px solid rgba(255,255,255,0.06)',
