@@ -84,12 +84,31 @@ export default function OnboardingOrganisateur() {
 
   useEffect(() => {
     if (!user) { navigate('/connexion?next=/onboarding-organisateur'); return }
+
+    // Pre-fill responsable fields from user account (avoids re-entering what was already provided)
+    const nameParts = (user.name || '').trim().split(' ')
+    const prenom = nameParts[0] || ''
+    const nom = nameParts.slice(1).join(' ') || nameParts[0] || ''
+    const userPreFill = {
+      responsablePrenom: prenom,
+      responsableNom: nom,
+      responsableEmail: user.email || '',
+      responsableTelephone: user.phone || '',
+    }
+
     const existing = getApplicationByUser(user.uid, 'organisateur')
     if (existing) {
       setApp(existing)
-      if (existing.formData && Object.keys(existing.formData).length > 0) {
-        setF(prev => ({ ...prev, ...existing.formData }))
-      }
+      const fd = existing.formData || {}
+      setF(prev => ({
+        ...prev,
+        ...fd,
+        // Use user data as fallback if field not yet filled in the dossier
+        responsablePrenom: fd.responsablePrenom || userPreFill.responsablePrenom,
+        responsableNom: fd.responsableNom || userPreFill.responsableNom,
+        responsableEmail: fd.responsableEmail || userPreFill.responsableEmail,
+        responsableTelephone: fd.responsableTelephone || userPreFill.responsableTelephone,
+      }))
       // If approved/submitted, redirect to dossier
       if (['submitted','under_review','approved'].includes(existing.status)) {
         navigate('/mon-dossier')
@@ -97,6 +116,7 @@ export default function OnboardingOrganisateur() {
     } else {
       const created = createApplication(user.uid, user.email, user.name, 'organisateur')
       setApp(created)
+      setF(prev => ({ ...prev, ...userPreFill }))
     }
   }, [user])
 
@@ -361,6 +381,9 @@ export default function OnboardingOrganisateur() {
         {step === 1 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>👤 Responsable du compte</p>
+            <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: -8, lineHeight: 1.5 }}>
+              Pré-rempli depuis ton compte — modifie si nécessaire.
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Nom" required>
                 <input style={{ ...S.input, borderColor: errors.responsableNom ? '#e05aaa' : undefined }} value={f.responsableNom} onChange={e => update('responsableNom', e.target.value)} placeholder="Dupont" />
