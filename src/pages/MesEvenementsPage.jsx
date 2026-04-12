@@ -211,6 +211,30 @@ function IconClose({ size = 12, color = 'rgba(255,255,255,0.5)' }) {
 export default function MesEvenementsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+
+  // Compte en attente de validation → écran d'attente
+  if (user?.status === 'pending') {
+    return (
+      <Layout>
+        <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div style={{ textAlign: 'center', maxWidth: 400 }}>
+            <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 12 }}>
+              Validation en cours
+            </p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24 }}>
+              Ton compte organisateur est en attente de validation par l'équipe LIVEINBLACK. Tu pourras créer des événements dès que ton dossier sera approuvé.
+            </p>
+            <button onClick={() => navigate('/mon-dossier')}
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
+              Voir mon dossier →
+            </button>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
   const userCanCreate = canCreateEvent(user)
   const imageInputRef = useRef(null)
 

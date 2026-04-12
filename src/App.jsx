@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
@@ -116,6 +116,27 @@ function RequireOrganisateur({ user, children }) {
   return children
 }
 
+// Guard: org/prest pending without submitted onboarding → force onboarding page
+function OnboardingGuard({ user, children }) {
+  const location = useLocation()
+  const onboardingPaths = ['/onboarding-organisateur', '/onboarding-prestataire', '/connexion', '/cgu']
+  const isOnboarding = onboardingPaths.some(p => location.pathname.startsWith(p))
+  if (isOnboarding) return children
+
+  const isDedicated = user?.role === 'organisateur' || user?.role === 'prestataire'
+  if (isDedicated && user?.status === 'pending') {
+    try {
+      const apps = JSON.parse(localStorage.getItem('lib_applications') || '[]')
+      const app = apps.find(a => a.uid === user.uid)
+      if (!app || !app.submittedAt) {
+        const target = user.role === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire'
+        return <Navigate to={target} replace />
+      }
+    } catch {}
+  }
+  return children
+}
+
 // Wrapper: /connexion — allow logged-in users when ?mode= is present (creating a 2nd account)
 function ConnexionRoute({ user }) {
   const location = useLocation()
@@ -165,6 +186,7 @@ export default function App() {
             onClose={closeAuthModal}
           />
 
+          <OnboardingGuard user={user}>
           <Routes>
             {/* ── Root: always go to accueil ── */}
             <Route path="/" element={<Navigate to="/accueil" replace />} />
@@ -223,6 +245,7 @@ export default function App() {
               <RequireRole user={user} role="agent"><AgentPage /></RequireRole>
             } />
           </Routes>
+          </OnboardingGuard>
           </div>{/* fin couche z-index:1 */}
         </div>
       </BrowserRouter>
