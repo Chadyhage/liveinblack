@@ -460,6 +460,16 @@ export default function LoginPage() {
       }).catch(() => {})
       const params = new URLSearchParams(location.search)
       const next = params.get('next')
+      // Org/prest pending → redirect to onboarding if they haven't submitted yet
+      const isDedicated = userData.role === 'organisateur' || userData.role === 'prestataire'
+      if (!next && isDedicated && userData.status === 'pending') {
+        const { getApplicationByUser } = await import('../utils/applications')
+        const app = getApplicationByUser(userData.uid)
+        if (!app || !app.submittedAt) {
+          navigate(userData.role === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire')
+          return
+        }
+      }
       navigate(next || (userData.role === 'agent' ? '/agent' : '/accueil'))
     } catch (err) {
       if (err.code === 'auth/account-pending') {
