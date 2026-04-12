@@ -506,7 +506,15 @@ export default function LoginPage() {
       setOtpSent(true)
       startResendCooldown(newCount)
     } catch (err) {
-      setOtpError(getFirebaseError(err.code) || `Erreur : ${err.code || err.message || 'inconnue'}`)
+      const otpErrors = {
+        'auth/too-many-requests':      'Trop de tentatives. Réessaie dans quelques minutes.',
+        'auth/invalid-phone-number':   'Numéro invalide. Vérifie le format.',
+        'auth/captcha-check-failed':   'Vérification reCAPTCHA échouée. Réessaie.',
+        'auth/quota-exceeded':         'Quota SMS dépassé. Réessaie plus tard.',
+        'auth/network-request-failed': 'Erreur réseau. Vérifie ta connexion.',
+        'auth/unsupported-country-code': 'Ce pays n\'est pas supporté pour l\'envoi de SMS.',
+      }
+      setOtpError(otpErrors[err.code] || `Erreur (${err.code || err.message || 'inconnue'})`)
       if (recaptchaVerifierRef.current) {
         try { recaptchaVerifierRef.current.clear() } catch {}
         recaptchaVerifierRef.current = null
