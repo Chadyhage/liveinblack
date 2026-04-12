@@ -293,15 +293,16 @@ export async function syncOnLogin(uid) {
     // ── 16. Pending validations + role requests (all users: admin needs them) ──
     const pendingSnap = await loadCollection('pending_validations')
     if (pendingSnap.length) {
-      const validations = pendingSnap.filter(p => p.type !== 'role_request')
-      const roleReqs = pendingSnap.filter(p => p.type === 'role_request')
-      if (validations.length) {
-        const local = safeParseArray('lib_pending_validations')
-        localStorage.setItem('lib_pending_validations', JSON.stringify(mergeById(local, validations, 'uid')))
-      }
+      const validations = pendingSnap.filter(p => p.type !== 'role_request' && p.status === 'pending')
+      const roleReqs = pendingSnap.filter(p => p.type === 'role_request' && p.status === 'pending')
+      // Always overwrite local with the filtered Firestore list (removes approved/rejected items)
+      const local = safeParseArray('lib_pending_validations')
+      const filtered = local.filter(p => p.status === 'pending')
+      localStorage.setItem('lib_pending_validations', JSON.stringify(mergeById(filtered, validations, 'uid')))
       if (roleReqs.length) {
-        const local = safeParseArray('lib_role_requests')
-        localStorage.setItem('lib_role_requests', JSON.stringify(mergeById(local, roleReqs)))
+        const localRR = safeParseArray('lib_role_requests')
+        const filteredRR = localRR.filter(r => r.status === 'pending')
+        localStorage.setItem('lib_role_requests', JSON.stringify(mergeById(filteredRR, roleReqs)))
       }
     }
 

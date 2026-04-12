@@ -121,8 +121,10 @@ export async function approveValidation(uid) {
         activeRole: resolvedRole,
         enabledRoles: approved.enabledRoles,
       })
-      // Doc ID might be pending.id (reqId) or uid depending on which path created it
-      const pendingDocId = pending.id || uid
+      // _docId = vrai ID Firestore du document (ajouté par loadCollection), sinon fallback sur pending.id ou uid
+      const pendingDocId = pending._docId || pending.id || uid
+      // Marquer comme approuvé avant de supprimer (si delete échoue, le filtre le masquera)
+      try { await updateDoc(doc(db, 'pending_validations', pendingDocId), { status: 'approved' }) } catch {}
       await deleteDoc(doc(db, 'pending_validations', pendingDocId))
     }
   } catch {}
@@ -137,12 +139,24 @@ export async function approveValidation(uid) {
   return approved
 }
 
-export function rejectValidation(uid, reason = '') {
+export async function rejectValidation(uid, reason = '') {
   const pending = getPendingValidations().find(u => u.uid === uid)
   if (!pending) return
   const rejected = { ...pending, status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason }
   saveAccount(rejected)
   removePendingValidation(uid)
+
+  // Sync to Firestore
+  try {
+    const { USE_REAL_FIREBASE, db } = await import('../firebase')
+    if (USE_REAL_FIREBASE) {
+      const { doc, updateDoc, deleteDoc } = await import('firebase/firestore')
+      await updateDoc(doc(db, 'users', uid), { status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason })
+      const pendingDocId = pending._docId || pending.id || uid
+      try { await updateDoc(doc(db, 'pending_validations', pendingDocId), { status: 'rejected' }) } catch {}
+      await deleteDoc(doc(db, 'pending_validations', pendingDocId))
+    }
+  } catch {}
 }
 
 // ─── Multi-role architecture ───────────────────────────────────────────────

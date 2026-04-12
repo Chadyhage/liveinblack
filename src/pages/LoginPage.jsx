@@ -85,11 +85,11 @@ async function doEmailRegister(data) {
   const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
 
   // Each role creates a DEDICATED account — no upgrades.
-  // organisateur/prestataire → status:'pending' until admin approves.
-  // client/agent → status:'active' immediately.
+  // organisateur/prestataire → status:'onboarding' until they submit their full dossier,
+  // then 'pending' until admin approves. client/agent → status:'active' immediately.
   const baseRole     = isSuperAdmin ? 'agent' : (role || 'client')
   const isDedicated  = baseRole === 'organisateur' || baseRole === 'prestataire'
-  const initialStatus = isDedicated ? 'pending' : 'active'
+  const initialStatus = isDedicated ? 'onboarding' : 'active'
 
   if (!USE_REAL_FIREBASE) {
     // Block duplicate email — only if the existing account has been verified
@@ -201,26 +201,10 @@ async function doEmailRegister(data) {
   }
   await setDoc(doc(db, 'users', cred.user.uid), userObj)
 
-  // For org/prest: create the candidature application in Firestore
+  // For org/prest: create the application draft (no pending_validations yet — admin notified only after full dossier is submitted)
   if (isDedicated) {
     const { createApplication } = await import('../utils/applications')
     createApplication(cred.user.uid, email, name, baseRole)
-    // Also write a pending_validations entry so the admin can see the new account
-    const reqId = 'req-' + Date.now()
-    await setDoc(doc(db, 'pending_validations', reqId), {
-      id: reqId, uid: cred.user.uid, email, name,
-      role: baseRole,
-      activeRole: baseRole,
-      enabledRoles: [baseRole],
-      requestedRole: baseRole,
-      orgName: orgName || '',
-      ville: ville || '',
-      phone: phone || '',
-      prestataireType: prestataireType || null,
-      requestedAt: Date.now(),
-      status: 'pending',
-      type: 'new_account',
-    })
     return isSuperAdmin ? userObj : { ...userObj, _pendingOrgOnboarding: baseRole, _needsEmailVerification: true }
   }
 

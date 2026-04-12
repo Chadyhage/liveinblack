@@ -165,12 +165,48 @@ export async function submitApplication(id, formData) {
   all[idx] = app
   _saveAll(all)
 
+  // Mettre le compte en 'pending' dans localStorage (seul moment où l'admin est notifié)
+  try {
+    const { updateAccount, getPendingValidations } = await import('./accounts')
+    updateAccount(app.uid, { status: 'pending' })
+
+    // Créer l'entrée pending_validations maintenant (dossier complet soumis)
+    const existing = getPendingValidations().find(p => p.uid === app.uid)
+    if (!existing) {
+      const entry = {
+        id: id, uid: app.uid, email: app.email, name: app.name,
+        role: app.type, activeRole: app.type, enabledRoles: [app.type],
+        requestedRole: app.type,
+        orgName: formData?.nomCommercial || app.formData?.nomCommercial || '',
+        ville: formData?.ville || app.formData?.ville || '',
+        phone: formData?.telephonePro || app.formData?.telephonePro || '',
+        prestataireType: app.prestataireType || null,
+        requestedAt: now, status: 'pending', type: 'new_account',
+      }
+      const list = getPendingValidations()
+      list.push(entry)
+      localStorage.setItem('lib_pending_validations', JSON.stringify(list))
+    }
+  } catch {}
+
   // Sync Firestore
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, setDoc } = await import('firebase/firestore')
+      const { doc, setDoc, updateDoc } = await import('firebase/firestore')
       await setDoc(doc(db, 'applications', id), app)
+      // Mettre le compte en pending dans Firestore
+      await updateDoc(doc(db, 'users', app.uid), { status: 'pending' })
+      // Créer l'entrée pending_validations dans Firestore
+      await setDoc(doc(db, 'pending_validations', id), {
+        id, uid: app.uid, email: app.email, name: app.name,
+        role: app.type, activeRole: app.type, enabledRoles: [app.type],
+        requestedRole: app.type,
+        orgName: formData?.nomCommercial || app.formData?.nomCommercial || '',
+        ville: formData?.ville || app.formData?.ville || '',
+        prestataireType: app.prestataireType || null,
+        requestedAt: now, status: 'pending', type: 'new_account',
+      })
     }
   } catch {}
 

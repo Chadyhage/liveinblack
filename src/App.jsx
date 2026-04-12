@@ -124,7 +124,8 @@ function OnboardingGuard({ user, children }) {
   if (isOnboarding) return children
 
   const isDedicated = user?.role === 'organisateur' || user?.role === 'prestataire'
-  if (isDedicated && user?.status === 'pending') {
+  // status 'onboarding' = compte créé mais dossier pas encore soumis → force l'onboarding
+  if (isDedicated && (user?.status === 'onboarding' || user?.status === 'pending')) {
     try {
       const apps = JSON.parse(localStorage.getItem('lib_applications') || '[]')
       const app = apps.find(a => a.uid === user.uid)
