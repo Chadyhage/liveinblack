@@ -232,9 +232,9 @@ export async function uploadDocument(appId, docKey, file) {
         const path = `applications/${appId}/${docKey}/${Date.now()}_${file.name}`
         const storageRef = ref(storage, path)
 
-        // Timeout 10s — si Firebase Storage ne répond pas, on bascule en local
+        // 30s timeout — PDF can be heavy
         const timeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('storage_timeout')), 5000)
+          setTimeout(() => reject(new Error('storage_timeout')), 30000)
         )
         await Promise.race([uploadBytes(storageRef, file), timeout])
         const url = await Promise.race([getDownloadURL(storageRef), timeout])
@@ -245,14 +245,19 @@ export async function uploadDocument(appId, docKey, file) {
           [`documents.${docKey}`]: arrayUnion(docEntry),
           updatedAt: Date.now(),
         })
-      } catch {
-        // Firebase Storage indisponible ou timeout — fallback local uniquement
+
+        // Only save locally when Firebase succeeded (avoids null-url ghost entries)
+        recordDocumentUpload(appId, docKey, docEntry)
+        return { ok: true, url }
+      } catch (uploadErr) {
+        // Firebase Storage unavailable, permission denied, or timeout
+        return { ok: false, error: uploadErr?.message || 'upload_failed' }
       }
     }
 
-    // Toujours sauvegarder en local (fallback garanti)
+    // Local mode (no Firebase) — save without URL, it's just a draft
     recordDocumentUpload(appId, docKey, docEntry)
-    return { ok: true, url: docEntry.url }
+    return { ok: true, url: null }
 
   } catch (e) {
     return { ok: false, error: e.message }
