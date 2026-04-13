@@ -227,7 +227,7 @@ export async function uploadDocument(appId, docKey, file) {
       try {
         const { storage, db } = await import('../firebase')
         const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
-        const { doc, updateDoc, arrayUnion } = await import('firebase/firestore')
+        const { doc, setDoc, arrayUnion } = await import('firebase/firestore')
 
         const path = `applications/${appId}/${docKey}/${Date.now()}_${file.name}`
         const storageRef = ref(storage, path)
@@ -240,11 +240,11 @@ export async function uploadDocument(appId, docKey, file) {
         const url = await Promise.race([getDownloadURL(storageRef), timeout])
         docEntry.url = url
 
-        // Update Firestore (append to array)
-        await updateDoc(doc(db, 'applications', appId), {
+        // setDoc with merge:true works even if the doc doesn't exist yet
+        await setDoc(doc(db, 'applications', appId), {
           [`documents.${docKey}`]: arrayUnion(docEntry),
           updatedAt: Date.now(),
-        })
+        }, { merge: true })
 
         // Only save locally when Firebase succeeded (avoids null-url ghost entries)
         recordDocumentUpload(appId, docKey, docEntry)
