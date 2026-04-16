@@ -217,7 +217,7 @@ export default function OnboardingOrganisateur() {
       } catch (err) {
         setCreatingAccount(false)
         if (err.code === 'auth/email-already-in-use') {
-          setErrors({ regEmail: 'Cet email est déjà utilisé par un compte existant.' })
+          setErrors({ regEmail: 'Cet email est déjà lié à un compte. Si c\'est un essai précédent, supprime le compte dans Firebase Console (Authentication → Users) puis réessaie. Ou connecte-toi sur /mon-dossier pour voir son état.' })
         } else {
           setErrors({ regEmail: `Erreur : ${err.message || 'Réessaie.'}` })
         }
