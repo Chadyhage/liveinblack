@@ -17,10 +17,11 @@ async function doEmailLogin(email, password, role = null) {
       ? getAccountByEmailAndRole(email, role)
       : getAccountByEmail(email)
     if (!saved) throw { code: 'auth/user-not-found' }
-    // Check status before password so rejected/pending accounts get the right message
+    // Check status before password
     if (saved.status === 'rejected') throw { code: 'auth/account-rejected' }
-    if (saved.status === 'pending') throw { code: 'auth/account-pending', role: saved.role }
-    if (saved.password !== password) throw { code: 'auth/wrong-password' }
+    // pending → allow login, the app will redirect to /mon-dossier via OnboardingGuard
+    if (saved.status !== 'pending' && saved.password !== password) throw { code: 'auth/wrong-password' }
+    if (saved.status === 'pending' && saved.password && saved.password !== password) throw { code: 'auth/wrong-password' }
     // Mark email as verified on first successful login
     if (!saved.emailVerified) {
       updateAccount(saved.uid, { emailVerified: true })
@@ -32,16 +33,20 @@ async function doEmailLogin(email, password, role = null) {
   const { auth, db } = await import('../firebase')
   const { doc, getDoc } = await import('firebase/firestore')
   const cred = await signInWithEmailAndPassword(auth, email, password)
-  // Block login if email not verified (except super admin)
-  if (!cred.user.emailVerified && email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
-    throw { code: 'auth/email-not-verified' }
-  }
   const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+  // Read Firestore profile BEFORE the email-verification check.
+  // Organisateur/prestataire accounts are created silently during onboarding (no verification email sent).
+  // They must be allowed to log in so OnboardingGuard can redirect them to /mon-dossier.
   const snap = await getDoc(doc(db, 'users', cred.user.uid))
   if (snap.exists()) {
     let profile = snap.data()
+    const isPendingOrDraft = profile.status === 'pending' || profile.status === 'draft'
+    // Skip email verification for dossier-based accounts (verified by admin process instead)
+    if (!cred.user.emailVerified && !isSuperAdmin && !isPendingOrDraft) {
+      throw { code: 'auth/email-not-verified' }
+    }
     if (!isSuperAdmin) {
-      if (profile.status === 'pending') throw { code: 'auth/account-pending', role: profile.role }
+      // pending / draft → allow login, OnboardingGuard handles redirect to /mon-dossier or /inscription
       if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
     }
     // Force agent role for super admin — override any corrupted data in Firestore
@@ -438,15 +443,19 @@ export default function LoginPage() {
       }).catch(() => {})
       const params = new URLSearchParams(location.search)
       const next = params.get('next')
-      // Org/prest pending → redirect to onboarding if they haven't submitted yet
+      // Org/prest pending → redirect based on dossier state
       const isDedicated = userData.role === 'organisateur' || userData.role === 'prestataire'
-      if (!next && isDedicated && userData.status === 'pending') {
+      if (!next && isDedicated && (userData.status === 'pending' || userData.status === 'draft')) {
         const { getApplicationByUser } = await import('../utils/applications')
-        const app = getApplicationByUser(userData.uid)
+        const app = getApplicationByUser(userData.uid, userData.role)
         if (!app || !app.submittedAt) {
-          navigate(userData.role === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire')
-          return
+          // Dossier not submitted yet → back to inscription form
+          navigate(userData.role === 'organisateur' ? '/inscription-organisateur' : '/inscription-prestataire')
+        } else {
+          // Dossier submitted, awaiting admin validation → show status page
+          navigate('/mon-dossier')
         }
+        return
       }
       navigate(next || (userData.role === 'agent' ? '/agent' : '/accueil'))
     } catch (err) {
@@ -723,8 +732,14 @@ export default function LoginPage() {
                 Tu recevras une confirmation dès que ton compte sera activé. Cela prend généralement moins de 24h.
               </p>
               <button
-                onClick={() => { setPendingInfo(null); setMode('login') }}
+                onClick={() => { setPendingInfo(null); navigate('/mon-dossier') }}
                 style={{ ...S.btnGold, marginTop: '8px' }}
+              >
+                Voir mon dossier
+              </button>
+              <button
+                onClick={() => { setPendingInfo(null); setMode('login') }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', textDecoration: 'underline' }}
               >
                 Retour à la connexion
               </button>

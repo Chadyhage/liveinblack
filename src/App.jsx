@@ -116,18 +116,34 @@ function RequireOrganisateur({ user, children }) {
   return children
 }
 
-// Guard: org/prest in draft status → redirect back to inscription form
+// Guard: org/prest accounts with draft/pending status → redirect to correct page
 function OnboardingGuard({ user, children }) {
   const location = useLocation()
-  const bypassPaths = ['/inscription-organisateur', '/inscription-prestataire', '/onboarding-organisateur', '/onboarding-prestataire', '/connexion', '/cgu']
+  // These paths are always accessible regardless of account status
+  const bypassPaths = [
+    '/inscription-organisateur', '/inscription-prestataire',
+    '/onboarding-organisateur', '/onboarding-prestataire',
+    '/connexion', '/cgu', '/mon-dossier',
+  ]
   if (bypassPaths.some(p => location.pathname.startsWith(p))) return children
 
   const isDedicated = user?.role === 'organisateur' || user?.role === 'prestataire'
-  // status 'draft' = account created mid-inscription but dossier not submitted → send back to form
+
+  // draft = account created mid-inscription but dossier not yet submitted → back to form
   if (isDedicated && user?.status === 'draft') {
     const target = user.role === 'organisateur' ? '/inscription-organisateur' : '/inscription-prestataire'
     return <Navigate to={target} replace />
   }
+
+  // pending = dossier submitted, awaiting admin validation
+  // Allow public browsing (accueil, evenements) but block app-specific pages
+  if (isDedicated && user?.status === 'pending') {
+    const publicPaths = ['/accueil', '/evenements', '/ticket', '/cgu']
+    if (!publicPaths.some(p => location.pathname.startsWith(p))) {
+      return <Navigate to="/mon-dossier" replace />
+    }
+  }
+
   return children
 }
 

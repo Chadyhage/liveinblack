@@ -210,14 +210,22 @@ export default function MonDossierPage() {
 
   useEffect(() => {
     if (!user) { navigate('/connexion'); return }
-    // Try to find any application (org or prest) for this user
-    const orgApp  = getApplicationByUser(user.uid, 'organisateur')
+    // Try localStorage first (fast)
+    const orgApp   = getApplicationByUser(user.uid, 'organisateur')
     const prestApp = getApplicationByUser(user.uid, 'prestataire')
     const found = orgApp || prestApp
     if (found) {
       setApp(found)
+      return
     }
-  }, [user])
+    // Not in localStorage (e.g. different device) — pull from Firestore
+    import('../utils/applications').then(({ fetchApplicationsFromFirestore }) => {
+      fetchApplicationsFromFirestore().then(apps => {
+        const remote = apps.find(a => a.uid === user.uid)
+        if (remote) setApp(remote)
+      }).catch(() => {})
+    }).catch(() => {})
+  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) return null
 
