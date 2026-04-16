@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import {
   createApplication, saveDraft, submitApplication,
-  uploadDocument, getApplicationByUser, DOCUMENT_LABELS, getRequiredDocs,
+  uploadDocument, getApplicationById, getApplicationByUser,
+  updateApplication, DOCUMENT_LABELS, getRequiredDocs,
   hasDoc, getDocFiles, removeDocumentFile,
 } from '../utils/applications'
 
@@ -56,16 +57,28 @@ function Toggle({ value, onChange, label }) {
   )
 }
 
+const ANON_DRAFT_KEY = 'lib_anon_org_draft_id'
+
 export default function OnboardingOrganisateur() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [app, setApp] = useState(null)
   const [step, setStep] = useState(0)
-  const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [creatingAccount, setCreatingAccount] = useState(false)
   const [errors, setErrors] = useState({})
-  const [uploadStatus, setUploadStatus] = useState({}) // { [docKey]: 'uploading'|'done'|'error' }
+  const [uploadStatus, setUploadStatus] = useState({})
   const [toast, setToast] = useState(null)
+  const [successScreen, setSuccessScreen] = useState(false)
+
+  // Anonymous mode state (used when no user logged in)
+  const anonUidRef = useRef(null) // real Firebase uid once account is created
+  const [regEmail, setRegEmail] = useState('')
+  const [regPassword, setRegPassword] = useState('')
+  const [regPasswordConfirm, setRegPasswordConfirm] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
+
+  const anonMode = !user
 
   // Form state — each section
   const [f, setF] = useState({
@@ -74,7 +87,7 @@ export default function OnboardingOrganisateur() {
     adresseEtablissement: '', emailPro: '', telephonePro: '', siteWeb: '',
     // Step 1 — Responsable
     responsableNom: '', responsablePrenom: '', responsableFonction: '',
-    responsableEmail: '', responsableTelephone: '',
+    responsableTelephone: '',
     // Step 2 — Activité
     typeEtablissement: '', typeEtablissementCustom: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
     horaires: '', alcool: false,
@@ -83,40 +96,35 @@ export default function OnboardingOrganisateur() {
   })
 
   useEffect(() => {
-    if (!user) { navigate('/connexion?next=/onboarding-organisateur'); return }
-
-    // Pre-fill responsable fields from user account (avoids re-entering what was already provided)
-    const nameParts = (user.name || '').trim().split(' ')
-    const prenom = nameParts[0] || ''
-    const nom = nameParts.slice(1).join(' ') || nameParts[0] || ''
-    const userPreFill = {
-      responsablePrenom: prenom,
-      responsableNom: nom,
-      responsableEmail: user.email || '',
-      responsableTelephone: user.phone || '',
-    }
-
-    const existing = getApplicationByUser(user.uid, 'organisateur')
-    if (existing) {
-      setApp(existing)
-      const fd = existing.formData || {}
-      setF(prev => ({
-        ...prev,
-        ...fd,
-        // Use user data as fallback if field not yet filled in the dossier
-        responsablePrenom: fd.responsablePrenom || userPreFill.responsablePrenom,
-        responsableNom: fd.responsableNom || userPreFill.responsableNom,
-        responsableEmail: fd.responsableEmail || userPreFill.responsableEmail,
-        responsableTelephone: fd.responsableTelephone || userPreFill.responsableTelephone,
-      }))
-      // If approved/submitted, redirect to dossier
-      if (['submitted','under_review','approved'].includes(existing.status)) {
-        navigate('/mon-dossier')
+    if (user) {
+      // ── Logged-in mode (backwards compat) ──
+      const existing = getApplicationByUser(user.uid, 'organisateur')
+      if (existing) {
+        setApp(existing)
+        const fd = existing.formData || {}
+        setF(prev => ({ ...prev, ...fd }))
+        if (['submitted','under_review','approved'].includes(existing.status)) {
+          navigate('/mon-dossier')
+        }
+      } else {
+        const created = createApplication(user.uid, user.email, user.name, 'organisateur')
+        setApp(created)
       }
     } else {
-      const created = createApplication(user.uid, user.email, user.name, 'organisateur')
-      setApp(created)
-      setF(prev => ({ ...prev, ...userPreFill }))
+      // ── Anonymous mode — load or create temp draft ──
+      const savedId = localStorage.getItem(ANON_DRAFT_KEY)
+      const existing = savedId ? getApplicationById(savedId) : null
+      if (existing) {
+        setApp(existing)
+        const fd = existing.formData || {}
+        setF(prev => ({ ...prev, ...fd }))
+        if (fd.responsableEmail) setRegEmail(fd.responsableEmail)
+      } else {
+        const tempId = 'anon-org-' + Date.now()
+        localStorage.setItem(ANON_DRAFT_KEY, tempId)
+        const created = createApplication(tempId, '', '', 'organisateur')
+        setApp(created)
+      }
     }
   }, [user])
 
@@ -150,23 +158,78 @@ export default function OnboardingOrganisateur() {
     if (s === 1) {
       if (!f.responsableNom.trim()) errs.responsableNom = 'Requis'
       if (!f.responsablePrenom.trim()) errs.responsablePrenom = 'Requis'
-      if (!f.responsableEmail.trim()) errs.responsableEmail = 'Requis'
+      // Anonymous mode: also validate email + password
+      if (anonMode) {
+        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail.trim())
+        if (!regEmail.trim() || !emailOk) errs.regEmail = 'Email invalide'
+        if (!regPassword || regPassword.length < 8) errs.regPassword = 'Au moins 8 caractères'
+        if (!/[A-Z]/.test(regPassword)) errs.regPassword = 'Au moins une majuscule'
+        if (regPassword !== regPasswordConfirm) errs.regPasswordConfirm = 'Les mots de passe ne correspondent pas'
+      }
     }
     if (s === 2) {
       if (!f.typeEtablissement) errs.typeEtablissement = 'Requis'
       if (f.typeEtablissement === 'Autre' && !f.typeEtablissementCustom?.trim()) errs.typeEtablissementCustom = 'Précisez le type'
       if (!f.itinerant && !f.ville.trim()) errs.ville = 'Requis (ou cocher "Itinérant")'
     }
-    // Step 3 — Revenus : page informative, pas de validation
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
-  function next() {
+  async function next() {
     if (!validate(step)) return
+
+    // Anonymous mode: create Firebase account when leaving step 1
+    if (anonMode && step === 1 && !anonUidRef.current) {
+      setCreatingAccount(true)
+      try {
+        const { USE_REAL_FIREBASE } = await import('../firebase')
+        let uid
+        const name = `${f.responsablePrenom} ${f.responsableNom}`.trim()
+        const phone = f.responsableTelephone || ''
+
+        if (USE_REAL_FIREBASE) {
+          const { createUserWithEmailAndPassword } = await import('firebase/auth')
+          const { auth, db } = await import('../firebase')
+          const { doc, setDoc } = await import('firebase/firestore')
+          const cred = await createUserWithEmailAndPassword(auth, regEmail.trim(), regPassword)
+          uid = cred.user.uid
+          // Create Firestore user doc — status 'draft' (not yet pending, dossier not submitted)
+          await setDoc(doc(db, 'users', uid), {
+            uid, email: regEmail.trim(), name, phone,
+            role: 'organisateur', activeRole: 'organisateur', enabledRoles: ['organisateur'],
+            status: 'draft', emailVerified: false, createdAt: Date.now(),
+          })
+        } else {
+          uid = 'local-org-' + Date.now()
+          const { saveAccount } = await import('../utils/accounts')
+          saveAccount({ uid, email: regEmail.trim(), name, phone, role: 'organisateur', status: 'draft', emailVerified: false, createdAt: Date.now() })
+        }
+
+        // Update localStorage app with real uid + email
+        updateApplication(app.id, { uid, email: regEmail.trim(), name })
+        setApp(prev => ({ ...prev, uid, email: regEmail.trim(), name }))
+        anonUidRef.current = uid
+
+        // Save email to draft so it's restored on page reload
+        saveDraft(app.id, { ...f, responsableEmail: regEmail.trim() })
+
+      } catch (err) {
+        setCreatingAccount(false)
+        if (err.code === 'auth/email-already-in-use') {
+          setErrors({ regEmail: 'Cet email est déjà utilisé par un compte existant.' })
+        } else {
+          setErrors({ regEmail: `Erreur : ${err.message || 'Réessaie.'}` })
+        }
+        return
+      }
+      setCreatingAccount(false)
+    }
+
     setStep(s => Math.min(s + 1, STEPS.length - 1))
     window.scrollTo(0, 0)
   }
+
   function prev() {
     setStep(s => Math.max(s - 1, 0))
     window.scrollTo(0, 0)
@@ -178,7 +241,8 @@ export default function OnboardingOrganisateur() {
     const res = await uploadDocument(app.id, docKey, file)
     if (res.ok) {
       setUploadStatus(s => ({ ...s, [docKey]: 'done' }))
-      setApp(getApplicationByUser(user.uid, 'organisateur'))
+      const fresh = getApplicationById(app.id)
+      if (fresh) setApp(fresh)
     } else {
       setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
       showToast('Erreur lors de l\'ajout', 'error')
@@ -188,11 +252,11 @@ export default function OnboardingOrganisateur() {
   async function handleRemove(docKey, index) {
     if (!app) return
     await removeDocumentFile(app.id, docKey, index)
-    setApp(getApplicationByUser(user.uid, 'organisateur'))
+    const fresh = getApplicationById(app.id)
+    if (fresh) setApp(fresh)
   }
 
   async function handleSubmit() {
-    // Vérification des documents obligatoires avant soumission
     const missingDocs = []
     if (!hasDoc(app, 'identity'))                    missingDocs.push('Pièce d\'identité')
     if (f.alcool && !hasDoc(app, 'alcohol_license')) missingDocs.push('Licence alcool')
@@ -202,31 +266,41 @@ export default function OnboardingOrganisateur() {
     }
     setSubmitting(true)
     try {
-      // Vérifier qu'aucun fichier n'est resté "local uniquement" (upload échoué)
-      const freshApp = getApplicationByUser(user.uid, 'organisateur')
+      const freshApp = getApplicationById(app.id)
       const allDocs = freshApp?.documents || {}
       const failedDocs = []
       for (const [docKey, entries] of Object.entries(allDocs)) {
         const arr = Array.isArray(entries) ? entries : [entries]
-        const hasFailure = arr.some(e => e && !e.url)
-        if (hasFailure) {
-          const label = DOCUMENT_LABELS[docKey]?.label || docKey
-          failedDocs.push(label)
+        if (arr.some(e => e && !e.url)) {
+          failedDocs.push(DOCUMENT_LABELS[docKey]?.label || docKey)
         }
       }
       if (failedDocs.length > 0) {
         setSubmitting(false)
-        showToast(
-          `Certains fichiers n'ont pas pu être envoyés. Retire-les et rajoute-les : ${failedDocs.join(', ')}`,
-          'error'
-        )
+        showToast(`Retire et rajoute ces fichiers : ${failedDocs.join(', ')}`, 'error')
         return
       }
 
       const result = await submitApplication(app.id, f)
       setApp(result)
-      showToast('Dossier soumis !')
-      setTimeout(() => navigate('/mon-dossier'), 1500)
+
+      if (anonMode) {
+        // Sign out immediately — no access until admin validates
+        try {
+          const { USE_REAL_FIREBASE } = await import('../firebase')
+          if (USE_REAL_FIREBASE) {
+            const { auth } = await import('../firebase')
+            const { signOut } = await import('firebase/auth')
+            await signOut(auth)
+          }
+        } catch {}
+        // Clear the anon draft reference
+        localStorage.removeItem(ANON_DRAFT_KEY)
+        setSuccessScreen(true)
+      } else {
+        showToast('Dossier soumis !')
+        setTimeout(() => navigate('/mon-dossier'), 1500)
+      }
     } catch {
       showToast('Erreur lors de la soumission', 'error')
     } finally {
@@ -234,7 +308,35 @@ export default function OnboardingOrganisateur() {
     }
   }
 
-  if (!user || !app) return null
+  if (!app) return null
+
+  // ── Success screen (anonymous mode after submit) ──
+  if (successScreen) {
+    return (
+      <Layout hideNav>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div style={{ textAlign: 'center', maxWidth: 420 }}>
+            <div style={{ fontSize: 56, marginBottom: 24 }}>✅</div>
+            <h2 style={{ fontFamily: CG, fontWeight: 300, fontSize: '2rem', color: 'rgba(255,255,255,0.92)', margin: '0 0 16px' }}>
+              Demande envoyée !
+            </h2>
+            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.8, marginBottom: 8 }}>
+              Ton dossier a été transmis à l'équipe LIVEINBLACK.
+            </p>
+            <p style={{ fontFamily: DM, fontSize: 12, color: GOLD, lineHeight: 1.8, marginBottom: 32 }}>
+              Tu seras contacté à <strong>{regEmail}</strong> une fois ton compte validé.
+            </p>
+            <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.7, marginBottom: 32 }}>
+              La validation prend généralement moins de 24h. Tu recevras un email dès que ton espace est activé.
+            </p>
+            <button onClick={() => navigate('/accueil')} style={{ ...S.btnGold, maxWidth: 240, margin: '0 auto' }}>
+              Retour à l'accueil
+            </button>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
 
   const requiredDocs = getRequiredDocs('organisateur')
   const uploadedDocs = Object.keys(app.documents || {})
@@ -381,9 +483,6 @@ export default function OnboardingOrganisateur() {
         {step === 1 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>👤 Responsable du compte</p>
-            <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: -8, lineHeight: 1.5 }}>
-              Pré-rempli depuis ton compte — modifie si nécessaire.
-            </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Nom" required>
                 <input style={{ ...S.input, borderColor: errors.responsableNom ? '#e05aaa' : undefined }} value={f.responsableNom} onChange={e => update('responsableNom', e.target.value)} placeholder="Dupont" />
@@ -398,13 +497,69 @@ export default function OnboardingOrganisateur() {
                   <input style={S.input} value={f.responsableFonction} onChange={e => update('responsableFonction', e.target.value)} placeholder="Gérant, Directeur, etc." />
                 </Field>
               </div>
-              <Field label="Email de contact" required>
-                <input type="email" style={{ ...S.input, borderColor: errors.responsableEmail ? '#e05aaa' : undefined }} value={f.responsableEmail} onChange={e => update('responsableEmail', e.target.value)} placeholder="jean.dupont@..." />
-                {errors.responsableEmail && <p style={S.error}>{errors.responsableEmail}</p>}
-              </Field>
-              <Field label="Téléphone de contact">
-                <input style={S.input} value={f.responsableTelephone} onChange={e => update('responsableTelephone', e.target.value)} placeholder="+33 6 ..." />
-              </Field>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <Field label="Téléphone de contact">
+                  <input style={S.input} value={f.responsableTelephone} onChange={e => update('responsableTelephone', e.target.value)} placeholder="+228 90 00 00 00" />
+                </Field>
+              </div>
+
+              {/* ── Identifiants de connexion (anonymous mode only) ── */}
+              {anonMode && (
+                <>
+                  <div style={{ gridColumn: '1 / -1', height: 1, background: 'rgba(255,255,255,0.07)', margin: '4px 0' }} />
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <p style={{ ...S.section, marginBottom: 12 }}>🔐 Identifiants de connexion</p>
+                    <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', marginBottom: 12, lineHeight: 1.6 }}>
+                      Cet email sera ton identifiant pour accéder à ton espace une fois validé.
+                    </p>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <Field label="Email de l'organisation (email de connexion)" required>
+                      <input
+                        type="email"
+                        style={{ ...S.input, borderColor: errors.regEmail ? '#e05aaa' : undefined }}
+                        value={regEmail}
+                        onChange={e => setRegEmail(e.target.value)}
+                        placeholder="contact@monorganisation.com"
+                        disabled={!!anonUidRef.current}
+                      />
+                      {errors.regEmail && <p style={S.error}>{errors.regEmail}</p>}
+                      {anonUidRef.current && (
+                        <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.6)', marginTop: 4 }}>✓ Compte créé — email verrouillé</p>
+                      )}
+                    </Field>
+                  </div>
+                  {!anonUidRef.current && (
+                    <>
+                      <Field label="Mot de passe" required>
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            type={showPwd ? 'text' : 'password'}
+                            style={{ ...S.input, paddingRight: 52, borderColor: errors.regPassword ? '#e05aaa' : undefined }}
+                            value={regPassword}
+                            onChange={e => setRegPassword(e.target.value)}
+                            placeholder="••••••••"
+                          />
+                          <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
+                            {showPwd ? 'Cacher' : 'Voir'}
+                          </button>
+                        </div>
+                        {errors.regPassword && <p style={S.error}>{errors.regPassword}</p>}
+                      </Field>
+                      <Field label="Confirmer le mot de passe" required>
+                        <input
+                          type={showPwd ? 'text' : 'password'}
+                          style={{ ...S.input, borderColor: errors.regPasswordConfirm ? '#e05aaa' : undefined }}
+                          value={regPasswordConfirm}
+                          onChange={e => setRegPasswordConfirm(e.target.value)}
+                          placeholder="••••••••"
+                        />
+                        {errors.regPasswordConfirm && <p style={S.error}>{errors.regPasswordConfirm}</p>}
+                      </Field>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -649,7 +804,9 @@ export default function OnboardingOrganisateur() {
                     <>
                       <p style={{ fontFamily: DM, fontSize: 9, color: GOLD, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Prêt à soumettre ✓</p>
                       <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, marginBottom: 16 }}>
-                        Une fois soumis, ton dossier sera examiné par l'équipe LIVEINBLACK. Tu peux suivre l'avancement dans <strong style={{ color: 'rgba(255,255,255,0.55)' }}>Mon Dossier</strong>.
+                        {anonMode
+                          ? 'Une fois envoyé, ton dossier sera examiné par l\'équipe LIVEINBLACK. Tu seras contacté par email dès validation.'
+                          : 'Une fois soumis, ton dossier sera examiné par l\'équipe LIVEINBLACK. Tu peux suivre l\'avancement dans Mon Dossier.'}
                       </p>
                     </>
                   )}
@@ -658,7 +815,7 @@ export default function OnboardingOrganisateur() {
                     disabled={submitting || !canSubmit}
                     style={{ ...S.btnGold, opacity: (submitting || !canSubmit) ? 0.35 : 1, cursor: !canSubmit ? 'not-allowed' : 'pointer', marginTop: canSubmit ? 0 : 12 }}
                   >
-                    {submitting ? 'Soumission...' : 'Soumettre mon dossier'}
+                    {submitting ? 'Envoi en cours...' : anonMode ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
                   </button>
                 </div>
               )
@@ -669,15 +826,17 @@ export default function OnboardingOrganisateur() {
         {/* Navigation */}
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           {step > 0 && (
-            <button onClick={prev} style={{ ...S.btnGhost, flex: 1 }}>← Retour</button>
+            <button onClick={prev} disabled={creatingAccount || submitting} style={{ ...S.btnGhost, flex: 1 }}>← Retour</button>
           )}
           {step < STEPS.length - 1 && (
-            <button onClick={next} style={{ ...S.btnGold, flex: 2 }}>Continuer →</button>
+            <button onClick={next} disabled={creatingAccount} style={{ ...S.btnGold, flex: 2, opacity: creatingAccount ? 0.6 : 1 }}>
+              {creatingAccount ? 'Création du compte...' : 'Continuer →'}
+            </button>
           )}
         </div>
 
         <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.18)', textAlign: 'center', marginTop: 12, letterSpacing: '0.1em' }}>
-          Sauvegarde automatique activée
+          {anonMode ? 'Brouillon enregistré localement' : 'Sauvegarde automatique activée'}
         </p>
       </div>
 

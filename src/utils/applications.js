@@ -65,6 +65,15 @@ export function getApplicationByUser(uid, type) {
   return _getAll().find(a => a.uid === uid && a.type === type) || null
 }
 
+export function updateApplication(appId, patch) {
+  const all = _getAll()
+  const idx = all.findIndex(a => a.id === appId)
+  if (idx < 0) return null
+  all[idx] = { ...all[idx], ...patch, updatedAt: Date.now() }
+  _saveAll(all)
+  return all[idx]
+}
+
 // ─── Suppression dossier ──────────────────────────────────────────────────────
 
 export async function deleteApplication(id) {

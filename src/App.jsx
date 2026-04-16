@@ -116,24 +116,17 @@ function RequireOrganisateur({ user, children }) {
   return children
 }
 
-// Guard: org/prest pending without submitted onboarding → force onboarding page
+// Guard: org/prest in draft status → redirect back to inscription form
 function OnboardingGuard({ user, children }) {
   const location = useLocation()
-  const onboardingPaths = ['/onboarding-organisateur', '/onboarding-prestataire', '/connexion', '/cgu']
-  const isOnboarding = onboardingPaths.some(p => location.pathname.startsWith(p))
-  if (isOnboarding) return children
+  const bypassPaths = ['/inscription-organisateur', '/inscription-prestataire', '/onboarding-organisateur', '/onboarding-prestataire', '/connexion', '/cgu']
+  if (bypassPaths.some(p => location.pathname.startsWith(p))) return children
 
   const isDedicated = user?.role === 'organisateur' || user?.role === 'prestataire'
-  // status 'onboarding' = compte créé mais dossier pas encore soumis → force l'onboarding
-  if (isDedicated && (user?.status === 'onboarding' || user?.status === 'pending')) {
-    try {
-      const apps = JSON.parse(localStorage.getItem('lib_applications') || '[]')
-      const app = apps.find(a => a.uid === user.uid)
-      if (!app || !app.submittedAt) {
-        const target = user.role === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire'
-        return <Navigate to={target} replace />
-      }
-    } catch {}
+  // status 'draft' = account created mid-inscription but dossier not submitted → send back to form
+  if (isDedicated && user?.status === 'draft') {
+    const target = user.role === 'organisateur' ? '/inscription-organisateur' : '/inscription-prestataire'
+    return <Navigate to={target} replace />
   }
   return children
 }
@@ -230,7 +223,10 @@ export default function App() {
               <RequireServiceAccess user={user}><ProposerServicesPage /></RequireServiceAccess>
             } />
 
-            {/* ── Onboarding candidatures ── */}
+            {/* ── Inscription candidatures (public — no account required) ── */}
+            <Route path="/inscription-organisateur" element={<OnboardingOrganisateur />} />
+
+            {/* ── Onboarding candidatures (legacy — requires auth) ── */}
             <Route path="/onboarding-organisateur" element={
               <RequireAuth user={user} to="/onboarding-organisateur"><OnboardingOrganisateur /></RequireAuth>
             } />

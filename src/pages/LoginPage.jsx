@@ -894,7 +894,11 @@ export default function LoginPage() {
                 { role: 'prestataire',  title: 'Prestataire',  desc: 'DJ, salle, matériel, traiteur...',              badge: 'Validation requise' },
               ].map(({ role, title, desc, badge }) => (
                 <button key={role} type="button"
-                  onClick={() => { setRegRole(role); setRegStep(2) }}
+                  onClick={() => {
+                    if (role === 'organisateur') { navigate('/inscription-organisateur'); return }
+                    if (role === 'prestataire')  { navigate('/inscription-prestataire');  return }
+                    setRegRole(role); setRegStep(2)
+                  }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '14px',
                     padding: '14px',
