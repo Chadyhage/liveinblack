@@ -335,7 +335,7 @@ export async function removeDocumentFile(appId, docKey, index) {
 
 // ─── Actions admin ────────────────────────────────────────────────────────────
 
-export async function updateApplicationStatus(id, status, adminUid, adminName, note = '') {
+export async function updateApplicationStatus(id, status, adminUid, adminName, note = '', adminNoteStr = '') {
   const all = _getAll()
   const idx = all.findIndex(a => a.id === id)
   if (idx < 0) return null
@@ -356,9 +356,18 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
   if (status === 'needs_changes')  { patch.requestedChanges = note }
   if (status === 'under_review')   { patch.adminNote = note }
   if (status === 'suspended')      { patch.adminNote = note }
+  if (adminNoteStr)                { patch.adminNote = adminNoteStr }
 
   all[idx] = { ...all[idx], ...patch }
   _saveAll(all)
+
+  // Clear pending_validations to avoid showing same user in both Validations + Dossiers tabs
+  if (status === 'approved' || status === 'rejected') {
+    try {
+      const { removePendingValidation } = await import('./accounts')
+      removePendingValidation(all[idx].uid)
+    } catch {}
+  }
 
   // ── Approbation : upgrader le rôle + copier les permissions dans le profil ──
   if (status === 'approved') {

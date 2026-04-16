@@ -52,6 +52,14 @@ const COLORS = {
   dim: 'rgba(255,255,255,0.22)',
 }
 
+const SECTION_MAP = {
+  pending:    { label: 'En attente',  color: '#c8a96e', statuses: ['submitted'] },
+  review:     { label: 'En révision', color: '#3b82f6', statuses: ['under_review'] },
+  correction: { label: 'À corriger',  color: '#f59e0b', statuses: ['needs_changes'] },
+  validated:  { label: 'Validés',     color: '#22c55e', statuses: ['approved'] },
+  refused:    { label: 'Refusés',     color: '#e05aaa', statuses: ['rejected', 'suspended'] },
+}
+
 function RoleBadge({ role, small }) {
   const r = ROLES[role] || { label: role, icon: '', color: COLORS.muted }
   const size = small ? { fontSize: 9, padding: '2px 6px' } : { fontSize: 10, padding: '3px 8px' }
@@ -132,7 +140,9 @@ export default function AgentPage() {
   const [applications, setApplications] = useState([])
   const [selectedApp, setSelectedApp] = useState(null)
   const [appNote, setAppNote] = useState('')
+  const [appAdminNote, setAppAdminNote] = useState('')
   const [dossierFilter, setDossierFilter] = useState(null)
+  const [dossierSection, setDossierSection] = useState('pending')
   const [roleRejectReason, setRoleRejectReason] = useState('')
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
@@ -289,11 +299,13 @@ export default function AgentPage() {
   }
 
   async function handleAppAction(appId, status, note) {
-    await updateApplicationStatus(appId, status, user?.uid, user?.name || 'Agent', note)
+    const adminNoteValue = appAdminNote || ''
+    await updateApplicationStatus(appId, status, user?.uid, user?.name || 'Agent', note, adminNoteValue)
     refresh()
     setSelectedApp(apps => apps ? { ...apps, status, ...(status === 'approved' ? { approvedAt: Date.now() } : {}), ...(status === 'rejected' ? { rejectionReason: note } : {}), ...(status === 'needs_changes' ? { requestedChanges: note } : {}) } : null)
     showToast(status === 'approved' ? 'Dossier approuvé' : status === 'rejected' ? 'Dossier refusé' : status === 'needs_changes' ? 'Corrections demandées' : status === 'under_review' ? 'Dossier en révision' : 'Dossier mis à jour')
     setAppNote('')
+    setAppAdminNote('')
     setConfirmAction(null)
   }
 
@@ -339,7 +351,7 @@ export default function AgentPage() {
         </div>
         {totalAllPending > 0 && (
           <button
-            onClick={() => setTab(totalPending > 0 ? 'validations' : 'role-requests')}
+            onClick={() => setTab('dossiers')}
             style={{
               fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em',
               background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.45)',
@@ -826,96 +838,94 @@ export default function AgentPage() {
         {tab === 'dossiers' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
 
-            {/* Filter chips */}
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-              {['all', 'submitted', 'under_review', 'needs_changes', 'approved', 'rejected'].map(s => {
-                const cfg = APPLICATION_STATUSES[s]
-                const count = s === 'all' ? applications.length : applications.filter(a => a.status === s).length
-                const active = (dossierFilter || 'all') === s
+            {/* Section sub-tabs with counts */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+              {Object.entries(SECTION_MAP).map(([key, sec]) => {
+                const count = applications.filter(a => sec.statuses.includes(a.status)).length
+                const active = dossierSection === key
                 return (
-                  <button key={s} onClick={() => setDossierFilter(s === 'all' ? null : s)}
+                  <button key={key} onClick={() => setDossierSection(key)}
                     style={{
-                      flexShrink: 0, padding: '4px 10px', borderRadius: 4,
-                      fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase',
-                      cursor: 'pointer',
-                      background: active ? (cfg?.bg || 'rgba(255,255,255,0.08)') : 'transparent',
-                      border: `1px solid ${active ? (cfg?.color || 'rgba(255,255,255,0.20)') + '55' : 'rgba(255,255,255,0.10)'}`,
-                      color: active ? (cfg?.color || '#fff') : COLORS.dim,
+                      padding: '8px 4px', borderRadius: 6, cursor: 'pointer', textAlign: 'center',
+                      background: active ? sec.color + '18' : 'transparent',
+                      border: `1px solid ${active ? sec.color + '55' : 'rgba(255,255,255,0.08)'}`,
                       transition: 'all 0.15s',
                     }}>
-                    {s === 'all' ? `Tous (${count})` : `${cfg?.label} (${count})`}
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 16, fontWeight: 700, color: active ? sec.color : COLORS.dim, margin: '0 0 2px', lineHeight: 1 }}>{count}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: active ? sec.color : COLORS.dim, margin: 0, letterSpacing: '0.04em', lineHeight: 1.3, textTransform: 'uppercase' }}>{sec.label}</p>
                   </button>
                 )
               })}
             </div>
 
-            {/* List */}
-            {(dossierFilter ? applications.filter(a => a.status === dossierFilter) : applications).length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 8px' }}>Aucun dossier</p>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Les candidatures organisateurs et prestataires apparaissent ici.</p>
-              </div>
-            ) : (dossierFilter ? applications.filter(a => a.status === dossierFilter) : applications)
-              .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
-              .map(app => {
-                const statusCfg = APPLICATION_STATUSES[app.status] || {}
+            {/* List for selected section */}
+            {(() => {
+              const sec = SECTION_MAP[dossierSection]
+              const sectionColor = sec.color
+              const list = applications
+                .filter(a => sec.statuses.includes(a.status))
+                .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+              if (list.length === 0) return (
+                <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                  <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 8px' }}>Aucun dossier</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Aucun dossier dans la section « {sec.label} ».</p>
+                </div>
+              )
+              return list.map(app => {
                 const score = getCompleteness(app)
                 return (
-                  <button key={app.id} onClick={() => { setSelectedApp(app); setAppNote('') }}
+                  <button key={app.id} onClick={() => { setSelectedApp(app); setAppNote(''); setAppAdminNote('') }}
                     style={{
-                      ...CARD, display: 'flex', flexDirection: 'column', gap: 10,
+                      ...CARD, display: 'flex', flexDirection: 'column', gap: 8,
                       padding: 14, cursor: 'pointer', width: '100%', textAlign: 'left',
-                      borderColor: statusCfg.color ? statusCfg.color + '33' : 'rgba(255,255,255,0.10)',
-                      transition: 'border-color 0.2s',
+                      borderColor: sectionColor + '33',
                     }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    {/* Row 1: avatar + name + type + completeness */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{
-                        width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                        background: (statusCfg.color || COLORS.dim) + '14',
-                        border: `1px solid ${(statusCfg.color || COLORS.dim)}33`,
+                        width: 38, height: 38, borderRadius: 8, flexShrink: 0,
+                        background: sectionColor + '14', border: `1px solid ${sectionColor}33`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
-                        color: statusCfg.color || COLORS.dim,
+                        fontFamily: FONTS.mono, fontSize: 14, fontWeight: 700, color: sectionColor,
                       }}>
-                        {app.name?.[0]?.toUpperCase() || '?'}
+                        {(app.formData?.nomCommercial || app.name)?.[0]?.toUpperCase() || '?'}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {app.formData?.nomCommercial || app.name}
                         </p>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: 0 }}>
-                          {app.type === 'organisateur' ? 'Organisateur' : `Prestataire · ${app.formData?.prestataireType || ''}`}
-                          {' · '}{app.email}
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0' }}>
+                          {app.type === 'organisateur' ? '🎪 Organisateur' : `🎤 Prestataire · ${app.formData?.prestataireType || ''}`}
                         </p>
                       </div>
-                      <span style={{
-                        fontFamily: FONTS.mono, fontSize: 9, padding: '3px 7px', borderRadius: 4,
-                        border: `1px solid ${statusCfg.color || COLORS.dim}44`,
-                        background: statusCfg.bg || 'transparent',
-                        color: statusCfg.color || COLORS.dim, flexShrink: 0,
-                        textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600,
-                      }}>
-                        {statusCfg.label || app.status}
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: score >= 80 ? COLORS.teal : score >= 50 ? COLORS.gold : COLORS.pink, fontWeight: 700 }}>{score}%</span>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0' }}>complétude</p>
+                      </div>
+                    </div>
+                    {/* Row 2: email + date */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim }}>{app.email}</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim }}>
+                        {app.submittedAt ? `Soumis le ${new Date(app.submittedAt).toLocaleDateString('fr-FR')}` : `Créé le ${new Date(app.createdAt).toLocaleDateString('fr-FR')}`}
                       </span>
                     </div>
-                    {/* completeness bar */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%', borderRadius: 99,
-                          width: `${score}%`,
-                          background: score >= 80 ? COLORS.teal : score >= 50 ? COLORS.gold : COLORS.pink,
-                        }} />
+                    {/* Row 3: correction note if needs_changes */}
+                    {app.status === 'needs_changes' && app.requestedChanges && (
+                      <div style={{ padding: '7px 10px', background: 'rgba(245,158,11,0.08)', borderRadius: 6, border: '1px solid rgba(245,158,11,0.25)' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', margin: 0, lineHeight: 1.5 }}>
+                          ⚠ {app.requestedChanges}
+                        </p>
                       </div>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0 }}>{score}%</span>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0 }}>
-                        {new Date(app.updatedAt).toLocaleDateString('fr-FR')}
-                      </span>
+                    )}
+                    {/* completeness bar */}
+                    <div style={{ height: 2, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${score}%`, borderRadius: 99, background: score >= 80 ? COLORS.teal : score >= 50 ? COLORS.gold : COLORS.pink }} />
                     </div>
                   </button>
                 )
               })
-            }
+            })()}
           </div>
         )}
       </div>
@@ -1224,42 +1234,54 @@ export default function AgentPage() {
                   <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim }}>Aucun document</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {Object.entries(selectedApp.documents || {}).map(([key, entry]) => (
-                      <div key={key} style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '9px 12px', borderRadius: 7,
-                        background: 'rgba(78,232,200,0.04)',
-                        border: '1px solid rgba(78,232,200,0.15)',
-                      }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {DOCUMENT_LABELS[key]?.label || key}
-                          </p>
-                          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {entry.name}
-                          </p>
+                    {Object.entries(selectedApp.documents || {}).map(([key, val]) => {
+                      const files = Array.isArray(val) ? val : (val ? [val] : [])
+                      return files.map((entry, i) => (
+                        <div key={`${key}-${i}`} style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '9px 12px', borderRadius: 7,
+                          background: 'rgba(78,232,200,0.04)',
+                          border: '1px solid rgba(78,232,200,0.15)',
+                        }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                          </svg>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: 0 }}>{DOCUMENT_LABELS[key]?.label || key}</p>
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {entry.name}{entry.size ? ` · ${Math.round(entry.size / 1024)}ko` : ''}
+                            </p>
+                          </div>
+                          {entry.url ? (
+                            <a href={entry.url} target="_blank" rel="noreferrer"
+                              style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, textDecoration: 'none', padding: '4px 8px', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4 }}>
+                              Voir →
+                            </a>
+                          ) : (
+                            <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim }}>Local</span>
+                          )}
                         </div>
-                        {entry.url && (
-                          <a href={entry.url} target="_blank" rel="noreferrer"
-                            style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, textDecoration: 'none' }}>
-                            Voir →
-                          </a>
-                        )}
-                      </div>
-                    ))}
+                      ))
+                    })}
                   </div>
                 )}
               </Section>
 
-              {/* Admin note input */}
-              <Section title="Note / Motif">
+              {/* Message au candidat (user-visible) */}
+              <Section title="Message au candidat">
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 8px', lineHeight: 1.5 }}>
+                  Ce message sera visible par le candidat depuis son espace.
+                </p>
+                {selectedApp.requestedChanges && (
+                  <div style={{ padding: '8px 10px', background: 'rgba(245,158,11,0.06)', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)', marginBottom: 8 }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 2px' }}>Dernier message envoyé :</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: 0 }}>{selectedApp.requestedChanges}</p>
+                  </div>
+                )}
                 <textarea
                   value={appNote}
                   onChange={e => setAppNote(e.target.value)}
-                  placeholder="Note interne, motif de refus ou corrections requises..."
+                  placeholder="Ex: Merci de renvoyer une pièce d'identité valide..."
                   style={{
                     width: '100%', boxSizing: 'border-box',
                     background: 'rgba(8,10,20,0.7)',
@@ -1272,7 +1294,30 @@ export default function AgentPage() {
                 />
               </Section>
 
-              {/* Action buttons */}
+              {/* Note interne (admin only) */}
+              <Section title="Note interne (privée)">
+                <textarea
+                  value={appAdminNote}
+                  onChange={e => setAppAdminNote(e.target.value)}
+                  placeholder="Note privée visible uniquement par les admins..."
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: 'rgba(8,10,20,0.7)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: 6, color: '#fff',
+                    fontFamily: FONTS.mono, fontSize: 11,
+                    padding: '10px 12px', outline: 'none', resize: 'vertical',
+                    minHeight: 56, lineHeight: 1.5,
+                  }}
+                />
+                {selectedApp.adminNote && (
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '6px 0 0' }}>
+                    Note précédente : {selectedApp.adminNote}
+                  </p>
+                )}
+              </Section>
+
+              {/* Action buttons — contextual per status */}
               {(selectedApp.status === 'submitted' || selectedApp.status === 'under_review') && (
                 <Section title="Actions">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1298,7 +1343,7 @@ export default function AgentPage() {
                     </button>
                     {selectedApp.status === 'submitted' && (
                       <button
-                        onClick={() => handleAppAction(selectedApp.id, 'under_review', appNote)}
+                        onClick={() => handleAppAction(selectedApp.id, 'under_review', appAdminNote)}
                         style={{
                           width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
                           background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.35)',
@@ -1322,6 +1367,26 @@ export default function AgentPage() {
                 </Section>
               )}
 
+              {selectedApp.status === 'needs_changes' && (
+                <Section title="En attente de corrections">
+                  <div style={{ padding: '12px', background: 'rgba(245,158,11,0.06)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)', marginBottom: 12 }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: 0 }}>
+                      Le candidat a été notifié des corrections à apporter. Le dossier repassera en "En attente" une fois resoumis.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setConfirmAction({ type: 'appReject', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                    style={{
+                      width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
+                      background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.35)',
+                      color: COLORS.pink,
+                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                    Refuser définitivement
+                  </button>
+                </Section>
+              )}
+
               {selectedApp.status === 'approved' && (
                 <Section title="Actions">
                   <button
@@ -1333,6 +1398,21 @@ export default function AgentPage() {
                       fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
                     }}>
                     Suspendre le compte
+                  </button>
+                </Section>
+              )}
+
+              {selectedApp.status === 'suspended' && (
+                <Section title="Actions">
+                  <button
+                    onClick={() => handleAppAction(selectedApp.id, 'approved', appAdminNote)}
+                    style={{
+                      width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
+                      background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))',
+                      border: '1px solid rgba(34,197,94,0.35)', color: '#22c55e',
+                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                    Réactiver le dossier
                   </button>
                 </Section>
               )}
