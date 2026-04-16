@@ -379,6 +379,8 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
       // Permissions dérivées du formulaire
       const perms = {
         role: app.type === 'organisateur' ? 'organisateur' : 'prestataire',
+        status: 'active',
+        emailVerified: true,   // validé par l'admin = email vérifié
         canSellAlcohol:   !!(app.formData?.alcool),
         approvedAt:       now,
         approvedBy:       adminName,

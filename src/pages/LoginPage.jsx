@@ -41,8 +41,11 @@ async function doEmailLogin(email, password, role = null) {
   if (snap.exists()) {
     let profile = snap.data()
     const isPendingOrDraft = profile.status === 'pending' || profile.status === 'draft'
-    // Skip email verification for dossier-based accounts (verified by admin process instead)
-    if (!cred.user.emailVerified && !isSuperAdmin && !isPendingOrDraft) {
+    // Organisateurs and prestataires never receive a verification email —
+    // their account is verified by the admin validation process instead.
+    // So skip the emailVerified check entirely for these roles (at any status).
+    const isOrgOrPrest = profile.role === 'organisateur' || profile.role === 'prestataire'
+    if (!cred.user.emailVerified && !isSuperAdmin && !isPendingOrDraft && !isOrgOrPrest) {
       throw { code: 'auth/email-not-verified' }
     }
     if (!isSuperAdmin) {
