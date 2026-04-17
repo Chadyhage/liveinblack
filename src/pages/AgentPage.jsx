@@ -468,81 +468,22 @@ export default function AgentPage() {
                 Répartition par rôle
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {Object.entries(ROLES).map(([key, r]) => {
-                  const count = accounts.filter(a => a.role === key).length
-                  return (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, width: 80, flexShrink: 0 }}>{r.label}</span>
-                      <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: 99, height: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', borderRadius: 99, transition: 'width 0.4s', width: totalUsers ? `${(count / totalUsers) * 100}%` : '0%', background: r.color }} />
+                {Object.entries(ROLES)
+                  .filter(([key]) => key !== 'user') // 'user' est un alias de 'client' — on n'affiche qu'une ligne
+                  .map(([key, r]) => {
+                    // compter 'user' avec 'client' pour ne pas perdre ces comptes
+                    const count = accounts.filter(a => a.role === key || (key === 'client' && a.role === 'user')).length
+                    return (
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, width: 80, flexShrink: 0 }}>{r.label}</span>
+                        <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: 99, height: 4, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', borderRadius: 99, transition: 'width 0.4s', width: totalUsers ? `${(count / totalUsers) * 100}%` : '0%', background: r.color }} />
+                        </div>
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', width: 16, textAlign: 'right' }}>{count}</span>
                       </div>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', width: 16, textAlign: 'right' }}>{count}</span>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
               </div>
-            </div>
-
-            {/* ── Zone de danger — Reset total ── */}
-            <div style={{
-              ...CARD,
-              borderColor: 'rgba(239,68,68,0.30)',
-              padding: 16,
-            }}>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(239,68,68,0.7)', textTransform: 'uppercase', letterSpacing: '0.2em', margin: '0 0 8px' }}>
-                Zone de danger
-              </p>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '0 0 12px', lineHeight: 1.5 }}>
-                Supprime toutes les données (comptes, messages, wallets, événements) de localStorage ET de Firestore.
-                Les comptes Firebase Auth doivent être supprimés manuellement depuis la console Firebase.
-              </p>
-              {!showResetConfirm ? (
-                <button
-                  onClick={() => setShowResetConfirm(true)}
-                  style={{
-                    width: '100%', padding: '11px', borderRadius: 4, cursor: 'pointer',
-                    background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.35)',
-                    fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.12em',
-                    textTransform: 'uppercase', color: 'rgba(239,68,68,0.8)',
-                  }}
-                >
-                  Réinitialiser toutes les données
-                </button>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: '#ef4444', margin: 0, textAlign: 'center' }}>
-                    ATTENTION — action irréversible. Confirmes-tu ?
-                  </p>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      onClick={() => setShowResetConfirm(false)}
-                      style={{
-                        flex: 1, padding: '11px', borderRadius: 4, cursor: 'pointer',
-                        background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
-                        fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim,
-                      }}
-                    >Annuler</button>
-                    <button
-                      disabled={resetting}
-                      onClick={async () => {
-                        setResetting(true)
-                        await resetAllData()
-                        setResetting(false)
-                        setShowResetConfirm(false)
-                        refresh()
-                        showToast('Données réinitialisées — déconnecte et reconnecte chaque compte', 'success')
-                      }}
-                      style={{
-                        flex: 1, padding: '11px', borderRadius: 4, cursor: resetting ? 'wait' : 'pointer',
-                        background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.55)',
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.1em',
-                        textTransform: 'uppercase', color: '#ef4444',
-                        opacity: resetting ? 0.6 : 1,
-                      }}
-                    >{resetting ? 'En cours...' : 'Confirmer le reset'}</button>
-                  </div>
-                </div>
-              )}
             </div>
 
           </div>
