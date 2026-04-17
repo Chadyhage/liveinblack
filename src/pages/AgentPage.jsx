@@ -201,10 +201,11 @@ export default function AgentPage() {
   const totalActive       = accounts.filter(a => a.status === 'active').length
   const totalPrestataires = accounts.filter(a => a.role === 'prestataire').length
   const totalOrgas        = accounts.filter(a => a.role === 'organisateur').length
-  const totalPending      = pending.length
   const totalRoleReqs     = roleRequests.length
   const totalAppsSubmitted = applications.filter(a => a.status === 'submitted' || a.status === 'under_review').length
-  const totalAllPending   = totalPending + totalRoleReqs + totalAppsSubmitted
+  // totalPending (lib_pending_validations) is legacy — new flow goes through applications only.
+  // Count only applications + role requests to avoid double-counting the same dossier.
+  const totalAllPending   = totalAppsSubmitted + totalRoleReqs
 
   const filtered = accounts.filter(a => {
     const matchSearch = !search ||
