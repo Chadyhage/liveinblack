@@ -168,10 +168,24 @@ export default function AgentPage() {
       try {
         const { loadCollection } = await import('../utils/firestore-sync')
         const { fetchApplicationsFromFirestore } = await import('../utils/applications')
-        const [apps, pendingSnap] = await Promise.all([
+        const [apps, pendingSnap, usersSnap] = await Promise.all([
           fetchApplicationsFromFirestore(),
           loadCollection('pending_validations'),
+          loadCollection('users'),
         ])
+
+        // Sync users from Firestore → localStorage so the Comptes tab is populated
+        if (usersSnap.length) {
+          const existing = getAllAccounts()
+          const merged = [...existing]
+          usersSnap.forEach(u => {
+            const idx = merged.findIndex(a => a.uid === u.uid)
+            if (idx >= 0) merged[idx] = { ...merged[idx], ...u }
+            else merged.push(u)
+          })
+          localStorage.setItem('lib_registered_users', JSON.stringify(merged))
+        }
+
         if (pendingSnap.length) {
           const validations = pendingSnap.filter(p => p.type !== 'role_request')
           const roleReqs = pendingSnap.filter(p => p.type === 'role_request')
@@ -185,6 +199,7 @@ export default function AgentPage() {
         setApplications(apps)
         setPending(getPendingValidations())
         setRoleRequests(getPendingRoleRequests().filter(r => r.status === 'pending'))
+        setAccounts(getAllAccounts())
       } catch {}
     }
     fetchFromFirestore()
@@ -469,7 +484,7 @@ export default function AgentPage() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {Object.entries(ROLES)
-                  .filter(([key]) => key !== 'user') // 'user' est un alias de 'client' — on n'affiche qu'une ligne
+                  .filter(([key]) => key !== 'user' && key !== 'agent') // 'user' = alias client, 'agent' = toujours 1 seul
                   .map(([key, r]) => {
                     // compter 'user' avec 'client' pour ne pas perdre ces comptes
                     const count = accounts.filter(a => a.role === key || (key === 'client' && a.role === 'user')).length
