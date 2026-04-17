@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAgent() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'agent';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── Users ──────────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read:  if isOwner(uid) || isAgent();
+      allow write: if isOwner(uid) || isAgent();
+    }
+
+    // ── Applications / candidatures ────────────────────────────────────────────
+    match /applications/{id} {
+      allow read, write: if isSignedIn() && (
+        resource == null ||
+        resource.data.uid == request.auth.uid ||
+        isAgent()
+      );
+    }
+
+    // ── Pending validations ────────────────────────────────────────────────────
+    match /pending_validations/{id} {
+      allow read, write: if isAgent() || (
+        isSignedIn() && resource.data.uid == request.auth.uid
+      );
+    }
+
+    // ── Wallets ────────────────────────────────────────────────────────────────
+    match /wallets/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+
+    // ── User data collections ──────────────────────────────────────────────────
+    match /user_bookings/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+    match /user_events/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+    match /user_social/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+    match /catalogs/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+    match /providers/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+
+    // ── Conversations & messages ───────────────────────────────────────────────
+    match /conversations/{id} {
+      allow read, write: if isSignedIn();
+    }
+    match /conv_messages/{id} {
+      allow read, write: if isSignedIn();
+    }
+    match /friend_requests/{id} {
+      allow read, write: if isSignedIn();
+    }
+    match /group_bookings/{id} {
+      allow read, write: if isSignedIn();
+    }
+    match /service_orders/{id} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

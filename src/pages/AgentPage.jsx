@@ -175,16 +175,25 @@ export default function AgentPage() {
         ])
 
         // Sync users from Firestore → localStorage so the Comptes tab is populated
+        const existing = getAllAccounts()
+        const merged = [...existing]
+
+        // Always include the current admin account (even if Firestore read fails)
+        try {
+          const currentUser = JSON.parse(localStorage.getItem('lib_user') || 'null')
+          if (currentUser?.uid && !merged.find(a => a.uid === currentUser.uid)) {
+            merged.push(currentUser)
+          }
+        } catch {}
+
         if (usersSnap.length) {
-          const existing = getAllAccounts()
-          const merged = [...existing]
           usersSnap.forEach(u => {
             const idx = merged.findIndex(a => a.uid === u.uid)
             if (idx >= 0) merged[idx] = { ...merged[idx], ...u }
             else merged.push(u)
           })
-          localStorage.setItem('lib_registered_users', JSON.stringify(merged))
         }
+        localStorage.setItem('lib_registered_users', JSON.stringify(merged))
 
         if (pendingSnap.length) {
           const validations = pendingSnap.filter(p => p.type !== 'role_request')
