@@ -141,8 +141,10 @@ export default function AgentPage() {
   const [selectedApp, setSelectedApp] = useState(null)
   const [appNote, setAppNote] = useState('')
   const [appAdminNote, setAppAdminNote] = useState('')
+  const [activeAction, setActiveAction] = useState(null) // 'approve' | 'changes' | 'reject' | null
   const [dossierFilter, setDossierFilter] = useState(null)
   const [dossierSection, setDossierSection] = useState('pending')
+  const [dossierSearch, setDossierSearch] = useState('')
   const [roleRejectReason, setRoleRejectReason] = useState('')
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
@@ -406,6 +408,7 @@ export default function AgentPage() {
     showToast(status === 'approved' ? 'Dossier approuvé' : status === 'rejected' ? 'Dossier refusé' : status === 'needs_changes' ? 'Corrections demandées' : status === 'under_review' ? 'Dossier en révision' : 'Dossier mis à jour')
     setAppNote('')
     setAppAdminNote('')
+    setActiveAction(null)
     setConfirmAction(null)
   }
 
@@ -1033,7 +1036,7 @@ export default function AgentPage() {
                 const count = applications.filter(a => sec.statuses.includes(a.status)).length
                 const active = dossierSection === key
                 return (
-                  <button key={key} onClick={() => setDossierSection(key)}
+                  <button key={key} onClick={() => { setDossierSection(key); setDossierSearch('') }}
                     style={{
                       padding: '8px 4px', borderRadius: 6, cursor: 'pointer', textAlign: 'center',
                       background: active ? sec.color + '18' : 'transparent',
@@ -1047,23 +1050,84 @@ export default function AgentPage() {
               })}
             </div>
 
+            {/* Search bar */}
+            {(() => {
+              const sec = SECTION_MAP[dossierSection]
+              const totalInSection = applications.filter(a => sec.statuses.includes(a.status)).length
+              if (totalInSection === 0) return null
+              return (
+                <div style={{ position: 'relative' }}>
+                  <span style={{
+                    position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)',
+                    fontSize: 13, color: 'rgba(255,255,255,0.25)', pointerEvents: 'none', lineHeight: 1,
+                  }}>⌕</span>
+                  <input
+                    type="text"
+                    value={dossierSearch}
+                    onChange={e => setDossierSearch(e.target.value)}
+                    placeholder={`Rechercher dans « ${sec.label} »…`}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      background: 'rgba(8,10,20,0.6)',
+                      border: `1px solid ${dossierSearch ? sec.color + '55' : 'rgba(255,255,255,0.10)'}`,
+                      borderRadius: 7, color: '#fff',
+                      fontFamily: FONTS.mono, fontSize: 11,
+                      padding: '9px 12px 9px 30px',
+                      outline: 'none',
+                      transition: 'border-color 0.15s',
+                    }}
+                  />
+                  {dossierSearch && (
+                    <button
+                      onClick={() => setDossierSearch('')}
+                      style={{
+                        position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)',
+                        cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 2,
+                      }}>×</button>
+                  )}
+                </div>
+              )
+            })()}
+
             {/* List for selected section */}
             {(() => {
               const sec = SECTION_MAP[dossierSection]
               const sectionColor = sec.color
+              const q = dossierSearch.toLowerCase().trim()
               const list = applications
                 .filter(a => sec.statuses.includes(a.status))
+                .filter(a => {
+                  if (!q) return true
+                  const name = (a.formData?.nomCommercial || a.name || '').toLowerCase()
+                  const email = (a.email || '').toLowerCase()
+                  const type = (a.formData?.prestataireType || '').toLowerCase()
+                  return name.includes(q) || email.includes(q) || type.includes(q)
+                })
                 .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
               if (list.length === 0) return (
-                <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                  <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 8px' }}>Aucun dossier</p>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Aucun dossier dans la section « {sec.label} ».</p>
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 8px' }}>
+                    {q ? 'Aucun résultat' : 'Aucun dossier'}
+                  </p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>
+                    {q
+                      ? `Aucun dossier ne correspond à « ${dossierSearch} » dans « ${sec.label} ».`
+                      : `Aucun dossier dans la section « ${sec.label} ».`}
+                  </p>
+                  {q && (
+                    <button onClick={() => setDossierSearch('')} style={{
+                      marginTop: 12, background: 'none', border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: 4, color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10,
+                      padding: '6px 14px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em',
+                    }}>Effacer la recherche</button>
+                  )}
                 </div>
               )
               return list.map(app => {
                 const score = getCompleteness(app)
                 return (
-                  <button key={app.id} onClick={() => { setSelectedApp(app); setAppNote(''); setAppAdminNote('') }}
+                  <button key={app.id} onClick={() => { setSelectedApp(app); setAppNote(''); setAppAdminNote(''); setActiveAction(null) }}
                     style={{
                       ...CARD, display: 'flex', flexDirection: 'column', gap: 8,
                       padding: 14, cursor: 'pointer', width: '100%', textAlign: 'left',
@@ -1456,32 +1520,16 @@ export default function AgentPage() {
                 )}
               </Section>
 
-              {/* Message au candidat (user-visible) */}
-              <Section title="Message au candidat">
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 8px', lineHeight: 1.5 }}>
-                  Ce message sera visible par le candidat depuis son espace.
-                </p>
-                {selectedApp.requestedChanges && (
-                  <div style={{ padding: '8px 10px', background: 'rgba(245,158,11,0.06)', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)', marginBottom: 8 }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 2px' }}>Dernier message envoyé :</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: 0 }}>{selectedApp.requestedChanges}</p>
+              {/* Previous messages sent to candidate */}
+              {(selectedApp.requestedChanges || selectedApp.rejectionReason) && (
+                <Section title="Dernier message envoyé">
+                  <div style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>
+                      {selectedApp.requestedChanges || selectedApp.rejectionReason}
+                    </p>
                   </div>
-                )}
-                <textarea
-                  value={appNote}
-                  onChange={e => setAppNote(e.target.value)}
-                  placeholder="Ex: Merci de renvoyer une pièce d'identité valide..."
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    background: 'rgba(8,10,20,0.7)',
-                    border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: 6, color: '#fff',
-                    fontFamily: FONTS.mono, fontSize: 11,
-                    padding: '10px 12px', outline: 'none', resize: 'vertical',
-                    minHeight: 72, lineHeight: 1.5,
-                  }}
-                />
-              </Section>
+                </Section>
+              )}
 
               {/* Note interne (admin only) */}
               <Section title="Note interne (privée)">
@@ -1506,30 +1554,109 @@ export default function AgentPage() {
                 )}
               </Section>
 
-              {/* Action buttons — contextual per status */}
+              {/* Action buttons — contextual inline forms */}
               {(selectedApp.status === 'submitted' || selectedApp.status === 'under_review') && (
                 <Section title="Actions">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+                    {/* APPROUVER */}
                     <button
-                      onClick={() => setConfirmAction({ type: 'appApprove', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                      onClick={() => setActiveAction(a => a === 'approve' ? null : 'approve')}
                       style={{
                         width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                        background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))',
-                        border: '1px solid rgba(34,197,94,0.35)', color: '#22c55e',
+                        background: activeAction === 'approve'
+                          ? 'linear-gradient(135deg, rgba(34,197,94,0.28), rgba(34,197,94,0.14))'
+                          : 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))',
+                        border: `1px solid ${activeAction === 'approve' ? 'rgba(34,197,94,0.6)' : 'rgba(34,197,94,0.35)'}`,
+                        color: '#22c55e',
                         fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
                       }}>
                       ✓ Approuver le dossier
                     </button>
+                    {activeAction === 'approve' && (
+                      <div style={{ padding: '12px 14px', background: 'rgba(34,197,94,0.05)', borderRadius: 8, border: '1px solid rgba(34,197,94,0.18)', marginTop: -4 }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#22c55e', margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                          Message d'approbation (optionnel)
+                        </p>
+                        <textarea
+                          value={appNote}
+                          onChange={e => setAppNote(e.target.value)}
+                          placeholder="Félicitations ! Votre dossier a été approuvé. Bienvenue sur LIVEINBLACK..."
+                          style={{
+                            width: '100%', boxSizing: 'border-box',
+                            background: 'rgba(8,10,20,0.7)', border: '1px solid rgba(34,197,94,0.25)',
+                            borderRadius: 6, color: '#fff', fontFamily: FONTS.mono, fontSize: 11,
+                            padding: '9px 12px', outline: 'none', resize: 'vertical', minHeight: 64, lineHeight: 1.5,
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <button onClick={() => setActiveAction(null)} style={{
+                            flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                            color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase',
+                          }}>Annuler</button>
+                          <button onClick={() => handleAppAction(selectedApp.id, 'approved', appNote)} style={{
+                            flex: 2, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                            background: 'linear-gradient(135deg, rgba(34,197,94,0.22), rgba(34,197,94,0.08))',
+                            border: '1px solid rgba(34,197,94,0.45)', color: '#22c55e',
+                            fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
+                          }}>✓ Confirmer l'approbation</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* DEMANDER DES CORRECTIONS */}
                     <button
-                      onClick={() => setConfirmAction({ type: 'appChanges', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                      onClick={() => setActiveAction(a => a === 'changes' ? null : 'changes')}
                       style={{
                         width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                        background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.35)',
+                        background: activeAction === 'changes' ? 'rgba(245,158,11,0.18)' : 'rgba(245,158,11,0.10)',
+                        border: `1px solid ${activeAction === 'changes' ? 'rgba(245,158,11,0.60)' : 'rgba(245,158,11,0.35)'}`,
                         color: '#f59e0b',
                         fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
                       }}>
                       ⚠ Demander des corrections
                     </button>
+                    {activeAction === 'changes' && (
+                      <div style={{ padding: '12px 14px', background: 'rgba(245,158,11,0.04)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.20)', marginTop: -4 }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                          Corrections requises *
+                        </p>
+                        <textarea
+                          value={appNote}
+                          onChange={e => setAppNote(e.target.value)}
+                          placeholder="Ex: Merci de renvoyer une pièce d'identité valide, et de compléter la section activité..."
+                          style={{
+                            width: '100%', boxSizing: 'border-box',
+                            background: 'rgba(8,10,20,0.7)', border: '1px solid rgba(245,158,11,0.25)',
+                            borderRadius: 6, color: '#fff', fontFamily: FONTS.mono, fontSize: 11,
+                            padding: '9px 12px', outline: 'none', resize: 'vertical', minHeight: 80, lineHeight: 1.5,
+                          }}
+                        />
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '6px 0 8px', lineHeight: 1.5 }}>
+                          Ce message sera visible par le candidat depuis son espace.
+                        </p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => setActiveAction(null)} style={{
+                            flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                            color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase',
+                          }}>Annuler</button>
+                          <button
+                            onClick={() => { if (appNote.trim()) handleAppAction(selectedApp.id, 'needs_changes', appNote) }}
+                            disabled={!appNote.trim()}
+                            style={{
+                              flex: 2, padding: '9px 0', borderRadius: 4, cursor: appNote.trim() ? 'pointer' : 'not-allowed',
+                              background: appNote.trim() ? 'rgba(245,158,11,0.18)' : 'rgba(245,158,11,0.06)',
+                              border: `1px solid ${appNote.trim() ? 'rgba(245,158,11,0.50)' : 'rgba(245,158,11,0.20)'}`,
+                              color: appNote.trim() ? '#f59e0b' : 'rgba(245,158,11,0.40)',
+                              fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
+                            }}>⚠ Envoyer les corrections</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* PASSER EN RÉVISION (action directe) */}
                     {selectedApp.status === 'submitted' && (
                       <button
                         onClick={() => handleAppAction(selectedApp.id, 'under_review', appAdminNote)}
@@ -1542,16 +1669,53 @@ export default function AgentPage() {
                         → Passer en révision
                       </button>
                     )}
+
+                    {/* REFUSER */}
                     <button
-                      onClick={() => setConfirmAction({ type: 'appReject', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                      onClick={() => setActiveAction(a => a === 'reject' ? null : 'reject')}
                       style={{
                         width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                        background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.35)',
+                        background: activeAction === 'reject' ? 'rgba(224,90,170,0.18)' : 'rgba(224,90,170,0.10)',
+                        border: `1px solid ${activeAction === 'reject' ? 'rgba(224,90,170,0.60)' : 'rgba(224,90,170,0.35)'}`,
                         color: COLORS.pink,
                         fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
                       }}>
                       ✕ Refuser le dossier
                     </button>
+                    {activeAction === 'reject' && (
+                      <div style={{ padding: '12px 14px', background: 'rgba(224,90,170,0.04)', borderRadius: 8, border: '1px solid rgba(224,90,170,0.20)', marginTop: -4 }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                          Motif de refus (optionnel)
+                        </p>
+                        <textarea
+                          value={appNote}
+                          onChange={e => setAppNote(e.target.value)}
+                          placeholder="Ex: Le dossier ne correspond pas aux critères d'éligibilité..."
+                          style={{
+                            width: '100%', boxSizing: 'border-box',
+                            background: 'rgba(8,10,20,0.7)', border: '1px solid rgba(224,90,170,0.25)',
+                            borderRadius: 6, color: '#fff', fontFamily: FONTS.mono, fontSize: 11,
+                            padding: '9px 12px', outline: 'none', resize: 'vertical', minHeight: 64, lineHeight: 1.5,
+                          }}
+                        />
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '6px 0 8px', lineHeight: 1.5 }}>
+                          Ce motif sera visible par le candidat depuis son espace.
+                        </p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => setActiveAction(null)} style={{
+                            flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                            color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase',
+                          }}>Annuler</button>
+                          <button onClick={() => handleAppAction(selectedApp.id, 'rejected', appNote)} style={{
+                            flex: 2, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                            background: 'rgba(224,90,170,0.16)', border: '1px solid rgba(224,90,170,0.45)',
+                            color: COLORS.pink, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
+                          }}>✕ Confirmer le refus</button>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 </Section>
               )}
@@ -1564,15 +1728,46 @@ export default function AgentPage() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setConfirmAction({ type: 'appReject', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
+                    onClick={() => setActiveAction(a => a === 'reject' ? null : 'reject')}
                     style={{
                       width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                      background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.35)',
+                      background: activeAction === 'reject' ? 'rgba(224,90,170,0.18)' : 'rgba(224,90,170,0.10)',
+                      border: `1px solid ${activeAction === 'reject' ? 'rgba(224,90,170,0.60)' : 'rgba(224,90,170,0.35)'}`,
                       color: COLORS.pink,
                       fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
                     }}>
-                    Refuser définitivement
+                    ✕ Refuser définitivement
                   </button>
+                  {activeAction === 'reject' && (
+                    <div style={{ padding: '12px 14px', background: 'rgba(224,90,170,0.04)', borderRadius: 8, border: '1px solid rgba(224,90,170,0.20)', marginTop: 8 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                        Motif de refus (optionnel)
+                      </p>
+                      <textarea
+                        value={appNote}
+                        onChange={e => setAppNote(e.target.value)}
+                        placeholder="Ex: Malgré les demandes de correction, le dossier ne satisfait pas les critères..."
+                        style={{
+                          width: '100%', boxSizing: 'border-box',
+                          background: 'rgba(8,10,20,0.7)', border: '1px solid rgba(224,90,170,0.25)',
+                          borderRadius: 6, color: '#fff', fontFamily: FONTS.mono, fontSize: 11,
+                          padding: '9px 12px', outline: 'none', resize: 'vertical', minHeight: 64, lineHeight: 1.5,
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <button onClick={() => setActiveAction(null)} style={{
+                          flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                          background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                          color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase',
+                        }}>Annuler</button>
+                        <button onClick={() => handleAppAction(selectedApp.id, 'rejected', appNote)} style={{
+                          flex: 2, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
+                          background: 'rgba(224,90,170,0.16)', border: '1px solid rgba(224,90,170,0.45)',
+                          color: COLORS.pink, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
+                        }}>✕ Confirmer le refus</button>
+                      </div>
+                    </div>
+                  )}
                 </Section>
               )}
 
@@ -1609,31 +1804,56 @@ export default function AgentPage() {
               {/* Audit log */}
               {selectedApp.auditLog?.length > 0 && (
                 <Section title="Historique">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {[...selectedApp.auditLog].reverse().map((entry, i) => {
-                      const cfg = APPLICATION_STATUSES[entry.action]
-                      const color = cfg?.color || COLORS.dim
-                      return (
-                        <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i < selectedApp.auditLog.length - 1 ? 14 : 0, position: 'relative' }}>
-                          {i < selectedApp.auditLog.length - 1 && (
-                            <div style={{ position: 'absolute', left: 10, top: 20, bottom: 0, width: 1, background: 'rgba(255,255,255,0.06)' }} />
-                          )}
-                          <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, border: `1px solid ${color}44`, background: color + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-                            <div style={{ width: 5, height: 5, borderRadius: '50%', background: color }} />
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: '1px 0 1px', fontWeight: 600 }}>
-                              {cfg?.label || entry.action}
-                            </p>
-                            {entry.note && <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.muted, margin: '0 0 1px' }}>{entry.note}</p>}
-                            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: 0 }}>
-                              {entry.byName} · {new Date(entry.at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                  {(() => {
+                    // Extended label map for actions not in APPLICATION_STATUSES
+                    const EXTRA_LABELS = {
+                      created:   { label: 'Dossier créé',       color: 'rgba(255,255,255,0.30)' },
+                      submitted: { label: 'Soumis',             color: '#4ee8c8' },
+                      resubmitted: { label: 'Re-soumis',        color: '#4ee8c8' },
+                    }
+                    const reversed = [...selectedApp.auditLog].reverse()
+                    // Determine if a note is "system text" (auto-generated) vs a real admin message
+                    const AUTO_NOTES = ['Dossier créé', 'Dossier soumis pour validation', 'Dossier re-soumis']
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        {reversed.map((entry, i) => {
+                          const cfg = APPLICATION_STATUSES[entry.action] || EXTRA_LABELS[entry.action]
+                          const color = cfg?.color || COLORS.dim
+                          const isLast = i === reversed.length - 1
+                          const isAdminNote = entry.note && !AUTO_NOTES.includes(entry.note)
+                          const authorLabel = entry.byName || (entry.action === 'created' ? 'Système' : '—')
+                          return (
+                            <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: isLast ? 0 : 14, position: 'relative' }}>
+                              {!isLast && (
+                                <div style={{ position: 'absolute', left: 10, top: 20, bottom: 0, width: 1, background: 'rgba(255,255,255,0.06)' }} />
+                              )}
+                              <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, border: `1px solid ${color}44`, background: color + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+                                <div style={{ width: 5, height: 5, borderRadius: '50%', background: color }} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: '1px 0 2px', fontWeight: 600 }}>
+                                  {cfg?.label || entry.action}
+                                </p>
+                                {/* Auto note (system text) — dim */}
+                                {entry.note && !isAdminNote && (
+                                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 2px', fontStyle: 'italic' }}>{entry.note}</p>
+                                )}
+                                {/* Admin message — highlighted */}
+                                {isAdminNote && (
+                                  <div style={{ padding: '5px 8px', background: color + '0d', border: `1px solid ${color}22`, borderRadius: 4, marginBottom: 4 }}>
+                                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: color, margin: 0, lineHeight: 1.5 }}>"{entry.note}"</p>
+                                  </div>
+                                )}
+                                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: 0 }}>
+                                  {authorLabel} · {new Date(entry.at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
                 </Section>
               )}
             </div>
