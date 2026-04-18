@@ -188,12 +188,16 @@ export default function AgentPage() {
 
         if (usersSnap.length) {
           usersSnap.forEach(u => {
+            // Ignorer les docs Firestore fantômes (sans email ni nom — inscriptions abandonnées)
+            if (!u.uid || (!u.email && !u.name)) return
             const idx = merged.findIndex(a => a.uid === u.uid)
             if (idx >= 0) merged[idx] = { ...merged[idx], ...u }
             else merged.push(u)
           })
         }
-        localStorage.setItem('lib_registered_users', JSON.stringify(merged))
+        // Filtrer les entrées invalides avant de sauvegarder
+        const cleanMerged = merged.filter(u => u.uid && (u.email || u.name))
+        localStorage.setItem('lib_registered_users', JSON.stringify(cleanMerged))
 
         if (pendingSnap.length) {
           const validations = pendingSnap.filter(p => p.type !== 'role_request')
