@@ -65,6 +65,7 @@ export default function OnboardingOrganisateur() {
   const [app, setApp] = useState(null)
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [candidateNote, setCandidateNote] = useState('')
   const [creatingAccount, setCreatingAccount] = useState(false)
   const [errors, setErrors] = useState({})
   const [uploadStatus, setUploadStatus] = useState({})
@@ -281,7 +282,7 @@ export default function OnboardingOrganisateur() {
         return
       }
 
-      const result = await submitApplication(app.id, f)
+      const result = await submitApplication(app.id, f, candidateNote)
       setApp(result)
 
       if (anonMode) {
@@ -808,6 +809,28 @@ export default function OnboardingOrganisateur() {
                           ? 'Une fois envoyé, ton dossier sera examiné par l\'équipe LIVEINBLACK. Tu seras contacté par email dès validation.'
                           : 'Une fois soumis, ton dossier sera examiné par l\'équipe LIVEINBLACK. Tu peux suivre l\'avancement dans Mon Dossier.'}
                       </p>
+                      {/* Note optionnelle pour l'équipe */}
+                      <div style={{ marginBottom: 14 }}>
+                        <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+                          Message pour l'équipe (optionnel)
+                        </p>
+                        <textarea
+                          value={candidateNote}
+                          onChange={e => setCandidateNote(e.target.value)}
+                          placeholder={app?.status === 'needs_changes'
+                            ? 'Ex : J\'ai mis à jour la pièce d\'identité et complété le SIRET...'
+                            : 'Ex : Bonjour, voici mon dossier. N\'hésitez pas à me contacter si vous avez des questions...'}
+                          style={{
+                            width: '100%', boxSizing: 'border-box',
+                            background: 'rgba(8,10,20,0.6)',
+                            border: '1px solid rgba(255,255,255,0.10)',
+                            borderRadius: 6, color: '#fff',
+                            fontFamily: DM, fontSize: 11,
+                            padding: '9px 12px', outline: 'none', resize: 'vertical',
+                            minHeight: 64, lineHeight: 1.5,
+                          }}
+                        />
+                      </div>
                     </>
                   )}
                   <button

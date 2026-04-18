@@ -88,6 +88,7 @@ export default function OnboardingPrestataire() {
   const [app, setApp] = useState(null)
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [candidateNote, setCandidateNote] = useState('')
   const [errors, setErrors] = useState({})
   const [uploadStatus, setUploadStatus] = useState({})
   const [toast, setToast] = useState(null)
@@ -189,7 +190,7 @@ export default function OnboardingPrestataire() {
   async function handleSubmit() {
     setSubmitting(true)
     try {
-      const result = await submitApplication(app.id, f)
+      const result = await submitApplication(app.id, f, candidateNote)
       setApp(result)
       showToast('Dossier soumis !')
       setTimeout(() => navigate('/mon-dossier'), 1500)
@@ -516,6 +517,28 @@ export default function OnboardingPrestataire() {
               <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, marginBottom: 16 }}>
                 Ton dossier sera examiné par l'équipe LIVEINBLACK. Suis l'avancement dans <strong style={{ color: 'rgba(255,255,255,0.55)' }}>Mon Dossier</strong>.
               </p>
+              {/* Note optionnelle pour l'équipe */}
+              <div style={{ marginBottom: 14 }}>
+                <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Message pour l'équipe (optionnel)
+                </p>
+                <textarea
+                  value={candidateNote}
+                  onChange={e => setCandidateNote(e.target.value)}
+                  placeholder={app?.status === 'needs_changes'
+                    ? 'Ex : J\'ai mis à jour les documents demandés et corrigé les informations...'
+                    : 'Ex : Bonjour, voici mon dossier prestataire. Je suis disponible pour tout complément...'}
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: 'rgba(8,10,20,0.6)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: 6, color: '#fff',
+                    fontFamily: DM, fontSize: 11,
+                    padding: '9px 12px', outline: 'none', resize: 'vertical',
+                    minHeight: 64, lineHeight: 1.5,
+                  }}
+                />
+              </div>
               <button onClick={handleSubmit} disabled={submitting} style={{ ...S.btnGold, opacity: submitting ? 0.6 : 1 }}>
                 {submitting ? 'Soumission...' : 'Soumettre mon dossier'}
               </button>

@@ -11,6 +11,7 @@ export const APPLICATION_STATUSES = {
   submitted:      { label: 'Soumis',                color: '#4ee8c8',               bg: 'rgba(78,232,200,0.06)' },
   under_review:   { label: 'En cours de révision',  color: '#3b82f6',               bg: 'rgba(59,130,246,0.06)' },
   needs_changes:  { label: 'Corrections requises',  color: '#f59e0b',               bg: 'rgba(245,158,11,0.06)' },
+  resubmitted:    { label: 'Re-soumis',             color: '#a78bfa',               bg: 'rgba(167,139,250,0.06)' },
   approved:       { label: 'Approuvé',              color: '#22c55e',               bg: 'rgba(34,197,94,0.06)'  },
   rejected:       { label: 'Refusé',                color: '#e05aaa',               bg: 'rgba(224,90,170,0.06)' },
   suspended:      { label: 'Suspendu',              color: '#ef4444',               bg: 'rgba(239,68,68,0.06)'  },
@@ -154,21 +155,26 @@ export function saveDraft(id, formData) {
 
 // ─── Soumettre dossier ────────────────────────────────────────────────────────
 
-export async function submitApplication(id, formData) {
+export async function submitApplication(id, formData, candidateNote = '') {
   const all = _getAll()
   const idx = all.findIndex(a => a.id === id)
   if (idx < 0) return null
 
   const now = Date.now()
+  const wasCorrection = all[idx].status === 'needs_changes'
+  const newStatus = wasCorrection ? 'resubmitted' : 'submitted'
+  const defaultNote = wasCorrection ? 'Dossier corrigé et re-soumis' : 'Dossier soumis pour validation'
+
   const app = {
     ...all[idx],
     formData: { ...all[idx].formData, ...formData },
-    status: 'submitted',
+    status: newStatus,
     submittedAt: now,
     updatedAt: now,
+    candidateNote: candidateNote.trim() || all[idx].candidateNote || '',
     auditLog: [
       ...all[idx].auditLog,
-      { action: 'submitted', by: all[idx].uid, byName: all[idx].name, at: now, note: 'Dossier soumis pour validation' },
+      { action: newStatus, by: all[idx].uid, byName: all[idx].name, at: now, note: candidateNote.trim() || defaultNote },
     ],
   }
   all[idx] = app

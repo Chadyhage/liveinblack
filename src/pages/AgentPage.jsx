@@ -53,11 +53,12 @@ const COLORS = {
 }
 
 const SECTION_MAP = {
-  pending:    { label: 'En attente',  color: '#c8a96e', statuses: ['submitted'] },
-  review:     { label: 'En révision', color: '#3b82f6', statuses: ['under_review'] },
-  correction: { label: 'À corriger',  color: '#f59e0b', statuses: ['needs_changes'] },
-  validated:  { label: 'Validés',     color: '#22c55e', statuses: ['approved'] },
-  refused:    { label: 'Refusés',     color: '#e05aaa', statuses: ['rejected', 'suspended'] },
+  pending:     { label: 'En attente',  color: '#c8a96e', statuses: ['submitted'] },
+  review:      { label: 'En révision', color: '#3b82f6', statuses: ['under_review'] },
+  correction:  { label: 'À corriger',  color: '#f59e0b', statuses: ['needs_changes'] },
+  resubmitted: { label: 'Re-soumis',   color: '#a78bfa', statuses: ['resubmitted'] },
+  validated:   { label: 'Validés',     color: '#22c55e', statuses: ['approved'] },
+  refused:     { label: 'Refusés',     color: '#e05aaa', statuses: ['rejected', 'suspended'] },
 }
 
 function RoleBadge({ role, small }) {
@@ -1031,7 +1032,7 @@ export default function AgentPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
 
             {/* Section sub-tabs with counts */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
               {Object.entries(SECTION_MAP).map(([key, sec]) => {
                 const count = applications.filter(a => sec.statuses.includes(a.status)).length
                 const active = dossierSection === key
@@ -1467,6 +1468,25 @@ export default function AgentPage() {
                 )
               })()}
 
+              {/* Message du candidat */}
+              {selectedApp.candidateNote && (
+                <Section title="Message du candidat">
+                  <div style={{
+                    padding: '12px 14px',
+                    background: 'rgba(167,139,250,0.06)',
+                    border: '1px solid rgba(167,139,250,0.22)',
+                    borderRadius: 8,
+                  }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#a78bfa', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      {selectedApp.status === 'resubmitted' ? '↩ Message joint à la re-soumission' : '✉ Message joint à la soumission'}
+                    </p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6 }}>
+                      "{selectedApp.candidateNote}"
+                    </p>
+                  </div>
+                </Section>
+              )}
+
               {/* Form data summary */}
               <Section title="Informations formulaire">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -1555,7 +1575,7 @@ export default function AgentPage() {
               </Section>
 
               {/* Action buttons — contextual inline forms */}
-              {(selectedApp.status === 'submitted' || selectedApp.status === 'under_review') && (
+              {(selectedApp.status === 'submitted' || selectedApp.status === 'under_review' || selectedApp.status === 'resubmitted') && (
                 <Section title="Actions">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
@@ -1657,7 +1677,7 @@ export default function AgentPage() {
                     )}
 
                     {/* PASSER EN RÉVISION (action directe) */}
-                    {selectedApp.status === 'submitted' && (
+                    {(selectedApp.status === 'submitted' || selectedApp.status === 'resubmitted') && (
                       <button
                         onClick={() => handleAppAction(selectedApp.id, 'under_review', appAdminNote)}
                         style={{
