@@ -584,22 +584,26 @@ export default function AgentPage() {
             </div>
 
             {/* ── Emails non vérifiés ── */}
-            {unverifiedAccounts.length > 0 && (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-                    ⚠ Emails non vérifiés ({unverifiedAccounts.length})
-                  </p>
-                  {expiredUnverified.length > 0 && (
-                    <button onClick={handleCleanupExpired} style={{
-                      fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
-                      background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)',
-                      color: '#ef4444', borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
-                    }}>
-                      Supprimer les +7j ({expiredUnverified.length})
-                    </button>
-                  )}
-                </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: unverifiedAccounts.length > 0 ? '#f59e0b' : COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                  {unverifiedAccounts.length > 0 ? '⚠' : '✓'} Emails non vérifiés ({unverifiedAccounts.length})
+                </p>
+                {expiredUnverified.length > 0 && (
+                  <button onClick={handleCleanupExpired} style={{
+                    fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)',
+                    color: '#ef4444', borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
+                  }}>
+                    Supprimer les +7j ({expiredUnverified.length})
+                  </button>
+                )}
+              </div>
+              {unverifiedAccounts.length === 0 ? (
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, padding: '8px 0' }}>
+                  Aucun email non vérifié en attente.
+                </p>
+              ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {unverifiedAccounts.map(u => {
                     const ageMs = u.createdAt ? Date.now() - u.createdAt : null
@@ -630,16 +634,16 @@ export default function AgentPage() {
                     )
                   })}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* ── Doublons détectés ── */}
-            {duplicateGroups.length > 0 && (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-                    ⚠ Doublons ({duplicateGroups.length} email{duplicateGroups.length > 1 ? 's' : ''})
-                  </p>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: duplicateGroups.length > 0 ? COLORS.pink : COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                  {duplicateGroups.length > 0 ? '⚠' : '✓'} Doublons ({duplicateGroups.length})
+                </p>
+                {duplicateGroups.length > 0 && (
                   <button onClick={handleCleanupDuplicates} style={{
                     fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
                     background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.3)',
@@ -647,7 +651,13 @@ export default function AgentPage() {
                   }}>
                     Nettoyer tout
                   </button>
-                </div>
+                )}
+              </div>
+              {duplicateGroups.length === 0 ? (
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, padding: '8px 0' }}>
+                  Aucun doublon détecté.
+                </p>
+              ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {duplicateGroups.map(([email, group]) => (
                     <div key={email} style={{ ...CARD, padding: '10px 12px', borderColor: 'rgba(224,90,170,0.2)' }}>
@@ -666,8 +676,8 @@ export default function AgentPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
           </div>
         )}
