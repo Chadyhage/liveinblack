@@ -25,6 +25,60 @@ const S = {
   error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em' },
 }
 
+const COUNTRY_CODES = [
+  { code: '+33',  flag: '🇫🇷', label: 'France' },
+  { code: '+32',  flag: '🇧🇪', label: 'Belgique' },
+  { code: '+41',  flag: '🇨🇭', label: 'Suisse' },
+  { code: '+352', flag: '🇱🇺', label: 'Luxembourg' },
+  { code: '+1',   flag: '🇨🇦', label: 'Canada' },
+  { code: '+212', flag: '🇲🇦', label: 'Maroc' },
+  { code: '+213', flag: '🇩🇿', label: 'Algérie' },
+  { code: '+216', flag: '🇹🇳', label: 'Tunisie' },
+  { code: '+221', flag: '🇸🇳', label: 'Sénégal' },
+  { code: '+225', flag: '🇨🇮', label: 'Côte d\'Ivoire' },
+  { code: '+226', flag: '🇧🇫', label: 'Burkina Faso' },
+  { code: '+227', flag: '🇳🇪', label: 'Niger' },
+  { code: '+228', flag: '🇹🇬', label: 'Togo' },
+  { code: '+229', flag: '🇧🇯', label: 'Bénin' },
+  { code: '+237', flag: '🇨🇲', label: 'Cameroun' },
+  { code: '+241', flag: '🇬🇦', label: 'Gabon' },
+  { code: '+242', flag: '🇨🇬', label: 'Congo' },
+  { code: '+243', flag: '🇨🇩', label: 'RD Congo' },
+  { code: '+245', flag: '🇬🇼', label: 'Guinée-Bissau' },
+  { code: '+224', flag: '🇬🇳', label: 'Guinée' },
+  { code: '+223', flag: '🇲🇱', label: 'Mali' },
+]
+
+function PhoneInput({ codeField, numberField, formState, onUpdate, inputStyle, error, placeholder = '6 00 00 00 00' }) {
+  const selected = COUNTRY_CODES.find(c => c.code === formState[codeField]) || COUNTRY_CODES[0]
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <select
+        value={formState[codeField]}
+        onChange={e => onUpdate(codeField, e.target.value)}
+        style={{
+          flexShrink: 0, width: 115,
+          background: 'rgba(6,8,16,0.7)',
+          border: `1px solid ${error ? '#e05aaa' : 'rgba(255,255,255,0.10)'}`,
+          borderRadius: 4, fontFamily: DM, fontSize: 12,
+          color: 'rgba(255,255,255,0.9)', padding: '10px 8px',
+          outline: 'none', appearance: 'none', cursor: 'pointer',
+        }}>
+        {COUNTRY_CODES.map(c => (
+          <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+        ))}
+      </select>
+      <input
+        type="tel"
+        value={formState[numberField]}
+        onChange={e => onUpdate(numberField, e.target.value)}
+        placeholder={placeholder}
+        style={{ ...inputStyle, flex: 1, borderColor: error ? '#e05aaa' : undefined }}
+      />
+    </div>
+  )
+}
+
 const TYPES_ETAB = ['Boîte / Club','Bar','Autre']
 
 const STEPS = [
@@ -85,10 +139,10 @@ export default function OnboardingOrganisateur() {
   const [f, setF] = useState({
     // Step 0 — Entreprise
     nomCommercial: '', siret: '', noFixedAddress: false,
-    adresseEtablissement: '', emailPro: '', telephonePro: '', siteWeb: '',
+    adresseEtablissement: '', emailPro: '', telephoneProCode: '+33', telephonePro: '', siteWeb: '',
     // Step 1 — Responsable
     responsableNom: '', responsablePrenom: '', responsableFonction: '',
-    responsableTelephone: '',
+    responsableTelephoneCode: '+33', responsableTelephone: '',
     // Step 2 — Activité
     typeEtablissement: '', typeEtablissementCustom: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
     horaires: '', alcool: false,
@@ -420,7 +474,7 @@ export default function OnboardingOrganisateur() {
                 {errors.emailPro && <p style={S.error}>{errors.emailPro}</p>}
               </Field>
               <Field label="Téléphone professionnel" required>
-                <input style={{ ...S.input, borderColor: errors.telephonePro ? '#e05aaa' : undefined }} value={f.telephonePro} onChange={e => update('telephonePro', e.target.value)} placeholder="+33 6 00 00 00 00" />
+                <PhoneInput codeField="telephoneProCode" numberField="telephonePro" formState={f} onUpdate={update} inputStyle={S.input} error={errors.telephonePro} />
                 {errors.telephonePro && <p style={S.error}>{errors.telephonePro}</p>}
               </Field>
 
@@ -500,7 +554,7 @@ export default function OnboardingOrganisateur() {
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <Field label="Téléphone de contact">
-                  <input style={S.input} value={f.responsableTelephone} onChange={e => update('responsableTelephone', e.target.value)} placeholder="+228 90 00 00 00" />
+                  <PhoneInput codeField="responsableTelephoneCode" numberField="responsableTelephone" formState={f} onUpdate={update} inputStyle={S.input} placeholder="90 00 00 00" />
                 </Field>
               </div>
 
