@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 // ─── Style tokens ─────────────────────────────────────────────────────────────
 const S = {
   overlay: {
@@ -18,162 +16,106 @@ const S = {
     width: '100%',
     maxWidth: 380,
   },
-  label: {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 9,
-    letterSpacing: '0.35em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.28)',
-    display: 'block',
-    marginBottom: 6,
-  },
-  input: {
-    background: 'rgba(6,8,16,0.6)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.9)',
-    padding: '10px 14px',
-    width: '100%',
-    outline: 'none',
-    boxSizing: 'border-box',
-  },
   btnPrimary: {
     padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(78,232,200,0.12))',
-    border: '1px solid rgba(255,255,255,0.28)',
+    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+    border: '1px solid rgba(200,169,110,0.45)',
     borderRadius: 4,
     fontFamily: "'DM Mono', monospace",
     fontSize: 11,
     letterSpacing: '0.25em',
     textTransform: 'uppercase',
-    color: 'white',
+    color: '#c8a96e',
     cursor: 'pointer',
     width: '100%',
   },
   btnGhost: {
     padding: '11px 20px',
     background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.12)',
+    border: '1px solid rgba(255,255,255,0.10)',
     borderRadius: 4,
     fontFamily: "'DM Mono', monospace",
     fontSize: 11,
     letterSpacing: '0.15em',
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.35)',
     cursor: 'pointer',
     width: '100%',
     marginTop: 8,
   },
 }
 
-// Compute age from date string YYYY-MM-DD
-function computeAge(dobString) {
-  if (!dobString) return null
-  const dob = new Date(dobString)
-  if (isNaN(dob.getTime())) return null
-  const today = new Date()
-  let age = today.getFullYear() - dob.getFullYear()
-  const m = today.getMonth() - dob.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
-  return age
-}
-
 /**
  * AgeVerificationModal
+ * Informe l'utilisateur qu'une pièce d'identité sera demandée à l'entrée.
+ * Ne collecte aucune donnée — simple avertissement avant achat.
+ *
  * Props:
  *   minAge: number (e.g. 18)
- *   onVerified: () => void  — called when age is confirmed ≥ minAge
+ *   onVerified: () => void  — appelé quand l'utilisateur confirme
  *   onCancel: () => void
  */
 export default function AgeVerificationModal({ minAge = 18, onVerified, onCancel }) {
-  const [dob, setDob] = useState('')
-  const [error, setError] = useState(null)
-  const [focused, setFocused] = useState(false)
-
-  function handleCheck() {
-    const age = computeAge(dob)
-    if (age === null) {
-      setError('Date invalide.')
-      return
-    }
-    if (age < minAge) {
-      setError(`Tu dois avoir au moins ${minAge} ans pour accéder à cet événement.`)
-      return
-    }
-    setError(null)
-    onVerified()
-  }
-
   return (
     <div style={S.overlay} onClick={onCancel}>
       <div style={S.modal} onClick={e => e.stopPropagation()}>
+
         {/* Header */}
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div style={{ width: 28, height: 1, background: '#c8a96e', flexShrink: 0 }} />
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)' }}>
-              Vérification d'âge
+              Événement {minAge}+
             </span>
           </div>
-          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0, marginBottom: 6 }}>
-            Événement {minAge}+
-          </p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.7, letterSpacing: '0.05em' }}>
-            Cet événement est réservé aux personnes de {minAge} ans et plus. Confirme ta date de naissance pour continuer.
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
+            Réservé aux {minAge} ans et plus
           </p>
         </div>
 
-        {/* Age badge */}
+        {/* Badge âge */}
         <div style={{
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          width: 48, height: 48, borderRadius: '50%',
+          width: 52, height: 52, borderRadius: '50%',
           border: '1px solid rgba(200,169,110,0.4)',
           background: 'rgba(200,169,110,0.08)',
           fontFamily: "'DM Mono', monospace",
-          fontSize: 13, fontWeight: 500,
+          fontSize: 14, fontWeight: 600,
           color: '#c8a96e',
           marginBottom: 20,
         }}>
           {minAge}+
         </div>
 
-        {/* Date input */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={S.label}>Date de naissance</label>
-          <input
-            type="date"
-            value={dob}
-            onChange={e => { setDob(e.target.value); setError(null) }}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            max={new Date().toISOString().split('T')[0]}
-            style={{
-              ...S.input,
-              borderColor: error ? 'rgba(220,50,50,0.6)' : focused ? '#c8a96e' : 'rgba(255,255,255,0.10)',
-              colorScheme: 'dark',
-            }}
-          />
-          {error && (
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>
-              {error}
-            </p>
-          )}
+        {/* Message principal */}
+        <div style={{
+          padding: '14px 16px',
+          background: 'rgba(200,169,110,0.06)',
+          border: '1px solid rgba(200,169,110,0.18)',
+          borderRadius: 8,
+          marginBottom: 20,
+        }}>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', margin: '0 0 6px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            🪪 Pièce d'identité obligatoire
+          </p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
+            Une pièce d'identité valide sera demandée à l'entrée de l'événement pour vérifier ta majorité. Pense à la prendre avec toi.
+          </p>
         </div>
 
-        {/* Legal note */}
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em', lineHeight: 1.6, marginBottom: 16 }}>
-          À l'entrée de l'événement, une pièce d'identité pourra être demandée par les organisateurs pour confirmer ta majorité.
+        {/* Note légale */}
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em', lineHeight: 1.6, marginBottom: 20 }}>
+          En continuant, tu confirmes avoir {minAge} ans ou plus et acceptes de présenter une pièce d'identité le soir de l'événement.
         </p>
 
         {/* CTA */}
-        <button style={S.btnPrimary} onClick={handleCheck}>
-          Confirmer mon âge
+        <button style={S.btnPrimary} onClick={onVerified}>
+          J'ai compris — continuer
         </button>
         <button style={S.btnGhost} onClick={onCancel}>
           Annuler
         </button>
+
       </div>
     </div>
   )
