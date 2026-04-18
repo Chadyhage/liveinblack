@@ -221,11 +221,17 @@ export default function AgentPage() {
 
   if (!isAgent) return null
 
+  // ── Presence helper — true if lastSeen within 5 min ──
+  function isUserOnline(acc) {
+    if (acc?.isOnline && acc?.lastSeen && (Date.now() - acc.lastSeen) < 5 * 60 * 1000) return true
+    return !!(acc?.lastSeen && (Date.now() - acc.lastSeen) < 5 * 60 * 1000)
+  }
+
   const totalUsers        = accounts.length
   const totalActive       = accounts.filter(a => a.status === 'active').length
   const totalPrestataires = accounts.filter(a => a.role === 'prestataire').length
   const totalOrgas        = accounts.filter(a => a.role === 'organisateur').length
-  const totalPending      = pending.length  // legacy — kept for the Validations tab label
+  const totalOnline       = accounts.filter(isUserOnline).length
   const totalRoleReqs     = roleRequests.length
   const totalAppsSubmitted = applications.filter(a => a.status === 'submitted' || a.status === 'under_review').length
   // Count only applications + role requests to avoid double-counting the same dossier.
@@ -396,8 +402,6 @@ export default function AgentPage() {
         {[
           { key: 'dashboard',     label: 'Dashboard' },
           { key: 'users',         label: 'Comptes' },
-          { key: 'validations',   label: `Valid.${totalPending > 0 ? ` (${totalPending})` : ''}` },
-          { key: 'role-requests', label: `Rôles${totalRoleReqs > 0 ? ` (${totalRoleReqs})` : ''}` },
           { key: 'dossiers',      label: `Dossiers${totalAppsSubmitted > 0 ? ` (${totalAppsSubmitted})` : ''}` },
         ].map(t => (
           <button
@@ -429,15 +433,17 @@ export default function AgentPage() {
             {/* Stat grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { label: 'Comptes total', value: totalUsers,        color: '#4ee8c8' },
-                { label: 'Actifs',        value: totalActive,       color: '#4ee8c8' },
-                { label: 'Prestataires', value: totalPrestataires,  color: COLORS.gold },
-                { label: 'En attente',   value: totalAllPending,    color: totalAllPending > 0 ? COLORS.pink : COLORS.muted, alert: totalAllPending > 0 },
+                { label: 'Comptes total', value: totalUsers,        color: '#4ee8c8',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch('') } },
+                { label: 'Connectés',     value: totalOnline,       color: '#22c55e',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch('') } },
+                { label: 'Prestataires', value: totalPrestataires,  color: COLORS.gold, onClick: () => { setTab('users'); setRoleFilter('prestataire'); setStatusFilter('all'); setSearch('') } },
+                { label: 'En attente',   value: totalAllPending,    color: totalAllPending > 0 ? COLORS.pink : COLORS.muted, alert: totalAllPending > 0, onClick: () => setTab('dossiers') },
               ].map(s => (
-                <div key={s.label} style={{
+                <button key={s.label} onClick={s.onClick} style={{
                   ...CARD,
                   padding: 16,
                   borderColor: s.alert ? `${s.color}55` : 'rgba(255,255,255,0.10)',
+                  cursor: 'pointer', textAlign: 'left',
+                  transition: 'border-color 0.2s, background 0.2s',
                 }}>
                   <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
                     {s.label}
@@ -445,7 +451,10 @@ export default function AgentPage() {
                   <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 38, color: s.color, margin: 0, lineHeight: 1 }}>
                     {s.value}
                   </p>
-                </div>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: s.color, margin: '6px 0 0', letterSpacing: '0.08em', opacity: 0.7 }}>
+                    VOIR →
+                  </p>
+                </button>
               ))}
             </div>
 
@@ -462,13 +471,22 @@ export default function AgentPage() {
                       padding: 12, cursor: 'pointer', width: '100%', textAlign: 'left',
                       transition: 'border-color 0.2s',
                     }}>
-                    <div style={{
-                      width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                      background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.2)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: FONTS.mono, fontSize: 12, color: COLORS.teal, fontWeight: 700,
-                    }}>
-                      {u.name?.[0]?.toUpperCase() || '?'}
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: '50%',
+                        background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.2)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: FONTS.mono, fontSize: 12, color: COLORS.teal, fontWeight: 700,
+                      }}>
+                        {u.name?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      {isUserOnline(u) && (
+                        <span style={{
+                          position: 'absolute', bottom: 0, right: 0,
+                          width: 8, height: 8, borderRadius: '50%',
+                          background: '#22c55e', border: '2px solid #04040b',
+                        }} />
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</p>
@@ -588,15 +606,24 @@ export default function AgentPage() {
                     ...CARD, display: 'flex', alignItems: 'center', gap: 12,
                     padding: 12, cursor: 'pointer', width: '100%', textAlign: 'left',
                   }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                    background: u.role === 'agent' ? 'rgba(200,169,110,0.12)' : 'rgba(255,255,255,0.05)',
-                    border: u.role === 'agent' ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(255,255,255,0.08)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
-                    color: u.role === 'agent' ? COLORS.gold : '#fff',
-                  }}>
-                    {u.name?.[0]?.toUpperCase() || '?'}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: u.role === 'agent' ? 'rgba(200,169,110,0.12)' : 'rgba(255,255,255,0.05)',
+                      border: u.role === 'agent' ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
+                      color: u.role === 'agent' ? COLORS.gold : '#fff',
+                    }}>
+                      {u.name?.[0]?.toUpperCase() || '?'}
+                    </div>
+                    {isUserOnline(u) && (
+                      <span style={{
+                        position: 'absolute', bottom: 1, right: 1,
+                        width: 9, height: 9, borderRadius: '50%',
+                        background: '#22c55e', border: '2px solid #04040b',
+                      }} />
+                    )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</p>
@@ -620,9 +647,9 @@ export default function AgentPage() {
         )}
 
         {/* ══════════════════════════════════════════════
-            VALIDATIONS
+            VALIDATIONS (legacy — kept hidden, data still loaded for totalAllPending count)
         ══════════════════════════════════════════════ */}
-        {tab === 'validations' && (
+        {false && tab === 'validations' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
             {pending.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
@@ -706,9 +733,9 @@ export default function AgentPage() {
         )}
 
         {/* ══════════════════════════════════════════════
-            ROLE REQUESTS
+            ROLE REQUESTS (legacy — tab removed)
         ══════════════════════════════════════════════ */}
-        {tab === 'role-requests' && (
+        {false && tab === 'role-requests' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
             {roleRequests.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>

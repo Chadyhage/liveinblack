@@ -78,6 +78,32 @@ function usePersistedUser() {
     }
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Presence heartbeat — setOnline every 60s, setOffline on hide/unload
+  useEffect(() => {
+    const uid = user?.uid
+    if (!uid) return
+
+    let intervalId = null
+    let onHide = null
+    let onUnload = null
+
+    import('./utils/messaging').then(({ setOnline, setOffline }) => {
+      setOnline(uid)
+      intervalId = setInterval(() => setOnline(uid), 60000)
+      onHide = () => document.visibilityState === 'hidden' ? setOffline(uid) : setOnline(uid)
+      onUnload = () => setOffline(uid)
+      document.addEventListener('visibilitychange', onHide)
+      window.addEventListener('beforeunload', onUnload)
+    }).catch(() => {})
+
+    return () => {
+      if (intervalId) clearInterval(intervalId)
+      if (onHide) document.removeEventListener('visibilitychange', onHide)
+      if (onUnload) window.removeEventListener('beforeunload', onUnload)
+      import('./utils/messaging').then(({ setOffline }) => setOffline(uid)).catch(() => {})
+    }
+  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Re-sync when tab regains focus — picks up changes made on other devices
   useEffect(() => {
     const uid = user?.uid

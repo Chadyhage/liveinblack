@@ -42,6 +42,18 @@ export function listenGroupConversations(uid, callback) {
   } catch { return () => {} }
 }
 
+// Listen to a user's presence (lastSeen / isOnline) — for MessagingPage "En ligne" indicator
+export function listenUserPresence(userId, callback) {
+  try {
+    const ref = doc(db, 'users', userId)
+    return onSnapshot(ref, snap => {
+      if (!snap.exists()) return
+      const data = snap.data()
+      callback({ lastSeen: data.lastSeen || null, isOnline: data.isOnline || false })
+    }, () => {})
+  } catch { return () => {} }
+}
+
 // Listen to messages for a specific conversation
 export function listenConvMessages(convId, callback) {
   try {

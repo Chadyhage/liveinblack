@@ -98,13 +98,44 @@ export function setOnline(userId) {
     all[userId] = Date.now()
     localStorage.setItem('lib_online', JSON.stringify(all))
   } catch {}
+  // Sync to Firestore so other devices can see presence
+  import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
+    if (!USE_REAL_FIREBASE) return
+    import('firebase/firestore').then(({ doc, updateDoc }) => {
+      updateDoc(doc(db, 'users', userId), { lastSeen: Date.now(), isOnline: true }).catch(() => {})
+    }).catch(() => {})
+  }).catch(() => {})
+}
+
+export function setOffline(userId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_online') || '{}')
+    delete all[userId]
+    localStorage.setItem('lib_online', JSON.stringify(all))
+  } catch {}
+  import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
+    if (!USE_REAL_FIREBASE) return
+    import('firebase/firestore').then(({ doc, updateDoc }) => {
+      updateDoc(doc(db, 'users', userId), { isOnline: false, lastSeen: Date.now() }).catch(() => {})
+    }).catch(() => {})
+  }).catch(() => {})
 }
 
 export function isOnline(userId) {
   try {
+    // 1. Fast local heartbeat (own device → very recent, 90s window)
     const all = JSON.parse(localStorage.getItem('lib_online') || '{}')
     const ts = all[userId]
-    return ts && (Date.now() - ts) < 90000 // 90 seconds
+    if (ts && (Date.now() - ts) < 90000) return true
+
+    // 2. Firestore-synced accounts (populated from Firestore — 5min window)
+    try {
+      const users = JSON.parse(localStorage.getItem('lib_registered_users') || '[]')
+      const u = users.find(u => u.uid === userId || u.id === userId)
+      if (u?.lastSeen && (Date.now() - u.lastSeen) < 5 * 60 * 1000) return true
+    } catch {}
+
+    return false
   } catch { return false }
 }
 

@@ -745,6 +745,30 @@ export default function MessagingPage() {
     return () => unsub()
   }, [activeConvId])
 
+  // ── Presence listener — active direct conversation partner ──
+  useEffect(() => {
+    if (!activeConvId || !myId) return
+    // Get the other person's ID from the active conv
+    const conv = conversations.find(c => c.id === activeConvId)
+      || (() => { try { return JSON.parse(localStorage.getItem('lib_conversations') || '{}')[myId]?.find(c => c.id === activeConvId) } catch { return null } })()
+    if (!conv || conv.type !== 'direct') return
+    const otherId = conv.participants?.find(id => id !== myId)
+    if (!otherId) return
+
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenUserPresence }) => {
+      unsub = listenUserPresence(otherId, ({ lastSeen }) => {
+        if (!lastSeen) return
+        try {
+          const all = JSON.parse(localStorage.getItem('lib_online') || '{}')
+          all[otherId] = lastSeen
+          localStorage.setItem('lib_online', JSON.stringify(all))
+        } catch {}
+      })
+    }).catch(() => {})
+    return () => unsub()
+  }, [activeConvId, myId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     // Auto-scroll seulement si l'utilisateur est déjà en bas
     if (!showScrollBtn) {
