@@ -210,19 +210,22 @@ export default function MonDossierPage() {
 
   useEffect(() => {
     if (!user) { navigate('/connexion'); return }
-    // Try localStorage first (fast)
+    // Show localStorage version immediately (fast render, no flash)
     const orgApp   = getApplicationByUser(user.uid, 'organisateur')
     const prestApp = getApplicationByUser(user.uid, 'prestataire')
     const found = orgApp || prestApp
-    if (found) {
-      setApp(found)
-      return
-    }
-    // Not in localStorage (e.g. different device) — pull from Firestore
+    if (found) setApp(found)
+
+    // Always also fetch from Firestore to get admin updates (status, corrections, etc.)
+    // The admin writes to Firestore — the candidate must read from there to get changes
     import('../utils/applications').then(({ fetchApplicationsFromFirestore }) => {
       fetchApplicationsFromFirestore().then(apps => {
         const remote = apps.find(a => a.uid === user.uid)
-        if (remote) setApp(remote)
+        if (!remote) return
+        // Use Firestore version if it's newer (or nothing was in localStorage)
+        if (!found || (remote.updatedAt || 0) > (found.updatedAt || 0)) {
+          setApp(remote)
+        }
       }).catch(() => {})
     }).catch(() => {})
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
