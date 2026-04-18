@@ -231,11 +231,13 @@ export default function AgentPage() {
     return !!(acc?.lastSeen && (Date.now() - acc.lastSeen) < 5 * 60 * 1000)
   }
 
-  const totalUsers        = accounts.length
-  const totalActive       = accounts.filter(a => a.status === 'active').length
-  const totalPrestataires = accounts.filter(a => a.role === 'prestataire').length
-  const totalOrgas        = accounts.filter(a => a.role === 'organisateur').length
-  const totalOnline       = accounts.filter(isUserOnline).length
+  // Exclure les comptes avec email non vérifié des stats principales
+  const verifiedAccounts  = accounts.filter(a => a.emailVerified !== false)
+  const totalUsers        = verifiedAccounts.length
+  const totalActive       = verifiedAccounts.filter(a => a.status === 'active').length
+  const totalPrestataires = verifiedAccounts.filter(a => a.role === 'prestataire').length
+  const totalOrgas        = verifiedAccounts.filter(a => a.role === 'organisateur').length
+  const totalOnline       = verifiedAccounts.filter(isUserOnline).length
 
   // ── Emails non vérifiés (clients uniquement — pas les org/prest en onboarding) ──
   const UNVERIFIED_TTL = 7 * 24 * 60 * 60 * 1000 // 7 jours
@@ -531,7 +533,7 @@ export default function AgentPage() {
                 Inscriptions récentes
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {[...accounts].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 5).map(u => (
+                {[...accounts].filter(a => a.emailVerified !== false).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 5).map(u => (
                   <button key={u.uid} onClick={() => { setSelectedUser(u); setTab('users') }}
                     style={{
                       ...CARD, display: 'flex', alignItems: 'center', gap: 12,
