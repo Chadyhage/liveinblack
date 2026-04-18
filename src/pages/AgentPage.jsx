@@ -304,6 +304,18 @@ export default function AgentPage() {
     setSelectedUser(null)
   }
 
+  async function handleVerifyEmail(uid) {
+    // Marque emailVerified:true + status:active dans localStorage et Firestore
+    updateAccount(uid, { emailVerified: true, status: 'active' })
+    try {
+      const { db } = await import('../firebase')
+      const { doc, updateDoc } = await import('firebase/firestore')
+      await updateDoc(doc(db, 'users', uid), { emailVerified: true, status: 'active' })
+    } catch {}
+    refresh()
+    showToast('Email vérifié manuellement')
+  }
+
   async function handleDeleteUnverified(uid) {
     deleteAccount(uid)
     try {
@@ -595,41 +607,72 @@ export default function AgentPage() {
                     background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)',
                     color: '#ef4444', borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
                   }}>
-                    Supprimer les +7j ({expiredUnverified.length})
+                    Supprimer +7j ({expiredUnverified.length})
                   </button>
                 )}
               </div>
               {unverifiedAccounts.length === 0 ? (
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, padding: '8px 0' }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, padding: '4px 0 8px' }}>
                   Aucun email non vérifié en attente.
                 </p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {unverifiedAccounts.map(u => {
                     const ageMs = u.createdAt ? Date.now() - u.createdAt : null
-                    const ageDays = ageMs ? Math.floor(ageMs / (24 * 60 * 60 * 1000)) : null
+                    const ageDays = ageMs !== null ? Math.floor(ageMs / (24 * 60 * 60 * 1000)) : null
                     const isExpired = ageDays !== null && ageDays >= 7
                     return (
                       <div key={u.uid} style={{
-                        ...CARD, padding: '10px 12px',
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        borderColor: isExpired ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.2)',
+                        ...CARD, padding: '12px 14px',
+                        borderColor: isExpired ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.25)',
                       }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.email}</p>
-                          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: isExpired ? '#ef4444' : '#f59e0b', margin: '2px 0 0' }}>
-                            {ageDays !== null ? `${ageDays} jour${ageDays > 1 ? 's' : ''} sans vérification` : 'Date inconnue'}
-                            {isExpired ? ' — expiré' : ''}
-                          </p>
+                        {/* Infos compte */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                          <div style={{
+                            width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                            background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.3)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: '#f59e0b',
+                          }}>
+                            {u.name?.[0]?.toUpperCase() || '?'}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: FONTS.display, fontSize: 15, fontWeight: 400, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {u.name || '—'}
+                            </p>
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {u.email}
+                            </p>
+                          </div>
+                          <span style={{
+                            fontFamily: FONTS.mono, fontSize: 9, flexShrink: 0,
+                            color: isExpired ? '#ef4444' : '#f59e0b',
+                            background: isExpired ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
+                            border: `1px solid ${isExpired ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.2)'}`,
+                            borderRadius: 4, padding: '2px 6px',
+                          }}>
+                            {ageDays !== null ? `J+${ageDays}` : '?'}
+                          </span>
                         </div>
-                        <button onClick={() => handleDeleteUnverified(u.uid)} style={{
-                          fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em',
-                          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-                          color: '#ef4444', borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
-                          flexShrink: 0,
-                        }}>
-                          Supprimer
-                        </button>
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => handleVerifyEmail(u.uid)} style={{
+                            flex: 1, padding: '7px 0',
+                            fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase',
+                            background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.3)',
+                            color: COLORS.teal, borderRadius: 4, cursor: 'pointer',
+                          }}>
+                            ✓ Vérifier manuellement
+                          </button>
+                          <button onClick={() => handleDeleteUnverified(u.uid)} style={{
+                            flex: 1, padding: '7px 0',
+                            fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase',
+                            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                            color: '#ef4444', borderRadius: 4, cursor: 'pointer',
+                          }}>
+                            ✕ Supprimer
+                          </button>
+                        </div>
                       </div>
                     )
                   })}
