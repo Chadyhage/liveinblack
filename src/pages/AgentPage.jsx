@@ -143,6 +143,7 @@ export default function AgentPage() {
   const [appNote, setAppNote] = useState('')
   const [appAdminNote, setAppAdminNote] = useState('')
   const [activeAction, setActiveAction] = useState(null) // 'approve' | 'changes' | 'reject' | null
+  const [adminNoteInput, setAdminNoteInput] = useState('')
   const [dossierFilter, setDossierFilter] = useState(null)
   const [dossierSection, setDossierSection] = useState('pending')
   const [dossierSearch, setDossierSearch] = useState('')
@@ -1128,7 +1129,7 @@ export default function AgentPage() {
               return list.map(app => {
                 const score = getCompleteness(app)
                 return (
-                  <button key={app.id} onClick={() => { setSelectedApp(app); setAppNote(''); setAppAdminNote(''); setActiveAction(null) }}
+                  <button key={app.id} onClick={() => { setSelectedApp(app); setAppNote(''); setAppAdminNote(''); setActiveAction(null); setAdminNoteInput('') }}
                     style={{
                       ...CARD, display: 'flex', flexDirection: 'column', gap: 8,
                       padding: 14, cursor: 'pointer', width: '100%', textAlign: 'left',
@@ -1551,50 +1552,133 @@ export default function AgentPage() {
                 </Section>
               )}
 
-              {/* Note interne (admin only) */}
-              <Section title="Note interne (privée)">
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 8px', lineHeight: 1.5 }}>
-                  Mémo privé — jamais visible par le candidat. Utile pour les remarques d'équipe.
-                </p>
-                {selectedApp.adminNote && (
-                  <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 6, marginBottom: 8 }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Note actuelle :</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, lineHeight: 1.5 }}>{selectedApp.adminNote}</p>
-                  </div>
-                )}
-                <textarea
-                  value={appAdminNote}
-                  onChange={e => setAppAdminNote(e.target.value)}
-                  placeholder={selectedApp.adminNote ? 'Modifier la note...' : 'Ex: À vérifier avec l\'équipe, SIRET à confirmer...'}
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    background: 'rgba(8,10,20,0.7)',
-                    border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: 6, color: '#fff',
-                    fontFamily: FONTS.mono, fontSize: 11,
-                    padding: '10px 12px', outline: 'none', resize: 'vertical',
-                    minHeight: 56, lineHeight: 1.5,
-                  }}
-                />
-                {appAdminNote.trim() && (
-                  <button
-                    onClick={async () => {
-                      const { updateApplicationStatus } = await import('../utils/applications')
-                      await updateApplicationStatus(selectedApp.id, selectedApp.status, user?.uid, user?.name || 'Agent', '', appAdminNote)
-                      setSelectedApp(a => a ? { ...a, adminNote: appAdminNote } : null)
-                      setAppAdminNote('')
-                      showToast('Note sauvegardée')
-                    }}
-                    style={{
-                      marginTop: 8, width: '100%', padding: '9px 0', borderRadius: 5, cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)',
-                      color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10,
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                    }}>
-                    💾 Sauvegarder la note
-                  </button>
-                )}
-              </Section>
+              {/* Notes internes — liste à faire (admin only) */}
+              {(() => {
+                // Normalize: support old string adminNote + new adminNotes array
+                const rawNotes = selectedApp.adminNotes || []
+                const legacyNote = (selectedApp.adminNote && rawNotes.length === 0) ? selectedApp.adminNote : null
+                const notes = legacyNote
+                  ? [{ id: 'legacy', text: legacyNote, done: false, createdAt: selectedApp.updatedAt || Date.now() }]
+                  : rawNotes
+
+                async function saveNotes(updated) {
+                  try {
+                    const { updateApplication } = await import('../utils/applications')
+                    updateApplication(selectedApp.id, { adminNotes: updated, adminNote: '' })
+                    setSelectedApp(a => a ? { ...a, adminNotes: updated, adminNote: '' } : null)
+                    const { USE_REAL_FIREBASE, db } = await import('../firebase')
+                    if (USE_REAL_FIREBASE) {
+                      const { doc, updateDoc } = await import('firebase/firestore')
+                      updateDoc(doc(db, 'applications', selectedApp.id), { adminNotes: updated, adminNote: '' }).catch(() => {})
+                    }
+                  } catch {}
+                }
+
+                async function addNote() {
+                  const text = adminNoteInput.trim()
+                  if (!text) return
+                  const newNote = { id: Date.now().toString(), text, done: false, createdAt: Date.now() }
+                  await saveNotes([...notes.filter(n => n.id !== 'legacy'), newNote])
+                  if (legacyNote) {
+                    // also keep legacy note as real entry
+                    await saveNotes([
+                      { id: 'legacy-' + Date.now(), text: legacyNote, done: false, createdAt: selectedApp.updatedAt || Date.now() },
+                      newNote,
+                    ])
+                  }
+                  setAdminNoteInput('')
+                  showToast('Note ajoutée')
+                }
+
+                async function toggleNote(id) {
+                  const updated = notes.map(n => n.id === id ? { ...n, done: !n.done } : n)
+                  await saveNotes(updated)
+                }
+
+                async function deleteNote(id) {
+                  const updated = notes.filter(n => n.id !== id)
+                  await saveNotes(updated)
+                }
+
+                const doneCount = notes.filter(n => n.done).length
+                return (
+                  <Section title={`Notes internes${notes.length > 0 ? ` (${doneCount}/${notes.length})` : ''}`}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 10px', lineHeight: 1.5 }}>
+                      Privé — jamais visible par le candidat.
+                    </p>
+
+                    {/* Liste des notes */}
+                    {notes.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+                        {notes.map(note => (
+                          <div key={note.id} style={{
+                            display: 'flex', alignItems: 'flex-start', gap: 8,
+                            padding: '8px 10px',
+                            background: note.done ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)',
+                            border: `1px solid ${note.done ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.10)'}`,
+                            borderRadius: 6,
+                          }}>
+                            {/* Checkbox */}
+                            <button
+                              onClick={() => toggleNote(note.id)}
+                              style={{
+                                flexShrink: 0, width: 18, height: 18, borderRadius: 4, marginTop: 1,
+                                border: `1.5px solid ${note.done ? COLORS.teal : 'rgba(255,255,255,0.25)'}`,
+                                background: note.done ? COLORS.teal + '22' : 'transparent',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: COLORS.teal, fontSize: 11, lineHeight: 1,
+                              }}>
+                              {note.done ? '✓' : ''}
+                            </button>
+                            {/* Texte */}
+                            <span style={{
+                              flex: 1, fontFamily: FONTS.mono, fontSize: 10, lineHeight: 1.5,
+                              color: note.done ? COLORS.dim : COLORS.muted,
+                              textDecoration: note.done ? 'line-through' : 'none',
+                            }}>{note.text}</span>
+                            {/* Supprimer */}
+                            <button
+                              onClick={() => deleteNote(note.id)}
+                              style={{
+                                flexShrink: 0, background: 'none', border: 'none',
+                                color: 'rgba(255,255,255,0.18)', cursor: 'pointer',
+                                fontSize: 14, lineHeight: 1, padding: '1px 2px',
+                              }}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Ajouter une note */}
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input
+                        type="text"
+                        value={adminNoteInput}
+                        onChange={e => setAdminNoteInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addNote()}
+                        placeholder="Ajouter une note..."
+                        style={{
+                          flex: 1, background: 'rgba(8,10,20,0.7)',
+                          border: '1px solid rgba(255,255,255,0.10)',
+                          borderRadius: 6, color: '#fff',
+                          fontFamily: FONTS.mono, fontSize: 11,
+                          padding: '8px 10px', outline: 'none',
+                        }}
+                      />
+                      <button
+                        onClick={addNote}
+                        disabled={!adminNoteInput.trim()}
+                        style={{
+                          flexShrink: 0, padding: '8px 14px', borderRadius: 6, cursor: adminNoteInput.trim() ? 'pointer' : 'not-allowed',
+                          background: adminNoteInput.trim() ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          color: adminNoteInput.trim() ? '#fff' : COLORS.dim,
+                          fontFamily: FONTS.mono, fontSize: 16, lineHeight: 1,
+                        }}>+</button>
+                    </div>
+                  </Section>
+                )
+              })()}
 
               {/* Action buttons — contextual inline forms */}
               {(selectedApp.status === 'submitted' || selectedApp.status === 'under_review' || selectedApp.status === 'resubmitted') && (
