@@ -54,16 +54,29 @@ function _saveAll(apps) {
   localStorage.setItem(APPS_KEY, JSON.stringify(apps))
 }
 
+// Détecte un dossier re-soumis après corrections (migration rétro-compatible)
+// Un dossier "submitted" qui a un "needs_changes" dans son auditLog = "resubmitted"
+function _migrateStatus(app) {
+  if (app.status === 'submitted' && app.auditLog?.some(e => e.action === 'needs_changes')) {
+    return { ...app, status: 'resubmitted' }
+  }
+  return app
+}
+
 export function getAllApplications() {
-  return _getAll()
+  const apps = _getAll()
+  const migrated = apps.map(_migrateStatus)
+  const changed = migrated.some((a, i) => a !== apps[i])
+  if (changed) _saveAll(migrated)
+  return migrated
 }
 
 export function getApplicationById(id) {
-  return _getAll().find(a => a.id === id) || null
+  return getAllApplications().find(a => a.id === id) || null
 }
 
 export function getApplicationByUser(uid, type) {
-  return _getAll().find(a => a.uid === uid && a.type === type) || null
+  return getAllApplications().find(a => a.uid === uid && a.type === type) || null
 }
 
 export function updateApplication(appId, patch) {
@@ -413,8 +426,8 @@ export function getCompleteness(app) {
 export async function fetchApplicationsFromFirestore() {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
-    if (!USE_REAL_FIREBASE) return _getAll()
-    const { collection, getDocs } = await import('firebase/firestore')
+    if (!USE_REAL_FIREBASE) return getAllApplications()
+    const { collection, getDocs, doc, updateDoc } = await import('firebase/firestore')
     const snap = await getDocs(collection(db, 'applications'))
     const apps = snap.docs.map(d => d.data())
     // Merge into local cache
@@ -425,9 +438,20 @@ export async function fetchApplicationsFromFirestore() {
       if (idx >= 0) merged[idx] = app
       else merged.push(app)
     })
-    _saveAll(merged)
-    return merged
+    // Migrate resubmitted status (rétro-compatibilité)
+    const toFixInFirestore = []
+    const finalMerged = merged.map(app => {
+      const migrated = _migrateStatus(app)
+      if (migrated.status !== app.status) toFixInFirestore.push(migrated)
+      return migrated
+    })
+    _saveAll(finalMerged)
+    // Pousse la correction vers Firestore pour les anciens dossiers mal classés
+    toFixInFirestore.forEach(app => {
+      updateDoc(doc(db, 'applications', app.id), { status: 'resubmitted' }).catch(() => {})
+    })
+    return finalMerged
   } catch {
-    return _getAll()
+    return getAllApplications()
   }
 }
