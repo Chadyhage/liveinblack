@@ -1553,10 +1553,19 @@ export default function AgentPage() {
 
               {/* Note interne (admin only) */}
               <Section title="Note interne (privée)">
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 8px', lineHeight: 1.5 }}>
+                  Mémo privé — jamais visible par le candidat. Utile pour les remarques d'équipe.
+                </p>
+                {selectedApp.adminNote && (
+                  <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 6, marginBottom: 8 }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Note actuelle :</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, lineHeight: 1.5 }}>{selectedApp.adminNote}</p>
+                  </div>
+                )}
                 <textarea
                   value={appAdminNote}
                   onChange={e => setAppAdminNote(e.target.value)}
-                  placeholder="Note privée visible uniquement par les admins..."
+                  placeholder={selectedApp.adminNote ? 'Modifier la note...' : 'Ex: À vérifier avec l\'équipe, SIRET à confirmer...'}
                   style={{
                     width: '100%', boxSizing: 'border-box',
                     background: 'rgba(8,10,20,0.7)',
@@ -1567,10 +1576,23 @@ export default function AgentPage() {
                     minHeight: 56, lineHeight: 1.5,
                   }}
                 />
-                {selectedApp.adminNote && (
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '6px 0 0' }}>
-                    Note précédente : {selectedApp.adminNote}
-                  </p>
+                {appAdminNote.trim() && (
+                  <button
+                    onClick={async () => {
+                      const { updateApplicationStatus } = await import('../utils/applications')
+                      await updateApplicationStatus(selectedApp.id, selectedApp.status, user?.uid, user?.name || 'Agent', '', appAdminNote)
+                      setSelectedApp(a => a ? { ...a, adminNote: appAdminNote } : null)
+                      setAppAdminNote('')
+                      showToast('Note sauvegardée')
+                    }}
+                    style={{
+                      marginTop: 8, width: '100%', padding: '9px 0', borderRadius: 5, cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)',
+                      color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10,
+                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                    💾 Sauvegarder la note
+                  </button>
                 )}
               </Section>
 
