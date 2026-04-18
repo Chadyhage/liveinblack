@@ -538,15 +538,9 @@ export default function LoginPage() {
       }
     } catch (err) {
       if (err.code === 'auth/email-unverified-ghost') {
-        // Firebase Auth still holds a ghost account for this email — send a reset so user can reclaim it
-        try {
-          const { sendPasswordResetEmail } = await import('firebase/auth')
-          const { auth } = await import('../firebase')
-          await sendPasswordResetEmail(auth, regEmail)
-          setError(`Un email de récupération a été envoyé à ${regEmail}. Clique sur le lien dans cet email pour définir ton mot de passe, puis connecte-toi.`)
-        } catch {
-          setError(`Cet email est déjà utilisé par un compte non vérifié. Va sur "Mot de passe oublié" pour récupérer l'accès.`)
-        }
+        // Un compte non vérifié existe déjà avec cet email — montrer l'écran de vérification
+        // avec option de renvoyer le mail plutôt qu'un message d'erreur confus
+        setUnverifiedEmail(regEmail)
       } else {
         setError(getFirebaseError(err.code))
       }
@@ -617,9 +611,17 @@ export default function LoginPage() {
     setResendSent(false)
     try {
       const { auth } = await import('../firebase')
-      if (auth.currentUser) {
+      if (auth.currentUser && !auth.currentUser.emailVerified) {
         const { sendEmailVerification } = await import('firebase/auth')
         await sendEmailVerification(auth.currentUser)
+        setResendSent(true)
+        return
+      }
+      // Si pas de currentUser (venu du flow login), utiliser sendPasswordResetEmail comme fallback
+      // pour que l'utilisateur puisse au moins récupérer l'accès
+      if (unverifiedEmail) {
+        const { sendPasswordResetEmail } = await import('firebase/auth')
+        await sendPasswordResetEmail(auth, unverifiedEmail)
         setResendSent(true)
       }
     } catch {}

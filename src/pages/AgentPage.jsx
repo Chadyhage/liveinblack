@@ -236,6 +236,20 @@ export default function AgentPage() {
   const totalPrestataires = accounts.filter(a => a.role === 'prestataire').length
   const totalOrgas        = accounts.filter(a => a.role === 'organisateur').length
   const totalOnline       = accounts.filter(isUserOnline).length
+
+  // ── Emails non vérifiés (clients uniquement — pas les org/prest en onboarding) ──
+  const UNVERIFIED_TTL = 7 * 24 * 60 * 60 * 1000 // 7 jours
+  const unverifiedAccounts = accounts.filter(a =>
+    a.emailVerified === false && (a.role === 'client' || a.role === 'user')
+  )
+  const expiredUnverified = unverifiedAccounts.filter(a =>
+    a.createdAt && (Date.now() - a.createdAt) > UNVERIFIED_TTL
+  )
+
+  // ── Doublons (même email, comptes différents) ──
+  const emailGroups = {}
+  accounts.forEach(a => { if (a.email) { emailGroups[a.email] = [...(emailGroups[a.email] || []), a] } })
+  const duplicateGroups = Object.entries(emailGroups).filter(([, group]) => group.length > 1)
   const totalRoleReqs     = roleRequests.length
   const totalAppsSubmitted = applications.filter(a => a.status === 'submitted' || a.status === 'under_review').length
   // Count only applications + role requests to avoid double-counting the same dossier.
@@ -288,6 +302,43 @@ export default function AgentPage() {
     showToast('Compte supprimé', 'error')
     setConfirmAction(null)
     setSelectedUser(null)
+  }
+
+  async function handleDeleteUnverified(uid) {
+    deleteAccount(uid)
+    try {
+      const { db } = await import('../firebase')
+      const { doc, deleteDoc } = await import('firebase/firestore')
+      const cols = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social']
+      await Promise.allSettled(cols.map(c => deleteDoc(doc(db, c, uid))))
+    } catch {}
+    refresh()
+    showToast('Compte non vérifié supprimé')
+  }
+
+  async function handleCleanupExpired() {
+    const expired = accounts.filter(a =>
+      a.emailVerified === false && (a.role === 'client' || a.role === 'user') &&
+      a.createdAt && (Date.now() - a.createdAt) > 7 * 24 * 60 * 60 * 1000
+    )
+    for (const a of expired) await handleDeleteUnverified(a.uid)
+    showToast(`${expired.length} compte(s) expirés supprimés`)
+  }
+
+  async function handleCleanupDuplicates() {
+    // Pour chaque groupe de doublons : garder le plus récent, supprimer les autres
+    const emailMap = {}
+    accounts.forEach(a => { if (a.email) emailMap[a.email] = [...(emailMap[a.email] || []), a] })
+    const dupes = Object.values(emailMap).filter(g => g.length > 1)
+    let count = 0
+    for (const group of dupes) {
+      const sorted = [...group].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+      for (const old of sorted.slice(1)) { // garder le [0] (plus récent), supprimer le reste
+        await handleDeleteUnverified(old.uid)
+        count++
+      }
+    }
+    showToast(`${count} doublon(s) supprimé(s)`)
   }
 
   async function handleApproveRoleRequest(requestId) {
@@ -531,6 +582,92 @@ export default function AgentPage() {
                   })}
               </div>
             </div>
+
+            {/* ── Emails non vérifiés ── */}
+            {unverifiedAccounts.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                    ⚠ Emails non vérifiés ({unverifiedAccounts.length})
+                  </p>
+                  {expiredUnverified.length > 0 && (
+                    <button onClick={handleCleanupExpired} style={{
+                      fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)',
+                      color: '#ef4444', borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
+                    }}>
+                      Supprimer les +7j ({expiredUnverified.length})
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {unverifiedAccounts.map(u => {
+                    const ageMs = u.createdAt ? Date.now() - u.createdAt : null
+                    const ageDays = ageMs ? Math.floor(ageMs / (24 * 60 * 60 * 1000)) : null
+                    const isExpired = ageDays !== null && ageDays >= 7
+                    return (
+                      <div key={u.uid} style={{
+                        ...CARD, padding: '10px 12px',
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        borderColor: isExpired ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.2)',
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.email}</p>
+                          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: isExpired ? '#ef4444' : '#f59e0b', margin: '2px 0 0' }}>
+                            {ageDays !== null ? `${ageDays} jour${ageDays > 1 ? 's' : ''} sans vérification` : 'Date inconnue'}
+                            {isExpired ? ' — expiré' : ''}
+                          </p>
+                        </div>
+                        <button onClick={() => handleDeleteUnverified(u.uid)} style={{
+                          fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em',
+                          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                          color: '#ef4444', borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
+                          flexShrink: 0,
+                        }}>
+                          Supprimer
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Doublons détectés ── */}
+            {duplicateGroups.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                    ⚠ Doublons ({duplicateGroups.length} email{duplicateGroups.length > 1 ? 's' : ''})
+                  </p>
+                  <button onClick={handleCleanupDuplicates} style={{
+                    fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.3)',
+                    color: COLORS.pink, borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
+                  }}>
+                    Nettoyer tout
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {duplicateGroups.map(([email, group]) => (
+                    <div key={email} style={{ ...CARD, padding: '10px 12px', borderColor: 'rgba(224,90,170,0.2)' }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: '0 0 6px' }}>{email}</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {[...group].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map((u, i) => (
+                          <div key={u.uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: i === 0 ? COLORS.teal : COLORS.dim }}>
+                              {i === 0 ? '✓ Garder' : '✕ Doublon'} · {formatDate(u.createdAt)}
+                            </span>
+                            <RoleBadge role={u.role} small />
+                            <StatusBadge status={u.status} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
         )}
