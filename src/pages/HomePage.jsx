@@ -50,10 +50,13 @@ function RevealSection({ children, delay = 0, style = {} }) {
 const VIOLET = '#8444ff'
 const WHITE  = '#ffffff'
 
-function HeroGooeyText({ user }) {
+function HeroGooeyText({ user, orgName }) {
   const { texts, colors } = useMemo(() => {
-    if (user?.name) {
-      const parts = user.name.trim().split(' ').filter(Boolean)
+    // Pour les organisateurs : afficher le nom de l'organisation
+    const displayName = (user?.role === 'organisateur' && orgName)
+      ? orgName
+      : user?.name?.trim() || null
+    if (displayName) {
       const greeting = (() => {
         const h = new Date().getHours()
         if (h >= 5  && h < 12) return 'Bonjour'
@@ -61,7 +64,7 @@ function HeroGooeyText({ user }) {
         if (h >= 18 && h < 22) return 'Bonsoir'
         return 'Bonne nuit'
       })()
-      const txts = [greeting, user.name.trim()]
+      const txts = [greeting, displayName]
       const clrs = txts.map((_, i) => i === 0 ? VIOLET : WHITE)
       return { texts: txts, colors: clrs }
     }
@@ -69,7 +72,7 @@ function HeroGooeyText({ user }) {
       texts: ['Bienvenue.', 'L|VE IN', 'BLACK.'],
       colors: [VIOLET, WHITE, WHITE],
     }
-  }, [user?.name])
+  }, [user?.name, user?.role, orgName])
 
   return (
     <div style={{ position: 'relative', height: 'clamp(52px, 13vw, 100px)', marginBottom: 4 }}>
@@ -94,6 +97,16 @@ function HeroGooeyText({ user }) {
 export default function HomePage() {
   const navigate  = useNavigate()
   const { user }  = useAuth()
+
+  // Pour les organisateurs : récupérer le nom commercial de leur dossier
+  const [orgName, setOrgName] = useState(null)
+  useEffect(() => {
+    if (user?.role !== 'organisateur') { setOrgName(null); return }
+    import('../utils/applications').then(({ getApplicationByUser }) => {
+      const app = getApplicationByUser(user.uid, 'organisateur')
+      setOrgName(app?.formData?.nomCommercial || null)
+    }).catch(() => {})
+  }, [user?.uid, user?.role])
 
   const defaultRegion = regions.find((r) => r.id === 'france')
   const [selectedRegion, setSelectedRegion] = useState(() => {
@@ -206,7 +219,7 @@ export default function HomePage() {
 
         {/* ── Hero ── */}
         <div style={{ padding: '52px 0 48px' }}>
-          <HeroGooeyText user={user} />
+          <HeroGooeyText user={user} orgName={orgName} />
           <p style={{
             fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)',
             color: 'rgba(255,255,255,0.38)', marginTop: 20, maxWidth: 420, lineHeight: 1.55,

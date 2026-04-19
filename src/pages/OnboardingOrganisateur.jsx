@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -116,6 +116,7 @@ const ANON_DRAFT_KEY = 'lib_anon_org_draft_id'
 export default function OnboardingOrganisateur() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [app, setApp] = useState(null)
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
@@ -164,6 +165,9 @@ export default function OnboardingOrganisateur() {
       } else {
         const created = createApplication(user.uid, user.email, user.name, 'organisateur')
         setApp(created)
+        // Pré-remplir avec les données transmises depuis MonDossierPage (recréation après suppression)
+        const prefill = location.state?.prefill
+        if (prefill) setF(prev => ({ ...prev, ...prefill }))
       }
     } else {
       // ── Anonymous mode — load or create temp draft ──

@@ -233,6 +233,18 @@ export default function MonDossierPage() {
   if (!user) return null
 
   if (!app) {
+    // Préfill minimal depuis le compte existant (nom + email)
+    const nameParts  = (user.name || '').trim().split(' ').filter(Boolean)
+    const prefillOrg = {
+      responsableNom:    nameParts[0] || '',
+      responsablePrenom: nameParts.slice(1).join(' ') || '',
+      emailPro:          user.email || '',
+    }
+
+    // Selon le rôle, on ne propose que l'option cohérente
+    const canOrg   = !user.role || user.role === 'client' || user.role === 'organisateur'
+    const canPrest = !user.role || user.role === 'client' || user.role === 'prestataire'
+
     return (
       <Layout>
         <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 20 }}>
@@ -244,30 +256,38 @@ export default function MonDossierPage() {
               Aucun dossier trouvé
             </p>
             <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>
-              Vous n&apos;avez pas encore soumis de candidature.
+              {user.role === 'organisateur'
+                ? 'Ton dossier organisateur a été supprimé. Tu peux en soumettre un nouveau.'
+                : user.role === 'prestataire'
+                ? 'Ton dossier prestataire a été supprimé. Tu peux en soumettre un nouveau.'
+                : 'Tu n\'as pas encore soumis de candidature.'}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
-            <button
-              onClick={() => navigate('/onboarding-organisateur')}
-              style={{
-                padding: '11px 22px', borderRadius: 6, cursor: 'pointer',
-                background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)',
-                color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 11,
-                letterSpacing: '0.06em', textTransform: 'uppercase',
-              }}>
-              Dossier Organisateur
-            </button>
-            <button
-              onClick={() => navigate('/onboarding-prestataire')}
-              style={{
-                padding: '11px 22px', borderRadius: 6, cursor: 'pointer',
-                background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.28)',
-                color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 11,
-                letterSpacing: '0.06em', textTransform: 'uppercase',
-              }}>
-              Dossier Prestataire
-            </button>
+            {canOrg && (
+              <button
+                onClick={() => navigate('/onboarding-organisateur', { state: { prefill: prefillOrg } })}
+                style={{
+                  padding: '11px 22px', borderRadius: 6, cursor: 'pointer',
+                  background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)',
+                  color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 11,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}>
+                Dossier Organisateur
+              </button>
+            )}
+            {canPrest && (
+              <button
+                onClick={() => navigate('/onboarding-prestataire')}
+                style={{
+                  padding: '11px 22px', borderRadius: 6, cursor: 'pointer',
+                  background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.28)',
+                  color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 11,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}>
+                Dossier Prestataire
+              </button>
+            )}
           </div>
         </div>
       </Layout>
