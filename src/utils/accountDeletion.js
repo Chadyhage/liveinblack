@@ -91,18 +91,6 @@ export function auditAccountForDeletion(uid, userRole) {
     } catch {}
   }
 
-  // ── Solde wallet ──
-  try {
-    const wallet = JSON.parse(localStorage.getItem(`lib_wallet_${uid}`) || '{}')
-    const bal    = parseFloat(wallet.balance || 0)
-    if (bal > 0) {
-      blockers.push({
-        type:  'wallet_balance',
-        label: `Solde wallet de ${bal.toFixed(2)} € — à retirer avant suppression`,
-      })
-    }
-  } catch {}
-
   return { blockers, warnings }
 }
 

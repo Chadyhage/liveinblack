@@ -9,7 +9,6 @@ import JeSuisUneBoitePage from './pages/JeSuisUneBoitePage'
 import MesEvenementsPage from './pages/MesEvenementsPage'
 import ProfilePage from './pages/ProfilePage'
 import MessagingPage from './pages/MessagingPage'
-import WalletPage from './pages/WalletPage'
 import ScannerPage from './pages/ScannerPage'
 import CGUPage from './pages/CGUPage'
 import TicketPage from './pages/TicketPage'
@@ -244,9 +243,6 @@ export default function App() {
             } />
             <Route path="/messagerie" element={
               <RequireAuth user={user} to="/messagerie"><MessagingPage /></RequireAuth>
-            } />
-            <Route path="/portefeuille" element={
-              <RequireAuth user={user} to="/portefeuille"><WalletPage /></RequireAuth>
             } />
             <Route path="/scanner" element={
               <RequireAuth user={user} to="/scanner"><ScannerPage /></RequireAuth>

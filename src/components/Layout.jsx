@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SideMenu from './SideMenu'
 import { getUserId, getTotalUnreadCount } from '../utils/messaging'
-import { getBalance } from '../utils/wallet'
 import { getTotalPendingCount } from '../utils/accounts'
 
 // ── Nav icons ──────────────────────────────────────────────────────────────────
@@ -61,15 +60,10 @@ export default function Layout({ children, hideNav, chatMode }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, openAuthModal } = useAuth()
-  const [balance, setBalance] = useState(0)
   const activeRole = user?.role || null
   const isAgent    = activeRole === 'agent'
   const pendingCount = isAgent ? getTotalPendingCount() : 0
 
-  useEffect(() => {
-    const uid = getUserId(user)
-    if (uid) setBalance(getBalance(uid))
-  }, [user, location.pathname])
 
   const navItems = getNavItems(activeRole)
   const uid = getUserId(user)
@@ -204,14 +198,10 @@ export default function Layout({ children, hideNav, chatMode }) {
               )}
             </nav>
 
-            {/* Right: wallet + avatar / connexion + hamburger */}
+            {/* Right: avatar / connexion + hamburger */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               {user ? (
                 <>
-                  <button onClick={() => navigate('/portefeuille')}
-                    style={{ background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.20)', borderRadius: 999, padding: '6px 14px', cursor: 'pointer' }}>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--gold)' }}>{balance.toFixed(0)} €</span>
-                  </button>
                   <button onClick={() => navigate('/profil')}
                     style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
                     {user.avatar ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : avatarLetter}
@@ -280,14 +270,10 @@ export default function Layout({ children, hideNav, chatMode }) {
               </span>
             </button>
 
-            {/* Right: wallet + avatar / connexion */}
+            {/* Right: avatar / connexion */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {user ? (
                 <>
-                  <button onClick={() => navigate('/portefeuille')}
-                    style={{ background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.20)', borderRadius: 999, padding: '5px 10px', cursor: 'pointer' }}>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'var(--gold)' }}>{balance.toFixed(0)} €</span>
-                  </button>
                   <button onClick={() => navigate('/profil')}
                     style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
                     {user.avatar ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : avatarLetter}

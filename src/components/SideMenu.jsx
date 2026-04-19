@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
-import { getBalance } from '../utils/wallet'
 import { ROLES, getTotalPendingCount, getEnabledRoles, switchActiveRole, cancelRoleRequest } from '../utils/accounts'
 
 const ROLE_CONFIG = {
@@ -16,7 +15,6 @@ const ROLE_CONFIG = {
 export default function SideMenu({ open, onClose }) {
   const navigate = useNavigate()
   const { user, setUser } = useAuth()
-  const balance = user ? getBalance(getUserId(user)) : 0
   const pendingCount = user?.role === 'agent' ? getTotalPendingCount() : 0
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [switching, setSwitching] = useState(false)
@@ -125,11 +123,6 @@ export default function SideMenu({ open, onClose }) {
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}>
                 {user.points || 0} pts
               </span>
-              {!isAgent && (
-                <button onClick={() => go('/portefeuille')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 999, background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)', cursor: 'pointer' }}>
-                  {balance.toFixed(0)} €
-                </button>
-              )}
             </div>
           </div>
         ) : (
@@ -162,7 +155,6 @@ export default function SideMenu({ open, onClose }) {
               ...(user ? [
                 { label: 'Messages', path: '/messagerie', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> },
                 { label: 'Mon Profil', path: '/profil', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> },
-                { label: 'Portefeuille', path: '/portefeuille', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> },
               ] : []),
             ].map(item => (
               <button key={item.path} onClick={() => go(item.path)}
