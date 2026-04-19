@@ -1481,7 +1481,7 @@ export default function AgentPage() {
                     <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#a78bfa', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       {selectedApp.status === 'resubmitted' ? '↩ Message joint à la re-soumission' : '✉ Message joint à la soumission'}
                     </p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6 }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6, wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
                       "{selectedApp.candidateNote}"
                     </p>
                   </div>
