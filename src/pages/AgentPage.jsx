@@ -12,6 +12,11 @@ import {
   getAllApplications, updateApplicationStatus,
   APPLICATION_STATUSES, getCompleteness, DOCUMENT_LABELS,
 } from '../utils/applications'
+import {
+  getAllDeletionRequests,
+  fetchDeletionRequestsFromFirestore,
+  resolveDeletionRequest,
+} from '../utils/accountDeletion'
 
 const ADMIN_EMAIL = 'hagechady4@gmail.com'
 
@@ -157,12 +162,15 @@ export default function AgentPage() {
   const [editField, setEditField] = useState(null)
   const [balanceAdjust, setBalanceAdjust] = useState({ uid: null, amount: '', reason: '' })
   const [toast, setToast] = useState(null)
+  const [deletionRequests, setDeletionRequests] = useState([])
+  const [delResNote, setDelResNote]             = useState('')  // note admin pour résolution
 
   function refresh() {
     setAccounts(getAllAccounts())
     setPending(getPendingValidations())
     setRoleRequests(getPendingRoleRequests().filter(r => r.status === 'pending'))
     setApplications(getAllApplications())
+    setDeletionRequests(getAllDeletionRequests())
   }
 
   useEffect(() => {
@@ -217,6 +225,10 @@ export default function AgentPage() {
         setPending(getPendingValidations())
         setRoleRequests(getPendingRoleRequests().filter(r => r.status === 'pending'))
         setAccounts(getAllAccounts())
+
+        // Demandes de suppression depuis Firestore
+        const delReqs = await fetchDeletionRequestsFromFirestore()
+        setDeletionRequests(delReqs)
       } catch {}
     }
     fetchFromFirestore()
@@ -474,9 +486,10 @@ export default function AgentPage() {
         overflowX: 'auto',
       }}>
         {[
-          { key: 'dashboard',     label: 'Dashboard' },
-          { key: 'users',         label: 'Comptes' },
-          { key: 'dossiers',      label: `Dossiers${totalAppsSubmitted > 0 ? ` (${totalAppsSubmitted})` : ''}` },
+          { key: 'dashboard',    label: 'Dashboard' },
+          { key: 'users',        label: 'Comptes' },
+          { key: 'dossiers',     label: `Dossiers${totalAppsSubmitted > 0 ? ` (${totalAppsSubmitted})` : ''}` },
+          { key: 'suppressions', label: `Suppressions${deletionRequests.length > 0 ? ` (${deletionRequests.length})` : ''}` },
         ].map(t => (
           <button
             key={t.key}
@@ -2070,6 +2083,149 @@ export default function AgentPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          SUPPRESSIONS
+      ══════════════════════════════════════════════ */}
+      {tab === 'suppressions' && (
+        <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>
+            Demandes de suppression de compte
+          </p>
+
+          {deletionRequests.length === 0 ? (
+            <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 18, fontWeight: 300, color: COLORS.muted, margin: 0 }}>
+                Aucune demande en attente
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {deletionRequests.map(req => (
+                <div key={req.id} style={{
+                  ...CARD, padding: 18,
+                  borderColor: 'rgba(239,68,68,0.28)',
+                  background: 'rgba(239,68,68,0.04)',
+                }}>
+                  {/* En-tête */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+                    <div>
+                      <p style={{ fontFamily: FONTS.display, fontSize: 17, fontWeight: 300, color: '#fff', margin: '0 0 2px' }}>
+                        {req.userName}
+                      </p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0 }}>
+                        {req.userEmail} · {req.applicationType || req.userRole}
+                      </p>
+                    </div>
+                    <span style={{
+                      padding: '3px 9px', borderRadius: 4, flexShrink: 0,
+                      background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)',
+                      fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444',
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                    }}>
+                      En attente
+                    </span>
+                  </div>
+
+                  {/* Date */}
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 10px' }}>
+                    Demandé le {new Date(req.requestedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+
+                  {/* Raison */}
+                  <div style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, marginBottom: 12 }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
+                      Raison invoquée
+                    </p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                      {req.reason || '—'}
+                    </p>
+                  </div>
+
+                  {/* Audit — blockers */}
+                  {req.audit?.blockers?.length > 0 && (
+                    <div style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.22)', borderRadius: 6, marginBottom: 10 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
+                        ⚠ Points signalés par le système
+                      </p>
+                      {req.audit.blockers.map((b, i) => (
+                        <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(239,68,68,0.75)', margin: '0 0 3px', lineHeight: 1.5 }}>
+                          • {b.label}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Audit — warnings */}
+                  {req.audit?.warnings?.length > 0 && (
+                    <div style={{ padding: '10px 12px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.18)', borderRadius: 6, marginBottom: 10 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
+                        ℹ Éléments à archiver
+                      </p>
+                      {req.audit.warnings.map((w, i) => (
+                        <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(245,158,11,0.7)', margin: '0 0 3px', lineHeight: 1.5 }}>
+                          • {w.label}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Note admin */}
+                  <label style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 }}>
+                    Note pour l&apos;utilisateur (optionnel)
+                  </label>
+                  <textarea
+                    placeholder="Ex : demande refusée car événement en cours…"
+                    rows={2}
+                    onChange={e => setDelResNote(e.target.value)}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)',
+                      borderRadius: 5, padding: '8px 10px', resize: 'vertical',
+                      fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)',
+                      lineHeight: 1.6, outline: 'none', marginBottom: 12,
+                    }}
+                  />
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={async () => {
+                        await resolveDeletionRequest(req.id, 'approved', user.uid, user.name || 'Admin', delResNote)
+                        setDeletionRequests(getAllDeletionRequests())
+                        setDelResNote('')
+                        showToast('Suppression approuvée — compte anonymisé.')
+                      }}
+                      style={{
+                        flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
+                        background: 'rgba(239,68,68,0.16)', border: '1px solid rgba(239,68,68,0.40)',
+                        color: '#ef4444', fontFamily: FONTS.mono, fontSize: 10,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}>
+                      ✓ Approuver
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await resolveDeletionRequest(req.id, 'rejected', user.uid, user.name || 'Admin', delResNote)
+                        setDeletionRequests(getAllDeletionRequests())
+                        setDelResNote('')
+                        showToast('Demande refusée.')
+                      }}
+                      style={{
+                        flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
+                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
+                        color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}>
+                      ✕ Refuser
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

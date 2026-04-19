@@ -10,6 +10,12 @@ import {
   uploadDocument,
   deleteApplication,
 } from '../utils/applications'
+import {
+  auditAccountForDeletion,
+  createDeletionRequest,
+  cancelDeletionRequest,
+  getDeletionRequestByUser,
+} from '../utils/accountDeletion'
 import Layout from '../components/Layout'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────
@@ -182,6 +188,12 @@ export default function MonDossierPage() {
   const [uploadStatus, setUploadStatus] = useState({}) // { [docKey]: 'uploading'|'done'|'error' }
   const [toast, setToast] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // ── Demande de suppression (comptes validés) ──
+  const [deletionReq, setDeletionReq]         = useState(null)
+  const [showDeletionForm, setShowDeletionForm] = useState(false)
+  const [deletionReason, setDeletionReason]   = useState('')
+  const [auditResult, setAuditResult]         = useState(null)   // { blockers, warnings }
+  const [deletionLoading, setDeletionLoading] = useState(false)
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type })
@@ -215,6 +227,9 @@ export default function MonDossierPage() {
     const prestApp = getApplicationByUser(user.uid, 'prestataire')
     const found = orgApp || prestApp
     if (found) setApp(found)
+
+    // Charger une éventuelle demande de suppression en cours
+    setDeletionReq(getDeletionRequestByUser(user.uid))
 
     // Always also fetch from Firestore to get admin updates (status, corrections, etc.)
     // The admin writes to Firestore — the candidate must read from there to get changes
@@ -436,55 +451,207 @@ export default function MonDossierPage() {
           </div>
         )}
 
-        {/* ── Supprimer le dossier ── */}
-        {!confirmDelete ? (
-          <button
-            onClick={() => setConfirmDelete(true)}
-            style={{
-              width: '100%', padding: '11px 0', borderRadius: 8, cursor: 'pointer',
-              background: 'transparent',
-              border: '1px solid rgba(239,68,68,0.22)',
-              color: 'rgba(239,68,68,0.55)', fontFamily: FONTS.mono, fontSize: 10,
-              letterSpacing: '0.08em', textTransform: 'uppercase',
-              marginBottom: 16,
-            }}>
-            Supprimer le dossier
-          </button>
-        ) : (
-          <div style={{
-            ...CARD, padding: 16, marginBottom: 16,
-            borderColor: 'rgba(239,68,68,0.35)',
-            background: 'rgba(239,68,68,0.06)',
-          }}>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#fff', margin: '0 0 4px', fontWeight: 600 }}>
-              Supprimer définitivement ce dossier ?
-            </p>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.5 }}>
-              Cette action est irréversible. Tu devras soumettre un nouveau dossier pour candidater à nouveau.
-            </p>
-            <div style={{ display: 'flex', gap: 8 }}>
+        {/* ── Suppression : flux différent selon statut ── */}
+        {app.status === 'approved' ? (
+          // ── Compte validé : demande admin obligatoire ──
+          <div style={{ marginBottom: 16 }}>
+            {/* Demande déjà en cours */}
+            {deletionReq ? (
+              <div style={{
+                ...CARD, padding: 16,
+                borderColor: 'rgba(239,68,68,0.30)',
+                background: 'rgba(239,68,68,0.05)',
+              }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
+                  ⏳ Demande de suppression en cours
+                </p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 12px', lineHeight: 1.5 }}>
+                  Ta demande a été transmise à l&apos;équipe LIVEINBLACK le {new Date(deletionReq.requestedAt).toLocaleDateString('fr-FR')}. Tu recevras une réponse prochainement.
+                </p>
+                <button
+                  onClick={() => { cancelDeletionRequest(deletionReq.id); setDeletionReq(null); setShowDeletionForm(false) }}
+                  style={{
+                    padding: '8px 16px', borderRadius: 5, cursor: 'pointer',
+                    background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                    color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 10,
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}>
+                  Annuler la demande
+                </button>
+              </div>
+            ) : !showDeletionForm ? (
+              // Bouton d'ouverture
               <button
-                onClick={handleDelete}
+                onClick={() => {
+                  setAuditResult(auditAccountForDeletion(user.uid, user.role))
+                  setShowDeletionForm(true)
+                }}
                 style={{
-                  flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                  background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.45)',
-                  color: '#ef4444', fontFamily: FONTS.mono, fontSize: 10,
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  width: '100%', padding: '11px 0', borderRadius: 8, cursor: 'pointer',
+                  background: 'transparent', border: '1px solid rgba(239,68,68,0.22)',
+                  color: 'rgba(239,68,68,0.55)', fontFamily: FONTS.mono, fontSize: 10,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
                 }}>
-                Oui, supprimer
+                Demander la suppression du compte
               </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
-                  color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 10,
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                }}>
-                Annuler
-              </button>
-            </div>
+            ) : (
+              // Formulaire de demande
+              <div style={{
+                ...CARD, padding: 16,
+                borderColor: 'rgba(239,68,68,0.30)',
+                background: 'rgba(239,68,68,0.04)',
+              }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>
+                  Demande de suppression de compte
+                </p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.6 }}>
+                  La suppression doit être validée par notre équipe. Une fois approuvée, tes données personnelles seront anonymisées. Les données transactionnelles (billets, paiements) restent archivées conformément aux obligations légales (10 ans).
+                </p>
+
+                {/* Résultats audit */}
+                {auditResult && (auditResult.blockers.length > 0 || auditResult.warnings.length > 0) && (
+                  <div style={{ marginBottom: 14 }}>
+                    {auditResult.blockers.length > 0 && (
+                      <div style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 7, marginBottom: 8 }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
+                          ⚠ Points à résoudre (signalés à l&apos;admin)
+                        </p>
+                        {auditResult.blockers.map((b, i) => (
+                          <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(239,68,68,0.8)', margin: '0 0 3px', lineHeight: 1.5 }}>
+                            • {b.label}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {auditResult.warnings.length > 0 && (
+                      <div style={{ padding: '10px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.22)', borderRadius: 7 }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
+                          ℹ Ce qui sera archivé
+                        </p>
+                        {auditResult.warnings.map((w, i) => (
+                          <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(245,158,11,0.75)', margin: '0 0 3px', lineHeight: 1.5 }}>
+                            • {w.label}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Raison */}
+                <label style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>
+                  Raison de la suppression <span style={{ color: COLORS.pink }}>*</span>
+                </label>
+                <textarea
+                  value={deletionReason}
+                  onChange={e => setDeletionReason(e.target.value)}
+                  placeholder="Ex : je cesse mon activité, je n'utilise plus la plateforme…"
+                  rows={3}
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: 5, padding: '9px 11px', resize: 'vertical',
+                    fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.8)',
+                    lineHeight: 1.6, outline: 'none', marginBottom: 12,
+                  }}
+                />
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    disabled={deletionLoading || !deletionReason.trim()}
+                    onClick={async () => {
+                      if (!deletionReason.trim()) return
+                      setDeletionLoading(true)
+                      const req = createDeletionRequest({
+                        uid:             user.uid,
+                        userName:        user.name || '',
+                        userEmail:       user.email || '',
+                        userRole:        user.role  || '',
+                        applicationId:   app.id,
+                        applicationType: app.type,
+                        reason:          deletionReason,
+                        audit:           auditResult || { blockers: [], warnings: [] },
+                      })
+                      setDeletionReq(req)
+                      setShowDeletionForm(false)
+                      setDeletionReason('')
+                      setDeletionLoading(false)
+                      showToast('Demande envoyée — l\'équipe te répondra prochainement.')
+                    }}
+                    style={{
+                      flex: 1, padding: '10px 0', borderRadius: 6, cursor: deletionReason.trim() ? 'pointer' : 'not-allowed',
+                      background: deletionReason.trim() ? 'rgba(239,68,68,0.16)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${deletionReason.trim() ? 'rgba(239,68,68,0.40)' : 'rgba(255,255,255,0.08)'}`,
+                      color: deletionReason.trim() ? '#ef4444' : COLORS.dim,
+                      fontFamily: FONTS.mono, fontSize: 10,
+                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                      opacity: deletionLoading ? 0.6 : 1,
+                    }}>
+                    {deletionLoading ? '…' : 'Envoyer la demande'}
+                  </button>
+                  <button
+                    onClick={() => { setShowDeletionForm(false); setAuditResult(null); setDeletionReason('') }}
+                    style={{
+                      flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
+                      color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 10,
+                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+        ) : (
+          // ── Dossier non validé : suppression directe ──
+          !confirmDelete ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              style={{
+                width: '100%', padding: '11px 0', borderRadius: 8, cursor: 'pointer',
+                background: 'transparent', border: '1px solid rgba(239,68,68,0.22)',
+                color: 'rgba(239,68,68,0.55)', fontFamily: FONTS.mono, fontSize: 10,
+                letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16,
+              }}>
+              Supprimer le dossier
+            </button>
+          ) : (
+            <div style={{
+              ...CARD, padding: 16, marginBottom: 16,
+              borderColor: 'rgba(239,68,68,0.35)',
+              background: 'rgba(239,68,68,0.06)',
+            }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#fff', margin: '0 0 4px', fontWeight: 600 }}>
+                Supprimer définitivement ce dossier ?
+              </p>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.5 }}>
+                Cette action est irréversible. Tu devras soumettre un nouveau dossier pour candidater à nouveau.
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={handleDelete}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
+                    background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.45)',
+                    color: '#ef4444', fontFamily: FONTS.mono, fontSize: 10,
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}>
+                  Oui, supprimer
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
+                    color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 10,
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}>
+                  Annuler
+                </button>
+              </div>
+            </div>
+          )
         )}
 
         {/* ── Tabs ── */}
