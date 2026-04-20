@@ -145,13 +145,15 @@ function Eyebrow({ children, style = {} }) {
   )
 }
 
-function InputField({ label, value, onChange, placeholder, type = 'text', error, style = {} }) {
+function InputField({ label, value, onChange, placeholder, type = 'text', error, style = {}, min, max }) {
   const [focused, setFocused] = useState(false)
   return (
     <div>
       {label && <label style={S.label}>{label}</label>}
       <input
         type={type}
+        min={min}
+        max={max}
         style={{
           ...S.inputBase,
           borderColor: error ? 'rgba(220,50,50,0.6)' : focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)',
@@ -335,7 +337,13 @@ export default function MesEvenementsPage() {
     const errs = {}
     if (currentStep === 0) {
       if (!form.name.trim()) errs.name = 'Le nom est obligatoire'
-      if (!form.date) errs.date = 'La date est obligatoire'
+      if (!form.date) {
+        errs.date = 'La date est obligatoire'
+      } else {
+        const today = new Date(); today.setHours(0, 0, 0, 0)
+        const picked = new Date(form.date + 'T00:00:00')
+        if (picked < today) errs.date = 'La date ne peut pas être dans le passé'
+      }
       if (!eventType) errs.eventType = "Choisis un type d'événement"
     }
     if (currentStep === 1) {
@@ -892,7 +900,14 @@ export default function MesEvenementsPage() {
             {/* Basic fields */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <InputField label="Nom de l'événement *" placeholder="Ex: NEON NIGHT Vol.3" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} error={errors.name} />
-              <InputField label="Date *" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} error={errors.date} />
+              <InputField
+                label="Date *"
+                type="date"
+                value={form.date}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                error={errors.date}
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} />
                 <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} />
