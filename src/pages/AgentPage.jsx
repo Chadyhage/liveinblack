@@ -1975,12 +1975,12 @@ export default function AgentPage() {
                                 </p>
                                 {/* Auto note (system text) — dim */}
                                 {entry.note && !isAdminNote && (
-                                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 2px', fontStyle: 'italic' }}>{entry.note}</p>
+                                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 2px', fontStyle: 'italic', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{entry.note}</p>
                                 )}
                                 {/* Admin message — highlighted */}
                                 {isAdminNote && (
                                   <div style={{ padding: '5px 8px', background: color + '0d', border: `1px solid ${color}22`, borderRadius: 4, marginBottom: 4 }}>
-                                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: color, margin: 0, lineHeight: 1.5 }}>"{entry.note}"</p>
+                                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: color, margin: 0, lineHeight: 1.5, wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>"{entry.note}"</p>
                                   </div>
                                 )}
                                 <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: 0 }}>
