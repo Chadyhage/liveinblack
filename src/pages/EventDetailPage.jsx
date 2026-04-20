@@ -1098,15 +1098,17 @@ export default function EventDetailPage() {
                         disabled={!userCanBook}
                         onClick={() => setShowConfirmModal(true)}
                       >
-                        {preorderTotal > 0 ? `Confirmer la commande — ${totalPrice}€` : 'Confirmer sans précommande'}
+                        {preorderTotal > 0 ? `Confirmer la commande — ${totalPrice}€` : 'Confirmer la réservation'}
                       </button>
-                      <button
-                        onClick={() => setShowConfirmModal(true)}
-                        disabled={!userCanBook}
-                        style={{ ...S.btnGhost, width: '100%', padding: '10px', opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
-                      >
-                        Ignorer et réserver sans précommande
-                      </button>
+                      {preorderTotal > 0 && (
+                        <button
+                          onClick={() => setShowConfirmModal(true)}
+                          disabled={!userCanBook}
+                          style={{ ...S.btnGhost, width: '100%', padding: '10px', opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
+                        >
+                          Ignorer et réserver sans précommande
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
