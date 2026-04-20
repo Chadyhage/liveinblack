@@ -342,7 +342,11 @@ export default function MesEvenementsPage() {
       } else {
         const today = new Date(); today.setHours(0, 0, 0, 0)
         const picked = new Date(form.date + 'T00:00:00')
-        if (picked < today) errs.date = 'La date ne peut pas être dans le passé'
+        if (picked < today) errs.date = 'La date que vous avez renseignée est déjà passée'
+      }
+      if (form.timeStart && form.timeEnd) {
+        if (form.timeStart === form.timeEnd) errs.timeEnd = "L'heure de fin doit être différente de l'heure de début"
+        else if (form.timeEnd < form.timeStart) errs.timeEnd = "L'heure de fin doit être après l'heure de début"
       }
       if (!eventType) errs.eventType = "Choisis un type d'événement"
     }
@@ -908,9 +912,12 @@ export default function MesEvenementsPage() {
                 onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                 error={errors.date}
               />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} />
-                <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} />
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} />
+                  <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} />
+                </div>
+                {errors.timeEnd && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
               </div>
 
               <div>
