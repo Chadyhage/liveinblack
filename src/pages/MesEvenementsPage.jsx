@@ -1173,7 +1173,21 @@ export default function MesEvenementsPage() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <InputField label="Quantité disponible" type="number" placeholder="Ex: 100" value={place.qty} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, qty: e.target.value } : p))} />
-                  <InputField label="Max/compte" type="number" placeholder="0 = illimité" value={place.maxPerAccount || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, maxPerAccount: e.target.value } : p))} />
+                  <div>
+                    <InputField
+                      label="Max/compte"
+                      type="number"
+                      placeholder="0 = illimité"
+                      value={place.groupType === 'group' ? '1' : (place.maxPerAccount || '')}
+                      onChange={e => place.groupType !== 'group' && setPlaces(places.map((p, j) => j === i ? { ...p, maxPerAccount: e.target.value } : p))}
+                      style={place.groupType === 'group' ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
+                    />
+                    {place.groupType === 'group' && (
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(78,232,200,0.6)', letterSpacing: '0.08em', marginTop: 4 }}>
+                        Fixé à 1 réservation par compte (groupe)
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
@@ -1182,7 +1196,11 @@ export default function MesEvenementsPage() {
                   </div>
                   <Toggle
                     value={place.groupType === 'group'}
-                    onChange={() => setPlaces(places.map((p, j) => j === i ? { ...p, groupType: p.groupType === 'group' ? 'solo' : 'group' } : p))}
+                    onChange={() => setPlaces(places.map((p, j) =>
+                      j === i
+                        ? { ...p, groupType: p.groupType === 'group' ? 'solo' : 'group', maxPerAccount: p.groupType !== 'group' ? 1 : p.maxPerAccount }
+                        : p
+                    ))}
                   />
                 </div>
                 {place.groupType === 'group' && (
