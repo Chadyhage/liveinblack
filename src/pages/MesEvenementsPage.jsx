@@ -374,7 +374,7 @@ export default function MesEvenementsPage() {
       endTime: form.timeEnd || '05:00',
       location: [venue.name, venue.city].filter(Boolean).join(', '),
       city: venue.city,
-      region: form.region || venue.country || venue.city,
+      region: form.region || venue.city,
       imageUrl: imagePreview,
       color: '#c8a96e',
       accentColor: '#e8d49e',
@@ -1257,27 +1257,11 @@ export default function MesEvenementsPage() {
                   error={f.key === 'city' ? errors.city : undefined}
                 />
               ))}
-              {/* Pays + auto-détection de région */}
-              <InputField
-                label="Pays"
-                placeholder="Ex: France, Togo, Côte d'Ivoire..."
-                value={venue.country}
-                onChange={e => {
-                  const country = e.target.value
-                  setVenue(v => ({ ...v, country }))
-                  // Auto-détection de la région depuis le pays saisi
-                  const matched = regions.find(r =>
-                    r.country.toLowerCase() === country.trim().toLowerCase() ||
-                    r.name.toLowerCase() === country.trim().toLowerCase()
-                  )
-                  if (matched) setForm(f => ({ ...f, region: matched.name }))
-                }}
-              />
               {/* Sélecteur de région */}
               <div>
                 <label style={{ ...S.label, marginBottom: 4 }}>Région *</label>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em', marginBottom: 10 }}>
-                  Se remplit automatiquement depuis le pays — modifiable manuellement
+                  Dans quelle région se déroule l'événement ?
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {regions.map(r => {
