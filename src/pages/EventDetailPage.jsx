@@ -230,10 +230,13 @@ export default function EventDetailPage() {
   const [groupSendConvId, setGroupSendConvId] = useState(null)
   const [insufficientFunds] = useState(false) // désactivé — paiement fictif
   const [conflictBooking, setConflictBooking] = useState(null)
+  const [showConflictModal, setShowConflictModal] = useState(false)
+  const [conflictProceedFn, setConflictProceedFn] = useState(null)
   const [eventStartedError, setEventStartedError] = useState(false)
   const [showPointsToast, setShowPointsToast] = useState(false)
   const [showAgeModal, setShowAgeModal] = useState(false)
   const [ageVerified, setAgeVerified] = useState(false)
+  const [playlistTabBlink, setPlaylistTabBlink] = useState(false)
 
   if (!event) {
     return (
@@ -301,12 +304,8 @@ export default function EventDetailPage() {
       return
     }
     setEventStartedError(false)
-    // Schedule conflict check (exclut le même événement — re-réserver est autorisé)
-    const uid = getUserId(user)
-    const conflict = checkScheduleConflict(uid, event.date, event.time, event.endTime, event.id)
-    // conflit = avertissement uniquement, pas un blocage
-    setConflictBooking(conflict || null)
     // paiement fictif — Stripe sera intégré plus tard
+    // (conflit géré en amont par tryProceed)
 
     const newTickets = []
     try {
@@ -366,6 +365,24 @@ export default function EventDetailPage() {
       totalPrice,
     }])
     setBookingStep('confirmed')
+    if (hasPlaylist) {
+      setPlaylistTabBlink(true)
+      setTimeout(() => setPlaylistTabBlink(false), 5000)
+    }
+  }
+
+  // Vérifie le conflit AVANT de procéder — si conflit, ouvre le modal dédié
+  function tryProceed(action) {
+    const uid = getUserId(user)
+    const conflict = checkScheduleConflict(uid, event.date, event.time, event.endTime, event.id)
+    if (conflict) {
+      setConflictBooking(conflict)
+      setConflictProceedFn(() => action) // stocker l'action à exécuter si l'utilisateur confirme
+      setShowConflictModal(true)
+    } else {
+      setConflictBooking(null)
+      action()
+    }
   }
 
   function resetBooking() {
@@ -551,10 +568,20 @@ export default function EventDetailPage() {
           borderBottom: '1px solid rgba(255,255,255,0.07)',
           overflowX: 'auto',
         }}>
-          {TABS.map((tab) => (
+          {/* Keyframe pour le clignotement de l'onglet Playlist */}
+          <style>{`
+            @keyframes playlistTabBlink {
+              0%, 100% { color: rgba(255,255,255,0.3); border-bottom-color: transparent; text-shadow: none; }
+              50% { color: #e05aaa; border-bottom-color: #e05aaa; text-shadow: 0 0 8px rgba(224,90,170,0.6); }
+            }
+          `}</style>
+
+          {TABS.map((tab) => {
+            const isPlaylistBlink = tab === 'Playlist' && playlistTabBlink && activeTab !== 'Playlist'
+            return (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); if (tab === 'Playlist') setPlaylistTabBlink(false) }}
               style={{
                 flexShrink: 0,
                 padding: '14px 16px 12px',
@@ -569,11 +596,12 @@ export default function EventDetailPage() {
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 marginBottom: -1,
+                animation: isPlaylistBlink ? 'playlistTabBlink 0.7s ease-in-out infinite' : 'none',
               }}
             >
               {tab}
             </button>
-          ))}
+          )})}
         </div>
 
         {/* ── Tab Content ───────────────────────────────────────────────────── */}
@@ -709,16 +737,7 @@ export default function EventDetailPage() {
                     </div>
                   )}
 
-                  {conflictBooking && (
-                    <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.30)', borderRadius: 8, padding: '12px 14px' }}>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#f59e0b', margin: '0 0 4px', letterSpacing: '0.08em' }}>
-                        Conflit de créneau
-                      </p>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
-                        Tu as déjà une réservation pour <strong style={{ color: '#fff' }}>{conflictBooking.eventName}</strong> sur un créneau qui se chevauche.
-                      </p>
-                    </div>
-                  )}
+                  {/* conflit affiché dans le modal dédié (showConflictModal) */}
 
                   {/* paiement fictif — pas de vérification de solde */}
 
@@ -753,11 +772,11 @@ export default function EventDetailPage() {
                         <button
                           style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                           disabled={!userCanBook}
-                          onClick={() => {
+                          onClick={() => tryProceed(() => {
                             setPerTicketOrders([{ items: {}, shows: {} }])
                             setActivePreorderTicket(0)
                             setBookingStep('preorder')
-                          }}
+                          })}
                         >
                           Continuer →
                         </button>
@@ -782,7 +801,7 @@ export default function EventDetailPage() {
                         <button
                           style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                           disabled={!userCanBook}
-                          onClick={() => setShowConfirmModal(true)}
+                          onClick={() => tryProceed(() => setShowConfirmModal(true))}
                         >
                           Confirmer la réservation
                         </button>
@@ -1379,6 +1398,105 @@ export default function EventDetailPage() {
       })()}
 
       {/* ── Confirm booking modal ────────────────────────────────────────────── */}
+      {/* ── Modal conflit de créneau ───────────────────────────────────────── */}
+      {showConflictModal && conflictBooking && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 55, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)' }} onClick={() => setShowConflictModal(false)} />
+          <div style={{
+            position: 'relative', width: '100%', maxWidth: 448,
+            background: 'rgba(4,5,12,0.98)',
+            border: '1px solid rgba(245,158,11,0.35)',
+            borderRadius: '16px 16px 0 0',
+            padding: '20px 20px 40px',
+            display: 'flex', flexDirection: 'column', gap: 18,
+          }}>
+            <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,0.15)', borderRadius: 2, margin: '0 auto' }} />
+
+            {/* Icône + titre */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+              <div style={{
+                width: 60, height: 60, borderRadius: '50%',
+                background: 'rgba(245,158,11,0.12)',
+                border: '1px solid rgba(245,158,11,0.40)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="#f59e0b">
+                  <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+              </div>
+              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 24, color: 'white', margin: 0 }}>
+                Conflit de créneau
+              </h3>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, letterSpacing: '0.04em', margin: 0 }}>
+                Tu as déjà une réservation pour{' '}
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}>{conflictBooking.eventName}</span>
+                {' '}le <span style={{ color: 'white' }}>{conflictBooking.eventDate}</span> sur un créneau qui se chevauche avec cet événement.
+              </p>
+            </div>
+
+            {/* Card récap conflit */}
+            <div style={{
+              background: 'rgba(245,158,11,0.07)',
+              border: '1px solid rgba(245,158,11,0.22)',
+              borderRadius: 10, padding: '14px 16px',
+              display: 'flex', alignItems: 'center', gap: 12,
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                background: 'rgba(245,158,11,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
+                  <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+                </svg>
+              </div>
+              <div>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
+                  {conflictBooking.eventName}
+                </p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0', letterSpacing: '0.1em' }}>
+                  {conflictBooking.eventDate} · {conflictBooking.eventStartTime} → {conflictBooking.eventEndTime}
+                </p>
+              </div>
+            </div>
+
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', textAlign: 'center', margin: 0, letterSpacing: '0.06em' }}>
+              Tu peux quand même réserver — la décision t'appartient.
+            </p>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button
+                onClick={() => {
+                  setShowConflictModal(false)
+                  if (conflictProceedFn) conflictProceedFn()
+                }}
+                style={{
+                  padding: '14px', borderRadius: 4, cursor: 'pointer',
+                  background: 'linear-gradient(135deg, rgba(245,158,11,0.22), rgba(245,158,11,0.07))',
+                  border: '1px solid rgba(245,158,11,0.45)',
+                  fontFamily: "'DM Mono', monospace", fontSize: 11,
+                  letterSpacing: '0.2em', textTransform: 'uppercase', color: '#f59e0b',
+                }}
+              >
+                Continuer quand même →
+              </button>
+              <button
+                onClick={() => setShowConflictModal(false)}
+                style={{
+                  padding: '12px', borderRadius: 4, cursor: 'pointer',
+                  background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+                  fontFamily: "'DM Mono', monospace", fontSize: 11,
+                  letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)',
+                }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showConfirmModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)' }} onClick={() => setShowConfirmModal(false)} />
@@ -1413,17 +1531,6 @@ export default function EventDetailPage() {
               )}
             </div>
 
-            {/* Avertissement conflit — informatif, non bloquant */}
-            {conflictBooking && (
-              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.30)', borderRadius: 8, padding: '10px 12px' }}>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#f59e0b', margin: '0 0 2px', letterSpacing: '0.08em' }}>
-                  ⚠ Conflit de créneau détecté
-                </p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.40)', margin: 0, lineHeight: 1.5 }}>
-                  Tu as une réservation pour <strong style={{ color: 'rgba(255,255,255,0.75)' }}>{conflictBooking.eventName}</strong> au même moment. Tu peux quand même confirmer.
-                </p>
-              </div>
-            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button
