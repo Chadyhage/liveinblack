@@ -1005,36 +1005,6 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        {/* Wallet quick-access */}
-        <button
-          onClick={() => navigate('/portefeuille')}
-          style={{
-            ...S.card,
-            borderColor: 'rgba(200,169,110,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            cursor: 'pointer',
-            width: '100%',
-            textAlign: 'left',
-            transition: 'border-color 0.18s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(200,169,110,0.45)'}
-          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(200,169,110,0.2)'}
-        >
-          <div>
-            <EyebrowLabel text="Mon Portefeuille" />
-            <p style={{
-              fontFamily: '"Cormorant Garamond", serif',
-              fontWeight: 300,
-              fontSize: 'clamp(1.8rem, 8vw, 2.25rem)',
-              color: '#c8a96e',
-              lineHeight: 1,
-            }}>{wallet.balance.toFixed(2)}&thinsp;€</p>
-          </div>
-          <span style={{ color: '#c8a96e', fontSize: '22px', opacity: 0.6 }}>›</span>
-        </button>
-
         {/* Points info */}
         <div style={{ ...S.card, borderColor: 'rgba(200,169,110,0.12)' }}>
           <EyebrowLabel text="Système de points" />
@@ -1046,15 +1016,20 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {/* Menu */}
+        {/* Menu — items filtrés selon le rôle */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {[
-            { label: 'Mes billets', action: () => setPanel('billets') },
-            { label: 'Mes commandes événements', action: () => setPanel('commandes') },
-            { label: 'Mes commandes prestataires', action: () => setPanel('service-orders') },
+            // Clients uniquement : achats de billets et commandes événements
+            (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
+              { label: 'Mes billets',               action: () => setPanel('billets')        },
+            (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
+              { label: 'Mes commandes événements',  action: () => setPanel('commandes')      },
+            // Prestataires + clients : commandes de services reçues/passées
+            (user?.role !== 'organisateur' && user?.role !== 'agent') &&
+              { label: 'Mes commandes prestataires', action: () => setPanel('service-orders') },
             { label: 'Paramètres du compte', action: () => setPanel('settings') },
-            { label: 'Support / Aide', action: () => setPanel('support') },
-          ].map((item) => (
+            { label: 'Support / Aide',       action: () => setPanel('support')   },
+          ].filter(Boolean).map((item) => (
             <MenuRow key={item.label} label={item.label} onClick={item.action} />
           ))}
         </div>
