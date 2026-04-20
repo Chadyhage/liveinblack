@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import Layout from '../components/Layout'
@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import { getWallet } from '../utils/wallet'
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
+import { getApplicationByUser } from '../utils/applications'
 import { getOrdersForBuyer, ORDER_STATUS_LABELS } from '../utils/services'
 
 function getBookings() {
@@ -234,6 +235,14 @@ export default function ProfilePage() {
 
   // Support state
   const [openFaq, setOpenFaq] = useState(null)
+
+  // Nom de l'organisation (organisateurs uniquement)
+  const [orgName, setOrgName] = useState(null)
+  useEffect(() => {
+    if (user?.role !== 'organisateur') { setOrgName(null); return }
+    const app = getApplicationByUser(user.uid, 'organisateur')
+    setOrgName(app?.formData?.nomCommercial || null)
+  }, [user?.uid, user?.role])
 
   const emailChanged    = settingsForm.email.trim() !== (user?.email || '')
   const passwordChanged = !!settingsForm.newPassword
@@ -948,7 +957,7 @@ export default function ProfilePage() {
             color: 'rgba(255,255,255,0.92)',
             marginTop: '14px',
             letterSpacing: '0.04em',
-          }}>{user?.name}</h2>
+          }}>{(user?.role === 'organisateur' && orgName) ? orgName : user?.name}</h2>
           <p style={{ ...S.label, marginTop: '6px' }}>{user?.email}</p>
           {user?.phone && (
             <p style={{ ...S.label, marginTop: '4px' }}>{user.phone}</p>
@@ -969,52 +978,58 @@ export default function ProfilePage() {
                 {ROLES[user.role].label}
               </span>
             )}
-            <span style={{
-              fontFamily: '"DM Mono", monospace',
-              fontSize: '9px',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              padding: '4px 12px',
-              borderRadius: '4px',
-              border: '1px solid rgba(200,169,110,0.25)',
-              background: 'rgba(200,169,110,0.08)',
-              color: '#c8a96e',
-            }}>
-              {user?.points || 0} pts
-            </span>
+            {user?.role !== 'organisateur' && (
+              <span style={{
+                fontFamily: '"DM Mono", monospace',
+                fontSize: '9px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                border: '1px solid rgba(200,169,110,0.25)',
+                background: 'rgba(200,169,110,0.08)',
+                color: '#c8a96e',
+              }}>
+                {user?.points || 0} pts
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-          {[
-            { label: 'Tickets', val: bookingsCount },
-            { label: 'Événements', val: createdCount },
-            { label: 'Points', val: user?.points || 0 },
-          ].map((s) => (
-            <div key={s.label} style={{ ...S.card, textAlign: 'center', padding: '14px 8px' }}>
-              <p style={{
-                fontFamily: '"Cormorant Garamond", serif',
-                fontWeight: 300,
-                fontSize: '28px',
-                color: 'rgba(255,255,255,0.9)',
-                lineHeight: 1,
-              }}>{s.val}</p>
-              <p style={{ ...S.label, marginTop: '6px' }}>{s.label}</p>
+        {/* Stats — filtrées selon le rôle */}
+        {(() => {
+          const isOrg = user?.role === 'organisateur'
+          const stats = isOrg
+            ? [{ label: 'Événements', val: createdCount }]
+            : [
+                { label: 'Tickets',     val: bookingsCount },
+                { label: 'Événements',  val: createdCount  },
+                { label: 'Points',      val: user?.points || 0 },
+              ]
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, 1fr)`, gap: '8px' }}>
+              {stats.map((s) => (
+                <div key={s.label} style={{ ...S.card, textAlign: 'center', padding: '14px 8px' }}>
+                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 300, fontSize: '28px', color: 'rgba(255,255,255,0.9)', lineHeight: 1 }}>{s.val}</p>
+                  <p style={{ ...S.label, marginTop: '6px' }}>{s.label}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )
+        })()}
 
-        {/* Points info */}
-        <div style={{ ...S.card, borderColor: 'rgba(200,169,110,0.12)' }}>
-          <EyebrowLabel text="Système de points" />
-          <p style={S.bodyText}>
-            Tu gagnes{' '}
-            <span style={{ color: 'rgba(255,255,255,0.82)' }}>1 point</span>
-            {' '}pour chaque ticket ou carré acheté.
-            Les points seront bientôt échangeables contre des avantages exclusifs.
-          </p>
-        </div>
+        {/* Points info — clients uniquement */}
+        {user?.role !== 'organisateur' && (
+          <div style={{ ...S.card, borderColor: 'rgba(200,169,110,0.12)' }}>
+            <EyebrowLabel text="Système de points" />
+            <p style={S.bodyText}>
+              Tu gagnes{' '}
+              <span style={{ color: 'rgba(255,255,255,0.82)' }}>1 point</span>
+              {' '}pour chaque ticket ou carré acheté.
+              Les points seront bientôt échangeables contre des avantages exclusifs.
+            </p>
+          </div>
+        )}
 
         {/* Menu — items filtrés selon le rôle */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
