@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { saveBoost, isBoostSlotTaken, getActiveBoostsByRegion } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
-import { getBalance, deductFunds } from '../utils/wallet'
+// wallet: paiement fictif — Stripe à venir
 
 const BOOST_PLANS = [
   {
@@ -131,7 +131,6 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
   const [selectedPlan, setSelectedPlan] = useState(null) // { position, tierIdx }
   const [step, setStep] = useState('pick') // 'pick' | 'pay' | 'done'
   const [paying, setPaying] = useState(false)
-  const [walletError, setWalletError] = useState(false)
 
   if (!event) return null
 
@@ -139,14 +138,10 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
     ? BOOST_PLANS.find(p => p.position === selectedPlan.position)
     : null
   const chosenTier = chosen ? chosen.tiers[selectedPlan.tierIdx] : null
-  const uid = getUserId(user)
-  const walletBalance = getBalance(uid)
-  const canAfford = chosenTier ? walletBalance >= chosenTier.price : true
 
   function confirmBoost() {
     if (!chosen || !chosenTier) return
-    const deducted = deductFunds(uid, chosenTier.price, `Boost ${chosen.label} — ${event.name}`)
-    if (!deducted) { setWalletError(true); return }
+    // paiement fictif — Stripe à venir
     setPaying(true)
     setTimeout(() => {
       saveBoost(event.id, chosen.position, chosenTier.days, chosenTier.price, event.region || '')
@@ -276,57 +271,15 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
                 </div>
               </div>
 
-              {/* Wallet */}
-              <div style={{
-                ...S.card,
-                borderColor: !canAfford ? 'rgba(220,50,50,0.35)' : 'rgba(255,255,255,0.10)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-              }}>
-                <p style={{ ...S.label }}>Paiement via portefeuille</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <WalletIcon size={16} color="#c8a96e" />
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>
-                      Solde disponible
-                    </span>
-                  </div>
-                  <span style={{
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontWeight: 300,
-                    fontSize: 20,
-                    color: canAfford ? '#4ee8c8' : 'rgba(220,100,100,0.9)',
-                  }}>
-                    {walletBalance.toFixed(2)}€
-                  </span>
-                </div>
-                {!canAfford && (
-                  <div style={{
-                    background: 'rgba(220,50,50,0.08)',
-                    border: '1px solid rgba(220,50,50,0.25)',
-                    borderRadius: 6,
-                    padding: '10px 12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                  }}>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0 }}>
-                      Solde insuffisant — il te manque {(chosenTier.price - walletBalance).toFixed(2)}€
-                    </p>
-                    <button
-                      onClick={() => { onClose(); navigate('/portefeuille') }}
-                      style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', textAlign: 'left' }}
-                    >
-                      Recharger →
-                    </button>
-                  </div>
-                )}
-                {walletError && canAfford && (
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0 }}>
-                    Erreur lors du paiement. Réessaie.
+              {/* Paiement fictif */}
+              <div style={{ ...S.card, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 18 }}>🧪</span>
+                <div>
+                  <p style={{ ...S.label, color: '#4ee8c8', margin: 0 }}>Mode test — paiement fictif</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>
+                    Stripe sera intégré prochainement. Aucun débit réel.
                   </p>
-                )}
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: 8 }}>
@@ -335,16 +288,16 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
                 </button>
                 <button
                   onClick={confirmBoost}
-                  disabled={paying || !canAfford}
+                  disabled={paying}
                   style={{
                     ...S.btnGold,
                     flex: 1,
                     width: 'auto',
-                    opacity: (paying || !canAfford) ? 0.4 : 1,
-                    cursor: (paying || !canAfford) ? 'not-allowed' : 'pointer',
+                    opacity: paying ? 0.4 : 1,
+                    cursor: paying ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {paying ? 'Traitement…' : `Payer ${chosenTier?.price}€`}
+                  {paying ? 'Traitement…' : `Confirmer — ${chosenTier?.price}€`}
                 </button>
               </div>
             </div>

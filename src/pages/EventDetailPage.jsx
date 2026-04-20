@@ -7,7 +7,7 @@ import PlaylistSystem from '../components/PlaylistSystem'
 import { useAuth } from '../context/AuthContext'
 import { generateTicketToken, checkScheduleConflict } from '../utils/ticket'
 import { getConversations, sendMessage, getUserId, formatTime, getInitials, saveGroupBooking, getGroupBookings, validateGroupBooking, payGroupBookingShare } from '../utils/messaging'
-import { deductFunds, getBalance } from '../utils/wallet'
+// wallet: paiement fictif — Stripe sera intégré plus tard
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
 
@@ -228,7 +228,7 @@ export default function EventDetailPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showGroupSendModal, setShowGroupSendModal] = useState(false)
   const [groupSendConvId, setGroupSendConvId] = useState(null)
-  const [insufficientFunds, setInsufficientFunds] = useState(false)
+  const [insufficientFunds] = useState(false) // désactivé — paiement fictif
   const [conflictBooking, setConflictBooking] = useState(null)
   const [eventStartedError, setEventStartedError] = useState(false)
   const [showPointsToast, setShowPointsToast] = useState(false)
@@ -265,9 +265,7 @@ export default function EventDetailPage() {
   const preorderTotal = perTicketOrders.reduce((total, t) =>
     total + activeMenu.reduce((sum, item) => sum + (t.items[item.name] || 0) * item.price, 0), 0)
   const totalPrice = placePrice + preorderTotal
-  const walletBalance = getBalance(getUserId(user))
-  const availableBalance = walletBalance
-  const canAfford = walletBalance >= totalPrice
+  const canAfford = true // paiement fictif — Stripe à venir
   const isAuctionPlace = selectedPlaceObj?.auctionType === 'auction'
   const currentAuctionPrice = 0
   const userCanBook = canBook(user)
@@ -312,13 +310,7 @@ export default function EventDetailPage() {
       return
     }
     setConflictBooking(null)
-    const deducted = deductFunds(uid, totalPrice, `${event.name} — ${selectedPlace}`)
-    if (!deducted) {
-      setInsufficientFunds(true)
-      setShowConfirmModal(false)
-      return
-    }
-    setInsufficientFunds(false)
+    // paiement fictif — Stripe sera intégré plus tard
 
     const newTickets = []
     try {
@@ -732,30 +724,7 @@ export default function EventDetailPage() {
                     </div>
                   )}
 
-                  {insufficientFunds && (
-                    <div style={{
-                      background: 'rgba(220,50,50,0.08)',
-                      border: '1px solid rgba(220,50,50,0.30)',
-                      borderRadius: 8,
-                      padding: '12px 14px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 4,
-                    }}>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', letterSpacing: '0.1em', margin: 0 }}>
-                        Solde insuffisant
-                      </p>
-                      <p style={{ ...S.label, marginTop: 0 }}>
-                        Solde : {availableBalance.toFixed(2)}€ · Requis : {totalPrice}€
-                      </p>
-                      <button
-                        onClick={() => navigate('/portefeuille')}
-                        style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', textAlign: 'left', padding: 0 }}
-                      >
-                        Recharger mon portefeuille →
-                      </button>
-                    </div>
-                  )}
+                  {/* paiement fictif — pas de vérification de solde */}
 
                   {selectedPlace && (
                     <div style={{ paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -778,41 +747,10 @@ export default function EventDetailPage() {
                           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8' }}>+1 point</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
-                          <span style={S.muted}>Ton solde</span>
-                          <span style={{ ...S.price, fontSize: 16, color: canAfford ? '#4ee8c8' : 'rgba(220,100,100,0.9)' }}>
-                            {availableBalance.toFixed(2)}€
-                          </span>
+                          <span style={S.muted}>Paiement</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8', letterSpacing: '0.1em' }}>FICTIF — STRIPE À VENIR</span>
                         </div>
                       </div>
-
-                      {/* Insufficient funds inline warning */}
-                      {!isGroupPlace && !isAuctionPlace && !canAfford && (
-                        <div style={{
-                          ...S.card,
-                          borderColor: 'rgba(220,50,50,0.30)',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 10,
-                        }}>
-                          <WarnIcon size={18} color="rgba(220,100,100,0.9)" />
-                          <div style={{ flex: 1 }}>
-                            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0, letterSpacing: '0.1em' }}>
-                              Solde insuffisant
-                            </p>
-                            <p style={{ ...S.muted, marginTop: 3 }}>
-                              Il te manque{' '}
-                              <span style={{ color: 'white' }}>{(totalPrice - availableBalance).toFixed(2)}€</span>{' '}
-                              pour réserver.
-                            </p>
-                            <button
-                              onClick={() => navigate('/portefeuille')}
-                              style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0, marginTop: 4 }}
-                            >
-                              Recharger mon portefeuille →
-                            </button>
-                          </div>
-                        </div>
-                      )}
 
                       {/* CTA */}
                       {event.preorder ? (
@@ -1477,54 +1415,10 @@ export default function EventDetailPage() {
               )}
             </div>
 
-            {!canAfford && (
-              <div style={{
-                background: 'rgba(220,50,50,0.08)',
-                border: '1px solid rgba(220,50,50,0.30)',
-                borderRadius: 8,
-                padding: '14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-              }}>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', letterSpacing: '0.1em', margin: 0 }}>
-                  Solde insuffisant
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={S.muted}>Ton solde</span>
-                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: 'rgba(220,100,100,0.9)' }}>{availableBalance.toFixed(2)}€</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={S.muted}>Montant requis</span>
-                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: 'white' }}>{totalPrice}€</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(220,50,50,0.20)', paddingTop: 6, marginTop: 2 }}>
-                    <span style={S.muted}>Il manque</span>
-                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: 'rgba(220,100,100,0.9)' }}>
-                      {(totalPrice - availableBalance).toFixed(2)}€
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setShowConfirmModal(false); navigate('/portefeuille') }}
-                  style={{
-                    ...S.btnGold,
-                    padding: '10px',
-                    fontSize: 10,
-                    marginTop: 4,
-                  }}
-                >
-                  Recharger mon portefeuille →
-                </button>
-              </div>
-            )}
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button
-                style={{ ...S.btnGold, opacity: !canAfford ? 0.3 : 1, cursor: !canAfford ? 'not-allowed' : 'pointer' }}
-                onClick={() => { if (!canAfford) return; setShowConfirmModal(false); confirmBooking() }}
-                disabled={!canAfford}
+                style={{ ...S.btnGold }}
+                onClick={() => { setShowConfirmModal(false); confirmBooking() }}
               >
                 Oui, confirmer
               </button>

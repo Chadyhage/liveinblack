@@ -4,7 +4,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { services } from '../data/events'
 import { getUserId, createDirectConversation, sendMessage } from '../utils/messaging'
-import { getBalance, deductFunds } from '../utils/wallet'
+// wallet: paiement fictif — Stripe à venir
 import {
   getCatalog, addCatalogItem, updateCatalogItem, deleteCatalogItem,
   getOrdersForSeller, getOrdersForBuyer, placeOrder, updateOrderStatus,
@@ -761,9 +761,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
 
   function handlePlaceOrder() {
     if (!orderModal || cart.length === 0) return
-    const balance = getBalance(uid)
-    if (balance < cartTotal) { alert(`Solde insuffisant (${balance.toFixed(0)}€ disponible, ${cartTotal.toFixed(2)}€ requis)`); return }
-    deductFunds(uid, cartTotal, `Commande chez ${orderModal.name}`)
+    // paiement fictif — Stripe à venir
     const order = placeOrder({
       buyerId: uid, buyerName: user?.name || 'Utilisateur',
       sellerId: orderModal.userId || `static_${orderModal.id}`,
@@ -1092,7 +1090,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                     <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>
                       Ta commande a été transmise à <span style={{ color: 'rgba(255,255,255,0.90)' }}>{orderModal.name}</span>. Tu seras notifié(e) dès confirmation.
                     </p>
-                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: '#c8a96e', margin: 0 }}>{cartTotal.toFixed(2)}€ débités de ton portefeuille</p>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: '#c8a96e', margin: 0 }}>Total : {cartTotal.toFixed(2)}€ — paiement fictif 🧪</p>
                     <button onClick={() => { setOrderModal(null); setCart([]) }} style={{ ...S.btnGold, marginTop: 8 }}>Fermer</button>
                   </div>
                 ) : (
@@ -1162,7 +1160,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)' }}>Total à payer</span>
                           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: '#c8a96e' }}>{cartTotal.toFixed(2)}€</span>
                         </div>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', margin: 0 }}>Solde disponible : {getBalance(uid).toFixed(0)}€</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8', margin: 0, letterSpacing: '0.1em' }}>🧪 MODE TEST — paiement fictif</p>
                       </div>
                     </div>
                   )}
