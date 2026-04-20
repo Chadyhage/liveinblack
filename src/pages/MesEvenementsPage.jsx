@@ -255,6 +255,7 @@ export default function MesEvenementsPage() {
   const [imagePreview, setImagePreview] = useState(null)
   const [eventType, setEventType] = useState(null)
   const [category, setCategory] = useState(null)
+  const [customGenre, setCustomGenre] = useState('')
   const [errors, setErrors] = useState({})
 
   // Image crop state
@@ -365,7 +366,7 @@ export default function MesEvenementsPage() {
       imageUrl: imagePreview,
       color: '#c8a96e',
       accentColor: '#e8d49e',
-      category: category || 'Autre',
+      category: category === 'Autre' ? (customGenre.trim() || 'Autre') : (category || 'Autre'),
       tags: [],
       organizer: user?.name || 'Organisateur',
       description: form.description,
@@ -448,6 +449,7 @@ export default function MesEvenementsPage() {
     setImagePreview(null)
     setEventType(null)
     setCategory(null)
+    setCustomGenre('')
     setErrors({})
     setPlaces([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
     setVenue({ name: '', address: '', city: '', country: '' })
@@ -474,7 +476,15 @@ export default function MesEvenementsPage() {
     setShowArtistSection(loadedArtists.length > 0)
     setImagePreview(ev.imageUrl || null)
     setEventType('public')
-    setCategory(ev.category || null)
+    const PRESET_GENRES = ['Afrobeat', 'Rap', 'Électronique', 'R&B', 'Reggaeton', 'Dancehall', 'House', 'Autre']
+    const evCat = ev.category || null
+    if (evCat && !PRESET_GENRES.includes(evCat)) {
+      setCategory('Autre')
+      setCustomGenre(evCat)
+    } else {
+      setCategory(evCat)
+      setCustomGenre('')
+    }
     setErrors({})
     const venueParts = (ev.location || '').split(', ')
     setVenue({
@@ -1033,7 +1043,7 @@ export default function MesEvenementsPage() {
                 {['Afrobeat', 'Rap', 'Électronique', 'R&B', 'Reggaeton', 'Dancehall', 'House', 'Autre'].map((g) => (
                   <button
                     key={g}
-                    onClick={() => setCategory(g)}
+                    onClick={() => { setCategory(g); if (g !== 'Autre') setCustomGenre('') }}
                     style={{
                       padding: '10px',
                       borderRadius: 4,
@@ -1051,6 +1061,26 @@ export default function MesEvenementsPage() {
                   </button>
                 ))}
               </div>
+              {/* Champ libre quand "Autre" est sélectionné */}
+              {category === 'Autre' && (
+                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input
+                    autoFocus
+                    type="text"
+                    maxLength={40}
+                    placeholder="Précise le genre (ex : Afropop, Jazz, Amapiano…)"
+                    value={customGenre}
+                    onChange={e => setCustomGenre(e.target.value)}
+                    style={{
+                      ...S.inputBase,
+                      padding: '9px 14px',
+                      border: customGenre.trim()
+                        ? '1px solid rgba(200,169,110,0.45)'
+                        : '1px solid rgba(200,169,110,0.22)',
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Âge légal */}
@@ -1320,7 +1350,7 @@ export default function MesEvenementsPage() {
                 { label: 'Horaires', val: form.timeStart ? `${form.timeStart} → ${form.timeEnd || '?'}` : '—' },
                 { label: 'DJ / Artiste', val: artists.filter(a => a.name?.trim()).map(a => a.name.trim()).join(', ') || user?.name || '—' },
                 { label: 'Visibilité', val: eventType === 'private' ? 'Privé (codes requis)' : 'Public' },
-                { label: 'Genre musical', val: category || 'Autre' },
+                { label: 'Genre musical', val: category === 'Autre' ? (customGenre.trim() || 'Autre') : (category || 'Autre') },
                 { label: 'Types de places', val: `${places.length} type(s)` },
                 { label: 'Lieu', val: venue.name ? `${venue.name}, ${venue.city}` : venue.city ? venue.city : '—' },
                 { label: 'Playlist interactive', val: options.playlist ? 'Activée' : 'Désactivée' },
