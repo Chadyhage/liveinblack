@@ -45,6 +45,257 @@ function formatDate(ts) {
   })
 }
 
+// ─── Génération attestation de validation (ouverture dans un nouvel onglet → Ctrl+P pour PDF) ──
+function openValidationReceipt(app) {
+  const approvedDate = new Date(app.approvedAt || Date.now()).toLocaleDateString('fr-FR', {
+    day: '2-digit', month: 'long', year: 'numeric',
+  })
+  const orgName    = app.formData?.nomCommercial || '—'
+  const responsable = [app.formData?.responsablePrenom, app.formData?.responsableNom].filter(Boolean).join(' ') || '—'
+  const emailPro   = app.formData?.emailPro || app.email || '—'
+  const tel        = [app.formData?.telephoneProCode, app.formData?.telephonePro].filter(Boolean).join(' ') || '—'
+  const ville      = app.formData?.ville || '—'
+  const typeEtab   = app.formData?.typeEtablissement || '—'
+  const refId      = app.id || '—'
+  const approvedBy = app.auditLog?.slice().reverse().find(e => e.action === 'approved')?.byName || 'LIVEINBLACK'
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attestation — ${orgName}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Mono', monospace;
+      background: #ffffff;
+      color: #0a0a18;
+      padding: 64px 80px;
+      max-width: 760px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #e0e0ec;
+    }
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      color: #0a0a18;
+    }
+    .logo span { font-style: italic; font-weight: 600; }
+    .ref {
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #999;
+      text-align: right;
+      line-height: 1.8;
+    }
+    .badge {
+      display: inline-block;
+      background: #f0faf7;
+      border: 1px solid #b8ead9;
+      border-radius: 4px;
+      padding: 3px 10px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #1a9e72;
+      font-weight: 500;
+    }
+    .title-section {
+      margin-bottom: 36px;
+    }
+    .label {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 300;
+      color: #0a0a18;
+      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #888;
+      letter-spacing: 0.06em;
+    }
+    .seal {
+      background: linear-gradient(135deg, #f5f0e8, #fdf8ef);
+      border: 1px solid #d4b896;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .seal-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c8a96e, #a87c3e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 20px;
+    }
+    .seal-text {
+      font-size: 11px;
+      color: #7a5c2e;
+      letter-spacing: 0.04em;
+      line-height: 1.7;
+    }
+    .seal-text strong {
+      font-size: 13px;
+      color: #4a3010;
+      display: block;
+      margin-bottom: 2px;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 32px;
+    }
+    td {
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f5;
+      font-size: 11px;
+      vertical-align: top;
+    }
+    td:first-child {
+      color: #aaa;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 9px;
+      width: 180px;
+      padding-top: 12px;
+    }
+    td:last-child { color: #0a0a18; font-size: 12px; }
+    .divider {
+      height: 1px;
+      background: #e8e8f0;
+      margin: 28px 0;
+    }
+    .footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid #e0e0ec;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .footer-left { font-size: 9px; color: #bbb; letter-spacing: 0.06em; line-height: 1.8; }
+    .signature { text-align: right; }
+    .signature .sig-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 300;
+      font-style: italic;
+      color: #c8a96e;
+    }
+    .signature .sig-title { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: #aaa; margin-top: 2px; }
+    .print-btn {
+      position: fixed; bottom: 32px; right: 32px;
+      background: #0a0a18; color: #fff;
+      border: none; border-radius: 6px;
+      padding: 12px 24px; font-family: 'DM Mono', monospace;
+      font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+      cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    @media print {
+      body { padding: 40px 48px; }
+      .print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">L<span style="font-style:normal;font-weight:400">|</span>VE IN <span>BLACK</span></div>
+    <div class="ref">
+      <div class="badge">✓ Validé</div>
+      <div style="margin-top:8px">Réf. ${refId}</div>
+      <div>Émis le ${approvedDate}</div>
+    </div>
+  </div>
+
+  <div class="title-section">
+    <div class="label">Document officiel</div>
+    <h1>Attestation de validation</h1>
+    <div class="subtitle">Dossier organisateur approuvé par l&apos;équipe LIVEINBLACK</div>
+  </div>
+
+  <div class="seal">
+    <div class="seal-icon">✓</div>
+    <div class="seal-text">
+      <strong>${orgName}</strong>
+      Est officiellement reconnu(e) comme <strong style="display:inline;font-size:inherit;font-family:inherit;font-weight:600">organisateur partenaire</strong> sur la plateforme LIVEINBLACK et est autorisé(e) à créer et publier des événements.
+    </div>
+  </div>
+
+  <table>
+    <tr><td>Organisation</td><td>${orgName}</td></tr>
+    <tr><td>Responsable</td><td>${responsable}</td></tr>
+    <tr><td>Email professionnel</td><td>${emailPro}</td></tr>
+    <tr><td>Téléphone</td><td>${tel}</td></tr>
+    <tr><td>Ville</td><td>${ville}</td></tr>
+    <tr><td>Type d'établissement</td><td>${typeEtab}</td></tr>
+    <tr><td>Date de validation</td><td>${approvedDate}</td></tr>
+    <tr><td>Validé par</td><td>${approvedBy} — Équipe LIVEINBLACK</td></tr>
+    <tr><td>Référence dossier</td><td>${refId}</td></tr>
+  </table>
+
+  <div class="divider"></div>
+
+  <p style="font-size:10px;color:#aaa;line-height:1.8;letter-spacing:0.03em">
+    Ce document atteste que l'organisation mentionnée ci-dessus a soumis un dossier complet, vérifié et approuvé par l'équipe LIVEINBLACK.
+    Cette attestation est valable jusqu'à révocation du statut d'organisateur.
+    En cas de doute sur l'authenticité de ce document, contacter <strong style="color:#888">support@liveinblack.com</strong>.
+  </p>
+
+  <div class="footer">
+    <div class="footer-left">
+      LIVEINBLACK — Plateforme événementielle<br>
+      liveinblack.com<br>
+      Document généré le ${new Date().toLocaleDateString('fr-FR')}
+    </div>
+    <div class="signature">
+      <div class="sig-name">LIVEINBLACK</div>
+      <div class="sig-title">Équipe de validation</div>
+    </div>
+  </div>
+
+  <button class="print-btn" onclick="window.print()">↓ Enregistrer en PDF</button>
+
+</body>
+</html>`
+
+  const win = window.open('', '_blank')
+  if (win) { win.document.write(html); win.document.close() }
+}
+
 function StatusBadge({ status }) {
   const cfg = APPLICATION_STATUSES[status] || { label: status, color: COLORS.muted, bg: 'transparent' }
   return (
@@ -114,7 +365,7 @@ function AuditLog({ log }) {
                 {statusCfg?.label || entry.action}
               </p>
               {entry.note && (
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 2px' }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 2px', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
                   {entry.note}
                 </p>
               )}
@@ -403,18 +654,38 @@ export default function MonDossierPage() {
             borderColor: 'rgba(34,197,94,0.35)',
             background: 'rgba(34,197,94,0.06)',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#22c55e', margin: 0, fontWeight: 600 }}>
-                  Dossier approuvé
-                </p>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
-                  Votre compte a été activé le {formatDate(app.approvedAt)}
-                </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#22c55e', margin: 0, fontWeight: 600 }}>
+                    Dossier approuvé
+                  </p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
+                    Compte activé le {formatDate(app.approvedAt)}
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={() => openValidationReceipt(app)}
+                title="Télécharger l'attestation"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 12px', borderRadius: 6, cursor: 'pointer', flexShrink: 0,
+                  background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.30)',
+                  color: '#22c55e', fontFamily: FONTS.mono, fontSize: 10,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <polyline points="9 15 12 18 15 15"/>
+                </svg>
+                Attestation
+              </button>
             </div>
           </div>
         )}
