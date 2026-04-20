@@ -173,6 +173,15 @@ export default function AgentPage() {
     setDeletionRequests(getAllDeletionRequests())
   }
 
+  // Returns the org/business name for organisateurs & prestataires, personal name otherwise
+  function getDisplayName(u) {
+    if (u?.role === 'organisateur' || u?.role === 'prestataire') {
+      const app = applications.find(a => a.uid === (u.uid || u.id))
+      if (app?.formData?.nomCommercial) return app.formData.nomCommercial
+    }
+    return u?.name || '—'
+  }
+
   useEffect(() => {
     refresh() // immediate local data
     // Then pull fresh data from Firestore
@@ -565,7 +574,7 @@ export default function AgentPage() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontFamily: FONTS.mono, fontSize: 12, color: COLORS.teal, fontWeight: 700,
                       }}>
-                        {u.name?.[0]?.toUpperCase() || '?'}
+                        {getDisplayName(u)?.[0]?.toUpperCase() || '?'}
                       </div>
                       {isUserOnline(u) && (
                         <span style={{
@@ -576,8 +585,10 @@ export default function AgentPage() {
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</p>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.email}</p>
+                      <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getDisplayName(u)}</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {(u.role === 'organisateur' || u.role === 'prestataire') && getDisplayName(u) !== u.name ? `${u.name} · ` : ''}{u.email}
+                      </p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                       <RoleBadge role={u.role} small />
@@ -654,14 +665,14 @@ export default function AgentPage() {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: '#f59e0b',
                           }}>
-                            {u.name?.[0]?.toUpperCase() || '?'}
+                            {getDisplayName(u)?.[0]?.toUpperCase() || '?'}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontFamily: FONTS.display, fontSize: 15, fontWeight: 400, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {u.name || '—'}
+                              {getDisplayName(u)}
                             </p>
                             <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {u.email}
+                              {(u.role === 'organisateur' || u.role === 'prestataire') && getDisplayName(u) !== u.name ? `${u.name} · ` : ''}{u.email}
                             </p>
                           </div>
                           <span style={{
@@ -829,7 +840,7 @@ export default function AgentPage() {
                       fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                       color: u.role === 'agent' ? COLORS.gold : '#fff',
                     }}>
-                      {u.name?.[0]?.toUpperCase() || '?'}
+                      {getDisplayName(u)?.[0]?.toUpperCase() || '?'}
                     </div>
                     {isUserOnline(u) && (
                       <span style={{
@@ -840,9 +851,9 @@ export default function AgentPage() {
                     )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</p>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getDisplayName(u)}</p>
                     <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {u.email}{u.phone ? ` · ${u.phone}` : ''}
+                      {(u.role === 'organisateur' || u.role === 'prestataire') && getDisplayName(u) !== u.name ? `${u.name} · ` : ''}{u.email}{u.phone ? ` · ${u.phone}` : ''}
                     </p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
@@ -884,10 +895,13 @@ export default function AgentPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontFamily: FONTS.mono, fontSize: 14, fontWeight: 700, color: COLORS.teal,
                   }}>
-                    {u.name?.[0]?.toUpperCase() || '?'}
+                    {getDisplayName(u)?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 17, color: '#fff', margin: '0 0 2px' }}>{u.name}</p>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 17, color: '#fff', margin: '0 0 2px' }}>{getDisplayName(u)}</p>
+                    {(u.role === 'organisateur' || u.role === 'prestataire') && getDisplayName(u) !== u.name && (
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 2px' }}>{u.name}</p>
+                    )}
                     <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 4px' }}>{u.email}</p>
                     {u.phone && (
                       <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '0 0 6px' }}>{u.phone}</p>
@@ -1226,10 +1240,13 @@ export default function AgentPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontFamily: FONTS.mono, fontSize: 18, fontWeight: 700, color: COLORS.teal,
                 }}>
-                  {selectedUser.name?.[0]?.toUpperCase() || '?'}
+                  {getDisplayName(selectedUser)?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 19, color: '#fff', margin: 0 }}>{selectedUser.name}</p>
+                  <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 19, color: '#fff', margin: 0 }}>{getDisplayName(selectedUser)}</p>
+                  {(selectedUser.role === 'organisateur' || selectedUser.role === 'prestataire') && getDisplayName(selectedUser) !== selectedUser.name && (
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '1px 0 0' }}>{selectedUser.name}</p>
+                  )}
                   <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>{selectedUser.email}</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
