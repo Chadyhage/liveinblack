@@ -301,15 +301,11 @@ export default function EventDetailPage() {
       return
     }
     setEventStartedError(false)
-    // Schedule conflict check
+    // Schedule conflict check (exclut le même événement — re-réserver est autorisé)
     const uid = getUserId(user)
-    const conflict = checkScheduleConflict(uid, event.date, event.time, event.endTime)
-    if (conflict) {
-      setConflictBooking(conflict)
-      setShowConfirmModal(false)
-      return
-    }
-    setConflictBooking(null)
+    const conflict = checkScheduleConflict(uid, event.date, event.time, event.endTime, event.id)
+    // conflit = avertissement uniquement, pas un blocage
+    setConflictBooking(conflict || null)
     // paiement fictif — Stripe sera intégré plus tard
 
     const newTickets = []
@@ -1416,6 +1412,18 @@ export default function EventDetailPage() {
                 </p>
               )}
             </div>
+
+            {/* Avertissement conflit — informatif, non bloquant */}
+            {conflictBooking && (
+              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.30)', borderRadius: 8, padding: '10px 12px' }}>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#f59e0b', margin: '0 0 2px', letterSpacing: '0.08em' }}>
+                  ⚠ Conflit de créneau détecté
+                </p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.40)', margin: 0, lineHeight: 1.5 }}>
+                  Tu as une réservation pour <strong style={{ color: 'rgba(255,255,255,0.75)' }}>{conflictBooking.eventName}</strong> au même moment. Tu peux quand même confirmer.
+                </p>
+              </div>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button

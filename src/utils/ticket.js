@@ -129,10 +129,15 @@ function parseDateTime(dateISO, timeStr) {
 }
 
 // Returns the conflicting booking if there's a time overlap, or null
-export function checkScheduleConflict(userId, newDateISO, newStart, newEnd) {
+// excludeEventId: ignores bookings for the same event (re-booking is allowed)
+export function checkScheduleConflict(userId, newDateISO, newStart, newEnd, excludeEventId = null) {
   try {
     const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-      .filter(b => b.userId === userId && b.eventDateISO && b.eventStartTime && b.eventEndTime)
+      .filter(b =>
+        b.userId === userId &&
+        b.eventDateISO && b.eventStartTime && b.eventEndTime &&
+        (excludeEventId == null || String(b.eventId) !== String(excludeEventId))
+      )
 
     const ns = parseDateTime(newDateISO, newStart)
     let ne = parseDateTime(newDateISO, newEnd)
