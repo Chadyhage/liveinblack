@@ -118,6 +118,43 @@ function usePersistedUser() {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Temps réel : écoute Firestore pour les changements de rôle / statut ──
+  // Ex : admin approuve un dossier → rôle passe de "client" à "organisateur"
+  // Sans ça, l'utilisateur doit fermer/rouvrir le navigateur pour voir le changement.
+  useEffect(() => {
+    const uid = user?.uid
+    if (!uid) return
+    let unsubscribe = null
+
+    import('./firebase').then(({ USE_REAL_FIREBASE, db }) => {
+      if (!USE_REAL_FIREBASE) return
+      import('firebase/firestore').then(({ doc, onSnapshot }) => {
+        unsubscribe = onSnapshot(
+          doc(db, 'users', uid),
+          (snap) => {
+            if (!snap.exists()) return
+            const remote = snap.data()
+            // Comparer avec la session active
+            let current = null
+            try { current = JSON.parse(localStorage.getItem('lib_user') || 'null') } catch {}
+            if (!current) return
+            // Mettre à jour si le rôle ou le statut a changé
+            const roleChanged   = remote.role   && remote.role   !== current.role
+            const statusChanged = remote.status && remote.status !== current.status
+            if (roleChanged || statusChanged) {
+              const updated = normalizeUser({ ...current, ...remote })
+              localStorage.setItem('lib_user', JSON.stringify(updated))
+              setUserState(updated)
+            }
+          },
+          () => {} // ignorer les erreurs silencieusement
+        )
+      }).catch(() => {})
+    }).catch(() => {})
+
+    return () => { if (unsubscribe) unsubscribe() }
+  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return { user, setUser }
 }
 
