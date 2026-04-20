@@ -93,29 +93,46 @@ export default function PlaylistSystem({ event, booked }) {
 
   // Persist playlist state in localStorage so tab switching doesn't reset it
   const songsKey = `lib_playlist_songs_${event.id}`
-  const addedKey = `lib_playlist_added_${event.id}_${userId}`
+  const addedKey = `lib_playlist_added_${event.id}_${userId}` // stocke un nombre maintenant
   const likesKey = `lib_playlist_likes_${event.id}_${userId}`
+
+  // Nombre de billets que l'utilisateur a pour cet événement
+  function loadTicketCount() {
+    try {
+      const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+      return bookings.filter(b => String(b.eventId) === String(event.id) && b.userId === userId).length
+    } catch { return 1 }
+  }
 
   function loadSongs() {
     try { return JSON.parse(localStorage.getItem(songsKey)) || [] } catch { return [] }
   }
-  function loadHasAdded() {
-    try { return localStorage.getItem(addedKey) === 'true' } catch { return false }
+  // Combien de sons cet utilisateur a déjà ajoutés (entier, pas booléen)
+  function loadSongsAdded() {
+    try {
+      const raw = localStorage.getItem(addedKey)
+      if (raw === 'true') return 1  // migration ancien format booléen
+      return parseInt(raw) || 0
+    } catch { return 0 }
   }
   function loadLikesUsed() {
     try { return parseInt(localStorage.getItem(likesKey)) || 0 } catch { return 0 }
   }
+
+  const ticketCount = loadTicketCount()
 
   const [songs, setSongsState] = useState(loadSongs)
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [likesUsed, setLikesUsedState] = useState(loadLikesUsed)
-  const [hasAdded, setHasAddedState] = useState(loadHasAdded)
+  const [songsAdded, setSongsAddedState] = useState(loadSongsAdded)
   const [preview, setPreview] = useState(null)
   const [message, setMessage] = useState('')
   const audioRef = useRef(null)
   const debounceRef = useRef(null)
+
+  const songsRemaining = Math.max(0, ticketCount - songsAdded)
 
   function setSongs(updater) {
     setSongsState((prev) => {
@@ -124,9 +141,10 @@ export default function PlaylistSystem({ event, booked }) {
       return next
     })
   }
-  function setHasAdded(val) {
-    setHasAddedState(val)
-    try { localStorage.setItem(addedKey, String(val)) } catch {}
+  function incrementSongsAdded() {
+    const next = songsAdded + 1
+    setSongsAddedState(next)
+    try { localStorage.setItem(addedKey, String(next)) } catch {}
   }
   function setLikesUsed(updater) {
     setLikesUsedState((prev) => {
@@ -190,13 +208,16 @@ export default function PlaylistSystem({ event, booked }) {
     }
     const newSong = { id: Date.now(), title: song.title, artist: song.artist, likes: 0, myLike: false, addedBy: 'Moi', previewUrl: song.previewUrl || null }
     setSongs((prev) => [...prev, newSong])
-    setHasAdded(true)
+    incrementSongsAdded()
     setSearch('')
     setSearchResults([])
     audioRef.current?.pause()
     setPreview(null)
-    setMessage(`ok:"${song.title}" ajouté à la playlist !`)
-    setTimeout(() => setMessage(''), 3000)
+    const remaining = songsRemaining - 1
+    setMessage(remaining > 0
+      ? `ok:"${song.title}" ajouté ! Il te reste ${remaining} son${remaining > 1 ? 's' : ''} à proposer.`
+      : `ok:"${song.title}" ajouté à la playlist !`)
+    setTimeout(() => setMessage(''), 4000)
   }
 
   function toggleLike(songId) {
@@ -289,9 +310,17 @@ export default function PlaylistSystem({ event, booked }) {
       )}
 
       {/* Add a song */}
-      {!hasAdded ? (
+      {songsRemaining > 0 ? (
         <div>
-          <p style={{ ...S.label, marginBottom: 8 }}>Recherche un son à proposer au DJ (1 seul autorisé)</p>
+          <p style={{ ...S.label, marginBottom: 8 }}>
+            Propose un son au DJ —{' '}
+            <span style={{ color: '#c8a96e' }}>
+              {songsRemaining} slot{songsRemaining > 1 ? 's' : ''} restant{songsRemaining > 1 ? 's' : ''}
+            </span>
+            {ticketCount > 1 && (
+              <span style={{ color: 'rgba(255,255,255,0.25)' }}> · {ticketCount} billets</span>
+            )}
+          </p>
           <div style={{ position: 'relative' }}>
             <input
               style={S.input}
@@ -421,12 +450,14 @@ export default function PlaylistSystem({ event, booked }) {
         <div style={{
           ...S.card,
           textAlign: 'center',
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 11,
-          color: '#4ee8c8',
-          letterSpacing: '0.1em',
+          display: 'flex', flexDirection: 'column', gap: 4,
         }}>
-          Tu as déjà ajouté ton son à la playlist
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#4ee8c8', letterSpacing: '0.1em', margin: 0 }}>
+            {songsAdded} son{songsAdded > 1 ? 's' : ''} ajouté{songsAdded > 1 ? 's' : ''} sur {ticketCount}
+          </p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', margin: 0, letterSpacing: '0.06em' }}>
+            Tu as utilisé tous tes slots · 1 son par billet réservé
+          </p>
         </div>
       )}
 
