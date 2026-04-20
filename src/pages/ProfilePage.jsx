@@ -19,6 +19,19 @@ const FAQ = [
   { q: "Comment créer un événement ?", a: "Rends-toi dans 'Mes Événements & Créations' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
 ]
 
+function getPasswordStrength(pwd) {
+  if (!pwd) return null
+  let score = 0
+  if (pwd.length >= 8)  score++
+  if (pwd.length >= 12) score++
+  if (/[A-Z]/.test(pwd)) score++
+  if (/[0-9]/.test(pwd)) score++
+  if (/[^a-zA-Z0-9]/.test(pwd)) score++
+  if (score <= 1) return { label: 'FAIBLE', color: '#ef4444', pct: 25 }
+  if (score <= 3) return { label: 'MOYEN',  color: '#f97316', pct: 60 }
+  return               { label: 'FORT',   color: '#4ee8c8', pct: 100 }
+}
+
 function getProfileError(code) {
   switch (code) {
     case 'auth/wrong-password':
@@ -222,16 +235,22 @@ export default function ProfilePage() {
   const [deleteError, setDeleteError] = useState('')
   const [deleting, setDeleting] = useState(false)
 
-  // Settings form state
-  const [settingsForm, setSettingsForm] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  })
+  // Settings — nom du compte
+  const [settingsForm, setSettingsForm] = useState({ name: user?.name || '' })
   const [settingsMsg, setSettingsMsg] = useState(null)
   const [saving, setSaving] = useState(false)
+
+  // Settings — changement d'e-mail (flux avec vérification)
+  const [emailForm, setEmailForm] = useState({ newEmail: '', password: '' })
+  const [emailMsg, setEmailMsg] = useState(null)
+  const [sendingEmailVerif, setSendingEmailVerif] = useState(false)
+  const [emailPending, setEmailPending] = useState(null) // nouvel e-mail en attente de vérification
+
+  // Settings — changement de mot de passe
+  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' })
+  const [passwordMsg, setPasswordMsg] = useState(null)
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [sendingReset, setSendingReset] = useState(false)
 
   // Support state
   const [openFaq, setOpenFaq] = useState(null)
@@ -244,10 +263,6 @@ export default function ProfilePage() {
     setOrgName(app?.formData?.nomCommercial || null)
   }, [user?.uid, user?.role])
 
-  const emailChanged    = settingsForm.email.trim() !== (user?.email || '')
-  const passwordChanged = !!settingsForm.newPassword
-  const needsCurrentPassword = emailChanged || passwordChanged
-
   // ── Name change cooldown (1 fois toutes les 2 semaines) ──
   const NAME_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000 // 14 jours
   const nameChangedAt   = user?.nameChangedAt || null
@@ -259,7 +274,8 @@ export default function ProfilePage() {
     return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
   }
 
-  async function saveSettings() {
+  // ── Sauvegarder le nom uniquement ────────────────────────────────────────
+  async function saveName() {
     if (!settingsForm.name.trim()) {
       setSettingsMsg({ type: 'error', text: user?.role === 'organisateur' ? 'Le nom du responsable est obligatoire' : 'Le prénom / nom est obligatoire' })
       return
@@ -268,97 +284,29 @@ export default function ProfilePage() {
       setSettingsMsg({ type: 'error', text: `Prochain changement de nom possible le ${formatNextDate(nextNameChange)}.` })
       return
     }
-    if (!settingsForm.email.trim() || !settingsForm.email.includes('@')) {
-      setSettingsMsg({ type: 'error', text: 'Adresse e-mail invalide' })
-      return
-    }
-    if (passwordChanged) {
-      if (settingsForm.newPassword.length < 8) {
-        setSettingsMsg({ type: 'error', text: 'Le mot de passe doit contenir au moins 8 caractères' })
-        return
-      }
-      if (settingsForm.newPassword !== settingsForm.confirmPassword) {
-        setSettingsMsg({ type: 'error', text: 'Les mots de passe ne correspondent pas' })
-        return
-      }
-    }
-    if (needsCurrentPassword && !settingsForm.currentPassword) {
-      setSettingsMsg({ type: 'error', text: 'Saisis ton mot de passe actuel pour modifier l\'e-mail ou le mot de passe' })
-      return
-    }
-
     setSaving(true)
     setSettingsMsg(null)
-
     try {
       const { USE_REAL_FIREBASE } = await import('../firebase')
       if (USE_REAL_FIREBASE) {
         const { auth } = await import('../firebase')
-        const { updateProfile, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } = await import('firebase/auth')
+        const { updateProfile } = await import('firebase/auth')
         const currentUser = auth.currentUser
-
-        if (currentUser) {
-          // Update display name
-          if (settingsForm.name.trim() !== user.name) {
-            await updateProfile(currentUser, { displayName: settingsForm.name.trim() })
-          }
-
-          // Email or password change requires re-authentication
-          if (needsCurrentPassword) {
-            const isEmailPassword = currentUser.providerData.some(p => p.providerId === 'password')
-            if (!isEmailPassword) {
-              setSettingsMsg({ type: 'error', text: 'Connexion via Google/Apple — e-mail et mot de passe gérés par ce service' })
-              setSaving(false)
-              return
-            }
-            const credential = EmailAuthProvider.credential(user.email, settingsForm.currentPassword)
-            await reauthenticateWithCredential(currentUser, credential)
-
-            if (emailChanged) {
-              await updateEmail(currentUser, settingsForm.email.trim())
-            }
-            if (passwordChanged) {
-              await updatePassword(currentUser, settingsForm.newPassword)
-            }
-          }
+        if (currentUser && settingsForm.name.trim() !== user.name) {
+          await updateProfile(currentUser, { displayName: settingsForm.name.trim() })
         }
       }
-
-      // Update local state
       const uid = getUserId(user)
       const now = Date.now()
       const nameWasChanged = settingsForm.name.trim() !== user.name
-      const patch = {
-        name: settingsForm.name.trim(),
-        email: settingsForm.email.trim(),
-        ...(nameWasChanged ? { nameChangedAt: now } : {}),
-      }
+      const patch = { name: settingsForm.name.trim(), ...(nameWasChanged ? { nameChangedAt: now } : {}) }
       const updatedUser = { ...user, ...patch }
       setUser(updatedUser)
       updateAccount(uid, patch)
-
-      // Push the updated profile to Firestore users/{uid} so contacts see the new name cross-device
       try {
         const { syncUserProfile } = await import('../utils/firestore-sync')
         syncUserProfile(uid, updatedUser)
       } catch {}
-
-      // For organisateurs: sync email change to dossier emailPro as well
-      if (emailChanged && user?.role === 'organisateur') {
-        try {
-          const { getApplicationByUser, updateApplication } = await import('../utils/applications')
-          const app = getApplicationByUser(uid, 'organisateur')
-          if (app) {
-            const updatedFormData = { ...(app.formData || {}), emailPro: settingsForm.email.trim() }
-            updateApplication(app.id, { formData: updatedFormData })
-            // Sync to Firestore
-            const { syncDoc } = await import('../utils/firestore-sync')
-            syncDoc(`applications/${app.id}`, { formData: updatedFormData })
-          }
-        } catch {}
-      }
-
-      // Persist nameChangedAt to Firestore if Firebase active
       if (nameWasChanged) {
         try {
           const { USE_REAL_FIREBASE: fb } = await import('../firebase')
@@ -369,13 +317,164 @@ export default function ProfilePage() {
           }
         } catch {}
       }
-      setSettingsForm(f => ({ ...f, currentPassword: '', newPassword: '', confirmPassword: '' }))
-      setSettingsMsg({ type: 'success', text: 'Modifications enregistrées' })
+      setSettingsMsg({ type: 'success', text: 'Nom mis à jour' })
       setTimeout(() => setSettingsMsg(null), 3000)
     } catch (err) {
       setSettingsMsg({ type: 'error', text: getProfileError(err.code) })
     } finally {
       setSaving(false)
+    }
+  }
+
+  // ── Envoyer le lien de vérification à la nouvelle adresse e-mail ──────────
+  async function sendEmailVerif() {
+    const newEmail = emailForm.newEmail.trim()
+    if (!newEmail || !newEmail.includes('@')) {
+      setEmailMsg({ type: 'error', text: 'Adresse e-mail invalide' })
+      return
+    }
+    if (newEmail === user?.email) {
+      setEmailMsg({ type: 'error', text: 'C\'est déjà ton adresse e-mail actuelle' })
+      return
+    }
+    if (!emailForm.password) {
+      setEmailMsg({ type: 'error', text: 'Saisis ton mot de passe actuel pour confirmer' })
+      return
+    }
+    setSendingEmailVerif(true)
+    setEmailMsg(null)
+    try {
+      const { USE_REAL_FIREBASE } = await import('../firebase')
+      if (USE_REAL_FIREBASE) {
+        const { auth } = await import('../firebase')
+        const { verifyBeforeUpdateEmail, reauthenticateWithCredential, EmailAuthProvider } = await import('firebase/auth')
+        const currentUser = auth.currentUser
+        if (!currentUser) throw { code: 'auth/requires-recent-login' }
+        const isEmailPassword = currentUser.providerData.some(p => p.providerId === 'password')
+        if (!isEmailPassword) {
+          setEmailMsg({ type: 'error', text: 'Connexion via Google/Apple — e-mail géré par ce service' })
+          setSendingEmailVerif(false)
+          return
+        }
+        const credential = EmailAuthProvider.credential(user.email, emailForm.password)
+        await reauthenticateWithCredential(currentUser, credential)
+        await verifyBeforeUpdateEmail(currentUser, newEmail)
+      }
+      setEmailPending(newEmail)
+      setEmailForm({ newEmail: '', password: '' })
+      setEmailMsg({
+        type: 'success',
+        text: `Un lien de vérification a été envoyé à ${newEmail}. Clique dessus pour confirmer le changement.`,
+      })
+    } catch (err) {
+      setEmailMsg({ type: 'error', text: getProfileError(err.code) })
+    } finally {
+      setSendingEmailVerif(false)
+    }
+  }
+
+  // ── Détecter si la vérification e-mail a été complétée (après retour dans l'app) ──
+  // Firebase Auth met à jour currentUser.email dès que l'utilisateur clique sur le lien
+  useEffect(() => {
+    if (panel !== 'settings') return
+    import('../firebase').then(({ USE_REAL_FIREBASE, auth }) => {
+      if (!USE_REAL_FIREBASE || !auth.currentUser) return
+      const firebaseEmail = auth.currentUser.email
+      if (firebaseEmail && firebaseEmail !== user?.email) {
+        // L'e-mail a été vérifié et mis à jour dans Firebase Auth
+        const uid = getUserId(user)
+        const patch = { email: firebaseEmail }
+        const updatedUser = { ...user, ...patch }
+        setUser(updatedUser)
+        updateAccount(uid, patch)
+        setEmailPending(null)
+        setEmailMsg({ type: 'success', text: `E-mail mis à jour : ${firebaseEmail}` })
+        setTimeout(() => setEmailMsg(null), 4000)
+        // Sync dossier emailPro pour les organisateurs
+        if (user?.role === 'organisateur') {
+          import('../utils/applications').then(({ getApplicationByUser, updateApplication }) => {
+            const app = getApplicationByUser(uid, 'organisateur')
+            if (app) {
+              const updatedFormData = { ...(app.formData || {}), emailPro: firebaseEmail }
+              updateApplication(app.id, { formData: updatedFormData })
+              import('../utils/firestore-sync').then(({ syncDoc }) => {
+                syncDoc(`applications/${app.id}`, { formData: updatedFormData })
+              }).catch(() => {})
+            }
+          }).catch(() => {})
+        }
+        // Sync Firestore users/{uid}
+        import('../utils/firestore-sync').then(({ syncDoc }) => {
+          syncDoc(`users/${uid}`, { email: firebaseEmail })
+        }).catch(() => {})
+      }
+    }).catch(() => {})
+  }, [panel]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Changer le mot de passe ───────────────────────────────────────────────
+  async function changePassword() {
+    if (!passwordForm.current) {
+      setPasswordMsg({ type: 'error', text: 'Saisis ton mot de passe actuel' })
+      return
+    }
+    if (passwordForm.new.length < 8) {
+      setPasswordMsg({ type: 'error', text: 'Le nouveau mot de passe doit faire au moins 8 caractères' })
+      return
+    }
+    if (passwordForm.new !== passwordForm.confirm) {
+      setPasswordMsg({ type: 'error', text: 'Les mots de passe ne correspondent pas' })
+      return
+    }
+    if (passwordForm.new === passwordForm.current) {
+      setPasswordMsg({ type: 'error', text: 'Le nouveau mot de passe doit être différent de l\'actuel' })
+      return
+    }
+    setSavingPassword(true)
+    setPasswordMsg(null)
+    try {
+      const { USE_REAL_FIREBASE } = await import('../firebase')
+      if (USE_REAL_FIREBASE) {
+        const { auth } = await import('../firebase')
+        const { updatePassword, reauthenticateWithCredential, EmailAuthProvider } = await import('firebase/auth')
+        const currentUser = auth.currentUser
+        if (!currentUser) throw { code: 'auth/requires-recent-login' }
+        const isEmailPassword = currentUser.providerData.some(p => p.providerId === 'password')
+        if (!isEmailPassword) {
+          setPasswordMsg({ type: 'error', text: 'Connexion via Google/Apple — mot de passe géré par ce service' })
+          setSavingPassword(false)
+          return
+        }
+        const credential = EmailAuthProvider.credential(user.email, passwordForm.current)
+        await reauthenticateWithCredential(currentUser, credential)
+        await updatePassword(currentUser, passwordForm.new)
+      }
+      setPasswordForm({ current: '', new: '', confirm: '' })
+      setPasswordMsg({ type: 'success', text: 'Mot de passe mis à jour avec succès' })
+      setTimeout(() => setPasswordMsg(null), 4000)
+    } catch (err) {
+      setPasswordMsg({ type: 'error', text: getProfileError(err.code) })
+    } finally {
+      setSavingPassword(false)
+    }
+  }
+
+  // ── Envoyer un e-mail de réinitialisation du mot de passe ─────────────────
+  async function sendPasswordReset() {
+    setSendingReset(true)
+    setPasswordMsg(null)
+    try {
+      const { USE_REAL_FIREBASE } = await import('../firebase')
+      if (USE_REAL_FIREBASE) {
+        const { auth } = await import('../firebase')
+        const { sendPasswordResetEmail } = await import('firebase/auth')
+        await sendPasswordResetEmail(auth, user.email)
+      }
+      setPasswordMsg({ type: 'success', text: `E-mail de réinitialisation envoyé à ${user.email}` })
+      setTimeout(() => setPasswordMsg(null), 6000)
+    } catch (err) {
+      setPasswordMsg({ type: 'error', text: getProfileError(err.code) })
+    } finally {
+      setSendingReset(false)
     }
   }
 
@@ -442,7 +541,8 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Personal info */}
+
+            {/* ── Nom ── */}
             <div style={S.card}>
               <EyebrowLabel text="Informations personnelles" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -455,100 +555,197 @@ export default function ProfilePage() {
                     style={nameOnCooldown ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   />
                   {nameOnCooldown && (
-                    <p style={{
-                      fontFamily: "'DM Mono', monospace", fontSize: 9,
-                      letterSpacing: '0.12em', color: 'rgba(200,169,110,0.7)',
-                      marginTop: 6,
-                    }}>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.12em', color: 'rgba(200,169,110,0.7)', marginTop: 6 }}>
                       ⏳ Prochain changement possible le {formatNextDate(nextNameChange)}
                     </p>
                   )}
                 </div>
-                <div>
-                  <FocusInput
-                    label="Adresse e-mail"
-                    type="email"
-                    placeholder="ton@email.com"
-                    value={settingsForm.email}
-                    onChange={e => setSettingsForm(f => ({ ...f, email: e.target.value }))}
-                  />
-                  {user?.role === 'organisateur' && (
-                    <p style={{
-                      fontFamily: "'DM Mono', monospace", fontSize: 9,
-                      letterSpacing: '0.12em', color: 'rgba(78,232,200,0.55)',
-                      marginTop: 6,
-                    }}>
-                      Cet e-mail est utilisé pour la connexion et comme e-mail professionnel de ton dossier.
-                    </p>
-                  )}
-                </div>
+                {settingsMsg && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: 4,
+                    fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.05em',
+                    ...(settingsMsg.type === 'success'
+                      ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
+                      : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
+                  }}>{settingsMsg.text}</div>
+                )}
+                <button
+                  onClick={saveName}
+                  disabled={saving || !nameChanged}
+                  style={{ ...S.btnGold, opacity: (saving || !nameChanged) ? 0.45 : 1, cursor: (saving || !nameChanged) ? 'not-allowed' : 'pointer' }}
+                >
+                  {saving ? 'Enregistrement...' : 'Enregistrer le nom'}
+                </button>
               </div>
             </div>
 
-            {/* Password */}
+            {/* ── Adresse e-mail ── */}
             <div style={S.card}>
-              <EyebrowLabel text="Changer le mot de passe" />
+              <EyebrowLabel text="Adresse e-mail" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <FocusInput
-                  label="Nouveau mot de passe"
-                  type="password"
-                  placeholder="Minimum 8 caractères"
-                  value={settingsForm.newPassword}
-                  onChange={e => setSettingsForm(f => ({ ...f, newPassword: e.target.value }))}
-                />
-                <FocusInput
-                  label="Confirmer le mot de passe"
-                  type="password"
-                  placeholder="Répète le mot de passe"
-                  value={settingsForm.confirmPassword}
-                  onChange={e => setSettingsForm(f => ({ ...f, confirmPassword: e.target.value }))}
-                  hasError={!!(settingsForm.newPassword && settingsForm.confirmPassword && settingsForm.newPassword !== settingsForm.confirmPassword)}
-                />
+
+                {/* E-mail actuel affiché */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.03em' }}>{user?.email}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(78,232,200,0.7)', textTransform: 'uppercase' }}>Actuel</span>
+                </div>
+
+                {/* Bannière en attente */}
+                {emailPending && (
+                  <div style={{ padding: '10px 14px', borderRadius: 4, background: 'rgba(251,146,60,0.07)', border: '1px solid rgba(251,146,60,0.3)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ fontSize: 14, marginTop: 1 }}>⏳</span>
+                    <div>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(251,146,60,0.9)', letterSpacing: '0.05em', marginBottom: 2 }}>
+                        Vérification en attente
+                      </p>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.03em' }}>
+                        Un lien a été envoyé à <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{emailPending}</strong>. Ouvre-le pour confirmer le changement.
+                      </p>
+                      <button
+                        onClick={() => setEmailPending(null)}
+                        style={{ marginTop: 8, background: 'none', border: 'none', fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(251,146,60,0.6)', cursor: 'pointer', padding: 0 }}
+                      >
+                        Annuler la demande
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Formulaire de changement */}
+                {!emailPending && (
+                  <>
+                    <FocusInput
+                      label="Nouvelle adresse e-mail"
+                      type="email"
+                      placeholder="nouvelle@adresse.com"
+                      value={emailForm.newEmail}
+                      onChange={e => setEmailForm(f => ({ ...f, newEmail: e.target.value }))}
+                    />
+                    <FocusInput
+                      label="Mot de passe actuel (requis)"
+                      type="password"
+                      placeholder="Confirme ton identité"
+                      value={emailForm.password}
+                      onChange={e => setEmailForm(f => ({ ...f, password: e.target.value }))}
+                    />
+                    {user?.role === 'organisateur' && (
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', color: 'rgba(78,232,200,0.55)', lineHeight: 1.6 }}>
+                        Cet e-mail est aussi utilisé comme e-mail professionnel de ton dossier.
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {emailMsg && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: 4,
+                    fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.05em', lineHeight: 1.5,
+                    ...(emailMsg.type === 'success'
+                      ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
+                      : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
+                  }}>{emailMsg.text}</div>
+                )}
+
+                {!emailPending && (
+                  <button
+                    onClick={sendEmailVerif}
+                    disabled={sendingEmailVerif || !emailForm.newEmail || !emailForm.password}
+                    style={{
+                      ...S.btnGold,
+                      opacity: (sendingEmailVerif || !emailForm.newEmail || !emailForm.password) ? 0.45 : 1,
+                      cursor: (sendingEmailVerif || !emailForm.newEmail || !emailForm.password) ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {sendingEmailVerif ? 'Envoi en cours...' : 'Envoyer le lien de vérification'}
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Re-auth if needed */}
-            {needsCurrentPassword && (
-              <div style={{
-                ...S.card,
-                borderColor: 'rgba(251,146,60,0.2)',
-                background: 'rgba(251,146,60,0.04)',
-              }}>
-                <p style={{ ...S.labelOrange, marginBottom: '12px' }}>Confirmation requise</p>
+            {/* ── Mot de passe ── */}
+            <div style={S.card}>
+              <EyebrowLabel text="Sécurité — Mot de passe" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <FocusInput
                   label="Mot de passe actuel"
                   type="password"
                   placeholder="Ton mot de passe actuel"
-                  value={settingsForm.currentPassword}
-                  onChange={e => setSettingsForm(f => ({ ...f, currentPassword: e.target.value }))}
+                  value={passwordForm.current}
+                  onChange={e => setPasswordForm(f => ({ ...f, current: e.target.value }))}
                 />
-                <p style={{ ...S.label, marginTop: '10px' }}>Requis pour modifier ton e-mail ou mot de passe.</p>
-              </div>
-            )}
+                <div>
+                  <FocusInput
+                    label="Nouveau mot de passe"
+                    type="password"
+                    placeholder="Minimum 8 caractères"
+                    value={passwordForm.new}
+                    onChange={e => setPasswordForm(f => ({ ...f, new: e.target.value }))}
+                  />
+                  {/* Barre de force */}
+                  {passwordForm.new && (() => {
+                    const s = getPasswordStrength(passwordForm.new)
+                    return (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: 2, transition: 'width 0.3s ease, background 0.3s ease' }} />
+                        </div>
+                        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.2em', color: s.color, marginTop: 4 }}>
+                          FORCE : {s.label}
+                        </p>
+                      </div>
+                    )
+                  })()}
+                </div>
+                <FocusInput
+                  label="Confirmer le nouveau mot de passe"
+                  type="password"
+                  placeholder="Répète le mot de passe"
+                  value={passwordForm.confirm}
+                  onChange={e => setPasswordForm(f => ({ ...f, confirm: e.target.value }))}
+                  hasError={!!(passwordForm.new && passwordForm.confirm && passwordForm.new !== passwordForm.confirm)}
+                />
 
-            {settingsMsg && (
-              <div style={{
-                padding: '12px 16px',
-                borderRadius: '4px',
-                fontFamily: '"DM Mono", monospace',
-                fontSize: '11px',
-                letterSpacing: '0.05em',
-                ...(settingsMsg.type === 'success'
-                  ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
-                  : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }
-                ),
-              }}>
-                {settingsMsg.text}
-              </div>
-            )}
+                {passwordMsg && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: 4,
+                    fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.05em',
+                    ...(passwordMsg.type === 'success'
+                      ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
+                      : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
+                  }}>{passwordMsg.text}</div>
+                )}
 
-            <button
-              onClick={saveSettings}
-              disabled={saving}
-              style={{ ...S.btnGold, opacity: saving ? 0.5 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
-            >
-              {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-            </button>
+                <button
+                  onClick={changePassword}
+                  disabled={savingPassword || !passwordForm.current || !passwordForm.new || !passwordForm.confirm}
+                  style={{
+                    ...S.btnGold,
+                    opacity: (savingPassword || !passwordForm.current || !passwordForm.new || !passwordForm.confirm) ? 0.45 : 1,
+                    cursor: (savingPassword || !passwordForm.current || !passwordForm.new || !passwordForm.confirm) ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {savingPassword ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
+                </button>
+
+                {/* Mot de passe oublié */}
+                <button
+                  onClick={sendPasswordReset}
+                  disabled={sendingReset}
+                  style={{
+                    background: 'none', border: 'none', padding: '4px 0',
+                    fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.15em',
+                    textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)',
+                    cursor: sendingReset ? 'wait' : 'pointer', textDecoration: 'underline',
+                    textDecorationColor: 'rgba(255,255,255,0.15)',
+                    opacity: sendingReset ? 0.5 : 1,
+                    textAlign: 'left',
+                  }}
+                >
+                  {sendingReset ? 'Envoi...' : 'Mot de passe oublié ? Recevoir un lien de réinitialisation'}
+                </button>
+              </div>
+            </div>
 
             {/* ── Zone danger ── */}
             <div style={{ marginTop: 8 }}>
