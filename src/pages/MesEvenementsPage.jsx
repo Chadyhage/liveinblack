@@ -1056,27 +1056,55 @@ export default function MesEvenementsPage() {
             {/* Âge légal */}
             <div>
               <label style={S.label}>Âge minimum requis</label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {[0, 16, 18, 21].map(age => (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                {[{ label: 'TOUT PUBLIC', value: 0 }, { label: '16+', value: 16 }, { label: '18+', value: 18 }, { label: '21+', value: 21 }].map(({ label, value }) => (
                   <button
-                    key={age}
+                    key={value}
                     type="button"
-                    onClick={() => setForm(f => ({ ...f, minAge: age }))}
+                    onClick={() => setForm(f => ({ ...f, minAge: value }))}
                     style={{
                       padding: '8px 18px',
                       borderRadius: 4,
-                      border: form.minAge === age ? '1px solid #4ee8c8' : '1px solid rgba(255,255,255,0.10)',
-                      background: form.minAge === age ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.6)',
-                      color: form.minAge === age ? '#4ee8c8' : 'rgba(255,255,255,0.4)',
+                      border: form.minAge === value ? '1px solid #4ee8c8' : '1px solid rgba(255,255,255,0.10)',
+                      background: form.minAge === value ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.6)',
+                      color: form.minAge === value ? '#4ee8c8' : 'rgba(255,255,255,0.4)',
                       fontFamily: "'DM Mono', monospace",
                       fontSize: 11,
                       letterSpacing: '0.15em',
                       cursor: 'pointer',
                     }}
                   >
-                    {age === 0 ? 'TOUT PUBLIC' : `${age}+`}
+                    {label}
                   </button>
                 ))}
+              </div>
+              {/* Custom age input */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={form.minAge === 0 ? '' : form.minAge}
+                  placeholder="Autre âge…"
+                  onChange={e => {
+                    const v = parseInt(e.target.value, 10)
+                    if (e.target.value === '') { setForm(f => ({ ...f, minAge: 0 })); return }
+                    if (!isNaN(v) && v >= 0 && v <= 99) setForm(f => ({ ...f, minAge: v }))
+                  }}
+                  style={{
+                    ...S.inputBase,
+                    width: 130,
+                    padding: '8px 14px',
+                  }}
+                />
+                <span style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 10,
+                  letterSpacing: '0.12em',
+                  color: 'rgba(255,255,255,0.25)',
+                }}>
+                  {form.minAge === 0 ? 'Tout public' : `${form.minAge} ans minimum`}
+                </span>
               </div>
             </div>
 

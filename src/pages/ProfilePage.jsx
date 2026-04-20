@@ -261,7 +261,7 @@ export default function ProfilePage() {
 
   async function saveSettings() {
     if (!settingsForm.name.trim()) {
-      setSettingsMsg({ type: 'error', text: 'Le prénom / nom est obligatoire' })
+      setSettingsMsg({ type: 'error', text: user?.role === 'organisateur' ? 'Le nom du responsable est obligatoire' : 'Le prénom / nom est obligatoire' })
       return
     }
     if (nameChanged && nameOnCooldown) {
@@ -342,6 +342,21 @@ export default function ProfilePage() {
         const { syncUserProfile } = await import('../utils/firestore-sync')
         syncUserProfile(uid, updatedUser)
       } catch {}
+
+      // For organisateurs: sync email change to dossier emailPro as well
+      if (emailChanged && user?.role === 'organisateur') {
+        try {
+          const { getApplicationByUser, updateApplication } = await import('../utils/applications')
+          const app = getApplicationByUser(uid, 'organisateur')
+          if (app) {
+            const updatedFormData = { ...(app.formData || {}), emailPro: settingsForm.email.trim() }
+            updateApplication(app.id, { formData: updatedFormData })
+            // Sync to Firestore
+            const { syncDoc } = await import('../utils/firestore-sync')
+            syncDoc(`applications/${app.id}`, { formData: updatedFormData })
+          }
+        } catch {}
+      }
 
       // Persist nameChangedAt to Firestore if Firebase active
       if (nameWasChanged) {
@@ -433,7 +448,7 @@ export default function ProfilePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
                   <FocusInput
-                    label="Prénom / Nom"
+                    label={user?.role === 'organisateur' ? 'Nom du responsable' : 'Prénom / Nom'}
                     placeholder="Ton nom"
                     value={settingsForm.name}
                     onChange={e => !nameOnCooldown && setSettingsForm(f => ({ ...f, name: e.target.value }))}
@@ -449,13 +464,24 @@ export default function ProfilePage() {
                     </p>
                   )}
                 </div>
-                <FocusInput
-                  label="Adresse e-mail"
-                  type="email"
-                  placeholder="ton@email.com"
-                  value={settingsForm.email}
-                  onChange={e => setSettingsForm(f => ({ ...f, email: e.target.value }))}
-                />
+                <div>
+                  <FocusInput
+                    label="Adresse e-mail"
+                    type="email"
+                    placeholder="ton@email.com"
+                    value={settingsForm.email}
+                    onChange={e => setSettingsForm(f => ({ ...f, email: e.target.value }))}
+                  />
+                  {user?.role === 'organisateur' && (
+                    <p style={{
+                      fontFamily: "'DM Mono', monospace", fontSize: 9,
+                      letterSpacing: '0.12em', color: 'rgba(78,232,200,0.55)',
+                      marginTop: 6,
+                    }}>
+                      Cet e-mail est utilisé pour la connexion et comme e-mail professionnel de ton dossier.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
