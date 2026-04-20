@@ -2,13 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 
-const MOCK_SONGS = [
-  { id: 1, title: 'Goosebumps', artist: 'Travis Scott', likes: 12, myLike: false, addedBy: 'Alex M.' },
-  { id: 2, title: 'Midnight in Paris', artist: 'Kanye West', likes: 9, myLike: false, addedBy: 'Sarah K.' },
-  { id: 3, title: 'SICKO MODE', artist: 'Travis Scott', likes: 7, myLike: false, addedBy: 'Tom B.' },
-  { id: 4, title: "Money Trees", artist: 'Kendrick Lamar', likes: 5, myLike: true, addedBy: 'Moi' },
-  { id: 5, title: "God's Plan", artist: 'Drake', likes: 3, myLike: false, addedBy: 'Julie R.' },
-]
+// pas de sons par défaut — la playlist démarre vide
 
 const MAX_LIKES_PER_USER = 5
 
@@ -103,13 +97,13 @@ export default function PlaylistSystem({ event, booked }) {
   const likesKey = `lib_playlist_likes_${event.id}_${userId}`
 
   function loadSongs() {
-    try { return JSON.parse(localStorage.getItem(songsKey)) || MOCK_SONGS } catch { return MOCK_SONGS }
+    try { return JSON.parse(localStorage.getItem(songsKey)) || [] } catch { return [] }
   }
   function loadHasAdded() {
     try { return localStorage.getItem(addedKey) === 'true' } catch { return false }
   }
   function loadLikesUsed() {
-    try { return parseInt(localStorage.getItem(likesKey)) || 1 } catch { return 1 }
+    try { return parseInt(localStorage.getItem(likesKey)) || 0 } catch { return 0 }
   }
 
   const [songs, setSongsState] = useState(loadSongs)
@@ -475,8 +469,16 @@ export default function PlaylistSystem({ event, booked }) {
       {/* Songs list */}
       <div>
         <p style={{ ...S.label, marginBottom: 12 }}>
-          Classement ({sortedSongs.length} sons)
+          Classement ({sortedSongs.length} son{sortedSongs.length !== 1 ? 's' : ''})
         </p>
+        {sortedSongs.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '28px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <MusicNoteIcon size={28} color="rgba(255,255,255,0.10)" />
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: 0, letterSpacing: '0.1em' }}>
+              La playlist est vide — sois le premier à proposer un son
+            </p>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {sortedSongs.map((song, i) => (
             <div

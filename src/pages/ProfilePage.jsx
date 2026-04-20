@@ -8,6 +8,15 @@ import { getWallet } from '../utils/wallet'
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser } from '../utils/applications'
 import { getOrdersForBuyer, ORDER_STATUS_LABELS } from '../utils/services'
+import PlaylistSystem from '../components/PlaylistSystem'
+import { events as staticEvents } from '../data/events'
+
+function getAllEvents() {
+  try {
+    const created = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
+    return [...staticEvents, ...created]
+  } catch { return staticEvents }
+}
 
 function getBookings() {
   try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]') } catch { return [] }
@@ -1447,8 +1456,14 @@ function FocusInput({ label, value, onChange, type = 'text', placeholder, hasErr
 function EventTicketGroup({ group }) {
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
+  const [showPlaylist, setShowPlaylist] = useState(false)
+
+  // Récupère l'objet événement complet pour savoir s'il a une playlist
+  const event = getAllEvents().find(e => String(e.id) === String(group.eventId))
+  const hasPlaylist = !!event?.playlist
 
   return (
+    <>
     <div style={{
       background: 'rgba(8,10,20,0.55)',
       backdropFilter: 'blur(22px) saturate(1.6)',
@@ -1500,18 +1515,20 @@ function EventTicketGroup({ group }) {
         </div>
       </div>
 
-      {/* Expand / collapse */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Actions row */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex' }}>
+        {/* Expand / collapse tickets */}
         <button
           onClick={() => setExpanded(v => !v)}
           style={{
-            width: '100%',
+            flex: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '10px 16px',
             background: 'transparent',
             border: 'none',
+            borderRight: hasPlaylist ? '1px solid rgba(255,255,255,0.06)' : 'none',
             cursor: 'pointer',
           }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
@@ -1533,15 +1550,98 @@ function EventTicketGroup({ group }) {
           }}>›</span>
         </button>
 
-        {expanded && (
-          <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {group.tickets.map((b, i) => (
-              <SingleTicketCard key={b.id} booking={b} index={i} />
-            ))}
-          </div>
+        {/* Playlist button — only if event has playlist */}
+        {hasPlaylist && (
+          <button
+            onClick={() => setShowPlaylist(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '10px 16px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,169,110,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            {/* music note icon */}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#c8a96e"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+            <span style={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '9px',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: '#c8a96e',
+            }}>Playlist</span>
+          </button>
         )}
       </div>
+
+      {expanded && (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {group.tickets.map((b, i) => (
+            <SingleTicketCard key={b.id} booking={b} index={i} />
+          ))}
+        </div>
+      )}
     </div>
+
+    {/* ── Playlist modal (bottom sheet) ── */}
+    {showPlaylist && event && (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+        <div
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowPlaylist(false)}
+        />
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: 520,
+          background: 'rgba(4,5,12,0.97)',
+          borderTop: '1px solid rgba(255,255,255,0.10)',
+          borderLeft: '1px solid rgba(255,255,255,0.07)',
+          borderRight: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: '16px 16px 0 0',
+          maxHeight: '88vh',
+          overflowY: 'auto',
+        }}>
+          {/* Handle */}
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+            <div style={{ width: 40, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
+          </div>
+
+          {/* Header */}
+          <div style={{ padding: '4px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                Playlist interactive
+              </p>
+              <p style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 300, fontSize: 18, color: 'white', margin: '2px 0 0' }}>
+                {group.eventName}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowPlaylist(false)}
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18, color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+              }}
+            >×</button>
+          </div>
+
+          <div style={{ padding: '12px 20px 36px' }}>
+            <PlaylistSystem event={event} booked={true} />
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 
