@@ -1467,7 +1467,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
   }
 
   function addShowOption() {
-    const newOpt = { id: 'so_' + Date.now(), label: '', requiresInfo: false, infoPrompt: '' }
+    const newOpt = { id: 'so_' + Date.now(), label: '', requiresInfo: false, infoPrompt: '', excludedPlaces: [] }
     onUpdate({ ...item, showOptions: [...(item.showOptions || []), newOpt] })
   }
 
@@ -1621,6 +1621,46 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
                   onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
                   onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
                 />
+              )}
+              {/* Exclusion par place pour CE show spécifiquement */}
+              {placeTypes.length > 1 && (
+                <div style={{ paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.22)', marginBottom: 6 }}>
+                    Masquer ce show pour certaines places :
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {placeTypes.map(pt => {
+                      const isExcl = (opt.excludedPlaces || []).includes(pt)
+                      return (
+                        <button
+                          key={pt}
+                          type="button"
+                          onClick={() => {
+                            const excl = opt.excludedPlaces || []
+                            updateShowOption(opt.id, 'excludedPlaces', isExcl ? excl.filter(x => x !== pt) : [...excl, pt])
+                          }}
+                          style={{
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 9,
+                            padding: '3px 10px',
+                            borderRadius: 3,
+                            border: isExcl ? '1px solid rgba(220,50,50,0.30)' : '1px solid rgba(255,255,255,0.07)',
+                            background: isExcl ? 'rgba(220,50,50,0.08)' : 'rgba(6,8,16,0.6)',
+                            color: isExcl ? 'rgba(220,100,100,0.9)' : 'rgba(255,255,255,0.38)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {isExcl ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              {pt}
+                            </span>
+                          ) : pt}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               )}
             </div>
           ))}
