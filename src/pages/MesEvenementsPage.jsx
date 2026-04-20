@@ -455,7 +455,19 @@ export default function MesEvenementsPage() {
   function startCreate() {
     setCreateStep(0)
     setEditingEventId(null)
-    setForm({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18, region: '' })
+    // Pré-remplir la région depuis la région sélectionnée dans l'app
+    const defaultRegion = (() => {
+      try {
+        const saved = localStorage.getItem('lib_region')
+        if (saved) {
+          const { id } = JSON.parse(saved)
+          const found = regions.find(r => r.id === id)
+          return found ? found.name : ''
+        }
+      } catch {}
+      return ''
+    })()
+    setForm({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18, region: defaultRegion })
     setArtists([])
     setShowArtistSection(false)
     setImagePreview(null)
@@ -1261,35 +1273,58 @@ export default function MesEvenementsPage() {
                   if (matched) setForm(f => ({ ...f, region: matched.name }))
                 }}
               />
-              {/* Sélecteur de région — auto-rempli depuis le pays, modifiable */}
+              {/* Sélecteur de région */}
               <div>
-                <label style={{ ...S.label, marginBottom: 8 }}>
-                  Région *
-                  {form.region && <span style={{ color: 'rgba(78,232,200,0.7)', marginLeft: 8 }}>— auto-détectée depuis le pays</span>}
-                </label>
+                <label style={{ ...S.label, marginBottom: 4 }}>Région *</label>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em', marginBottom: 10 }}>
+                  Se remplit automatiquement depuis le pays — modifiable manuellement
+                </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {regions.map(r => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setForm(f => ({ ...f, region: r.name }))}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '8px 14px',
-                        borderRadius: 999,
-                        border: form.region === r.name ? '1px solid rgba(78,232,200,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                        background: form.region === r.name ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.5)',
-                        color: form.region === r.name ? '#4ee8c8' : 'rgba(255,255,255,0.45)',
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 11,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <span style={{ fontSize: 14 }}>{r.flag}</span>
-                      {r.name}
-                    </button>
-                  ))}
+                  {regions.map(r => {
+                    const selected = form.region === r.name
+                    // Code ISO 2 lettres extrait du flag emoji (fonctionne sur tous les OS)
+                    const code = r.id === 'amerique' ? '🌎'
+                      : r.id === 'cote-divoire' ? 'CI'
+                      : r.id === 'ghana' ? 'GH'
+                      : r.id === 'togo' ? 'TG'
+                      : r.id === 'benin' ? 'BJ'
+                      : r.id === 'france' ? 'FR'
+                      : r.id.slice(0, 2).toUpperCase()
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, region: r.name }))}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '8px 14px',
+                          borderRadius: 999,
+                          border: selected ? '1px solid rgba(78,232,200,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                          background: selected ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.5)',
+                          color: selected ? '#4ee8c8' : 'rgba(255,255,255,0.45)',
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          width: 22, height: 16, borderRadius: 3,
+                          background: selected ? 'rgba(78,232,200,0.18)' : 'rgba(255,255,255,0.08)',
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: code.length > 2 ? 12 : 9,
+                          fontWeight: 700,
+                          color: selected ? '#4ee8c8' : 'rgba(255,255,255,0.5)',
+                          letterSpacing: 0,
+                          flexShrink: 0,
+                        }}>
+                          {code}
+                        </span>
+                        {r.name}
+                      </button>
+                    )
+                  })}
                 </div>
                 {errors.region && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
               </div>
