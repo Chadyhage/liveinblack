@@ -5,7 +5,7 @@ import RegionSelector from '../components/RegionSelector'
 import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
-import { getActiveBoosts } from '../utils/ticket'
+import { getActiveBoostsByRegion } from '../utils/ticket'
 import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 
@@ -162,8 +162,19 @@ export default function HomePage() {
     } catch { return events }
   })()
 
-  const activeBoosts = getActiveBoosts()
-  const baseTopThree = selectedRegion ? getTopEventsByRegion(selectedRegion.name) : events.slice(0, 3)
+  // Top 3 : filtre par région sur tous les événements (statiques + créés par organisateurs)
+  const regionName = selectedRegion?.name
+  const regionEvents = allEvents.filter(e =>
+    !regionName || regionName === 'Toutes' || e.region === regionName
+  )
+  // Non-boostés : triés par date la plus proche
+  const baseTopThree = regionEvents
+    .filter(e => !e.cancelled)
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(0, 10) // plus de candidats pour le fallback
+
+  // Boosts filtrés par la région du visiteur
+  const activeBoosts = getActiveBoostsByRegion(regionName)
 
   const boostedByPosition = {}
   activeBoosts.forEach(b => {

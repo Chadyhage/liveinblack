@@ -336,7 +336,6 @@ export default function MesEvenementsPage() {
     if (currentStep === 0) {
       if (!form.name.trim()) errs.name = 'Le nom est obligatoire'
       if (!form.date) errs.date = 'La date est obligatoire'
-      if (!form.region) errs.region = 'Choisis une région'
       if (!eventType) errs.eventType = "Choisis un type d'événement"
     }
     if (currentStep === 1) {
@@ -346,6 +345,7 @@ export default function MesEvenementsPage() {
     }
     if (currentStep === 2) {
       if (!venue.city.trim()) errs.city = 'La ville est obligatoire'
+      if (!form.region) errs.region = 'Choisis une région'
     }
     setErrors(errs)
     if (Object.keys(errs).length === 0) setCreateStep(currentStep + 1)
@@ -897,35 +897,6 @@ export default function MesEvenementsPage() {
                 <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} />
                 <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} />
               </div>
-              {/* Region selector */}
-              <div>
-                <label style={{ ...S.label, marginBottom: 8 }}>Région *</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {regions.map(r => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setForm(f => ({ ...f, region: r.name }))}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '8px 14px',
-                        borderRadius: 999,
-                        border: form.region === r.name ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                        background: form.region === r.name ? 'rgba(200,169,110,0.10)' : 'rgba(6,8,16,0.5)',
-                        color: form.region === r.name ? '#c8a96e' : 'rgba(255,255,255,0.45)',
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 11,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <span style={{ fontSize: 14 }}>{r.flag}</span>
-                      {r.name}
-                    </button>
-                  ))}
-                </div>
-                {errors.region && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
-              </div>
 
               <div>
                 <label style={S.label}>Description courte</label>
@@ -1224,7 +1195,6 @@ export default function MesEvenementsPage() {
                 { key: 'name', label: 'Nom du lieu', placeholder: 'Ex: Club Le Baroque, Salle des Fêtes...' },
                 { key: 'address', label: 'Adresse', placeholder: 'Ex: 12 rue de la Paix' },
                 { key: 'city', label: 'Ville *', placeholder: 'Ex: Paris, Lomé, Abidjan...' },
-                { key: 'country', label: 'Pays', placeholder: "Ex: France, Togo, Côte d'Ivoire..." },
               ].map((f) => (
                 <InputField
                   key={f.key}
@@ -1235,6 +1205,54 @@ export default function MesEvenementsPage() {
                   error={f.key === 'city' ? errors.city : undefined}
                 />
               ))}
+              {/* Pays + auto-détection de région */}
+              <InputField
+                label="Pays"
+                placeholder="Ex: France, Togo, Côte d'Ivoire..."
+                value={venue.country}
+                onChange={e => {
+                  const country = e.target.value
+                  setVenue(v => ({ ...v, country }))
+                  // Auto-détection de la région depuis le pays saisi
+                  const matched = regions.find(r =>
+                    r.country.toLowerCase() === country.trim().toLowerCase() ||
+                    r.name.toLowerCase() === country.trim().toLowerCase()
+                  )
+                  if (matched) setForm(f => ({ ...f, region: matched.name }))
+                }}
+              />
+              {/* Sélecteur de région — auto-rempli depuis le pays, modifiable */}
+              <div>
+                <label style={{ ...S.label, marginBottom: 8 }}>
+                  Région *
+                  {form.region && <span style={{ color: 'rgba(78,232,200,0.7)', marginLeft: 8 }}>— auto-détectée depuis le pays</span>}
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {regions.map(r => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, region: r.name }))}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '8px 14px',
+                        borderRadius: 999,
+                        border: form.region === r.name ? '1px solid rgba(78,232,200,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                        background: form.region === r.name ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.5)',
+                        color: form.region === r.name ? '#4ee8c8' : 'rgba(255,255,255,0.45)',
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 11,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>{r.flag}</span>
+                      {r.name}
+                    </button>
+                  ))}
+                </div>
+                {errors.region && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
+              </div>
             </div>
             <div style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.18)' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5" style={{ flexShrink: 0, marginTop: 1 }}>
@@ -1353,6 +1371,7 @@ export default function MesEvenementsPage() {
                 { label: 'Genre musical', val: category === 'Autre' ? (customGenre.trim() || 'Autre') : (category || 'Autre') },
                 { label: 'Types de places', val: `${places.length} type(s)` },
                 { label: 'Lieu', val: venue.name ? `${venue.name}, ${venue.city}` : venue.city ? venue.city : '—' },
+                { label: 'Région', val: (() => { const r = regions.find(x => x.name === form.region); return r ? `${r.flag} ${r.name}` : form.region || '—' })() },
                 { label: 'Playlist interactive', val: options.playlist ? 'Activée' : 'Désactivée' },
                 { label: 'Précommande conso', val: options.preorder ? `Activée (${menuItems.filter(i => i.name.trim()).length} articles)` : 'Désactivée' },
                 { label: 'QR Code billet', val: 'Activé — obligatoire' },

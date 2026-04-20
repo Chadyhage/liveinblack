@@ -62,35 +62,48 @@ export function getActiveBoosts() {
   } catch { return [] }
 }
 
-export function saveBoost(eventId, position, days, price) {
+export function saveBoost(eventId, position, days, price, region = '') {
   try {
     const boost = {
       eventId,
       position,
+      region,   // région de l'événement — le boost n'est visible que dans cette région
       price,
       days,
       purchasedAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
     }
     const all = JSON.parse(localStorage.getItem('lib_boosts') || '[]')
-    // Remove any existing boost for this event OR for this position (slot conflict)
-    const filtered = all.filter(b => b.eventId !== eventId && b.position !== position)
+    // Remove any existing boost for this event OR for this position within same region
+    const filtered = all.filter(b =>
+      b.eventId !== eventId &&
+      !(b.position === position && (b.region || '') === (region || ''))
+    )
     localStorage.setItem('lib_boosts', JSON.stringify([...filtered, boost]))
   } catch {}
 }
 
-// Check if a given position slot is already occupied by another event
-export function isBoostSlotTaken(position, excludeEventId = null) {
+// Active boosts for a specific region (region-aware Top 3)
+export function getActiveBoostsByRegion(regionName = '') {
+  const active = getActiveBoosts()
+  if (!regionName) return active
+  // A boost matches if its region equals the viewer's region
+  // (legacy boosts with no region field are shown everywhere for backward compat)
+  return active.filter(b => !b.region || b.region === regionName)
+}
+
+// Check if a given Top-N slot is already taken in a given region
+export function isBoostSlotTaken(position, region = '', excludeEventId = null) {
   try {
-    const active = getActiveBoosts()
+    const active = getActiveBoostsByRegion(region)
     return active.some(b => b.position === position && b.eventId !== excludeEventId)
   } catch { return false }
 }
 
-// Get the event name occupying a slot (for conflict messaging)
-export function getBoostSlotOccupant(position, allEvents = []) {
+// Get the event name occupying a slot in a given region
+export function getBoostSlotOccupant(position, region = '', allEvents = []) {
   try {
-    const active = getActiveBoosts()
+    const active = getActiveBoostsByRegion(region)
     const b = active.find(b => b.position === position)
     if (!b) return null
     const ev = allEvents.find(e => e.id === b.eventId)

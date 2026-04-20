@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { saveBoost, isBoostSlotTaken } from '../utils/ticket'
+import { saveBoost, isBoostSlotTaken, getActiveBoostsByRegion } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
 import { getBalance, deductFunds } from '../utils/wallet'
 
@@ -149,7 +149,7 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
     if (!deducted) { setWalletError(true); return }
     setPaying(true)
     setTimeout(() => {
-      saveBoost(event.id, chosen.position, chosenTier.days, chosenTier.price)
+      saveBoost(event.id, chosen.position, chosenTier.days, chosenTier.price, event.region || '')
       setPaying(false)
       setStep('done')
     }, 600)
@@ -356,7 +356,7 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
               </p>
 
               {BOOST_PLANS.map(plan => {
-                const slotTaken = isBoostSlotTaken(plan.position, event.id)
+                const slotTaken = isBoostSlotTaken(plan.position, event.region || '', event.id)
                 return (
                 <div key={plan.position}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: slotTaken ? 6 : 10 }}>
