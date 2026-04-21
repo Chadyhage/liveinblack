@@ -9,6 +9,21 @@ import { getActiveBoostsByRegion } from '../utils/ticket'
 import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 
+function isEventPast(ev) {
+  try {
+    if (!ev.date) return false
+    const endTime = ev.endTime || ev.time || '23:59'
+    const [h, m] = endTime.split(':').map(Number)
+    const d = new Date(ev.date + 'T00:00:00')
+    d.setHours(h, m, 0, 0)
+    // Si endTime < startTime → croise minuit → ajouter 1 jour
+    const startTime = ev.time || '00:00'
+    const [sh, sm] = startTime.split(':').map(Number)
+    if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
+    return d.getTime() < Date.now()
+  } catch { return false }
+}
+
 function getGreeting() {
   const h = new Date().getHours()
   if (h >= 5  && h < 12) return 'Bonjour'
@@ -169,7 +184,7 @@ export default function HomePage() {
   )
   // Non-boostés : triés par date la plus proche
   const baseTopThree = regionEvents
-    .filter(e => !e.cancelled)
+    .filter(e => !e.cancelled && !isEventPast(e))
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 10) // plus de candidats pour le fallback
 

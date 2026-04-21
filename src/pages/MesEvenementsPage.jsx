@@ -33,6 +33,21 @@ function getCreatedEvents() {
   try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
 }
 
+function isEventPast(ev) {
+  try {
+    if (!ev.date) return false
+    const endTime = ev.endTime || ev.time || '23:59'
+    const [h, m] = endTime.split(':').map(Number)
+    const d = new Date(ev.date + 'T00:00:00')
+    d.setHours(h, m, 0, 0)
+    // Si endTime < startTime → croise minuit → ajouter 1 jour
+    const startTime = ev.time || '00:00'
+    const [sh, sm] = startTime.split(':').map(Number)
+    if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
+    return d.getTime() < Date.now()
+  } catch { return false }
+}
+
 // ── Shared style tokens ────────────────────────────────────────────────────────
 const S = {
   card: {
@@ -289,6 +304,8 @@ export default function MesEvenementsPage() {
   const [generatedCodes, setGeneratedCodes] = useState(null)
 
   const [createdEvents, setCreatedEvents] = useState(getCreatedEvents)
+  const [showStatsPanel, setShowStatsPanel] = useState(false)
+  const [statsPanelEvent, setStatsPanelEvent] = useState(null)
 
   function handleImage(e) {
     const file = e.target.files[0]
@@ -605,8 +622,13 @@ export default function MesEvenementsPage() {
 
           {/* Events list */}
           <div>
+            {(() => {
+              const upcomingEvents = createdEvents.filter(ev => !isEventPast(ev))
+              const pastEvents = createdEvents.filter(ev => isEventPast(ev))
+              return (
+                <>
             <Eyebrow style={{ marginBottom: 14 }}>Mes soirées en cours</Eyebrow>
-            {createdEvents.length === 0 ? (
+            {upcomingEvents.length === 0 ? (
               <div style={{ ...S.card, padding: 40, textAlign: 'center' }}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
                   <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
@@ -616,7 +638,7 @@ export default function MesEvenementsPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {createdEvents.map(ev => (
+                {upcomingEvents.map(ev => (
                   <div key={ev.id} style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
                     <button onClick={() => navigate(`/evenements/${ev.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
                       {ev.imageUrl ? (
@@ -682,6 +704,55 @@ export default function MesEvenementsPage() {
                 ))}
               </div>
             )}
+
+            {/* ── Événements passés ── */}
+            {pastEvents.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <Eyebrow style={{ marginBottom: 14 }}>Événements passés</Eyebrow>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {pastEvents.map(ev => {
+                    const evBookings = (() => { try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]').filter(b => String(b.eventId) === String(ev.id)) } catch { return [] } })()
+                    const totalRevenue = evBookings.reduce((s, b) => s + (b.totalPrice || 0), 0)
+                    return (
+                      <div key={ev.id} style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'center', gap: 12, opacity: 0.85 }}>
+                        <button onClick={() => navigate(`/evenements/${ev.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                          {ev.imageUrl ? (
+                            <img src={ev.imageUrl} alt={ev.name} style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', flexShrink: 0, filter: 'grayscale(30%)' }} />
+                          ) : (
+                            <div style={{ width: 52, height: 52, borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                            </div>
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.75)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                            <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: 3 }}>
+                                TERMINÉ
+                              </span>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: '#c8a96e' }}>
+                                {evBookings.length} billet{evBookings.length !== 1 ? 's' : ''} · {totalRevenue.toFixed(0)}€
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                        {/* Bouton Statistiques */}
+                        <button
+                          onClick={() => { setStatsPanelEvent(ev); setShowStatsPanel(true) }}
+                          title="Statistiques"
+                          style={{ width: 36, height: 36, borderRadius: 6, background: 'linear-gradient(135deg, rgba(78,232,200,0.12), rgba(78,232,200,0.04))', border: '1px solid rgba(78,232,200,0.25)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2 }}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+                </>
+              )
+            })()}
           </div>
 
           {/* Delete confirmation modal */}
@@ -705,6 +776,11 @@ export default function MesEvenementsPage() {
         {/* Bookings panel */}
         {showBookingsPanel && bookingsPanelEvent && (
           <BookingsPanel event={bookingsPanelEvent} onClose={() => setShowBookingsPanel(false)} />
+        )}
+
+        {/* Stats panel */}
+        {showStatsPanel && statsPanelEvent && (
+          <StatsPanel event={statsPanelEvent} onClose={() => setShowStatsPanel(false)} />
         )}
 
         {/* Boost toast */}
@@ -1850,6 +1926,125 @@ function BookingsPanel({ event, onClose }) {
               ))}
             </div>
           </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Stats Panel (événements passés) ─────────────────────────────────────────
+function StatsPanel({ event, onClose }) {
+  const allBookings = (() => {
+    try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]') } catch { return [] }
+  })()
+  const bookings = allBookings.filter(b => String(b.eventId) === String(event.id))
+
+  const totalRevenue = bookings.reduce((s, b) => s + (b.totalPrice || 0), 0)
+  const totalTickets = bookings.length
+
+  // By place type
+  const byPlace = bookings.reduce((acc, b) => {
+    const key = b.place || 'Standard'
+    if (!acc[key]) acc[key] = { count: 0, revenue: 0 }
+    acc[key].count++
+    acc[key].revenue += b.placePrice || 0
+    return acc
+  }, {})
+
+  // Preorder totals
+  const itemTotals = {}
+  bookings.forEach(b => {
+    if (b.preorderSummary?.length) {
+      b.preorderSummary.forEach(item => {
+        const qty = (b.preorderItems || {})[item.name] || 0
+        if (!itemTotals[item.name]) itemTotals[item.name] = { emoji: item.emoji, qty: 0, revenue: 0 }
+        itemTotals[item.name].qty += qty
+        itemTotals[item.name].revenue += qty * (item.price || 0)
+      })
+    }
+  })
+
+  const preorderRevenue = Object.values(itemTotals).reduce((s, i) => s + i.revenue, 0)
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'rgba(4,4,11,0.98)', backdropFilter: 'blur(20px)' }}>
+      {/* Header */}
+      <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', padding: 4, display: 'flex', alignItems: 'center' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+            STATISTIQUES · {event.dateDisplay || event.date}
+          </p>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* KPIs */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {[
+            { label: 'Billets vendus', value: totalTickets, color: '#4ee8c8' },
+            { label: 'Revenus totaux', value: `${totalRevenue.toFixed(0)} €`, color: '#c8a96e' },
+            { label: 'Dont billetterie', value: `${(totalRevenue - preorderRevenue).toFixed(0)} €`, color: 'rgba(255,255,255,0.55)' },
+            { label: 'Dont précommandes', value: `${preorderRevenue.toFixed(0)} €`, color: 'rgba(255,255,255,0.55)' },
+          ].map(k => (
+            <div key={k.label} style={{ ...S.card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', margin: 0 }}>{k.label.toUpperCase()}</p>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: k.color, margin: 0, lineHeight: 1 }}>{k.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* By place */}
+        {Object.keys(byPlace).length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <Eyebrow style={{ marginBottom: 8 }}>Répartition par place</Eyebrow>
+            {Object.entries(byPlace).sort((a, b) => b[1].count - a[1].count).map(([place, data]) => {
+              const pct = totalTickets > 0 ? (data.count / totalTickets) * 100 : 0
+              return (
+                <div key={place} style={{ ...S.card, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{place}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e' }}>{data.revenue.toFixed(0)} €</span>
+                      <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: '#4ee8c8' }}>{data.count}</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #4ee8c8, #c8a96e)', borderRadius: 2, transition: 'width 0.6s ease' }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Preorder stats */}
+        {Object.keys(itemTotals).length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <Eyebrow style={{ marginBottom: 8 }}>Précommandes consommées</Eyebrow>
+            {Object.entries(itemTotals).sort((a, b) => b[1].qty - a[1].qty).map(([name, data]) => (
+              <div key={name} style={{ ...S.card, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{data.emoji} {name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e' }}>{data.revenue.toFixed(0)} €</span>
+                  <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: '#4ee8c8' }}>×{data.qty}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* No data */}
+        {bookings.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.28)' }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11 }}>Aucune réservation enregistrée.</p>
+          </div>
         )}
       </div>
     </div>
