@@ -623,8 +623,20 @@ export default function MesEvenementsPage() {
           {/* Events list */}
           <div>
             {(() => {
-              const upcomingEvents = createdEvents.filter(ev => !isEventPast(ev))
-              const pastEvents = createdEvents.filter(ev => isEventPast(ev))
+              const uid = user?.uid
+              // Mes événements = créés par ce compte OU sans createdBy (legacy)
+              const myEvents = createdEvents.filter(ev =>
+                !ev.createdBy ||
+                ev.createdBy === uid ||
+                ev.organizerId === uid
+              )
+              // Événements orphelins = créés par un autre compte (ancien compte supprimé)
+              const orphanEvents = createdEvents.filter(ev =>
+                ev.createdBy && ev.createdBy !== uid &&
+                (!ev.organizerId || ev.organizerId !== uid)
+              )
+              const upcomingEvents = myEvents.filter(ev => !isEventPast(ev))
+              const pastEvents = myEvents.filter(ev => isEventPast(ev))
               return (
                 <>
             <Eyebrow style={{ marginBottom: 14 }}>Mes soirées en cours</Eyebrow>
@@ -750,6 +762,35 @@ export default function MesEvenementsPage() {
                 </div>
               </div>
             )}
+                {/* ── Événements orphelins (anciens comptes) ── */}
+                {orphanEvents.length > 0 && (
+                  <div style={{ marginTop: 28 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#e05aaa"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                      <Eyebrow style={{ color: 'rgba(224,90,170,0.7)' }}>Anciens événements (autre compte)</Eyebrow>
+                    </div>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginBottom: 10, lineHeight: 1.7 }}>
+                      Ces événements ont été créés avec un compte supprimé. Supprime-les pour nettoyer l'affichage public.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {orphanEvents.map(ev => (
+                        <div key={ev.id} style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'center', gap: 12, opacity: 0.7, borderColor: 'rgba(224,90,170,0.2)' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: 400, color: 'rgba(255,255,255,0.65)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>{ev.dateDisplay || ev.date}</p>
+                          </div>
+                          <button
+                            onClick={() => setDeleteConfirm(ev.id)}
+                            style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                            title="Supprimer"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 </>
               )
             })()}

@@ -193,6 +193,23 @@ export async function syncOnLogin(uid) {
       localStorage.setItem('lib_created_events', JSON.stringify(mergeById(local, eventsDoc.items)))
     }
 
+    // ── 3.5. Cleanup local-only orphan events from deleted/switched accounts ──
+    // Keep: events without createdBy (demo/legacy), events owned by current uid
+    // Remove local-only: events with a different createdBy that are NOT yet in Firestore
+    // (Firestore-backed events from other organizers are re-added in step 15 anyway)
+    try {
+      const localEvts = safeParseArray('lib_created_events')
+      const cleaned = localEvts.filter(ev =>
+        !ev.createdBy ||                        // demo / legacy
+        ev.createdBy === uid ||                 // mine
+        ev.organizerId === uid ||               // mine (alt field)
+        !ev.userCreated                         // static demo event
+      )
+      if (cleaned.length !== localEvts.length) {
+        localStorage.setItem('lib_created_events', JSON.stringify(cleaned))
+      }
+    } catch {}
+
     // ── 4. Conversations (directs + groupes) ──
     const [directConvsSnap, groupConvsSnap] = await Promise.all([
       loadCollection('conversations', [where('participants', 'array-contains', uid)]),
