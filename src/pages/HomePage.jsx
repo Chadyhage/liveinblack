@@ -398,7 +398,16 @@ export default function HomePage() {
                             fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700,
                             color: 'var(--violet-end)',
                           }}>
-                            {event.price > 0 ? `${event.price} €` : 'Gratuit'}
+                            {(() => {
+                              // Événements organisateur : prix dans places[].price
+                              // Événements statiques : prix dans event.price
+                              const minPlace = event.places?.length > 0
+                                ? Math.min(...event.places.map(p => Number(p.price) || 0))
+                                : null
+                              const effectivePrice = minPlace !== null ? minPlace : (Number(event.price) || 0)
+                              if (effectivePrice > 0) return `À partir de ${effectivePrice} €`
+                              return 'Gratuit'
+                            })()}
                           </span>
                         </div>
                       </div>
