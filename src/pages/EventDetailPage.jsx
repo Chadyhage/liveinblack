@@ -385,6 +385,15 @@ export default function EventDetailPage() {
     }
   }
 
+  // Redirige vers l'auth si non connecté, sinon exécute l'action
+  function requireUserThenDo(action) {
+    if (!user) {
+      openAuthModal('Crée ton compte pour réserver ta place 🎟️', action)
+      return
+    }
+    action()
+  }
+
   function resetBooking() {
     setBookingStep('place')
     setSelectedPlace(null)
@@ -618,31 +627,10 @@ export default function EventDetailPage() {
                     Choisir ton type de place
                   </h3>
 
-                  {!userCanBook && !user && (
+                  {/* Utilisateur connecté avec mauvais rôle → avertissement */}
+                  {user && !userCanBook && (
                     <div style={{
-                      margin: '16px 0', padding: '20px',
-                      background: 'rgba(78,232,200,0.05)',
-                      border: '1px solid rgba(78,232,200,0.2)',
-                      borderRadius: 8, textAlign: 'center',
-                    }}>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', marginBottom: 14 }}>
-                        Connecte-toi pour réserver une place
-                      </p>
-                      <button
-                        onClick={() => openAuthModal('Réserve ta place en quelques secondes.', () => {})}
-                        style={{
-                          padding: '11px 28px', borderRadius: 4,
-                          background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.35)',
-                          fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: '0.2em',
-                          textTransform: 'uppercase', color: '#4ee8c8', cursor: 'pointer',
-                        }}>
-                        Se connecter
-                      </button>
-                    </div>
-                  )}
-                  {!userCanBook && user && (
-                    <div style={{
-                      margin: '16px 0', padding: '16px',
+                      margin: '4px 0 12px', padding: '14px 16px',
                       background: 'rgba(200,169,110,0.08)',
                       border: '1px solid rgba(200,169,110,0.25)',
                       borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 12,
@@ -767,16 +755,21 @@ export default function EventDetailPage() {
                         </div>
                       </div>
 
-                      {/* CTA */}
+                      {/* CTA — non connecté : ouvre le modal auth puis continue */}
                       {event.preorder ? (
                         <button
-                          style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
-                          disabled={!userCanBook}
-                          onClick={() => tryProceed(() => {
+                          style={{
+                            ...S.btnGold,
+                            opacity: (user && !userCanBook) ? 0.4 : 1,
+                            cursor: (user && !userCanBook) ? 'not-allowed' : 'pointer',
+                            pointerEvents: (user && !userCanBook) ? 'none' : 'auto',
+                          }}
+                          disabled={user && !userCanBook}
+                          onClick={() => requireUserThenDo(() => tryProceed(() => {
                             setPerTicketOrders([{ items: {}, shows: {} }])
                             setActivePreorderTicket(0)
                             setBookingStep('preorder')
-                          })}
+                          }))}
                         >
                           Continuer →
                         </button>
@@ -787,21 +780,23 @@ export default function EventDetailPage() {
                             background: 'rgba(78,232,200,0.07)',
                             border: '1px solid rgba(78,232,200,0.25)',
                             color: '#4ee8c8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 8,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                           }}
-                          onClick={() => { setGroupSendConvId(null); setShowGroupSendModal(true) }}
+                          onClick={() => requireUserThenDo(() => { setGroupSendConvId(null); setShowGroupSendModal(true) })}
                         >
                           <GroupIcon size={13} color="#4ee8c8" />
                           Proposer au groupe →
                         </button>
                       ) : (
                         <button
-                          style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
-                          disabled={!userCanBook}
-                          onClick={() => tryProceed(() => setShowConfirmModal(true))}
+                          style={{
+                            ...S.btnGold,
+                            opacity: (user && !userCanBook) ? 0.4 : 1,
+                            cursor: (user && !userCanBook) ? 'not-allowed' : 'pointer',
+                            pointerEvents: (user && !userCanBook) ? 'none' : 'auto',
+                          }}
+                          disabled={user && !userCanBook}
+                          onClick={() => requireUserThenDo(() => tryProceed(() => setShowConfirmModal(true)))}
                         >
                           Confirmer la réservation
                         </button>
