@@ -84,8 +84,8 @@ function HeroGooeyText({ user, orgName }) {
       return { texts: txts, colors: clrs }
     }
     return {
-      texts: ['Bienvenue.', 'L|VE IN', 'BLACK.'],
-      colors: [VIOLET, WHITE, WHITE],
+      texts: ['Bienvenue', 'sur L|VE IN BLACK'],
+      colors: [VIOLET, WHITE],
     }
   }, [user?.name, user?.role, orgName])
 
