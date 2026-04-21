@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { events } from '../data/events'
@@ -56,7 +56,27 @@ export default function EventsPage() {
     setTimeout(() => navigate('/messagerie'), 800)
   }
 
-  const allEvents = [...events, ...getCreatedEvents()]
+  const [createdEventsState, setCreatedEventsState] = useState(getCreatedEvents)
+
+  // Charge les événements Firestore même pour les visiteurs non connectés
+  useEffect(() => {
+    import('../utils/firestore-sync').then(({ loadCollection }) => {
+      loadCollection('events').then(firestoreEvents => {
+        if (!firestoreEvents.length) return
+        const local = getCreatedEvents()
+        const localIds = new Set(local.map(e => String(e.id)))
+        const newRemote = firestoreEvents
+          .filter(e => !localIds.has(String(e.id || e._docId)))
+          .map(e => ({ ...e, id: e.id || e._docId }))
+        if (!newRemote.length) return
+        const merged = [...local, ...newRemote]
+        localStorage.setItem('lib_created_events', JSON.stringify(merged))
+        setCreatedEventsState(merged)
+      }).catch(() => {})
+    }).catch(() => {})
+  }, [])
+
+  const allEvents = [...events, ...createdEventsState]
   const unlockedEvents = getUnlockedEvents()
 
   // Filter: show public events + unlocked private events

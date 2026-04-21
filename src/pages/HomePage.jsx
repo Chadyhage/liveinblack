@@ -170,12 +170,29 @@ export default function HomePage() {
     )
   }, [])
 
-  const allEvents = (() => {
-    try {
-      const created = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
-      return [...events, ...created]
-    } catch { return events }
-  })()
+  const [createdEvents, setCreatedEvents] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
+  })
+
+  // Charge les événements Firestore même pour les visiteurs non connectés
+  useEffect(() => {
+    import('../utils/firestore-sync').then(({ loadCollection }) => {
+      loadCollection('events').then(firestoreEvents => {
+        if (!firestoreEvents.length) return
+        const local = (() => { try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] } })()
+        const localIds = new Set(local.map(e => String(e.id)))
+        const newRemote = firestoreEvents
+          .filter(e => !localIds.has(String(e.id || e._docId)))
+          .map(e => ({ ...e, id: e.id || e._docId }))
+        if (!newRemote.length) return
+        const merged = [...local, ...newRemote]
+        localStorage.setItem('lib_created_events', JSON.stringify(merged))
+        setCreatedEvents(merged)
+      }).catch(() => {})
+    }).catch(() => {})
+  }, [])
+
+  const allEvents = [...events, ...createdEvents]
 
   // Top 3 : filtre par région sur tous les événements (statiques + créés par organisateurs)
   const regionName = selectedRegion?.name
