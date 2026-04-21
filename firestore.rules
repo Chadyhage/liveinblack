@@ -43,6 +43,22 @@ service cloud.firestore {
       allow read, write: if isOwner(uid) || isAgent();
     }
 
+    // ── Public events (lecture publique, écriture = organisateur propriétaire ou agent) ──
+    match /events/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && (
+        resource == null ||
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.organizerId == request.auth.uid ||
+        isAgent()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.organizerId == request.auth.uid ||
+        isAgent()
+      );
+    }
+
     // ── User data collections ──────────────────────────────────────────────────
     match /user_bookings/{uid} {
       allow read, write: if isOwner(uid) || isAgent();
