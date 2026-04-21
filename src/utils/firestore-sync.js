@@ -193,19 +193,29 @@ export async function syncOnLogin(uid) {
       localStorage.setItem('lib_created_events', JSON.stringify(mergeById(local, eventsDoc.items)))
     }
 
-    // ── 3.5. Cleanup local-only orphan events from deleted/switched accounts ──
-    // Keep: events without createdBy (demo/legacy), events owned by current uid
-    // Remove local-only: events with a different createdBy that are NOT yet in Firestore
-    // (Firestore-backed events from other organizers are re-added in step 15 anyway)
+    // ── 3.5. Auto-delete orphan events (created by a different/deleted account) ──
+    // Any userCreated event with a different UID is deleted from localStorage AND Firestore
+    // so it never reappears in the public listing.
     try {
       const localEvts = safeParseArray('lib_created_events')
-      const cleaned = localEvts.filter(ev =>
-        !ev.createdBy ||                        // demo / legacy
-        ev.createdBy === uid ||                 // mine
-        ev.organizerId === uid ||               // mine (alt field)
-        !ev.userCreated                         // static demo event
+      const orphans = localEvts.filter(ev =>
+        ev.userCreated &&
+        ev.createdBy &&
+        ev.createdBy !== uid &&
+        (!ev.organizerId || ev.organizerId !== uid)
       )
-      if (cleaned.length !== localEvts.length) {
+      if (orphans.length) {
+        // Delete each orphan from Firestore (events + user_events of the old uid)
+        for (const ev of orphans) {
+          try {
+            const { deleteDoc, doc: fsDoc } = await import('firebase/firestore')
+            const { db: fsDb } = await import('../firebase')
+            await deleteDoc(fsDoc(fsDb, 'events', String(ev.id)))
+          } catch {}
+        }
+        // Remove from localStorage
+        const orphanIds = new Set(orphans.map(ev => String(ev.id)))
+        const cleaned = localEvts.filter(ev => !orphanIds.has(String(ev.id)))
         localStorage.setItem('lib_created_events', JSON.stringify(cleaned))
       }
     } catch {}
