@@ -203,11 +203,11 @@ export function getFriendRequests(toId) {
   try { return JSON.parse(localStorage.getItem('lib_friend_requests') || '[]').filter(r => r.toId === toId) } catch { return [] }
 }
 
-export function sendFriendRequest(fromId, fromName, toId) {
+export function sendFriendRequest(fromId, fromName, toId, fromUsername) {
   try {
     const all = JSON.parse(localStorage.getItem('lib_friend_requests') || '[]')
     if (all.find(r => r.fromId === fromId && r.toId === toId)) return
-    const req = { id: Date.now().toString(), fromId, fromName, toId, sentAt: new Date().toISOString() }
+    const req = { id: Date.now().toString(), fromId, fromName, fromUsername: fromUsername || null, toId, sentAt: new Date().toISOString() }
     all.push(req)
     localStorage.setItem('lib_friend_requests', JSON.stringify(all))
     // Sync to Firestore so recipient sees it on other devices
@@ -343,8 +343,16 @@ export function leaveGroup(convId, userId, userName) {
       all[idx] = { ...conv, members: remaining }
     }
     localStorage.setItem('lib_conversations', JSON.stringify(all))
+    // Sync updated conversation to Firestore so other devices see the change
     if (remaining.length > 0) {
       sendMessage(convId, userId, userName, 'system', `${userName} a quitté le groupe`)
+      import('./firestore-sync').then(({ syncDoc }) => {
+        syncDoc(`conversations/${convId}`, all[idx])
+      }).catch(() => {})
+    } else {
+      import('./firestore-sync').then(({ syncDelete }) => {
+        syncDelete(`conversations/${convId}`)
+      }).catch(() => {})
     }
   } catch {}
 }
@@ -357,6 +365,11 @@ export function deleteGroup(convId) {
     const msgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
     delete msgs[convId]
     localStorage.setItem('lib_messages', JSON.stringify(msgs))
+    // Sync deletion to Firestore
+    import('./firestore-sync').then(({ syncDelete }) => {
+      syncDelete(`conversations/${convId}`)
+      syncDelete(`conv_messages/${convId}`)
+    }).catch(() => {})
   } catch {}
 }
 
@@ -610,6 +623,10 @@ export function saveGroupBooking(booking) {
   const all = getGroupBookings()
   all[booking.id] = booking
   localStorage.setItem('lib_group_bookings', JSON.stringify(all))
+  // Sync to Firestore so all group members can see/interact with the booking
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`group_bookings/${booking.id}`, booking)
+  }).catch(() => {})
 }
 
 export function getGroupBookingById(id) {
@@ -622,6 +639,9 @@ export function validateGroupBooking(bookingId, userId) {
   if (!all[bookingId]) return null
   all[bookingId].validations = { ...(all[bookingId].validations || {}), [userId]: true }
   localStorage.setItem('lib_group_bookings', JSON.stringify(all))
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`group_bookings/${bookingId}`, all[bookingId])
+  }).catch(() => {})
   return all[bookingId]
 }
 
@@ -631,6 +651,9 @@ export function payGroupBookingShare(bookingId, userId) {
   if (!all[bookingId]) return null
   all[bookingId].payments = { ...(all[bookingId].payments || {}), [userId]: true }
   localStorage.setItem('lib_group_bookings', JSON.stringify(all))
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`group_bookings/${bookingId}`, all[bookingId])
+  }).catch(() => {})
   return all[bookingId]
 }
 
@@ -644,6 +667,9 @@ export function addSongToGroupBooking(bookingId, userId, song) {
   if (!all[bookingId]) return null
   all[bookingId].songSelections = { ...(all[bookingId].songSelections || {}), [userId]: song }
   localStorage.setItem('lib_group_bookings', JSON.stringify(all))
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`group_bookings/${bookingId}`, all[bookingId])
+  }).catch(() => {})
   return all[bookingId]
 }
 

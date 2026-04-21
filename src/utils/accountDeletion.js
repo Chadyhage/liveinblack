@@ -32,24 +32,15 @@ export function auditAccountForDeletion(uid, userRole) {
         const isFuture    = evDate > now
         const title       = ev.title || ev.name || ev.id
 
-        // Bookings pour cet événement
+        // Bookings pour cet événement (global lib_bookings array)
         let activeBookings = 0
         try {
-          const bk = JSON.parse(localStorage.getItem(`lib_bookings_${ev.id}`) || '[]')
-          activeBookings = bk.filter(b => b.status !== 'cancelled' && b.status !== 'refunded').length
+          const allBookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+          activeBookings = allBookings.filter(b =>
+            String(b.eventId) === String(ev.id) &&
+            b.status !== 'cancelled' && b.status !== 'refunded'
+          ).length
         } catch {}
-        // Fallback: check user_bookings global
-        if (!activeBookings) {
-          try {
-            const users = JSON.parse(localStorage.getItem('lib_registered_users') || '[]')
-            users.forEach(u => {
-              try {
-                const ub = JSON.parse(localStorage.getItem(`lib_user_bookings_${u.uid}`) || '[]')
-                activeBookings += ub.filter(b => b.eventId === ev.id && b.status !== 'cancelled').length
-              } catch {}
-            })
-          } catch {}
-        }
 
         if (isFuture && activeBookings > 0) {
           blockers.push({

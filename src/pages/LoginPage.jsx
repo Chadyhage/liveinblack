@@ -223,9 +223,38 @@ async function doGoogleLogin() {
     return user
   }
   const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth')
-  const { auth } = await import('../firebase')
+  const { auth, db } = await import('../firebase')
   const cred = await signInWithPopup(auth, new GoogleAuthProvider())
-  return { uid: cred.user.uid, name: cred.user.displayName, email: cred.user.email, photo: cred.user.photoURL, role: 'user', status: 'active' }
+  const uid = cred.user.uid
+
+  // Check if Firestore profile already exists
+  const { doc, getDoc, setDoc, updateDoc } = await import('firebase/firestore')
+  const snap = await getDoc(doc(db, 'users', uid))
+  if (snap.exists()) {
+    const profile = snap.data()
+    // Keep photo fresh
+    if (cred.user.photoURL && profile.photo !== cred.user.photoURL) {
+      updateDoc(doc(db, 'users', uid), { photo: cred.user.photoURL }).catch(() => {})
+    }
+    return { ...profile, photo: cred.user.photoURL || profile.photo }
+  }
+
+  // First Google login — create Firestore profile
+  const userObj = {
+    uid,
+    name: cred.user.displayName || cred.user.email?.split('@')[0] || 'Utilisateur',
+    email: cred.user.email,
+    photo: cred.user.photoURL || null,
+    role: 'user',
+    activeRole: 'user',
+    enabledRoles: ['user'],
+    status: 'active',
+    emailVerified: true,
+    createdAt: Date.now(),
+    provider: 'google',
+  }
+  await setDoc(doc(db, 'users', uid), userObj)
+  return userObj
 }
 
 async function doAppleLogin() {
@@ -236,13 +265,37 @@ async function doAppleLogin() {
     return user
   }
   const { signInWithPopup, OAuthProvider } = await import('firebase/auth')
-  const { auth } = await import('../firebase')
+  const { auth, db } = await import('../firebase')
   const provider = new OAuthProvider('apple.com')
   provider.addScope('email')
   provider.addScope('name')
   const cred = await signInWithPopup(auth, provider)
+  const uid = cred.user.uid
   const name = cred.user.displayName || cred.user.email?.split('@')[0] || 'Utilisateur Apple'
-  return { uid: cred.user.uid, name, email: cred.user.email, photo: cred.user.photoURL, role: 'user', status: 'active' }
+
+  // Check if Firestore profile already exists
+  const { doc, getDoc, setDoc } = await import('firebase/firestore')
+  const snap = await getDoc(doc(db, 'users', uid))
+  if (snap.exists()) {
+    return snap.data()
+  }
+
+  // First Apple login — create Firestore profile
+  const userObj = {
+    uid,
+    name,
+    email: cred.user.email,
+    photo: cred.user.photoURL || null,
+    role: 'user',
+    activeRole: 'user',
+    enabledRoles: ['user'],
+    status: 'active',
+    emailVerified: true,
+    createdAt: Date.now(),
+    provider: 'apple',
+  }
+  await setDoc(doc(db, 'users', uid), userObj)
+  return userObj
 }
 
 // ─── Country dial codes ───────────────────────────────────────────────────

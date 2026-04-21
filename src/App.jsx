@@ -178,7 +178,7 @@ function RequireOrganisateur({ user, children }) {
   return children
 }
 
-// Guard: org/prest accounts with draft/pending status → redirect to correct page
+// Guard: org/prest accounts with draft/pending/onboarding status → redirect to correct page
 function OnboardingGuard({ user, children }) {
   const location = useLocation()
   // These paths are always accessible regardless of account status
@@ -191,7 +191,13 @@ function OnboardingGuard({ user, children }) {
 
   const isDedicated = user?.role === 'organisateur' || user?.role === 'prestataire'
 
-  // draft = account created mid-inscription but dossier not yet submitted → back to form
+  // onboarding = freshly registered, not yet completed the form → back to form
+  if (isDedicated && user?.status === 'onboarding') {
+    const target = user.role === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire'
+    return <Navigate to={target} replace />
+  }
+
+  // draft = dossier created but not submitted yet → back to form
   if (isDedicated && user?.status === 'draft') {
     const target = user.role === 'organisateur' ? '/inscription-organisateur' : '/inscription-prestataire'
     return <Navigate to={target} replace />
@@ -300,6 +306,7 @@ export default function App() {
 
             {/* ── Inscription candidatures (public — no account required) ── */}
             <Route path="/inscription-organisateur" element={<OnboardingOrganisateur />} />
+            <Route path="/inscription-prestataire"  element={<OnboardingPrestataire />} />
 
             {/* ── Onboarding candidatures (legacy — requires auth) ── */}
             <Route path="/onboarding-organisateur" element={

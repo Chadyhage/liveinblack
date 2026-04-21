@@ -87,6 +87,17 @@ export function syncUserProfile(uid, userData) {
     username: userData.username || generateUsername(userData.name || userData.email || uid),
   }
   syncDoc(`users/${uid}`, profile)
+
+  // Also update lib_users localStorage immediately so getUserById() works at once
+  // (syncOnLogin runs async and may not complete before messaging features are used)
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_users') || '[]')
+    const idx = all.findIndex(u => (u.uid || u.id) === uid)
+    const merged = { ...profile, ...userData, uid, id: uid }
+    if (idx >= 0) all[idx] = { ...all[idx], ...merged }
+    else all.push(merged)
+    localStorage.setItem('lib_users', JSON.stringify(all))
+  } catch {}
 }
 
 // ── Core helpers ──────────────────────────────────────────────────────────────

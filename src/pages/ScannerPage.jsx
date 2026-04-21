@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import jsQR from 'jsqr'
 import { verifyTicketToken } from '../utils/ticket'
+import { useAuth } from '../context/AuthContext'
+import { getUserId } from '../utils/messaging'
 
 // Mock tickets for demo fallback
 const MOCK_TICKETS = {
@@ -140,6 +142,21 @@ function CameraScanner({ active, onScan, onError }) {
 // ── Main page ───────────────────────────────────────────────────────
 export default function ScannerPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const myId = getUserId(user)
+
+  // Guard: agent/organisateur only
+  const userRole = user?.role || user?.activeRole
+  if (user && userRole !== 'agent' && userRole !== 'organisateur') {
+    return (
+      <div style={{ minHeight: '100dvh', background: '#04040b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
+        <span style={{ fontSize: 40 }}>🚫</span>
+        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, textAlign: 'center' }}>Accès réservé aux agents et organisateurs</p>
+        <button onClick={() => navigate('/')} style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, background: 'none', border: '1px solid rgba(78,232,200,0.3)', borderRadius: 6, padding: '8px 20px', cursor: 'pointer' }}>Retour</button>
+      </div>
+    )
+  }
+
   const [scanMode, setScanMode] = useState('entry') // 'entry' | 'service'
 
   // Camera state (shared)
@@ -161,7 +178,14 @@ export default function ScannerPage() {
   function markUsed(code) {
     setUsedCodes(prev => {
       const next = new Set([...prev, code])
-      try { localStorage.setItem('lib_used_tickets', JSON.stringify([...next])) } catch {}
+      const arr = [...next]
+      try { localStorage.setItem('lib_used_tickets', JSON.stringify(arr)) } catch {}
+      // Sync to Firestore so other devices (multi-scanner soirée) are aware
+      if (myId) {
+        import('../utils/firestore-sync').then(({ syncDoc }) => {
+          syncDoc(`used_tickets/${myId}`, { items: arr, updatedAt: new Date().toISOString() })
+        }).catch(() => {})
+      }
       return next
     })
   }

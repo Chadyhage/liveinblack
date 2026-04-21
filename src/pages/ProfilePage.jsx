@@ -492,30 +492,45 @@ export default function ProfilePage() {
     setDeleting(true)
     try {
       const { USE_REAL_FIREBASE } = await import('../firebase')
+      const uid = user?.uid
       if (USE_REAL_FIREBASE) {
         // Verify password first by re-authenticating
         const { auth } = await import('../firebase')
         const { EmailAuthProvider, reauthenticateWithCredential, deleteUser } = await import('firebase/auth')
         const currentUser = auth.currentUser
         if (!currentUser) throw { code: 'auth/requires-recent-login' }
-        const cred = EmailAuthProvider.credential(currentUser.email, deletePassword)
-        await reauthenticateWithCredential(currentUser, cred)
-        // Delete Firestore doc
+        // Only re-auth with password for email/password accounts
+        if (currentUser.providerData?.[0]?.providerId === 'password') {
+          const cred = EmailAuthProvider.credential(currentUser.email, deletePassword)
+          await reauthenticateWithCredential(currentUser, cred)
+        }
+        // Delete all linked Firestore documents (fire-and-forget for non-critical ones)
         const { db } = await import('../firebase')
         const { doc, deleteDoc } = await import('firebase/firestore')
-        await deleteDoc(doc(db, 'users', currentUser.uid))
-        // Delete Firebase Auth user
+        const linkedCollections = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social', 'user_boosts']
+        await Promise.allSettled(
+          linkedCollections.map(coll => deleteDoc(doc(db, coll, uid)))
+        )
+        // Delete Firebase Auth user (must be last)
         await deleteUser(currentUser)
       } else {
         // Local mode: check password
         if (user.password && user.password !== deletePassword) {
           throw { code: 'auth/wrong-password' }
         }
-        deleteAccount(user.uid)
+        deleteAccount(uid)
       }
-      // Clear all local session data
+      // Clear all local session data for this user
       localStorage.removeItem('lib_user')
       localStorage.removeItem('lib_region')
+      // Clear user-specific localStorage keys that are keyed by uid
+      try {
+        const keysToRemove = [
+          `lib_catalog_${uid}`,
+          `lib_wallet_${uid}`,
+        ]
+        keysToRemove.forEach(k => localStorage.removeItem(k))
+      } catch {}
       setUser(null)
       navigate('/accueil')
     } catch (err) {

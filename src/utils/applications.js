@@ -85,7 +85,14 @@ export function updateApplication(appId, patch) {
   if (idx < 0) return null
   all[idx] = { ...all[idx], ...patch, updatedAt: Date.now() }
   _saveAll(all)
-  return all[idx]
+  const updated = all[idx]
+
+  // Fire-and-forget Firestore sync for critical field changes (uid, status, etc.)
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`applications/${appId}`, patch)
+  }).catch(() => {})
+
+  return updated
 }
 
 // ─── Suppression dossier ──────────────────────────────────────────────────────
@@ -133,7 +140,7 @@ export function createApplication(uid, email, name, type) {
     type,                 // 'organisateur' | 'prestataire'
     status: 'draft',
     formData: {},
-    documents: {},        // { [docKey]: { name, url, size, uploadedAt } }
+    documents: {},        // { [docKey]: [{ name, url, size, uploadedAt }] }
     auditLog: [
       { action: 'created', by: uid, byName: name, at: Date.now(), note: 'Dossier créé' }
     ],
@@ -152,6 +159,15 @@ export function createApplication(uid, email, name, type) {
   const all = _getAll()
   all.push(app)
   _saveAll(all)
+
+  // Fire-and-forget Firestore sync
+  import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
+    if (!USE_REAL_FIREBASE) return
+    import('firebase/firestore').then(({ doc, setDoc }) => {
+      setDoc(doc(db, 'applications', app.id), app).catch(() => {})
+    }).catch(() => {})
+  }).catch(() => {})
+
   return app
 }
 
@@ -163,7 +179,14 @@ export function saveDraft(id, formData) {
   if (idx < 0) return null
   all[idx] = { ...all[idx], formData: { ...all[idx].formData, ...formData }, updatedAt: Date.now() }
   _saveAll(all)
-  return all[idx]
+  const updated = all[idx]
+
+  // Fire-and-forget Firestore sync (only formData + updatedAt to avoid overwriting docs)
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`applications/${id}`, { formData: updated.formData, updatedAt: updated.updatedAt })
+  }).catch(() => {})
+
+  return updated
 }
 
 // ─── Soumettre dossier ────────────────────────────────────────────────────────
@@ -227,7 +250,7 @@ export async function uploadDocument(appId, docKey, file) {
       try {
         const { storage, db } = await import('../firebase')
         const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
-        const { doc, setDoc, arrayUnion } = await import('firebase/firestore')
+        const { doc, setDoc } = await import('firebase/firestore')
 
         const path = `applications/${appId}/${docKey}/${Date.now()}_${file.name}`
         const storageRef = ref(storage, path)
@@ -240,14 +263,13 @@ export async function uploadDocument(appId, docKey, file) {
         const url = await Promise.race([getDownloadURL(storageRef), timeout])
         docEntry.url = url
 
-        // setDoc with merge:true works even if the doc doesn't exist yet
-        await setDoc(doc(db, 'applications', appId), {
-          [`documents.${docKey}`]: arrayUnion(docEntry),
-          updatedAt: Date.now(),
-        }, { merge: true })
-
-        // Only save locally when Firebase succeeded (avoids null-url ghost entries)
+        // Save locally first, then sync full app object to Firestore
+        // (avoids dotted-key bug with setDoc+merge and arrayUnion)
         recordDocumentUpload(appId, docKey, docEntry)
+        const updatedApp = _getAll().find(a => a.id === appId)
+        if (updatedApp) {
+          await setDoc(doc(db, 'applications', appId), updatedApp)
+        }
         return { ok: true, url }
       } catch (uploadErr) {
         // Firebase Storage unavailable, permission denied, or timeout

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Layout from '../components/Layout'
+import { useAuth } from '../context/AuthContext'
 
 const STEPS = ['Infos boîte', 'Options', 'Louer ma salle', 'Confirmation']
 
@@ -97,6 +98,7 @@ function Eyebrow({ children }) {
 }
 
 export default function JeSuisUneBoitePage() {
+  const { user } = useAuth()
   const [step, setStep] = useState(0)
   const [wantsToRent, setWantsToRent] = useState(null)
   const [submitted, setSubmitted] = useState(false)
@@ -159,18 +161,52 @@ export default function JeSuisUneBoitePage() {
     ),
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const registration = {
+      id: 'boite-' + Date.now(),
       ...boiteForm,
       address: boiteForm.noFixedAddress ? null : boiteForm.address,
       options: toggles,
       wantsToRent,
       rentDetails: wantsToRent ? rentForm : null,
       submittedAt: new Date().toISOString(),
+      userId: user?.uid || null,
+      userEmail: user?.email || boiteForm.email || null,
     }
     try {
       localStorage.setItem('lib_boite_registration', JSON.stringify(registration))
     } catch {}
+
+    // If user is logged in, also create a formal application dossier
+    if (user?.uid) {
+      try {
+        const { createApplication, submitApplication } = await import('../utils/applications')
+        const app = createApplication(user.uid, user.email || boiteForm.email, user.name || boiteForm.manager, 'organisateur')
+        if (app) {
+          await submitApplication(app.id, {
+            nomCommercial: boiteForm.name,
+            emailPro: boiteForm.email,
+            telephonePro: boiteForm.phone,
+            siret: boiteForm.siret,
+            adresse: boiteForm.address,
+            responsableNom: boiteForm.manager,
+            website: boiteForm.website,
+            options: toggles,
+            wantsToRent,
+            rentDetails: wantsToRent ? rentForm : null,
+          })
+        }
+      } catch {}
+    }
+
+    // Sync boite_registration to Firestore
+    import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
+      if (!USE_REAL_FIREBASE) return
+      import('firebase/firestore').then(({ doc, setDoc }) => {
+        setDoc(doc(db, 'boite_registrations', registration.id), registration).catch(() => {})
+      }).catch(() => {})
+    }).catch(() => {})
+
     setSubmitted(true)
   }
 

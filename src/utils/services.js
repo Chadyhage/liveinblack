@@ -14,6 +14,10 @@ export function getCatalog(userId) {
 
 export function saveCatalog(userId, items) {
   localStorage.setItem(CATALOG_KEY(userId), JSON.stringify(items))
+  // Sync to Firestore so the catalog is visible cross-device
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`catalogs/${userId}`, { items, updatedAt: new Date().toISOString() })
+  }).catch(() => {})
 }
 
 export function addCatalogItem(userId, item) {
@@ -68,12 +72,23 @@ export function placeOrder({ buyerId, buyerName, sellerId, sellerName, sellerTyp
   const orders = getAllOrders()
   orders.push(order)
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders))
+  // Sync to Firestore so seller sees the order immediately on any device
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`service_orders/${order.id}`, order)
+  }).catch(() => {})
   return order
 }
 
 export function updateOrderStatus(orderId, status) {
   const orders = getAllOrders().map(o => o.id === orderId ? { ...o, status, updatedAt: Date.now() } : o)
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders))
+  // Sync updated status to Firestore
+  const updated = orders.find(o => o.id === orderId)
+  if (updated) {
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`service_orders/${orderId}`, updated)
+    }).catch(() => {})
+  }
 }
 
 // ── Provider profile linked to account ────────────────────────────────────────
@@ -94,6 +109,12 @@ export function saveProviderProfile(profile) {
   if (idx >= 0) all[idx] = profile
   else all.push(profile)
   localStorage.setItem(PROVIDER_PROFILES_KEY, JSON.stringify(all))
+  // Sync to Firestore
+  if (profile.userId) {
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`providers/${profile.userId}`, profile)
+    }).catch(() => {})
+  }
 }
 
 // ── Category labels ────────────────────────────────────────────────────────────

@@ -17,8 +17,10 @@ service cloud.firestore {
     }
 
     // ── Users ──────────────────────────────────────────────────────────────────
+    // Read: any signed-in user can see profiles (needed for messaging contacts sync)
+    // Write: only the owner can update their own profile, or an agent
     match /users/{uid} {
-      allow read:  if isOwner(uid) || isAgent();
+      allow read:  if isSignedIn();
       allow write: if isOwner(uid) || isAgent();
     }
 
@@ -91,6 +93,57 @@ service cloud.firestore {
     }
     match /service_orders/{id} {
       allow read, write: if isSignedIn();
+    }
+    // ── Photos partagées dans les conversations (fallback base64) ──────────────
+    match /conv_photos/{id} {
+      allow read, write: if isSignedIn();
+    }
+    // ── Statut de lecture cross-device ────────────────────────────────────────
+    match /user_read_status/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+
+    // ── Boosts ────────────────────────────────────────────────────────────────
+    match /user_boosts/{uid} {
+      allow read:  if isSignedIn();
+      allow write: if isOwner(uid) || isAgent();
+    }
+
+    // ── Billets scannés ────────────────────────────────────────────────────────
+    match /used_tickets/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+
+    // ── Signalements ──────────────────────────────────────────────────────────
+    match /reports/{id} {
+      allow read:  if isAgent();
+      allow write: if isSignedIn();
+    }
+
+    // ── Demandes de suppression de compte ─────────────────────────────────────
+    match /deletion_requests/{id} {
+      allow read:  if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow write: if isAgent() || (isSignedIn() && (resource == null || resource.data.uid == request.auth.uid));
+    }
+
+    // ── Inscriptions boîte (JeSuisUneBoitePage) ───────────────────────────────
+    match /boite_registrations/{id} {
+      allow read:  if isAgent();
+      allow write: if isSignedIn();
+      allow create: if true;  // Allow anonymous submissions too
+    }
+
+    // ── Profils prestataires ──────────────────────────────────────────────────
+    // Allow signed-in users to read (for service marketplace discovery)
+    match /providers/{uid} {
+      allow read:  if isSignedIn();
+      allow write: if isOwner(uid) || isAgent();
+    }
+
+    // ── Catalogues (read public pour marketplace) ─────────────────────────────
+    match /catalogs/{uid} {
+      allow read:  if isSignedIn();
+      allow write: if isOwner(uid) || isAgent();
     }
   }
 }

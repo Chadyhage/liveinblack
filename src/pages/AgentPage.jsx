@@ -104,10 +104,16 @@ function StatusBadge({ status }) {
 // ─── Main Component ────────────────────────────────────────────────────────
 // ── Local storage keys à vider lors d'un reset total ──────────────────────
 const LIB_KEYS = [
-  'lib_user', 'lib_accounts', 'lib_users', 'lib_bookings', 'lib_events',
+  'lib_user', 'lib_accounts', 'lib_users', 'lib_registered_users',
+  'lib_bookings', 'lib_events', 'lib_created_events',
   'lib_conversations', 'lib_messages', 'lib_wallet', 'lib_social',
   'lib_pending_validations', 'lib_role_requests', 'lib_applications',
   'lib_catalog', 'lib_service_orders', 'lib_notifications',
+  'lib_boosts', 'lib_used_tickets', 'lib_deletion_requests',
+  'lib_provider_profiles', 'lib_group_bookings', 'lib_last_read',
+  'lib_friend_requests', 'lib_friends', 'lib_blocked', 'lib_online',
+  'lib_new_contacts', 'lib_event_codes', 'lib_reports', 'lib_typing',
+  'lib_photo_cache', 'lib_boite_registration',
 ]
 
 async function resetAllData() {
@@ -307,8 +313,13 @@ export default function AgentPage() {
     setConfirmAction(null)
   }
 
-  function handleBan(uid) {
+  async function handleBan(uid) {
     updateAccount(uid, { status: 'banned' })
+    try {
+      const { db } = await import('../firebase')
+      const { doc, updateDoc } = await import('firebase/firestore')
+      await updateDoc(doc(db, 'users', uid), { status: 'banned', bannedAt: Date.now() })
+    } catch {}
     refresh()
     showToast('Compte suspendu')
     setConfirmAction(null)
@@ -395,16 +406,26 @@ export default function AgentPage() {
     setConfirmAction(null)
   }
 
-  function handleReactivate(uid) {
+  async function handleReactivate(uid) {
     updateAccount(uid, { status: 'active' })
+    try {
+      const { db } = await import('../firebase')
+      const { doc, updateDoc } = await import('firebase/firestore')
+      await updateDoc(doc(db, 'users', uid), { status: 'active', reactivatedAt: Date.now() })
+    } catch {}
     refresh()
     showToast('Compte réactivé')
     setSelectedUser(u => u?.uid === uid ? { ...u, status: 'active' } : u)
   }
 
-  function handleSaveEdit() {
+  async function handleSaveEdit() {
     if (!editField) return
     updateAccount(editField.uid, { [editField.field]: editField.value })
+    try {
+      const { db } = await import('../firebase')
+      const { doc, updateDoc } = await import('firebase/firestore')
+      await updateDoc(doc(db, 'users', editField.uid), { [editField.field]: editField.value })
+    } catch {}
     refresh()
     setSelectedUser(u => u?.uid === editField.uid ? { ...u, [editField.field]: editField.value } : u)
     setEditField(null)

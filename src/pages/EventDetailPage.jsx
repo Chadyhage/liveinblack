@@ -7,7 +7,7 @@ import PlaylistSystem from '../components/PlaylistSystem'
 import { useAuth } from '../context/AuthContext'
 import { generateTicketToken, checkScheduleConflict } from '../utils/ticket'
 import { getConversations, sendMessage, getUserId, formatTime, getInitials, saveGroupBooking, getGroupBookings, validateGroupBooking, payGroupBookingShare } from '../utils/messaging'
-// wallet: paiement fictif — Stripe sera intégré plus tard
+import { deductFunds, getBalance } from '../utils/wallet'
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
 
@@ -268,7 +268,8 @@ export default function EventDetailPage() {
   const preorderTotal = perTicketOrders.reduce((total, t) =>
     total + activeMenu.reduce((sum, item) => sum + (t.items[item.name] || 0) * item.price, 0), 0)
   const totalPrice = placePrice + preorderTotal
-  const canAfford = true // paiement fictif — Stripe à venir
+  const walletBalance = getUserId(user) ? getBalance(getUserId(user)) : 0
+  const canAfford = totalPrice === 0 || walletBalance >= totalPrice * ticketQty
   const isAuctionPlace = selectedPlaceObj?.auctionType === 'auction'
   const currentAuctionPrice = 0
   const userCanBook = canBook(user)
@@ -283,6 +284,7 @@ export default function EventDetailPage() {
   }
 
   function confirmBooking() {
+    const uid = getUserId(user)
     // Age check
     if ((event.minAge || 0) >= 18 && !ageVerified) {
       setShowAgeModal(true)
@@ -304,8 +306,15 @@ export default function EventDetailPage() {
       return
     }
     setEventStartedError(false)
-    // paiement fictif — Stripe sera intégré plus tard
-    // (conflit géré en amont par tryProceed)
+    // Déduire le montant du portefeuille (si l'événement est payant)
+    if (totalPrice > 0) {
+      const deducted = deductFunds(uid, totalPrice * ticketQty, `Réservation — ${event.name} (${selectedPlace})`)
+      if (!deducted) {
+        setBookingStep('place')
+        setShowConfirmModal(false)
+        return
+      }
+    }
 
     const newTickets = []
     try {
@@ -354,8 +363,16 @@ export default function EventDetailPage() {
     } catch {}
 
     setBookedTickets(newTickets)
-    if (user) {
-      setUser({ ...user, points: (user.points || 0) + 1 })
+    if (user && uid) {
+      const newPoints = (user.points || 0) + ticketQty
+      setUser({ ...user, points: newPoints })
+      // Persiste les points dans Firestore + localStorage
+      import('../utils/firestore-sync').then(({ syncDoc }) => {
+        syncDoc(`users/${uid}`, { points: newPoints })
+      }).catch(() => {})
+      import('../utils/accounts').then(({ updateAccount }) => {
+        updateAccount(uid, { points: newPoints })
+      }).catch(() => {})
       setShowPointsToast(true)
       setTimeout(() => setShowPointsToast(false), 2500)
     }

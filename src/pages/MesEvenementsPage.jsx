@@ -362,8 +362,9 @@ export default function MesEvenementsPage() {
         if (picked < today) errs.date = 'La date que vous avez renseignée est déjà passée'
       }
       if (form.timeStart && form.timeEnd) {
+        // Only block identical times — overnight events (end < start) are valid for clubs
         if (form.timeStart === form.timeEnd) errs.timeEnd = "L'heure de fin doit être différente de l'heure de début"
-        else if (form.timeEnd < form.timeStart) errs.timeEnd = "L'heure de fin doit être après l'heure de début"
+        // Note: end < start is allowed (soirée crossing midnight, e.g. 23:00 → 05:00)
       }
       if (!eventType) errs.eventType = "Choisis un type d'événement"
     }

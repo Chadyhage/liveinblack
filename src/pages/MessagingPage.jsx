@@ -454,7 +454,8 @@ export default function MessagingPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const myId   = getUserId(user)
-  const myName = user?.name || 'Moi'
+  const myName     = user?.name || 'Moi'
+  const myUsername = user?.username || getUserById(myId)?.username || null
 
   // ── Views ──
   const [view, setView]           = useState('list') // list | chat | search | new-group | contacts
@@ -502,8 +503,10 @@ export default function MessagingPage() {
   const [newGroupSearch, setNewGroupSearch]   = useState('')
 
   // ── Group settings ──
-  const [editGroupName, setEditGroupName]     = useState('')
-  const [editContribPcts, setEditContribPcts] = useState(null) // { [userId]: pct } while editing
+  const [editGroupName, setEditGroupName]         = useState('')
+  const [editContribPcts, setEditContribPcts]     = useState(null) // { [userId]: pct } while editing
+  const [showAddMember, setShowAddMember]         = useState(false)
+  const [addMemberSearch, setAddMemberSearch]     = useState('')
 
   // ── Poll creator ──
   const [pollQuestion, setPollQuestion]     = useState('')
@@ -614,7 +617,9 @@ export default function MessagingPage() {
       setFriends(getFriends(myId))
       if (newReqs.length > prevRequestCount) {
         notifSound()
-        showToast(`📩 Nouvelle demande de contact de ${newReqs[newReqs.length - 1]?.fromName || 'quelqu\'un'}`)
+        const latestReq = newReqs[newReqs.length - 1]
+        const senderLabel = latestReq?.fromUsername ? `@${latestReq.fromUsername}` : (latestReq?.fromName || 'quelqu\'un')
+        showToast(`📩 Nouvelle demande de contact de ${senderLabel}`)
       }
       setPrevRequestCount(newReqs.length)
       if (activeConvIdRef.current) {
@@ -808,6 +813,25 @@ export default function MessagingPage() {
     }
     setLastRead(convId, myId)
     setGroupBookings(getGroupBookings())
+    // Sync group bookings referenced in this conversation from Firestore
+    // so members on other devices can validate/pay without re-creating the booking
+    import('../utils/firestore-sync').then(({ loadCollection }) => {
+      loadCollection('group_bookings').then(firestoreBookings => {
+        if (!firestoreBookings.length) return
+        const local = getGroupBookings()
+        let changed = false
+        firestoreBookings.forEach(fb => {
+          if (fb.id && (!local[fb.id] || JSON.stringify(local[fb.id]) !== JSON.stringify(fb))) {
+            local[fb.id] = fb
+            changed = true
+          }
+        })
+        if (changed) {
+          localStorage.setItem('lib_group_bookings', JSON.stringify(local))
+          setGroupBookings({ ...local })
+        }
+      }).catch(() => {})
+    }).catch(() => {})
     const conv = getConversationById(convId)
     if (conv?.pinnedMessageId) {
       // will be rendered in pinned bar
@@ -1275,7 +1299,7 @@ export default function MessagingPage() {
   }
 
   // ── Friend actions ──
-  function handleSendRequest(userId) { sendFriendRequest(myId, myName, userId); refresh() }
+  function handleSendRequest(userId) { sendFriendRequest(myId, myName, userId, myUsername); refresh() }
   function handleAccept(reqId) {
     acceptFriendRequest(reqId, myId)
     refresh()
@@ -1360,6 +1384,26 @@ export default function MessagingPage() {
         refresh()
       }
     })
+  }
+  function handleAddMember(userId) {
+    if (!activeConv) return
+    const u = getUserById(userId) || allUsers.find(x => x.id === userId)
+    if (!u) return
+    if (activeConv.members?.some(m => m.userId === userId)) return
+    const newMembers = [
+      ...(activeConv.members || []),
+      { userId, name: u.name, role: 'member', contributionPct: Math.round(100 / ((activeConv.members?.length || 0) + 1)) }
+    ]
+    // Rebalance contributions equally
+    const equalPct = Math.floor(100 / newMembers.length)
+    const remainder = 100 - equalPct * newMembers.length
+    const balanced = newMembers.map((m, i) => ({ ...m, contributionPct: equalPct + (i === 0 ? remainder : 0) }))
+    saveConversation({ ...activeConv, members: balanced, participantIds: balanced.map(m => m.userId) })
+    sendMessage(activeConvId, myId, myName, 'system', `${myName} a ajouté ${u.name}`)
+    refresh()
+    setShowAddMember(false)
+    setAddMemberSearch('')
+    showToast(`${u.name} ajouté·e au groupe`)
   }
   function handleRemoveMember(memberId) {
     if (!activeConv) return
@@ -1761,7 +1805,10 @@ export default function MessagingPage() {
             {requests.map(r => (
               <div key={r.id} style={{ ...CARD, padding: '12px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                 <Avatar user={{ id: r.fromId, name: r.fromName }} size={36} />
-                <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', flex: 1, margin: 0 }}>{r.fromName}</p>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{r.fromName}</p>
+                  {r.fromUsername && <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.muted, margin: 0, letterSpacing: '0.05em' }}>@{r.fromUsername}</p>}
+                </div>
                 <button onClick={() => handleDecline(r.id)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.muted, fontFamily: T.dmMono, fontSize: 9 }}>✕</button>
                 <button onClick={() => handleAccept(r.id)} style={{ background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.30)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>Accepter</button>
               </div>
@@ -1922,7 +1969,39 @@ export default function MessagingPage() {
                 </div>
               )}
               {/* Members */}
-              <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Membres</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Membres ({activeConv?.members?.length || 0})</p>
+                {amAdmin && (
+                  <button onClick={() => { setShowAddMember(v => !v); setAddMemberSearch('') }}
+                    style={{ background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '3px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>
+                    + Ajouter
+                  </button>
+                )}
+              </div>
+              {/* Add member search */}
+              {showAddMember && amAdmin && (
+                <div style={{ marginBottom: 12, background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.15)', borderRadius: 8, padding: '10px' }}>
+                  <input style={{ ...INPUT_S, marginBottom: 8, fontSize: 12 }} placeholder="Rechercher un ami…" value={addMemberSearch} onChange={e => setAddMemberSearch(e.target.value)} autoFocus />
+                  {(addMemberSearch.trim() ? searchUsers(addMemberSearch).filter(u => u.id !== myId) : friends.map(id => getUserById(id) || allUsers.find(u => u.id === id)).filter(Boolean))
+                    .filter(u => u && !activeConv?.members?.some(m => m.userId === u.id))
+                    .slice(0, 6)
+                    .map(u => (
+                      <button key={u.id} onClick={() => handleAddMember(u.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 4px', background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <Avatar user={u} size={28} />
+                        <div style={{ flex: 1, textAlign: 'left' }}>
+                          <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 14, color: '#fff', margin: 0 }}>{u.name}</p>
+                          <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
+                        </div>
+                        <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.teal }}>+ Ajouter</span>
+                      </button>
+                    ))}
+                  {(addMemberSearch.trim() ? searchUsers(addMemberSearch) : friends.map(id => getUserById(id) || allUsers.find(u => u.id === id)).filter(Boolean))
+                    .filter(u => u && !activeConv?.members?.some(m => m.userId === u.id)).length === 0 && (
+                    <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim, textAlign: 'center', margin: '8px 0 0' }}>Tous tes amis sont déjà dans ce groupe</p>
+                  )}
+                </div>
+              )}
               {activeConv?.members?.map(m => (
                 <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <Avatar user={getUserById(m.userId) || { id: m.userId, name: m.name }} size={34} showOnline />
@@ -2363,7 +2442,7 @@ export default function MessagingPage() {
                   if (confirmDialog.action === 'delete') handleDeleteGroup()
                   if (confirmDialog.onConfirm) confirmDialog.onConfirm()
                   if (confirmDialog.action === 'block_after_report') handleBlockUser(confirmDialog.userId, confirmDialog.userName)
-                  if (confirmDialog.action === 'block_user') { handleBlockUser(confirmDialog.userId, confirmDialog.userName); setChatSubView('messages'); setShowReportModal({ userId: confirmDialog.userId, userName: confirmDialog.userName }) }
+                  if (confirmDialog.action === 'block_user') { handleBlockUser(confirmDialog.userId, confirmDialog.userName); setChatSubView('messages') }
                   if (confirmDialog.action === 'clear_history') { deleteConversationHistory(activeConvId); setMessages([]); showToast('Historique effacé') }
                   setConfirmDialog(null)
                 }}
@@ -2438,28 +2517,32 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
   const dmMono = "'DM Mono', monospace"
   const cormorant = "'Cormorant Garamond', serif"
 
-  // Load events from localStorage bookings or use demo events
+  // Load events from all available sources
   const events = useMemo(() => {
     const seen = new Set()
     const result = []
+    const add = (id, name, date, price, placeName, image) => {
+      if (!id || seen.has(String(id))) return
+      seen.add(String(id))
+      result.push({ id, name, date, price, placeName: placeName || '', image: image || null })
+    }
     try {
       // Billets achetés
       const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-      bookings.forEach(b => {
-        if (b.eventId && !seen.has(b.eventId)) {
-          seen.add(b.eventId)
-          result.push({ id: b.eventId, name: b.eventName, date: b.eventDate, price: b.placePrice, placeName: b.place || '', image: b.eventImage || null })
-        }
-      })
+      bookings.forEach(b => add(b.eventId, b.eventName, b.eventDate, b.placePrice, b.place, b.eventImage))
     } catch {}
     try {
-      // Événements créés (organisateur)
+      // Événements créés (organisateur) — clé lib_user_events
       const userEvents = JSON.parse(localStorage.getItem('lib_user_events') || '[]')
-      userEvents.forEach(ev => {
-        if (ev.id && !seen.has(ev.id)) {
-          seen.add(ev.id)
-          result.push({ id: ev.id, name: ev.name || ev.title, date: ev.date, price: ev.price, placeName: ev.place || ev.location || '', image: ev.image || ev.imageUrl || null })
-        }
+      userEvents.forEach(ev => add(ev.id, ev.name || ev.title, ev.date, ev.price, ev.place || ev.location, ev.image || ev.imageUrl))
+    } catch {}
+    try {
+      // Événements créés — clé lib_created_events (organisateur via MesEvenementsPage)
+      const createdEvents = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
+      createdEvents.forEach(ev => {
+        const firstPlace = ev.places?.[0]
+        const price = firstPlace?.price ?? ev.price
+        add(ev.id, ev.name || ev.title, ev.date, price, ev.location || ev.place, ev.image || ev.imageUrl)
       })
     } catch {}
     return result

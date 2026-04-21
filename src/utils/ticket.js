@@ -62,24 +62,32 @@ export function getActiveBoosts() {
   } catch { return [] }
 }
 
-export function saveBoost(eventId, position, days, price, region = '') {
+export function saveBoost(eventId, position, days, price, region = '', userId = null) {
   try {
     const boost = {
+      id: `boost_${eventId}_${position}_${Date.now()}`,
       eventId,
       position,
-      region,   // région de l'événement — le boost n'est visible que dans cette région
+      region,
       price,
       days,
+      userId,
       purchasedAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
     }
     const all = JSON.parse(localStorage.getItem('lib_boosts') || '[]')
-    // Remove any existing boost for this event OR for this position within same region
     const filtered = all.filter(b =>
       b.eventId !== eventId &&
       !(b.position === position && (b.region || '') === (region || ''))
     )
-    localStorage.setItem('lib_boosts', JSON.stringify([...filtered, boost]))
+    const updated = [...filtered, boost]
+    localStorage.setItem('lib_boosts', JSON.stringify(updated))
+    // Sync to Firestore immediately
+    if (userId) {
+      import('./firestore-sync').then(({ syncDoc }) => {
+        syncDoc(`user_boosts/${userId}`, { items: updated.filter(b => b.userId === userId) })
+      }).catch(() => {})
+    }
   } catch {}
 }
 
@@ -115,7 +123,7 @@ export function getBoostSlotOccupant(position, region = '', allEvents = []) {
 export function getMyBookings(userId) {
   try {
     const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-    return all.filter(b => b.userId === userId || b.userEmail)
+    return all.filter(b => b.userId === userId)
   } catch { return [] }
 }
 
