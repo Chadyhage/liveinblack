@@ -101,8 +101,8 @@ export function setOnline(userId) {
   // Sync to Firestore so other devices can see presence
   import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
     if (!USE_REAL_FIREBASE) return
-    import('firebase/firestore').then(({ doc, updateDoc }) => {
-      updateDoc(doc(db, 'users', userId), { lastSeen: Date.now(), isOnline: true }).catch(() => {})
+    import('firebase/firestore').then(({ doc, setDoc }) => {
+      setDoc(doc(db, 'users', userId), { lastSeen: Date.now(), isOnline: true }, { merge: true }).catch(() => {})
     }).catch(() => {})
   }).catch(() => {})
 }
@@ -115,8 +115,8 @@ export function setOffline(userId) {
   } catch {}
   import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
     if (!USE_REAL_FIREBASE) return
-    import('firebase/firestore').then(({ doc, updateDoc }) => {
-      updateDoc(doc(db, 'users', userId), { isOnline: false, lastSeen: Date.now() }).catch(() => {})
+    import('firebase/firestore').then(({ doc, setDoc }) => {
+      setDoc(doc(db, 'users', userId), { isOnline: false, lastSeen: Date.now() }, { merge: true }).catch(() => {})
     }).catch(() => {})
   }).catch(() => {})
 }
@@ -128,10 +128,11 @@ export function isOnline(userId) {
     const ts = all[userId]
     if (ts && (Date.now() - ts) < 90000) return true
 
-    // 2. Firestore-synced accounts (populated from Firestore — 5min window)
+    // 2. Firestore-synced accounts (populated from Firestore via syncOnLogin — 5min window)
     try {
-      const users = JSON.parse(localStorage.getItem('lib_registered_users') || '[]')
+      const users = JSON.parse(localStorage.getItem('lib_users') || '[]')
       const u = users.find(u => u.uid === userId || u.id === userId)
+      if (u?.isOnline) return true
       if (u?.lastSeen && (Date.now() - u.lastSeen) < 5 * 60 * 1000) return true
     } catch {}
 
@@ -342,12 +343,14 @@ export function leaveGroup(convId, userId, userName) {
       }
       all[idx] = { ...conv, members: remaining }
     }
+    // Capture reference before any mutation changes its meaning
+    const updatedConv = remaining.length > 0 ? all[idx] : null
     localStorage.setItem('lib_conversations', JSON.stringify(all))
     // Sync updated conversation to Firestore so other devices see the change
     if (remaining.length > 0) {
       sendMessage(convId, userId, userName, 'system', `${userName} a quitté le groupe`)
       import('./firestore-sync').then(({ syncDoc }) => {
-        syncDoc(`conversations/${convId}`, all[idx])
+        syncDoc(`conversations/${convId}`, updatedConv)
       }).catch(() => {})
     } else {
       import('./firestore-sync').then(({ syncDelete }) => {
@@ -750,6 +753,10 @@ export function blockUser(myId, userId) {
     const all = JSON.parse(localStorage.getItem('lib_blocked') || '{}')
     all[myId] = [...new Set([...(all[myId] || []), userId])]
     localStorage.setItem('lib_blocked', JSON.stringify(all))
+    // Sync to Firestore so block persists cross-device
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`user_social/${myId}`, { blocked: all[myId] })
+    }).catch(() => {})
   } catch {}
 }
 
@@ -758,6 +765,10 @@ export function unblockUser(myId, userId) {
     const all = JSON.parse(localStorage.getItem('lib_blocked') || '{}')
     all[myId] = (all[myId] || []).filter(id => id !== userId)
     localStorage.setItem('lib_blocked', JSON.stringify(all))
+    // Sync to Firestore so unblock persists cross-device
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`user_social/${myId}`, { blocked: all[myId] })
+    }).catch(() => {})
   } catch {}
 }
 
@@ -768,9 +779,14 @@ export function isBlocked(myId, userId) {
 // ─── Reports ─────────────────────────────────────────────────────────────────
 export function reportUser(fromId, fromName, targetId, targetName, reason) {
   try {
+    const report = { id: Date.now().toString(), fromId, fromName, targetId, targetName, reason, reportedAt: new Date().toISOString() }
     const all = JSON.parse(localStorage.getItem('lib_reports') || '[]')
-    all.push({ id: Date.now().toString(), fromId, fromName, targetId, targetName, reason, reportedAt: new Date().toISOString() })
+    all.push(report)
     localStorage.setItem('lib_reports', JSON.stringify(all))
+    // Sync to Firestore so agents can review reports cross-device
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`reports/${report.id}`, report)
+    }).catch(() => {})
   } catch {}
 }
 

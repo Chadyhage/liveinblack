@@ -236,10 +236,7 @@ export async function syncOnLogin(uid) {
       loadCollection('conversations', [where('participants', 'array-contains', uid)]),
       loadCollection('conversations', [where('participantIds', 'array-contains', uid)]),
     ])
-    const convsSnap = mergeById([...directConvsSnap, ...groupConvsSnap], [], 'id').length
-      ? mergeById(directConvsSnap, groupConvsSnap, '_docId')
-      : [...directConvsSnap, ...groupConvsSnap]
-    // Deduplicate by id
+    // Deduplicate by id (participants query and participantIds query may return same conv)
     const seen = new Set()
     const allConvsSnap = [...directConvsSnap, ...groupConvsSnap].filter(c => {
       const id = c.id || c._docId
@@ -262,7 +259,7 @@ export async function syncOnLogin(uid) {
         allMessages[cid] = mergeById(localMsgs, msgDoc.items)
       }
     }
-    if (convsSnap.length) localStorage.setItem('lib_messages', JSON.stringify(allMessages))
+    if (allConvsSnap.length) localStorage.setItem('lib_messages', JSON.stringify(allMessages))
 
     // ── 6. Friends + Blocked ──
     const social = await loadDoc(`user_social/${uid}`)
@@ -309,12 +306,16 @@ export async function syncOnLogin(uid) {
     const normalizedUsers = usersSnap.map(u => ({ ...u, id: u.id || u.uid || u._docId }))
     localStorage.setItem('lib_users', JSON.stringify(normalizedUsers))
 
-    // ── 10-bis. Service orders ──
-    const orders = await loadCollection('service_orders')
-    if (orders.length) localStorage.setItem('lib_service_orders', JSON.stringify(orders))
+    // ── 10-bis. Service orders (only this user's orders as buyer or seller) ──
+    const [buyerOrders, sellerOrders] = await Promise.all([
+      loadCollection('service_orders', [where('buyerId', '==', uid)]),
+      loadCollection('service_orders', [where('sellerId', '==', uid)]),
+    ])
+    const allOrders = [...buyerOrders, ...sellerOrders].filter((o, i, arr) => arr.findIndex(x => (x.id || x._docId) === (o.id || o._docId)) === i)
+    if (allOrders.length) localStorage.setItem('lib_service_orders', JSON.stringify(allOrders))
 
     // ── 11. Group bookings ──
-    const gBookings = await loadCollection('group_bookings')
+    const gBookings = await loadCollection('group_bookings', [where('participantIds', 'array-contains', uid)])
     if (gBookings.length) {
       const obj = {}
       gBookings.forEach(gb => { obj[gb.id || gb._docId] = gb })
@@ -329,8 +330,8 @@ export async function syncOnLogin(uid) {
     const usedTix = await loadDoc(`used_tickets/${uid}`)
     if (usedTix?.items) localStorage.setItem('lib_used_tickets', JSON.stringify(usedTix.items))
 
-    // ── 14. Reports ──
-    const reports = await loadCollection('reports')
+    // ── 14. Reports (only reports submitted by this user) ──
+    const reports = await loadCollection('reports', [where('fromId', '==', uid)])
     if (reports.length) localStorage.setItem('lib_reports', JSON.stringify(reports))
 
     // ── 15. Public events (shared collection — all organizers) ──
