@@ -107,16 +107,19 @@ export default function OnboardingPrestataire() {
     // Step 2 — Salle
     adresseLieu: '', capaciteLieu: '', typeLieu: '', horairesAutorises: '', reglesDuLieu: '',
     // Step 2 — Matériel
-    categoriesMateriel: '', conditionsLocation: '', politiqueCaution: '',
+    categoriesMateriel: '', inventaire: '', conditionsLocation: '', politiqueCaution: '',
     // Step 2 — Food
     typeActiviteFood: '', menuBase: '', informationsReglementaires: '',
     alcoolFood: false,
-    // Step 3 — Paiement
-    titulaire: '', iban: '',
+    // Step 3 — Paiement (handled via Stripe Connect post-approval, no fields needed)
   })
 
   useEffect(() => {
-    if (!user) { navigate('/connexion?next=/onboarding-prestataire'); return }
+    // Delay redirect to avoid false-firing during Firebase Auth initialization
+    if (!user) {
+      const t = setTimeout(() => navigate('/connexion?next=/onboarding-prestataire'), 300)
+      return () => clearTimeout(t)
+    }
     const existing = getApplicationByUser(user.uid, 'prestataire')
     if (existing) {
       setApp(existing)
@@ -155,10 +158,7 @@ export default function OnboardingPrestataire() {
       if (!f.responsableNom.trim()) errs.responsableNom = 'Requis'
       if (!f.ville.trim()) errs.ville = 'Requis'
     }
-    if (s === 3) {
-      if (!f.titulaire.trim()) errs.titulaire = 'Requis'
-      if (!f.iban.trim()) errs.iban = 'Requis'
-    }
+    // Step 3 (payment) — no validation required, Stripe Connect handles it post-approval
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -179,7 +179,8 @@ export default function OnboardingPrestataire() {
     const res = await uploadDocument(app.id, docKey, file)
     if (res.ok) {
       setUploadStatus(s => ({ ...s, [docKey]: 'done' }))
-      setApp(getApplicationByUser(user.uid, 'prestataire'))
+      const fresh = getApplicationByUser(user.uid, 'prestataire')
+      if (fresh) setApp(fresh)
       showToast('Document enregistré')
     } else {
       setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
@@ -362,7 +363,7 @@ export default function OnboardingPrestataire() {
                   </select>
                 </Field>
                 <Field label="Besoins techniques (optionnel)">
-                  <textarea style={{ ...S.input, minHeight: 70, resize: 'vertical' }} value={f.besoinstech} onChange={e => update('besoinstech', e.target.value)} placeholder="Table de mix, monitoring, rider technique..." />
+                  <textarea style={{ ...S.input, minHeight: 70, resize: 'vertical' }} value={f.besoinstechniques} onChange={e => update('besoinstechniques', e.target.value)} placeholder="Table de mix, monitoring, rider technique..." />
                 </Field>
               </div>
             )}
@@ -446,24 +447,16 @@ export default function OnboardingPrestataire() {
         {/* ── STEP 3: Paiement ── */}
         {step === 3 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>💳 Coordonnées bancaires</p>
-            <div style={{ padding: '10px 14px', background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.2)', borderRadius: 6 }}>
-              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(200,169,110,0.8)', letterSpacing: '0.08em', margin: 0 }}>
-                Ces informations sont nécessaires pour recevoir tes paiements via LIVEINBLACK. Stockées de manière sécurisée.
+            <p style={S.section}>💳 Paiement</p>
+            <div style={{ padding: '14px 16px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.15)', borderRadius: 8 }}>
+              <p style={{ fontFamily: DM, fontSize: 8, color: 'rgba(78,232,200,0.7)', letterSpacing: '0.1em', margin: '0 0 8px', textTransform: 'uppercase' }}>Stripe Connect</p>
+              <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.7 }}>
+                Tes coordonnées bancaires seront enregistrées via <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Stripe Connect</strong> une fois ton dossier approuvé — directement sur la plateforme sécurisée Stripe, sans jamais transiter par LIVEINBLACK.
               </p>
             </div>
-            <Field label="Titulaire du compte" required>
-              <input style={{ ...S.input, borderColor: errors.titulaire ? '#e05aaa' : undefined }} value={f.titulaire} onChange={e => update('titulaire', e.target.value)} placeholder="Nom complet ou raison sociale" />
-              {errors.titulaire && <p style={S.error}>{errors.titulaire}</p>}
-            </Field>
-            <Field label="IBAN / RIB" required>
-              <input style={{ ...S.input, borderColor: errors.iban ? '#e05aaa' : undefined }} value={f.iban} onChange={e => update('iban', e.target.value.toUpperCase())} placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" />
-              {errors.iban && <p style={S.error}>{errors.iban}</p>}
-            </Field>
-            <div style={{ padding: '12px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
-              <p style={{ fontFamily: DM, fontSize: 8, color: 'rgba(78,232,200,0.6)', letterSpacing: '0.1em', margin: '0 0 4px', textTransform: 'uppercase' }}>Stripe Connect</p>
-              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: 0, lineHeight: 1.6 }}>
-                Une fois validé, tu pourras connecter ton compte bancaire via Stripe Connect pour recevoir les reversements automatiquement.
+            <div style={{ padding: '10px 14px', background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.15)', borderRadius: 6 }}>
+              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(200,169,110,0.7)', letterSpacing: '0.06em', margin: 0, lineHeight: 1.6 }}>
+                ℹ️ Pour continuer, clique simplement sur <strong>Suivant</strong>. Tu recevras un lien Stripe par email après validation de ton dossier.
               </p>
             </div>
           </div>

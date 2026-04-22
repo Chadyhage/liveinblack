@@ -285,6 +285,29 @@ function PrestataireDashboard({ user, navigate }) {
 
   const categories = CATALOG_CATEGORIES[prestType] || CATALOG_CATEGORIES.prestation
 
+  // Re-sync catalog + orders from Firestore on mount (syncOnLogin may complete after initial render)
+  useEffect(() => {
+    if (!uid) return
+    // Direct Firestore fetch for this user's catalog
+    import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
+      if (!USE_REAL_FIREBASE) return
+      import('firebase/firestore').then(({ doc, getDoc }) => {
+        getDoc(doc(db, 'catalogs', uid)).then(snap => {
+          if (snap.exists()) {
+            const items = snap.data().items || []
+            if (items.length > 0) {
+              localStorage.setItem(`lib_catalog_${uid}`, JSON.stringify(items))
+              setCatalog(items)
+            }
+          }
+        }).catch(() => {})
+      }).catch(() => {})
+    }).catch(() => {})
+    // Re-read orders after a short delay
+    const t = setTimeout(() => setOrders(getOrdersForSeller(uid)), 1000)
+    return () => clearTimeout(t)
+  }, [uid]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
   function refreshData() {

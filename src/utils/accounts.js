@@ -64,6 +64,13 @@ export function updateAccount(uid, patch) {
 export function deleteAccount(uid) {
   const all = getAllAccounts().filter(u => u.uid !== uid)
   localStorage.setItem(USERS_KEY, JSON.stringify(all))
+  // Also remove from Firestore
+  import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
+    if (!USE_REAL_FIREBASE) return
+    import('firebase/firestore').then(({ doc, deleteDoc }) => {
+      deleteDoc(doc(db, 'users', uid)).catch(() => {})
+    }).catch(() => {})
+  }).catch(() => {})
 }
 
 // ─── Pending validations (prestataires + agents) ───────────────────────────
@@ -112,15 +119,15 @@ export async function approveValidation(uid) {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, updateDoc, deleteDoc } = await import('firebase/firestore')
-      // Use updateDoc (not setDoc) to preserve the original users/{uid} document fields
-      await updateDoc(doc(db, 'users', uid), {
+      const { doc, setDoc, updateDoc, deleteDoc } = await import('firebase/firestore')
+      // Use setDoc with merge to preserve existing fields AND create doc if missing
+      await setDoc(doc(db, 'users', uid), {
         status: 'active',
         approvedAt: Date.now(),
         role: resolvedRole,
         activeRole: resolvedRole,
         enabledRoles: approved.enabledRoles,
-      })
+      }, { merge: true })
       // _docId = vrai ID Firestore du document (ajouté par loadCollection), sinon fallback sur pending.id ou uid
       const pendingDocId = pending._docId || pending.id || uid
       // Marquer comme approuvé avant de supprimer (si delete échoue, le filtre le masquera)
@@ -150,8 +157,8 @@ export async function rejectValidation(uid, reason = '') {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, updateDoc, deleteDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', uid), { status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason })
+      const { doc, setDoc, updateDoc, deleteDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', uid), { status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason }, { merge: true })
       const pendingDocId = pending._docId || pending.id || uid
       try { await updateDoc(doc(db, 'pending_validations', pendingDocId), { status: 'rejected' }) } catch {}
       await deleteDoc(doc(db, 'pending_validations', pendingDocId))

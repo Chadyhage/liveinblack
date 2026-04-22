@@ -13,6 +13,7 @@ export function getCatalog(userId) {
 }
 
 export function saveCatalog(userId, items) {
+  if (!userId) return
   localStorage.setItem(CATALOG_KEY(userId), JSON.stringify(items))
   // Sync to Firestore so the catalog is visible cross-device
   import('./firestore-sync').then(({ syncDoc }) => {
@@ -53,7 +54,7 @@ export function getOrdersForBuyer(userId) {
 }
 
 export function placeOrder({ buyerId, buyerName, sellerId, sellerName, sellerType, items }) {
-  const subtotal = items.reduce((s, i) => s + (i.price * i.qty), 0)
+  const subtotal = items.reduce((s, i) => s + ((+i.price || 0) * (+i.qty || 0)), 0)
   const commission = Math.round(subtotal * COMMISSION_RATE * 100) / 100
   const sellerReceives = Math.round((subtotal - commission) * 100) / 100
 
@@ -80,13 +81,19 @@ export function placeOrder({ buyerId, buyerName, sellerId, sellerName, sellerTyp
 }
 
 export function updateOrderStatus(orderId, status) {
-  const orders = getAllOrders().map(o => o.id === orderId ? { ...o, status, updatedAt: Date.now() } : o)
+  const updatedAt = Date.now()
+  const orders = getAllOrders().map(o => o.id === orderId ? { ...o, status, updatedAt } : o)
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders))
   // Sync updated status to Firestore
   const updated = orders.find(o => o.id === orderId)
   if (updated) {
     import('./firestore-sync').then(({ syncDoc }) => {
       syncDoc(`service_orders/${orderId}`, updated)
+    }).catch(() => {})
+  } else {
+    // Order not in local cache (e.g. new device) — patch Firestore directly
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`service_orders/${orderId}`, { status, updatedAt })
     }).catch(() => {})
   }
 }

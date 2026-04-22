@@ -486,7 +486,7 @@ export default function MonDossierPage() {
     // The admin writes to Firestore — the candidate must read from there to get changes
     import('../utils/applications').then(({ fetchApplicationsFromFirestore }) => {
       fetchApplicationsFromFirestore().then(apps => {
-        const remote = apps.find(a => a.uid === user.uid)
+        const remote = apps.find(a => a.uid === user.uid || a.userId === user.uid)
         if (!remote) return
         // Use Firestore version if it's newer (or nothing was in localStorage)
         if (!found || (remote.updatedAt || 0) > (found.updatedAt || 0)) {

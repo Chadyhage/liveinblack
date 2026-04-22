@@ -253,10 +253,11 @@ export default function OnboardingOrganisateur() {
           const { doc, setDoc } = await import('firebase/firestore')
           const cred = await createUserWithEmailAndPassword(auth, regEmail.trim(), regPassword)
           uid = cred.user.uid
-          // Create Firestore user doc — status 'draft' (not yet pending, dossier not submitted)
+          // Create Firestore user doc — role stays 'client' until admin approval
+          // (OnboardingGuard redirects status:'draft' to the form, so navigation still works)
           await setDoc(doc(db, 'users', uid), {
             uid, email: regEmail.trim(), name, phone,
-            role: 'organisateur', activeRole: 'organisateur', enabledRoles: ['organisateur'],
+            role: 'client', activeRole: 'client', enabledRoles: ['client'],
             status: 'draft', emailVerified: false, createdAt: Date.now(),
           })
         } else {

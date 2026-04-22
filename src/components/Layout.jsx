@@ -62,8 +62,7 @@ export default function Layout({ children, hideNav, chatMode }) {
   const { user, openAuthModal } = useAuth()
   const activeRole = user?.role || null
   const isAgent    = activeRole === 'agent'
-  const pendingCount = isAgent ? getTotalPendingCount() : 0
-
+  const [pendingCount, setPendingCount] = useState(() => isAgent ? getTotalPendingCount() : 0)
 
   const navItems = getNavItems(activeRole)
   const uid = getUserId(user)
@@ -99,6 +98,14 @@ export default function Layout({ children, hideNav, chatMode }) {
     const interval = setInterval(() => setUnreadMsgCount(getTotalUnreadCount(uid)), 3000)
     return () => clearInterval(interval)
   }, [uid])
+
+  // Poll pending validations count for agent badge
+  useEffect(() => {
+    if (!isAgent) return
+    setPendingCount(getTotalPendingCount())
+    const id = setInterval(() => setPendingCount(getTotalPendingCount()), 5000)
+    return () => clearInterval(id)
+  }, [isAgent])
 
   function handleProtectedNav(path) {
     if (!user) {

@@ -21,7 +21,7 @@ export function getBalance(userId) {
 }
 
 export function addFunds(userId, amount, description = 'Rechargement') {
-  if (!userId || amount <= 0) return null
+  if (!userId || !Number.isFinite(amount) || amount <= 0) return null
   const wallet = getWallet(userId)
   wallet.balance = Math.round((wallet.balance + amount) * 100) / 100
   wallet.transactions = [
@@ -34,7 +34,7 @@ export function addFunds(userId, amount, description = 'Rechargement') {
 
 // Returns the updated wallet on success, false if insufficient funds
 export function deductFunds(userId, amount, description = 'Paiement') {
-  if (!userId) return false
+  if (!userId || !Number.isFinite(amount) || amount <= 0) return false
   const wallet = getWallet(userId)
   if (wallet.balance < amount) return false
   wallet.balance = Math.round((wallet.balance - amount) * 100) / 100

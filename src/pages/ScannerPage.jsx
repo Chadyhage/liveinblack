@@ -176,24 +176,35 @@ export default function ScannerPage() {
   const [servedItems, setServedItems] = useState({})
 
   function markUsed(code) {
-    setUsedCodes(prev => {
-      const next = new Set([...prev, code])
-      const arr = [...next]
-      try { localStorage.setItem('lib_used_tickets', JSON.stringify(arr)) } catch {}
-      // Sync to Firestore so other devices (multi-scanner soirée) are aware
-      if (myId) {
-        import('../utils/firestore-sync').then(({ syncDoc }) => {
-          syncDoc(`used_tickets/${myId}`, { items: arr, updatedAt: new Date().toISOString() })
-        }).catch(() => {})
-      }
-      return next
-    })
+    // Re-read localStorage to catch validations from other scanners/devices
+    let persisted = new Set()
+    try { persisted = new Set(JSON.parse(localStorage.getItem('lib_used_tickets') || '[]')) } catch {}
+    const next = new Set([...persisted, code])
+    const arr = [...next]
+    // Write outside of setState to avoid Strict Mode double-call side effects
+    try { localStorage.setItem('lib_used_tickets', JSON.stringify(arr)) } catch {}
+    setUsedCodes(next)
+    // Sync each validated ticket as its own Firestore doc for cross-scanner awareness
+    if (myId) {
+      import('../utils/firestore-sync').then(({ syncDoc }) => {
+        syncDoc(`used_tickets/${myId}`, { items: arr, updatedAt: new Date().toISOString() })
+      }).catch(() => {})
+    }
   }
 
   // ── Code processing ──
   function processCode(rawValue) {
     setCameraActive(false)
     const val = rawValue.trim()
+    // Merge in-memory set with persisted set to catch cross-device validations
+    let currentUsed = usedCodes
+    try {
+      const persisted = new Set(JSON.parse(localStorage.getItem('lib_used_tickets') || '[]'))
+      if (persisted.size > usedCodes.size) {
+        currentUsed = persisted
+        setUsedCodes(persisted)
+      }
+    } catch {}
 
     // URL with embedded token: http://…/ticket/{token}
     const tokenMatch = val.match(/\/ticket\/([A-Za-z0-9_-]+)/)
@@ -201,7 +212,7 @@ export default function ScannerPage() {
       const { valid, data } = verifyTicketToken(tokenMatch[1])
       if (!valid || !data) { setResult({ code: val, status: 'invalid' }); return }
       const tc = data.tc
-      const isUsed = usedCodes.has(tc)
+      const isUsed = currentUsed.has(tc)
       setResult({
         code: tc,
         status: isUsed ? 'used' : 'valid',
@@ -219,7 +230,7 @@ export default function ScannerPage() {
       const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
       const booking = bookings.find(b => b.ticketCode === clean)
       if (booking) {
-        const isUsed = usedCodes.has(clean)
+        const isUsed = currentUsed.has(clean)
         setResult({
           code: clean,
           status: isUsed ? 'used' : 'valid',
@@ -233,7 +244,7 @@ export default function ScannerPage() {
     // Demo / mock fallback
     const ticket = MOCK_TICKETS[clean]
     if (!ticket) { setResult({ code: clean, status: 'invalid' }); return }
-    if (ticket.used || usedCodes.has(clean)) { setResult({ code: clean, status: 'used', ticket }); return }
+    if (ticket.used || currentUsed.has(clean)) { setResult({ code: clean, status: 'used', ticket }); return }
     setResult({ code: clean, status: 'valid', ticket })
   }
 

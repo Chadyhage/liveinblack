@@ -1865,6 +1865,13 @@ function AvatarUpload({ user, setUser }) {
         const idx = users.findIndex(u => u.id === user.id || u.email === user.email)
         if (idx >= 0) { users[idx] = { ...users[idx], avatar }; localStorage.setItem('lib_users', JSON.stringify(users)) }
       } catch {}
+      // Sync avatar to Firestore so it appears cross-device
+      const uid = user?.uid || user?.id
+      if (uid) {
+        import('../utils/firestore-sync').then(({ syncDoc }) => {
+          syncDoc(`users/${uid}`, { avatar })
+        }).catch(() => {})
+      }
       setCropData(null)
     }
     img.src = cropData.dataUrl

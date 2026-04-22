@@ -104,7 +104,7 @@ function StatusBadge({ status }) {
 // ─── Main Component ────────────────────────────────────────────────────────
 // ── Local storage keys à vider lors d'un reset total ──────────────────────
 const LIB_KEYS = [
-  'lib_user', 'lib_accounts', 'lib_users', 'lib_registered_users',
+  'lib_user', 'lib_users', 'lib_registered_users',
   'lib_bookings', 'lib_events', 'lib_created_events',
   'lib_conversations', 'lib_messages', 'lib_wallet', 'lib_social',
   'lib_pending_validations', 'lib_role_requests', 'lib_applications',
@@ -298,15 +298,15 @@ export default function AgentPage() {
     return matchSearch && matchRole && matchStatus
   })
 
-  function handleApprove(uid) {
-    approveValidation(uid)
+  async function handleApprove(uid) {
+    await approveValidation(uid)
     refresh()
     showToast('Compte validé')
     setConfirmAction(null)
   }
 
-  function handleReject(uid) {
-    rejectValidation(uid, rejectReason)
+  async function handleReject(uid) {
+    await rejectValidation(uid, rejectReason)
     setRejectReason('')
     refresh()
     showToast('Compte refusé', 'error')
@@ -314,11 +314,12 @@ export default function AgentPage() {
   }
 
   async function handleBan(uid) {
-    updateAccount(uid, { status: 'banned' })
+    const bannedAt = Date.now()
+    updateAccount(uid, { status: 'banned', bannedAt })
     try {
       const { db } = await import('../firebase')
       const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', uid), { status: 'banned', bannedAt: Date.now() })
+      await updateDoc(doc(db, 'users', uid), { status: 'banned', bannedAt })
     } catch {}
     refresh()
     showToast('Compte suspendu')
@@ -1401,10 +1402,24 @@ export default function AgentPage() {
                 }}>
                   <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>Générer un nouveau mdp</span>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const newPwd = 'LIB' + Math.random().toString(36).slice(2, 8).toUpperCase()
+                      // Local-auth mode: store in localStorage
                       updateAccount(selectedUser.uid, { password: newPwd })
-                      showToast(`Nouveau mdp : ${newPwd}`)
+                      // Firebase Auth mode: send a password reset email (Firebase doesn't allow
+                      // setting passwords directly from client SDK without re-auth)
+                      try {
+                        const { USE_REAL_FIREBASE, auth } = await import('../firebase')
+                        if (USE_REAL_FIREBASE && selectedUser.email) {
+                          const { sendPasswordResetEmail } = await import('firebase/auth')
+                          await sendPasswordResetEmail(auth, selectedUser.email)
+                          showToast(`Lien de réinitialisation envoyé à ${selectedUser.email}`)
+                        } else {
+                          showToast(`Nouveau mdp (local) : ${newPwd}`)
+                        }
+                      } catch {
+                        showToast(`Nouveau mdp : ${newPwd}`)
+                      }
                       refresh()
                     }}
                     style={{
@@ -1629,14 +1644,12 @@ export default function AgentPage() {
                   const text = adminNoteInput.trim()
                   if (!text) return
                   const newNote = { id: Date.now().toString(), text, done: false, createdAt: Date.now() }
-                  await saveNotes([...notes.filter(n => n.id !== 'legacy'), newNote])
-                  if (legacyNote) {
-                    // also keep legacy note as real entry
-                    await saveNotes([
-                      { id: 'legacy-' + Date.now(), text: legacyNote, done: false, createdAt: selectedApp.updatedAt || Date.now() },
-                      newNote,
-                    ])
-                  }
+                  // Merge into a single saveNotes call to avoid stale-closure race
+                  const filtered = notes.filter(n => n.id !== 'legacy')
+                  const withLegacy = legacyNote
+                    ? [{ id: 'legacy-' + Date.now(), text: legacyNote, done: false, createdAt: selectedApp.updatedAt || Date.now() }, ...filtered]
+                    : filtered
+                  await saveNotes([...withLegacy, newNote])
                   setAdminNoteInput('')
                   showToast('Note ajoutée')
                 }
@@ -2217,6 +2230,7 @@ export default function AgentPage() {
                   <textarea
                     placeholder="Ex : demande refusée car événement en cours…"
                     rows={2}
+                    value={delResNote}
                     onChange={e => setDelResNote(e.target.value)}
                     style={{
                       width: '100%', boxSizing: 'border-box',

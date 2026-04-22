@@ -261,7 +261,7 @@ export default function WalletPage() {
     const amt = parseFloat(amount)
     if (!amt || amt <= 0) return
     const w = addFunds(userId, amt, 'Rechargement')
-    setWallet(w)
+    if (w) setWallet(w)
     setFlash(true)
     setTimeout(() => setFlash(false), 1200)
     setCustomAmount('')

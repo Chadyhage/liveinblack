@@ -229,29 +229,6 @@ export default function MesEvenementsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  // Compte en attente de validation → écran d'attente
-  if (user?.status === 'pending') {
-    return (
-      <Layout>
-        <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-          <div style={{ textAlign: 'center', maxWidth: 400 }}>
-            <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 12 }}>
-              Validation en cours
-            </p>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24 }}>
-              Ton compte organisateur est en attente de validation par l'équipe LIVEINBLACK. Tu pourras créer des événements dès que ton dossier sera approuvé.
-            </p>
-            <button onClick={() => navigate('/mon-dossier')}
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
-              Voir mon dossier →
-            </button>
-          </div>
-        </div>
-      </Layout>
-    )
-  }
-
   const userCanCreate = canCreateEvent(user)
   const imageInputRef = useRef(null)
 
@@ -383,7 +360,7 @@ export default function MesEvenementsPage() {
 
   function handlePublish() {
     const eventData = {
-      id: editingEventId || Date.now(),
+      id: editingEventId || String(Date.now()),
       name: form.name,
       subtitle: form.description?.slice(0, 60) || '',
       date: form.date,
@@ -441,7 +418,7 @@ export default function MesEvenementsPage() {
       const eventToSync = { ...eventData, createdBy: user?.uid, organizerId: user?.uid, organizerName: user?.name || 'Organisateur' }
       syncDoc(`events/${eventData.id}`, eventToSync)
       // Also keep in organizer's personal collection for their dashboard
-      syncDoc(`user_events/${user?.uid}`, { items: updated })
+      if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: updated })
     }).catch(() => {})
 
     if (eventType === 'private' && form.privateCode.trim()) {
@@ -549,11 +526,34 @@ export default function MesEvenementsPage() {
     // Remove from shared Firestore collection too
     import('../utils/firestore-sync').then(({ syncDelete, syncDoc }) => {
       syncDelete(`events/${id}`)
-      syncDoc(`user_events/${user?.uid}`, { items: updated })
+      if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: updated })
     }).catch(() => {})
   }
 
-  // ─── Role guard ──────────────────────────────────────────────────────────────
+  // ─── Guards (after all hooks — respects Rules of Hooks) ───────────────────────
+  // Compte en attente de validation
+  if (user?.status === 'pending') {
+    return (
+      <Layout>
+        <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div style={{ textAlign: 'center', maxWidth: 400 }}>
+            <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 12 }}>
+              Validation en cours
+            </p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24 }}>
+              Ton compte organisateur est en attente de validation par l'équipe LIVEINBLACK. Tu pourras créer des événements dès que ton dossier sera approuvé.
+            </p>
+            <button onClick={() => navigate('/mon-dossier')}
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
+              Voir mon dossier →
+            </button>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
   if (!userCanCreate) {
     return (
       <Layout>

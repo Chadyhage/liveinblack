@@ -207,7 +207,7 @@ export default function EventDetailPage() {
   const { user, setUser, openAuthModal } = useAuth()
   const event = getAllEvents().find((e) => e.id === parseInt(id))
 
-  const hasPlaylist = !!event.playlist
+  const hasPlaylist = !!event?.playlist
   const TABS = ['Réservation', ...(hasPlaylist ? ['Playlist'] : []), 'Info']
 
   const [activeTab, setActiveTab] = useState(() => {
@@ -269,7 +269,9 @@ export default function EventDetailPage() {
     total + activeMenu.reduce((sum, item) => sum + (t.items[item.name] || 0) * item.price, 0), 0)
   const totalPrice = placePrice + preorderTotal
   const walletBalance = getUserId(user) ? getBalance(getUserId(user)) : 0
-  const canAfford = totalPrice === 0 || walletBalance >= totalPrice * ticketQty
+  // Correct total: place price × qty + preorder total (preorderTotal already sums all tickets)
+  const grandTotal = placePrice * ticketQty + preorderTotal
+  const canAfford = grandTotal === 0 || walletBalance >= grandTotal
   const isAuctionPlace = selectedPlaceObj?.auctionType === 'auction'
   const currentAuctionPrice = 0
   const userCanBook = canBook(user)
@@ -307,8 +309,8 @@ export default function EventDetailPage() {
     }
     setEventStartedError(false)
     // Déduire le montant du portefeuille (si l'événement est payant)
-    if (totalPrice > 0) {
-      const deducted = deductFunds(uid, totalPrice * ticketQty, `Réservation — ${event.name} (${selectedPlace})`)
+    if (grandTotal > 0) {
+      const deducted = deductFunds(uid, grandTotal, `Réservation — ${event.name} (${selectedPlace})`)
       if (!deducted) {
         setBookingStep('place')
         setShowConfirmModal(false)
@@ -322,7 +324,10 @@ export default function EventDetailPage() {
       const newBookings = []
 
       for (let n = 0; n < ticketQty; n++) {
-        const code = Math.random().toString(36).slice(2, 8).toUpperCase()
+        // Use crypto.getRandomValues for collision-resistant ticket codes
+        const arr = new Uint32Array(1)
+        crypto.getRandomValues(arr)
+        const code = arr[0].toString(36).slice(0, 6).toUpperCase().padEnd(6, '0')
         const fullCode = `LIB-${event.id.toString().padStart(3, '0')}-${code}`
         const tOrder = perTicketOrders[n] || { items: {}, shows: {} }
         const tSummary = activeMenu.filter(i => (tOrder.items[i.name] || 0) > 0)
@@ -360,28 +365,37 @@ export default function EventDetailPage() {
         const myBookings = allBookings.filter(b => b.userId === uid)
         if (myBookings.length) syncDoc(`user_bookings/${uid}`, { items: myBookings })
       }).catch(() => {})
-    } catch {}
 
-    setBookedTickets(newTickets)
-    if (user && uid) {
-      const newPoints = (user.points || 0) + ticketQty
-      setUser({ ...user, points: newPoints })
-      // Persiste les points dans Firestore + localStorage
-      import('../utils/firestore-sync').then(({ syncDoc }) => {
-        syncDoc(`users/${uid}`, { points: newPoints })
-      }).catch(() => {})
-      import('../utils/accounts').then(({ updateAccount }) => {
-        updateAccount(uid, { points: newPoints })
-      }).catch(() => {})
-      setShowPointsToast(true)
-      setTimeout(() => setShowPointsToast(false), 2500)
+      // ── Success: update UI state inside try to ensure tickets are saved ──
+      setBookedTickets(newTickets)
+      if (user && uid) {
+        const newPoints = (user.points || 0) + ticketQty
+        setUser({ ...user, points: newPoints })
+        import('../utils/firestore-sync').then(({ syncDoc }) => {
+          syncDoc(`users/${uid}`, { points: newPoints })
+        }).catch(() => {})
+        import('../utils/accounts').then(({ updateAccount }) => {
+          updateAccount(uid, { points: newPoints })
+        }).catch(() => {})
+        setShowPointsToast(true)
+        setTimeout(() => setShowPointsToast(false), 2500)
+      }
+      setAllBookedThisSession(prev => [...prev, {
+        place: selectedPlace,
+        tickets: newTickets,
+        totalPrice: grandTotal,
+      }])
+      setBookingStep('confirmed')
+    } catch {
+      // Booking save failed — refund the wallet to avoid lost funds
+      if (grandTotal > 0) {
+        import('../utils/wallet').then(({ refundFunds }) => {
+          refundFunds(uid, grandTotal, 'Remboursement automatique — erreur technique')
+        }).catch(() => {})
+      }
+      setShowConfirmModal(false)
+      return
     }
-    setAllBookedThisSession(prev => [...prev, {
-      place: selectedPlace,
-      tickets: newTickets,
-      totalPrice,
-    }])
-    setBookingStep('confirmed')
     if (hasPlaylist) {
       setPlaylistTabBlink(true)
       setTimeout(() => setPlaylistTabBlink(false), 5000)
@@ -1146,7 +1160,7 @@ export default function EventDetailPage() {
                 <BookedCard
                   event={event}
                   selectedPlace={selectedPlace}
-                  totalPrice={totalPrice}
+                  totalPrice={grandTotal}
                   bookedTickets={bookedTickets}
                   onBookAnother={resetBooking}
                 />

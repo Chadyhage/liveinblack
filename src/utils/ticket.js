@@ -77,7 +77,7 @@ export function saveBoost(eventId, position, days, price, region = '', userId = 
     }
     const all = JSON.parse(localStorage.getItem('lib_boosts') || '[]')
     const filtered = all.filter(b =>
-      b.eventId !== eventId &&
+      b.eventId !== eventId ||
       !(b.position === position && (b.region || '') === (region || ''))
     )
     const updated = [...filtered, boost]

@@ -2531,11 +2531,7 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
       const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
       bookings.forEach(b => add(b.eventId, b.eventName, b.eventDate, b.placePrice, b.place, b.eventImage))
     } catch {}
-    try {
-      // Événements créés (organisateur) — clé lib_user_events
-      const userEvents = JSON.parse(localStorage.getItem('lib_user_events') || '[]')
-      userEvents.forEach(ev => add(ev.id, ev.name || ev.title, ev.date, ev.price, ev.place || ev.location, ev.image || ev.imageUrl))
-    } catch {}
+    // Note: user events are stored in lib_created_events (already handled below)
     try {
       // Événements créés — clé lib_created_events (organisateur via MesEvenementsPage)
       const createdEvents = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
