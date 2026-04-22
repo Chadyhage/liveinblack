@@ -103,6 +103,12 @@ service cloud.firestore {
       allow read, write: if isOwner(uid) || isAgent();
     }
 
+    // ── Playlists événements (lecture publique, écriture = participants connectés) ──
+    match /event_playlists/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
     // ── Boosts ────────────────────────────────────────────────────────────────
     match /user_boosts/{uid} {
       allow read:  if isSignedIn();
