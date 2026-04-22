@@ -138,6 +138,10 @@ export default function PlaylistSystem({ event, booked }) {
     setSongsState((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater
       try { localStorage.setItem(songsKey, JSON.stringify(next)) } catch {}
+      // Sync playlist to Firestore so other devices (and the DJ screen) see it live
+      import('../utils/firestore-sync').then(({ syncDoc }) => {
+        syncDoc(`event_playlists/${event.id}`, { songs: next, updatedAt: new Date().toISOString() })
+      }).catch(() => {})
       return next
     })
   }
@@ -213,7 +217,9 @@ export default function PlaylistSystem({ event, booked }) {
     setSearchResults([])
     audioRef.current?.pause()
     setPreview(null)
-    const remaining = songsRemaining - 1
+    // Use nextAdded for accurate remaining count (state update is async)
+    const nextAdded = songsAdded + 1
+    const remaining = Math.max(0, ticketCount - nextAdded)
     setMessage(remaining > 0
       ? `ok:"${song.title}" ajouté ! Il te reste ${remaining} son${remaining > 1 ? 's' : ''} à proposer.`
       : `ok:"${song.title}" ajouté à la playlist !`)

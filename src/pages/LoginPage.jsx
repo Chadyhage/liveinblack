@@ -8,6 +8,9 @@ import {
   requestAdditionalRole, getAccountByPhone, updateAccount, deleteAccount,
 } from '../utils/accounts'
 
+// ─── Constants ────────────────────────────────────────────────────────────
+const SUPER_ADMIN_EMAIL = 'hagechady4@gmail.com'
+
 // ─── Auth adapters ────────────────────────────────────────────────────────
 
 // role = null means single-account login (old behaviour), role = 'organisateur' etc = targeted
@@ -83,10 +86,8 @@ async function doEmailLogin(email, password, role = null) {
     setDoc(doc(db, 'users', cred.user.uid), agentObj).catch(() => {})
     return agentObj
   }
-  return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', status: 'active', emailVerified: true }
+  return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', activeRole: 'user', enabledRoles: ['user'], status: 'active', emailVerified: true }
 }
-
-const SUPER_ADMIN_EMAIL = 'hagechady4@gmail.com'
 
 async function doEmailRegister(data) {
   const { email, password, name, phone, role, prestataireType } = data

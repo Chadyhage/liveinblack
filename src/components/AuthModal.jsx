@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getAllAccountsByEmail } from '../utils/accounts'
@@ -22,6 +22,14 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
   const [loading, setLoading]       = useState(false)
   const [roleChoices, setRoleChoices] = useState(null)  // array when email has multiple accounts
   const [selectedUid, setSelectedUid] = useState(null)  // uid of chosen account
+
+  // Reset form state whenever the modal reopens
+  useEffect(() => {
+    if (open) {
+      setEmail(''); setPassword(''); setError('')
+      setRoleChoices(null); setSelectedUid(null); setShowPwd(false)
+    }
+  }, [open])
 
   if (!open) return null
 
@@ -61,9 +69,15 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
         const snap = await getDoc(doc(db, 'users', cred.user.uid))
         const profile = snap.exists()
           ? snap.data()
-          : { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', status: 'active' }
+          : { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', activeRole: 'user', enabledRoles: ['user'], status: 'active', emailVerified: true }
 
-        if (profile.status === 'pending')  { setError('Compte en attente de validation.'); setLoading(false); return }
+        if (profile.status === 'pending')  {
+          setLoading(false)
+          setUser(profile)
+          close()
+          navigate('/mon-dossier')
+          return
+        }
         if (profile.status === 'rejected') { setError('Compte rejeté. Contacte le support.'); setLoading(false); return }
 
         setLoading(false)

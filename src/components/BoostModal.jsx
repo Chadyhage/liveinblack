@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { saveBoost, isBoostSlotTaken, getActiveBoostsByRegion } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
-// wallet: paiement fictif — Stripe à venir
+import { deductFunds } from '../utils/wallet'
 
 const BOOST_PLANS = [
   {
@@ -141,10 +140,18 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
 
   function confirmBoost() {
     if (!chosen || !chosenTier) return
-    // paiement fictif — Stripe à venir
+    const uid = getUserId(user)
+    if (!uid) return
+    // Deduct from wallet before granting the boost
+    const result = deductFunds(uid, chosenTier.price, `Boost Top ${chosen.position} — ${chosenTier.label}`)
+    if (!result) {
+      setStep('error')
+      return
+    }
     setPaying(true)
     setTimeout(() => {
-      saveBoost(event.id, chosen.position, chosenTier.days, chosenTier.price, event.region || '')
+      // Pass userId so the boost is synced to Firestore cross-device
+      saveBoost(event.id, chosen.position, chosenTier.days, chosenTier.price, event.region || '', uid)
       setPaying(false)
       setStep('done')
     }, 600)
@@ -234,6 +241,17 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
               </p>
               <button onClick={() => { onBoostDone?.(); onClose() }} style={{ ...S.btnGold, marginTop: 8 }}>
                 Parfait
+              </button>
+            </div>
+
+          ) : step === 'error' ? (
+            <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+              <div style={{ fontSize: 40 }}>⚠️</div>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
+                Solde insuffisant pour ce boost.<br />Recharge ton portefeuille et réessaie.
+              </p>
+              <button onClick={() => setStep('pick')} style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
+                ← Retour
               </button>
             </div>
 

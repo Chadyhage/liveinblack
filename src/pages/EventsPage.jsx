@@ -48,7 +48,7 @@ export default function EventsPage() {
   const [sharedEventId, setSharedEventId] = useState(null)
 
   function handleShareEvent(event) {
-    if (!shareConvId) return
+    if (!shareConvId || !myId) return
     const minPrice = event.places?.length > 0 ? Math.min(...event.places.map(p => p.price)) : null
     const payload = JSON.stringify({ id: event.id, name: event.name, date: event.dateDisplay, price: minPrice, image: event.imageUrl || null })
     sendMessage(shareConvId, myId, myName, 'event', payload)
@@ -83,10 +83,11 @@ export default function EventsPage() {
   const visibleEvents = allEvents.filter(e => !e.isPrivate || unlockedEvents.includes(String(e.id)))
 
   const filtered = visibleEvents.filter((e) => {
+    const q = search.toLowerCase()
     const matchSearch =
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.city.toLowerCase().includes(search.toLowerCase()) ||
-      e.category.toLowerCase().includes(search.toLowerCase())
+      (e.name || '').toLowerCase().includes(q) ||
+      (e.city || '').toLowerCase().includes(q) ||
+      (e.category || '').toLowerCase().includes(q)
     const matchCategory =
       activeCategory === 'Tous' ||
       (activeCategory === 'Autre' ? !KNOWN_CATEGORIES.includes(e.category) : e.category === activeCategory)
@@ -647,7 +648,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
               </div>
               {/* Tags */}
               <div style={{ position: 'absolute', top: 12, left: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {event.tags.map((tag) => (
+                {(event.tags || []).map((tag) => (
                   <span key={tag} style={{
                     fontFamily: "'DM Mono', monospace",
                     fontSize: 9,
