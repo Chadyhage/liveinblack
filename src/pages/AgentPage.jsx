@@ -318,8 +318,8 @@ export default function AgentPage() {
     updateAccount(uid, { status: 'banned', bannedAt })
     try {
       const { db } = await import('../firebase')
-      const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', uid), { status: 'banned', bannedAt })
+      const { doc, setDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', uid), { status: 'banned', bannedAt }, { merge: true })
     } catch {}
     refresh()
     showToast('Compte suspendu')
@@ -348,8 +348,8 @@ export default function AgentPage() {
     updateAccount(uid, { emailVerified: true, status: 'active' })
     try {
       const { db } = await import('../firebase')
-      const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', uid), { emailVerified: true, status: 'active' })
+      const { doc, setDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', uid), { emailVerified: true, status: 'active' }, { merge: true })
     } catch {}
     refresh()
     showToast('Email vérifié manuellement')
@@ -411,8 +411,8 @@ export default function AgentPage() {
     updateAccount(uid, { status: 'active' })
     try {
       const { db } = await import('../firebase')
-      const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', uid), { status: 'active', reactivatedAt: Date.now() })
+      const { doc, setDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', uid), { status: 'active', reactivatedAt: Date.now() }, { merge: true })
     } catch {}
     refresh()
     showToast('Compte réactivé')
@@ -424,8 +424,8 @@ export default function AgentPage() {
     updateAccount(editField.uid, { [editField.field]: editField.value })
     try {
       const { db } = await import('../firebase')
-      const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', editField.uid), { [editField.field]: editField.value })
+      const { doc, setDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', editField.uid), { [editField.field]: editField.value }, { merge: true })
     } catch {}
     refresh()
     setSelectedUser(u => u?.uid === editField.uid ? { ...u, [editField.field]: editField.value } : u)
@@ -1634,8 +1634,8 @@ export default function AgentPage() {
                     setSelectedApp(a => a ? { ...a, adminNotes: updated, adminNote: '' } : null)
                     const { USE_REAL_FIREBASE, db } = await import('../firebase')
                     if (USE_REAL_FIREBASE) {
-                      const { doc, updateDoc } = await import('firebase/firestore')
-                      updateDoc(doc(db, 'applications', selectedApp.id), { adminNotes: updated, adminNote: '' }).catch(() => {})
+                      const { doc, setDoc } = await import('firebase/firestore')
+                      setDoc(doc(db, 'applications', selectedApp.id), { adminNotes: updated, adminNote: '' }, { merge: true }).catch(() => {})
                     }
                   } catch {}
                 }

@@ -148,8 +148,8 @@ export function cancelDeletionRequest(requestId) {
 
   import('../firebase').then(({ USE_REAL_FIREBASE, db }) => {
     if (!USE_REAL_FIREBASE) return
-    import('firebase/firestore').then(({ doc, updateDoc }) => {
-      updateDoc(doc(db, 'deletion_requests', requestId), { status: 'cancelled', cancelledAt: now }).catch(() => {})
+    import('firebase/firestore').then(({ doc, setDoc }) => {
+      setDoc(doc(db, 'deletion_requests', requestId), { status: 'cancelled', cancelledAt: now }, { merge: true }).catch(() => {})
     })
   }).catch(() => {})
 }
@@ -179,8 +179,8 @@ export async function resolveDeletionRequest(requestId, decision, adminUid, admi
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'deletion_requests', requestId), patch)
+      const { doc, setDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'deletion_requests', requestId), patch, { merge: true })
     }
   } catch {}
 

@@ -321,8 +321,8 @@ export default function ProfilePage() {
           const { USE_REAL_FIREBASE: fb } = await import('../firebase')
           if (fb) {
             const { db: firestoreDb } = await import('../firebase')
-            const { doc, updateDoc } = await import('firebase/firestore')
-            await updateDoc(doc(firestoreDb, 'users', uid), { nameChangedAt: now })
+            const { doc, setDoc } = await import('firebase/firestore')
+            await setDoc(doc(firestoreDb, 'users', uid), { nameChangedAt: now }, { merge: true })
           }
         } catch {}
       }

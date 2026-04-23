@@ -119,7 +119,7 @@ export async function approveValidation(uid) {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, setDoc, updateDoc, deleteDoc } = await import('firebase/firestore')
+      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
       // Use setDoc with merge to preserve existing fields AND create doc if missing
       await setDoc(doc(db, 'users', uid), {
         status: 'active',
@@ -131,7 +131,7 @@ export async function approveValidation(uid) {
       // _docId = vrai ID Firestore du document (ajouté par loadCollection), sinon fallback sur pending.id ou uid
       const pendingDocId = pending._docId || pending.id || uid
       // Marquer comme approuvé avant de supprimer (si delete échoue, le filtre le masquera)
-      try { await updateDoc(doc(db, 'pending_validations', pendingDocId), { status: 'approved' }) } catch {}
+      try { await setDoc(doc(db, 'pending_validations', pendingDocId), { status: 'approved' }, { merge: true }) } catch {}
       await deleteDoc(doc(db, 'pending_validations', pendingDocId))
     }
   } catch {}
@@ -157,10 +157,10 @@ export async function rejectValidation(uid, reason = '') {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, setDoc, updateDoc, deleteDoc } = await import('firebase/firestore')
+      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
       await setDoc(doc(db, 'users', uid), { status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason }, { merge: true })
       const pendingDocId = pending._docId || pending.id || uid
-      try { await updateDoc(doc(db, 'pending_validations', pendingDocId), { status: 'rejected' }) } catch {}
+      try { await setDoc(doc(db, 'pending_validations', pendingDocId), { status: 'rejected' }, { merge: true }) } catch {}
       await deleteDoc(doc(db, 'pending_validations', pendingDocId))
     }
   } catch {}
@@ -231,8 +231,8 @@ export async function requestAdditionalRole(user, role, prestataireType = null) 
         type: 'role_request',
       })
       // Update user doc
-      const { updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', user.uid), patch)
+      const { setDoc: setUserDoc } = await import('firebase/firestore')
+      await setUserDoc(doc(db, 'users', user.uid), patch, { merge: true })
     }
   } catch {}
 
@@ -282,8 +282,8 @@ export async function approveRoleRequest(requestId) {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, updateDoc, deleteDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', req.uid), patch)
+      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', req.uid), patch, { merge: true })
       await deleteDoc(doc(db, 'pending_validations', requestId))
     }
   } catch {}
@@ -321,8 +321,8 @@ export async function rejectRoleRequest(requestId, reason = '') {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, updateDoc, deleteDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', req.uid), patch)
+      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', req.uid), patch, { merge: true })
       await deleteDoc(doc(db, 'pending_validations', requestId))
     }
   } catch {}
@@ -359,9 +359,9 @@ export async function cancelRoleRequest(uid, role) {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, deleteDoc, updateDoc } = await import('firebase/firestore')
+      const { doc, deleteDoc, setDoc } = await import('firebase/firestore')
       await deleteDoc(doc(db, 'pending_validations', req.id))
-      await updateDoc(doc(db, 'users', uid), patch)
+      await setDoc(doc(db, 'users', uid), patch, { merge: true })
     }
   } catch {}
 }
@@ -389,8 +389,8 @@ export async function switchActiveRole(user, newRole) {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', user.uid), patch)
+      const { doc, setDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'users', user.uid), patch, { merge: true })
     }
   } catch {}
 

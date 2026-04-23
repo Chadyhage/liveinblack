@@ -227,9 +227,9 @@ export async function submitApplication(id, formData, candidateNote = '') {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, setDoc, updateDoc } = await import('firebase/firestore')
+      const { doc, setDoc } = await import('firebase/firestore')
       await setDoc(doc(db, 'applications', id), app)
-      await updateDoc(doc(db, 'users', app.uid), { status: 'pending' })
+      await setDoc(doc(db, 'users', app.uid), { status: 'pending' }, { merge: true })
     }
   } catch {}
 
@@ -335,11 +335,11 @@ export async function removeDocumentFile(appId, docKey, index) {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'applications', appId), {
-        [`documents.${docKey}`]: updated.length > 0 ? updated : null,
+      const { doc, setDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'applications', appId), {
+        documents: all[idx].documents || {},
         updatedAt: Date.now(),
-      })
+      }, { merge: true })
     }
   } catch {}
 
@@ -414,8 +414,8 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
-      const { doc, updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'applications', id), patch)
+      const { doc, setDoc } = await import('firebase/firestore')
+      await setDoc(doc(db, 'applications', id), patch, { merge: true })
     }
   } catch {}
 
@@ -449,7 +449,7 @@ export async function fetchApplicationsFromFirestore() {
   try {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (!USE_REAL_FIREBASE) return getAllApplications()
-    const { collection, getDocs, doc, updateDoc } = await import('firebase/firestore')
+    const { collection, getDocs, doc, setDoc } = await import('firebase/firestore')
     const snap = await getDocs(collection(db, 'applications'))
     const apps = snap.docs.map(d => d.data())
     // Merge into local cache
@@ -470,7 +470,7 @@ export async function fetchApplicationsFromFirestore() {
     _saveAll(finalMerged)
     // Pousse la correction vers Firestore pour les anciens dossiers mal classés
     toFixInFirestore.forEach(app => {
-      updateDoc(doc(db, 'applications', app.id), { status: 'resubmitted' }).catch(() => {})
+      setDoc(doc(db, 'applications', app.id), { status: 'resubmitted' }, { merge: true }).catch(() => {})
     })
     return finalMerged
   } catch {
