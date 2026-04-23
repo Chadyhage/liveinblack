@@ -71,13 +71,6 @@ service cloud.firestore {
     match /user_social/{uid} {
       allow read, write: if isOwner(uid) || isAgent();
     }
-    match /catalogs/{uid} {
-      allow read, write: if isOwner(uid) || isAgent();
-    }
-    match /providers/{uid} {
-      allow read, write: if isOwner(uid) || isAgent();
-    }
-
     // ── Conversations & messages ───────────────────────────────────────────────
     match /conversations/{id} {
       allow read, write: if isSignedIn();
