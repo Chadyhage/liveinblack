@@ -128,7 +128,9 @@ export default function HomePage() {
     try {
       const saved = localStorage.getItem('lib_region')
       if (saved) {
-        const { id } = JSON.parse(saved)
+        const parsed = JSON.parse(saved)
+        if (parsed === null) return null  // user explicitly chose "Toutes les régions"
+        const { id } = parsed
         const found = regions.find(r => r.id === id)
         if (found) return found
       }
@@ -230,7 +232,7 @@ export default function HomePage() {
 
   const handleRegionSelect = (region) => {
     setSelectedRegion(region)
-    localStorage.setItem('lib_region', JSON.stringify({ id: region.id }))
+    localStorage.setItem('lib_region', region ? JSON.stringify({ id: region.id }) : 'null')
   }
 
   const RANK_LABEL = ['01', '02', '03']
