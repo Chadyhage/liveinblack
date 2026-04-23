@@ -205,7 +205,7 @@ export default function EventDetailPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user, setUser, openAuthModal } = useAuth()
-  const event = getAllEvents().find((e) => e.id === parseInt(id))
+  const event = getAllEvents().find((e) => String(e.id) === String(id))
 
   const hasPlaylist = !!event?.playlist
   const TABS = ['Réservation', ...(hasPlaylist ? ['Playlist'] : []), 'Info']
