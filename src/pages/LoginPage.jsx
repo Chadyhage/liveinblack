@@ -57,20 +57,20 @@ async function doEmailLogin(email, password, role = null) {
     }
     // Force agent role for super admin — override any corrupted data in Firestore
     if (isSuperAdmin) {
-      const { updateDoc } = await import('firebase/firestore')
+      const { setDoc: setUserDoc } = await import('firebase/firestore')
       const agentPatch = {
         role: 'agent', activeRole: 'agent', enabledRoles: ['agent'],
         email: cred.user.email,
         name: profile.name || cred.user.displayName || 'Admin',
         emailVerified: true, status: 'active',
       }
-      updateDoc(doc(db, 'users', cred.user.uid), agentPatch).catch(() => {})
+      setUserDoc(doc(db, 'users', cred.user.uid), agentPatch, { merge: true }).catch(() => {})
       return { ...profile, ...agentPatch, uid: cred.user.uid }
     }
     // Email was verified by Firebase — persist that flag so phone is now "locked"
     if (!profile.emailVerified) {
-      const { updateDoc } = await import('firebase/firestore')
-      await updateDoc(doc(db, 'users', cred.user.uid), { emailVerified: true })
+      const { setDoc: setUserDoc } = await import('firebase/firestore')
+      await setUserDoc(doc(db, 'users', cred.user.uid), { emailVerified: true }, { merge: true })
       return { ...profile, emailVerified: true }
     }
     return profile
@@ -229,13 +229,13 @@ async function doGoogleLogin() {
   const uid = cred.user.uid
 
   // Check if Firestore profile already exists
-  const { doc, getDoc, setDoc, updateDoc } = await import('firebase/firestore')
+  const { doc, getDoc, setDoc } = await import('firebase/firestore')
   const snap = await getDoc(doc(db, 'users', uid))
   if (snap.exists()) {
     const profile = snap.data()
     // Keep photo fresh
     if (cred.user.photoURL && profile.photo !== cred.user.photoURL) {
-      updateDoc(doc(db, 'users', uid), { photo: cred.user.photoURL }).catch(() => {})
+      setDoc(doc(db, 'users', uid), { photo: cred.user.photoURL }, { merge: true }).catch(() => {})
     }
     return { ...profile, photo: cred.user.photoURL || profile.photo }
   }
