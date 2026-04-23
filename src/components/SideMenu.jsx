@@ -155,6 +155,9 @@ export default function SideMenu({ open, onClose }) {
               ...(user ? [
                 { label: 'Messages', path: '/messagerie', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> },
                 { label: 'Mon Profil', path: '/profil', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> },
+                ...(user.role !== 'agent' ? [
+                  { label: 'Portefeuille', path: '/portefeuille', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7"/><circle cx="16" cy="14" r="1.5" fill="currentColor" stroke="none"/></svg> },
+                ] : []),
               ] : []),
             ].map(item => (
               <button key={item.path} onClick={() => go(item.path)}

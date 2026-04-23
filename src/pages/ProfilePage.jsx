@@ -1289,6 +1289,9 @@ export default function ProfilePage() {
             // Prestataires + clients : commandes de services reçues/passées
             (user?.role !== 'organisateur' && user?.role !== 'agent') &&
               { label: 'Mes commandes prestataires', action: () => setPanel('service-orders') },
+            // Portefeuille — accessible à tous sauf agents
+            (user?.role !== 'agent') &&
+              { label: `Portefeuille — ${wallet.balance?.toFixed(2) ?? '0.00'}€`, action: () => navigate('/portefeuille') },
             { label: 'Paramètres du compte', action: () => setPanel('settings') },
             { label: 'Support / Aide',       action: () => setPanel('support')   },
           ].filter(Boolean).map((item) => (

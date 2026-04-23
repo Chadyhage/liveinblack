@@ -16,6 +16,7 @@ import AgentPage from './pages/AgentPage'
 import OnboardingOrganisateur from './pages/OnboardingOrganisateur'
 import OnboardingPrestataire from './pages/OnboardingPrestataire'
 import MonDossierPage from './pages/MonDossierPage'
+import WalletPage from './pages/WalletPage'
 import { AuthContext } from './context/AuthContext'
 import AuthModal from './components/AuthModal'
 
@@ -283,6 +284,9 @@ export default function App() {
             {/* ── Protected: require any logged-in account ── */}
             <Route path="/profil" element={
               <RequireAuth user={user} to="/profil"><ProfilePage /></RequireAuth>
+            } />
+            <Route path="/portefeuille" element={
+              <RequireAuth user={user} to="/portefeuille"><WalletPage /></RequireAuth>
             } />
             <Route path="/messagerie" element={
               <RequireAuth user={user} to="/messagerie"><MessagingPage /></RequireAuth>
