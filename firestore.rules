@@ -35,9 +35,8 @@ service cloud.firestore {
 
     // ── Pending validations ────────────────────────────────────────────────────
     match /pending_validations/{id} {
-      allow read, write: if isAgent() || (
-        isSignedIn() && resource.data.uid == request.auth.uid
-      );
+      allow read: if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow write: if isAgent() || (isSignedIn() && (resource == null || resource.data.uid == request.auth.uid));
     }
 
     // ── Wallets ────────────────────────────────────────────────────────────────
