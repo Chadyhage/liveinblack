@@ -21,6 +21,7 @@ export const APPLICATION_STATUSES = {
 
 export const DOCUMENT_LABELS = {
   identity:          { label: 'Pièce d\'identité du responsable',                    required: true  },
+  rib:               { label: 'RIB (Relevé d\'identité bancaire)',                   required: true  },
   business_doc:      { label: 'Document officiel de l\'entreprise (KBIS, statuts, récépissé INSEE…)', required: false },
   alcohol_license:   { label: 'Licence / Justificatif de débit de boissons',         required: false },
   activity_proof:    { label: 'Justificatif d\'activité',                            required: true  },
@@ -400,6 +401,18 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
       }
       if (app.type === 'prestataire') {
         perms.prestataireType = app.formData?.prestataireType || null
+        // Set display name: stage name for artistes, otherwise commercial name
+        const fd = app.formData || {}
+        let displayName = ''
+        if (fd.prestataireType === 'artiste' && fd.nomScene?.trim()) {
+          displayName = fd.nomScene.trim()
+        } else if (fd.nomCommercial?.trim()) {
+          displayName = fd.nomCommercial.trim()
+        } else {
+          displayName = [fd.responsablePrenom, fd.responsableNom]
+            .filter(Boolean).map(s => s.trim()).join(' ')
+        }
+        if (displayName) perms.name = displayName
       }
 
       // Mettre à jour localStorage (lib_registered_users)

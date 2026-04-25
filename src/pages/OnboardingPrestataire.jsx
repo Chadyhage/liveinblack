@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import {
   createApplication, saveDraft, submitApplication,
-  uploadDocument, getApplicationByUser, DOCUMENT_LABELS, getRequiredDocs,
+  uploadDocument, getApplicationById, getApplicationByUser,
+  updateApplication, DOCUMENT_LABELS, getRequiredDocs,
+  hasDoc, getDocFiles, removeDocumentFile,
 } from '../utils/applications'
 
 const DM = "'DM Mono', monospace"
 const CG = "'Cormorant Garamond', serif"
 const GOLD = '#c8a96e'
+const PURPLE = '#8b5cf6'
 
 const S = {
   page:    { position: 'relative', zIndex: 1, padding: '24px 16px 8px', maxWidth: 560, margin: '0 auto' },
@@ -23,11 +26,61 @@ const S = {
   error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em' },
 }
 
+const COUNTRY_CODES = [
+  { code: '+33',  flag: '🇫🇷', label: 'France' },
+  { code: '+32',  flag: '🇧🇪', label: 'Belgique' },
+  { code: '+41',  flag: '🇨🇭', label: 'Suisse' },
+  { code: '+352', flag: '🇱🇺', label: 'Luxembourg' },
+  { code: '+1',   flag: '🇨🇦', label: 'Canada' },
+  { code: '+212', flag: '🇲🇦', label: 'Maroc' },
+  { code: '+213', flag: '🇩🇿', label: 'Algérie' },
+  { code: '+216', flag: '🇹🇳', label: 'Tunisie' },
+  { code: '+221', flag: '🇸🇳', label: 'Sénégal' },
+  { code: '+225', flag: '🇨🇮', label: 'Côte d\'Ivoire' },
+  { code: '+226', flag: '🇧🇫', label: 'Burkina Faso' },
+  { code: '+227', flag: '🇳🇪', label: 'Niger' },
+  { code: '+228', flag: '🇹🇬', label: 'Togo' },
+  { code: '+229', flag: '🇧🇯', label: 'Bénin' },
+  { code: '+237', flag: '🇨🇲', label: 'Cameroun' },
+  { code: '+241', flag: '🇬🇦', label: 'Gabon' },
+  { code: '+242', flag: '🇨🇬', label: 'Congo' },
+  { code: '+243', flag: '🇨🇩', label: 'RD Congo' },
+]
+
+function PhoneInput({ codeField, numberField, formState, onUpdate, inputStyle, error, placeholder = '6 00 00 00 00' }) {
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <select
+        value={formState[codeField]}
+        onChange={e => onUpdate(codeField, e.target.value)}
+        style={{
+          flexShrink: 0, width: 115,
+          background: 'rgba(6,8,16,0.7)',
+          border: `1px solid ${error ? '#e05aaa' : 'rgba(255,255,255,0.10)'}`,
+          borderRadius: 4, fontFamily: DM, fontSize: 12,
+          color: 'rgba(255,255,255,0.9)', padding: '10px 8px',
+          outline: 'none', appearance: 'none', cursor: 'pointer',
+        }}>
+        {COUNTRY_CODES.map(c => (
+          <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+        ))}
+      </select>
+      <input
+        type="tel"
+        value={formState[numberField]}
+        onChange={e => onUpdate(numberField, e.target.value)}
+        placeholder={placeholder}
+        style={{ ...inputStyle, flex: 1, borderColor: error ? '#e05aaa' : undefined }}
+      />
+    </div>
+  )
+}
+
 const TYPES = [
-  { key: 'artiste',  label: 'Artiste / DJ / Performer', icon: '🎤', color: '#8b5cf6' },
-  { key: 'salle',    label: 'Lieu / Salle à louer',     icon: '🏛',  color: '#3b82f6' },
-  { key: 'materiel', label: 'Matériel à louer',          icon: '🔊', color: '#f59e0b' },
-  { key: 'food',     label: 'Food / Boissons / Traiteur',icon: '🍽', color: '#22c55e' },
+  { key: 'artiste',  label: 'Artiste / DJ / Performer',  icon: '🎤', color: '#8b5cf6', desc: 'DJ, musicien live, performeur, saxophoniste, animateur...' },
+  { key: 'salle',    label: 'Lieu / Salle à louer',      icon: '🏛',  color: '#3b82f6', desc: 'Club, loft, rooftop, château, salle de réception...' },
+  { key: 'materiel', label: 'Matériel à louer',          icon: '🔊', color: '#f59e0b', desc: 'Son, lumière, scène, vidéo, structure, mobilier...' },
+  { key: 'food',     label: 'Food / Boissons / Traiteur', icon: '🍽', color: '#22c55e', desc: 'Traiteur, bar, cocktails, food truck, pâtisserie...' },
 ]
 
 const STEPS = [
@@ -37,6 +90,8 @@ const STEPS = [
   { label: 'Paiement',   icon: '💳' },
   { label: 'Documents',  icon: '📎' },
 ]
+
+const ANON_DRAFT_KEY = 'lib_anon_prest_draft_id'
 
 function Field({ label, required, children }) {
   return (
@@ -49,7 +104,9 @@ function Field({ label, required, children }) {
 
 function Toggle({ value, onChange, label }) {
   return (
-    <button type="button" onClick={() => onChange(!value)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+    <button type="button" onClick={() => onChange(!value)} style={{
+      display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+    }}>
       <div style={{ width: 36, height: 20, borderRadius: 99, position: 'relative', transition: 'background 0.2s', background: value ? 'rgba(78,232,200,0.6)' : 'rgba(255,255,255,0.1)', border: `1px solid ${value ? '#4ee8c8' : 'rgba(255,255,255,0.12)'}` }}>
         <div style={{ position: 'absolute', top: 2, left: value ? 18 : 2, width: 14, height: 14, borderRadius: '50%', background: value ? '#4ee8c8' : 'rgba(255,255,255,0.4)', transition: 'left 0.2s' }} />
       </div>
@@ -58,26 +115,67 @@ function Toggle({ value, onChange, label }) {
   )
 }
 
-function DocUploadRow({ label, required, uploaded, status, onChange }) {
-  const isDone = status === 'done' || !!uploaded
-  const isUploading = status === 'uploading'
+// ── Helper : nom d'affichage ──────────────────────────────────────────────────
+function getDisplayName(f) {
+  if (f.prestataireType === 'artiste' && f.nomScene?.trim()) return f.nomScene.trim()
+  if (f.nomCommercial?.trim()) return f.nomCommercial.trim()
+  const parts = [f.responsablePrenom, f.responsableNom].filter(Boolean).map(s => s.trim())
+  return parts.join(' ') || ''
+}
+
+// ── TarifBlock ────────────────────────────────────────────────────────────────
+function TarifBlock({ f, update }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: isDone ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)', border: `1px solid ${isDone ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 6 }}>
-      <div style={{ width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDone ? 'rgba(34,197,94,0.10)' : 'rgba(255,255,255,0.04)', border: `1px solid ${isDone ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.08)'}`, fontSize: 14, flexShrink: 0 }}>
-        {isUploading ? '⏳' : isDone ? '✓' : '📄'}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: DM, fontSize: 10, color: isDone ? '#4ee8c8' : 'rgba(255,255,255,0.6)', margin: '0 0 2px', letterSpacing: '0.04em' }}>
-          {label} {required && <span style={{ color: '#e05aaa' }}>*</span>}
-        </p>
-        {uploaded && <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploaded.name}</p>}
-      </div>
-      <label style={{ cursor: 'pointer', flexShrink: 0 }}>
-        <input type="file" style={{ display: 'none' }} accept=".pdf,.jpg,.jpeg,.png" onChange={e => e.target.files?.[0] && onChange(e.target.files[0])} />
-        <span style={{ fontFamily: DM, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: isDone ? 'rgba(78,232,200,0.6)' : 'rgba(200,169,110,0.7)', padding: '5px 10px', border: `1px solid ${isDone ? 'rgba(78,232,200,0.25)' : 'rgba(200,169,110,0.3)'}`, borderRadius: 4 }}>
-          {isDone ? 'Modifier' : 'Choisir'}
-        </span>
-      </label>
+    <div style={{ marginTop: 8, padding: '14px', background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.14)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <p style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(139,92,246,0.6)', margin: 0 }}>
+        Tarifs indicatifs
+      </p>
+      <Toggle value={f.tarifDevis} onChange={v => update('tarifDevis', v)} label="Sur devis uniquement" />
+      {!f.tarifDevis && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="À partir de (€)">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input
+                  type="number"
+                  min={0}
+                  style={{ ...S.input, flex: 1 }}
+                  value={f.tarifMin}
+                  onChange={e => update('tarifMin', e.target.value)}
+                  placeholder="ex: 200"
+                />
+                <span style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>€</span>
+              </div>
+            </Field>
+            <Field label="Jusqu'à (€)">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input
+                  type="number"
+                  min={0}
+                  style={{ ...S.input, flex: 1 }}
+                  value={f.tarifMax}
+                  onChange={e => update('tarifMax', e.target.value)}
+                  placeholder="ex: 800"
+                />
+                <span style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>€</span>
+              </div>
+            </Field>
+          </div>
+          <Field label="Type de tarification">
+            <select style={S.select} value={f.tarifType} onChange={e => update('tarifType', e.target.value)}>
+              <option value="">Choisir...</option>
+              <option value="soiree">Par soirée / événement</option>
+              <option value="heure">Par heure</option>
+              <option value="journee">Par journée</option>
+              <option value="forfait">Au forfait</option>
+              <option value="personne">Par personne</option>
+            </select>
+          </Field>
+        </>
+      )}
+      <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: 0, letterSpacing: '0.04em', lineHeight: 1.6 }}>
+        Ces tarifs sont indicatifs et seront affichés sur ton profil
+      </p>
     </div>
   )
 }
@@ -85,53 +183,79 @@ function DocUploadRow({ label, required, uploaded, status, onChange }) {
 export default function OnboardingPrestataire() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [app, setApp] = useState(null)
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [candidateNote, setCandidateNote] = useState('')
+  const [creatingAccount, setCreatingAccount] = useState(false)
   const [errors, setErrors] = useState({})
   const [uploadStatus, setUploadStatus] = useState({})
   const [toast, setToast] = useState(null)
+  const [successScreen, setSuccessScreen] = useState(false)
+
+  // Anonymous mode state
+  const anonUidRef = useRef(null)
+  const [regEmail, setRegEmail] = useState('')
+  const [regPassword, setRegPassword] = useState('')
+  const [regPasswordConfirm, setRegPasswordConfirm] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
+
+  const anonMode = !user
 
   const [f, setF] = useState({
-    // Step 0 — Type
     prestataireType: '',
-    // Step 1 — Profil commun
-    nomCommercial: '', raisonSociale: '', siren: '', siret: '',
-    adresse: '', ville: '', pays: 'France',
-    emailPro: '', telephonePro: '',
+    // Profil commun
+    nomCommercial: '', nomScene: '',
+    siret: '',
+    emailPro: '', telephoneProCode: '+33', telephonePro: '',
     responsableNom: '', responsablePrenom: '', responsableFonction: '',
-    zoneIntervention: '', description: '',
-    // Step 2 — Artiste
-    nomScene: '', styles: '', portfolio: '', statutFacturation: '', besoinstechniques: '',
-    // Step 2 — Salle
-    adresseLieu: '', capaciteLieu: '', typeLieu: '', horairesAutorises: '', reglesDuLieu: '',
-    // Step 2 — Matériel
+    responsableTelephoneCode: '+33', responsableTelephone: '',
+    ville: '', pays: 'France', zoneIntervention: '', description: '',
+    // Artiste
+    styles: '', anneesExperience: '', statutFacturation: '', portfolio: '', instagram: '', besoinstechniques: '',
+    // Salle
+    adresseLieu: '', capaciteLieu: '', typeLieu: '', equipements: '', horairesAutorises: '', reglesDuLieu: '',
+    // Matériel
     categoriesMateriel: '', inventaire: '', conditionsLocation: '', politiqueCaution: '',
-    // Step 2 — Food
-    typeActiviteFood: '', menuBase: '', informationsReglementaires: '',
-    alcoolFood: false,
-    // Step 3 — Paiement (handled via Stripe Connect post-approval, no fields needed)
+    // Food
+    typeActiviteFood: '', menuBase: '', alcoolFood: false,
+    // Tarifs (tous types)
+    tarifMin: '', tarifMax: '', tarifType: '', tarifDevis: false,
   })
 
   useEffect(() => {
-    // Delay redirect to avoid false-firing during Firebase Auth initialization
-    if (!user) {
-      const t = setTimeout(() => navigate('/connexion?next=/onboarding-prestataire'), 300)
-      return () => clearTimeout(t)
-    }
-    const existing = getApplicationByUser(user.uid, 'prestataire')
-    if (existing) {
-      setApp(existing)
-      if (existing.formData && Object.keys(existing.formData).length > 0) {
-        setF(prev => ({ ...prev, ...existing.formData }))
-      }
-      if (['submitted','under_review','approved'].includes(existing.status)) {
-        navigate('/mon-dossier')
+    if (user) {
+      // Logged-in mode
+      const existing = getApplicationByUser(user.uid, 'prestataire')
+      if (existing) {
+        setApp(existing)
+        const fd = existing.formData || {}
+        setF(prev => ({ ...prev, ...fd }))
+        if (['submitted', 'under_review', 'approved'].includes(existing.status)) {
+          navigate('/mon-dossier')
+        }
+      } else {
+        const created = createApplication(user.uid, user.email, user.name, 'prestataire')
+        setApp(created)
+        const prefill = location.state?.prefill
+        if (prefill) setF(prev => ({ ...prev, ...prefill }))
       }
     } else {
-      const created = createApplication(user.uid, user.email, user.name, 'prestataire')
-      setApp(created)
+      // Anonymous mode
+      const savedId = localStorage.getItem(ANON_DRAFT_KEY)
+      const existing = savedId ? getApplicationById(savedId) : null
+      if (existing) {
+        setApp(existing)
+        const fd = existing.formData || {}
+        setF(prev => ({ ...prev, ...fd }))
+        if (fd.regEmail) setRegEmail(fd.regEmail)
+      } else {
+        const tempId = 'anon-prest-' + Date.now()
+        localStorage.setItem(ANON_DRAFT_KEY, tempId)
+        const created = createApplication(tempId, '', '', 'prestataire')
+        setApp(created)
+      }
     }
   }, [user])
 
@@ -146,6 +270,7 @@ export default function OnboardingPrestataire() {
     saveDraft(app?.id, { ...f, ...patch })
   }
 
+  // ── Validation par step ──────────────────────────────────────────────────────
   function validate(s) {
     const errs = {}
     if (s === 0) {
@@ -156,18 +281,69 @@ export default function OnboardingPrestataire() {
       if (!f.emailPro.trim() || !f.emailPro.includes('@')) errs.emailPro = 'Email invalide'
       if (!f.telephonePro.trim()) errs.telephonePro = 'Requis'
       if (!f.responsableNom.trim()) errs.responsableNom = 'Requis'
-      if (!f.ville.trim()) errs.ville = 'Requis'
+      if (!f.responsablePrenom.trim()) errs.responsablePrenom = 'Requis'
+      if (anonMode) {
+        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail.trim())
+        if (!regEmail.trim() || !emailOk) errs.regEmail = 'Email invalide'
+        if (!regPassword || regPassword.length < 8) errs.regPassword = 'Au moins 8 caractères'
+        if (!/[A-Z]/.test(regPassword)) errs.regPassword = 'Au moins une majuscule'
+        if (regPassword !== regPasswordConfirm) errs.regPasswordConfirm = 'Les mots de passe ne correspondent pas'
+      }
     }
-    // Step 3 (payment) — no validation required, Stripe Connect handles it post-approval
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
-  function next() {
+  async function next() {
     if (!validate(step)) return
+
+    // Anonymous mode: create Firebase account when leaving step 1
+    if (anonMode && step === 1 && !anonUidRef.current) {
+      setCreatingAccount(true)
+      try {
+        const { USE_REAL_FIREBASE } = await import('../firebase')
+        let uid
+        const name = `${f.responsablePrenom} ${f.responsableNom}`.trim()
+        const phone = f.responsableTelephone || ''
+
+        if (USE_REAL_FIREBASE) {
+          const { createUserWithEmailAndPassword } = await import('firebase/auth')
+          const { auth, db } = await import('../firebase')
+          const { doc, setDoc } = await import('firebase/firestore')
+          const cred = await createUserWithEmailAndPassword(auth, regEmail.trim(), regPassword)
+          uid = cred.user.uid
+          await setDoc(doc(db, 'users', uid), {
+            uid, email: regEmail.trim(), name, phone,
+            role: 'client', activeRole: 'client', enabledRoles: ['client'],
+            status: 'draft', emailVerified: false, createdAt: Date.now(),
+          })
+        } else {
+          uid = 'local-prest-' + Date.now()
+          const { saveAccount } = await import('../utils/accounts')
+          saveAccount({ uid, email: regEmail.trim(), name, phone, role: 'prestataire', status: 'draft', emailVerified: false, createdAt: Date.now() })
+        }
+
+        updateApplication(app.id, { uid, email: regEmail.trim(), name })
+        setApp(prev => ({ ...prev, uid, email: regEmail.trim(), name }))
+        anonUidRef.current = uid
+        saveDraft(app.id, { ...f, regEmail: regEmail.trim() })
+
+      } catch (err) {
+        setCreatingAccount(false)
+        if (err.code === 'auth/email-already-in-use') {
+          setErrors({ regEmail: 'Cet email est déjà lié à un compte. Connecte-toi sur /mon-dossier pour voir son état.' })
+        } else {
+          setErrors({ regEmail: `Erreur : ${err.message || 'Réessaie.'}` })
+        }
+        return
+      }
+      setCreatingAccount(false)
+    }
+
     setStep(s => Math.min(s + 1, STEPS.length - 1))
     window.scrollTo(0, 0)
   }
+
   function prev() {
     setStep(s => Math.max(s - 1, 0))
     window.scrollTo(0, 0)
@@ -179,22 +355,72 @@ export default function OnboardingPrestataire() {
     const res = await uploadDocument(app.id, docKey, file)
     if (res.ok) {
       setUploadStatus(s => ({ ...s, [docKey]: 'done' }))
-      const fresh = getApplicationByUser(user.uid, 'prestataire')
+      const fresh = getApplicationById(app.id)
       if (fresh) setApp(fresh)
-      showToast('Document enregistré')
     } else {
       setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
-      showToast('Erreur upload', 'error')
+      showToast('Erreur lors de l\'ajout', 'error')
     }
   }
 
+  async function handleRemove(docKey, index) {
+    if (!app) return
+    await removeDocumentFile(app.id, docKey, index)
+    const fresh = getApplicationById(app.id)
+    if (fresh) setApp(fresh)
+  }
+
   async function handleSubmit() {
+    const missingDocs = []
+    if (!hasDoc(app, 'identity')) missingDocs.push('Pièce d\'identité')
+    if (!hasDoc(app, 'rib'))      missingDocs.push('RIB')
+    if (missingDocs.length > 0) {
+      showToast(`Document(s) manquant(s) : ${missingDocs.join(', ')}`, 'error')
+      return
+    }
     setSubmitting(true)
     try {
+      const freshApp = getApplicationById(app.id)
+      const allDocs = freshApp?.documents || {}
+      const failedDocs = []
+      for (const [docKey, entries] of Object.entries(allDocs)) {
+        const arr = Array.isArray(entries) ? entries : [entries]
+        if (arr.some(e => e && !e.url)) {
+          failedDocs.push(DOCUMENT_LABELS[docKey]?.label || docKey)
+        }
+      }
+      if (failedDocs.length > 0) {
+        setSubmitting(false)
+        showToast(`Retire et rajoute ces fichiers : ${failedDocs.join(', ')}`, 'error')
+        return
+      }
+
       const result = await submitApplication(app.id, f, candidateNote)
       setApp(result)
-      showToast('Dossier soumis !')
-      setTimeout(() => navigate('/mon-dossier'), 1500)
+
+      // Sync display name to user profile (logged-in mode)
+      if (user) {
+        try {
+          const { syncDoc } = await import('../utils/firestore-sync')
+          syncDoc(`users/${user.uid}`, { name: getDisplayName(f), prestataireType: f.prestataireType })
+        } catch {}
+      }
+
+      if (anonMode) {
+        try {
+          const { USE_REAL_FIREBASE } = await import('../firebase')
+          if (USE_REAL_FIREBASE) {
+            const { auth } = await import('../firebase')
+            const { signOut } = await import('firebase/auth')
+            await signOut(auth)
+          }
+        } catch {}
+        localStorage.removeItem(ANON_DRAFT_KEY)
+        setSuccessScreen(true)
+      } else {
+        showToast('Dossier soumis !')
+        setTimeout(() => navigate('/mon-dossier'), 1500)
+      }
     } catch {
       showToast('Erreur lors de la soumission', 'error')
     } finally {
@@ -202,9 +428,38 @@ export default function OnboardingPrestataire() {
     }
   }
 
-  if (!user || !app) return null
+  if (!app) return null
+
+  // ── Success screen (anonymous mode) ──────────────────────────────────────────
+  if (successScreen) {
+    return (
+      <Layout hideNav>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div style={{ textAlign: 'center', maxWidth: 420 }}>
+            <div style={{ fontSize: 56, marginBottom: 24 }}>✅</div>
+            <h2 style={{ fontFamily: CG, fontWeight: 300, fontSize: '2rem', color: 'rgba(255,255,255,0.92)', margin: '0 0 16px' }}>
+              Demande envoyée !
+            </h2>
+            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.8, marginBottom: 8 }}>
+              Ton dossier a été transmis à l'équipe LIVEINBLACK.
+            </p>
+            <p style={{ fontFamily: DM, fontSize: 12, color: GOLD, lineHeight: 1.8, marginBottom: 32 }}>
+              Tu seras contacté à <strong>{regEmail}</strong> une fois ton compte validé.
+            </p>
+            <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.7, marginBottom: 32 }}>
+              La validation prend généralement moins de 24h. Tu recevras un email dès que ton espace est activé.
+            </p>
+            <button onClick={() => navigate('/accueil')} style={{ ...S.btnGold, maxWidth: 240, margin: '0 auto' }}>
+              Retour à l'accueil
+            </button>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
 
   const selectedType = TYPES.find(t => t.key === f.prestataireType)
+  const typeColor = selectedType?.color || PURPLE
   const requiredDocs = getRequiredDocs('prestataire', f.prestataireType)
 
   return (
@@ -213,8 +468,10 @@ export default function OnboardingPrestataire() {
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <span style={{ width: 28, height: 1, background: '#8b5cf6', display: 'block', flexShrink: 0 }} />
-            <span style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: '#8b5cf6' }}>Demande d'espace</span>
+            <span style={{ width: 28, height: 1, background: PURPLE, flexShrink: 0, display: 'block' }} />
+            <span style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: PURPLE }}>
+              Demande d'espace
+            </span>
           </div>
           <h1 style={{ fontFamily: CG, fontWeight: 300, fontSize: 'clamp(1.8rem,8vw,2.8rem)', color: 'rgba(255,255,255,0.92)', margin: 0, lineHeight: 1.1 }}>
             Compte Prestataire
@@ -224,16 +481,19 @@ export default function OnboardingPrestataire() {
           </p>
         </div>
 
-        {/* Progress */}
+        {/* Progress bar */}
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
             {STEPS.map((s, i) => (
-              <button key={i} onClick={() => i < step && setStep(i)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: i < step ? 'pointer' : 'default', flex: 1 }}>
+              <button key={i} onClick={() => i < step && setStep(i)} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                background: 'none', border: 'none', cursor: i < step ? 'pointer' : 'default', flex: 1,
+              }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', fontSize: 13,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: i === step ? 'rgba(139,92,246,0.15)' : i < step ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
-                  border: i === step ? '1px solid rgba(139,92,246,0.5)' : i < step ? '1px solid rgba(78,232,200,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                  background: i === step ? `${typeColor}22` : i < step ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
+                  border: i === step ? `1px solid ${typeColor}80` : i < step ? '1px solid rgba(78,232,200,0.4)' : '1px solid rgba(255,255,255,0.08)',
                 }}>
                   {i < step ? '✓' : s.icon}
                 </div>
@@ -241,7 +501,7 @@ export default function OnboardingPrestataire() {
             ))}
           </div>
           <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 99 }}>
-            <div style={{ height: '100%', borderRadius: 99, background: 'linear-gradient(to right,#8b5cf6,rgba(139,92,246,0.3))', width: `${(step / (STEPS.length - 1)) * 100}%`, transition: 'width 0.4s' }} />
+            <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(to right,${typeColor},${typeColor}4d)`, width: `${(step / (STEPS.length - 1)) * 100}%`, transition: 'width 0.4s' }} />
           </div>
         </div>
 
@@ -258,12 +518,13 @@ export default function OnboardingPrestataire() {
                 border: f.prestataireType === t.key ? `1px solid ${t.color}55` : '1px solid rgba(255,255,255,0.08)',
                 display: 'flex', alignItems: 'center', gap: 14, transition: 'all 0.2s',
               }}>
-                <span style={{ fontSize: 24 }}>{t.icon}</span>
-                <div>
-                  <p style={{ fontFamily: DM, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: f.prestataireType === t.key ? t.color : 'rgba(255,255,255,0.7)', margin: 0 }}>{t.label}</p>
+                <span style={{ fontSize: 24, flexShrink: 0 }}>{t.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: DM, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: f.prestataireType === t.key ? t.color : 'rgba(255,255,255,0.7)', margin: '0 0 4px' }}>{t.label}</p>
+                  <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: 0, letterSpacing: '0.04em' }}>{t.desc}</p>
                 </div>
                 {f.prestataireType === t.key && (
-                  <span style={{ marginLeft: 'auto', color: t.color, fontSize: 16 }}>✓</span>
+                  <span style={{ color: t.color, fontSize: 16, flexShrink: 0 }}>✓</span>
                 )}
               </button>
             ))}
@@ -278,64 +539,175 @@ export default function OnboardingPrestataire() {
               {selectedType?.icon} Profil — {selectedType?.label}
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+
+              {/* Nom commercial */}
               <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Nom commercial / Nom complet" required>
-                  <input style={{ ...S.input, borderColor: errors.nomCommercial ? '#e05aaa' : undefined }} value={f.nomCommercial} onChange={e => update('nomCommercial', e.target.value)} placeholder={f.prestataireType === 'artiste' ? 'DJ Shadow, Les Traiteurs du Sud...' : 'Nom de ta structure'} />
+                <Field label="Nom commercial" required>
+                  <input
+                    style={{ ...S.input, borderColor: errors.nomCommercial ? '#e05aaa' : undefined }}
+                    value={f.nomCommercial}
+                    onChange={e => update('nomCommercial', e.target.value)}
+                    placeholder={f.prestataireType === 'artiste' ? 'Nom de ta structure / collectif...' : 'Nom de ta structure'}
+                  />
                   {errors.nomCommercial && <p style={S.error}>{errors.nomCommercial}</p>}
                 </Field>
               </div>
-              <Field label="Raison sociale (si applicable)">
-                <input style={S.input} value={f.raisonSociale} onChange={e => update('raisonSociale', e.target.value)} placeholder="SAS, EI, Auto-entrepreneur..." />
+
+              {/* Nom de scène (artiste uniquement) */}
+              {f.prestataireType === 'artiste' && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Field label="Nom de scène">
+                    <input
+                      style={S.input}
+                      value={f.nomScene}
+                      onChange={e => update('nomScene', e.target.value)}
+                      placeholder="ex: DJ Paradox"
+                    />
+                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
+                      Sera ton nom affiché sur la plateforme si renseigné
+                    </p>
+                  </Field>
+                </div>
+              )}
+
+              {/* SIRET */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>
+                  Numéro SIRET
+                  <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6, letterSpacing: '0.1em' }}>
+                    — si pas de numéro, indiquez <span style={{ color: GOLD }}>000.000</span>
+                  </span>
+                </label>
+                <input style={S.input} value={f.siret} onChange={e => update('siret', e.target.value)} placeholder="123 456 789 00012 — ou 000.000" />
+              </div>
+
+              {/* Email + Téléphone */}
+              <Field label="Email professionnel" required>
+                <input
+                  type="email"
+                  style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined }}
+                  value={f.emailPro}
+                  onChange={e => update('emailPro', e.target.value)}
+                  placeholder="contact@..."
+                />
+                {errors.emailPro && <p style={S.error}>{errors.emailPro}</p>}
               </Field>
-              <Field label="SIREN (si activité pro déclarée)">
-                <input style={S.input} value={f.siren} onChange={e => update('siren', e.target.value)} placeholder="123 456 789" maxLength={9} />
+              <Field label="Téléphone professionnel" required>
+                <PhoneInput codeField="telephoneProCode" numberField="telephonePro" formState={f} onUpdate={update} inputStyle={S.input} error={errors.telephonePro} />
+                {errors.telephonePro && <p style={S.error}>{errors.telephonePro}</p>}
               </Field>
-              <Field label="SIRET">
-                <input style={S.input} value={f.siret} onChange={e => update('siret', e.target.value)} placeholder="123 456 789 00012" maxLength={14} />
+
+              {/* Responsable */}
+              <Field label="Nom du responsable" required>
+                <input
+                  style={{ ...S.input, borderColor: errors.responsableNom ? '#e05aaa' : undefined }}
+                  value={f.responsableNom}
+                  onChange={e => update('responsableNom', e.target.value)}
+                  placeholder="Dupont"
+                />
+                {errors.responsableNom && <p style={S.error}>{errors.responsableNom}</p>}
+              </Field>
+              <Field label="Prénom du responsable" required>
+                <input
+                  style={{ ...S.input, borderColor: errors.responsablePrenom ? '#e05aaa' : undefined }}
+                  value={f.responsablePrenom}
+                  onChange={e => update('responsablePrenom', e.target.value)}
+                  placeholder="Jean"
+                />
+                {errors.responsablePrenom && <p style={S.error}>{errors.responsablePrenom}</p>}
               </Field>
               <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Adresse">
-                  <input style={S.input} value={f.adresse} onChange={e => update('adresse', e.target.value)} placeholder="12 rue..." />
+                <Field label="Fonction / Poste">
+                  <input style={S.input} value={f.responsableFonction} onChange={e => update('responsableFonction', e.target.value)} placeholder="Gérant, Artiste, Directeur..." />
                 </Field>
               </div>
-              <Field label="Ville" required>
-                <input style={{ ...S.input, borderColor: errors.ville ? '#e05aaa' : undefined }} value={f.ville} onChange={e => update('ville', e.target.value)} placeholder="Paris" />
-                {errors.ville && <p style={S.error}>{errors.ville}</p>}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <Field label="Téléphone du responsable">
+                  <PhoneInput codeField="responsableTelephoneCode" numberField="responsableTelephone" formState={f} onUpdate={update} inputStyle={S.input} placeholder="90 00 00 00" />
+                </Field>
+              </div>
+
+              {/* Localisation */}
+              <Field label="Ville">
+                <input style={S.input} value={f.ville} onChange={e => update('ville', e.target.value)} placeholder="Paris" />
               </Field>
               <Field label="Pays">
                 <input style={S.input} value={f.pays} onChange={e => update('pays', e.target.value)} placeholder="France" />
               </Field>
-              <Field label="Email" required>
-                <input type="email" style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined }} value={f.emailPro} onChange={e => update('emailPro', e.target.value)} placeholder="contact@..." />
-                {errors.emailPro && <p style={S.error}>{errors.emailPro}</p>}
-              </Field>
-              <Field label="Téléphone" required>
-                <input style={{ ...S.input, borderColor: errors.telephonePro ? '#e05aaa' : undefined }} value={f.telephonePro} onChange={e => update('telephonePro', e.target.value)} placeholder="+33 6..." />
-                {errors.telephonePro && <p style={S.error}>{errors.telephonePro}</p>}
-              </Field>
-              <Field label="Nom du responsable" required>
-                <input style={{ ...S.input, borderColor: errors.responsableNom ? '#e05aaa' : undefined }} value={f.responsableNom} onChange={e => update('responsableNom', e.target.value)} placeholder="Dupont" />
-                {errors.responsableNom && <p style={S.error}>{errors.responsableNom}</p>}
-              </Field>
-              <Field label="Prénom">
-                <input style={S.input} value={f.responsablePrenom} onChange={e => update('responsablePrenom', e.target.value)} placeholder="Jean" />
-              </Field>
-              <Field label="Fonction">
-                <input style={S.input} value={f.responsableFonction} onChange={e => update('responsableFonction', e.target.value)} placeholder="Gérant, Artiste..." />
-              </Field>
-              <Field label="Zone d'intervention">
-                <input style={S.input} value={f.zoneIntervention} onChange={e => update('zoneIntervention', e.target.value)} placeholder="Île-de-France, National, Europe..." />
-              </Field>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <Field label="Zone d'intervention">
+                  <input style={S.input} value={f.zoneIntervention} onChange={e => update('zoneIntervention', e.target.value)} placeholder="Île-de-France, National, Europe..." />
+                </Field>
+              </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <Field label="Description courte de l'activité">
                   <textarea style={{ ...S.input, minHeight: 80, resize: 'vertical' }} value={f.description} onChange={e => update('description', e.target.value)} placeholder="Décris ton activité, ton style, tes points forts..." />
                 </Field>
               </div>
+
+              {/* ── Identifiants de connexion (anonymous mode) ── */}
+              {anonMode && (
+                <>
+                  <div style={{ gridColumn: '1 / -1', height: 1, background: 'rgba(255,255,255,0.07)', margin: '4px 0' }} />
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <p style={{ ...S.section, marginBottom: 12 }}>🔐 Identifiants de connexion</p>
+                    <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', marginBottom: 12, lineHeight: 1.6 }}>
+                      Cet email sera ton identifiant pour accéder à ton espace une fois validé.
+                    </p>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <Field label="Email de connexion" required>
+                      <input
+                        type="email"
+                        style={{ ...S.input, borderColor: errors.regEmail ? '#e05aaa' : undefined }}
+                        value={regEmail}
+                        onChange={e => setRegEmail(e.target.value)}
+                        placeholder="contact@monactivite.fr"
+                        disabled={!!anonUidRef.current}
+                      />
+                      {errors.regEmail && <p style={S.error}>{errors.regEmail}</p>}
+                      {anonUidRef.current && (
+                        <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.6)', marginTop: 4 }}>✓ Compte créé — email verrouillé</p>
+                      )}
+                    </Field>
+                  </div>
+                  {!anonUidRef.current && (
+                    <>
+                      <Field label="Mot de passe" required>
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            type={showPwd ? 'text' : 'password'}
+                            style={{ ...S.input, paddingRight: 52, borderColor: errors.regPassword ? '#e05aaa' : undefined }}
+                            value={regPassword}
+                            onChange={e => setRegPassword(e.target.value)}
+                            placeholder="••••••••"
+                          />
+                          <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
+                            {showPwd ? 'Cacher' : 'Voir'}
+                          </button>
+                        </div>
+                        {errors.regPassword && <p style={S.error}>{errors.regPassword}</p>}
+                      </Field>
+                      <Field label="Confirmer le mot de passe" required>
+                        <input
+                          type={showPwd ? 'text' : 'password'}
+                          style={{ ...S.input, borderColor: errors.regPasswordConfirm ? '#e05aaa' : undefined }}
+                          value={regPasswordConfirm}
+                          onChange={e => setRegPasswordConfirm(e.target.value)}
+                          placeholder="••••••••"
+                        />
+                        {errors.regPasswordConfirm && <p style={S.error}>{errors.regPasswordConfirm}</p>}
+                      </Field>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}
 
-        {/* ── STEP 2: Champs spécifiques ── */}
+        {/* ── STEP 2: Informations spécifiques + tarifs ── */}
         {step === 2 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>{selectedType?.icon} Informations spécifiques — {selectedType?.label}</p>
@@ -343,20 +715,30 @@ export default function OnboardingPrestataire() {
             {/* Artiste */}
             {f.prestataireType === 'artiste' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <Field label="Nom de scène (optionnel)">
-                  <input style={S.input} value={f.nomScene} onChange={e => update('nomScene', e.target.value)} placeholder="ex: DJ Paradox" />
-                </Field>
                 <Field label="Styles / Spécialités">
                   <input style={S.input} value={f.styles} onChange={e => update('styles', e.target.value)} placeholder="House, Techno, R&B, Live Saxo..." />
                 </Field>
-                <Field label="Portfolio / Instagram / Lien vidéo">
-                  <input style={S.input} value={f.portfolio} onChange={e => update('portfolio', e.target.value)} placeholder="https://... ou @nom" />
+                <Field label="Années d'expérience">
+                  <select style={S.select} value={f.anneesExperience} onChange={e => update('anneesExperience', e.target.value)}>
+                    <option value="">Choisir...</option>
+                    <option value="moins_1">Moins d'1 an</option>
+                    <option value="1_3">1–3 ans</option>
+                    <option value="3_5">3–5 ans</option>
+                    <option value="5_10">5–10 ans</option>
+                    <option value="plus_10">Plus de 10 ans</option>
+                  </select>
+                </Field>
+                <Field label="Portfolio / Lien vidéo">
+                  <input style={S.input} value={f.portfolio} onChange={e => update('portfolio', e.target.value)} placeholder="https://soundcloud.com/... ou lien YouTube..." />
+                </Field>
+                <Field label="Instagram">
+                  <input style={S.input} value={f.instagram} onChange={e => update('instagram', e.target.value)} placeholder="@ton_pseudo" />
                 </Field>
                 <Field label="Statut de facturation">
                   <select style={S.select} value={f.statutFacturation} onChange={e => update('statutFacturation', e.target.value)}>
                     <option value="">Choisir...</option>
                     <option value="auto_entrepreneur">Auto-entrepreneur</option>
-                    <option value="artiste_auteur">Artiste-Auteur</option>
+                    <option value="artiste_auteur">Artiste-Auteur (Agessa / MDA)</option>
                     <option value="salarie_intermittent">Salarié / Intermittent</option>
                     <option value="structure">Via structure (SARL, SAS...)</option>
                     <option value="autre">Autre</option>
@@ -385,8 +767,13 @@ export default function OnboardingPrestataire() {
                     <option value="rooftop">Rooftop / Terrasse</option>
                     <option value="club">Club / Discothèque</option>
                     <option value="chateau">Château / Manoir</option>
+                    <option value="warehouse">Warehouse / Hangar</option>
+                    <option value="plein_air">Plein air</option>
                     <option value="autre">Autre</option>
                   </select>
+                </Field>
+                <Field label="Équipements disponibles">
+                  <input style={S.input} value={f.equipements} onChange={e => update('equipements', e.target.value)} placeholder="Sono intégrée, éclairage, parking, cuisine..." />
                 </Field>
                 <Field label="Horaires autorisés">
                   <input style={S.input} value={f.horairesAutorises} onChange={e => update('horairesAutorises', e.target.value)} placeholder="ex: Jusqu'à 06h00, Pas d'événement le dimanche..." />
@@ -435,30 +822,77 @@ export default function OnboardingPrestataire() {
                 <Field label="Menu / Carte de base">
                   <textarea style={{ ...S.input, minHeight: 80, resize: 'vertical' }} value={f.menuBase} onChange={e => update('menuBase', e.target.value)} placeholder="Décris tes formules, spécialités, régimes..." />
                 </Field>
-                <Toggle value={f.alcoolFood} onChange={v => update('alcoolFood', v)} label="Alcool proposé" />
-                <Field label="Informations réglementaires (licence alcool si applicable)">
-                  <input style={S.input} value={f.informationsReglementaires} onChange={e => update('informationsReglementaires', e.target.value)} placeholder="Licence II, III, IV..." />
-                </Field>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <Toggle value={f.alcoolFood} onChange={v => update('alcoolFood', v)} label="Alcool proposé" />
+                  {f.alcoolFood && (
+                    <p style={{ fontFamily: DM, fontSize: 9, color: GOLD, letterSpacing: '0.06em', margin: '2px 0 0 46px' }}>
+                      → Une licence alcool pourra vous être demandée
+                    </p>
+                  )}
+                </div>
               </div>
             )}
+
+            {/* TarifBlock — affiché pour tous les types */}
+            {f.prestataireType && <TarifBlock f={f} update={update} />}
           </div>
         )}
 
         {/* ── STEP 3: Paiement ── */}
         {step === 3 && (
-          <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>💳 Paiement</p>
-            <div style={{ padding: '14px 16px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.15)', borderRadius: 8 }}>
-              <p style={{ fontFamily: DM, fontSize: 8, color: 'rgba(78,232,200,0.7)', letterSpacing: '0.1em', margin: '0 0 8px', textTransform: 'uppercase' }}>Stripe Connect</p>
-              <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.7 }}>
-                Tes coordonnées bancaires seront enregistrées via <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Stripe Connect</strong> une fois ton dossier approuvé — directement sur la plateforme sécurisée Stripe, sans jamais transiter par LIVEINBLACK.
+          <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <p style={S.section}>💳 Tes revenus</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ fontFamily: CG, fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                Comment tu seras payé
+              </p>
+              <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.8, margin: 0 }}>
+                LIVEINBLACK collecte les paiements et te reverse ta part directement sur ton compte bancaire.
+                Les reversements sont gérés de façon entièrement automatique.
               </p>
             </div>
-            <div style={{ padding: '10px 14px', background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.15)', borderRadius: 6 }}>
-              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(200,169,110,0.7)', letterSpacing: '0.06em', margin: 0, lineHeight: 1.6 }}>
-                ℹ️ Pour continuer, clique simplement sur <strong>Suivant</strong>. Tu recevras un lien Stripe par email après validation de ton dossier.
+
+            {[
+              {
+                num: '01',
+                title: 'Dossier approuvé',
+                desc: 'Notre équipe valide ton dossier (sous 48h). Tu reçois une notification par email.',
+                color: GOLD,
+              },
+              {
+                num: '02',
+                title: 'Connexion Stripe',
+                desc: 'Tu reçois un lien pour connecter ton compte bancaire via Stripe — la référence mondiale du paiement en ligne. Stripe vérifie ton identité et tes coordonnées bancaires de façon sécurisée (nous ne voyons jamais ton IBAN).',
+                color: '#4ee8c8',
+              },
+              {
+                num: '03',
+                title: 'Reversements automatiques',
+                desc: 'À chaque commande acceptée, ta part (après commission LIVEINBLACK) est automatiquement virée sur ton compte dans les 2–7 jours ouvrés.',
+                color: PURPLE,
+              },
+            ].map(s => (
+              <div key={s.num} style={{ display: 'flex', gap: 14, padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
+                <div style={{ fontFamily: DM, fontSize: 20, fontWeight: 700, color: s.color, opacity: 0.5, flexShrink: 0, lineHeight: 1, paddingTop: 2 }}>
+                  {s.num}
+                </div>
+                <div>
+                  <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.85)', margin: '0 0 5px', letterSpacing: '0.05em' }}>{s.title}</p>
+                  <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.32)', margin: 0, lineHeight: 1.7 }}>{s.desc}</p>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ padding: '10px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
+              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.55)', letterSpacing: '0.06em', margin: 0, lineHeight: 1.7 }}>
+                🔒 Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK. Stripe est certifié PCI-DSS niveau 1 (la norme de sécurité bancaire la plus élevée).
               </p>
             </div>
+
+            <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.18)', margin: 0, letterSpacing: '0.05em' }}>
+              Aucune information bancaire n'est demandée ici — tu configureras tout après approbation.
+            </p>
           </div>
         )}
 
@@ -467,9 +901,10 @@ export default function OnboardingPrestataire() {
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>📎 Documents justificatifs</p>
             <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, margin: 0 }}>
-              Télécharge les documents requis pour ta catégorie. Ils sont stockés de manière privée.
+              Télécharge les documents requis pour ta catégorie. Stockés de façon privée, accessibles uniquement à l'équipe LIVEINBLACK.
             </p>
 
+            {/* Documents requis par type */}
             {requiredDocs.map(docKey => {
               const label = DOCUMENT_LABELS[docKey]?.label || docKey
               return (
@@ -477,83 +912,279 @@ export default function OnboardingPrestataire() {
                   key={docKey}
                   label={label}
                   required
-                  uploaded={app.documents?.[docKey]}
+                  files={getDocFiles(app, docKey)}
                   status={uploadStatus[docKey]}
                   onChange={file => handleUpload(docKey, file)}
+                  onRemove={i => handleRemove(docKey, i)}
                 />
               )
             })}
 
-            {/* RC Pro — optionnelle mais affichée */}
-            <DocUploadRow
-              label="Attestation RC Pro (si applicable)"
-              required={false}
-              uploaded={app.documents?.rc_pro}
-              status={uploadStatus.rc_pro}
-              onChange={file => handleUpload('rc_pro', file)}
-            />
-
-            {/* Alcool food */}
-            {f.prestataireType === 'food' && f.alcoolFood && (
+            {/* RC Pro — optionnelle */}
+            {!requiredDocs.includes('rc_pro') && (
               <DocUploadRow
-                label="Licence alcool (II / III / IV)"
+                label="Attestation RC Pro (optionnelle)"
                 required={false}
-                uploaded={app.documents?.alcohol_license}
-                status={uploadStatus.alcohol_license}
-                onChange={file => handleUpload('alcohol_license', file)}
+                files={getDocFiles(app, 'rc_pro')}
+                status={uploadStatus.rc_pro}
+                onChange={file => handleUpload('rc_pro', file)}
+                onRemove={i => handleRemove('rc_pro', i)}
               />
             )}
 
-            {/* Submit */}
-            <div style={{ marginTop: 8, padding: '16px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: 8 }}>
-              <p style={{ fontFamily: DM, fontSize: 9, color: '#8b5cf6', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Prêt à soumettre ?</p>
-              <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, marginBottom: 16 }}>
-                Ton dossier sera examiné par l'équipe LIVEINBLACK. Suis l'avancement dans <strong style={{ color: 'rgba(255,255,255,0.55)' }}>Mon Dossier</strong>.
-              </p>
-              {/* Note optionnelle pour l'équipe */}
-              <div style={{ marginBottom: 14 }}>
-                <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-                  Message pour l'équipe (optionnel)
-                </p>
-                <textarea
-                  value={candidateNote}
-                  onChange={e => setCandidateNote(e.target.value)}
-                  placeholder={app?.status === 'needs_changes'
-                    ? 'Ex : J\'ai mis à jour les documents demandés et corrigé les informations...'
-                    : 'Ex : Bonjour, voici mon dossier prestataire. Je suis disponible pour tout complément...'}
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    background: 'rgba(8,10,20,0.6)',
-                    border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: 6, color: '#fff',
-                    fontFamily: DM, fontSize: 11,
-                    padding: '9px 12px', outline: 'none', resize: 'vertical',
-                    minHeight: 64, lineHeight: 1.5,
-                  }}
-                />
-              </div>
-              <button onClick={handleSubmit} disabled={submitting} style={{ ...S.btnGold, opacity: submitting ? 0.6 : 1 }}>
-                {submitting ? 'Soumission...' : 'Soumettre mon dossier'}
-              </button>
-            </div>
+            {/* Alcool food — conditionnelle */}
+            {f.prestataireType === 'food' && f.alcoolFood && (
+              <DocUploadRow
+                label="Licence alcool (II / III / IV)"
+                required
+                files={getDocFiles(app, 'alcohol_license')}
+                status={uploadStatus.alcohol_license}
+                onChange={file => handleUpload('alcohol_license', file)}
+                onRemove={i => handleRemove('alcohol_license', i)}
+              />
+            )}
+
+            {/* Submit section */}
+            {(() => {
+              const missing = []
+              if (!hasDoc(app, 'identity')) missing.push('Pièce d\'identité')
+              if (!hasDoc(app, 'rib'))      missing.push('RIB')
+              if (f.prestataireType === 'food' && f.alcoolFood && !hasDoc(app, 'alcohol_license')) missing.push('Licence alcool')
+              const canSubmit = missing.length === 0
+              return (
+                <div style={{ marginTop: 8, padding: '16px', background: canSubmit ? 'rgba(139,92,246,0.05)' : 'rgba(224,90,170,0.04)', border: `1px solid ${canSubmit ? 'rgba(139,92,246,0.18)' : 'rgba(224,90,170,0.2)'}`, borderRadius: 8 }}>
+                  {!canSubmit ? (
+                    <>
+                      <p style={{ fontFamily: DM, fontSize: 9, color: '#e05aaa', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+                        Documents requis manquants
+                      </p>
+                      {missing.map(d => (
+                        <p key={d} style={{ fontFamily: DM, fontSize: 10, color: 'rgba(224,90,170,0.7)', margin: '0 0 4px', letterSpacing: '0.04em' }}>
+                          ✗ {d}
+                        </p>
+                      ))}
+                      <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.2)', margin: '10px 0 0', lineHeight: 1.6 }}>
+                        Télécharge les documents ci-dessus pour débloquer la soumission.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ fontFamily: DM, fontSize: 9, color: PURPLE, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Prêt à soumettre ✓</p>
+                      <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, marginBottom: 16 }}>
+                        {anonMode
+                          ? 'Une fois envoyé, ton dossier sera examiné par l\'équipe LIVEINBLACK. Tu seras contacté par email dès validation.'
+                          : 'Une fois soumis, ton dossier sera examiné par l\'équipe LIVEINBLACK. Tu peux suivre l\'avancement dans Mon Dossier.'}
+                      </p>
+                      <div style={{ marginBottom: 14 }}>
+                        <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+                          Message pour l'équipe (optionnel)
+                        </p>
+                        <textarea
+                          value={candidateNote}
+                          onChange={e => setCandidateNote(e.target.value)}
+                          placeholder={app?.status === 'needs_changes'
+                            ? 'Ex : J\'ai mis à jour les documents demandés et corrigé les informations...'
+                            : 'Ex : Bonjour, voici mon dossier prestataire. Je suis disponible pour tout complément...'}
+                          style={{
+                            width: '100%', boxSizing: 'border-box',
+                            background: 'rgba(8,10,20,0.6)',
+                            border: '1px solid rgba(255,255,255,0.10)',
+                            borderRadius: 6, color: '#fff',
+                            fontFamily: DM, fontSize: 11,
+                            padding: '9px 12px', outline: 'none', resize: 'vertical',
+                            minHeight: 64, lineHeight: 1.5,
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting || !canSubmit}
+                    style={{ ...S.btnGold, opacity: (submitting || !canSubmit) ? 0.35 : 1, cursor: !canSubmit ? 'not-allowed' : 'pointer', marginTop: canSubmit ? 0 : 12 }}
+                  >
+                    {submitting ? 'Envoi en cours...' : anonMode ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
+                  </button>
+                </div>
+              )
+            })()}
           </div>
         )}
 
         {/* Navigation */}
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-          {step > 0 && <button onClick={prev} style={{ ...S.btnGhost, flex: 1 }}>← Retour</button>}
-          {step < STEPS.length - 1 && <button onClick={next} style={{ ...S.btnGold, flex: 2 }}>Continuer →</button>}
+          {step > 0 && (
+            <button onClick={prev} disabled={creatingAccount || submitting} style={{ ...S.btnGhost, flex: 1 }}>← Retour</button>
+          )}
+          {step < STEPS.length - 1 && (
+            <button onClick={next} disabled={creatingAccount} style={{ ...S.btnGold, flex: 2, opacity: creatingAccount ? 0.6 : 1 }}>
+              {creatingAccount ? 'Création du compte...' : 'Continuer →'}
+            </button>
+          )}
         </div>
+
         <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.18)', textAlign: 'center', marginTop: 12, letterSpacing: '0.1em' }}>
-          Sauvegarde automatique activée
+          {anonMode ? 'Brouillon enregistré localement' : 'Sauvegarde automatique activée'}
         </p>
       </div>
 
+      {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 20px', borderRadius: 6, backdropFilter: 'blur(20px)', fontFamily: DM, fontSize: 11, letterSpacing: '0.06em', ...(toast.type === 'error' ? { background: 'rgba(220,50,50,0.16)', border: '1px solid rgba(220,50,50,0.4)', color: 'rgba(220,100,100,0.95)' } : { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ee8c8' }) }}>
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
+          padding: '10px 20px', borderRadius: 6, backdropFilter: 'blur(20px)',
+          fontFamily: DM, fontSize: 11, letterSpacing: '0.06em',
+          ...(toast.type === 'error'
+            ? { background: 'rgba(220,50,50,0.16)', border: '1px solid rgba(220,50,50,0.4)', color: 'rgba(220,100,100,0.95)' }
+            : { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ee8c8' }),
+        }}>
           {toast.msg}
         </div>
       )}
     </Layout>
+  )
+}
+
+// ── File row ──────────────────────────────────────────────────────────────────
+function FileRow({ file, onRemove }) {
+  const failed = !file.url
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      padding: '8px 10px', borderRadius: 6,
+      background: failed ? 'rgba(224,90,170,0.06)' : 'rgba(78,232,200,0.05)',
+      border: `1px solid ${failed ? 'rgba(224,90,170,0.25)' : 'rgba(78,232,200,0.12)'}`,
+    }}>
+      <span style={{ fontSize: 14, flexShrink: 0 }}>{failed ? '⚠' : '📄'}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span style={{
+          fontFamily: "'DM Mono', monospace", fontSize: 10,
+          color: failed ? 'rgba(224,90,170,0.9)' : 'rgba(255,255,255,0.8)',
+          display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {file.name}
+        </span>
+        <span style={{
+          fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.04em',
+          color: failed ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.3)',
+        }}>
+          {failed
+            ? 'Envoi échoué — retire et rajoute ce fichier'
+            : file.size != null
+              ? file.size < 1024 * 1024
+                ? `${(file.size / 1024).toFixed(0)} Ko`
+                : `${(file.size / (1024 * 1024)).toFixed(1)} Mo`
+              : ''}
+        </span>
+      </div>
+      <button
+        onClick={onRemove}
+        style={{
+          background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.25)',
+          cursor: 'pointer', color: '#e05aaa', fontSize: 13, lineHeight: 1,
+          padding: '3px 7px', borderRadius: 4, flexShrink: 0,
+        }}
+        title="Retirer ce fichier"
+      >✕</button>
+    </div>
+  )
+}
+
+// ── Document upload row ───────────────────────────────────────────────────────
+function DocUploadRow({ label, required, files = [], status, onChange, onRemove }) {
+  const hasFiles    = files.length > 0
+  const isUploading = status === 'uploading'
+  const missing     = required && !hasFiles
+
+  const borderColor = hasFiles
+    ? 'rgba(78,232,200,0.25)'
+    : missing ? 'rgba(224,90,170,0.35)' : 'rgba(255,255,255,0.10)'
+  const bgColor = hasFiles
+    ? 'rgba(78,232,200,0.04)'
+    : missing ? 'rgba(224,90,170,0.04)' : 'rgba(255,255,255,0.02)'
+  const iconColor = hasFiles ? '#4ee8c8' : missing ? '#e05aaa' : 'rgba(255,255,255,0.25)'
+  const btnColor  = hasFiles ? 'rgba(78,232,200,0.7)' : missing ? '#e05aaa' : 'rgba(200,169,110,0.7)'
+  const btnBorder = hasFiles ? 'rgba(78,232,200,0.3)' : missing ? 'rgba(224,90,170,0.4)' : 'rgba(200,169,110,0.3)'
+
+  return (
+    <div style={{
+      borderRadius: 10, marginBottom: 12, overflow: 'hidden',
+      border: `1px solid ${borderColor}`,
+      background: bgColor,
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 16px' }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 16, fontWeight: 700,
+          background: hasFiles ? 'rgba(78,232,200,0.10)' : missing ? 'rgba(224,90,170,0.10)' : 'rgba(255,255,255,0.05)',
+          border: `1px solid ${borderColor}`,
+          color: iconColor,
+        }}>
+          {isUploading ? (
+            <span style={{ fontSize: 12, opacity: 0.6 }}>···</span>
+          ) : hasFiles ? '✓' : missing ? '!' : '○'}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontFamily: "'DM Mono', monospace", fontSize: 11, margin: 0, letterSpacing: '0.03em',
+            color: hasFiles ? '#fff' : missing ? '#e05aaa' : 'rgba(255,255,255,0.6)',
+            fontWeight: hasFiles ? 500 : 400,
+          }}>
+            {label}
+            {required && <span style={{ color: '#e05aaa', marginLeft: 4 }}>*</span>}
+          </p>
+          <p style={{
+            fontFamily: "'DM Mono', monospace", fontSize: 9, margin: '3px 0 0',
+            color: hasFiles
+              ? 'rgba(78,232,200,0.6)'
+              : missing ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.22)',
+          }}>
+            {isUploading
+              ? 'Enregistrement en cours…'
+              : hasFiles
+                ? `${files.length} fichier${files.length > 1 ? 's' : ''} ajouté${files.length > 1 ? 's' : ''}`
+                : missing ? 'Obligatoire — aucun fichier' : 'Optionnel'}
+          </p>
+        </div>
+
+        <label style={{ cursor: isUploading ? 'wait' : 'pointer', flexShrink: 0 }}>
+          <input
+            type="file"
+            multiple
+            disabled={isUploading}
+            style={{ display: 'none' }}
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={e => Array.from(e.target.files || []).forEach(f => onChange(f))}
+          />
+          <span style={{
+            display: 'inline-block',
+            fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+            padding: '7px 14px', borderRadius: 5,
+            color: isUploading ? 'rgba(255,255,255,0.25)' : btnColor,
+            border: `1px solid ${isUploading ? 'rgba(255,255,255,0.08)' : btnBorder}`,
+            background: 'transparent',
+            whiteSpace: 'nowrap',
+          }}>
+            {isUploading ? '···' : hasFiles ? '+ Ajouter' : 'Choisir'}
+          </span>
+        </label>
+      </div>
+
+      {/* File list */}
+      {hasFiles && (
+        <div style={{
+          borderTop: '1px solid rgba(78,232,200,0.08)',
+          padding: '10px 16px 12px',
+          display: 'flex', flexDirection: 'column', gap: 6,
+        }}>
+          {files.map((file, i) => (
+            <FileRow key={i} file={file} onRemove={() => onRemove(i)} />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

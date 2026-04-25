@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import SideMenu from './SideMenu'
 import { getUserId, getTotalUnreadCount } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
+import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG } from '../utils/notifications'
 
 // ── Nav icons ──────────────────────────────────────────────────────────────────
 function NavIcon({ id, active }) {
@@ -67,6 +68,10 @@ export default function Layout({ children, hideNav, chatMode }) {
   const navItems = getNavItems(activeRole)
   const uid = getUserId(user)
   const [unreadMsgCount, setUnreadMsgCount] = useState(0)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0)
+  const notifBellRef = useRef(null)
 
   // ── Hide header on scroll-down, reveal on scroll-up ──
   const [headerHidden, setHeaderHidden] = useState(false)
@@ -98,6 +103,40 @@ export default function Layout({ children, hideNav, chatMode }) {
     const interval = setInterval(() => setUnreadMsgCount(getTotalUnreadCount(uid)), 3000)
     return () => clearInterval(interval)
   }, [uid])
+
+  // Poll notifications
+  useEffect(() => {
+    if (!uid) return
+    const refresh = () => {
+      const notifs = getNotifications(uid)
+      setNotifications(notifs)
+      setUnreadNotifCount(getUnreadCount(uid))
+    }
+    refresh()
+    const id = setInterval(refresh, 5000)
+    return () => clearInterval(id)
+  }, [uid])
+
+  // Close notif dropdown on outside click
+  useEffect(() => {
+    if (!notifOpen) return
+    const handler = e => {
+      if (notifBellRef.current && !notifBellRef.current.contains(e.target)) {
+        setNotifOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [notifOpen])
+
+  function handleOpenNotifs() {
+    setNotifOpen(o => !o)
+    if (!notifOpen && uid && unreadNotifCount > 0) {
+      markAllRead(uid)
+      setUnreadNotifCount(0)
+      setNotifications(n => n.map(x => ({ ...x, read: true })))
+    }
+  }
 
   // Poll pending validations count for agent badge
   useEffect(() => {
@@ -205,10 +244,27 @@ export default function Layout({ children, hideNav, chatMode }) {
               )}
             </nav>
 
-            {/* Right: avatar / connexion + hamburger */}
+            {/* Right: avatar / connexion + notification bell + hamburger */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               {user ? (
                 <>
+                  {/* Notification bell */}
+                  <div ref={notifBellRef} style={{ position: 'relative' }}>
+                    <button onClick={handleOpenNotifs}
+                      style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: notifOpen ? 'rgba(139,92,246,0.14)' : 'rgba(255,255,255,0.06)', border: `1px solid ${notifOpen ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.09)'}`, cursor: 'pointer', flexShrink: 0, position: 'relative' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                      </svg>
+                      {unreadNotifCount > 0 && (
+                        <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#e05aaa)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                          {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                        </span>
+                      )}
+                    </button>
+                    {notifOpen && (
+                      <NotifDropdown notifications={notifications} onClose={() => setNotifOpen(false)} uid={uid} />
+                    )}
+                  </div>
                   <button onClick={() => navigate('/profil')}
                     style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
                     {user.avatar ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : avatarLetter}
@@ -277,10 +333,27 @@ export default function Layout({ children, hideNav, chatMode }) {
               </span>
             </button>
 
-            {/* Right: avatar / connexion */}
+            {/* Right: avatar / connexion + notification bell */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {user ? (
                 <>
+                  {/* Notification bell — mobile */}
+                  <div ref={notifBellRef} style={{ position: 'relative' }}>
+                    <button onClick={handleOpenNotifs}
+                      style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: notifOpen ? 'rgba(139,92,246,0.14)' : 'rgba(255,255,255,0.07)', border: `1px solid ${notifOpen ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.10)'}`, cursor: 'pointer', position: 'relative' }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                      </svg>
+                      {unreadNotifCount > 0 && (
+                        <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 13, height: 13, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#e05aaa)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 7, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                          {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                        </span>
+                      )}
+                    </button>
+                    {notifOpen && (
+                      <NotifDropdown notifications={notifications} onClose={() => setNotifOpen(false)} uid={uid} mobile />
+                    )}
+                  </div>
                   <button onClick={() => navigate('/profil')}
                     style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
                     {user.avatar ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : avatarLetter}
@@ -384,6 +457,104 @@ export default function Layout({ children, hideNav, chatMode }) {
           )}
         </div>
       </nav>}
+    </div>
+  )
+}
+
+// ── Notification dropdown ─────────────────────────────────────────────────────
+function NotifDropdown({ notifications, onClose, uid, mobile }) {
+  const DM = "'DM Mono', monospace"
+  const recent = notifications.slice(0, 8)
+
+  function timeAgo(ts) {
+    const diff = Date.now() - ts
+    if (diff < 60000)   return 'À l\'instant'
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} min`
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`
+    return `${Math.floor(diff / 86400000)}j`
+  }
+
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 'calc(100% + 10px)',
+      right: 0,
+      width: mobile ? 'min(320px, calc(100vw - 24px))' : 320,
+      background: 'linear-gradient(180deg, rgba(14,16,30,0.98), rgba(8,10,20,0.98))',
+      border: '1px solid rgba(255,255,255,0.10)',
+      borderRadius: 14,
+      boxShadow: '0 20px 60px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.06) inset',
+      backdropFilter: 'blur(24px)',
+      zIndex: 999,
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px' }}>
+        <span style={{ fontFamily: DM, fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+          Notifications
+        </span>
+        {notifications.length > 0 && (
+          <button onClick={() => { if (uid) markAllRead(uid) }} style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(139,92,246,0.7)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            Tout lire
+          </button>
+        )}
+      </div>
+
+      {/* List */}
+      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+        {recent.length === 0 ? (
+          <div style={{ padding: '20px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🔔</div>
+            <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: 0 }}>Aucune notification</p>
+          </div>
+        ) : (
+          recent.map(n => {
+            const cfg = NOTIF_CONFIG[n.type] || { icon: '🔔', color: 'rgba(255,255,255,0.5)' }
+            return (
+              <div key={n.id} style={{
+                display: 'flex', gap: 12, padding: '12px 16px',
+                borderTop: '1px solid rgba(255,255,255,0.04)',
+                background: n.read ? 'transparent' : 'rgba(139,92,246,0.05)',
+                cursor: 'default',
+              }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: `${cfg.color}12`,
+                  border: `1px solid ${cfg.color}30`,
+                  fontSize: 14,
+                }}>
+                  {cfg.icon}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: DM, fontSize: 11, color: n.read ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.9)', margin: '0 0 3px', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {n.title}
+                  </p>
+                  {n.body && (
+                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '0 0 4px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {n.body}
+                    </p>
+                  )}
+                  <span style={{ fontFamily: DM, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}>
+                    {timeAgo(n.createdAt)}
+                  </span>
+                </div>
+                {!n.read && (
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, flexShrink: 0, marginTop: 4 }} />
+                )}
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {recent.length > 0 && (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '10px 16px', textAlign: 'center' }}>
+          <span style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
+            {notifications.length > 8 ? `+${notifications.length - 8} autres` : `${notifications.length} notification${notifications.length > 1 ? 's' : ''}`}
+          </span>
+        </div>
+      )}
     </div>
   )
 }

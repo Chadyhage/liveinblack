@@ -447,10 +447,38 @@ export default function AgentPage() {
 
   async function handleAppAction(appId, status, note) {
     const adminNoteValue = appAdminNote || ''
-    await updateApplicationStatus(appId, status, user?.uid, user?.name || 'Agent', note, adminNoteValue)
+    const updatedApp = await updateApplicationStatus(appId, status, user?.uid, user?.name || 'Agent', note, adminNoteValue)
     refresh()
     setSelectedApp(apps => apps ? { ...apps, status, ...(status === 'approved' ? { approvedAt: Date.now() } : {}), ...(status === 'rejected' ? { rejectionReason: note } : {}), ...(status === 'needs_changes' ? { requestedChanges: note } : {}) } : null)
     showToast(status === 'approved' ? 'Dossier approuvé' : status === 'rejected' ? 'Dossier refusé' : status === 'needs_changes' ? 'Corrections demandées' : status === 'under_review' ? 'Dossier en révision' : 'Dossier mis à jour')
+
+    // Fire in-app notification to the applicant
+    const applicantUid = updatedApp?.uid
+    if (applicantUid) {
+      try {
+        const { createNotification } = await import('../utils/notifications')
+        if (status === 'approved') {
+          createNotification(applicantUid, 'application_approved',
+            'Dossier approuvé ✅',
+            'Ton dossier LIVEINBLACK a été validé. Connecte-toi pour accéder à ton espace.',
+            { appId }
+          )
+        } else if (status === 'rejected') {
+          createNotification(applicantUid, 'application_rejected',
+            'Dossier refusé',
+            note || 'Ton dossier n\'a pas été retenu. Contacte-nous pour plus d\'informations.',
+            { appId }
+          )
+        } else if (status === 'needs_changes') {
+          createNotification(applicantUid, 'application_needs_changes',
+            'Corrections requises ⚠️',
+            note || 'Des modifications sont demandées sur ton dossier. Ouvre Mon Dossier pour voir les détails.',
+            { appId }
+          )
+        }
+      } catch {}
+    }
+
     setAppNote('')
     setAppAdminNote('')
     setActiveAction(null)
@@ -1556,16 +1584,113 @@ export default function AgentPage() {
 
               {/* Form data summary */}
               <Section title="Informations formulaire">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  {Object.entries(selectedApp.formData || {}).slice(0, 12).map(([k, v]) => (
-                    <div key={k} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0, minWidth: 100 }}>{k}</span>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.muted, wordBreak: 'break-all' }}>
-                        {typeof v === 'boolean' ? (v ? 'oui' : 'non') : String(v)}
-                      </span>
+                {(() => {
+                  const fd = selectedApp.formData || {}
+                  const type = selectedApp.type
+                  const pt = fd.prestataireType
+
+                  const FR = ({ label, value, href, mono }) => !value ? null : (
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0, minWidth: 120, paddingTop: 1 }}>{label}</span>
+                      {href
+                        ? <a href={href} target="_blank" rel="noreferrer" style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, wordBreak: 'break-all', flex: 1 }}>{value}</a>
+                        : <span style={{ fontFamily: mono === false ? FONTS.display : FONTS.mono, fontSize: 10, color: COLORS.muted, wordBreak: 'break-all', flex: 1, lineHeight: 1.5 }}>{value}</span>
+                      }
                     </div>
-                  ))}
-                </div>
+                  )
+
+                  const Sub = ({ title }) => (
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.15)', margin: '12px 0 6px', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      {title}
+                    </p>
+                  )
+
+                  const TARIF_TYPES = { soiree: 'Par soirée / événement', heure: 'Par heure', journee: 'Par journée', forfait: 'Au forfait', personne: 'Par personne' }
+                  const EXP_LABELS = { moins_1: '< 1 an', '1_3': '1–3 ans', '3_5': '3–5 ans', '5_10': '5–10 ans', plus_10: '> 10 ans' }
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {/* Common fields */}
+                      {type === 'prestataire' && pt && (
+                        <FR label="Type prestataire" value={
+                          PRESTATAIRE_TYPES.find(t => t.key === pt) ? `${PRESTATAIRE_TYPES.find(t => t.key === pt).icon || ''} ${PRESTATAIRE_TYPES.find(t => t.key === pt).label}` : pt
+                        } />
+                      )}
+                      <FR label="Nom commercial" value={fd.nomCommercial} />
+                      {type === 'prestataire' && pt === 'artiste' && fd.nomScene && (
+                        <FR label="Nom de scène" value={fd.nomScene} />
+                      )}
+                      <FR label="SIRET" value={fd.siret} />
+                      <FR label="Email pro" value={fd.emailPro} />
+                      <FR label="Tél. pro" value={fd.telephoneProCode ? `${fd.telephoneProCode} ${fd.telephonePro}` : fd.telephonePro} />
+                      <FR label="Responsable" value={[fd.responsablePrenom, fd.responsableNom, fd.responsableFonction].filter(Boolean).join(' ')} />
+                      <FR label="Ville" value={[fd.ville, fd.pays].filter(Boolean).join(', ')} />
+                      <FR label="Zone d'intervention" value={fd.zoneIntervention} />
+                      <FR label="Description" value={fd.description} />
+
+                      {/* ── Artiste ── */}
+                      {pt === 'artiste' && (
+                        <>
+                          <Sub title="Artiste" />
+                          <FR label="Styles" value={fd.styles} />
+                          <FR label="Expérience" value={EXP_LABELS[fd.anneesExperience] || fd.anneesExperience} />
+                          <FR label="Statut facturation" value={fd.statutFacturation} />
+                          <FR label="Portfolio" value={fd.portfolio} href={fd.portfolio?.startsWith('http') ? fd.portfolio : undefined} />
+                          <FR label="Instagram" value={fd.instagram} />
+                          {fd.besoinstechniques && <FR label="Rider technique" value={fd.besoinstechniques} />}
+                        </>
+                      )}
+
+                      {/* ── Salle ── */}
+                      {pt === 'salle' && (
+                        <>
+                          <Sub title="Lieu" />
+                          <FR label="Adresse" value={fd.adresseLieu} />
+                          <FR label="Capacité" value={fd.capaciteLieu ? `${fd.capaciteLieu} pers.` : null} />
+                          <FR label="Type de lieu" value={fd.typeLieu} />
+                          <FR label="Équipements" value={fd.equipements} />
+                          <FR label="Horaires autorisés" value={fd.horairesAutorises} />
+                          {fd.reglesDuLieu && <FR label="Règles" value={fd.reglesDuLieu} />}
+                        </>
+                      )}
+
+                      {/* ── Matériel ── */}
+                      {pt === 'materiel' && (
+                        <>
+                          <Sub title="Matériel" />
+                          <FR label="Catégories" value={fd.categoriesMateriel} />
+                          {fd.inventaire && <FR label="Inventaire" value={fd.inventaire} />}
+                          <FR label="Conditions location" value={fd.conditionsLocation} />
+                          <FR label="Politique caution" value={fd.politiqueCaution} />
+                        </>
+                      )}
+
+                      {/* ── Food ── */}
+                      {pt === 'food' && (
+                        <>
+                          <Sub title="Food / Boissons" />
+                          <FR label="Type activité" value={fd.typeActiviteFood} />
+                          {fd.menuBase && <FR label="Menu / Carte" value={fd.menuBase} />}
+                          <FR label="Alcool" value={fd.alcoolFood ? '⚠️ Oui — vérifier licence alcool' : 'Non'} />
+                        </>
+                      )}
+
+                      {/* ── Tarifs (prestataires uniquement) ── */}
+                      {type === 'prestataire' && (fd.tarifDevis || fd.tarifMin || fd.tarifMax) && (
+                        <>
+                          <Sub title="Tarifs" />
+                          {fd.tarifDevis
+                            ? <FR label="Tarification" value="Sur devis uniquement" />
+                            : <>
+                                <FR label="Fourchette" value={fd.tarifMin || fd.tarifMax ? `${fd.tarifMin || '—'}€ – ${fd.tarifMax || '—'}€` : null} />
+                                <FR label="Type" value={TARIF_TYPES[fd.tarifType] || fd.tarifType} />
+                              </>
+                          }
+                        </>
+                      )}
+                    </div>
+                  )
+                })()}
               </Section>
 
               {/* Documents */}
