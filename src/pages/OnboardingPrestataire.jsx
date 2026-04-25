@@ -213,7 +213,7 @@ export default function OnboardingPrestataire() {
     responsableTelephoneCode: '+33', responsableTelephone: '',
     ville: '', pays: 'France', zoneIntervention: '', description: '',
     // Artiste
-    styles: '', anneesExperience: '', statutFacturation: '', portfolio: '', instagram: '', besoinstechniques: '',
+    typeArtiste: '', styles: '', anneesExperience: '', statutFacturation: '', portfolio: '', instagram: '', besoinstechniques: '',
     // Salle
     adresseLieu: '', capaciteLieu: '', typeLieu: '', equipements: '', horairesAutorises: '', reglesDuLieu: '',
     // Matériel
@@ -277,7 +277,14 @@ export default function OnboardingPrestataire() {
       if (!f.prestataireType) errs.prestataireType = 'Sélectionne un type'
     }
     if (s === 1) {
-      if (!f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
+      // Nom commercial requis pour structures ; artiste peut utiliser uniquement son nom de scène
+      const isStructure = ['salle', 'materiel', 'food'].includes(f.prestataireType)
+      if (isStructure && !f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
+      if (f.prestataireType === 'artiste' && !f.nomCommercial.trim() && !f.nomScene.trim()) {
+        errs.nomScene = 'Renseigne ton nom de scène ou ton nom commercial'
+      }
+      // SIRET requis pour structures (ERP / entreprise de location / food)
+      if (isStructure && !f.siret.trim()) errs.siret = 'SIRET requis pour ce type de prestataire'
       if (!f.emailPro.trim() || !f.emailPro.includes('@')) errs.emailPro = 'Email invalide'
       if (!f.telephonePro.trim()) errs.telephonePro = 'Requis'
       if (!f.responsableNom.trim()) errs.responsableNom = 'Requis'
@@ -371,11 +378,16 @@ export default function OnboardingPrestataire() {
   }
 
   async function handleSubmit() {
-    const missingDocs = []
-    if (!hasDoc(app, 'identity')) missingDocs.push('Pièce d\'identité')
-    if (!hasDoc(app, 'rib'))      missingDocs.push('RIB')
+    // Dynamic check based on type
+    const requiredDocKeys = getRequiredDocs('prestataire', f.prestataireType)
+    const missingDocs = requiredDocKeys
+      .filter(key => !hasDoc(app, key))
+      .map(key => DOCUMENT_LABELS[key]?.label || key)
+    if (f.prestataireType === 'food' && f.alcoolFood && !hasDoc(app, 'alcohol_license')) {
+      missingDocs.push('Licence alcool')
+    }
     if (missingDocs.length > 0) {
-      showToast(`Document(s) manquant(s) : ${missingDocs.join(', ')}`, 'error')
+      showToast(`Document(s) manquant(s) : ${missingDocs[0]}${missingDocs.length > 1 ? ` (+${missingDocs.length - 1})` : ''}`, 'error')
       return
     }
     setSubmitting(true)
@@ -542,43 +554,62 @@ export default function OnboardingPrestataire() {
 
               {/* Nom commercial */}
               <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Nom commercial" required>
+                <Field
+                  label={f.prestataireType === 'artiste' ? 'Nom de la structure / collectif' : 'Nom commercial'}
+                  required={['salle', 'materiel', 'food'].includes(f.prestataireType)}
+                >
                   <input
                     style={{ ...S.input, borderColor: errors.nomCommercial ? '#e05aaa' : undefined }}
                     value={f.nomCommercial}
                     onChange={e => update('nomCommercial', e.target.value)}
-                    placeholder={f.prestataireType === 'artiste' ? 'Nom de ta structure / collectif...' : 'Nom de ta structure'}
+                    placeholder={f.prestataireType === 'artiste'
+                      ? 'Optionnel — si tu as un collectif ou une structure'
+                      : 'Nom officiel de ta structure'}
                   />
                   {errors.nomCommercial && <p style={S.error}>{errors.nomCommercial}</p>}
                 </Field>
               </div>
 
-              {/* Nom de scène (artiste uniquement) */}
+              {/* Nom de scène (artiste uniquement) — identifiant principal */}
               {f.prestataireType === 'artiste' && (
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <Field label="Nom de scène">
+                  <Field label="Nom de scène" required>
                     <input
-                      style={S.input}
+                      style={{ ...S.input, borderColor: errors.nomScene ? '#e05aaa' : undefined }}
                       value={f.nomScene}
                       onChange={e => update('nomScene', e.target.value)}
-                      placeholder="ex: DJ Paradox"
+                      placeholder="ex: DJ Paradox, Salsa Flow, Les Twins..."
                     />
-                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
-                      Sera ton nom affiché sur la plateforme si renseigné
-                    </p>
+                    {errors.nomScene
+                      ? <p style={S.error}>{errors.nomScene}</p>
+                      : <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
+                          Ce nom sera affiché sur la plateforme — laisse vide pour utiliser ton nom réel
+                        </p>
+                    }
                   </Field>
                 </div>
               )}
 
-              {/* SIRET */}
+              {/* SIRET — requis pour structures, optionnel pour artistes individuels */}
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={S.label}>
                   Numéro SIRET
-                  <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6, letterSpacing: '0.1em' }}>
-                    — si pas de numéro, indiquez <span style={{ color: GOLD }}>000.000</span>
-                  </span>
+                  {['salle', 'materiel', 'food'].includes(f.prestataireType)
+                    ? <span style={{ color: '#e05aaa' }}> *</span>
+                    : <span style={{ color: 'rgba(255,255,255,0.18)', marginLeft: 6, fontSize: 9, letterSpacing: '0.06em' }}>
+                        — optionnel si artiste-auteur / intermittent
+                      </span>
+                  }
                 </label>
-                <input style={S.input} value={f.siret} onChange={e => update('siret', e.target.value)} placeholder="123 456 789 00012 — ou 000.000" />
+                <input
+                  style={{ ...S.input, borderColor: errors.siret ? '#e05aaa' : undefined }}
+                  value={f.siret}
+                  onChange={e => update('siret', e.target.value)}
+                  placeholder={['salle', 'materiel', 'food'].includes(f.prestataireType)
+                    ? '123 456 789 00012'
+                    : 'Laisse vide si pas de structure'}
+                />
+                {errors.siret && <p style={S.error}>{errors.siret}</p>}
               </div>
 
               {/* Email + Téléphone */}
@@ -715,8 +746,22 @@ export default function OnboardingPrestataire() {
             {/* Artiste */}
             {f.prestataireType === 'artiste' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <Field label="Type d'artiste" required>
+                  <select style={S.select} value={f.typeArtiste} onChange={e => update('typeArtiste', e.target.value)}>
+                    <option value="">Choisir...</option>
+                    <option value="dj">DJ</option>
+                    <option value="musicien_live">Musicien live / Band</option>
+                    <option value="danseur">Danseur / Danseuse</option>
+                    <option value="performeur">Performeur / Show artistique</option>
+                    <option value="dj_sax">DJ-Saxophoniste</option>
+                    <option value="orchestre">Orchestre / Groupe musical</option>
+                    <option value="animateur">Animateur / MC / Présentateur</option>
+                    <option value="humoriste">Humoriste / Stand-up</option>
+                    <option value="autre">Autre</option>
+                  </select>
+                </Field>
                 <Field label="Styles / Spécialités">
-                  <input style={S.input} value={f.styles} onChange={e => update('styles', e.target.value)} placeholder="House, Techno, R&B, Live Saxo..." />
+                  <input style={S.input} value={f.styles} onChange={e => update('styles', e.target.value)} placeholder="House, Techno, R&B, Salsa, Jazz, Classique..." />
                 </Field>
                 <Field label="Années d'expérience">
                   <select style={S.select} value={f.anneesExperience} onChange={e => update('anneesExperience', e.target.value)}>
@@ -947,8 +992,10 @@ export default function OnboardingPrestataire() {
             {/* Submit section */}
             {(() => {
               const missing = []
-              if (!hasDoc(app, 'identity')) missing.push('Pièce d\'identité')
-              if (!hasDoc(app, 'rib'))      missing.push('RIB')
+              const reqKeys = getRequiredDocs('prestataire', f.prestataireType)
+              reqKeys.forEach(key => {
+                if (!hasDoc(app, key)) missing.push(DOCUMENT_LABELS[key]?.label || key)
+              })
               if (f.prestataireType === 'food' && f.alcoolFood && !hasDoc(app, 'alcohol_license')) missing.push('Licence alcool')
               const canSubmit = missing.length === 0
               return (

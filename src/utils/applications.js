@@ -22,13 +22,13 @@ export const APPLICATION_STATUSES = {
 export const DOCUMENT_LABELS = {
   identity:          { label: 'Pièce d\'identité du responsable',                    required: true  },
   rib:               { label: 'RIB (Relevé d\'identité bancaire)',                   required: true  },
-  business_doc:      { label: 'Document officiel de l\'entreprise (KBIS, statuts, récépissé INSEE…)', required: false },
+  business_doc:      { label: 'Document officiel d\'entreprise (Kbis, extrait INSEE, statuts…)', required: true  },
   alcohol_license:   { label: 'Licence / Justificatif de débit de boissons',         required: false },
-  activity_proof:    { label: 'Justificatif d\'activité',                            required: true  },
-  insurance:         { label: 'Attestation d\'assurance',                            required: false },
-  exploitation_proof:{ label: 'Document exploitation du lieu',                       required: false },
-  billing_proof:     { label: 'Statut de facturation / SIRET',                       required: false },
-  rc_pro:            { label: 'Attestation RC Pro',                                   required: false },
+  activity_proof:    { label: 'Justificatif d\'activité',                            required: false },
+  insurance:         { label: 'Attestation RC Pro / assurance professionnelle',      required: true  },
+  exploitation_proof:{ label: 'Autorisation d\'exploitation du lieu (licence ERP, arrêté de capacité…)', required: true },
+  billing_proof:     { label: 'Justificatif de statut (Kbis AE, attestation Agessa/MDA, attestation CDDU intermittent…)', required: true },
+  rc_pro:            { label: 'Attestation RC Pro (optionnelle)',                     required: false },
 }
 
 export function getRequiredDocs(type, prestataireType = null) {
@@ -36,12 +36,15 @@ export function getRequiredDocs(type, prestataireType = null) {
     return ['identity']   // Stripe gère les coords bancaires — on ne demande que l'identité
   }
   if (type === 'prestataire') {
-    const base = ['identity', 'rib', 'activity_proof']
-    if (prestataireType === 'salle')      return [...base, 'exploitation_proof', 'insurance']
-    if (prestataireType === 'artiste')    return [...base, 'billing_proof']
-    if (prestataireType === 'materiel')   return [...base, 'insurance']
-    if (prestataireType === 'food')       return [...base, 'insurance']
-    return base
+    // Artiste (DJ, danseur, musicien…) — souvent sans SIRET, statut billing variable
+    if (prestataireType === 'artiste')  return ['identity', 'rib', 'billing_proof']
+    // Salle (lieu, club, rooftop…) — ERP, licence exploitation obligatoire
+    if (prestataireType === 'salle')    return ['identity', 'rib', 'business_doc', 'exploitation_proof', 'insurance']
+    // Matériel (sono, lumière, scène…) — société de location
+    if (prestataireType === 'materiel') return ['identity', 'rib', 'business_doc', 'insurance']
+    // Food (traiteur, bar, food truck…) — entreprise, RC Pro, +alcool conditionnel
+    if (prestataireType === 'food')     return ['identity', 'rib', 'business_doc', 'insurance']
+    return ['identity', 'rib']
   }
   return ['identity', 'rib']
 }

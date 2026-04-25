@@ -1526,7 +1526,9 @@ export default function AgentPage() {
                     {selectedApp.formData?.nomCommercial || selectedApp.name}
                   </p>
                   <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
-                    {selectedApp.email} · {selectedApp.type}
+                    {selectedApp.email} · {selectedApp.type === 'prestataire'
+                      ? `Prestataire · ${PRESTATAIRE_TYPES.find(t => t.key === selectedApp.formData?.prestataireType)?.label || selectedApp.formData?.prestataireType || ''}`
+                      : selectedApp.type}
                   </p>
                 </div>
                 {(() => {
@@ -1632,7 +1634,15 @@ export default function AgentPage() {
                       {pt === 'artiste' && (
                         <>
                           <Sub title="Artiste" />
-                          <FR label="Styles" value={fd.styles} />
+                          {fd.typeArtiste && (
+                            <FR label="Type d'artiste" value={{
+                              dj: 'DJ', musicien_live: 'Musicien live / Band',
+                              danseur: 'Danseur / Danseuse', performeur: 'Performeur / Show',
+                              dj_sax: 'DJ-Saxophoniste', orchestre: 'Orchestre / Groupe',
+                              animateur: 'Animateur / MC', humoriste: 'Humoriste / Stand-up', autre: 'Autre',
+                            }[fd.typeArtiste] || fd.typeArtiste} />
+                          )}
+                          <FR label="Styles / Spécialités" value={fd.styles} />
                           <FR label="Expérience" value={EXP_LABELS[fd.anneesExperience] || fd.anneesExperience} />
                           <FR label="Statut facturation" value={fd.statutFacturation} />
                           <FR label="Portfolio" value={fd.portfolio} href={fd.portfolio?.startsWith('http') ? fd.portfolio : undefined} />
