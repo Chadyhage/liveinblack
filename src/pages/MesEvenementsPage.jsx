@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import Layout from '../components/Layout'
@@ -280,9 +280,23 @@ export default function MesEvenementsPage() {
   const [codesQty, setCodesQty] = useState(10)
   const [generatedCodes, setGeneratedCodes] = useState(null)
 
-  const [createdEvents, setCreatedEvents] = useState(getCreatedEvents)
+  const [createdEvents, setCreatedEvents] = useState([])
   const [showStatsPanel, setShowStatsPanel] = useState(false)
   const [statsPanelEvent, setStatsPanelEvent] = useState(null)
+
+  // ── Real-time Firestore listener for organizer's events ──────────────────────
+  useEffect(() => {
+    if (!user?.uid) return
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenUserEvents }) => {
+      unsub = listenUserEvents(user.uid, (items) => {
+        setCreatedEvents(items)
+        // Keep localStorage in sync as cache
+        try { localStorage.setItem('lib_created_events', JSON.stringify(items)) } catch {}
+      })
+    }).catch(() => {})
+    return () => unsub()
+  }, [user?.uid])
 
   function handleImage(e) {
     const file = e.target.files[0]

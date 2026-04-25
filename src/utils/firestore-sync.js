@@ -9,6 +9,26 @@ import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, onSn
 // ── Real-time listeners ────────────────────────────────────────────────────────
 // Each returns an unsubscribe function. Call it on unmount to stop listening.
 
+// Listen to the public events collection (all published events — real-time)
+export function listenEvents(callback) {
+  try {
+    return onSnapshot(collection(db, 'events'), snap => {
+      const evts = snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id }))
+      callback(evts)
+    }, () => {})
+  } catch { return () => {} }
+}
+
+// Listen to an organizer's own created events (user_events/{uid})
+export function listenUserEvents(uid, callback) {
+  try {
+    if (!uid) return () => {}
+    return onSnapshot(doc(db, 'user_events', uid), snap => {
+      callback(snap.exists() ? (snap.data().items || []) : [])
+    }, () => {})
+  } catch { return () => {} }
+}
+
 export function listenDoc(path, callback) {
   try {
     const ref = doc(db, ...path.split('/'))
