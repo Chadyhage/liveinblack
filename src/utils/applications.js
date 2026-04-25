@@ -404,17 +404,13 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
       }
       if (app.type === 'prestataire') {
         perms.prestataireType = app.formData?.prestataireType || null
-        // Set display name: stage name for artistes, otherwise commercial name
+        // Display name: stage name for artistes, else commercial name, else real name
         const fd = app.formData || {}
-        let displayName = ''
-        if (fd.prestataireType === 'artiste' && fd.nomScene?.trim()) {
-          displayName = fd.nomScene.trim()
-        } else if (fd.nomCommercial?.trim()) {
-          displayName = fd.nomCommercial.trim()
-        } else {
-          displayName = [fd.responsablePrenom, fd.responsableNom]
-            .filter(Boolean).map(s => s.trim()).join(' ')
-        }
+        const displayName =
+          (fd.prestataireType === 'artiste' && fd.nomScene?.trim())
+            ? fd.nomScene.trim()
+            : fd.nomCommercial?.trim() ||
+              [fd.prenom, fd.nom].filter(Boolean).map(s => s.trim()).join(' ')
         if (displayName) perms.name = displayName
       }
 
@@ -446,7 +442,7 @@ export function getCompleteness(app) {
 
   const coreFields = type === 'organisateur'
     ? ['nomCommercial', 'emailPro', 'telephonePro', 'responsableNom', 'responsablePrenom', 'responsableEmail']
-    : ['nomCommercial', 'emailPro', 'telephonePro', 'responsableNom', 'responsablePrenom']
+    : ['prenom', 'nom', 'telephone']
 
   const fieldScore = coreFields.filter(f => form[f] && String(form[f]).trim()).length / coreFields.length
 

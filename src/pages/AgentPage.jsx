@@ -1618,15 +1618,14 @@ export default function AgentPage() {
                           PRESTATAIRE_TYPES.find(t => t.key === pt) ? `${PRESTATAIRE_TYPES.find(t => t.key === pt).icon || ''} ${PRESTATAIRE_TYPES.find(t => t.key === pt).label}` : pt
                         } />
                       )}
-                      <FR label="Nom commercial" value={fd.nomCommercial} />
+                      <FR label="Nom" value={[fd.prenom, fd.nom].filter(Boolean).join(' ')} />
+                      <FR label="Téléphone" value={fd.telephoneCode ? `${fd.telephoneCode} ${fd.telephone}` : fd.telephone} />
+                      <FR label="Ville" value={[fd.ville, fd.pays].filter(Boolean).join(', ')} />
                       {type === 'prestataire' && pt === 'artiste' && fd.nomScene && (
                         <FR label="Nom de scène" value={fd.nomScene} />
                       )}
+                      <FR label="Nom commercial" value={fd.nomCommercial} />
                       <FR label="SIRET" value={fd.siret} />
-                      <FR label="Email pro" value={fd.emailPro} />
-                      <FR label="Tél. pro" value={fd.telephoneProCode ? `${fd.telephoneProCode} ${fd.telephonePro}` : fd.telephonePro} />
-                      <FR label="Responsable" value={[fd.responsablePrenom, fd.responsableNom, fd.responsableFonction].filter(Boolean).join(' ')} />
-                      <FR label="Ville" value={[fd.ville, fd.pays].filter(Boolean).join(', ')} />
                       <FR label="Zone d'intervention" value={fd.zoneIntervention} />
                       <FR label="Description" value={fd.description} />
 

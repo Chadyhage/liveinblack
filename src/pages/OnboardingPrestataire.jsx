@@ -119,8 +119,7 @@ function Toggle({ value, onChange, label }) {
 function getDisplayName(f) {
   if (f.prestataireType === 'artiste' && f.nomScene?.trim()) return f.nomScene.trim()
   if (f.nomCommercial?.trim()) return f.nomCommercial.trim()
-  const parts = [f.responsablePrenom, f.responsableNom].filter(Boolean).map(s => s.trim())
-  return parts.join(' ') || ''
+  return [f.prenom, f.nom].filter(Boolean).map(s => s.trim()).join(' ') || ''
 }
 
 // ── TarifBlock ────────────────────────────────────────────────────────────────
@@ -205,17 +204,20 @@ export default function OnboardingPrestataire() {
 
   const [f, setF] = useState({
     prestataireType: '',
-    // Profil commun
-    nomCommercial: '', nomScene: '',
-    siret: '',
-    emailPro: '', telephoneProCode: '+33', telephonePro: '',
-    responsableNom: '', responsablePrenom: '', responsableFonction: '',
-    responsableTelephoneCode: '+33', responsableTelephone: '',
-    ville: '', pays: 'France', zoneIntervention: '', description: '',
+    // Identité de la personne
+    prenom: '', nom: '',
+    telephoneCode: '+33', telephone: '',
+    ville: '', pays: 'France',
+    // Structure (nom commercial + SIRET — requis pour salle/mat/food, optionnel artiste)
+    nomCommercial: '', nomScene: '', siret: '',
+    // Activité
+    zoneIntervention: '', description: '',
     // Artiste
-    typeArtiste: '', styles: '', anneesExperience: '', statutFacturation: '', portfolio: '', instagram: '', besoinstechniques: '',
+    typeArtiste: '', styles: '', anneesExperience: '', statutFacturation: '',
+    portfolio: '', instagram: '', besoinstechniques: '',
     // Salle
-    adresseLieu: '', capaciteLieu: '', typeLieu: '', equipements: '', horairesAutorises: '', reglesDuLieu: '',
+    adresseLieu: '', capaciteLieu: '', typeLieu: '', equipements: '',
+    horairesAutorises: '', reglesDuLieu: '',
     // Matériel
     categoriesMateriel: '', inventaire: '', conditionsLocation: '', politiqueCaution: '',
     // Food
@@ -277,18 +279,15 @@ export default function OnboardingPrestataire() {
       if (!f.prestataireType) errs.prestataireType = 'Sélectionne un type'
     }
     if (s === 1) {
-      // Nom commercial requis pour structures ; artiste peut utiliser uniquement son nom de scène
+      if (!f.prenom.trim()) errs.prenom = 'Requis'
+      if (!f.nom.trim()) errs.nom = 'Requis'
+      if (!f.telephone.trim()) errs.telephone = 'Requis'
       const isStructure = ['salle', 'materiel', 'food'].includes(f.prestataireType)
       if (isStructure && !f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
-      if (f.prestataireType === 'artiste' && !f.nomCommercial.trim() && !f.nomScene.trim()) {
-        errs.nomScene = 'Renseigne ton nom de scène ou ton nom commercial'
-      }
-      // SIRET requis pour structures (ERP / entreprise de location / food)
       if (isStructure && !f.siret.trim()) errs.siret = 'SIRET requis pour ce type de prestataire'
-      if (!f.emailPro.trim() || !f.emailPro.includes('@')) errs.emailPro = 'Email invalide'
-      if (!f.telephonePro.trim()) errs.telephonePro = 'Requis'
-      if (!f.responsableNom.trim()) errs.responsableNom = 'Requis'
-      if (!f.responsablePrenom.trim()) errs.responsablePrenom = 'Requis'
+      if (f.prestataireType === 'artiste' && !f.nomScene.trim() && !f.nomCommercial.trim()) {
+        errs.nomScene = 'Renseigne ton nom de scène ou nom commercial'
+      }
       if (anonMode) {
         const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail.trim())
         if (!regEmail.trim() || !emailOk) errs.regEmail = 'Email invalide'
@@ -310,8 +309,8 @@ export default function OnboardingPrestataire() {
       try {
         const { USE_REAL_FIREBASE } = await import('../firebase')
         let uid
-        const name = `${f.responsablePrenom} ${f.responsableNom}`.trim()
-        const phone = f.responsableTelephone || ''
+        const name = getDisplayName(f) || `${f.prenom} ${f.nom}`.trim()
+        const phone = f.telephone || ''
 
         if (USE_REAL_FIREBASE) {
           const { createUserWithEmailAndPassword } = await import('firebase/auth')
@@ -544,121 +543,41 @@ export default function OnboardingPrestataire() {
           </div>
         )}
 
-        {/* ── STEP 1: Profil commun ── */}
+        {/* ── STEP 1: Profil ── */}
         {step === 1 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>
-              {selectedType?.icon} Profil — {selectedType?.label}
-            </p>
+            <p style={S.section}>{selectedType?.icon} Ton identité</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
 
-              {/* Nom commercial */}
-              <div style={{ gridColumn: '1 / -1' }}>
-                <Field
-                  label={f.prestataireType === 'artiste' ? 'Nom de la structure / collectif' : 'Nom commercial'}
-                  required={['salle', 'materiel', 'food'].includes(f.prestataireType)}
-                >
-                  <input
-                    style={{ ...S.input, borderColor: errors.nomCommercial ? '#e05aaa' : undefined }}
-                    value={f.nomCommercial}
-                    onChange={e => update('nomCommercial', e.target.value)}
-                    placeholder={f.prestataireType === 'artiste'
-                      ? 'Optionnel — si tu as un collectif ou une structure'
-                      : 'Nom officiel de ta structure'}
-                  />
-                  {errors.nomCommercial && <p style={S.error}>{errors.nomCommercial}</p>}
-                </Field>
-              </div>
-
-              {/* Nom de scène (artiste uniquement) — identifiant principal */}
-              {f.prestataireType === 'artiste' && (
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <Field label="Nom de scène" required>
-                    <input
-                      style={{ ...S.input, borderColor: errors.nomScene ? '#e05aaa' : undefined }}
-                      value={f.nomScene}
-                      onChange={e => update('nomScene', e.target.value)}
-                      placeholder="ex: DJ Paradox, Salsa Flow, Les Twins..."
-                    />
-                    {errors.nomScene
-                      ? <p style={S.error}>{errors.nomScene}</p>
-                      : <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
-                          Ce nom sera affiché sur la plateforme — laisse vide pour utiliser ton nom réel
-                        </p>
-                    }
-                  </Field>
-                </div>
-              )}
-
-              {/* SIRET — requis pour structures, optionnel pour artistes individuels */}
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={S.label}>
-                  Numéro SIRET
-                  {['salle', 'materiel', 'food'].includes(f.prestataireType)
-                    ? <span style={{ color: '#e05aaa' }}> *</span>
-                    : <span style={{ color: 'rgba(255,255,255,0.18)', marginLeft: 6, fontSize: 9, letterSpacing: '0.06em' }}>
-                        — optionnel si artiste-auteur / intermittent
-                      </span>
-                  }
-                </label>
+              {/* Prénom + Nom */}
+              <Field label="Prénom" required>
                 <input
-                  style={{ ...S.input, borderColor: errors.siret ? '#e05aaa' : undefined }}
-                  value={f.siret}
-                  onChange={e => update('siret', e.target.value)}
-                  placeholder={['salle', 'materiel', 'food'].includes(f.prestataireType)
-                    ? '123 456 789 00012'
-                    : 'Laisse vide si pas de structure'}
-                />
-                {errors.siret && <p style={S.error}>{errors.siret}</p>}
-              </div>
-
-              {/* Email + Téléphone */}
-              <Field label="Email professionnel" required>
-                <input
-                  type="email"
-                  style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined }}
-                  value={f.emailPro}
-                  onChange={e => update('emailPro', e.target.value)}
-                  placeholder="contact@..."
-                />
-                {errors.emailPro && <p style={S.error}>{errors.emailPro}</p>}
-              </Field>
-              <Field label="Téléphone professionnel" required>
-                <PhoneInput codeField="telephoneProCode" numberField="telephonePro" formState={f} onUpdate={update} inputStyle={S.input} error={errors.telephonePro} />
-                {errors.telephonePro && <p style={S.error}>{errors.telephonePro}</p>}
-              </Field>
-
-              {/* Responsable */}
-              <Field label="Nom du responsable" required>
-                <input
-                  style={{ ...S.input, borderColor: errors.responsableNom ? '#e05aaa' : undefined }}
-                  value={f.responsableNom}
-                  onChange={e => update('responsableNom', e.target.value)}
-                  placeholder="Dupont"
-                />
-                {errors.responsableNom && <p style={S.error}>{errors.responsableNom}</p>}
-              </Field>
-              <Field label="Prénom du responsable" required>
-                <input
-                  style={{ ...S.input, borderColor: errors.responsablePrenom ? '#e05aaa' : undefined }}
-                  value={f.responsablePrenom}
-                  onChange={e => update('responsablePrenom', e.target.value)}
+                  style={{ ...S.input, borderColor: errors.prenom ? '#e05aaa' : undefined }}
+                  value={f.prenom}
+                  onChange={e => update('prenom', e.target.value)}
                   placeholder="Jean"
                 />
-                {errors.responsablePrenom && <p style={S.error}>{errors.responsablePrenom}</p>}
+                {errors.prenom && <p style={S.error}>{errors.prenom}</p>}
               </Field>
+              <Field label="Nom" required>
+                <input
+                  style={{ ...S.input, borderColor: errors.nom ? '#e05aaa' : undefined }}
+                  value={f.nom}
+                  onChange={e => update('nom', e.target.value)}
+                  placeholder="Dupont"
+                />
+                {errors.nom && <p style={S.error}>{errors.nom}</p>}
+              </Field>
+
+              {/* Téléphone */}
               <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Fonction / Poste">
-                  <input style={S.input} value={f.responsableFonction} onChange={e => update('responsableFonction', e.target.value)} placeholder="Gérant, Artiste, Directeur..." />
-                </Field>
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Téléphone du responsable">
-                  <PhoneInput codeField="responsableTelephoneCode" numberField="responsableTelephone" formState={f} onUpdate={update} inputStyle={S.input} placeholder="90 00 00 00" />
+                <Field label="Téléphone" required>
+                  <PhoneInput codeField="telephoneCode" numberField="telephone" formState={f} onUpdate={update} inputStyle={S.input} error={errors.telephone} />
+                  {errors.telephone && <p style={S.error}>{errors.telephone}</p>}
                 </Field>
               </div>
 
-              {/* Localisation */}
+              {/* Ville */}
               <Field label="Ville">
                 <input style={S.input} value={f.ville} onChange={e => update('ville', e.target.value)} placeholder="Paris" />
               </Field>
@@ -666,35 +585,100 @@ export default function OnboardingPrestataire() {
                 <input style={S.input} value={f.pays} onChange={e => update('pays', e.target.value)} placeholder="France" />
               </Field>
 
-              <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Zone d'intervention">
-                  <input style={S.input} value={f.zoneIntervention} onChange={e => update('zoneIntervention', e.target.value)} placeholder="Île-de-France, National, Europe..." />
-                </Field>
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Description courte de l'activité">
-                  <textarea style={{ ...S.input, minHeight: 80, resize: 'vertical' }} value={f.description} onChange={e => update('description', e.target.value)} placeholder="Décris ton activité, ton style, tes points forts..." />
-                </Field>
-              </div>
+            </div>
 
-              {/* ── Identifiants de connexion (anonymous mode) ── */}
-              {anonMode && (
-                <>
-                  <div style={{ gridColumn: '1 / -1', height: 1, background: 'rgba(255,255,255,0.07)', margin: '4px 0' }} />
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <p style={{ ...S.section, marginBottom: 12 }}>🔐 Identifiants de connexion</p>
-                    <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', marginBottom: 12, lineHeight: 1.6 }}>
-                      Cet email sera ton identifiant pour accéder à ton espace une fois validé.
+            {/* ── Structure (nom commercial / nom de scène / SIRET) ── */}
+            <p style={{ ...S.section, marginTop: 4 }}>
+              {f.prestataireType === 'artiste' ? '🎭 Ton identité artistique' : '🏢 Ta structure'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+              {/* Nom de scène — artiste uniquement, c'est son nom public */}
+              {f.prestataireType === 'artiste' && (
+                <Field label="Nom de scène" required>
+                  <input
+                    style={{ ...S.input, borderColor: errors.nomScene ? '#e05aaa' : undefined }}
+                    value={f.nomScene}
+                    onChange={e => update('nomScene', e.target.value)}
+                    placeholder="ex : DJ Paradox, Salsa Flow, Les Twins..."
+                  />
+                  {errors.nomScene
+                    ? <p style={S.error}>{errors.nomScene}</p>
+                    : <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
+                        C'est ton nom affiché sur la plateforme. Laisse vide pour afficher Prénom Nom.
+                      </p>
+                  }
+                </Field>
+              )}
+
+              {/* Nom commercial */}
+              <Field
+                label={f.prestataireType === 'artiste' ? 'Nom de la structure / collectif' : 'Nom commercial'}
+                required={['salle', 'materiel', 'food'].includes(f.prestataireType)}
+              >
+                <input
+                  style={{ ...S.input, borderColor: errors.nomCommercial ? '#e05aaa' : undefined }}
+                  value={f.nomCommercial}
+                  onChange={e => update('nomCommercial', e.target.value)}
+                  placeholder={f.prestataireType === 'artiste'
+                    ? 'Optionnel — si tu as un collectif ou une structure'
+                    : 'Nom officiel de ta structure'}
+                />
+                {errors.nomCommercial && <p style={S.error}>{errors.nomCommercial}</p>}
+              </Field>
+
+              {/* SIRET */}
+              <Field
+                label={['salle', 'materiel', 'food'].includes(f.prestataireType) ? 'Numéro SIRET' : 'Numéro SIRET'}
+                required={['salle', 'materiel', 'food'].includes(f.prestataireType)}
+              >
+                <input
+                  style={{ ...S.input, borderColor: errors.siret ? '#e05aaa' : undefined }}
+                  value={f.siret}
+                  onChange={e => update('siret', e.target.value)}
+                  placeholder={['salle', 'materiel', 'food'].includes(f.prestataireType)
+                    ? '123 456 789 00012'
+                    : 'Laisse vide si pas de structure / SIRET'}
+                />
+                {errors.siret
+                  ? <p style={S.error}>{errors.siret}</p>
+                  : f.prestataireType === 'artiste' && (
+                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.2)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
+                      Optionnel — indique ton statut de facturation à l'étape suivante
                     </p>
-                  </div>
+                  )
+                }
+              </Field>
+
+            </div>
+
+            {/* ── Activité ── */}
+            <p style={{ ...S.section, marginTop: 4 }}>📍 Ton activité</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <Field label="Zone d'intervention">
+                <input style={S.input} value={f.zoneIntervention} onChange={e => update('zoneIntervention', e.target.value)} placeholder="Île-de-France, National, Europe..." />
+              </Field>
+              <Field label="Description courte">
+                <textarea style={{ ...S.input, minHeight: 72, resize: 'vertical' }} value={f.description} onChange={e => update('description', e.target.value)} placeholder="Décris ton activité, ton style, tes points forts..." />
+              </Field>
+            </div>
+
+            {/* ── Identifiants de connexion (mode anonyme uniquement) ── */}
+            {anonMode && (
+              <>
+                <p style={{ ...S.section, marginTop: 4 }}>🔐 Identifiants de connexion</p>
+                <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '-4px 0 8px' }}>
+                  Ton email servira à te connecter une fois ton dossier validé.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <Field label="Email de connexion" required>
+                    <Field label="Email" required>
                       <input
                         type="email"
                         style={{ ...S.input, borderColor: errors.regEmail ? '#e05aaa' : undefined }}
                         value={regEmail}
                         onChange={e => setRegEmail(e.target.value)}
-                        placeholder="contact@monactivite.fr"
+                        placeholder="ton@email.fr"
                         disabled={!!anonUidRef.current}
                       />
                       {errors.regEmail && <p style={S.error}>{errors.regEmail}</p>}
@@ -720,7 +704,7 @@ export default function OnboardingPrestataire() {
                         </div>
                         {errors.regPassword && <p style={S.error}>{errors.regPassword}</p>}
                       </Field>
-                      <Field label="Confirmer le mot de passe" required>
+                      <Field label="Confirmer" required>
                         <input
                           type={showPwd ? 'text' : 'password'}
                           style={{ ...S.input, borderColor: errors.regPasswordConfirm ? '#e05aaa' : undefined }}
@@ -732,9 +716,9 @@ export default function OnboardingPrestataire() {
                       </Field>
                     </>
                   )}
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
