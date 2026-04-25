@@ -51,7 +51,6 @@ function openValidationReceipt(app) {
     day: '2-digit', month: 'long', year: 'numeric',
   })
   const orgName    = app.formData?.nomCommercial || '—'
-  const responsable = [app.formData?.responsablePrenom, app.formData?.responsableNom].filter(Boolean).join(' ') || '—'
   const emailPro   = app.formData?.emailPro || app.email || '—'
   const tel        = [app.formData?.telephoneProCode, app.formData?.telephonePro].filter(Boolean).join(' ') || '—'
   const ville      = app.formData?.ville || '—'
@@ -257,7 +256,6 @@ function openValidationReceipt(app) {
 
   <table>
     <tr><td>Organisation</td><td>${orgName}</td></tr>
-    <tr><td>Responsable</td><td>${responsable}</td></tr>
     <tr><td>Email professionnel</td><td>${emailPro}</td></tr>
     <tr><td>Téléphone</td><td>${tel}</td></tr>
     <tr><td>Ville</td><td>${ville}</td></tr>
@@ -502,9 +500,7 @@ export default function MonDossierPage() {
     // Préfill minimal depuis le compte existant (nom + email)
     const nameParts  = (user.name || '').trim().split(' ').filter(Boolean)
     const prefillOrg = {
-      responsableNom:    nameParts[0] || '',
-      responsablePrenom: nameParts.slice(1).join(' ') || '',
-      emailPro:          user.email || '',
+      emailPro: user.email || '',
     }
 
     // Selon le rôle, on ne propose que l'option cohérente
@@ -965,7 +961,6 @@ export default function MonDossierPage() {
                   { label: 'Nom commercial',  value: app.formData?.nomCommercial   },
                   { label: 'Email professionnel', value: app.formData?.emailPro   },
                   { label: 'Téléphone',        value: app.formData?.telephonePro  },
-                  { label: 'Responsable',      value: app.formData?.responsableNom },
                   { label: 'Ville',            value: app.formData?.ville          },
                   app.type === 'organisateur'
                     ? { label: 'SIRET',        value: app.formData?.siret          }

@@ -82,11 +82,10 @@ function PhoneInput({ codeField, numberField, formState, onUpdate, inputStyle, e
 const TYPES_ETAB = ['Boîte / Club','Bar','Autre']
 
 const STEPS = [
-  { label: 'Entreprise',  icon: '🏢' },
-  { label: 'Responsable', icon: '👤' },
-  { label: 'Activité',    icon: '🎪' },
-  { label: 'Revenus',     icon: '💳' },
-  { label: 'Documents',   icon: '📎' },
+  { label: 'Établissement', icon: '🏢' },
+  { label: 'Activité',      icon: '🎪' },
+  { label: 'Revenus',       icon: '💳' },
+  { label: 'Documents',     icon: '📎' },
 ]
 
 function Field({ label, required, children }) {
@@ -141,10 +140,7 @@ export default function OnboardingOrganisateur() {
     // Step 0 — Entreprise
     nomCommercial: '', siret: '', noFixedAddress: false,
     adresseEtablissement: '', emailPro: '', telephoneProCode: '+33', telephonePro: '', siteWeb: '',
-    // Step 1 — Responsable
-    responsableNom: '', responsablePrenom: '', responsableFonction: '',
-    responsableTelephoneCode: '+33', responsableTelephone: '',
-    // Step 2 — Activité
+    // Step 1 — Activité
     typeEtablissement: '', typeEtablissementCustom: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
     horaires: '', alcool: false,
     description: '',
@@ -177,7 +173,7 @@ export default function OnboardingOrganisateur() {
         setApp(existing)
         const fd = existing.formData || {}
         setF(prev => ({ ...prev, ...fd }))
-        if (fd.responsableEmail) setRegEmail(fd.responsableEmail)
+        if (fd.regEmail) setRegEmail(fd.regEmail)
       } else {
         const tempId = 'anon-org-' + Date.now()
         localStorage.setItem(ANON_DRAFT_KEY, tempId)
@@ -213,11 +209,7 @@ export default function OnboardingOrganisateur() {
       if (!f.emailPro.trim() || !f.emailPro.includes('@')) errs.emailPro = 'Email invalide'
       if (!f.telephonePro.trim()) errs.telephonePro = 'Requis'
       if (!f.noFixedAddress && !f.adresseEtablissement.trim()) errs.adresseEtablissement = 'Requis (ou cocher "Pas de lieu fixe")'
-    }
-    if (s === 1) {
-      if (!f.responsableNom.trim()) errs.responsableNom = 'Requis'
-      if (!f.responsablePrenom.trim()) errs.responsablePrenom = 'Requis'
-      // Anonymous mode: also validate email + password
+      // Anonymous mode: validate login credentials on step 0
       if (anonMode) {
         const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail.trim())
         if (!regEmail.trim() || !emailOk) errs.regEmail = 'Email invalide'
@@ -226,7 +218,7 @@ export default function OnboardingOrganisateur() {
         if (regPassword !== regPasswordConfirm) errs.regPasswordConfirm = 'Les mots de passe ne correspondent pas'
       }
     }
-    if (s === 2) {
+    if (s === 1) {
       if (!f.typeEtablissement) errs.typeEtablissement = 'Requis'
       if (f.typeEtablissement === 'Autre' && !f.typeEtablissementCustom?.trim()) errs.typeEtablissementCustom = 'Précisez le type'
       if (!f.itinerant && !f.ville.trim()) errs.ville = 'Requis (ou cocher "Itinérant")'
@@ -238,14 +230,14 @@ export default function OnboardingOrganisateur() {
   async function next() {
     if (!validate(step)) return
 
-    // Anonymous mode: create Firebase account when leaving step 1
-    if (anonMode && step === 1 && !anonUidRef.current) {
+    // Anonymous mode: create Firebase account when leaving step 0
+    if (anonMode && step === 0 && !anonUidRef.current) {
       setCreatingAccount(true)
       try {
         const { USE_REAL_FIREBASE } = await import('../firebase')
         let uid
-        const name = `${f.responsablePrenom} ${f.responsableNom}`.trim()
-        const phone = f.responsableTelephone || ''
+        const name = f.nomCommercial.trim()
+        const phone = f.telephonePro || ''
 
         if (USE_REAL_FIREBASE) {
           const { createUserWithEmailAndPassword } = await import('firebase/auth')
@@ -272,7 +264,7 @@ export default function OnboardingOrganisateur() {
         anonUidRef.current = uid
 
         // Save email to draft so it's restored on page reload
-        saveDraft(app.id, { ...f, responsableEmail: regEmail.trim() })
+        saveDraft(app.id, { ...f, regEmail: regEmail.trim() })
 
       } catch (err) {
         setCreatingAccount(false)
@@ -536,45 +528,17 @@ export default function OnboardingOrganisateur() {
                 </Field>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* ── STEP 1: Responsable ── */}
-        {step === 1 && (
-          <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>👤 Responsable du compte</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Field label="Nom" required>
-                <input style={{ ...S.input, borderColor: errors.responsableNom ? '#e05aaa' : undefined }} value={f.responsableNom} onChange={e => update('responsableNom', e.target.value)} placeholder="Dupont" />
-                {errors.responsableNom && <p style={S.error}>{errors.responsableNom}</p>}
-              </Field>
-              <Field label="Prénom" required>
-                <input style={{ ...S.input, borderColor: errors.responsablePrenom ? '#e05aaa' : undefined }} value={f.responsablePrenom} onChange={e => update('responsablePrenom', e.target.value)} placeholder="Jean" />
-                {errors.responsablePrenom && <p style={S.error}>{errors.responsablePrenom}</p>}
-              </Field>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Fonction / Poste">
-                  <input style={S.input} value={f.responsableFonction} onChange={e => update('responsableFonction', e.target.value)} placeholder="Gérant, Directeur, etc." />
-                </Field>
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <Field label="Téléphone de contact">
-                  <PhoneInput codeField="responsableTelephoneCode" numberField="responsableTelephone" formState={f} onUpdate={update} inputStyle={S.input} placeholder="90 00 00 00" />
-                </Field>
-              </div>
-
-              {/* ── Identifiants de connexion (anonymous mode only) ── */}
-              {anonMode && (
-                <>
-                  <div style={{ gridColumn: '1 / -1', height: 1, background: 'rgba(255,255,255,0.07)', margin: '4px 0' }} />
+            {/* ── Identifiants de connexion (mode anonyme uniquement) ── */}
+            {anonMode && (
+              <>
+                <p style={{ ...S.section, marginTop: 4 }}>🔐 Identifiants de connexion</p>
+                <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '-4px 0 8px' }}>
+                  L'email servira à accéder à l'espace une fois le dossier validé.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <p style={{ ...S.section, marginBottom: 12 }}>🔐 Identifiants de connexion</p>
-                    <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', marginBottom: 12, lineHeight: 1.6 }}>
-                      Cet email sera ton identifiant pour accéder à ton espace une fois validé.
-                    </p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <Field label="Email de l'organisation (email de connexion)" required>
+                    <Field label="Email de l'organisation" required>
                       <input
                         type="email"
                         style={{ ...S.input, borderColor: errors.regEmail ? '#e05aaa' : undefined }}
@@ -606,7 +570,7 @@ export default function OnboardingOrganisateur() {
                         </div>
                         {errors.regPassword && <p style={S.error}>{errors.regPassword}</p>}
                       </Field>
-                      <Field label="Confirmer le mot de passe" required>
+                      <Field label="Confirmer" required>
                         <input
                           type={showPwd ? 'text' : 'password'}
                           style={{ ...S.input, borderColor: errors.regPasswordConfirm ? '#e05aaa' : undefined }}
@@ -618,14 +582,14 @@ export default function OnboardingOrganisateur() {
                       </Field>
                     </>
                   )}
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
-        {/* ── STEP 2: Activité ── */}
-        {step === 2 && (
+        {/* ── STEP 1: Activité ── */}
+        {step === 1 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>🎪 Description de l'activité</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -736,8 +700,8 @@ export default function OnboardingOrganisateur() {
           </div>
         )}
 
-        {/* ── STEP 3: Revenus ── */}
-        {step === 3 && (
+        {/* ── STEP 2: Revenus ── */}
+        {step === 2 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <p style={S.section}>💳 Tes revenus</p>
 
@@ -797,8 +761,8 @@ export default function OnboardingOrganisateur() {
           </div>
         )}
 
-        {/* ── STEP 4: Documents ── */}
-        {step === 4 && (
+        {/* ── STEP 3: Documents ── */}
+        {step === 3 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>📎 Documents justificatifs</p>
             <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, margin: 0 }}>
@@ -808,7 +772,7 @@ export default function OnboardingOrganisateur() {
 
             {/* ── Obligatoire : pièce d'identité ── */}
             <DocUploadRow
-              label="Pièce d'identité du responsable"
+              label="Pièce d'identité"
               required
               files={getDocFiles(app, 'identity')}
               status={uploadStatus.identity}

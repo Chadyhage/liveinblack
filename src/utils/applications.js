@@ -20,7 +20,7 @@ export const APPLICATION_STATUSES = {
 // ─── Documents requis par type ────────────────────────────────────────────────
 
 export const DOCUMENT_LABELS = {
-  identity:          { label: 'Pièce d\'identité du responsable',                    required: true  },
+  identity:          { label: 'Pièce d\'identité',                                   required: true  },
   rib:               { label: 'RIB (Relevé d\'identité bancaire)',                   required: true  },
   business_doc:      { label: 'Document officiel d\'entreprise (Kbis, extrait INSEE, statuts…)', required: true  },
   alcohol_license:   { label: 'Licence / Justificatif de débit de boissons',         required: false },
@@ -441,7 +441,7 @@ export function getCompleteness(app) {
   const type = app.type
 
   const coreFields = type === 'organisateur'
-    ? ['nomCommercial', 'emailPro', 'telephonePro', 'responsableNom', 'responsablePrenom', 'responsableEmail']
+    ? ['nomCommercial', 'emailPro', 'telephonePro']
     : ['prenom', 'nom', 'telephone']
 
   const fieldScore = coreFields.filter(f => form[f] && String(form[f]).trim()).length / coreFields.length

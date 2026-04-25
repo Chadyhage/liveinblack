@@ -106,7 +106,6 @@ export default function JeSuisUneBoitePage() {
   const [boiteForm, setBoiteForm] = useState({
     name: '',
     siret: '',
-    manager: '',
     email: '',
     phone: '',
     address: '',
@@ -181,7 +180,7 @@ export default function JeSuisUneBoitePage() {
     if (user?.uid) {
       try {
         const { createApplication, submitApplication } = await import('../utils/applications')
-        const app = createApplication(user.uid, user.email || boiteForm.email, user.name || boiteForm.manager, 'organisateur')
+        const app = createApplication(user.uid, user.email || boiteForm.email, user.name || boiteForm.name, 'organisateur')
         if (app) {
           await submitApplication(app.id, {
             nomCommercial: boiteForm.name,
@@ -189,7 +188,6 @@ export default function JeSuisUneBoitePage() {
             telephonePro: boiteForm.phone,
             siret: boiteForm.siret,
             adresse: boiteForm.address,
-            responsableNom: boiteForm.manager,
             website: boiteForm.website,
             options: toggles,
             wantsToRent,
@@ -310,9 +308,8 @@ export default function JeSuisUneBoitePage() {
                     />
                   </div>
 
-                  {/* Responsable + email + phone */}
+                  {/* Email + phone */}
                   {[
-                    { key: 'manager', label: 'Nom du responsable', placeholder: 'Prénom Nom' },
                     { key: 'email',   label: 'Email professionnel', placeholder: 'contact@monclub.fr' },
                     { key: 'phone',   label: 'Téléphone',           placeholder: '+33 6 00 00 00 00' },
                   ].map((f) => (
@@ -563,7 +560,6 @@ export default function JeSuisUneBoitePage() {
                   {[
                     { label: 'Établissement', val: boiteForm.name || '(non renseigné)' },
                     { label: 'SIRET / SIREN', val: boiteForm.siret || '(non renseigné)' },
-                    { label: 'Responsable', val: boiteForm.manager || '(non renseigné)' },
                     { label: 'Email', val: boiteForm.email || '(non renseigné)' },
                     { label: 'Adresse', val: boiteForm.noFixedAddress ? 'Aucun lieu fixe' : (boiteForm.address || '(non renseigné)') },
                     { label: 'Playlist interactive', val: toggles.playlist ? 'Activée' : 'Désactivée' },
