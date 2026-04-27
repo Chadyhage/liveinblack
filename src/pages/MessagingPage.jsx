@@ -137,7 +137,6 @@ function VoiceBubble({ content, isMe }) {
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [bars, setBars]         = useState(null) // null = loading, array = ready
-  const [broken, setBroken]     = useState(false)
   const audioRef = useRef(null)
 
   // Reset audio object whenever content changes
@@ -149,7 +148,6 @@ function VoiceBubble({ content, isMe }) {
     }
     setPlaying(false)
     setProgress(0)
-    setBroken(false)
   }, [content])
 
   // Decode waveform via Web Audio API (works for both data: and https: URLs)
@@ -192,11 +190,9 @@ function VoiceBubble({ content, isMe }) {
   }, [content])
 
   function handlePlay() {
-    if (broken) return
+    if (!content) return
     if (!audioRef.current) {
       const a = new Audio()
-      // Ne PAS mettre crossOrigin — inutile pour la lecture simple et bloque
-      // Firebase Storage si les règles CORS ne sont pas configurées côté bucket
       a.src = content
       a.onloadedmetadata = () => {
         if (!duration) setDuration(Math.round(a.duration))
@@ -206,7 +202,7 @@ function VoiceBubble({ content, isMe }) {
         setProgress(a.currentTime / d)
       }
       a.onended = () => { setPlaying(false); setProgress(0) }
-      a.onerror = () => { setPlaying(false); setBroken(true) }
+      a.onerror = () => { setPlaying(false) }
       audioRef.current = a
     }
     if (playing) {
@@ -215,12 +211,7 @@ function VoiceBubble({ content, isMe }) {
     } else {
       const p = audioRef.current.play()
       if (p && typeof p.then === 'function') {
-        p.then(() => setPlaying(true)).catch((err) => {
-          console.warn('[VoiceBubble] play() failed:', err)
-          setPlaying(false)
-          // Ne pas marquer broken si c'est juste un AbortError (interruption rapide)
-          if (err?.name !== 'AbortError') setBroken(true)
-        })
+        p.then(() => setPlaying(true)).catch(() => setPlaying(false))
       } else {
         setPlaying(true)
       }
@@ -234,14 +225,6 @@ function VoiceBubble({ content, isMe }) {
   const activeColor = isMe ? T.teal : '#fff'
   const dimColor = isMe ? 'rgba(78,232,200,0.25)' : 'rgba(255,255,255,0.18)'
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
-
-  if (broken) {
-    return (
-      <span style={{ fontFamily: T.dmMono, fontSize: 10, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>
-        🎤 audio indisponible
-      </span>
-    )
-  }
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 200, maxWidth: 260 }}>
