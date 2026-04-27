@@ -322,7 +322,7 @@ export default function OnboardingPrestataire() {
       if (!f.telephone.trim()) errs.telephone = 'Requis'
       const isStructure = ['salle', 'materiel', 'food'].includes(f.prestataireType)
       if (isStructure && !f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
-      if (isStructure && !f.siret.trim()) errs.siret = 'SIRET requis pour ce type de prestataire'
+      // SIRET optionnel pour tous — l'admin vérifie manuellement
       if (f.prestataireType === 'artiste' && !f.nomScene.trim() && !f.nomCommercial.trim()) {
         errs.nomScene = 'Renseigne ton nom de scène ou nom commercial'
       }
@@ -668,15 +668,12 @@ export default function OnboardingPrestataire() {
               {/* SIRET */}
               <Field
                 label={['salle', 'materiel', 'food'].includes(f.prestataireType) ? 'Numéro SIRET' : 'Numéro SIRET'}
-                required={['salle', 'materiel', 'food'].includes(f.prestataireType)}
               >
                 <input
                   style={{ ...S.input, borderColor: errors.siret ? '#e05aaa' : undefined }}
                   value={f.siret}
                   onChange={e => update('siret', e.target.value)}
-                  placeholder={['salle', 'materiel', 'food'].includes(f.prestataireType)
-                    ? '123 456 789 00012'
-                    : 'Optionnel si artiste-auteur / intermittent'}
+                  placeholder="Optionnel — laisse vide si tu n'en as pas"
                 />
                 {errors.siret
                   ? <p style={S.error}>{errors.siret}</p>
