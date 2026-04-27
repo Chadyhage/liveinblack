@@ -638,7 +638,7 @@ export default function OnboardingPrestataire() {
                   onChange={e => update('siret', e.target.value)}
                   placeholder={['salle', 'materiel', 'food'].includes(f.prestataireType)
                     ? '123 456 789 00012'
-                    : 'Laisse vide si pas de structure / SIRET'}
+                    : 'Optionnel — laisse vide si artiste-auteur / intermittent'}
                 />
                 {errors.siret
                   ? <p style={S.error}>{errors.siret}</p>
