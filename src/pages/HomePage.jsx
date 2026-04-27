@@ -24,6 +24,40 @@ function isEventPast(ev) {
   } catch { return false }
 }
 
+// Event visible si : non annulé, publishAt passé (ou absent), clôture non encore atteinte (ou absente), et pas expiré depuis 48h
+function isEventVisible(ev) {
+  const now = Date.now()
+  if (ev.cancelled) return false
+  if (ev.publishAt && new Date(ev.publishAt).getTime() > now) return false
+  // Clôture manuelle ou auto à la date de l'event + 48h de grâce
+  const gracePeriodMs = 48 * 60 * 60 * 1000
+  if (ev.closingDate) {
+    if (new Date(ev.closingDate).getTime() + gracePeriodMs < now) return false
+  } else if (isEventPast(ev)) {
+    // Pas de closingDate → on utilise la date/heure de fin + 48h
+    try {
+      const endTime = ev.endTime || ev.time || '23:59'
+      const [h, m] = endTime.split(':').map(Number)
+      const d = new Date(ev.date + 'T00:00:00')
+      d.setHours(h, m, 0, 0)
+      const startTime = ev.time || '00:00'
+      const [sh, sm] = startTime.split(':').map(Number)
+      if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
+      if (d.getTime() + gracePeriodMs < now) return false
+    } catch { return false }
+  }
+  return true
+}
+
+// Réservations closes (clôture manuelle ou date event passée, mais encore dans la grâce)
+function isEventClosed(ev) {
+  if (!isEventVisible(ev)) return false
+  const now = Date.now()
+  if (ev.closingDate && new Date(ev.closingDate).getTime() < now) return true
+  if (isEventPast(ev)) return true
+  return false
+}
+
 function getGreeting() {
   const h = new Date().getHours()
   if (h >= 5  && h < 12) return 'Bonjour'
@@ -192,9 +226,9 @@ export default function HomePage() {
   const regionEvents = allEvents.filter(e =>
     !regionName || regionName === 'Toutes' || e.region === regionName
   )
-  // Non-boostés : triés par date la plus proche
+  // Non-boostés : triés par date la plus proche — on exclut les events clos/invisibles
   const baseTopThree = regionEvents
-    .filter(e => !e.cancelled && !isEventPast(e))
+    .filter(e => isEventVisible(e) && !isEventClosed(e))
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 10) // plus de candidats pour le fallback
 
@@ -204,7 +238,8 @@ export default function HomePage() {
   const boostedByPosition = {}
   activeBoosts.forEach(b => {
     const ev = allEvents.find(e => e.id === b.eventId)
-    if (ev && b.position >= 1 && b.position <= 3 && !boostedByPosition[b.position]) {
+    // Ne montrer l'event boosté que s'il est visible et non passé/annulé
+    if (ev && !ev.cancelled && !isEventPast(ev) && b.position >= 1 && b.position <= 3 && !boostedByPosition[b.position]) {
       boostedByPosition[b.position] = { ...ev, boostPosition: b.position, featured: true }
     }
   })

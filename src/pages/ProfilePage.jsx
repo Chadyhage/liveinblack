@@ -1639,9 +1639,10 @@ function EventTicketGroup({ group }) {
   const [expanded, setExpanded] = useState(false)
   const [showPlaylist, setShowPlaylist] = useState(false)
 
-  // Récupère l'objet événement complet pour savoir s'il a une playlist
+  // Récupère l'objet événement complet pour savoir s'il a une playlist et son statut
   const event = getAllEvents().find(e => String(e.id) === String(group.eventId))
   const hasPlaylist = !!event?.playlist
+  const isCancelled = !!event?.cancelled
 
   return (
     <>
@@ -1666,16 +1667,24 @@ function EventTicketGroup({ group }) {
               fontFamily: '"Cormorant Garamond", serif',
               fontWeight: 400,
               fontSize: '16px',
-              color: 'rgba(255,255,255,0.88)',
+              color: isCancelled ? 'rgba(220,100,100,0.7)' : 'rgba(255,255,255,0.88)',
+              textDecoration: isCancelled ? 'line-through' : 'none',
             }}>{group.eventName}</p>
-            <p style={{
-              fontFamily: '"DM Mono", monospace',
-              fontSize: '9px',
-              letterSpacing: '0.25em',
-              textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.28)',
-              marginTop: '4px',
-            }}>{group.eventDate}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <p style={{
+                fontFamily: '"DM Mono", monospace',
+                fontSize: '9px',
+                letterSpacing: '0.25em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.28)',
+                margin: 0,
+              }}>{group.eventDate}</p>
+              {isCancelled && (
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.9)', background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.3)', borderRadius: 3, padding: '1px 6px' }}>
+                  ANNULÉ
+                </span>
+              )}
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{

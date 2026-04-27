@@ -30,6 +30,28 @@ function isEventPast(ev) {
   } catch { return false }
 }
 
+function isEventVisible(ev) {
+  const now = Date.now()
+  if (ev.cancelled) return false
+  if (ev.publishAt && new Date(ev.publishAt).getTime() > now) return false
+  const gracePeriodMs = 48 * 60 * 60 * 1000
+  if (ev.closingDate) {
+    if (new Date(ev.closingDate).getTime() + gracePeriodMs < now) return false
+  } else if (isEventPast(ev)) {
+    try {
+      const endTime = ev.endTime || ev.time || '23:59'
+      const [h, m] = endTime.split(':').map(Number)
+      const d = new Date(ev.date + 'T00:00:00')
+      d.setHours(h, m, 0, 0)
+      const startTime = ev.time || '00:00'
+      const [sh, sm] = startTime.split(':').map(Number)
+      if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
+      if (d.getTime() + gracePeriodMs < now) return false
+    } catch { return false }
+  }
+  return true
+}
+
 const KNOWN_CATEGORIES = ['Afrobeat', 'Rap', 'Électronique']
 const CATEGORIES = ['Tous', ...KNOWN_CATEGORIES, 'Autre']
 
@@ -82,7 +104,7 @@ export default function EventsPage() {
     const matchCategory =
       activeCategory === 'Tous' ||
       (activeCategory === 'Autre' ? !KNOWN_CATEGORIES.includes(e.category) : e.category === activeCategory)
-    return matchSearch && matchCategory && !isEventPast(e) && !e.cancelled
+    return matchSearch && matchCategory && isEventVisible(e)
   })
 
   function handleCodeSubmit() {

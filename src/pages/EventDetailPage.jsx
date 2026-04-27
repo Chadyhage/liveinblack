@@ -277,6 +277,29 @@ export default function EventDetailPage() {
   const userCanBook = canBook(user)
   const bookingBlockedReason = getBookingBlockedReason(user)
 
+  // ── Event status ──
+  const now = Date.now()
+  const isEventCancelled = !!event.cancelled
+  const isEventSoldOut = event.places?.length > 0 && event.places.every(p => p.available === 0)
+  const isEventClosed = (() => {
+    if (event.closingDate && new Date(event.closingDate).getTime() < now) return true
+    // Pas de closingDate → fermer à la date/heure de fin de l'event
+    if (!event.closingDate && event.date) {
+      try {
+        const endTime = event.endTime || event.time || '23:59'
+        const [h, m] = endTime.split(':').map(Number)
+        const d = new Date(event.date + 'T00:00:00')
+        d.setHours(h, m, 0, 0)
+        const startTime = event.time || '00:00'
+        const [sh, sm] = startTime.split(':').map(Number)
+        if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
+        return d.getTime() < now
+      } catch { return false }
+    }
+    return false
+  })()
+  const bookingDisabled = isEventCancelled || isEventSoldOut || isEventClosed
+
   function updatePreorder(name, delta) {
     setPerTicketOrders(prev => prev.map((t, i) =>
       i === activePreorderTicket
@@ -577,6 +600,22 @@ export default function EventDetailPage() {
                 {event.subtitle}
               </p>
             )}
+            {/* ── Badges de statut ── */}
+            {isEventCancelled && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(220,50,50,0.15)', border: '1px solid rgba(220,50,50,0.4)', borderRadius: 4, padding: '4px 10px', marginTop: 8 }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(220,100,100,0.95)', textTransform: 'uppercase' }}>● ÉVÉNEMENT ANNULÉ</span>
+              </div>
+            )}
+            {!isEventCancelled && isEventSoldOut && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)', borderRadius: 4, padding: '4px 10px', marginTop: 8 }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(220,120,120,0.95)', textTransform: 'uppercase' }}>● COMPLET</span>
+              </div>
+            )}
+            {!isEventCancelled && !isEventSoldOut && isEventClosed && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '4px 10px', marginTop: 8 }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>● RÉSERVATIONS CLOSES</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -822,14 +861,14 @@ export default function EventDetailPage() {
                         <button
                           style={{
                             ...S.btnGold,
-                            opacity: (user && !userCanBook) ? 0.4 : 1,
-                            cursor: (user && !userCanBook) ? 'not-allowed' : 'pointer',
-                            pointerEvents: (user && !userCanBook) ? 'none' : 'auto',
+                            opacity: (user && !userCanBook) || bookingDisabled ? 0.4 : 1,
+                            cursor: (user && !userCanBook) || bookingDisabled ? 'not-allowed' : 'pointer',
+                            pointerEvents: (user && !userCanBook) || bookingDisabled ? 'none' : 'auto',
                           }}
-                          disabled={user && !userCanBook}
-                          onClick={() => requireUserThenDo(() => tryProceed(() => setShowConfirmModal(true)))}
+                          disabled={(user && !userCanBook) || bookingDisabled}
+                          onClick={() => !bookingDisabled && requireUserThenDo(() => tryProceed(() => setShowConfirmModal(true)))}
                         >
-                          Confirmer la réservation
+                          {isEventCancelled ? 'Événement annulé' : isEventSoldOut ? 'Complet' : isEventClosed ? 'Réservations closes' : 'Confirmer la réservation'}
                         </button>
                       )}
                     </div>

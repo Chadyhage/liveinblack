@@ -266,8 +266,10 @@ export default function MesEvenementsPage() {
   // Step 2: Venue
   const [venue, setVenue] = useState({ name: '', address: '', city: '', country: '' })
 
-  // Step 3: Options
+  // Step 3: Options avancées
   const [options, setOptions] = useState({ playlist: false, preorder: false, qr: true })
+  const [publishAt, setPublishAt]     = useState('')   // '' = publier immédiatement
+  const [closingDate, setClosingDate] = useState('')   // '' = fermer à la date de l'event
   const [menuItems, setMenuItems] = useState([{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [] }])
 
   // Dashboard bookings panel
@@ -417,6 +419,9 @@ export default function MesEvenementsPage() {
       isPrivate: eventType === 'private',
       privateCode: eventType === 'private' ? form.privateCode.trim() : null,
       menu: options.preorder ? menuItems.filter(i => i.name.trim() && i.price) : null,
+      publishAt: publishAt || null,
+      closingDate: closingDate || null,
+      cancelled: false,
     }
     let updated
     if (editingEventId) {
@@ -488,6 +493,8 @@ export default function MesEvenementsPage() {
     setVenue({ name: '', address: '', city: '', country: '' })
     setOptions({ playlist: false, preorder: false, qr: true })
     setMenuItems([{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
+    setPublishAt('')
+    setClosingDate('')
     setView('create')
   }
 
@@ -529,7 +536,16 @@ export default function MesEvenementsPage() {
     setPlaces(ev.places?.map(p => ({ type: p.type, price: p.price, qty: p.total, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '' })) || [{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
     setOptions({ playlist: ev.playlist || false, preorder: ev.preorder || false, qr: true })
     setMenuItems(ev.menu?.length ? ev.menu : [{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
+    setPublishAt(ev.publishAt || '')
+    setClosingDate(ev.closingDate || '')
     setView('create')
+  }
+
+  function getEventBookingCount(eventId) {
+    try {
+      const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+      return all.filter(b => b.eventId === String(eventId)).length
+    } catch { return 0 }
   }
 
   function deleteEvent(id) {
@@ -720,7 +736,7 @@ export default function MesEvenementsPage() {
                       </button>
                       {/* Delete */}
                       <button
-                        onClick={() => setDeleteConfirm(ev.id)}
+                        onClick={() => setDeleteConfirm({ id: ev.id, bookingCount: getEventBookingCount(ev.id) })}
                         title="Supprimer"
                         style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                       >
@@ -786,15 +802,38 @@ export default function MesEvenementsPage() {
           {deleteConfirm && (
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => setDeleteConfirm(null)} />
-              <div style={{ ...S.card, position: 'relative', padding: 24, width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ ...S.card, position: 'relative', padding: 24, width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Supprimer l'événement ?</p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7 }}>
-                  Cette action est irréversible. L'événement sera retiré de la liste.
-                </p>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => setDeleteConfirm(null)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
-                  <button onClick={() => deleteEvent(deleteConfirm)} style={{ ...S.btnDanger, flex: 1 }}>Supprimer</button>
-                </div>
+
+                {deleteConfirm.bookingCount > 0 ? (
+                  /* Cas : réservations existantes */
+                  <>
+                    <div style={{ background: 'rgba(220,160,50,0.10)', border: '1px solid rgba(220,160,50,0.30)', borderRadius: 8, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,220,100,0.85)', lineHeight: 1.7, margin: 0 }}>
+                        <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. À vous de gérer légalement la suppression et les remboursements éventuels.
+                      </p>
+                    </div>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: 0 }}>
+                      Cette action est irréversible. L'événement sera retiré du site.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setDeleteConfirm(null)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
+                      <button onClick={() => deleteEvent(deleteConfirm.id)} style={{ ...S.btnDanger, flex: 1 }}>Je comprends, supprimer</button>
+                    </div>
+                  </>
+                ) : (
+                  /* Cas : aucune réservation */
+                  <>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>
+                      Cette action est irréversible. L'événement sera retiré de la liste.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setDeleteConfirm(null)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
+                      <button onClick={() => deleteEvent(deleteConfirm.id)} style={{ ...S.btnDanger, flex: 1 }}>Supprimer</button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -1496,6 +1535,36 @@ export default function MesEvenementsPage() {
                 La précommande est activée mais aucun article n'a été renseigné. Ajoute au moins un article avec un nom et un prix, ou désactive la précommande.
               </div>
             )}
+            {/* ── Publication & clôture ── */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: 0 }}>Planification</p>
+              <div>
+                <label style={S.label}>Date de publication <span style={{ color: 'rgba(255,255,255,0.20)' }}>(optionnel — vide = maintenant)</span></label>
+                <input
+                  type="datetime-local"
+                  value={publishAt}
+                  onChange={e => setPublishAt(e.target.value)}
+                  style={{ ...S.inputBase, colorScheme: 'dark' }}
+                />
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
+                  L'événement apparaîtra sur le site à cette date/heure. Laisse vide pour publier immédiatement.
+                </p>
+              </div>
+              <div>
+                <label style={S.label}>Date de clôture des réservations <span style={{ color: 'rgba(255,255,255,0.20)' }}>(optionnel)</span></label>
+                <input
+                  type="datetime-local"
+                  value={closingDate}
+                  onChange={e => setClosingDate(e.target.value)}
+                  min={form.date || undefined}
+                  style={{ ...S.inputBase, colorScheme: 'dark' }}
+                />
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
+                  Laisse vide pour fermer automatiquement à la date de l'événement.
+                </p>
+              </div>
+            </div>
+
             <button
               onClick={() => {
                 if (options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0) return

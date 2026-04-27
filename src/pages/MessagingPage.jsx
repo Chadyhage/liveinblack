@@ -133,26 +133,37 @@ function MicIcon({ color = '#fff', size = 18 }) {
 // ─── Voice bubble with waveform ────────────────────────────────────────────────
 const BAR_COUNT = 30
 function VoiceBubble({ content, isMe }) {
-  const [playing, setPlaying] = useState(false)
+  const [playing, setPlaying]   = useState(false)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [bars, setBars] = useState(null) // null = loading, array = ready
+  const [bars, setBars]         = useState(null) // null = loading, array = ready
+  const [broken, setBroken]     = useState(false)
   const audioRef = useRef(null)
 
-  // Decode real waveform via Web Audio API
+  // Reset audio object whenever content changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+      audioRef.current = null
+    }
+    setPlaying(false)
+    setProgress(0)
+    setBroken(false)
+  }, [content])
+
+  // Decode waveform via Web Audio API (works for both data: and https: URLs)
   useEffect(() => {
     if (!content) return
     let cancelled = false
     ;(async () => {
       try {
-        // base64 data URL → ArrayBuffer
         const res = await fetch(content)
         const arrayBuf = await res.arrayBuffer()
         const ctx = new (window.AudioContext || window.webkitAudioContext)()
         const audioBuffer = await ctx.decodeAudioData(arrayBuf)
         ctx.close()
         if (cancelled) return
-        // Extract peaks: sample channel 0 into BAR_COUNT buckets
         const channelData = audioBuffer.getChannelData(0)
         const blockSize = Math.floor(channelData.length / BAR_COUNT)
         const peaks = Array.from({ length: BAR_COUNT }, (_, i) => {
@@ -168,7 +179,7 @@ function VoiceBubble({ content, isMe }) {
         setBars(peaks.map(p => Math.max(0.1, p / maxPeak)))
         setDuration(Math.round(audioBuffer.duration))
       } catch {
-        // Fallback to deterministic bars if decoding fails
+        // Fallback: deterministic bars based on content hash
         if (!cancelled) setBars(
           Array.from({ length: BAR_COUNT }, (_, i) => {
             const seed = (content?.charCodeAt(i * 3 % (content?.length || 1)) || 80) + i * 17
@@ -181,10 +192,11 @@ function VoiceBubble({ content, isMe }) {
   }, [content])
 
   function handlePlay() {
+    if (broken) return
     if (!audioRef.current) {
       const a = new Audio()
-      // Set crossOrigin before src to avoid CORS issues with Storage URLs
-      a.crossOrigin = 'anonymous'
+      // Ne PAS mettre crossOrigin — inutile pour la lecture simple et bloque
+      // Firebase Storage si les règles CORS ne sont pas configurées côté bucket
       a.src = content
       a.onloadedmetadata = () => {
         if (!duration) setDuration(Math.round(a.duration))
@@ -194,7 +206,7 @@ function VoiceBubble({ content, isMe }) {
         setProgress(a.currentTime / d)
       }
       a.onended = () => { setPlaying(false); setProgress(0) }
-      a.onerror = () => { setPlaying(false) }
+      a.onerror = () => { setPlaying(false); setBroken(true) }
       audioRef.current = a
     }
     if (playing) {
@@ -203,7 +215,12 @@ function VoiceBubble({ content, isMe }) {
     } else {
       const p = audioRef.current.play()
       if (p && typeof p.then === 'function') {
-        p.then(() => setPlaying(true)).catch(() => setPlaying(false))
+        p.then(() => setPlaying(true)).catch((err) => {
+          console.warn('[VoiceBubble] play() failed:', err)
+          setPlaying(false)
+          // Ne pas marquer broken si c'est juste un AbortError (interruption rapide)
+          if (err?.name !== 'AbortError') setBroken(true)
+        })
       } else {
         setPlaying(true)
       }
@@ -217,6 +234,14 @@ function VoiceBubble({ content, isMe }) {
   const activeColor = isMe ? T.teal : '#fff'
   const dimColor = isMe ? 'rgba(78,232,200,0.25)' : 'rgba(255,255,255,0.18)'
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+
+  if (broken) {
+    return (
+      <span style={{ fontFamily: T.dmMono, fontSize: 10, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>
+        🎤 audio indisponible
+      </span>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 200, maxWidth: 260 }}>
@@ -958,7 +983,10 @@ export default function MessagingPage() {
     if (mediaRecorderRef.current?.state === 'recording') return
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mr = new MediaRecorder(stream)
+      // Choisir le bon format selon le navigateur (webm sur Chrome, mp4 sur Safari/iOS)
+      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg', 'audio/mp4']
+        .find(t => MediaRecorder.isTypeSupported(t)) || ''
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
       audioChunksRef.current = []
       mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
       mr.onstop = () => {
@@ -985,18 +1013,31 @@ export default function MessagingPage() {
   function stopAndSendRecording() {
     const mr = mediaRecorderRef.current
     if (!mr || mr.state !== 'recording') return
-    mr.onstop = () => {
+    mr.onstop = async () => {
       if (mr._shouldSend && audioChunksRef.current.length > 0) {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        const reader = new FileReader()
-        reader.onload = ev => {
-          const extra = replyTo ? { replyTo } : {}
-          sendMessage(activeConvId, myId, myName, 'voice', ev.target.result, extra)
-          setReplyTo(null)
-          setMessages(getMessages(activeConvId))
-          setConversations(getConversations(myId))
+        // Utiliser le vrai mimeType du recorder (webm sur Chrome, mp4 sur Safari)
+        const actualMime = mr.mimeType || 'audio/webm'
+        const ext = actualMime.includes('mp4') ? 'mp4' : actualMime.includes('ogg') ? 'ogg' : 'webm'
+        const blob = new Blob(audioChunksRef.current, { type: actualMime })
+        const extra = replyTo ? { replyTo } : {}
+        try {
+          const { storage } = await import('../firebase')
+          const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+          const path = `messages/${activeConvId}/${Date.now()}_voice.${ext}`
+          const snap = await uploadBytes(ref(storage, path), blob)
+          const url = await getDownloadURL(snap.ref)
+          sendMessage(activeConvId, myId, myName, 'voice', url, extra)
+        } catch {
+          // Fallback base64 (local only)
+          const reader = new FileReader()
+          reader.onload = ev => {
+            sendMessage(activeConvId, myId, myName, 'voice', ev.target.result, extra)
+          }
+          reader.readAsDataURL(blob)
         }
-        reader.readAsDataURL(blob)
+        setReplyTo(null)
+        setMessages(getMessages(activeConvId))
+        setConversations(getConversations(myId))
       }
       mr.stream?.getTracks().forEach(t => t.stop())
       clearInterval(recTimerRef.current)
