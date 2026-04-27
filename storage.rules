@@ -20,5 +20,13 @@ service firebase.storage {
                    && request.resource.size < 5 * 1024 * 1024;
     }
 
+    // Pièces jointes des messages (voix, images, fichiers) — utilisateurs authentifiés
+    // Lecture publique pour que les destinataires puissent y accéder via URL signée
+    match /messages/{convId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 25 * 1024 * 1024;
+    }
+
   }
 }
