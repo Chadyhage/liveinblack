@@ -1643,6 +1643,17 @@ function EventTicketGroup({ group }) {
   const event = getAllEvents().find(e => String(e.id) === String(group.eventId))
   const hasPlaylist = !!event?.playlist
   const isCancelled = !!event?.cancelled
+  const isDeleted = !event   // l'event n'existe plus du tout
+  const cancellationMessage = event?.cancellationMessage || ''
+  const showCancellationBanner = isCancelled || isDeleted
+
+  function openSupport() {
+    const subject = encodeURIComponent(`Événement annulé — ${group.eventName}`)
+    const body = encodeURIComponent(
+      `Bonjour,\n\nJe possède ${group.tickets.length} billet${group.tickets.length > 1 ? 's' : ''} pour l'événement "${group.eventName}" qui a été annulé.\n\nRéférences :\n${group.tickets.map(t => `• ${t.id || t.ticketCode}`).join('\n')}\n\nJe souhaite obtenir des informations sur le remboursement.\n\nMerci.`
+    )
+    window.location.href = `mailto:support@liveinblack.com?subject=${subject}&body=${body}`
+  }
 
   return (
     <>
@@ -1667,8 +1678,8 @@ function EventTicketGroup({ group }) {
               fontFamily: '"Cormorant Garamond", serif',
               fontWeight: 400,
               fontSize: '16px',
-              color: isCancelled ? 'rgba(220,100,100,0.7)' : 'rgba(255,255,255,0.88)',
-              textDecoration: isCancelled ? 'line-through' : 'none',
+              color: showCancellationBanner ? 'rgba(220,100,100,0.7)' : 'rgba(255,255,255,0.88)',
+              textDecoration: showCancellationBanner ? 'line-through' : 'none',
             }}>{group.eventName}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
               <p style={{
@@ -1679,7 +1690,7 @@ function EventTicketGroup({ group }) {
                 color: 'rgba(255,255,255,0.28)',
                 margin: 0,
               }}>{group.eventDate}</p>
-              {isCancelled && (
+              {showCancellationBanner && (
                 <span style={{ fontFamily: '"DM Mono", monospace', fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.9)', background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.3)', borderRadius: 3, padding: '1px 6px' }}>
                   ANNULÉ
                 </span>
@@ -1704,6 +1715,52 @@ function EventTicketGroup({ group }) {
           </div>
         </div>
       </div>
+
+      {/* Cartouche d'annulation — message de l'organisateur + lien support */}
+      {showCancellationBanner && (
+        <div style={{
+          borderTop: '1px solid rgba(220,50,50,0.20)',
+          background: 'rgba(220,50,50,0.05)',
+          padding: '14px 16px',
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 6 }}>
+                Événement annulé
+              </p>
+              {cancellationMessage ? (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {cancellationMessage}
+                </p>
+              ) : (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: 0 }}>
+                  Cet événement n'aura pas lieu. Pour toute question concernant ton billet ou un remboursement, contacte le support.
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={openSupport}
+            style={{
+              alignSelf: 'flex-start',
+              fontFamily: '"DM Mono", monospace',
+              fontSize: 9,
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: '#c8a96e',
+              background: 'rgba(200,169,110,0.10)',
+              border: '1px solid rgba(200,169,110,0.30)',
+              borderRadius: 4,
+              padding: '8px 14px',
+              cursor: 'pointer',
+            }}
+          >
+            ✉ Contacter le support
+          </button>
+        </div>
+      )}
 
       {/* Actions row */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex' }}>

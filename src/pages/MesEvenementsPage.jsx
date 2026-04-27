@@ -236,6 +236,7 @@ export default function MesEvenementsPage() {
   const [createStep, setCreateStep] = useState(0)
   const [editingEventId, setEditingEventId] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [cancellationMessageDraft, setCancellationMessageDraft] = useState('')
   const [showBoostModal, setShowBoostModal] = useState(false)
   const [boostTargetEvent, setBoostTargetEvent] = useState(null)
   const [showBoostToast, setShowBoostToast] = useState(false)
@@ -553,9 +554,31 @@ export default function MesEvenementsPage() {
     localStorage.setItem('lib_created_events', JSON.stringify(updated))
     setCreatedEvents(updated)
     setDeleteConfirm(null)
+    setCancellationMessageDraft('')
     // Remove from shared Firestore collection too
     import('../utils/firestore-sync').then(({ syncDelete, syncDoc }) => {
       syncDelete(`events/${id}`)
+      if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: updated })
+    }).catch(() => {})
+  }
+
+  // Annule l'event sans le supprimer pour de vrai — utilisé quand des réservations existent
+  // Le client gardera accès à son billet avec le message de l'organisateur + bouton support
+  function cancelEventWithMessage(id, message) {
+    const updated = createdEvents.map(ev =>
+      ev.id === id
+        ? { ...ev, cancelled: true, cancellationMessage: message || '', cancelledAt: new Date().toISOString() }
+        : ev
+    )
+    localStorage.setItem('lib_created_events', JSON.stringify(updated))
+    setCreatedEvents(updated)
+    setDeleteConfirm(null)
+    setCancellationMessageDraft('')
+    // Sync à Firestore — l'event reste dans la collection events/ pour que les billets
+    // existants puissent toujours afficher le message d'annulation cross-device
+    const cancelledEvent = updated.find(ev => ev.id === id)
+    import('../utils/firestore-sync').then(({ syncDoc }) => {
+      if (cancelledEvent) syncDoc(`events/${id}`, cancelledEvent)
       if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: updated })
     }).catch(() => {})
   }
@@ -806,24 +829,48 @@ export default function MesEvenementsPage() {
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Supprimer l'événement ?</p>
 
                 {deleteConfirm.bookingCount > 0 ? (
-                  /* Cas : réservations existantes */
+                  /* Cas : réservations existantes — on annule (pas de suppression dure) */
                   <>
                     <div style={{ background: 'rgba(220,160,50,0.10)', border: '1px solid rgba(220,160,50,0.30)', borderRadius: 8, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                       <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
                       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,220,100,0.85)', lineHeight: 1.7, margin: 0 }}>
-                        <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. À vous de gérer légalement la suppression et les remboursements éventuels.
+                        <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. À vous de gérer légalement les remboursements éventuels.
                       </p>
                     </div>
+
+                    <div>
+                      <label style={{ ...S.label, marginBottom: 6 }}>
+                        Message aux acheteurs <span style={{ color: 'rgba(255,255,255,0.20)' }}>(optionnel)</span>
+                      </label>
+                      <textarea
+                        value={cancellationMessageDraft}
+                        onChange={e => setCancellationMessageDraft(e.target.value)}
+                        placeholder="Ex : L'événement est annulé pour cause de force majeure. Un remboursement intégral sera effectué sous 5 jours ouvrés via votre moyen de paiement initial. Pour toute question, contactez-nous."
+                        rows={4}
+                        maxLength={500}
+                        style={{
+                          ...S.inputBase,
+                          resize: 'vertical',
+                          minHeight: 90,
+                          lineHeight: 1.6,
+                        }}
+                      />
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', marginTop: 5, lineHeight: 1.6 }}>
+                        Ce message s'affichera sur le billet de chaque acheteur, accompagné d'un bouton de contact support. ({cancellationMessageDraft.length}/500)
+                      </p>
+                    </div>
+
                     <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: 0 }}>
-                      Cette action est irréversible. L'événement sera retiré du site.
+                      L'événement sera marqué <strong style={{ color: 'rgba(220,100,100,0.9)' }}>ANNULÉ</strong> et retiré du site, mais restera accessible aux personnes ayant un billet pour qu'elles voient ce message.
                     </p>
+
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setDeleteConfirm(null)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
-                      <button onClick={() => deleteEvent(deleteConfirm.id)} style={{ ...S.btnDanger, flex: 1 }}>Je comprends, supprimer</button>
+                      <button onClick={() => { setDeleteConfirm(null); setCancellationMessageDraft('') }} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
+                      <button onClick={() => cancelEventWithMessage(deleteConfirm.id, cancellationMessageDraft.trim())} style={{ ...S.btnDanger, flex: 1 }}>Confirmer l'annulation</button>
                     </div>
                   </>
                 ) : (
-                  /* Cas : aucune réservation */
+                  /* Cas : aucune réservation — suppression directe */
                   <>
                     <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>
                       Cette action est irréversible. L'événement sera retiré de la liste.
