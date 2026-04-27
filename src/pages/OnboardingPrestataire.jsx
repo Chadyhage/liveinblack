@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
+import { regions } from '../data/regions'
 import {
   createApplication, saveDraft, submitApplication,
   uploadDocument, getApplicationById, getApplicationByUser,
@@ -179,6 +180,43 @@ function TarifBlock({ f, update }) {
   )
 }
 
+// ── Sélecteur multi-régions ───────────────────────────────────────────────────
+const REGION_OPTIONS = [
+  { id: 'international', name: 'International', flag: '🌍' },
+  ...regions,
+]
+
+function RegionPicker({ value = [], onChange }) {
+  function toggle(id) {
+    const has = value.includes(id)
+    if (id === 'international') {
+      onChange(has ? [] : ['international'])
+      return
+    }
+    const withoutInt = value.filter(r => r !== 'international')
+    onChange(has ? withoutInt.filter(r => r !== id) : [...withoutInt, id])
+  }
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {REGION_OPTIONS.map(r => {
+        const sel = value.includes(r.id)
+        return (
+          <button key={r.id} type="button" onClick={() => toggle(r.id)} style={{
+            padding: '6px 14px', borderRadius: 20,
+            border: `1px solid ${sel ? '#4ee8c8' : 'rgba(255,255,255,0.12)'}`,
+            background: sel ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
+            color: sel ? '#4ee8c8' : 'rgba(255,255,255,0.4)',
+            fontFamily: "'DM Mono', monospace", fontSize: 11,
+            cursor: 'pointer', letterSpacing: '0.03em', transition: 'all 0.15s',
+          }}>
+            {r.flag} {r.name}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function OnboardingPrestataire() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -211,7 +249,7 @@ export default function OnboardingPrestataire() {
     // Structure (nom commercial + SIRET — requis pour salle/mat/food, optionnel artiste)
     nomCommercial: '', nomScene: '', siret: '',
     // Activité
-    zoneIntervention: '', description: '',
+    zonesIntervention: [], description: '',
     // Artiste
     typeArtiste: '', styles: '', anneesExperience: '', statutFacturation: '',
     portfolio: '', instagram: '', besoinstechniques: '',
@@ -655,8 +693,11 @@ export default function OnboardingPrestataire() {
             {/* ── Activité ── */}
             <p style={{ ...S.section, marginTop: 4 }}>📍 Ton activité</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <Field label="Zone d'intervention">
-                <input style={S.input} value={f.zoneIntervention} onChange={e => update('zoneIntervention', e.target.value)} placeholder="Île-de-France, National, Europe..." />
+              <Field label="Zones d'intervention">
+                <RegionPicker value={Array.isArray(f.zonesIntervention) ? f.zonesIntervention : []} onChange={v => update('zonesIntervention', v)} />
+                <p style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: '8px 0 0', letterSpacing: '0.04em' }}>
+                  Sélectionne les pays / zones où tu es disponible
+                </p>
               </Field>
               <Field label="Description courte">
                 <textarea style={{ ...S.input, minHeight: 72, resize: 'vertical' }} value={f.description} onChange={e => update('description', e.target.value)} placeholder="Décris ton activité, ton style, tes points forts..." />
@@ -822,8 +863,11 @@ export default function OnboardingPrestataire() {
                 <Field label="Inventaire / Liste du matériel disponible">
                   <textarea style={{ ...S.input, minHeight: 80, resize: 'vertical' }} value={f.inventaire} onChange={e => update('inventaire', e.target.value)} placeholder="1× console Pioneer XDJ-RX3, 2× enceintes JBL SRX835..." />
                 </Field>
-                <Field label="Zone de livraison / installation">
-                  <input style={S.input} value={f.zoneIntervention} onChange={e => update('zoneIntervention', e.target.value)} placeholder="Paris + 100km, National..." />
+                <Field label="Zones de livraison / installation">
+                  <RegionPicker value={Array.isArray(f.zonesIntervention) ? f.zonesIntervention : []} onChange={v => update('zonesIntervention', v)} />
+                  <p style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: '8px 0 0', letterSpacing: '0.04em' }}>
+                    Sélectionne les zones où tu livres / installes ton matériel
+                  </p>
                 </Field>
                 <Field label="Conditions de location">
                   <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical' }} value={f.conditionsLocation} onChange={e => update('conditionsLocation', e.target.value)} placeholder="Durée minimum, weekend, installation incluse..." />

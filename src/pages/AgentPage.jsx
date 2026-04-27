@@ -1626,7 +1626,21 @@ export default function AgentPage() {
                       )}
                       <FR label="Nom commercial" value={fd.nomCommercial} />
                       <FR label="SIRET" value={fd.siret} />
-                      <FR label="Zone d'intervention" value={fd.zoneIntervention} />
+                      <FR label="Zones d'intervention" value={
+                        Array.isArray(fd.zonesIntervention) && fd.zonesIntervention.length
+                          ? fd.zonesIntervention.map(id => {
+                              const r = [{ id: 'international', name: 'International', flag: '🌍' },
+                                { id: 'cote-divoire', name: "Côte d'Ivoire", flag: '🇨🇮' },
+                                { id: 'ghana', name: 'Ghana', flag: '🇬🇭' },
+                                { id: 'togo', name: 'Togo', flag: '🇹🇬' },
+                                { id: 'benin', name: 'Bénin', flag: '🇧🇯' },
+                                { id: 'france', name: 'France', flag: '🇫🇷' },
+                                { id: 'amerique', name: 'Amérique', flag: '🌎' },
+                              ].find(x => x.id === id)
+                              return r ? `${r.flag} ${r.name}` : id
+                            }).join('  ·  ')
+                          : (fd.zoneIntervention || '—')
+                      } />
                       <FR label="Description" value={fd.description} />
 
                       {/* ── Artiste ── */}
