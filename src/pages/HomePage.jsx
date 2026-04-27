@@ -530,7 +530,7 @@ export default function HomePage() {
                 {!enabledRoles.includes('organisateur') && (
                   <RevealSection delay={100}>
                     <button
-                      onClick={() => navigate(orgStatus !== 'none' ? '/mon-dossier' : '/connexion?mode=register&role=organisateur')}
+                      onClick={() => navigate(orgStatus !== 'none' ? '/mon-dossier' : '/inscription-organisateur')}
                       style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                     >
                       <div style={{
@@ -588,7 +588,7 @@ export default function HomePage() {
                 {!enabledRoles.includes('prestataire') && (
                   <RevealSection delay={180}>
                     <button
-                      onClick={() => navigate(prestStatus !== 'none' ? '/mon-dossier' : '/connexion?mode=register&role=prestataire')}
+                      onClick={() => navigate(prestStatus !== 'none' ? '/mon-dossier' : '/inscription-prestataire')}
                       style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                     >
                       <div style={{
