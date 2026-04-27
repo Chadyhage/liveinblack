@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import { getWallet } from '../utils/wallet'
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
-import { getApplicationByUser } from '../utils/applications'
+import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
 import { getOrdersForBuyer, ORDER_STATUS_LABELS } from '../utils/services'
 import PlaylistSystem from '../components/PlaylistSystem'
 import { events as staticEvents } from '../data/events'
@@ -417,17 +417,16 @@ export default function ProfilePage() {
   const [credentialApp, setCredentialApp] = useState(null)
   useEffect(() => {
     if (!user?.uid) return
-    if (user.role === 'organisateur') {
-      const app = getApplicationByUser(user.uid, 'organisateur')
-      setOrgName(app?.formData?.nomCommercial || null)
-      if (app?.status === 'approved') setCredentialApp(app)
-    } else if (user.role === 'prestataire') {
-      const app = getApplicationByUser(user.uid, 'prestataire')
-      if (app?.status === 'approved') setCredentialApp(app)
-    } else {
-      setOrgName(null)
-      setCredentialApp(null)
+    const role = user.role
+    if (role !== 'organisateur' && role !== 'prestataire') {
+      setOrgName(null); setCredentialApp(null); return
     }
+    // Async : localStorage d'abord, Firestore en fallback (cross-device)
+    loadApplicationByUser(user.uid, role).then(app => {
+      if (!app) return
+      if (role === 'organisateur') setOrgName(app.formData?.nomCommercial || null)
+      if (app.status === 'approved') setCredentialApp(app)
+    }).catch(() => {})
   }, [user?.uid, user?.role])
 
   // ── Name change cooldown (1 fois toutes les 2 semaines) ──

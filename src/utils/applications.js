@@ -83,6 +83,28 @@ export function getApplicationByUser(uid, type) {
   return getAllApplications().find(a => a.uid === uid && a.type === type) || null
 }
 
+// Async version : localStorage d'abord, Firestore en fallback (cross-device)
+export async function loadApplicationByUser(uid, type) {
+  const local = getApplicationByUser(uid, type)
+  if (local) return local
+  try {
+    const { loadCollection } = await import('./firestore-sync')
+    const { where } = await import('firebase/firestore')
+    const docs = await loadCollection('applications', [where('uid', '==', uid), where('type', '==', type)])
+    if (docs.length) {
+      const app = docs[0]
+      // Sauvegarder en local pour les prochaines fois
+      const all = JSON.parse(localStorage.getItem('lib_applications') || '[]')
+      if (!all.find(a => a.id === app.id)) {
+        all.push(app)
+        localStorage.setItem('lib_applications', JSON.stringify(all))
+      }
+      return app
+    }
+  } catch {}
+  return null
+}
+
 export function updateApplication(appId, patch) {
   const all = _getAll()
   const idx = all.findIndex(a => a.id === appId)
