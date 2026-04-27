@@ -7,7 +7,7 @@ import PlaylistSystem from '../components/PlaylistSystem'
 import { useAuth } from '../context/AuthContext'
 import { generateTicketToken, checkScheduleConflict } from '../utils/ticket'
 import { getConversations, sendMessage, getUserId, formatTime, getInitials, saveGroupBooking, getGroupBookings, validateGroupBooking, payGroupBookingShare } from '../utils/messaging'
-import { deductFunds, getBalance } from '../utils/wallet'
+import { startStripeCheckout } from '../utils/stripe'
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
 
@@ -226,6 +226,8 @@ export default function EventDetailPage() {
   const [allBookedThisSession, setAllBookedThisSession] = useState([]) // { place, tickets, preorderSummary, totalPrice }
   const [showShareModal, setShowShareModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [stripeRedirecting, setStripeRedirecting] = useState(false)
+  const [stripeError, setStripeError] = useState('')
   const [showGroupSendModal, setShowGroupSendModal] = useState(false)
   const [groupSendConvId, setGroupSendConvId] = useState(null)
   const [insufficientFunds] = useState(false) // désactivé — paiement fictif
@@ -268,10 +270,8 @@ export default function EventDetailPage() {
   const preorderTotal = perTicketOrders.reduce((total, t) =>
     total + activeMenu.reduce((sum, item) => sum + (t.items[item.name] || 0) * item.price, 0), 0)
   const totalPrice = placePrice + preorderTotal
-  const walletBalance = getUserId(user) ? getBalance(getUserId(user)) : 0
   // Correct total: place price × qty + preorder total (preorderTotal already sums all tickets)
   const grandTotal = placePrice * ticketQty + preorderTotal
-  const canAfford = grandTotal === 0 || walletBalance >= grandTotal
   const isAuctionPlace = selectedPlaceObj?.auctionType === 'auction'
   const currentAuctionPrice = 0
   const userCanBook = canBook(user)
@@ -308,7 +308,7 @@ export default function EventDetailPage() {
     ))
   }
 
-  function confirmBooking() {
+  async function confirmBooking() {
     const uid = getUserId(user)
     // Age check
     if ((event.minAge || 0) >= 18 && !ageVerified) {
@@ -331,23 +331,84 @@ export default function EventDetailPage() {
       return
     }
     setEventStartedError(false)
-    // Déduire le montant du portefeuille (si l'événement est payant)
+
+    // ─── ÉVÉNEMENT PAYANT — Stripe Checkout ───────────────────────────────
     if (grandTotal > 0) {
-      const deducted = deductFunds(uid, grandTotal, `Réservation — ${event.name} (${selectedPlace})`)
-      if (!deducted) {
-        setBookingStep('place')
-        setShowConfirmModal(false)
-        return
+      // Construire un id de réservation persistant (rapproche pending ↔ session Stripe)
+      const arr = new Uint32Array(2)
+      crypto.getRandomValues(arr)
+      const bookingId = `${arr[0].toString(36)}${arr[1].toString(36)}`.slice(0, 16).toUpperCase()
+
+      // Construire le récap des consos précommandées (en EUR) pour Stripe line_items
+      // On passe par le total agrégé : Stripe ne sait pas découper "ticket A + ticket B avec menus différents"
+      const aggregatedPreorder = {}
+      perTicketOrders.forEach(t => {
+        Object.entries(t.items || {}).forEach(([name, q]) => {
+          if (!q) return
+          aggregatedPreorder[name] = (aggregatedPreorder[name] || 0) + q
+        })
+      })
+      const preorderItems = Object.entries(aggregatedPreorder).map(([name, q]) => {
+        const item = activeMenu.find(m => m.name === name)
+        return { name, qty: q, priceEUR: item?.price || 0 }
+      }).filter(i => i.priceEUR > 0)
+
+      // Sauvegarder la réservation en attente — sera finalisée par /paiement-reussi
+      const pending = {
+        bookingId,
+        eventId: event.id,
+        eventName: event.name,
+        eventImage: event.imageUrl,
+        eventDate: event.dateDisplay,
+        eventDateISO: event.date,
+        eventStartTime: event.time,
+        eventEndTime: event.endTime,
+        placeType: selectedPlace,
+        qty: ticketQty,
+        unitPriceEUR: placePrice,
+        preorderItems,
+        perTicketOrders, // détail par billet — utilisé pour réhydrater à /paiement-reussi
+        activeMenu,
+        userId: uid,
+        userName: user?.name || null,
+        userEmail: user?.email || null,
+        createdAt: new Date().toISOString(),
       }
+      try {
+        localStorage.setItem(`lib_pending_booking_${bookingId}`, JSON.stringify(pending))
+      } catch {}
+
+      setStripeRedirecting(true)
+      const result = await startStripeCheckout({
+        eventId: event.id,
+        eventName: event.name,
+        eventImage: event.imageUrl,
+        placeType: selectedPlace,
+        qty: ticketQty,
+        unitPriceEUR: placePrice,
+        preorderItems,
+        userId: uid,
+        userEmail: user?.email,
+        bookingId,
+      })
+
+      if (!result.ok) {
+        setStripeRedirecting(false)
+        setStripeError(result.error || 'Erreur Stripe — réessaye dans un instant.')
+        // Cleanup pending si erreur
+        try { localStorage.removeItem(`lib_pending_booking_${bookingId}`) } catch {}
+      }
+      // Si ok : window.location.href a déjà été déclenché → on attend la redirection
+      return
     }
 
+    // ─── ÉVÉNEMENT GRATUIT — création directe (pas de paiement) ──────────
     const newTickets = []
     try {
       const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
       const newBookings = []
 
       for (let n = 0; n < ticketQty; n++) {
-        // Use crypto.getRandomValues for collision-resistant ticket codes
         const arr = new Uint32Array(1)
         crypto.getRandomValues(arr)
         const code = arr[0].toString(36).slice(0, 6).toUpperCase().padEnd(6, '0')
@@ -374,6 +435,8 @@ export default function EventDetailPage() {
           userId: uid,
           userName: user?.name || null,
           userEmail: user?.email || null,
+          paid: false,
+          paymentMethod: 'free',
         }
         const token = generateTicketToken(booking)
         booking.token = token
@@ -383,13 +446,11 @@ export default function EventDetailPage() {
 
       const allBookings = [...prev, ...newBookings]
       localStorage.setItem('lib_bookings', JSON.stringify(allBookings))
-      // Sync immediately to Firestore so the ticket is visible on other devices
       import('../utils/firestore-sync').then(({ syncDoc }) => {
         const myBookings = allBookings.filter(b => b.userId === uid)
         if (myBookings.length) syncDoc(`user_bookings/${uid}`, { items: myBookings })
       }).catch(() => {})
 
-      // ── Success: update UI state inside try to ensure tickets are saved ──
       setBookedTickets(newTickets)
       if (user && uid) {
         const newPoints = (user.points || 0) + ticketQty
@@ -409,13 +470,8 @@ export default function EventDetailPage() {
         totalPrice: grandTotal,
       }])
       setBookingStep('confirmed')
+      setShowConfirmModal(false)
     } catch {
-      // Booking save failed — refund the wallet to avoid lost funds
-      if (grandTotal > 0) {
-        import('../utils/wallet').then(({ refundFunds }) => {
-          refundFunds(uid, grandTotal, 'Remboursement automatique — erreur technique')
-        }).catch(() => {})
-      }
       setShowConfirmModal(false)
       return
     }
@@ -1582,7 +1638,7 @@ export default function EventDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, paddingTop: 4 }}>
               <WarnIcon size={28} color="rgba(200,169,110,0.8)" />
               <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
-                Confirmer la réservation ?
+                {grandTotal > 0 ? 'Procéder au paiement ?' : 'Confirmer la réservation ?'}
               </h3>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, letterSpacing: '0.03em' }}>
                 Une fois confirmée, tu ne pourras{' '}
@@ -1596,17 +1652,50 @@ export default function EventDetailPage() {
               )}
             </div>
 
+            {/* Récap montant à payer */}
+            {grandTotal > 0 && (
+              <div style={{ background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', borderRadius: 8, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', margin: 0, marginBottom: 4 }}>
+                    Total à payer
+                  </p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.32)', margin: 0 }}>
+                    {ticketQty} {selectedPlace}{ticketQty > 1 ? 's' : ''}{preorderTotal > 0 ? ' + précommandes' : ''}
+                  </p>
+                </div>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 300, color: '#4ee8c8', margin: 0 }}>
+                  {grandTotal.toFixed(2)} €
+                </p>
+              </div>
+            )}
+
+            {/* Mention paiement sécurisé */}
+            {grandTotal > 0 && (
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.32)', textAlign: 'center', letterSpacing: '0.05em', margin: 0, lineHeight: 1.7 }}>
+                🔒 Paiement sécurisé via Stripe — tu seras redirigé.
+              </p>
+            )}
+
+            {stripeError && (
+              <div style={{ background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', borderRadius: 6, padding: '10px 12px' }}>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,180,180,0.95)', margin: 0, lineHeight: 1.6 }}>
+                  {stripeError}
+                </p>
+              </div>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button
-                style={{ ...S.btnGold }}
-                onClick={() => { setShowConfirmModal(false); confirmBooking() }}
+                style={{ ...S.btnGold, opacity: stripeRedirecting ? 0.6 : 1, cursor: stripeRedirecting ? 'wait' : 'pointer' }}
+                disabled={stripeRedirecting}
+                onClick={() => { setStripeError(''); confirmBooking() }}
               >
-                Oui, confirmer
+                {stripeRedirecting ? 'Redirection vers Stripe…' : grandTotal > 0 ? `Payer ${grandTotal.toFixed(2)} €` : 'Oui, confirmer'}
               </button>
               <button
-                onClick={() => setShowConfirmModal(false)}
+                onClick={() => { setShowConfirmModal(false); setStripeError('') }}
                 style={S.btnGhost}
+                disabled={stripeRedirecting}
               >
                 Retour
               </button>

@@ -17,6 +17,8 @@ import OnboardingOrganisateur from './pages/OnboardingOrganisateur'
 import OnboardingPrestataire from './pages/OnboardingPrestataire'
 import MonDossierPage from './pages/MonDossierPage'
 import WalletPage from './pages/WalletPage'
+import PaiementReussiPage from './pages/PaiementReussiPage'
+import PaiementAnnulePage from './pages/PaiementAnnulePage'
 import { AuthContext } from './context/AuthContext'
 import AuthModal from './components/AuthModal'
 
@@ -280,6 +282,8 @@ export default function App() {
             <Route path="/evenements/:id" element={<EventDetailPage />} />
             <Route path="/cgu" element={<CGUPage />} />
             <Route path="/ticket/:token" element={<TicketPage />} />
+            <Route path="/paiement-reussi" element={<PaiementReussiPage />} />
+            <Route path="/paiement-annule" element={<PaiementAnnulePage />} />
 
             {/* ── Protected: require any logged-in account ── */}
             <Route path="/profil" element={
