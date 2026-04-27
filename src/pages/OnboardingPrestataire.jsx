@@ -17,10 +17,10 @@ const PURPLE = '#8b5cf6'
 const S = {
   page:    { position: 'relative', zIndex: 1, padding: '24px 16px 8px', maxWidth: 560, margin: '0 auto' },
   card:    { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '20px 20px' },
-  label:   { fontFamily: DM, fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', display: 'block', marginBottom: 6 },
+  label:   { fontFamily: DM, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', display: 'block', marginBottom: 6, overflowWrap: 'break-word', wordBreak: 'break-word' },
   input:   { width: '100%', background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.9)', padding: '10px 12px', outline: 'none', boxSizing: 'border-box' },
   select:  { width: '100%', background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.9)', padding: '10px 12px', outline: 'none', boxSizing: 'border-box', appearance: 'none' },
-  section: { fontFamily: DM, fontSize: 8, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)' },
+  section: { fontFamily: DM, fontSize: 8, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)', overflowWrap: 'break-word', wordBreak: 'break-word' },
   btnGold: { width: '100%', padding: '13px', background: 'linear-gradient(135deg,rgba(200,169,110,0.22),rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', borderRadius: 4, fontFamily: DM, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, cursor: 'pointer' },
   btnGhost:{ width: '100%', padding: '13px', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 4, fontFamily: DM, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' },
   error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em' },
@@ -613,7 +613,7 @@ export default function OnboardingPrestataire() {
 
               {/* Nom commercial */}
               <Field
-                label={f.prestataireType === 'artiste' ? 'Nom de la structure / collectif' : 'Nom commercial'}
+                label={f.prestataireType === 'artiste' ? 'Structure / collectif' : 'Nom commercial'}
                 required={['salle', 'materiel', 'food'].includes(f.prestataireType)}
               >
                 <input
@@ -621,7 +621,7 @@ export default function OnboardingPrestataire() {
                   value={f.nomCommercial}
                   onChange={e => update('nomCommercial', e.target.value)}
                   placeholder={f.prestataireType === 'artiste'
-                    ? 'Optionnel — si tu as un collectif ou une structure'
+                    ? 'Optionnel — collectif, label, association...'
                     : 'Nom officiel de ta structure'}
                 />
                 {errors.nomCommercial && <p style={S.error}>{errors.nomCommercial}</p>}
@@ -638,7 +638,7 @@ export default function OnboardingPrestataire() {
                   onChange={e => update('siret', e.target.value)}
                   placeholder={['salle', 'materiel', 'food'].includes(f.prestataireType)
                     ? '123 456 789 00012'
-                    : 'Optionnel — laisse vide si artiste-auteur / intermittent'}
+                    : 'Optionnel si artiste-auteur / intermittent'}
                 />
                 {errors.siret
                   ? <p style={S.error}>{errors.siret}</p>
