@@ -11,6 +11,153 @@ import { getOrdersForBuyer, ORDER_STATUS_LABELS } from '../utils/services'
 import PlaylistSystem from '../components/PlaylistSystem'
 import { events as staticEvents } from '../data/events'
 
+// ─── Génération carte d'accréditation (organisateur + prestataire) ───────────
+function openCredentialPDF(app, role) {
+  if (!app) return
+  const fd = app.formData || {}
+  const approvedDate = new Date(app.approvedAt || Date.now()).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const approvedBy   = app.auditLog?.slice().reverse().find(e => e.action === 'approved')?.byName || 'LIVEINBLACK'
+  const refId        = app.id || '—'
+  const isOrg        = role === 'organisateur'
+
+  // ── Infos affichées selon le rôle ──
+  const displayName = isOrg
+    ? (fd.nomCommercial || '—')
+    : (fd.nomScene?.trim() || fd.nomCommercial?.trim() || [fd.prenom, fd.nom].filter(Boolean).join(' ') || '—')
+
+  const typeLabel = isOrg
+    ? (fd.typeEtablissement || 'Organisateur')
+    : ({
+        artiste:  'Artiste / Performeur',
+        salle:    'Salle & Espace événementiel',
+        materiel: 'Location de matériel',
+        food:     'Restauration & Boissons',
+      }[fd.prestataireType] || 'Prestataire')
+
+  const roleLabel  = isOrg ? 'Organisateur Partenaire' : 'Prestataire Partenaire'
+  const roleDesc   = isOrg
+    ? 'Est officiellement reconnu(e) comme <strong style="font-family:inherit;font-weight:600">organisateur partenaire</strong> et est autorisé(e) à créer et publier des événements sur la plateforme LIVEINBLACK.'
+    : 'Est officiellement référencé(e) comme <strong style="font-family:inherit;font-weight:600">prestataire partenaire</strong> et peut proposer ses services aux organisateurs de la plateforme LIVEINBLACK.'
+
+  const rows = isOrg ? [
+    ['Organisation',       displayName],
+    ["Type d'établissement", typeLabel],
+    ['Email professionnel', fd.emailPro || app.email || '—'],
+    ['Téléphone',          [fd.telephoneProCode, fd.telephonePro].filter(Boolean).join(' ') || '—'],
+    ['Ville',              fd.ville || '—'],
+    ['Date de validation', approvedDate],
+    ['Validé par',         approvedBy + ' — Équipe LIVEINBLACK'],
+    ['Référence dossier',  refId],
+  ] : [
+    ['Nom / Nom de scène',  displayName],
+    ['Type de prestataire', typeLabel],
+    ...(fd.prestataireType === 'artiste' && fd.typeArtiste ? [['Spécialité', fd.typeArtiste]] : []),
+    ['Email',               app.email || '—'],
+    ['Téléphone',           [fd.telephoneCode, fd.telephone].filter(Boolean).join(' ') || '—'],
+    ['Ville',               fd.ville || '—'],
+    ...(fd.siret ? [['SIRET', fd.siret]] : []),
+    ['Zones d\'intervention', Array.isArray(fd.zonesIntervention) && fd.zonesIntervention.length
+      ? fd.zonesIntervention.map(id => ({
+          'international': '🌍 International', 'france': '🇫🇷 France',
+          'cote-divoire': "🇨🇮 Côte d'Ivoire", 'ghana': '🇬🇭 Ghana',
+          'togo': '🇹🇬 Togo', 'benin': '🇧🇯 Bénin', 'amerique': '🌎 Amérique',
+        }[id] || id)).join('  ·  ')
+      : '—'],
+    ['Date de validation',  approvedDate],
+    ['Validé par',          approvedBy + ' — Équipe LIVEINBLACK'],
+    ['Référence dossier',   refId],
+  ]
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Carte d'accréditation — ${displayName}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,600&family=DM+Mono:wght@400;500&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Mono',monospace; background:#fff; color:#0a0a18; padding:64px 80px; max-width:760px; margin:0 auto; line-height:1.6; }
+    .header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:48px; padding-bottom:24px; border-bottom:2px solid #0a0a18; }
+    .logo { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:300; letter-spacing:0.12em; }
+    .logo span { font-style:italic; font-weight:600; }
+    .ref { font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:#999; text-align:right; line-height:1.8; }
+    .badge { display:inline-block; background:#f0faf7; border:1px solid #b8ead9; border-radius:4px; padding:3px 10px; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#1a9e72; font-weight:500; }
+    .hero { display:flex; gap:28px; align-items:flex-start; margin-bottom:40px; }
+    .hero-icon { width:72px; height:72px; border-radius:12px; background:linear-gradient(135deg,#0a0a18,#2a1a4a); display:flex; align-items:center; justify-content:center; font-size:32px; flex-shrink:0; }
+    .hero-text {}
+    .hero-label { font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:#aaa; margin-bottom:6px; }
+    .hero-name { font-family:'Cormorant Garamond',serif; font-size:38px; font-weight:300; color:#0a0a18; line-height:1.05; letter-spacing:0.02em; margin-bottom:6px; }
+    .hero-type { font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#c8a96e; }
+    .seal { background:linear-gradient(135deg,#f5f0e8,#fdf8ef); border:1px solid #d4b896; border-radius:8px; padding:18px 22px; margin-bottom:32px; display:flex; align-items:center; gap:16px; }
+    .seal-icon { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#c8a96e,#a87c3e); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; font-size:18px; }
+    .seal-text { font-size:11px; color:#7a5c2e; letter-spacing:0.03em; line-height:1.7; }
+    table { width:100%; border-collapse:collapse; margin-bottom:32px; }
+    td { padding:10px 0; border-bottom:1px solid #f0f0f5; font-size:11px; vertical-align:top; }
+    td:first-child { color:#aaa; letter-spacing:0.1em; text-transform:uppercase; font-size:9px; width:200px; padding-top:12px; }
+    td:last-child { color:#0a0a18; font-size:12px; }
+    .qr-row { display:flex; gap:24px; margin-bottom:32px; align-items:center; background:#fafafa; border:1px solid #eee; border-radius:8px; padding:20px; }
+    .qr-box { width:80px; height:80px; background:#fff; border:1px solid #ddd; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:9px; color:#ccc; letter-spacing:0.08em; text-align:center; padding:4px; }
+    .qr-info { flex:1; font-size:9px; color:#aaa; letter-spacing:0.06em; line-height:1.8; }
+    .footer { margin-top:40px; padding-top:20px; border-top:1px solid #e0e0ec; display:flex; justify-content:space-between; align-items:flex-end; }
+    .footer-left { font-size:9px; color:#bbb; letter-spacing:0.06em; line-height:1.8; }
+    .sig-name { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300; font-style:italic; color:#c8a96e; }
+    .sig-title { font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#aaa; margin-top:2px; }
+    .print-btn { position:fixed; bottom:32px; right:32px; background:#0a0a18; color:#fff; border:none; border-radius:6px; padding:12px 24px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+    @media print { body{padding:40px 48px;} .print-btn{display:none;} }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">L<span style="font-style:normal;font-weight:400">|</span>VE IN <span>BLACK</span></div>
+    <div class="ref">
+      <div class="badge">✓ ${roleLabel}</div>
+      <div style="margin-top:8px">Réf. ${refId}</div>
+      <div>Émis le ${new Date().toLocaleDateString('fr-FR')}</div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-icon">${isOrg ? '🎪' : (fd.prestataireType === 'artiste' ? '🎤' : fd.prestataireType === 'salle' ? '🏛️' : fd.prestataireType === 'materiel' ? '🔊' : '🍽️')}</div>
+    <div class="hero-text">
+      <div class="hero-label">Carte d'accréditation officielle</div>
+      <div class="hero-name">${displayName}</div>
+      <div class="hero-type">${typeLabel}</div>
+    </div>
+  </div>
+
+  <div class="seal">
+    <div class="seal-icon">✓</div>
+    <div class="seal-text">${roleDesc}</div>
+  </div>
+
+  <table>
+    ${rows.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('\n    ')}
+  </table>
+
+  <div style="height:1px;background:#e8e8f0;margin:24px 0;"></div>
+  <p style="font-size:10px;color:#aaa;line-height:1.9;letter-spacing:0.03em">
+    Ce document atteste que le titulaire a soumis un dossier vérifié et approuvé par l'équipe LIVEINBLACK.
+    Il est valable jusqu'à révocation du statut. Pour vérifier l'authenticité de ce document,
+    contactez <strong style="color:#888">support@liveinblack.com</strong> en indiquant la référence dossier.
+  </p>
+
+  <div class="footer">
+    <div class="footer-left">LIVEINBLACK — Plateforme événementielle<br>liveinblack.com<br>Document généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+    <div style="text-align:right">
+      <div class="sig-name">LIVEINBLACK</div>
+      <div class="sig-title">Équipe de validation</div>
+    </div>
+  </div>
+
+  <button class="print-btn" onclick="window.print()">↓ Enregistrer en PDF</button>
+</body>
+</html>`
+
+  const win = window.open('', '_blank')
+  if (win) { win.document.write(html); win.document.close() }
+}
+
 function getAllEvents() {
   try {
     const created = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
@@ -266,10 +413,21 @@ export default function ProfilePage() {
 
   // Nom de l'organisation (organisateurs uniquement)
   const [orgName, setOrgName] = useState(null)
+  // Dossier approuvé pour la carte d'accréditation (org + prestataire)
+  const [credentialApp, setCredentialApp] = useState(null)
   useEffect(() => {
-    if (user?.role !== 'organisateur') { setOrgName(null); return }
-    const app = getApplicationByUser(user.uid, 'organisateur')
-    setOrgName(app?.formData?.nomCommercial || null)
+    if (!user?.uid) return
+    if (user.role === 'organisateur') {
+      const app = getApplicationByUser(user.uid, 'organisateur')
+      setOrgName(app?.formData?.nomCommercial || null)
+      if (app?.status === 'approved') setCredentialApp(app)
+    } else if (user.role === 'prestataire') {
+      const app = getApplicationByUser(user.uid, 'prestataire')
+      if (app?.status === 'approved') setCredentialApp(app)
+    } else {
+      setOrgName(null)
+      setCredentialApp(null)
+    }
   }, [user?.uid, user?.role])
 
   // ── Name change cooldown (1 fois toutes les 2 semaines) ──
@@ -1294,8 +1452,10 @@ export default function ProfilePage() {
               { label: `Portefeuille — ${wallet.balance?.toFixed(2) ?? '0.00'}€`, action: () => navigate('/portefeuille') },
             { label: 'Paramètres du compte', action: () => setPanel('settings') },
             { label: 'Support / Aide',       action: () => setPanel('support')   },
+            // Carte d'accréditation — organisateurs et prestataires approuvés uniquement
+            credentialApp && { label: '🪪 Mes documents d\'identification', action: () => openCredentialPDF(credentialApp, user.role), gold: true },
           ].filter(Boolean).map((item) => (
-            <MenuRow key={item.label} label={item.label} onClick={item.action} />
+            <MenuRow key={item.label} label={item.label} onClick={item.action} gold={item.gold} />
           ))}
         </div>
 
@@ -1405,7 +1565,7 @@ export default function ProfilePage() {
 
 // ── Helper sub-components ─────────────────────────────────────────────────────
 
-function MenuRow({ label, onClick }) {
+function MenuRow({ label, onClick, gold = false }) {
   const [hovered, setHovered] = useState(false)
   return (
     <button
@@ -1416,10 +1576,14 @@ function MenuRow({ label, onClick }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '14px 16px',
-        background: hovered ? 'rgba(255,255,255,0.03)' : 'rgba(8,10,20,0.55)',
+        background: gold
+          ? hovered ? 'rgba(200,169,110,0.12)' : 'rgba(200,169,110,0.07)'
+          : hovered ? 'rgba(255,255,255,0.03)' : 'rgba(8,10,20,0.55)',
         backdropFilter: 'blur(22px) saturate(1.6)',
         WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
-        border: `1px solid ${hovered ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.08)'}`,
+        border: `1px solid ${gold
+          ? hovered ? 'rgba(200,169,110,0.5)' : 'rgba(200,169,110,0.28)'
+          : hovered ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.08)'}`,
         borderRadius: '8px',
         cursor: 'pointer',
         textAlign: 'left',
@@ -1433,9 +1597,9 @@ function MenuRow({ label, onClick }) {
         fontSize: '11px',
         letterSpacing: '0.12em',
         textTransform: 'uppercase',
-        color: hovered ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.52)',
+        color: gold ? '#c8a96e' : hovered ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.52)',
       }}>{label}</span>
-      <span style={{ color: hovered ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.18)', fontSize: '18px' }}>›</span>
+      <span style={{ color: gold ? 'rgba(200,169,110,0.6)' : hovered ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.18)', fontSize: '18px' }}>›</span>
     </button>
   )
 }
