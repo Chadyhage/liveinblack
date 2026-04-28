@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import { verifyStripeSession } from '../utils/stripe'
 import { generateTicketToken } from '../utils/ticket'
 import { useAuth } from '../context/AuthContext'
+import { IconMail } from '../components/icons'
 
 const FONTS = {
   display: "'Cormorant Garamond', Georgia, serif",
@@ -272,9 +273,11 @@ export default function PaiementReussiPage() {
                     fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
                     background: 'rgba(200,169,110,0.10)', border: `1px solid ${COLORS.gold}`, color: COLORS.gold,
                     textDecoration: 'none', textAlign: 'center',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}
                 >
-                  ✉ Contacter le support
+                  <IconMail size={13} color={COLORS.gold} />
+                  Contacter le support
                 </a>
                 <button
                   onClick={() => navigate('/')}

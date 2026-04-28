@@ -8,6 +8,7 @@ import { regions } from '../data/regions'
 import { getActiveBoostsByRegion } from '../utils/ticket'
 import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
+import { IconTent, IconMic } from '../components/icons'
 
 function isEventPast(ev) {
   try {
@@ -546,7 +547,13 @@ export default function HomePage() {
                         {/* Glow */}
                         <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-                        <div style={{ fontSize: 36, marginBottom: 16 }}>🎪</div>
+                        <div style={{
+                          width: 56, height: 56, borderRadius: 14, marginBottom: 18,
+                          background: 'rgba(132,68,255,0.16)', border: '1px solid rgba(132,68,255,0.32)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <IconTent size={26} color="#c9b0ff" />
+                        </div>
                         <h3 style={{
                           fontFamily: 'Inter, sans-serif', fontWeight: 800,
                           fontSize: 'clamp(22px, 5vw, 30px)',
@@ -604,7 +611,13 @@ export default function HomePage() {
                         {/* Glow */}
                         <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,77,166,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-                        <div style={{ fontSize: 36, marginBottom: 16 }}>🎤</div>
+                        <div style={{
+                          width: 56, height: 56, borderRadius: 14, marginBottom: 18,
+                          background: 'rgba(255,77,166,0.16)', border: '1px solid rgba(255,77,166,0.32)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <IconMic size={26} color="#ffb3d9" />
+                        </div>
                         <h3 style={{
                           fontFamily: 'Inter, sans-serif', fontWeight: 800,
                           fontSize: 'clamp(22px, 5vw, 30px)',

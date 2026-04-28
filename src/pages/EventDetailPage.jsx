@@ -10,6 +10,7 @@ import { getConversations, sendMessage, getUserId, formatTime, getInitials, save
 import { startStripeCheckout } from '../utils/stripe'
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
+import { IconLock } from '../components/icons'
 
 function getAllEvents() {
   try {
@@ -1671,9 +1672,12 @@ export default function EventDetailPage() {
 
             {/* Mention paiement sécurisé */}
             {grandTotal > 0 && (
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.32)', textAlign: 'center', letterSpacing: '0.05em', margin: 0, lineHeight: 1.7 }}>
-                🔒 Paiement sécurisé via Stripe — tu seras redirigé.
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <IconLock size={11} color="rgba(255,255,255,0.32)" />
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.05em', lineHeight: 1.7 }}>
+                  Paiement sécurisé via Stripe — tu seras redirigé.
+                </span>
+              </div>
             )}
 
             {stripeError && (

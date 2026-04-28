@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId, getConversations, sendMessage, getInitials, saveGroupAuctionBid } from '../utils/messaging'
+import { IconCrown } from './icons'
 // Note : enchères en mode "réservation" — le paiement réel sera ajouté en V2
 // via Stripe (capture différée jusqu'à fin d'enchère). Pour la démo, l'enchère
 // est enregistrée sans débit immédiat.
@@ -221,7 +222,9 @@ export default function AuctionSystem({ event, initialPlace }) {
           {currentBid}€
         </p>
         <div className="flex items-center justify-center gap-2 mt-1">
-          <span className="animate-crown">👑</span>
+          <span className="animate-crown" style={{ display: 'inline-flex' }}>
+            <IconCrown size={14} color="#d4af37" />
+          </span>
           <span className="text-gray-400 text-xs">{bids[0]?.user}</span>
         </div>
       </div>
@@ -348,7 +351,11 @@ export default function AuctionSystem({ event, initialPlace }) {
               }`}
             >
               <div className="flex items-center gap-2">
-                {i === 0 && <span className="animate-crown text-sm">👑</span>}
+                {i === 0 && (
+                  <span className="animate-crown" style={{ display: 'inline-flex' }}>
+                    <IconCrown size={12} color="#d4af37" />
+                  </span>
+                )}
                 <div
                   className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-black"
                   style={{ background: i === 0 ? '#d4af37' : '#333', color: i === 0 ? '#000' : '#888' }}

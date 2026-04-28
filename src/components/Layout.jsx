@@ -5,6 +5,7 @@ import SideMenu from './SideMenu'
 import { getUserId, getTotalUnreadCount } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
 import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG } from '../utils/notifications'
+import { IconBell } from './icons'
 
 // ── Nav icons ──────────────────────────────────────────────────────────────────
 function NavIcon({ id, active }) {
@@ -566,7 +567,9 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
       <div style={{ maxHeight: 320, overflowY: 'auto' }}>
         {recent.length === 0 ? (
           <div style={{ padding: '20px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: 28, marginBottom: 8 }}>🔔</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+              <IconBell size={26} color="rgba(255,255,255,0.20)" />
+            </div>
             <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: 0 }}>Aucune notification</p>
           </div>
         ) : (

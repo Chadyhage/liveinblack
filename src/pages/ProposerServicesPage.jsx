@@ -13,6 +13,7 @@ import {
   CATALOG_CATEGORIES, ORDER_STATUS_LABELS,
 } from '../utils/services'
 import { requestAdditionalRole, PRESTATAIRE_TYPES, cancelRoleRequest } from '../utils/accounts'
+import { IconHourglass } from '../components/icons'
 
 const CATEGORIES = [
   {
@@ -1241,8 +1242,14 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
           {/* Already pending state */}
           {roleRequestState === 'already_pending' && (
             <div style={{ ...contentBg, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <span style={{ fontSize: 32 }}>⏳</span>
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{
+                  width: 56, height: 56, borderRadius: '50%',
+                  background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.32)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <IconHourglass size={26} color="#c8a96e" />
+                </div>
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Candidature en cours</p>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
                   Ta demande de compte <span style={{ color: '#c8a96e' }}>{roleLabel}</span> est en cours de traitement. Tu seras notifié(e) sous 24h.

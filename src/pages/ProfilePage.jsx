@@ -9,6 +9,7 @@ import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
 import { getOrdersForBuyer, ORDER_STATUS_LABELS } from '../utils/services'
 import PlaylistSystem from '../components/PlaylistSystem'
+import { IconMail, IconIdBadge } from '../components/icons'
 import { events as staticEvents } from '../data/events'
 
 // ─── Génération carte d'accréditation (organisateur + prestataire) ───────────
@@ -1448,9 +1449,14 @@ export default function ProfilePage() {
             { label: 'Paramètres du compte', action: () => setPanel('settings') },
             { label: 'Support / Aide',       action: () => setPanel('support')   },
             // Carte d'accréditation — organisateurs et prestataires approuvés uniquement
-            credentialApp && { label: '🪪 Mes documents d\'identification', action: () => openCredentialPDF(credentialApp, user.role), gold: true },
+            credentialApp && {
+              label: 'Mes documents d\'identification',
+              action: () => openCredentialPDF(credentialApp, user.role),
+              gold: true,
+              icon: <IconIdBadge size={14} />,
+            },
           ].filter(Boolean).map((item) => (
-            <MenuRow key={item.label} label={item.label} onClick={item.action} gold={item.gold} />
+            <MenuRow key={item.label} label={item.label} onClick={item.action} gold={item.gold} icon={item.icon} />
           ))}
         </div>
 
@@ -1560,7 +1566,7 @@ export default function ProfilePage() {
 
 // ── Helper sub-components ─────────────────────────────────────────────────────
 
-function MenuRow({ label, onClick, gold = false }) {
+function MenuRow({ label, onClick, gold = false, icon = null }) {
   const [hovered, setHovered] = useState(false)
   return (
     <button
@@ -1587,13 +1593,20 @@ function MenuRow({ label, onClick, gold = false }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <span style={{
-        fontFamily: '"DM Mono", monospace',
-        fontSize: '11px',
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: gold ? '#c8a96e' : hovered ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.52)',
-      }}>{label}</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+        {icon && (
+          <span style={{ display: 'flex', alignItems: 'center', color: gold ? '#c8a96e' : 'rgba(255,255,255,0.55)' }}>
+            {icon}
+          </span>
+        )}
+        <span style={{
+          fontFamily: '"DM Mono", monospace',
+          fontSize: '11px',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: gold ? '#c8a96e' : hovered ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.52)',
+        }}>{label}</span>
+      </span>
       <span style={{ color: gold ? 'rgba(200,169,110,0.6)' : hovered ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.18)', fontSize: '18px' }}>›</span>
     </button>
   )
@@ -1741,6 +1754,7 @@ function EventTicketGroup({ group }) {
             onClick={openSupport}
             style={{
               alignSelf: 'flex-start',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
               fontFamily: '"DM Mono", monospace',
               fontSize: 9,
               letterSpacing: '0.2em',
@@ -1753,7 +1767,8 @@ function EventTicketGroup({ group }) {
               cursor: 'pointer',
             }}
           >
-            ✉ Contacter le support
+            <IconMail size={12} color="#c8a96e" />
+            Contacter le support
           </button>
         </div>
       )}

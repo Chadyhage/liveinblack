@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { verifyStripeSession } from '../utils/stripe'
 import { saveBoost } from '../utils/ticket'
+import { IconMail } from '../components/icons'
 
 const FONTS = {
   display: "'Cormorant Garamond', Georgia, serif",
@@ -169,13 +170,14 @@ export default function BoostActivePage() {
               <a
                 href="mailto:hagechady@liveinblack.com?subject=Probl%C3%A8me%20de%20boost"
                 style={{
-                  display: 'inline-block', marginTop: 24,
+                  display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 24,
                   padding: '12px 18px', borderRadius: 4,
                   fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
                   background: 'rgba(200,169,110,0.10)', border: `1px solid ${COLORS.gold}`, color: COLORS.gold,
                   textDecoration: 'none',
                 }}>
-                ✉ Contacter le support
+                <IconMail size={13} color={COLORS.gold} />
+                Contacter le support
               </a>
             </>
           )}

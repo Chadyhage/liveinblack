@@ -4,6 +4,7 @@ import Cropper from 'react-easy-crop'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import BoostModal from '../components/BoostModal'
+import { IconHourglass } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
 import { regions } from '../data/regions'
@@ -590,7 +591,13 @@ export default function MesEvenementsPage() {
       <Layout>
         <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
           <div style={{ textAlign: 'center', maxWidth: 400 }}>
-            <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
+            <div style={{
+              width: 72, height: 72, borderRadius: '50%', margin: '0 auto 24px',
+              background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <IconHourglass size={32} color="#c8a96e" />
+            </div>
             <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 12 }}>
               Validation en cours
             </p>
