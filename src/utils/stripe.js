@@ -43,6 +43,32 @@ export async function startStripeCheckout(params) {
 }
 
 /**
+ * Lance un Stripe Checkout pour booster un événement (Top 1/2/3).
+ *
+ * @param {Object} params - { eventId, eventName, position, days, priceEUR, region, userId, userEmail, boostId }
+ * @returns {Promise<{ ok: boolean, error?: string }>}
+ */
+export async function startStripeBoostCheckout(params) {
+  try {
+    const res = await fetch('/api/checkout-boost', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { ok: false, error: data.error || `HTTP ${res.status}` }
+    }
+    const data = await res.json()
+    if (!data.url) return { ok: false, error: 'URL Stripe manquante' }
+    window.location.href = data.url
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err.message || 'Erreur réseau' }
+  }
+}
+
+/**
  * Vérifie le statut d'une session Stripe après redirect success.
  * @param {string} sessionId
  * @returns {Promise<Object|null>}

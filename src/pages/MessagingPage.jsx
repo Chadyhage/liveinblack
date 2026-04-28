@@ -17,7 +17,7 @@ import {
   getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking,
   blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory,
 } from '../utils/messaging'
-import { deductFunds, getBalance } from '../utils/wallet'
+import { startStripeCheckout } from '../utils/stripe'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
@@ -1252,7 +1252,7 @@ export default function MessagingPage() {
     showToast('Tu as validé la proposition')
   }
 
-  function handlePayBooking(bookingId) {
+  async function handlePayBooking(bookingId) {
     const booking = getGroupBookings()[bookingId]
     if (!booking) return
     const conv = activeConv
@@ -1260,34 +1260,51 @@ export default function MessagingPage() {
     const memberCount = conv?.members?.length || Math.max(booking.groupMin || 1, 1)
     const myPct = myMember?.contributionPct ?? Math.round(100 / memberCount)
     const myShare = Math.round((booking.totalPrice * myPct / 100) * 100) / 100
-    const deducted = deductFunds(myId, myShare, `Réservation groupe — ${booking.eventName}`)
-    if (!deducted) { showToast(`Solde insuffisant (${myShare}€ requis)`, 'error'); return }
-    payGroupBookingShare(bookingId, myId)
-    // Save real booking ticket
-    try {
-      const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-      const code = Math.random().toString(36).slice(2, 8).toUpperCase()
-      const b = {
-        id: code,
-        ticketCode: `LIB-GRP-${code}`,
-        eventId: booking.eventId,
-        eventName: booking.eventName,
-        eventDate: booking.eventDate,
-        eventDateISO: booking.eventDateISO,
-        eventStartTime: booking.eventStartTime,
-        eventEndTime: booking.eventEndTime,
-        place: booking.placeName,
-        placePrice: booking.placePrice,
-        totalPrice: myShare,
-        bookedAt: new Date().toISOString(),
-        userId: myId,
-        userName: myName,
-        groupBookingId: bookingId,
-      }
-      localStorage.setItem('lib_bookings', JSON.stringify([...prev, b]))
-    } catch {}
-    setGroupBookings(getGroupBookings())
-    showToast('Paiement effectué ✓')
+
+    // Construire un pending booking — la page /paiement-reussi le finalisera
+    const arr = new Uint32Array(2)
+    crypto.getRandomValues(arr)
+    const pendingId = `${arr[0].toString(36)}${arr[1].toString(36)}`.slice(0, 16).toUpperCase()
+    const pending = {
+      bookingId: pendingId,
+      eventId: booking.eventId,
+      eventName: booking.eventName,
+      eventDate: booking.eventDate,
+      eventDateISO: booking.eventDateISO,
+      eventStartTime: booking.eventStartTime,
+      eventEndTime: booking.eventEndTime,
+      placeType: booking.placeName,
+      qty: 1,
+      unitPriceEUR: myShare,
+      preorderItems: [],
+      perTicketOrders: [{ items: {}, shows: {} }],
+      activeMenu: [],
+      userId: myId,
+      userName: myName,
+      userEmail: user?.email || null,
+      // Flag spécifique réservation de groupe — utilisé par /paiement-reussi
+      groupBookingId: bookingId,
+      isGroupShare: true,
+      createdAt: new Date().toISOString(),
+    }
+    try { localStorage.setItem(`lib_pending_booking_${pendingId}`, JSON.stringify(pending)) } catch {}
+
+    showToast('Redirection vers Stripe…')
+    const result = await startStripeCheckout({
+      eventId: booking.eventId,
+      eventName: `${booking.eventName} (part de groupe)`,
+      placeType: booking.placeName,
+      qty: 1,
+      unitPriceEUR: myShare,
+      preorderItems: [],
+      userId: myId,
+      userEmail: user?.email,
+      bookingId: pendingId,
+    })
+    if (!result.ok) {
+      showToast('Erreur Stripe — réessaye dans un instant', 'error')
+      try { localStorage.removeItem(`lib_pending_booking_${pendingId}`) } catch {}
+    }
   }
 
   // ── New DM search ──

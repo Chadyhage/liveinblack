@@ -4,7 +4,7 @@ import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
-import { getWallet } from '../utils/wallet'
+// Wallet retiré : les paiements passent désormais par Stripe
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
 import { getOrdersForBuyer, ORDER_STATUS_LABELS } from '../utils/services'
@@ -1346,7 +1346,6 @@ export default function ProfilePage() {
   // ── Main Profile ──────────────────────────────────────────────────────────────
   const bookingsCount = getBookings().length
   const createdCount = (() => { try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]').length } catch { return 0 } })()
-  const wallet = getWallet(getUserId(user))
 
   return (
     <Layout>
@@ -1446,9 +1445,6 @@ export default function ProfilePage() {
             // Prestataires + clients : commandes de services reçues/passées
             (user?.role !== 'organisateur' && user?.role !== 'agent') &&
               { label: 'Mes commandes prestataires', action: () => setPanel('service-orders') },
-            // Portefeuille — accessible à tous sauf agents
-            (user?.role !== 'agent') &&
-              { label: `Portefeuille — ${wallet.balance?.toFixed(2) ?? '0.00'}€`, action: () => navigate('/portefeuille') },
             { label: 'Paramètres du compte', action: () => setPanel('settings') },
             { label: 'Support / Aide',       action: () => setPanel('support')   },
             // Carte d'accréditation — organisateurs et prestataires approuvés uniquement

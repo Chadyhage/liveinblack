@@ -127,6 +127,10 @@ export default function PaiementReussiPage() {
       // 4) Persister
       try {
         const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+        // Pour les réservations de groupe, on attache le groupBookingId au billet créé
+        if (pending.isGroupShare && pending.groupBookingId) {
+          newBookings.forEach(b => { b.groupBookingId = pending.groupBookingId })
+        }
         const allBookings = [...prev, ...newBookings]
         localStorage.setItem('lib_bookings', JSON.stringify(allBookings))
 
@@ -135,6 +139,14 @@ export default function PaiementReussiPage() {
             const myBookings = allBookings.filter(b => b.userId === pending.userId)
             if (myBookings.length) syncDoc(`user_bookings/${pending.userId}`, { items: myBookings })
           }).catch(() => {})
+        }
+
+        // Marquer la part de groupe comme payée dans le système de groupe
+        if (pending.isGroupShare && pending.groupBookingId && pending.userId) {
+          try {
+            const { payGroupBookingShare } = await import('../utils/messaging')
+            payGroupBookingShare(pending.groupBookingId, pending.userId)
+          } catch {}
         }
 
         // Points fidélité

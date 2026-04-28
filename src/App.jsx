@@ -16,9 +16,10 @@ import AgentPage from './pages/AgentPage'
 import OnboardingOrganisateur from './pages/OnboardingOrganisateur'
 import OnboardingPrestataire from './pages/OnboardingPrestataire'
 import MonDossierPage from './pages/MonDossierPage'
-import WalletPage from './pages/WalletPage'
+// WalletPage retiré : les paiements passent désormais par Stripe
 import PaiementReussiPage from './pages/PaiementReussiPage'
 import PaiementAnnulePage from './pages/PaiementAnnulePage'
+import BoostActivePage from './pages/BoostActivePage'
 import MentionsLegalesPage from './pages/MentionsLegalesPage'
 import PolitiqueConfidentialitePage from './pages/PolitiqueConfidentialitePage'
 import PolitiqueCookiesPage from './pages/PolitiqueCookiesPage'
@@ -294,14 +295,14 @@ export default function App() {
             <Route path="/ticket/:token" element={<TicketPage />} />
             <Route path="/paiement-reussi" element={<PaiementReussiPage />} />
             <Route path="/paiement-annule" element={<PaiementAnnulePage />} />
+            <Route path="/boost-active" element={<BoostActivePage />} />
 
             {/* ── Protected: require any logged-in account ── */}
             <Route path="/profil" element={
               <RequireAuth user={user} to="/profil"><ProfilePage /></RequireAuth>
             } />
-            <Route path="/portefeuille" element={
-              <RequireAuth user={user} to="/portefeuille"><WalletPage /></RequireAuth>
-            } />
+            {/* /portefeuille retiré — redirige vers /profil pour les anciens liens */}
+            <Route path="/portefeuille" element={<Navigate to="/profil" replace />} />
             <Route path="/messagerie" element={
               <RequireAuth user={user} to="/messagerie"><MessagingPage /></RequireAuth>
             } />

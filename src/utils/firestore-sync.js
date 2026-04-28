@@ -201,14 +201,7 @@ export async function syncOnLogin(uid) {
       } catch {}
     }
 
-    // ── 1. Wallet ──
-    const wallet = await loadDoc(`wallets/${uid}`)
-    if (wallet && wallet.balance !== undefined) {
-      localStorage.setItem(`lib_wallet_${uid}`, JSON.stringify({
-        balance: wallet.balance,
-        transactions: wallet.transactions || [],
-      }))
-    }
+    // ── 1. (Wallet retiré — paiements via Stripe) ──
 
     // ── 2. Bookings ──
     const bookingsDoc = await loadDoc(`user_bookings/${uid}`)
@@ -404,9 +397,7 @@ export async function pushLocalToFirestore(uid) {
   console.log('[sync] Pushing local data to Firestore for', uid)
 
   try {
-    // Wallet
-    const wallet = safeParseObj(`lib_wallet_${uid}`)
-    if (wallet.balance !== undefined) syncDoc(`wallets/${uid}`, wallet)
+    // (Wallet retiré — paiements via Stripe)
 
     // Bookings
     const bookings = safeParseArray('lib_bookings').filter(b => b.userId === uid)

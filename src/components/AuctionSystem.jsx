@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId, getConversations, sendMessage, getInitials, saveGroupAuctionBid } from '../utils/messaging'
-import { deductFunds, getBalance } from '../utils/wallet'
+// Note : enchères en mode "réservation" — le paiement réel sera ajouté en V2
+// via Stripe (capture différée jusqu'à fin d'enchère). Pour la démo, l'enchère
+// est enregistrée sans débit immédiat.
 
 function loadBidsForPlace(eventId, placeType, basePriceFromEvent) {
   try {
@@ -97,10 +99,8 @@ export default function AuctionSystem({ event, initialPlace }) {
 
   function confirmBid() {
     const amount = parseInt(myBid)
-    // Deduct from wallet
-    const deducted = deductFunds(userId, amount, `Enchère — ${event.name} (${selectedAuction})`)
-    if (!deducted) { setWalletError(true); return }
-
+    // Note : enchère enregistrée sans débit immédiat. Le paiement réel sera
+    // capturé via Stripe en fin d'enchère pour le gagnant uniquement (V2).
     setShowBidModal(false)
     setWalletError(false)
     setBidFlash(true)
@@ -275,13 +275,6 @@ export default function AuctionSystem({ event, initialPlace }) {
                   <p className="text-gray-500 text-xs">{event.name} · {selectedAuction}</p>
                 </div>
 
-                {walletError && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
-                    <p className="text-red-400 text-xs font-semibold">Solde insuffisant</p>
-                    <p className="text-gray-500 text-[10px] mt-0.5">Solde : {getBalance(userId).toFixed(2)}€ — Enchère : {myBid}€</p>
-                    <button onClick={() => navigate('/portefeuille')} className="text-[#d4af37] text-xs underline mt-1">Recharger mon portefeuille →</button>
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <button

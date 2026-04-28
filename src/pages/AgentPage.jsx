@@ -7,7 +7,7 @@ import {
   getPendingRoleRequests, approveRoleRequest, rejectRoleRequest,
   ROLES, PRESTATAIRE_TYPES,
 } from '../utils/accounts'
-import { getBalance, deductFunds, addFunds } from '../utils/wallet'
+// Wallet supprimé : les paiements passent désormais par Stripe
 import {
   getAllApplications, updateApplicationStatus,
   APPLICATION_STATUSES, getCompleteness, DOCUMENT_LABELS,
@@ -166,7 +166,7 @@ export default function AgentPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [confirmAction, setConfirmAction] = useState(null)
   const [editField, setEditField] = useState(null)
-  const [balanceAdjust, setBalanceAdjust] = useState({ uid: null, amount: '', reason: '' })
+  // [retiré] balanceAdjust : le wallet interne a été remplacé par Stripe
   const [toast, setToast] = useState(null)
   const [deletionRequests, setDeletionRequests] = useState([])
   const [delResNote, setDelResNote]             = useState('')  // note admin pour résolution
@@ -433,17 +433,8 @@ export default function AgentPage() {
     showToast('Mis à jour')
   }
 
-  function handleBalanceAdjust() {
-    const amt = parseFloat(balanceAdjust.amount)
-    if (!amt || !balanceAdjust.uid) return
-    if (amt < 0) {
-      deductFunds(balanceAdjust.uid, Math.abs(amt), balanceAdjust.reason || 'Ajustement admin')
-    } else {
-      addFunds(balanceAdjust.uid, amt, balanceAdjust.reason || 'Ajustement admin')
-    }
-    showToast('Solde ajusté')
-    setBalanceAdjust({ uid: null, amount: '', reason: '' })
-  }
+  // Note : la fonction d'ajustement de solde a été retirée — le wallet interne
+  // a été remplacé par Stripe. Les remboursements se font côté Stripe Dashboard.
 
   async function handleAppAction(appId, status, note) {
     const adminNoteValue = appAdminNote || ''
@@ -1366,60 +1357,6 @@ export default function AgentPage() {
                     </div>
                   ))}
                 </div>
-              </Section>
-
-              {/* Wallet */}
-              <Section title="Portefeuille">
-                <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 14px', ...CARD,
-                }}>
-                  <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>Solde actuel</span>
-                  <span style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: COLORS.gold }}>
-                    {getBalance(selectedUser.uid)}€
-                  </span>
-                </div>
-                {balanceAdjust.uid === selectedUser.uid ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                    <input
-                      style={inputStyle} type="number"
-                      placeholder="Montant (négatif pour déduire)"
-                      value={balanceAdjust.amount}
-                      onChange={e => setBalanceAdjust(b => ({ ...b, amount: e.target.value }))}
-                    />
-                    <input
-                      style={inputStyle}
-                      placeholder="Raison (ex: remboursement, bonus)"
-                      value={balanceAdjust.reason}
-                      onChange={e => setBalanceAdjust(b => ({ ...b, reason: e.target.value }))}
-                    />
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={handleBalanceAdjust} style={{
-                        flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                        background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                        border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold,
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
-                      }}>Appliquer</button>
-                      <button onClick={() => setBalanceAdjust({ uid: null, amount: '', reason: '' })} style={{
-                        padding: '9px 16px', borderRadius: 4, cursor: 'pointer',
-                        background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                        color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
-                      }}>Annuler</button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setBalanceAdjust(b => ({ ...b, uid: selectedUser.uid }))}
-                    style={{
-                      width: '100%', marginTop: 8, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                      background: 'transparent', border: '1px solid rgba(255,255,255,0.10)',
-                      color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 11,
-                      textTransform: 'uppercase', letterSpacing: '0.06em',
-                      transition: 'border-color 0.2s, color 0.2s',
-                    }}>
-                    Ajuster le solde
-                  </button>
-                )}
               </Section>
 
               {/* Password */}

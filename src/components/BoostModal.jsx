@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { saveBoost, isBoostSlotTaken, getActiveBoostsByRegion } from '../utils/ticket'
+import { isBoostSlotTaken, getActiveBoostsByRegion } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
-import { deductFunds } from '../utils/wallet'
+import { startStripeBoostCheckout } from '../utils/stripe'
 
 const BOOST_PLANS = [
   {
@@ -71,17 +71,6 @@ function RocketIcon({ size = 40, color = '#4ee8c8' }) {
   )
 }
 
-// SVG wallet icon
-function WalletIcon({ size = 18, color = '#c8a96e' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
-      <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
-      <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
-    </svg>
-  )
-}
-
 const S = {
   card: {
     background: 'rgba(8,10,20,0.55)',
@@ -138,23 +127,31 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
     : null
   const chosenTier = chosen ? chosen.tiers[selectedPlan.tierIdx] : null
 
-  function confirmBoost() {
+  async function confirmBoost() {
     if (!chosen || !chosenTier) return
     const uid = getUserId(user)
     if (!uid) return
-    // Deduct from wallet before granting the boost
-    const result = deductFunds(uid, chosenTier.price, `Boost Top ${chosen.position} — ${chosenTier.label}`)
-    if (!result) {
-      setStep('error')
-      return
-    }
     setPaying(true)
-    setTimeout(() => {
-      // Pass userId so the boost is synced to Firestore cross-device
-      saveBoost(event.id, chosen.position, chosenTier.days, chosenTier.price, event.region || '', uid)
+    // Generate a unique boost ID to track this purchase
+    const arr = new Uint32Array(2)
+    crypto.getRandomValues(arr)
+    const boostId = `${arr[0].toString(36)}${arr[1].toString(36)}`.slice(0, 16).toUpperCase()
+    const result = await startStripeBoostCheckout({
+      eventId: event.id,
+      eventName: event.name,
+      position: chosen.position,
+      days: chosenTier.days,
+      priceEUR: chosenTier.price,
+      region: event.region || '',
+      userId: uid,
+      userEmail: user?.email,
+      boostId,
+    })
+    if (!result.ok) {
       setPaying(false)
-      setStep('done')
-    }, 600)
+      setStep('error')
+    }
+    // Sinon : redirect Stripe → l'utilisateur revient sur /boost-active
   }
 
   return (
@@ -246,9 +243,13 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
 
           ) : step === 'error' ? (
             <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-              <div style={{ fontSize: 40 }}>⚠️</div>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round" />
+                <circle cx="12" cy="16.5" r="0.6" fill="rgba(220,100,100,0.9)" />
+              </svg>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-                Solde insuffisant pour ce boost.<br />Recharge ton portefeuille et réessaie.
+                Erreur lors de la connexion à Stripe.<br />Réessaie dans un instant.
               </p>
               <button onClick={() => setStep('pick')} style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
                 ← Retour
@@ -315,7 +316,7 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
                     cursor: paying ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {paying ? 'Traitement…' : `Confirmer — ${chosenTier?.price}€`}
+                  {paying ? 'Redirection vers Stripe…' : `Payer ${chosenTier?.price}€`}
                 </button>
               </div>
             </div>

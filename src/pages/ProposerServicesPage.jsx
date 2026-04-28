@@ -4,7 +4,8 @@ import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { services } from '../data/events'
 import { getUserId, createDirectConversation, sendMessage } from '../utils/messaging'
-// wallet: paiement fictif — Stripe à venir
+// Note : les commandes de services entre orga ↔ prestataire sont prises en charge
+// via la messagerie. Le paiement réel sera ajouté en V2 via Stripe Connect.
 import {
   getCatalog, addCatalogItem, updateCatalogItem, deleteCatalogItem,
   getOrdersForSeller, getOrdersForBuyer, placeOrder, updateOrderStatus,
