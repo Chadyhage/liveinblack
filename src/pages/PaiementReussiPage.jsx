@@ -254,7 +254,7 @@ export default function PaiementReussiPage() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
                 <a
-                  href="mailto:support@liveinblack.com?subject=Probl%C3%A8me%20de%20paiement"
+                  href="mailto:hagechady@liveinblack.com?subject=Probl%C3%A8me%20de%20paiement"
                   style={{
                     padding: '12px 18px', borderRadius: 4,
                     fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',

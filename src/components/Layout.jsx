@@ -395,6 +395,68 @@ export default function Layout({ children, hideNav, chatMode }) {
         </div>
       </main>
 
+      {/* Footer global — masqué en chatMode et sur les vues hideNav (paiement, ticket scanné) */}
+      {!chatMode && !hideNav && (
+        <footer style={{
+          marginTop: 'auto',
+          padding: '32px 24px 28px',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          textAlign: 'center',
+          fontFamily: "'DM Mono', monospace",
+        }}
+        className="md:pl-[260px] pb-28 md:pb-8">
+          <div style={{ maxWidth: 720, margin: '0 auto' }}>
+            {/* Logo discret */}
+            <div style={{ marginBottom: 16, opacity: 0.55 }}>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.7)' }}>L|VE IN</span>
+              <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 14, color: '#c8a96e', marginLeft: 6 }}>BLACK</span>
+            </div>
+
+            {/* Liens légaux */}
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
+              gap: '6px 14px', marginBottom: 16,
+            }}>
+              {[
+                { label: 'Mentions légales', path: '/mentions-legales' },
+                { label: 'Confidentialité', path: '/confidentialite' },
+                { label: 'Cookies', path: '/cookies' },
+                { label: 'CGU', path: '/cgu' },
+                { label: 'Contact', path: 'mailto:hagechady@liveinblack.com', external: true },
+              ].map((link) =>
+                link.external ? (
+                  <a key={link.path} href={link.path}
+                    style={{
+                      fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase',
+                      color: 'rgba(255,255,255,0.32)', textDecoration: 'none',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#c8a96e'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.32)'}>
+                    {link.label}
+                  </a>
+                ) : (
+                  <button key={link.path} onClick={() => navigate(link.path)}
+                    style={{
+                      background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                      fontFamily: "'DM Mono', monospace", fontSize: 9,
+                      letterSpacing: '0.2em', textTransform: 'uppercase',
+                      color: 'rgba(255,255,255,0.32)',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#c8a96e'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.32)'}>
+                    {link.label}
+                  </button>
+                )
+              )}
+            </div>
+
+            <p style={{ fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.20)', margin: 0 }}>
+              © {new Date().getFullYear()} LIVEINBLACK · Tous droits réservés
+            </p>
+          </div>
+        </footer>
+      )}
+
       {/* MOBILE: Bottom Nav — floating glass pill */}
       {!hideNav && <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40"
         style={{ padding: '0 12px 12px', pointerEvents: 'none' }}>

@@ -270,7 +270,7 @@ function openValidationReceipt(app) {
   <p style="font-size:10px;color:#aaa;line-height:1.8;letter-spacing:0.03em">
     Ce document atteste que l'organisation mentionnée ci-dessus a soumis un dossier complet, vérifié et approuvé par l'équipe LIVEINBLACK.
     Cette attestation est valable jusqu'à révocation du statut d'organisateur.
-    En cas de doute sur l'authenticité de ce document, contacter <strong style="color:#888">support@liveinblack.com</strong>.
+    En cas de doute sur l'authenticité de ce document, contacter <strong style="color:#888">hagechady@liveinblack.com</strong>.
   </p>
 
   <div class="footer">

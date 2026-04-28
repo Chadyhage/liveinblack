@@ -19,8 +19,12 @@ import MonDossierPage from './pages/MonDossierPage'
 import WalletPage from './pages/WalletPage'
 import PaiementReussiPage from './pages/PaiementReussiPage'
 import PaiementAnnulePage from './pages/PaiementAnnulePage'
+import MentionsLegalesPage from './pages/MentionsLegalesPage'
+import PolitiqueConfidentialitePage from './pages/PolitiqueConfidentialitePage'
+import PolitiqueCookiesPage from './pages/PolitiqueCookiesPage'
 import { AuthContext } from './context/AuthContext'
 import AuthModal from './components/AuthModal'
+import CookieConsent from './components/CookieConsent'
 
 // Normalize user: Firebase users have uid but no id — getUserId() needs user.id to match Firestore paths
 function normalizeUser(val) {
@@ -267,6 +271,9 @@ export default function App() {
             onClose={closeAuthModal}
           />
 
+          {/* Cookie consent banner — appears on first visit */}
+          <CookieConsent />
+
           <OnboardingGuard user={user}>
           <Routes>
             {/* ── Root: always go to accueil ── */}
@@ -281,6 +288,9 @@ export default function App() {
             <Route path="/evenements" element={<EventsPage />} />
             <Route path="/evenements/:id" element={<EventDetailPage />} />
             <Route path="/cgu" element={<CGUPage />} />
+            <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
+            <Route path="/confidentialite" element={<PolitiqueConfidentialitePage />} />
+            <Route path="/cookies" element={<PolitiqueCookiesPage />} />
             <Route path="/ticket/:token" element={<TicketPage />} />
             <Route path="/paiement-reussi" element={<PaiementReussiPage />} />
             <Route path="/paiement-annule" element={<PaiementAnnulePage />} />

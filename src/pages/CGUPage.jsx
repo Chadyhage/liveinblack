@@ -64,7 +64,7 @@ const SECTIONS = [
     n: '10',
     title: "Contact",
     body: null,
-    contact: 'support@liveinblack.com',
+    contact: 'hagechady@liveinblack.com',
   },
 ]
 

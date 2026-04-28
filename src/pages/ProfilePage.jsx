@@ -139,7 +139,7 @@ function openCredentialPDF(app, role) {
   <p style="font-size:10px;color:#aaa;line-height:1.9;letter-spacing:0.03em">
     Ce document atteste que le titulaire a soumis un dossier vérifié et approuvé par l'équipe LIVEINBLACK.
     Il est valable jusqu'à révocation du statut. Pour vérifier l'authenticité de ce document,
-    contactez <strong style="color:#888">support@liveinblack.com</strong> en indiquant la référence dossier.
+    contactez <strong style="color:#888">hagechady@liveinblack.com</strong> en indiquant la référence dossier.
   </p>
 
   <div class="footer">
@@ -1322,7 +1322,7 @@ export default function ProfilePage() {
               Tu n&apos;as pas trouvé de réponse ? Notre équipe te répond sous 24h.
             </p>
             <a
-              href="mailto:support@liveinblack.com"
+              href="mailto:hagechady@liveinblack.com"
               style={{
                 ...S.btnGold,
                 display: 'flex',
@@ -1335,7 +1335,7 @@ export default function ProfilePage() {
               Envoyer un message
             </a>
             <p style={{ ...S.label, textAlign: 'center', marginTop: '10px' }}>
-              support@liveinblack.com
+              hagechady@liveinblack.com
             </p>
           </div>
         </div>
@@ -1652,7 +1652,7 @@ function EventTicketGroup({ group }) {
     const body = encodeURIComponent(
       `Bonjour,\n\nJe possède ${group.tickets.length} billet${group.tickets.length > 1 ? 's' : ''} pour l'événement "${group.eventName}" qui a été annulé.\n\nRéférences :\n${group.tickets.map(t => `• ${t.id || t.ticketCode}`).join('\n')}\n\nJe souhaite obtenir des informations sur le remboursement.\n\nMerci.`
     )
-    window.location.href = `mailto:support@liveinblack.com?subject=${subject}&body=${body}`
+    window.location.href = `mailto:hagechady@liveinblack.com?subject=${subject}&body=${body}`
   }
 
   return (
