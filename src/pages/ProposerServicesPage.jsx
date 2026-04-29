@@ -264,12 +264,13 @@ function PrestataireDashboard({ user, navigate }) {
   const uid = getUserId(user)
   const prestType = user?.prestataireType || 'prestation'
   const catConfig = CATEGORIES.find(c => c.id === prestType) || CATEGORIES[1]
-  const [tab, setTab] = useState('profil')
+  const [tab, setTab] = useState('apercu')
   const [catalog, setCatalog] = useState(() => getCatalog(uid))
   const [orders, setOrders] = useState(() => getOrdersForSeller(uid))
   const [profile, setProfile] = useState(() => getProviderProfile(uid))
   const [showAddItem, setShowAddItem] = useState(false)
   const [editItem, setEditItem] = useState(null)
+  const [orderFilter, setOrderFilter] = useState('all') // all | pending | confirmed | done | cancelled
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '', unit: 'unité', description: '', available: true })
   const [toast, setToast] = useState(null)
   const photoInputRef = useRef(null)
@@ -353,8 +354,45 @@ function PrestataireDashboard({ user, navigate }) {
     setCatalog(getCatalog(uid))
   }
 
+  // ── Métriques dashboard ──
   const pendingOrders = orders.filter(o => o.status === 'pending').length
+  const confirmedOrders = orders.filter(o => o.status === 'confirmed').length
   const revenue = orders.filter(o => o.status === 'done').reduce((s, o) => s + o.sellerReceives, 0)
+  // Revenus 30 derniers jours
+  const monthAgo = Date.now() - 30 * 24 * 3600 * 1000
+  const revenue30d = orders
+    .filter(o => o.status === 'done' && o.createdAt >= monthAgo)
+    .reduce((s, o) => s + o.sellerReceives, 0)
+  // Actifs / publiés
+  const availableItems = catalog.filter(i => i.available).length
+  // Score de complétion du profil
+  const profileCompletion = (() => {
+    if (!profile) return 0
+    let score = 0
+    if (profile.name) score += 20
+    if (profile.description && profile.description.length > 20) score += 30
+    if (profile.location) score += 20
+    if (profile.phone) score += 15
+    if (catalog.length > 0) score += 15
+    return Math.min(100, score)
+  })()
+  // Données 7 derniers jours pour mini-graph
+  const last7Days = (() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today)
+      d.setDate(d.getDate() - (6 - i))
+      const dayStart = d.getTime()
+      const dayEnd = dayStart + 24 * 3600 * 1000
+      const dayRevenue = orders
+        .filter(o => o.status === 'done' && o.createdAt >= dayStart && o.createdAt < dayEnd)
+        .reduce((s, o) => s + o.sellerReceives, 0)
+      return { date: d, revenue: dayRevenue, label: d.toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 2).toUpperCase() }
+    })
+  })()
+  const maxDayRevenue = Math.max(...last7Days.map(d => d.revenue), 1)
+  const recentPendingOrders = orders.filter(o => o.status === 'pending').slice(0, 3)
 
   return (
     <Layout>
@@ -388,29 +426,48 @@ function PrestataireDashboard({ user, navigate }) {
           </span>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-          {[
-            { label: 'Articles', value: catalog.length },
-            { label: 'Commandes', value: orders.length, alert: pendingOrders },
-            { label: 'Revenus', value: `${revenue.toFixed(0)}€` },
-          ].map(s => (
-            <div key={s.label} style={{ ...S.card, padding: 14, textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
-                {s.value}
-                {s.alert > 0 && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', marginLeft: 4 }}>+{s.alert}</span>}
+        {/* Stats — 4 KPI cards (mois en cours mis en avant) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {/* Revenus 30 jours — la plus importante */}
+          <div style={{ ...S.card, padding: 16, gridColumn: '1 / 3', borderColor: 'rgba(200,169,110,0.30)', background: 'linear-gradient(135deg, rgba(200,169,110,0.08), rgba(200,169,110,0.02))' }}>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
+              Revenus — 30 derniers jours
+            </p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: '#c8a96e', margin: '4px 0 0', lineHeight: 1 }}>
+              {revenue30d.toFixed(2)} €
+            </p>
+            {revenue > 0 && (
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, margin: '4px 0 0' }}>
+                Total cumulé : {revenue.toFixed(2)} €
               </p>
-              <p style={{ ...S.label, marginBottom: 0, marginTop: 4 }}>{s.label}</p>
-            </div>
-          ))}
+            )}
+          </div>
+          {/* Commandes en attente */}
+          <div style={{ ...S.card, padding: 14, textAlign: 'center', borderColor: pendingOrders > 0 ? 'rgba(200,169,110,0.35)' : undefined }}>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 300, color: pendingOrders > 0 ? '#c8a96e' : 'rgba(255,255,255,0.90)', margin: 0 }}>
+              {pendingOrders}
+            </p>
+            <p style={{ ...S.label, marginBottom: 0, marginTop: 4 }}>À traiter</p>
+          </div>
+          {/* Articles actifs */}
+          <div style={{ ...S.card, padding: 14, textAlign: 'center' }}>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+              {availableItems}
+              {availableItems !== catalog.length && (
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.32)' }}> /{catalog.length}</span>
+              )}
+            </p>
+            <p style={{ ...S.label, marginBottom: 0, marginTop: 4 }}>Articles actifs</p>
+          </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs (4 onglets — Aperçu en premier) */}
         <div style={{ display: 'flex', gap: 4, background: 'rgba(6,8,16,0.6)', padding: 4, borderRadius: 8 }}>
           {[
-            { key: 'profil', label: 'Profil' },
-            { key: 'catalogue', label: `Catalogue (${catalog.length})` },
+            { key: 'apercu', label: 'Aperçu' },
             { key: 'commandes', label: `Commandes${pendingOrders > 0 ? ' •' : ''}` },
+            { key: 'catalogue', label: `Catalogue (${catalog.length})` },
+            { key: 'profil', label: 'Profil' },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               style={{
@@ -425,6 +482,149 @@ function PrestataireDashboard({ user, navigate }) {
             </button>
           ))}
         </div>
+
+        {/* ── APERÇU TAB ── */}
+        {tab === 'apercu' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Mini graphique 7 derniers jours */}
+            <div style={{ ...S.card, padding: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', margin: 0 }}>
+                  Activité — 7 derniers jours
+                </p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.32)', margin: 0 }}>
+                  {last7Days.reduce((s, d) => s + d.revenue, 0).toFixed(0)} €
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80, marginBottom: 8 }}>
+                {last7Days.map((d, i) => {
+                  const h = maxDayRevenue > 0 ? (d.revenue / maxDayRevenue) * 100 : 0
+                  return (
+                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
+                      <div style={{
+                        width: '100%', minHeight: 2,
+                        height: `${Math.max(h, 4)}%`,
+                        background: d.revenue > 0
+                          ? 'linear-gradient(180deg, rgba(200,169,110,0.85) 0%, rgba(200,169,110,0.35) 100%)'
+                          : 'rgba(255,255,255,0.06)',
+                        borderRadius: 2,
+                        transition: 'height 0.4s',
+                      }} title={`${d.revenue.toFixed(2)}€`} />
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {last7Days.map((d, i) => (
+                  <span key={i} style={{
+                    flex: 1, textAlign: 'center',
+                    fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.1em',
+                    color: 'rgba(255,255,255,0.32)',
+                  }}>{d.label}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* À traiter — commandes pending immédiatement actionnables */}
+            {recentPendingOrders.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', margin: 0 }}>
+                    À traiter maintenant
+                  </p>
+                  {pendingOrders > 3 && (
+                    <button onClick={() => setTab('commandes')} style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em',
+                      textTransform: 'uppercase', color: '#c8a96e',
+                    }}>
+                      Tout voir ({pendingOrders}) →
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {recentPendingOrders.map(order => (
+                    <div key={order.id} style={{ ...S.card, padding: '14px 16px', borderColor: 'rgba(200,169,110,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.92)', margin: 0 }}>
+                          {order.buyerName}
+                        </p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: '2px 0 0' }}>
+                          {order.items.length} article{order.items.length > 1 ? 's' : ''} · <span style={{ color: '#c8a96e' }}>{order.sellerReceives.toFixed(2)} €</span>
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => { updateOrderStatus(order.id, 'confirmed'); setOrders(getOrdersForSeller(uid)); showToast('Commande confirmée') }}
+                          style={{ padding: '7px 12px', background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c8a96e', cursor: 'pointer' }}>
+                          ✓ Confirmer
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Score de complétion du profil — call to action si < 100% */}
+            {profileCompletion < 100 && (
+              <div style={{ ...S.card, padding: 16, borderColor: 'rgba(78,232,200,0.20)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#4ee8c8', margin: 0 }}>
+                    Profil à compléter
+                  </p>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: '#4ee8c8', margin: 0, lineHeight: 1 }}>
+                    {profileCompletion}%
+                  </p>
+                </div>
+                {/* Barre de progression */}
+                <div style={{ height: 4, background: 'rgba(78,232,200,0.10)', borderRadius: 2, overflow: 'hidden', marginBottom: 12 }}>
+                  <div style={{
+                    height: '100%', width: `${profileCompletion}%`,
+                    background: 'linear-gradient(90deg, #4ee8c8 0%, #c8a96e 100%)',
+                    transition: 'width 0.5s',
+                  }} />
+                </div>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: 0 }}>
+                  Un profil complet apparaît plus haut dans les recherches des organisateurs et reçoit jusqu'à <strong style={{ color: '#c8a96e' }}>3× plus de commandes</strong>.
+                </p>
+                <button onClick={() => setTab('profil')} style={{ ...S.btnGhost, marginTop: 12, padding: '10px 16px' }}>
+                  Compléter mon profil →
+                </button>
+              </div>
+            )}
+
+            {/* Empty states ciblés */}
+            {orders.length === 0 && catalog.length === 0 && (
+              <div style={{ ...S.card, padding: 20, textAlign: 'center' }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: 0 }}>
+                  Bienvenue sur ton espace prestataire.
+                </p>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: '10px 0 16px' }}>
+                  Première étape : ajoute tes premiers articles ou prestations au catalogue. Ils seront visibles par les organisateurs qui pourront te commander directement.
+                </p>
+                <button onClick={() => setTab('catalogue')} style={{ ...S.btnGold, padding: '12px 22px' }}>
+                  + Créer mon catalogue
+                </button>
+              </div>
+            )}
+
+            {/* Résumé statique du compte */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ ...S.card, padding: 14 }}>
+                <p style={{ ...S.label, margin: 0, marginBottom: 4 }}>Commandes en cours</p>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                  {confirmedOrders}
+                </p>
+              </div>
+              <div style={{ ...S.card, padding: 14 }}>
+                <p style={{ ...S.label, margin: 0, marginBottom: 4 }}>Commandes terminées</p>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                  {orders.filter(o => o.status === 'done').length}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── PROFIL TAB ── */}
         {tab === 'profil' && (
@@ -596,6 +796,44 @@ function PrestataireDashboard({ user, navigate }) {
         {/* ── COMMANDES TAB ── */}
         {tab === 'commandes' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Filtres par statut — toujours visibles si au moins une commande */}
+            {orders.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+                {[
+                  { key: 'all',       label: 'Toutes',     count: orders.length },
+                  { key: 'pending',   label: 'À traiter',  count: pendingOrders, hot: true },
+                  { key: 'confirmed', label: 'En cours',   count: confirmedOrders },
+                  { key: 'done',      label: 'Terminées',  count: orders.filter(o => o.status === 'done').length },
+                  { key: 'cancelled', label: 'Annulées',   count: orders.filter(o => o.status === 'cancelled').length },
+                ].map(f => {
+                  const active = orderFilter === f.key
+                  const hot = f.hot && f.count > 0 && !active
+                  return (
+                    <button key={f.key} onClick={() => setOrderFilter(f.key)}
+                      style={{
+                        padding: '7px 12px', borderRadius: 999, cursor: 'pointer', flexShrink: 0,
+                        fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase',
+                        transition: 'all 0.18s',
+                        ...(active
+                          ? { background: 'rgba(200,169,110,0.18)', border: '1px solid rgba(200,169,110,0.45)', color: '#c8a96e' }
+                          : hot
+                            ? { background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.25)', color: '#c8a96e' }
+                            : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)' }),
+                      }}>
+                      {f.label}
+                      {f.count > 0 && (
+                        <span style={{
+                          marginLeft: 6, padding: '1px 6px', borderRadius: 8, fontSize: 8,
+                          background: active ? 'rgba(200,169,110,0.20)' : 'rgba(255,255,255,0.06)',
+                          color: active ? '#c8a96e' : 'rgba(255,255,255,0.65)',
+                        }}>{f.count}</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
             {orders.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ marginBottom: 4 }}>
@@ -606,8 +844,18 @@ function PrestataireDashboard({ user, navigate }) {
                   Les commandes passées depuis ton profil apparaîtront ici.
                 </p>
               </div>
-            ) : (
-              orders.map(order => {
+            ) : (() => {
+              const filtered = orderFilter === 'all' ? orders : orders.filter(o => o.status === orderFilter)
+              if (filtered.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.32)', margin: 0 }}>
+                      Aucune commande dans cette catégorie.
+                    </p>
+                  </div>
+                )
+              }
+              return filtered.map(order => {
                 const st = ORDER_STATUS_LABELS[order.status] || { label: order.status, color: 'rgba(255,255,255,0.3)' }
                 const statusStyle = order.status === 'pending'
                   ? { color: '#c8a96e', borderColor: 'rgba(200,169,110,0.44)', background: 'rgba(200,169,110,0.11)' }
@@ -668,7 +916,7 @@ function PrestataireDashboard({ user, navigate }) {
                   </div>
                 )
               })
-            )}
+            })()}
           </div>
         )}
       </div>
