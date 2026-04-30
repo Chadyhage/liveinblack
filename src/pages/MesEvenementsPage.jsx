@@ -161,25 +161,40 @@ function Eyebrow({ children, style = {} }) {
   )
 }
 
-function InputField({ label, value, onChange, placeholder, type = 'text', error, style = {}, min, max }) {
+function InputField({ label, value, onChange, placeholder, type = 'text', error, style = {}, min, max, locked = false, lockedReason = '' }) {
   const [focused, setFocused] = useState(false)
   return (
     <div>
-      {label && <label style={S.label}>{label}</label>}
+      {label && (
+        <label style={{ ...S.label, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {label}
+          {locked && (
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(200,169,110,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="4" y="11" width="16" height="10" rx="2"/>
+              <path d="M8 11 V7 a4 4 0 0 1 8 0 V11"/>
+            </svg>
+          )}
+        </label>
+      )}
       <input
         type={type}
         min={min}
         max={max}
+        disabled={locked}
+        title={locked ? (lockedReason || 'Champ verrouillé — billets déjà vendus') : undefined}
         style={{
           ...S.inputBase,
-          borderColor: error ? 'rgba(220,50,50,0.6)' : focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)',
-          boxShadow: focused ? '0 0 0 3px rgba(78,232,200,0.06)' : 'none',
+          borderColor: error ? 'rgba(220,50,50,0.6)' : focused ? '#4ee8c8' : locked ? 'rgba(200,169,110,0.18)' : 'rgba(255,255,255,0.10)',
+          boxShadow: focused && !locked ? '0 0 0 3px rgba(78,232,200,0.06)' : 'none',
+          opacity: locked ? 0.55 : 1,
+          cursor: locked ? 'not-allowed' : 'text',
+          background: locked ? 'rgba(200,169,110,0.04)' : S.inputBase.background,
           ...style,
         }}
         placeholder={placeholder}
         value={value}
-        onChange={onChange}
-        onFocus={() => setFocused(true)}
+        onChange={locked ? () => {} : onChange}
+        onFocus={() => !locked && setFocused(true)}
         onBlur={() => setFocused(false)}
       />
       {error && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{error}</p>}
@@ -549,6 +564,27 @@ export default function MesEvenementsPage() {
       return all.filter(b => b.eventId === String(eventId)).length
     } catch { return 0 }
   }
+
+  // Combien de billets vendus pour une catégorie de place donnée d'un event
+  function getPlaceBookingCount(eventId, placeType) {
+    try {
+      const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+      return all.filter(b => b.eventId === String(eventId) && b.place === placeType).length
+    } catch { return 0 }
+  }
+
+  // ── Politique de modification post-publication ──
+  // Si l'event est en cours d'édition ET a au moins 1 réservation,
+  // certains champs sont verrouillés (date, prix, lieu, etc.)
+  const editingBookingCount = editingEventId ? getEventBookingCount(editingEventId) : 0
+  const isLocked = editingBookingCount > 0
+  const editingEventCancelled = (() => {
+    if (!editingEventId) return false
+    const ev = createdEvents.find(e => e.id === editingEventId)
+    return !!ev?.cancelled
+  })()
+  // En cas d'event annulé, on verrouille TOUT (lecture seule)
+  const isReadOnly = editingEventCancelled
 
   function deleteEvent(id) {
     const updated = createdEvents.filter(ev => ev.id !== id)
@@ -1072,6 +1108,53 @@ export default function MesEvenementsPage() {
           ))}
         </div>
 
+        {/* Bannière de modification post-publication — billets déjà vendus */}
+        {editingEventId && isLocked && !isReadOnly && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(200,169,110,0.10), rgba(200,169,110,0.03))',
+            border: '1px solid rgba(200,169,110,0.30)',
+            borderRadius: 8, padding: '14px 16px',
+            display: 'flex', gap: 12, alignItems: 'flex-start',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+              <rect x="4" y="11" width="16" height="10" rx="2"/>
+              <path d="M8 11 V7 a4 4 0 0 1 8 0 V11"/>
+            </svg>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', margin: 0, marginBottom: 4 }}>
+                {editingBookingCount} billet{editingBookingCount > 1 ? 's' : ''} déjà vendu{editingBookingCount > 1 ? 's' : ''}
+              </p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
+                Pour ne pas léser les acheteurs, certains champs sont verrouillés (date, heures, lieu, prix existants, type d'événement, âge minimum). Tu peux toujours modifier la description, l'affiche, les artistes et la date de clôture.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Bannière event annulé : lecture seule complète */}
+        {isReadOnly && (
+          <div style={{
+            background: 'rgba(220,50,50,0.07)',
+            border: '1px solid rgba(220,50,50,0.30)',
+            borderRadius: 8, padding: '14px 16px',
+            display: 'flex', gap: 12, alignItems: 'flex-start',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.95)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <circle cx="12" cy="16" r="0.6" fill="rgba(220,100,100,0.95)"/>
+            </svg>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
+                Événement annulé
+              </p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7 }}>
+                Cet événement a été annulé. Les modifications sont désactivées. Pour relancer un événement similaire, crée-en un nouveau depuis ton tableau de bord.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ── Step 0: Bases ── */}
         {createStep === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1119,11 +1202,12 @@ export default function MesEvenementsPage() {
                 min={new Date().toISOString().split('T')[0]}
                 onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                 error={errors.date}
+                locked={isLocked || isReadOnly}
               />
               <div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} />
-                  <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} />
+                  <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} locked={isLocked || isReadOnly} />
+                  <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} locked={isLocked || isReadOnly} />
                 </div>
                 {errors.timeEnd && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
               </div>
@@ -1189,17 +1273,30 @@ export default function MesEvenementsPage() {
 
             {/* Event type */}
             <div>
-              <label style={{ ...S.label, marginBottom: 8 }}>Type d'événement *</label>
+              <label style={{ ...S.label, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                Type d'événement *
+                {(isLocked || isReadOnly) && (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(200,169,110,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="11" width="16" height="10" rx="2"/>
+                    <path d="M8 11 V7 a4 4 0 0 1 8 0 V11"/>
+                  </svg>
+                )}
+              </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {['public', 'private'].map((t) => (
                   <button
                     key={t}
-                    onClick={() => { setEventType(t); setErrors(e => ({ ...e, eventType: null })) }}
+                    onClick={() => {
+                      if (isLocked || isReadOnly) return
+                      setEventType(t); setErrors(e => ({ ...e, eventType: null }))
+                    }}
+                    title={isLocked || isReadOnly ? "Verrouillé — billets déjà vendus" : undefined}
                     style={{
                       ...S.card,
                       padding: 12,
                       textAlign: 'center',
-                      cursor: 'pointer',
+                      cursor: isLocked || isReadOnly ? 'not-allowed' : 'pointer',
+                      opacity: (isLocked || isReadOnly) && eventType !== t ? 0.4 : 1,
                       borderColor: eventType === t ? 'rgba(200,169,110,0.55)' : 'rgba(255,255,255,0.07)',
                       background: eventType === t ? 'rgba(200,169,110,0.08)' : 'rgba(8,10,20,0.55)',
                     }}
@@ -1286,12 +1383,22 @@ export default function MesEvenementsPage() {
 
             {/* Âge légal */}
             <div>
-              <label style={S.label}>Âge minimum requis</label>
+              <label style={{ ...S.label, display: 'flex', alignItems: 'center', gap: 6 }}>
+                Âge minimum requis
+                {(isLocked || isReadOnly) && (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(200,169,110,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="11" width="16" height="10" rx="2"/>
+                    <path d="M8 11 V7 a4 4 0 0 1 8 0 V11"/>
+                  </svg>
+                )}
+              </label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
                 {[{ label: 'TOUT PUBLIC', value: 0 }, { label: '16+', value: 16 }, { label: '18+', value: 18 }, { label: '21+', value: 21 }].map(({ label, value }) => (
                   <button
                     key={value}
                     type="button"
+                    disabled={isLocked || isReadOnly}
+                    title={(isLocked || isReadOnly) ? "Verrouillé — billets déjà vendus" : undefined}
                     onClick={() => setForm(f => ({ ...f, minAge: value }))}
                     style={{
                       padding: '8px 18px',
@@ -1302,7 +1409,8 @@ export default function MesEvenementsPage() {
                       fontFamily: "'DM Mono', monospace",
                       fontSize: 11,
                       letterSpacing: '0.15em',
-                      cursor: 'pointer',
+                      cursor: (isLocked || isReadOnly) ? 'not-allowed' : 'pointer',
+                      opacity: (isLocked || isReadOnly) && form.minAge !== value ? 0.4 : 1,
                     }}
                   >
                     {label}
@@ -1317,7 +1425,9 @@ export default function MesEvenementsPage() {
                   max={99}
                   value={form.minAge === 0 ? '' : form.minAge}
                   placeholder="Autre âge…"
+                  disabled={isLocked || isReadOnly}
                   onChange={e => {
+                    if (isLocked || isReadOnly) return
                     const v = parseInt(e.target.value, 10)
                     if (e.target.value === '') { setForm(f => ({ ...f, minAge: 0 })); return }
                     if (!isNaN(v) && v >= 0 && v <= 99) setForm(f => ({ ...f, minAge: v }))
@@ -1326,6 +1436,8 @@ export default function MesEvenementsPage() {
                     ...S.inputBase,
                     width: 130,
                     padding: '8px 14px',
+                    opacity: (isLocked || isReadOnly) ? 0.55 : 1,
+                    cursor: (isLocked || isReadOnly) ? 'not-allowed' : 'text',
                   }}
                 />
                 <span style={{
@@ -1351,12 +1463,41 @@ export default function MesEvenementsPage() {
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Configure chaque type de place que tu veux proposer.</p>
             </div>
 
-            {places.map((place, i) => (
-              <div key={i} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {places.map((place, i) => {
+              // Cette place a-t-elle déjà été vendue ? (uniquement si on édite un event existant)
+              const placeSoldCount = editingEventId && place.type ? getPlaceBookingCount(editingEventId, place.type) : 0
+              const placeHasSales = placeSoldCount > 0
+              // Le type et le prix sont verrouillés si vente sur cette place
+              const placeTypeLocked = placeHasSales || isReadOnly
+              const placePriceLocked = placeHasSales || isReadOnly
+              // La suppression est interdite si vente sur cette place
+              const placeDeleteLocked = placeHasSales || isReadOnly
+              return (
+              <div key={i} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, ...(placeHasSales ? { borderColor: 'rgba(200,169,110,0.25)' } : {}) }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e' }}>Place {i + 1}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e' }}>Place {i + 1}</p>
+                    {placeHasSales && (
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.30)', borderRadius: 3, padding: '1px 6px' }}>
+                        {placeSoldCount} vendu{placeSoldCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
                   {i > 0 && (
-                    <button onClick={() => setPlaces(places.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(220,100,100,0.9)', letterSpacing: '0.1em' }}>Supprimer</button>
+                    <button
+                      onClick={() => {
+                        if (placeDeleteLocked) return
+                        setPlaces(places.filter((_, j) => j !== i))
+                      }}
+                      disabled={placeDeleteLocked}
+                      title={placeDeleteLocked ? "Impossible — cette place a déjà été vendue" : undefined}
+                      style={{
+                        background: 'none', border: 'none',
+                        cursor: placeDeleteLocked ? 'not-allowed' : 'pointer',
+                        opacity: placeDeleteLocked ? 0.35 : 1,
+                        fontFamily: "'DM Mono', monospace", fontSize: 9,
+                        color: 'rgba(220,100,100,0.9)', letterSpacing: '0.1em',
+                      }}>Supprimer</button>
                   )}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -1367,6 +1508,7 @@ export default function MesEvenementsPage() {
                       value={place.type}
                       onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, type: e.target.value } : p))}
                       error={errors[`place_${i}`]}
+                      locked={placeTypeLocked}
                     />
                   </div>
                   <div>
@@ -1376,11 +1518,35 @@ export default function MesEvenementsPage() {
                       placeholder="0 = gratuit"
                       value={place.price}
                       onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, price: e.target.value } : p))}
+                      locked={placePriceLocked}
                     />
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <InputField label="Quantité disponible" type="number" placeholder="Ex: 100" value={place.qty} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, qty: e.target.value } : p))} />
+                  <div>
+                    <InputField
+                      label="Quantité disponible"
+                      type="number"
+                      placeholder="Ex: 100"
+                      value={place.qty}
+                      onChange={e => {
+                        if (isReadOnly) return
+                        const newQty = parseInt(e.target.value) || 0
+                        // Empêcher la décroissance en dessous des billets vendus
+                        if (placeHasSales && newQty < placeSoldCount) {
+                          return // refus silencieux
+                        }
+                        setPlaces(places.map((p, j) => j === i ? { ...p, qty: e.target.value } : p))
+                      }}
+                      min={placeHasSales ? placeSoldCount : 0}
+                      locked={isReadOnly}
+                    />
+                    {placeHasSales && (
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(200,169,110,0.7)', marginTop: 4, letterSpacing: '0.05em' }}>
+                        Min : {placeSoldCount} (déjà vendu{placeSoldCount > 1 ? 's' : ''})
+                      </p>
+                    )}
+                  </div>
                   <div>
                     <InputField
                       label="Max/compte"
@@ -1389,6 +1555,7 @@ export default function MesEvenementsPage() {
                       value={place.groupType === 'group' ? '1' : (place.maxPerAccount || '')}
                       onChange={e => place.groupType !== 'group' && setPlaces(places.map((p, j) => j === i ? { ...p, maxPerAccount: e.target.value } : p))}
                       style={place.groupType === 'group' ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
+                      locked={isReadOnly}
                     />
                     {place.groupType === 'group' && (
                       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(78,232,200,0.6)', letterSpacing: '0.08em', marginTop: 4 }}>
@@ -1415,19 +1582,29 @@ export default function MesEvenementsPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <p style={{ ...S.label, color: '#4ee8c8' }}>Capacité du groupe</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      <InputField label="Min personnes" type="number" placeholder="Ex: 8" value={place.groupMin || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMin: e.target.value } : p))} />
-                      <InputField label="Max personnes" type="number" placeholder="Ex: 12" value={place.groupMax || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMax: e.target.value } : p))} />
+                      <InputField label="Min personnes" type="number" placeholder="Ex: 8" value={place.groupMin || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMin: e.target.value } : p))} locked={placeHasSales || isReadOnly} />
+                      <InputField label="Max personnes" type="number" placeholder="Ex: 12" value={place.groupMax || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMax: e.target.value } : p))} locked={placeHasSales || isReadOnly} />
                     </div>
                     <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Validé dès le min atteint · accepté jusqu'au max avec marge</p>
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
 
-            <button onClick={() => setPlaces(p => [...p, { type: '', price: 0, qty: 50 }])} style={S.btnGhost}>
+            <button
+              onClick={() => {
+                if (isReadOnly) return
+                setPlaces(p => [...p, { type: '', price: 0, qty: 50 }])
+              }}
+              disabled={isReadOnly}
+              style={{ ...S.btnGhost, opacity: isReadOnly ? 0.4 : 1, cursor: isReadOnly ? 'not-allowed' : 'pointer' }}
+            >
               + Ajouter un type de place
             </button>
-            <button onClick={() => validateAndNext(1)} style={S.btnGold}>Suivant</button>
+            <button onClick={() => validateAndNext(1)} style={S.btnGold} disabled={isReadOnly}>
+              Suivant
+            </button>
           </div>
         )}
 
@@ -1451,6 +1628,7 @@ export default function MesEvenementsPage() {
                   value={venue[f.key]}
                   onChange={e => setVenue(v => ({ ...v, [f.key]: e.target.value }))}
                   error={f.key === 'city' ? errors.city : undefined}
+                  locked={isLocked || isReadOnly}
                 />
               ))}
               {/* Sélecteur de région */}
@@ -1474,7 +1652,12 @@ export default function MesEvenementsPage() {
                       <button
                         key={r.id}
                         type="button"
-                        onClick={() => setForm(f => ({ ...f, region: r.name }))}
+                        disabled={isLocked || isReadOnly}
+                        title={(isLocked || isReadOnly) ? "Verrouillé — billets déjà vendus" : undefined}
+                        onClick={() => {
+                          if (isLocked || isReadOnly) return
+                          setForm(f => ({ ...f, region: r.name }))
+                        }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 8,
                           padding: '8px 14px',
@@ -1484,7 +1667,8 @@ export default function MesEvenementsPage() {
                           color: selected ? '#4ee8c8' : 'rgba(255,255,255,0.45)',
                           fontFamily: "'DM Mono', monospace",
                           fontSize: 11,
-                          cursor: 'pointer',
+                          cursor: (isLocked || isReadOnly) ? 'not-allowed' : 'pointer',
+                          opacity: (isLocked || isReadOnly) && !selected ? 0.4 : 1,
                           transition: 'all 0.15s',
                         }}
                       >
