@@ -415,18 +415,39 @@ export default function HomePage() {
                         </div>
                       )}
 
-                      {/* Rank badge */}
+                      {/* Rank badge + indicateur BOOSTÉ si l'event est vraiment promu */}
                       <div style={{
                         position: 'absolute', top: 16, right: 18,
-                        fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800,
-                        letterSpacing: '0.08em',
-                        color: RANK_COLOR[i],
-                        background: 'rgba(5,6,10,0.6)',
-                        backdropFilter: 'blur(10px)',
-                        padding: '5px 10px', borderRadius: 999,
-                        border: '1px solid rgba(255,255,255,0.12)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6,
                       }}>
-                        {RANK_LABEL[i]}
+                        <div style={{
+                          fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          color: RANK_COLOR[i],
+                          background: 'rgba(5,6,10,0.6)',
+                          backdropFilter: 'blur(10px)',
+                          padding: '5px 10px', borderRadius: 999,
+                          border: '1px solid rgba(255,255,255,0.12)',
+                        }}>
+                          {RANK_LABEL[i]}
+                        </div>
+                        {event.featured && (
+                          <div style={{
+                            fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700,
+                            letterSpacing: '0.18em', textTransform: 'uppercase',
+                            color: '#e05aaa',
+                            background: 'rgba(224,90,170,0.18)',
+                            backdropFilter: 'blur(10px)',
+                            padding: '4px 9px', borderRadius: 999,
+                            border: '1px solid rgba(224,90,170,0.45)',
+                            display: 'flex', alignItems: 'center', gap: 4,
+                          }}>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="#e05aaa" stroke="none">
+                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            </svg>
+                            Boosté
+                          </div>
+                        )}
                       </div>
 
                       {/* Info */}

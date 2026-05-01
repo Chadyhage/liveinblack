@@ -12,23 +12,38 @@ import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
 import { IconLock } from '../components/icons'
 
+// Cache séparé pour les events fetchés depuis Firestore par les visiteurs.
+// Important : NE PAS confondre avec 'lib_created_events' qui est réservé aux
+// events créés par le user lui-même (le mélanger pollue user_events et causait
+// la disparition aléatoire des events sur d'autres comptes).
+const EVENT_VIEW_CACHE_KEY = 'lib_event_view_cache'
+
+function readEventViewCache() {
+  try { return JSON.parse(localStorage.getItem(EVENT_VIEW_CACHE_KEY) || '[]') } catch { return [] }
+}
+function writeEventViewCache(arr) {
+  try { localStorage.setItem(EVENT_VIEW_CACHE_KEY, JSON.stringify(arr)) } catch {}
+}
+
 function getAllLocalEvents() {
   try {
     const created = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
-    return [...events, ...created]
+    const viewed = readEventViewCache()
+    return [...events, ...created, ...viewed]
   } catch { return events }
 }
 
 // Récupère un event par ID en explorant TOUTES les sources :
 // 1. Events statiques (data/events.js)
 // 2. localStorage 'lib_created_events' (créés sur ce device)
-// 3. Firestore collection 'events/{id}' (créés sur un AUTRE device)
+// 3. Cache local 'lib_event_view_cache' (events déjà consultés)
+// 4. Firestore collection 'events/{id}' (créés sur un AUTRE device)
 async function fetchEventById(id) {
-  // 1+2 : recherche locale
+  // 1+2+3 : recherche locale
   const local = getAllLocalEvents().find((e) => String(e.id) === String(id))
   if (local) return local
 
-  // 3 : Firestore fallback (cas client qui n'a pas créé l'event)
+  // 4 : Firestore fallback (cas visiteur sur un event créé par un organisateur)
   try {
     const { db, USE_REAL_FIREBASE } = await import('../firebase')
     if (!USE_REAL_FIREBASE) return null
@@ -36,13 +51,15 @@ async function fetchEventById(id) {
     const snap = await getDoc(doc(db, 'events', String(id)))
     if (snap.exists()) {
       const ev = { ...snap.data(), id: snap.data().id || snap.id }
-      // Cache pour les prochains accès
+      // Cache UNIQUEMENT dans 'lib_event_view_cache' — pas dans 'lib_created_events'
+      // sinon syncOnLogin pourrait croire que cet event nous appartient
       try {
-        const all = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
-        if (!all.find(e => String(e.id) === String(ev.id))) {
-          all.push(ev)
-          localStorage.setItem('lib_created_events', JSON.stringify(all))
-        }
+        const cache = readEventViewCache()
+        const without = cache.filter(e => String(e.id) !== String(ev.id))
+        without.push({ ...ev, _cachedAt: Date.now() })
+        // Limite à 50 events pour éviter une croissance infinie
+        const trimmed = without.slice(-50)
+        writeEventViewCache(trimmed)
       } catch {}
       return ev
     }

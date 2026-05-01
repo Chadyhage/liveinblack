@@ -231,32 +231,14 @@ export async function syncOnLogin(uid) {
       localStorage.setItem('lib_created_events', JSON.stringify(mergeById(local, eventsDoc.items)))
     }
 
-    // ── 3.5. Auto-delete orphan events (created by a different/deleted account) ──
-    // Any userCreated event with a different UID is deleted from localStorage AND Firestore
-    // so it never reappears in the public listing.
-    try {
-      const localEvts = safeParseArray('lib_created_events')
-      const orphans = localEvts.filter(ev =>
-        ev.userCreated &&
-        ev.createdBy &&
-        ev.createdBy !== uid &&
-        (!ev.organizerId || ev.organizerId !== uid)
-      )
-      if (orphans.length) {
-        // Delete each orphan from Firestore (events + user_events of the old uid)
-        for (const ev of orphans) {
-          try {
-            const { deleteDoc, doc: fsDoc } = await import('firebase/firestore')
-            const { db: fsDb } = await import('../firebase')
-            await deleteDoc(fsDoc(fsDb, 'events', String(ev.id)))
-          } catch {}
-        }
-        // Remove from localStorage
-        const orphanIds = new Set(orphans.map(ev => String(ev.id)))
-        const cleaned = localEvts.filter(ev => !orphanIds.has(String(ev.id)))
-        localStorage.setItem('lib_created_events', JSON.stringify(cleaned))
-      }
-    } catch {}
+    // ── 3.5. [RETIRÉ] Auto-delete orphan events ──
+    // Ce code supprimait dangereusement des events publics présents en local
+    // mais créés par un autre user (ex: events cachés par fetchEventById sur la
+    // fiche d'un événement). Résultat : l'event "disparaissait" pour le visiteur
+    // après chaque login, alors qu'il était toujours bien sur Firestore.
+    // Si jamais il faut nettoyer des events réellement orphelins (ex: comptes
+    // supprimés), ça doit se faire côté admin via une fonction dédiée, pas
+    // automatiquement dans syncOnLogin.
 
     // ── 4. Conversations (directs + groupes) ──
     const [directConvsSnap, groupConvsSnap] = await Promise.all([
