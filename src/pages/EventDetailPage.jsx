@@ -12,11 +12,42 @@ import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
 import { IconLock } from '../components/icons'
 
-function getAllEvents() {
+function getAllLocalEvents() {
   try {
     const created = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
     return [...events, ...created]
   } catch { return events }
+}
+
+// Récupère un event par ID en explorant TOUTES les sources :
+// 1. Events statiques (data/events.js)
+// 2. localStorage 'lib_created_events' (créés sur ce device)
+// 3. Firestore collection 'events/{id}' (créés sur un AUTRE device)
+async function fetchEventById(id) {
+  // 1+2 : recherche locale
+  const local = getAllLocalEvents().find((e) => String(e.id) === String(id))
+  if (local) return local
+
+  // 3 : Firestore fallback (cas client qui n'a pas créé l'event)
+  try {
+    const { db, USE_REAL_FIREBASE } = await import('../firebase')
+    if (!USE_REAL_FIREBASE) return null
+    const { doc, getDoc } = await import('firebase/firestore')
+    const snap = await getDoc(doc(db, 'events', String(id)))
+    if (snap.exists()) {
+      const ev = { ...snap.data(), id: snap.data().id || snap.id }
+      // Cache pour les prochains accès
+      try {
+        const all = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
+        if (!all.find(e => String(e.id) === String(ev.id))) {
+          all.push(ev)
+          localStorage.setItem('lib_created_events', JSON.stringify(all))
+        }
+      } catch {}
+      return ev
+    }
+  } catch {}
+  return null
 }
 
 const PREORDER_ITEMS = [
@@ -206,7 +237,20 @@ export default function EventDetailPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user, setUser, openAuthModal } = useAuth()
-  const event = getAllEvents().find((e) => String(e.id) === String(id))
+  // Event en state — initialement cherché localement, puis fetché Firestore si absent
+  const [event, setEvent] = useState(() => getAllLocalEvents().find((e) => String(e.id) === String(id)) || null)
+  const [eventLoading, setEventLoading] = useState(() => !getAllLocalEvents().find((e) => String(e.id) === String(id)))
+
+  useEffect(() => {
+    if (event) return // déjà trouvé en local
+    let cancelled = false
+    fetchEventById(id).then(ev => {
+      if (cancelled) return
+      setEvent(ev)
+      setEventLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [id, event])
 
   const hasPlaylist = !!event?.playlist
   const TABS = ['Réservation', ...(hasPlaylist ? ['Playlist'] : []), 'Info']
@@ -240,6 +284,26 @@ export default function EventDetailPage() {
   const [showAgeModal, setShowAgeModal] = useState(false)
   const [ageVerified, setAgeVerified] = useState(false)
   const [playlistTabBlink, setPlaylistTabBlink] = useState(false)
+
+  // Loading state — pendant qu'on cherche l'event sur Firestore (cas client cross-device)
+  if (eventLoading) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: '50%',
+            border: '2px solid rgba(255,255,255,0.10)',
+            borderTopColor: '#4ee8c8',
+            animation: 'spin 0.9s linear infinite',
+          }} />
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+            Chargement de l'événement…
+          </p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        </div>
+      </Layout>
+    )
+  }
 
   if (!event) {
     return (

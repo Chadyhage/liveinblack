@@ -304,14 +304,30 @@ export default function MesEvenementsPage() {
   const [statsPanelEvent, setStatsPanelEvent] = useState(null)
 
   // ── Real-time Firestore listener for organizer's events ──────────────────────
+  // Charge initial depuis localStorage pour éviter le flash vide pendant que
+  // le listener se met en place
+  useEffect(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
+      if (cached.length) setCreatedEvents(cached)
+    } catch {}
+  }, [])
+
   useEffect(() => {
     if (!user?.uid) return
     let unsub = () => {}
     import('../utils/firestore-sync').then(({ listenUserEvents }) => {
-      unsub = listenUserEvents(user.uid, (items) => {
-        setCreatedEvents(items)
-        // Keep localStorage in sync as cache
-        try { localStorage.setItem('lib_created_events', JSON.stringify(items)) } catch {}
+      unsub = listenUserEvents(user.uid, (firestoreItems) => {
+        // Merge robuste : on ne supprime PAS les events locaux qui ne sont pas
+        // (encore) dans Firestore — ça évite le flicker "ça part ça revient"
+        // quand on vient de publier et que le sync n'a pas encore propagé.
+        setCreatedEvents(prev => {
+          const incomingIds = new Set(firestoreItems.map(e => String(e.id)))
+          const localOnly = prev.filter(e => !incomingIds.has(String(e.id)))
+          const merged = [...firestoreItems, ...localOnly]
+          try { localStorage.setItem('lib_created_events', JSON.stringify(merged)) } catch {}
+          return merged
+        })
       })
     }).catch(() => {})
     return () => unsub()
