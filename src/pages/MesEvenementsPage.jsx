@@ -253,6 +253,7 @@ export default function MesEvenementsPage() {
   const [editingEventId, setEditingEventId] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [cancellationMessageDraft, setCancellationMessageDraft] = useState('')
+  const [syncErrorBanner, setSyncErrorBanner] = useState(null)
   const [showBoostModal, setShowBoostModal] = useState(false)
   const [boostTargetEvent, setBoostTargetEvent] = useState(null)
   const [showBoostToast, setShowBoostToast] = useState(false)
@@ -407,7 +408,26 @@ export default function MesEvenementsPage() {
     if (Object.keys(errs).length === 0) setCreateStep(currentStep + 1)
   }
 
-  function handlePublish() {
+  async function handlePublish() {
+    // Vérification critique : un event ne peut être publié que par un user authentifié Firebase Auth
+    // Sinon les rules Firestore rejettent silencieusement et l'event reste invisible cross-device
+    const { auth } = await import('../firebase')
+    const fbUid = auth?.currentUser?.uid
+    if (!fbUid) {
+      setSyncErrorBanner({
+        title: 'Connexion requise',
+        message: 'Tu dois être connecté pour publier un événement. Reconnecte-toi et réessaye.',
+      })
+      return
+    }
+    if (user?.uid && fbUid !== user.uid) {
+      setSyncErrorBanner({
+        title: 'Session expirée',
+        message: 'Ton authentification ne correspond plus. Déconnecte-toi puis reconnecte-toi pour publier.',
+      })
+      return
+    }
+
     const eventData = {
       id: editingEventId || String(Date.now()),
       name: form.name,
@@ -466,12 +486,37 @@ export default function MesEvenementsPage() {
     setCreatedEvents(updated)
 
     // Sync event to shared Firestore collection so all users see it cross-device
-    import('../utils/firestore-sync').then(({ syncDoc }) => {
-      const eventToSync = { ...eventData, createdBy: user?.uid, organizerId: user?.uid, organizerName: user?.name || 'Organisateur' }
-      syncDoc(`events/${eventData.id}`, eventToSync)
-      // Also keep in organizer's personal collection for their dashboard
-      if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: updated })
-    }).catch(() => {})
+    // CRITIQUE : on AWAIT le sync de events/{id} car c'est ce qui rend l'event public.
+    // Si ça échoue, le user doit le savoir (toast d'erreur) sinon il pense que l'event
+    // est publié alors qu'en réalité il est seulement dans son localStorage.
+    const eventToSync = {
+      ...eventData,
+      createdBy: fbUid,
+      organizerId: fbUid,
+      organizerName: user?.name || 'Organisateur',
+    }
+    try {
+      const { syncDocAwaitable, syncDoc } = await import('../utils/firestore-sync')
+      const result = await syncDocAwaitable(`events/${eventData.id}`, eventToSync)
+      if (!result.ok) {
+        setSyncErrorBanner({
+          title: 'Publication incomplète',
+          message: `L'événement n'a pas pu être publié sur le serveur (${result.code || 'erreur'}). Il reste sauvegardé localement, mais il ne sera pas visible par les clients tant que le problème n'est pas résolu.`,
+          retry: () => handlePublish(),
+        })
+        // On continue quand même — l'event est en localStorage au cas où
+      } else {
+        setSyncErrorBanner(null)
+      }
+      // user_events est non-bloquant
+      syncDoc(`user_events/${fbUid}`, { items: updated })
+    } catch {
+      setSyncErrorBanner({
+        title: 'Erreur réseau',
+        message: 'Impossible de joindre le serveur. Vérifie ta connexion et réessaye.',
+        retry: () => handlePublish(),
+      })
+    }
 
     if (eventType === 'private' && form.privateCode.trim()) {
       const all = getEventCodes()
@@ -702,6 +747,50 @@ export default function MesEvenementsPage() {
               Crée et gère tes soirées
             </p>
           </div>
+
+          {/* Bandeau d'erreur de sync — l'event n'a pas pu être publié sur Firestore */}
+          {syncErrorBanner && (
+            <div style={{
+              background: 'rgba(220,50,50,0.08)',
+              border: '1px solid rgba(220,50,50,0.35)',
+              borderRadius: 8, padding: '14px 16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.95)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <circle cx="12" cy="16" r="0.6" fill="rgba(220,100,100,0.95)"/>
+                </svg>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
+                    {syncErrorBanner.title}
+                  </p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
+                    {syncErrorBanner.message}
+                  </p>
+                </div>
+                <button onClick={() => setSyncErrorBanner(null)} aria-label="Fermer" style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'rgba(220,100,100,0.7)', fontSize: 18, lineHeight: 1, padding: 0,
+                }}>×</button>
+              </div>
+              {syncErrorBanner.retry && (
+                <button
+                  onClick={syncErrorBanner.retry}
+                  style={{
+                    alignSelf: 'flex-start', marginLeft: 30,
+                    fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em',
+                    textTransform: 'uppercase', color: '#c8a96e',
+                    background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)',
+                    borderRadius: 4, padding: '7px 14px', cursor: 'pointer',
+                  }}
+                >
+                  ↺ Réessayer la publication
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Quick actions */}
           <div style={{ display: 'flex', gap: 12 }}>

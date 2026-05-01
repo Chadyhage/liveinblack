@@ -132,6 +132,20 @@ export function syncDoc(path, data) {
   } catch (e) { console.warn('[sync]', e.message) }
 }
 
+// Variante awaitable — retourne { ok: true } ou { ok: false, error: string }
+// Utile quand on doit savoir si l'écriture a réussi (ex: publication d'event)
+export async function syncDocAwaitable(path, data) {
+  try {
+    const segments = path.split('/')
+    const ref = doc(db, ...segments)
+    await setDoc(ref, { ...data, _syncedAt: Date.now() }, { merge: true })
+    return { ok: true }
+  } catch (e) {
+    console.error('[sync] AWAIT write FAILED:', path, e.code, e.message)
+    return { ok: false, error: e.message || String(e), code: e.code }
+  }
+}
+
 // Fire-and-forget full overwrite (replaces entire doc)
 export function syncDocOverwrite(path, data) {
   try {
