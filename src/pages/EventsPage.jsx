@@ -79,17 +79,38 @@ export default function EventsPage() {
   }
 
   // Real-time events from Firestore — source of truth for all users
-  const [createdEventsState, setCreatedEventsState] = useState([])
+  // + fallback localStorage (events créés sur ce device, pas encore syncés)
+  const [createdEventsState, setCreatedEventsState] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
+  })
   const unsubEventsRef = useRef(() => {})
 
   useEffect(() => {
     import('../utils/firestore-sync').then(({ listenEvents }) => {
-      unsubEventsRef.current = listenEvents(evts => setCreatedEventsState(evts))
+      unsubEventsRef.current = listenEvents(firestoreEvts => {
+        // Merge robuste : Firestore + events locaux qui ne sont pas (encore) sync
+        setCreatedEventsState(prev => {
+          const incomingIds = new Set(firestoreEvts.map(e => String(e.id)))
+          const localOnly = prev.filter(e => !incomingIds.has(String(e.id)))
+          return [...firestoreEvts, ...localOnly]
+        })
+      })
     }).catch(() => {})
     return () => unsubEventsRef.current()
   }, [])
 
-  const allEvents = [...events, ...createdEventsState]
+  // Dédupliquer en cas de doublons (statiques vs créés ayant le même id)
+  const allEvents = (() => {
+    const seen = new Set()
+    const list = []
+    for (const e of [...events, ...createdEventsState]) {
+      const key = String(e.id)
+      if (seen.has(key)) continue
+      seen.add(key)
+      list.push(e)
+    }
+    return list
+  })()
   const unlockedEvents = getUnlockedEvents()
 
   // Filter: show public events + unlocked private events

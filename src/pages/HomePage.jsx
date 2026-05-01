@@ -208,19 +208,38 @@ export default function HomePage() {
   }, [])
 
   // Real-time events from Firestore — source of truth for all users
-  const [createdEvents, setCreatedEvents] = useState([])
+  // + fallback localStorage (events publiés sur ce device, pas encore syncés)
+  const [createdEvents, setCreatedEvents] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
+  })
 
   useEffect(() => {
     let unsub = () => {}
     import('../utils/firestore-sync').then(({ listenEvents }) => {
-      unsub = listenEvents(evts => {
-        setCreatedEvents(evts)
+      unsub = listenEvents(firestoreEvts => {
+        // Merge : Firestore + events locaux non encore syncés
+        setCreatedEvents(prev => {
+          const incomingIds = new Set(firestoreEvts.map(e => String(e.id)))
+          const localOnly = prev.filter(e => !incomingIds.has(String(e.id)))
+          return [...firestoreEvts, ...localOnly]
+        })
       })
     }).catch(() => {})
     return () => unsub()
   }, [])
 
-  const allEvents = [...events, ...createdEvents]
+  // Dédupliquer (statiques vs créés ayant le même id)
+  const allEvents = (() => {
+    const seen = new Set()
+    const list = []
+    for (const e of [...events, ...createdEvents]) {
+      const key = String(e.id)
+      if (seen.has(key)) continue
+      seen.add(key)
+      list.push(e)
+    }
+    return list
+  })()
 
   // Top 3 : filtre par région sur tous les événements (statiques + créés par organisateurs)
   const regionName = selectedRegion?.name

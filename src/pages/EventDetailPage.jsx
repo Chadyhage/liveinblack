@@ -346,22 +346,34 @@ export default function EventDetailPage() {
   const now = Date.now()
   const isEventCancelled = !!event.cancelled
   const isEventSoldOut = event.places?.length > 0 && event.places.every(p => p.available === 0)
+  // Calcule la timestamp de fin réelle de l'événement (start + duration jusqu'à endTime)
+  const eventEndTimestamp = (() => {
+    if (!event.date) return 0
+    try {
+      const endTime = event.endTime || event.time || '23:59'
+      const [h, m] = endTime.split(':').map(Number)
+      const d = new Date(event.date + 'T00:00:00')
+      d.setHours(h, m, 0, 0)
+      const startTime = event.time || '00:00'
+      const [sh, sm] = startTime.split(':').map(Number)
+      if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
+      return d.getTime()
+    } catch { return 0 }
+  })()
+
   const isEventClosed = (() => {
-    if (event.closingDate && new Date(event.closingDate).getTime() < now) return true
-    // Pas de closingDate → fermer à la date/heure de fin de l'event
-    if (!event.closingDate && event.date) {
-      try {
-        const endTime = event.endTime || event.time || '23:59'
-        const [h, m] = endTime.split(':').map(Number)
-        const d = new Date(event.date + 'T00:00:00')
-        d.setHours(h, m, 0, 0)
-        const startTime = event.time || '00:00'
-        const [sh, sm] = startTime.split(':').map(Number)
-        if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
-        return d.getTime() < now
-      } catch { return false }
+    // Cas 1 : closingDate explicite — on vérifie qu'il est cohérent
+    // (un closingDate avant le début de l'event qui n'a même pas eu lieu = config foireuse, on ignore)
+    if (event.closingDate) {
+      const closeTs = new Date(event.closingDate).getTime()
+      // Si l'event est encore dans le futur ET que closingDate est dans le passé,
+      // c'est une mauvaise config (l'organisateur a probablement saisi par erreur).
+      // On considère que l'event est fermé seulement si l'event lui-même est passé.
+      if (eventEndTimestamp > now) return false  // event futur → on ignore closingDate pourri
+      return closeTs < now
     }
-    return false
+    // Cas 2 : pas de closingDate → fermer à la fin de l'event
+    return eventEndTimestamp > 0 && eventEndTimestamp < now
   })()
   const bookingDisabled = isEventCancelled || isEventSoldOut || isEventClosed
 
