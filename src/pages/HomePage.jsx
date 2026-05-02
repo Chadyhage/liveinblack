@@ -324,7 +324,7 @@ export default function HomePage() {
           <div style={{ marginBottom: 56 }}>
             {/* section header */}
             <div style={{ marginBottom: 36 }}>
-              <p className="eyebrow" style={{ marginBottom: 12, color: 'rgba(255,255,255,0.35)' }}>Top 3 événements</p>
+              <p className="eyebrow" style={{ marginBottom: 12, color: 'rgba(255,255,255,0.35)' }}>À ne pas manquer</p>
               <button
                 onClick={() => setShowRegionSelector(true)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}

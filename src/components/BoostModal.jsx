@@ -290,13 +290,16 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
                 </div>
               </div>
 
-              {/* Paiement fictif */}
+              {/* Paiement sécurisé via Stripe */}
               <div style={{ ...S.card, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 18 }}>🧪</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="11" width="16" height="10" rx="2"/>
+                  <path d="M8 11 V7 a4 4 0 0 1 8 0 V11"/>
+                </svg>
                 <div>
-                  <p style={{ ...S.label, color: '#4ee8c8', margin: 0 }}>Mode test — paiement fictif</p>
+                  <p style={{ ...S.label, color: 'rgba(255,255,255,0.7)', margin: 0 }}>Paiement sécurisé via Stripe</p>
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>
-                    Stripe sera intégré prochainement. Aucun débit réel.
+                    Tu seras redirigé vers la page de paiement Stripe.
                   </p>
                 </div>
               </div>

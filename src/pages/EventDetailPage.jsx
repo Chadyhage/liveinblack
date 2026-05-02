@@ -292,7 +292,7 @@ export default function EventDetailPage() {
   const [stripeError, setStripeError] = useState('')
   const [showGroupSendModal, setShowGroupSendModal] = useState(false)
   const [groupSendConvId, setGroupSendConvId] = useState(null)
-  const [insufficientFunds] = useState(false) // désactivé — paiement fictif
+  const [insufficientFunds] = useState(false) // legacy — vérification gérée côté Stripe
   const [conflictBooking, setConflictBooking] = useState(null)
   const [showConflictModal, setShowConflictModal] = useState(false)
   const [conflictProceedFn, setConflictProceedFn] = useState(null)
@@ -947,7 +947,6 @@ export default function EventDetailPage() {
 
                   {/* conflit affiché dans le modal dédié (showConflictModal) */}
 
-                  {/* paiement fictif — pas de vérification de solde */}
 
                   {selectedPlace && (
                     <div style={{ paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>

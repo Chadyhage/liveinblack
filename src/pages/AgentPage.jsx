@@ -167,6 +167,19 @@ export default function AgentPage() {
   const [confirmAction, setConfirmAction] = useState(null)
   const [editField, setEditField] = useState(null)
   // [retiré] balanceAdjust : le wallet interne a été remplacé par Stripe
+
+  // ── Events admin (tab 'events') ──
+  const [allEvents, setAllEvents] = useState([])
+  const [eventsSearch, setEventsSearch] = useState('')
+  const [eventsFilter, setEventsFilter] = useState('all') // all | upcoming | past | cancelled
+
+  useEffect(() => {
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenEvents }) => {
+      unsub = listenEvents(evts => setAllEvents(evts || []))
+    }).catch(() => {})
+    return () => unsub()
+  }, [])
   const [toast, setToast] = useState(null)
   const [deletionRequests, setDeletionRequests] = useState([])
   const [delResNote, setDelResNote]             = useState('')  // note admin pour résolution
@@ -538,6 +551,7 @@ export default function AgentPage() {
         {[
           { key: 'dashboard',    label: 'Dashboard' },
           { key: 'users',        label: 'Comptes' },
+          { key: 'events',       label: `Events${allEvents.length > 0 ? ` (${allEvents.length})` : ''}` },
           { key: 'dossiers',     label: `Dossiers${totalAppsSubmitted > 0 ? ` (${totalAppsSubmitted})` : ''}` },
           { key: 'suppressions', label: `Suppressions${deletionRequests.length > 0 ? ` (${deletionRequests.length})` : ''}` },
         ].map(t => (
@@ -796,6 +810,172 @@ export default function AgentPage() {
 
           </div>
         )}
+
+        {/* ══════════════════════════════════════════════
+            EVENTS — vue admin de tous les événements publiés
+        ══════════════════════════════════════════════ */}
+        {tab === 'events' && (() => {
+          const now = Date.now()
+          // Détermine si event est passé (event.date + endTime < now)
+          function isPast(ev) {
+            if (!ev.date) return false
+            try {
+              const endTime = ev.endTime || ev.time || '23:59'
+              const [h, m] = endTime.split(':').map(Number)
+              const d = new Date(ev.date + 'T00:00:00')
+              d.setHours(h, m, 0, 0)
+              const startTime = ev.time || '00:00'
+              const [sh, sm] = startTime.split(':').map(Number)
+              if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
+              return d.getTime() < now
+            } catch { return false }
+          }
+          const filtered = allEvents
+            .filter(ev => {
+              if (eventsFilter === 'cancelled') return ev.cancelled
+              if (eventsFilter === 'past') return !ev.cancelled && isPast(ev)
+              if (eventsFilter === 'upcoming') return !ev.cancelled && !isPast(ev)
+              return true
+            })
+            .filter(ev => {
+              if (!eventsSearch.trim()) return true
+              const q = eventsSearch.toLowerCase()
+              return (ev.name || '').toLowerCase().includes(q) ||
+                     (ev.organizer || '').toLowerCase().includes(q) ||
+                     (ev.organizerName || '').toLowerCase().includes(q) ||
+                     (ev.city || '').toLowerCase().includes(q)
+            })
+            .sort((a, b) => {
+              // Annulés à la fin, puis par date proche
+              if (a.cancelled !== b.cancelled) return a.cancelled ? 1 : -1
+              return new Date(a.date || 0) - new Date(b.date || 0)
+            })
+
+          const totalUpcoming = allEvents.filter(ev => !ev.cancelled && !isPast(ev)).length
+          const totalPast     = allEvents.filter(ev => !ev.cancelled && isPast(ev)).length
+          const totalCancelled = allEvents.filter(ev => ev.cancelled).length
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
+              {/* Stats rapides */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
+                {[
+                  { label: 'Total',      value: allEvents.length, color: COLORS.gold },
+                  { label: 'À venir',    value: totalUpcoming,    color: '#4ee8c8' },
+                  { label: 'Passés',     value: totalPast,        color: COLORS.dim },
+                  { label: 'Annulés',    value: totalCancelled,   color: '#ef4444' },
+                ].map(s => (
+                  <div key={s.label} style={{ ...CARD, padding: '10px 8px', textAlign: 'center' }}>
+                    <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: s.color, margin: 0 }}>{s.value}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, marginTop: 2, margin: '2px 0 0' }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Recherche */}
+              <input
+                type="text"
+                placeholder="Rechercher par nom, organisateur, ville…"
+                value={eventsSearch}
+                onChange={e => setEventsSearch(e.target.value)}
+                style={inputStyle}
+              />
+
+              {/* Filtres pills */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {[
+                  { key: 'all',       label: 'Tous',     count: allEvents.length },
+                  { key: 'upcoming',  label: 'À venir',  count: totalUpcoming },
+                  { key: 'past',      label: 'Passés',   count: totalPast },
+                  { key: 'cancelled', label: 'Annulés',  count: totalCancelled },
+                ].map(f => {
+                  const active = eventsFilter === f.key
+                  return (
+                    <button key={f.key} onClick={() => setEventsFilter(f.key)} style={{
+                      padding: '7px 12px', borderRadius: 999, cursor: 'pointer',
+                      fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase',
+                      border: active ? '1px solid rgba(200,169,110,0.45)' : '1px solid rgba(255,255,255,0.10)',
+                      background: active ? 'rgba(200,169,110,0.15)' : 'rgba(255,255,255,0.03)',
+                      color: active ? COLORS.gold : COLORS.dim,
+                    }}>
+                      {f.label} {f.count > 0 && <span style={{ marginLeft: 4, opacity: 0.7 }}>{f.count}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Liste des events */}
+              {filtered.length === 0 ? (
+                <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
+                  <p style={{ fontFamily: FONTS.display, fontSize: 18, fontWeight: 300, color: COLORS.muted, margin: 0 }}>
+                    {allEvents.length === 0 ? 'Aucun événement publié' : 'Aucun résultat'}
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {filtered.map(ev => {
+                    const past = isPast(ev)
+                    const status = ev.cancelled ? 'cancelled' : past ? 'past' : 'upcoming'
+                    const statusStyle = status === 'cancelled'
+                      ? { color: '#ef4444', borderColor: 'rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.10)' }
+                      : status === 'past'
+                      ? { color: COLORS.dim, borderColor: 'rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)' }
+                      : { color: '#4ee8c8', borderColor: 'rgba(78,232,200,0.35)', background: 'rgba(78,232,200,0.08)' }
+                    const statusLabel = status === 'cancelled' ? 'Annulé' : status === 'past' ? 'Passé' : 'À venir'
+                    return (
+                      <div key={ev.id} style={{ ...CARD, padding: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
+                        {/* Image */}
+                        <div style={{
+                          width: 56, height: 56, borderRadius: 6, overflow: 'hidden', flexShrink: 0,
+                          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {ev.imageUrl ? (
+                            <img src={ev.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5">
+                              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                          )}
+                        </div>
+                        {/* Infos */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                            <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 400, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {ev.name}
+                            </p>
+                            <span style={{
+                              flexShrink: 0,
+                              padding: '2px 7px', borderRadius: 3, border: '1px solid',
+                              fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase',
+                              ...statusStyle,
+                            }}>
+                              {statusLabel}
+                            </span>
+                          </div>
+                          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {ev.dateDisplay || ev.date} {ev.city ? `· ${ev.city}` : ''} · {ev.organizerName || ev.organizer || '—'}
+                          </p>
+                        </div>
+                        {/* Action */}
+                        <button
+                          onClick={() => navigate(`/evenements/${ev.id}`)}
+                          style={{
+                            padding: '8px 14px', borderRadius: 4, cursor: 'pointer', flexShrink: 0,
+                            background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.30)',
+                            fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase',
+                            color: COLORS.gold,
+                          }}>
+                          Voir
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* ══════════════════════════════════════════════
             USERS / ACCOUNTS
