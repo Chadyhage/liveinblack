@@ -301,6 +301,67 @@ export default function AgentPage() {
   // Count only applications + role requests to avoid double-counting the same dossier.
   const totalAllPending   = totalAppsSubmitted + totalRoleReqs
 
+  // ── Métriques business (revenus plateforme, billets, GMV) ──────────────────
+  const PLATFORM_COMMISSION_RATE = 0.10 // 10% commission LIVEINBLACK
+  const allBookings = (() => {
+    try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]') } catch { return [] }
+  })()
+  const allBoosts = (() => {
+    try { return JSON.parse(localStorage.getItem('lib_boosts') || '[]') } catch { return [] }
+  })()
+  const allOrders = (() => {
+    try { return JSON.parse(localStorage.getItem('lib_service_orders') || '[]') } catch { return [] }
+  })()
+  // Activité 30 derniers jours
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 3600 * 1000
+  const recentBookings = allBookings.filter(b => {
+    const ts = new Date(b.bookedAt || 0).getTime()
+    return ts > thirtyDaysAgo
+  })
+  const recentOrders = allOrders.filter(o => (o.createdAt || 0) > thirtyDaysAgo && o.status === 'done')
+  // GMV (Gross Merchandise Value) — somme totale transactions
+  const gmvTickets = allBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0)
+  const gmvOrders = allOrders.filter(o => o.status === 'done').reduce((sum, o) => sum + (Number(o.subtotal) || 0), 0)
+  const gmvBoosts = allBoosts.reduce((sum, b) => sum + (Number(b.price) || 0), 0)
+  const totalGMV = gmvTickets + gmvOrders + gmvBoosts
+  // Revenus plateforme (commissions)
+  const platformRevenue = (gmvTickets * PLATFORM_COMMISSION_RATE) + (gmvOrders * PLATFORM_COMMISSION_RATE) + gmvBoosts // boost = 100% pour la plateforme
+  // Activité événementielle
+  const totalTicketsSold = allBookings.length
+  const totalEventsPublished = allEvents.length
+  const upcomingEventsCount = allEvents.filter(ev => {
+    if (ev.cancelled) return false
+    if (!ev.date) return false
+    try {
+      const endTime = ev.endTime || ev.time || '23:59'
+      const [h, m] = endTime.split(':').map(Number)
+      const d = new Date(ev.date + 'T00:00:00')
+      d.setHours(h, m, 0, 0)
+      return d.getTime() > Date.now()
+    } catch { return false }
+  }).length
+  // Nouveaux comptes ce mois
+  const newAccountsThisMonth = verifiedAccounts.filter(a =>
+    a.createdAt && (Date.now() - a.createdAt) < 30 * 24 * 3600 * 1000
+  ).length
+  // Évolution 30 derniers jours par jour (pour graphique)
+  const last30Days = (() => {
+    const days = []
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dayStart = d.getTime()
+      const dayEnd = dayStart + 24 * 3600 * 1000
+      const accountsCount = verifiedAccounts.filter(a =>
+        a.createdAt && a.createdAt >= dayStart && a.createdAt < dayEnd
+      ).length
+      days.push({ date: d, count: accountsCount })
+    }
+    return days
+  })()
+  const maxDayCount = Math.max(...last30Days.map(d => d.count), 1)
+
   const filtered = accounts.filter(a => {
     const matchSearch = !search ||
       a.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -581,10 +642,84 @@ export default function AgentPage() {
         {tab === 'dashboard' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 8 }}>
 
+            {/* ──────── MÉTRIQUES BUSINESS ──────── */}
+            <div>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10 }}>
+                Métriques business
+              </p>
+
+              {/* Card revenus plateforme — la plus importante */}
+              <div style={{
+                ...CARD,
+                padding: 20,
+                borderColor: 'rgba(200,169,110,0.30)',
+                background: 'linear-gradient(135deg, rgba(200,169,110,0.08), rgba(200,169,110,0.02))',
+                marginBottom: 10,
+              }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
+                  Revenus plateforme — Total
+                </p>
+                <p style={{ fontFamily: FONTS.display, fontSize: 42, fontWeight: 300, color: COLORS.gold, margin: '6px 0 0', lineHeight: 1 }}>
+                  {platformRevenue.toFixed(2)} €
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
+                  <div>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Commission billets</p>
+                    <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
+                      {(gmvTickets * PLATFORM_COMMISSION_RATE).toFixed(2)} €
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Commission services</p>
+                    <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
+                      {(gmvOrders * PLATFORM_COMMISSION_RATE).toFixed(2)} €
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Boosts (100%)</p>
+                    <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
+                      {gmvBoosts.toFixed(2)} €
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* GMV + activité */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                <div style={{ ...CARD, padding: 12 }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>GMV total</p>
+                  <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>
+                    {totalGMV.toFixed(0)} €
+                  </p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, margin: '3px 0 0' }}>Volume transactions</p>
+                </div>
+                <div style={{ ...CARD, padding: 12 }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Billets vendus</p>
+                  <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: '#4ee8c8', margin: '3px 0 0', lineHeight: 1 }}>
+                    {totalTicketsSold}
+                  </p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, margin: '3px 0 0' }}>{recentBookings.length} ces 30j</p>
+                </div>
+                <div style={{ ...CARD, padding: 12 }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Events publiés</p>
+                  <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>
+                    {totalEventsPublished}
+                  </p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, margin: '3px 0 0' }}>{upcomingEventsCount} à venir</p>
+                </div>
+              </div>
+            </div>
+
+            {/* ──────── COMMUNAUTÉ ──────── */}
+            <div>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10 }}>
+                Communauté
+              </p>
+
             {/* Stat grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { label: 'Comptes total', value: totalUsers,        color: '#4ee8c8',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch('') } },
+                { label: `Comptes total${newAccountsThisMonth > 0 ? ` · +${newAccountsThisMonth} ce mois` : ''}`, value: totalUsers, color: '#4ee8c8',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch('') } },
                 { label: 'Connectés',     value: totalOnline,       color: '#22c55e',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch('') } },
                 { label: 'Prestataires', value: totalPrestataires,  color: COLORS.gold, onClick: () => { setTab('users'); setRoleFilter('prestataire'); setStatusFilter('all'); setSearch('') } },
                 { label: 'En attente',   value: totalAllPending,    color: totalAllPending > 0 ? COLORS.pink : COLORS.muted, alert: totalAllPending > 0, onClick: () => setTab('dossiers') },
@@ -607,6 +742,43 @@ export default function AgentPage() {
                   </p>
                 </button>
               ))}
+            </div>
+            </div>
+
+            {/* ──────── GRAPHIQUE CROISSANCE 30 JOURS ──────── */}
+            <div style={{ ...CARD, padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
+                  Nouveaux comptes — 30 derniers jours
+                </p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#4ee8c8', margin: 0 }}>
+                  +{newAccountsThisMonth}
+                </p>
+              </div>
+              {/* Barres */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 60, marginBottom: 6 }}>
+                {last30Days.map((d, i) => {
+                  const h = (d.count / maxDayCount) * 100
+                  return (
+                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                      <div style={{
+                        width: '100%', minHeight: 2,
+                        height: `${Math.max(h, 4)}%`,
+                        background: d.count > 0
+                          ? 'linear-gradient(180deg, rgba(78,232,200,0.85) 0%, rgba(78,232,200,0.30) 100%)'
+                          : 'rgba(255,255,255,0.04)',
+                        borderRadius: 1,
+                        transition: 'height 0.4s',
+                      }} title={`${d.count} compte${d.count > 1 ? 's' : ''} le ${d.date.toLocaleDateString('fr-FR')}`} />
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Labels J-30 / aujourd'hui */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                <span style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, letterSpacing: '0.1em' }}>J-30</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, letterSpacing: '0.1em' }}>AUJOURD'HUI</span>
+              </div>
             </div>
 
             {/* Recent registrations */}
