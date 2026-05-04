@@ -535,6 +535,112 @@ export default function HomePage() {
           </div>
         </RevealSection>
 
+        {/* ── Comment ça marche — visitors only ── */}
+        {!user && (
+          <RevealSection delay={120}>
+            <div style={{
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+              paddingTop: 56,
+              paddingBottom: 56,
+              marginBottom: 24,
+            }}>
+              <p className="eyebrow" style={{ marginBottom: 14, color: 'rgba(255,255,255,0.28)' }}>Comment ça marche</p>
+              <h2 style={{
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: 'clamp(28px, 6vw, 44px)',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.05,
+                color: '#fff',
+                margin: '0 0 36px',
+                maxWidth: 580,
+              }}>
+                Une marketplace où la <span style={{ color: 'var(--teal)' }}>nuit</span> rencontre ses <span style={{ color: 'var(--gold)' }}>acteurs</span>.
+              </h2>
+
+              {/* 3 étapes */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+                {[
+                  {
+                    n: '01',
+                    color: '#4ee8c8',
+                    title: 'Découvre',
+                    desc: "Parcours les soirées les plus attendues de ta région. Top 3 mis à jour en temps réel, événements boostés mis en avant.",
+                  },
+                  {
+                    n: '02',
+                    color: '#c8a96e',
+                    title: 'Réserve',
+                    desc: "Achète tes billets en quelques clics, paiement sécurisé via Stripe, QR code instantané dans ton wallet.",
+                  },
+                  {
+                    n: '03',
+                    color: '#e05aaa',
+                    title: 'Vis l\'instant',
+                    desc: "Précommande tes consos, vote pour la playlist en live, partage avec ta team — tout dans une seule app.",
+                  },
+                ].map(step => (
+                  <div key={step.n} style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    borderRadius: 18,
+                    padding: '22px 22px 24px',
+                  }}>
+                    <p style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 11, letterSpacing: '0.25em',
+                      color: step.color, margin: 0,
+                    }}>{step.n}</p>
+                    <h3 style={{
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: 22, fontWeight: 700,
+                      letterSpacing: '-0.5px',
+                      color: '#fff', margin: '8px 0 8px',
+                    }}>{step.title}</h3>
+                    <p style={{
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: 13, lineHeight: 1.6,
+                      color: 'rgba(255,255,255,0.5)', margin: 0,
+                    }}>{step.desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA principal */}
+              <div style={{ display: 'flex', gap: 12, marginTop: 32, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => navigate('/connexion?mode=register')}
+                  style={{
+                    padding: '14px 26px',
+                    background: 'linear-gradient(135deg, var(--teal) 0%, #4ee8c8cc 100%)',
+                    border: 'none', borderRadius: 999,
+                    fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    color: '#04040b', cursor: 'pointer',
+                    boxShadow: '0 10px 30px rgba(78,232,200,0.25)',
+                  }}
+                >
+                  Créer mon compte gratuit →
+                </button>
+                <button
+                  onClick={() => navigate('/evenements')}
+                  style={{
+                    padding: '14px 26px',
+                    background: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.18)',
+                    borderRadius: 999,
+                    fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600,
+                    letterSpacing: '0.02em',
+                    color: 'rgba(255,255,255,0.78)', cursor: 'pointer',
+                  }}
+                >
+                  Voir les événements
+                </button>
+              </div>
+            </div>
+          </RevealSection>
+        )}
+
         {/* ── Élargis ton espace — bottom section ── */}
         {user?.role !== 'agent' && (!enabledRoles.includes('organisateur') || !enabledRoles.includes('prestataire')) && (
           <RevealSection delay={0}>
