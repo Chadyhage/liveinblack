@@ -63,16 +63,17 @@ function usePersistedUser() {
     }).catch(() => {})
 
     // Register service worker + FCM token for background push notifications
-    if ('serviceWorker' in navigator && typeof Notification !== 'undefined') {
+    // Requires VITE_FIREBASE_VAPID_KEY env var (Firebase Console → Project Settings → Cloud Messaging → Web Push certificates)
+    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
+    if (vapidKey && 'serviceWorker' in navigator && typeof Notification !== 'undefined') {
       navigator.serviceWorker.register('/firebase-messaging-sw.js').then(async reg => {
         try {
           if (Notification.permission !== 'granted') return
           const { getMessaging, getToken } = await import('firebase/messaging')
           const { app } = await import('./firebase')
           const messaging = getMessaging(app)
-          // VAPID key — à remplacer par ta vraie clé VAPID Firebase Cloud Messaging
           const token = await getToken(messaging, {
-            vapidKey: 'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM1x6CrHOg3FfvbOgbNHwX0HFmIxAT6Gz0LI0E3sEX9RVjIHaH',
+            vapidKey,
             serviceWorkerRegistration: reg,
           })
           if (token) {

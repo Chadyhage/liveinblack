@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIVEINBLACK — Rapport de Transmission Technique</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --obsidian: #0b0b12;
+    --teal: #4ee8c8;
+    --gold: #c8a96e;
+    --pink: #e05aaa;
+    --violet: #7c5cbf;
+    --bg: #ffffff;
+    --text: #1a1a2e;
+    --text-light: #4a4a6a;
+    --border: #e2e2f0;
+    --code-bg: #f4f4f8;
+    --accent-bg: #f0fdf9;
+    --warn-bg: #fff8e6;
+    --danger-bg: #fff0f5;
+    --section-bg: #f8f8fc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  /* COVER PAGE */
+  .cover {
+    background: var(--obsidian);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 40%, rgba(78,232,200,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 60%, rgba(200,169,110,0.08) 0%, transparent 60%);
+  }
+  .cover-logo {
+    font-size: 52px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .cover-logo span.teal { color: var(--teal); }
+  .cover-logo span.gold { color: var(--gold); }
+  .cover-subtitle {
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 60px;
+  }
+  .cover-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+  .cover-desc {
+    font-size: 15px;
+    color: rgba(255,255,255,0.6);
+    max-width: 560px;
+    margin-bottom: 60px;
+    line-height: 1.8;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 30px;
+  }
+  .cover-meta-item { text-align: center; }
+  .cover-meta-item .label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 4px;
+  }
+  .cover-meta-item .value {
+    font-size: 14px;
+    color: var(--teal);
+    font-weight: 600;
+  }
+
+  /* TOC */
+  .toc-page {
+    padding: 60px 60px;
+    page-break-after: always;
+  }
+  .toc-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+  }
+  .toc-section { margin-bottom: 8px; }
+  .toc-section a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    font-size: 14px;
+  }
+  .toc-section a:hover { background: var(--section-bg); }
+  .toc-section a .num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--teal);
+    min-width: 28px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .toc-section a .title { flex: 1; padding: 0 12px; }
+  .toc-section a .page { color: var(--text-light); font-size: 12px; }
+
+  /* CONTENT */
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 60px;
+  }
+
+  .chapter {
+    page-break-before: always;
+    padding-top: 20px;
+  }
+  .chapter:first-child { page-break-before: avoid; }
+
+  .chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+  }
+  .chapter-num {
+    background: var(--obsidian);
+    color: var(--teal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+  }
+  .chapter-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 28px 0 12px;
+    padding-left: 12px;
+    border-left: 3px solid var(--teal);
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; color: var(--text-light); }
+  p strong { color: var(--text); }
+
+  /* CALLOUTS */
+  .callout {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout.info { background: var(--accent-bg); border-left: 4px solid var(--teal); }
+  .callout.warn { background: var(--warn-bg); border-left: 4px solid var(--gold); }
+  .callout.danger { background: var(--danger-bg); border-left: 4px solid var(--pink); }
+  .callout .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout .body { font-size: 13px; color: var(--text-light); line-height: 1.6; }
+  .callout .body strong { color: var(--text); }
+
+  /* CODE */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #d63384;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  pre .comment { color: #6c7086; }
+  pre .key { color: #89b4fa; }
+  pre .string { color: #a6e3a1; }
+  pre .number { color: #fab387; }
+  pre .keyword { color: #cba6f7; }
+  pre .path { color: #f38ba8; }
+
+  /* TABLES */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  th {
+    background: var(--obsidian);
+    color: var(--teal);
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-light);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: var(--section-bg); }
+  td strong { color: var(--text); }
+  td code { font-size: 11px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .badge.green { background: #d1fae5; color: #065f46; }
+  .badge.blue { background: #dbeafe; color: #1e40af; }
+  .badge.yellow { background: #fef9c3; color: #854d0e; }
+  .badge.red { background: #fee2e2; color: #991b1b; }
+  .badge.purple { background: #ede9fe; color: #4c1d95; }
+
+  /* FILE TREE */
+  .filetree {
+    background: #1e1e2e;
+    border-radius: 10px;
+    padding: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.9;
+    color: #cdd6f4;
+  }
+  .filetree .dir { color: #89b4fa; font-weight: 600; }
+  .filetree .file { color: #cdd6f4; }
+  .filetree .comment { color: #6c7086; }
+  .filetree .important { color: #a6e3a1; }
+
+  /* FLOW */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 16px 0;
+  }
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 12px 0;
+    border-left: 2px solid var(--border);
+    padding-left: 20px;
+    margin-left: 16px;
+    position: relative;
+  }
+  .flow-step::before {
+    content: '';
+    width: 12px; height: 12px;
+    background: var(--teal);
+    border-radius: 50%;
+    position: absolute;
+    left: -7px;
+    top: 18px;
+    flex-shrink: 0;
+  }
+  .flow-step:last-child { border-left: 2px solid transparent; }
+  .flow-content { flex: 1; }
+  .flow-content .step-title { font-weight: 600; color: var(--text); font-size: 13px; }
+  .flow-content .step-desc { color: var(--text-light); font-size: 12px; margin-top: 2px; }
+
+  /* GRID */
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .card .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card .card-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--teal);
+  }
+  .card p { font-size: 12px; margin-bottom: 4px; }
+
+  /* PRINT */
+  @media print {
+    body { font-size: 12px; }
+    .cover { min-height: auto; padding: 80px 60px; }
+    .chapter { page-break-before: always; }
+    pre { page-break-inside: avoid; }
+    table { page-break-inside: avoid; }
+    .callout { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COVER PAGE
+════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">
+    L<span class="teal">|</span>VE IN <span class="gold">BLACK</span>
+  </div>
+  <div class="cover-subtitle">liveinblack.com</div>
+
+  <div class="cover-title">Rapport de Transmission Technique</div>
+  <div class="cover-desc">
+    Documentation complète destinée au développeur reprenant le projet.<br>
+    Architecture, flux de données, design system, déploiement, problèmes connus<br>
+    et recommandations pour la suite du développement.
+  </div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="label">Version</div>
+      <div class="value">1.0 — Mai 2026</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Fondateur</div>
+      <div class="value">Chady Hage</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Stack</div>
+      <div class="value">React 19 · Firebase · Vercel</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Repo GitHub</div>
+      <div class="value">Chadyhage/liveinblack</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TABLE DES MATIÈRES
+════════════════════════════════════════════════════════════ -->
+<div class="toc-page">
+  <div class="toc-title">Table des matières</div>
+
+  <div class="toc-section"><a href="#ch1"><span class="num">01</span><span class="title">Vision produit & contexte business</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch2"><span class="num">02</span><span class="title">Stack technique & dépendances</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch3"><span class="num">03</span><span class="title">Structure du projet</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch4"><span class="num">04</span><span class="title">Architecture des données & Firestore</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch5"><span class="num">05</span><span class="title">Authentification & système de rôles</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch6"><span class="num">06</span><span class="title">Flux utilisateurs principaux</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch7"><span class="num">07</span><span class="title">Système de paiement Stripe</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch8"><span class="num">08</span><span class="title">Design system & UI</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch9"><span class="num">09</span><span class="title">Pages & composants</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch10"><span class="num">10</span><span class="title">Déploiement & configuration</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch11"><span class="num">11</span><span class="title">Messagerie & temps réel</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch12"><span class="num">12</span><span class="title">Points critiques & problèmes connus</span><span class="page">→</span></a></div>
+  <div class="toc-section"><a href="#ch13"><span class="num">13</span><span class="title">Recommandations & prochaines étapes</span><span class="page">→</span></a></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CONTENT
+════════════════════════════════════════════════════════════ -->
+<div class="content">
+
+<!-- ─── CHAPITRE 1 ─── -->
+<div class="chapter" id="ch1">
+  <div class="chapter-header">
+    <div class="chapter-num">01</div>
+    <div class="chapter-title">Vision produit & contexte business</div>
+  </div>
+
+  <h3>Concept</h3>
+  <p>
+    <strong>LIVEINBLACK</strong> est une marketplace événementielle dédiée au nightlife, principalement ciblant la diaspora africaine en France et les marchés d'Afrique de l'Ouest. La plateforme met en relation trois types d'acteurs :
+  </p>
+
+  <table>
+    <thead><tr><th>Acteur</th><th>Rôle</th><th>Valeur apportée</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Clients</strong></td><td>Acheteurs de billets, spectateurs</td><td>Découvrir & réserver des événements nightlife</td></tr>
+      <tr><td><strong>Organisateurs</strong></td><td>Créateurs d'événements (boîtes de nuit, associations...)</td><td>Vendre des billets, gérer la jauge, booster la visibilité</td></tr>
+      <tr><td><strong>Prestataires</strong></td><td>DJs, sono, sécurité, décoration...</td><td>Proposer leurs services aux organisateurs</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Marchés cibles</h3>
+  <p>La plateforme supporte actuellement 5 régions avec détection automatique par géolocalisation :</p>
+  <p>🇫🇷 France &nbsp;·&nbsp; 🇨🇮 Côte d'Ivoire &nbsp;·&nbsp; 🇬🇭 Ghana &nbsp;·&nbsp; 🇹🇬 Togo &nbsp;·&nbsp; 🇧🇯 Bénin</p>
+
+  <h3>Modèle économique</h3>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:#4ee8c8"></div>Vente de billets</div>
+      <p>Commission sur chaque billet vendu via Stripe. Les organisateurs créent des "places" (catégories) avec prix et capacité indépendants.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:#c8a96e"></div>Système de Boost</div>
+      <p>Les organisateurs paient pour positionner leur événement en Top 1, Top 2 ou Top 3 sur la HomePage. Payant, par durée et par région.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:#e05aaa"></div>Services prestataires</div>
+      <p>Mise en relation rémunérée entre organisateurs et prestataires (DJs, équipement, venues).</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:#7c5cbf"></div>Événements privés</div>
+      <p>Événements accessibles uniquement via un code secret partagé. Niche premium possible.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <div class="icon">⚠️</div>
+    <div class="body">
+      <strong>Statut légal en cours :</strong> La structure juridique (SIREN, RCS, capital) n'est pas encore enregistrée au moment de la rédaction. Les pages légales contiennent des placeholders dans <code>src/data/legal.js</code>. À compléter dès immatriculation.
+    </div>
+  </div>
+</div>
+
+<!-- ─── CHAPITRE 2 ─── -->
+<div class="chapter" id="ch2">
+  <div class="chapter-header">
+    <div class="chapter-num">02</div>
+    <div class="chapter-title">Stack technique & dépendances</div>
+  </div>
+
+  <h3>Vue d'ensemble</h3>
+  <table>
+    <thead><tr><th>Couche</th><th>Technologie</th><th>Version</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><strong>UI</strong></td><td>React</td><td>19.2.4</td><td>Framework principal</td></tr>
+      <tr><td><strong>Routing</strong></td><td>React Router</td><td>7.13.1</td><td>Navigation SPA, routes protégées</td></tr>
+      <tr><td><strong>Styles</strong></td><td>Tailwind CSS</td><td>3.4.19</td><td>Utilitaires + design system custom</td></tr>
+      <tr><td><strong>Build</strong></td><td>Vite</td><td>8.0.1</td><td>Bundler ultra-rapide</td></tr>
+      <tr><td><strong>Auth + DB</strong></td><td>Firebase</td><td>12.11.0</td><td>Auth, Firestore, Storage, FCM</td></tr>
+      <tr><td><strong>Paiements</strong></td><td>Stripe</td><td>22.1.0</td><td>Checkout, webhooks, boosts</td></tr>
+      <tr><td><strong>3D</strong></td><td>Three.js</td><td>0.183.2</td><td>Globe 3D sur HomePage</td></tr>
+      <tr><td><strong>QR</strong></td><td>qrcode.react + jsqr</td><td>4.2.0 / 1.4.0</td><td>Génération et lecture QR billets</td></tr>
+      <tr><td><strong>Image</strong></td><td>react-easy-crop</td><td>5.5.7</td><td>Recadrage avatar/photos</td></tr>
+      <tr><td><strong>Hébergement</strong></td><td>Vercel</td><td>—</td><td>Frontend + fonctions serverless</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Services Firebase utilisés</h3>
+  <table>
+    <thead><tr><th>Service</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Firebase Auth</strong></td><td>Email/password, Google OAuth, Apple Sign-in</td></tr>
+      <tr><td><strong>Cloud Firestore</strong></td><td>Base de données principale (collections détaillées au ch.4)</td></tr>
+      <tr><td><strong>Firebase Storage</strong></td><td>Photos de profil, images d'événements</td></tr>
+      <tr><td><strong>Firebase Cloud Messaging (FCM)</strong></td><td>Notifications push (service worker configuré)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Variables d'environnement requises</h3>
+  <pre><span class="comment"># .env.local (jamais commité — NON présent dans le repo GitHub)</span>
+<span class="key">VITE_STRIPE_PUBLISHABLE_KEY</span>=<span class="string">pk_live_... ou pk_test_...</span>
+<span class="key">STRIPE_SECRET_KEY</span>=<span class="string">sk_live_... ou sk_test_...</span>
+
+<span class="comment"># Firebase — dans src/firebase.config.js (commité, valeurs publiques ok)</span>
+<span class="key">apiKey</span>, <span class="key">authDomain</span>, <span class="key">projectId</span>=<span class="string">"liveinblack-15d30"</span>
+<span class="key">storageBucket</span>, <span class="key">messagingSenderId</span>, <span class="key">appId</span></pre>
+
+  <div class="callout danger">
+    <div class="icon">🔐</div>
+    <div class="body">
+      <strong>CRITIQUE :</strong> Ne jamais commiter <code>.env.local</code> sur GitHub. La clé Stripe secrète (<code>sk_</code>) ne doit jamais apparaître côté client. Elle est uniquement utilisée dans les fonctions serverless Vercel <code>/api/</code>.
+    </div>
+  </div>
+</div>
+
+<!-- ─── CHAPITRE 3 ─── -->
+<div class="chapter" id="ch3">
+  <div class="chapter-header">
+    <div class="chapter-num">03</div>
+    <div class="chapter-title">Structure du projet</div>
+  </div>
+
+  <h3>Arborescence complète</h3>
+  <div class="filetree">
+<span class="dir">liveinblack/</span>
+├── <span class="dir">api/</span>                          <span class="comment"># Fonctions serverless Vercel (Node.js)</span>
+│   ├── <span class="important">checkout.js</span>               <span class="comment"># POST → créé session Stripe pour billet</span>
+│   ├── <span class="important">checkout-boost.js</span>         <span class="comment"># POST → créé session Stripe pour boost</span>
+│   └── <span class="important">verify-session.js</span>         <span class="comment"># GET → vérifie paiement Stripe réussi</span>
+├── <span class="dir">public/</span>
+│   ├── <span class="important">firebase-messaging-sw.js</span>   <span class="comment"># Service worker FCM (notifications push)</span>
+│   └── vite.svg
+├── <span class="dir">src/</span>
+│   ├── <span class="dir">components/</span>               <span class="comment"># Composants réutilisables</span>
+│   │   ├── <span class="important">Layout.jsx</span>             <span class="comment"># Wrapper global (sidebar + header + bottom nav)</span>
+│   │   ├── <span class="important">AuthModal.jsx</span>          <span class="comment"># Modal login/register (route protégée)</span>
+│   │   ├── SideMenu.jsx
+│   │   ├── EventCard.jsx
+│   │   ├── BoostModal.jsx
+│   │   ├── AgeVerificationModal.jsx
+│   │   ├── CookieConsent.jsx
+│   │   ├── Earth3D.jsx               <span class="comment"># Globe Three.js</span>
+│   │   ├── AuctionSystem.jsx
+│   │   ├── PlaylistSystem.jsx
+│   │   ├── RegionSelector.jsx
+│   │   ├── <span class="dir">icons/</span>                 <span class="comment"># SVG icon components (RoleIcon, etc.)</span>
+│   │   └── gooey-text-morphing.jsx   <span class="comment"># Animation texte héro</span>
+│   ├── <span class="dir">pages/</span>                    <span class="comment"># 22 pages</span>
+│   │   ├── <span class="important">HomePage.jsx</span>           <span class="comment"># Accueil (top 3, géoloc, hero)</span>
+│   │   ├── <span class="important">EventsPage.jsx</span>         <span class="comment"># Liste événements + filtres</span>
+│   │   ├── <span class="important">EventDetailPage.jsx</span>    <span class="comment"># Détail + achat billet</span>
+│   │   ├── <span class="important">LoginPage.jsx</span>          <span class="comment"># Auth (1424 lignes — très complexe)</span>
+│   │   ├── <span class="important">MessagingPage.jsx</span>      <span class="comment"># Chat complet</span>
+│   │   ├── <span class="important">AgentPage.jsx</span>          <span class="comment"># Dashboard admin</span>
+│   │   ├── MesEvenementsPage.jsx
+│   │   ├── ProposerServicesPage.jsx
+│   │   ├── ProfilePage.jsx
+│   │   ├── ScannerPage.jsx
+│   │   ├── WalletPage.jsx
+│   │   ├── TicketPage.jsx
+│   │   ├── MonDossierPage.jsx
+│   │   ├── JeSuisUneBoitePage.jsx
+│   │   ├── OnboardingOrganisateur.jsx
+│   │   ├── OnboardingPrestataire.jsx
+│   │   ├── PaiementReussiPage.jsx
+│   │   ├── PaiementAnnulePage.jsx
+│   │   ├── BoostActivePage.jsx
+│   │   ├── CGUPage.jsx
+│   │   ├── MentionsLegalesPage.jsx
+│   │   ├── PolitiqueConfidentialitePage.jsx
+│   │   └── PolitiqueCookiesPage.jsx
+│   ├── <span class="dir">utils/</span>                    <span class="comment"># Logique métier</span>
+│   │   ├── <span class="important">firestore-sync.js</span>      <span class="comment"># Sync localStorage ↔ Firestore (481 lignes)</span>
+│   │   ├── <span class="important">messaging.js</span>           <span class="comment"># Chat, amis, groupes (805 lignes)</span>
+│   │   ├── <span class="important">stripe.js</span>              <span class="comment"># startStripeCheckout, verifyStripeSession</span>
+│   │   ├── wallet.js
+│   │   ├── ticket.js
+│   │   ├── services.js
+│   │   ├── accounts.js
+│   │   ├── applications.js
+│   │   ├── permissions.js
+│   │   ├── notifications.js
+│   │   ├── accountDeletion.js         <span class="comment"># RGPD droit à l'oubli</span>
+│   │   └── cropImage.js
+│   ├── <span class="dir">context/</span>
+│   │   └── <span class="important">AuthContext.js</span>         <span class="comment"># useAuth(), openAuthModal() — global</span>
+│   ├── <span class="dir">data/</span>
+│   │   ├── events.js                  <span class="comment"># Événements statiques de démo</span>
+│   │   ├── regions.js                 <span class="comment"># Régions supportées</span>
+│   │   └── <span class="important">legal.js</span>               <span class="comment"># Mentions légales, RGPD, sous-traitants</span>
+│   ├── <span class="dir">lib/</span>
+│   │   └── utils.js                   <span class="comment"># cn() — merge classes Tailwind</span>
+│   ├── <span class="important">App.jsx</span>                    <span class="comment"># Router principal + AuthContext provider</span>
+│   ├── main.jsx
+│   └── index.css
+├── <span class="important">firebase.config.js</span>            <span class="comment"># Config Firebase (projet liveinblack-15d30)</span>
+├── <span class="important">tailwind.config.js</span>            <span class="comment"># Design system complet</span>
+├── vite.config.js
+├── vercel.json                   <span class="comment"># Config déploiement + rewrites SPA</span>
+└── package.json
+  </div>
+</div>
+
+<!-- ─── CHAPITRE 4 ─── -->
+<div class="chapter" id="ch4">
+  <div class="chapter-header">
+    <div class="chapter-num">04</div>
+    <div class="chapter-title">Architecture des données & Firestore</div>
+  </div>
+
+  <h3>Principe : Write-through cache</h3>
+  <div class="callout info">
+    <div class="icon">💡</div>
+    <div class="body">
+      <strong>Pattern central de l'app :</strong> toutes les données sont lues depuis <code>localStorage</code> (préfixe <code>lib_</code>) pour des performances instantanées, puis synchronisées en arrière-plan avec Firestore pour la persistance cross-device. Ce pattern évite les états de chargement pour l'utilisateur.
+    </div>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Login → <code>syncOnLogin(uid)</code></div>
+        <div class="step-desc">Charge toutes les données Firestore de l'utilisateur dans localStorage. Les listeners temps réel sont attachés.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Lecture → localStorage d'abord</div>
+        <div class="step-desc">Les composants lisent localStorage directement via les utils. Réponse instantanée, pas de spinner.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Écriture → localStorage + <code>syncDoc()</code> fire-and-forget</div>
+        <div class="step-desc">L'UI se met à jour immédiatement. Firestore est mis à jour en background sans bloquer.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Retour dans l'onglet → resync automatique</div>
+        <div class="step-desc">Un listener <code>visibilitychange</code> déclenche une resync depuis Firestore quand l'onglet redevient actif.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Collections Firestore</h3>
+  <table>
+    <thead><tr><th>Collection / Path</th><th>Contenu</th><th>Clé locale</th></tr></thead>
+    <tbody>
+      <tr><td><code>users/{uid}</code></td><td>Profil : nom, email, rôle, statut, avatar, amis, bloqués</td><td><code>lib_user</code></td></tr>
+      <tr><td><code>wallets/{uid}</code></td><td>Portefeuille : solde, transactions</td><td><code>lib_wallet</code></td></tr>
+      <tr><td><code>user_bookings/{uid}</code></td><td>Réservations événements de l'utilisateur</td><td><code>lib_bookings</code></td></tr>
+      <tr><td><code>user_events/{uid}</code></td><td>Événements créés par l'organisateur</td><td><code>lib_events</code></td></tr>
+      <tr><td><code>events/{eventId}</code></td><td>Événement public : places[], boost, dates, région</td><td><code>lib_all_events</code></td></tr>
+      <tr><td><code>conversations/{id}</code></td><td>Métadonnées conversation (participants, type, nom groupe)</td><td><code>lib_conversations</code></td></tr>
+      <tr><td><code>conv_messages/{id}</code></td><td>Messages d'une conversation (réactions, pins, read status)</td><td><code>lib_messages_{id}</code></td></tr>
+      <tr><td><code>user_social/{uid}</code></td><td>Amis, demandes d'amis, utilisateurs bloqués</td><td><code>lib_social</code></td></tr>
+      <tr><td><code>catalogs/{uid}</code></td><td>Catalogue services prestataire</td><td><code>lib_catalog</code></td></tr>
+      <tr><td><code>service_orders/{id}</code></td><td>Commandes de services entre organisateurs et prestataires</td><td><code>lib_orders</code></td></tr>
+      <tr><td><code>group_bookings/{id}</code></td><td>Réservations de groupe avec split de paiement</td><td><code>lib_group_bookings</code></td></tr>
+      <tr><td><code>notifications/{uid}/{id}</code></td><td>Notifications utilisateur</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Structure d'un événement (objet central)</h3>
+  <pre>{
+  <span class="key">id</span>: <span class="string">"evt_xxx"</span>,
+  <span class="key">title</span>: <span class="string">"AFRO NIGHT PARIS"</span>,
+  <span class="key">description</span>: <span class="string">"..."</span>,
+  <span class="key">category</span>: <span class="string">"Afrobeat"</span>,               <span class="comment">// Afrobeat | Rap | Électronique | Autre</span>
+  <span class="key">region</span>: <span class="string">"France"</span>,
+  <span class="key">venue</span>: <span class="string">"Le Loft Parisien"</span>,
+  <span class="key">publishAt</span>: <span class="string">"2026-05-01T00:00:00Z"</span>,    <span class="comment">// Date de mise en ligne</span>
+  <span class="key">closingDate</span>: <span class="string">"2026-05-20T23:59:00Z"</span>,  <span class="comment">// Date de fin de vente (+ 48h grace period)</span>
+  <span class="key">status</span>: <span class="string">"published"</span>,               <span class="comment">// draft | published | cancelled</span>
+  <span class="key">isPrivate</span>: <span class="keyword">false</span>,
+  <span class="key">privateCode</span>: <span class="string">""</span>,                   <span class="comment">// Code secret si isPrivate = true</span>
+  <span class="key">image</span>: <span class="string">"https://..."</span>,              <span class="comment">// Firebase Storage URL</span>
+  <span class="key">organizerId</span>: <span class="string">"uid_xxx"</span>,
+  <span class="key">places</span>: [                           <span class="comment">// Catégories de billets</span>
+    {
+      <span class="key">name</span>: <span class="string">"Entrée Standard"</span>,
+      <span class="key">price</span>: <span class="number">15</span>,                       <span class="comment">// en EUR</span>
+      <span class="key">capacity</span>: <span class="number">200</span>,
+      <span class="key">sold</span>: <span class="number">87</span>,
+      <span class="key">preorderItems</span>: []              <span class="comment">// Articles pré-commandables (boissons, etc.)</span>
+    }
+  ],
+  <span class="key">boost</span>: {
+    <span class="key">position</span>: <span class="number">1</span>,                      <span class="comment">// 1, 2 ou 3 (Top events)</span>
+    <span class="key">days</span>: <span class="number">7</span>,
+    <span class="key">region</span>: <span class="string">"France"</span>,
+    <span class="key">expiresAt</span>: <span class="string">"2026-05-21T00:00:00Z"</span>
+  }
+}</pre>
+
+  <h3>Fonctions utilitaires Firestore (<code>utils/firestore-sync.js</code>)</h3>
+  <table>
+    <thead><tr><th>Fonction</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>syncOnLogin(uid)</code></td><td>Sync complète au login — appeler une seule fois</td></tr>
+      <tr><td><code>syncDoc(path, data)</code></td><td>Écriture fire-and-forget (non bloquant)</td></tr>
+      <tr><td><code>syncDocAwaitable(path, data)</code></td><td>Écriture avec <code>await</code> (utiliser pour données critiques)</td></tr>
+      <tr><td><code>loadDoc(path)</code></td><td>Lecture async depuis Firestore</td></tr>
+      <tr><td><code>listenEvents(callback)</code></td><td>Listener temps réel sur tous les événements</td></tr>
+      <tr><td><code>listenDoc(path, callback)</code></td><td>Listener temps réel sur un document</td></tr>
+      <tr><td><code>pushLocalToFirestore(uid)</code></td><td>Sync inverse : localStorage → Firestore (dev/debug)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="icon">⚠️</div>
+    <div class="body">
+      <strong>Import dynamique obligatoire :</strong> Ne jamais importer firestore-sync en static dans les pages. Toujours utiliser <code>import('../utils/firestore-sync').then(({ syncDoc }) => ...)</code> pour éviter les problèmes de chargement.
+    </div>
+  </div>
+</div>
+
+<!-- ─── CHAPITRE 5 ─── -->
+<div class="chapter" id="ch5">
+  <div class="chapter-header">
+    <div class="chapter-num">05</div>
+    <div class="chapter-title">Authentification & système de rôles</div>
+  </div>
+
+  <h3>Méthodes d'authentification</h3>
+  <table>
+    <thead><tr><th>Méthode</th><th>Statut</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Email + mot de passe</td><td><span class="badge green">Actif</span></td><td>Validation force mot de passe (8+ chars, majuscule, chiffre)</td></tr>
+      <tr><td>Google OAuth</td><td><span class="badge green">Actif</span></td><td>Via Firebase Auth popup</td></tr>
+      <tr><td>Apple Sign-in</td><td><span class="badge green">Actif</span></td><td>Via Firebase Auth (nécessite certificat Apple)</td></tr>
+      <tr><td>Multi-comptes par email</td><td><span class="badge blue">Spécifique</span></td><td>Un même email peut avoir plusieurs comptes (rôles différents). Sélecteur de compte au login.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Rôles & permissions</h3>
+  <table>
+    <thead><tr><th>Rôle</th><th>Statuts possibles</th><th>Navigation</th><th>Accès spéciaux</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>user / client</strong></td>
+        <td><span class="badge green">active</span></td>
+        <td>Accueil, Événements, Messages</td>
+        <td>Acheter des billets, messagerie</td>
+      </tr>
+      <tr>
+        <td><strong>organisateur</strong></td>
+        <td><span class="badge yellow">onboarding</span> <span class="badge blue">pending</span> <span class="badge green">active</span> <span class="badge red">rejected</span></td>
+        <td>+ Mes Events, Services</td>
+        <td>Créer événements, booster, gérer la billetterie</td>
+      </tr>
+      <tr>
+        <td><strong>prestataire</strong></td>
+        <td><span class="badge yellow">onboarding</span> <span class="badge blue">pending</span> <span class="badge green">active</span> <span class="badge red">rejected</span></td>
+        <td>+ Mon Espace</td>
+        <td>Créer catalogue services, recevoir commandes</td>
+      </tr>
+      <tr>
+        <td><strong>agent</strong></td>
+        <td><span class="badge green">active</span></td>
+        <td>+ bouton Admin</td>
+        <td>Dashboard admin, valider candidatures, scanner QR</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Flux d'onboarding organisateur / prestataire</h3>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Inscription avec rôle org/prest</div>
+        <div class="step-desc">status = "onboarding", compte créé dans Firestore</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">OnboardingGuard intercepte</div>
+        <div class="step-desc">Redirige vers /onboarding-organisateur ou /onboarding-prestataire si status ≠ active</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Soumission du dossier</div>
+        <div class="step-desc">status = "pending", dossier visible dans AgentPage pour l'admin</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Validation admin (AgentPage)</div>
+        <div class="step-desc">status = "active" → accès complet. status = "rejected" → message d'erreur</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Super Admin</h3>
+  <div class="callout info">
+    <div class="icon">🔑</div>
+    <div class="body">
+      L'email <code>hagechady4@gmail.com</code> est hard-codé comme super admin dans LoginPage.jsx. Cette détection bypass certaines restrictions d'interface. À terme, ce mécanisme devrait être déplacé dans Firestore (champ <code>isSuperAdmin: true</code>).
+    </div>
+  </div>
+
+  <h3>AuthContext — usage</h3>
+  <pre><span class="keyword">import</span> { useAuth } <span class="keyword">from</span> <span class="string">'../context/AuthContext'</span>
+
+<span class="keyword">const</span> { user, openAuthModal, logout } = useAuth()
+
+<span class="comment">// user contient : uid, email, role, status, name, avatar...</span>
+<span class="comment">// openAuthModal() → ouvre le modal login si non connecté</span>
+<span class="comment">// handleProtectedNav(path) dans Layout.jsx → vérifie auth avant navigation</span></pre>
+</div>
+
+<!-- ─── CHAPITRE 6 ─── -->
+<div class="chapter" id="ch6">
+  <div class="chapter-header">
+    <div class="chapter-num">06</div>
+    <div class="chapter-title">Flux utilisateurs principaux</div>
+  </div>
+
+  <h3>1. Découverte & réservation d'un billet</h3>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">HomePage — Détection région</div>
+        <div class="step-desc">Géolocalisation browser → Nominatim (API reverse geocoding OSM) → détection région → personnalisation du contenu</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Affichage Top 3</div>
+        <div class="step-desc">Événements avec boost.position = 1/2/3, filtrés par région, triés par position. Badges 01/02/03 animés.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">EventsPage — Filtres</div>
+        <div class="step-desc">Recherche texte + catégorie (Afrobeat/Rap/Électronique/Autre) + événements privés (code secret stocké dans <code>lib_event_codes</code>)</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">EventDetailPage — Sélection</div>
+        <div class="step-desc">Affiche les "places" (catégories) avec prix, capacité restante. L'utilisateur choisit sa catégorie et quantité.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Paiement Stripe</div>
+        <div class="step-desc"><code>startStripeCheckout()</code> → POST /api/checkout → URL Stripe → redirection. Voir chapitre 7.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">/paiement-reussi → confirmation</div>
+        <div class="step-desc"><code>verifyStripeSession(sessionId)</code> → création booking dans Firestore + génération QR ticket</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>2. Création d'événement (Organisateur)</h3>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">MesEvenementsPage</div>
+        <div class="step-desc">Dashboard organisateur : liste des événements, stats, accès formulaire de création</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Formulaire multi-places</div>
+        <div class="step-desc">Création de N catégories (places[]) avec nom, prix, capacité, articles pré-commande</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Publication</div>
+        <div class="step-desc">status = "published", publishAt = now. Apparaît sur EventsPage/HomePage selon boost</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Boost (optionnel)</div>
+        <div class="step-desc">BoostModal → choix position (1/2/3) et durée → Stripe checkout boost → BoostActivePage</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>3. Scan QR à l'entrée (Agent)</h3>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">ScannerPage</div>
+        <div class="step-desc">Accès caméra via jsqr → lecture QR code du billet → vérification dans Firestore user_bookings</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-content">
+        <div class="step-title">Validation ou refus</div>
+        <div class="step-desc">Billet valide → billet marqué "used" → message vert. Billet déjà utilisé ou invalide → alerte rouge.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CHAPITRE 7 ─── -->
+<div class="chapter" id="ch7">
+  <div class="chapter-header">
+    <div class="chapter-num">07</div>
+    <div class="chapter-title">Système de paiement Stripe</div>
+  </div>
+
+  <h3>Architecture</h3>
+  <div class="callout info">
+    <div class="icon">💳</div>
+    <div class="body">
+      Stripe est utilisé en mode <strong>Checkout hosted</strong> : l'utilisateur est redirigé vers une page Stripe sécurisée, puis revient sur le site. Aucune donnée bancaire ne transite par les serveurs de l'app.
+    </div>
+  </div>
+
+  <h3>Flux de paiement billet</h3>
+  <pre><span class="comment">// 1. Client appelle (src/utils/stripe.js)</span>
+<span class="keyword">await</span> startStripeCheckout({
+  eventId, qty,
+  unitPriceEUR: <span class="number">15</span>,
+  bookingId,             <span class="comment">// ID local pour corrélation</span>
+  successUrl: <span class="string">"/paiement-reussi?session_id={CHECKOUT_SESSION_ID}"</span>,
+  cancelUrl: <span class="string">"/paiement-annule"</span>
+})
+
+<span class="comment">// 2. POST /api/checkout (serverless Vercel)</span>
+<span class="comment">// Crée une session Stripe, retourne sessionUrl</span>
+
+<span class="comment">// 3. Redirection vers page Stripe</span>
+<span class="comment">// 4. Retour sur /paiement-reussi</span>
+<span class="comment">// 5. verifyStripeSession(sessionId) → vérifie + crée booking</span></pre>
+
+  <h3>Flux de paiement boost</h3>
+  <pre><span class="comment">// src/utils/stripe.js</span>
+<span class="keyword">await</span> startStripeBoostCheckout({
+  eventId, position: <span class="number">1</span>, days: <span class="number">7</span>,
+  region: <span class="string">"France"</span>,
+  successUrl: <span class="string">"/boost-active?session_id={CHECKOUT_SESSION_ID}"</span>
+})
+<span class="comment">// POST /api/checkout-boost → session Stripe boost</span>
+<span class="comment">// Retour sur /boost-active → activation du boost dans Firestore</span></pre>
+
+  <h3>Points d'attention Stripe</h3>
+  <table>
+    <thead><tr><th>Sujet</th><th>Détail</th></tr></thead>
+    <tbody>
+      <tr><td>Mode test vs prod</td><td>Clés <code>pk_test_</code> / <code>sk_test_</code> pour dev, <code>pk_live_</code> / <code>sk_live_</code> pour prod. Changer dans <code>.env.local</code> et variables Vercel.</td></tr>
+      <tr><td>Webhooks</td><td>Non implémentés (MVP). <strong>Recommandé :</strong> ajouter un webhook <code>checkout.session.completed</code> pour confirmation serveur-side robuste.</td></tr>
+      <tr><td>Devise</td><td>EUR uniquement actuellement. Adapter pour CFA/GHS si expansion Afrique.</td></tr>
+      <tr><td>Remboursements</td><td>Non implémentés côté app. À gérer via dashboard Stripe ou ajouter une route <code>/api/refund</code>.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ─── CHAPITRE 8 ─── -->
+<div class="chapter" id="ch8">
+  <div class="chapter-header">
+    <div class="chapter-num">08</div>
+    <div class="chapter-title">Design system & UI</div>
+  </div>
+
+  <h3>Palette de couleurs</h3>
+  <table>
+    <thead><tr><th>Variable CSS</th><th>Valeur hex</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><code>--obsidian</code></td><td style="color:#0b0b12;background:#0b0b12;padding:4px 8px;border-radius:4px;color:white">#0b0b12</td><td>Fond principal, headers dark</td></tr>
+      <tr><td><code>--teal</code></td><td style="background:#4ee8c8;padding:4px 8px;border-radius:4px;color:#0b0b12;font-weight:600">#4ee8c8</td><td>Accent principal, CTA, liens actifs</td></tr>
+      <tr><td><code>--gold</code></td><td style="background:#c8a96e;padding:4px 8px;border-radius:4px;color:white">#c8a96e</td><td>Accent secondaire, logo BLACK, agent</td></tr>
+      <tr><td><code>--pink</code></td><td style="background:#e05aaa;padding:4px 8px;border-radius:4px;color:white">#e05aaa</td><td>Badges, notifications, gradient boutons</td></tr>
+      <tr><td><code>--violet</code></td><td style="background:#7c5cbf;padding:4px 8px;border-radius:4px;color:white">#7c5cbf</td><td>Gradient boutons primaires</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout danger">
+    <div class="icon">🚫</div>
+    <div class="body">
+      Ne <strong>jamais</strong> utiliser <code>#d4af37</code> (ancien gold). Toujours utiliser <code>var(--gold)</code> ou <code>var(--teal)</code>.
+    </div>
+  </div>
+
+  <h3>Typographie</h3>
+  <table>
+    <thead><tr><th>Police</th><th>Usage</th><th>Exemple</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Bebas Neue</strong></td><td>Titres, logo "LIVE IN", headings impact</td><td style="font-size:18px;letter-spacing:0.1em">LIVE IN</td></tr>
+      <tr><td><strong>Playfair Display Italic</strong></td><td>Logo "BLACK" uniquement</td><td style="font-style:italic;font-size:18px">BLACK</td></tr>
+      <tr><td><strong>DM Mono</strong></td><td>Nav labels, codes, UI monospace</td><td style="font-family:monospace;font-size:11px;letter-spacing:0.2em">ÉVÉNEMENTS</td></tr>
+      <tr><td><strong>Inter</strong></td><td>Corps de texte, descriptions</td><td>Texte courant</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Classes Tailwind custom</h3>
+  <table>
+    <thead><tr><th>Classe</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>.btn-primary</code></td><td>Bouton gradient violet → pink</td></tr>
+      <tr><td><code>.btn-gold</code></td><td>Bouton doré avec shimmer</td></tr>
+      <tr><td><code>.btn-chrome</code></td><td>Bouton métal avec effet chrome</td></tr>
+      <tr><td><code>.btn-pill</code></td><td>Bouton arrondi complet</td></tr>
+      <tr><td><code>.glass</code></td><td>Glass morphism (backdrop-blur + bg semi-transparent)</td></tr>
+      <tr><td><code>.badge-live</code></td><td>Badge animé "LIVE" avec pulse</td></tr>
+      <tr><td><code>.badge-upcoming</code></td><td>Badge "À VENIR"</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Animations custom</h3>
+  <table>
+    <thead><tr><th>Animation</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><code>liquid-float</code></td><td>Éléments flottants (hero, globe)</td></tr>
+      <tr><td><code>metal-shine / chrome-shimmer</code></td><td>Effet brillance sur boutons</td></tr>
+      <tr><td><code>glow-pulse</code></td><td>Halos lumineux sur badges</td></tr>
+      <tr><td><code>nebulaDriftA/B/C</code></td><td>3 blobs de fond animés (fond nebula)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Logo</h3>
+  <p>Le logo est <strong>toujours rendu en code</strong>, jamais comme image :</p>
+  <pre><span class="comment">// Structure du logo :</span>
+<span class="string">"L"</span> + <span class="string">"|"</span> (barre blanche) + <span class="string">"VE IN"</span>  <span class="comment">← Bebas Neue</span>
+<span class="string">"BLACK"</span>                                 <span class="comment">← Playfair Display italic, color: var(--gold)</span></pre>
+
+  <h3>Layout — props importants</h3>
+  <pre><span class="comment">// Layout.jsx accepte ces props :</span>
+&lt;<span class="keyword">Layout</span>&gt;               <span class="comment">// Navigation normale</span>
+&lt;<span class="keyword">Layout</span> <span class="key">hideNav</span>&gt;        <span class="comment">// Cache bottom nav mobile (ex: EventDetailPage)</span>
+&lt;<span class="keyword">Layout</span> <span class="key">chatMode</span>&gt;       <span class="comment">// Full-screen chat, cache header + bottom nav</span></pre>
+</div>
+
+<!-- ─── CHAPITRE 9 ─── -->
+<div class="chapter" id="ch9">
+  <div class="chapter-header">
+    <div class="chapter-num">09</div>
+    <div class="chapter-title">Pages & composants</div>
+  </div>
+
+  <h3>Pages critiques</h3>
+
+  <h4>LoginPage.jsx (~1424 lignes) — Page la plus complexe</h4>
+  <p>Gère : connexion email/password, inscription avec rôle, Google/Apple OAuth, sélecteur multi-comptes, validation email, reset password, écran "compte en attente", détection super admin. <strong>Ne pas refactoriser sans tests approfondis.</strong></p>
+
+  <h4>HomePage.jsx (~819 lignes)</h4>
+  <p>Géolocalisation → Nominatim → région → top 3 events filtrés. Contient la section "Comment ça marche" pour visiteurs non connectés, GooeyText animation, globe 3D conditionnel. La logique de filtrage des events (publishAt, closingDate, grace period 48h, boost position) est dans cette page.</p>
+
+  <h4>EventsPage.jsx (~749 lignes)</h4>
+  <p>Filtres catégorie/recherche, EventCard composant, mode partage <code>?share=</code> pour envoyer un événement via messagerie, unlock événements privés (code stocké dans <code>lib_event_codes</code>).</p>
+
+  <h4>AgentPage.jsx — Dashboard admin</h4>
+  <p>Métriques business, graphique de croissance, onglet candidatures organisateurs/prestataires, liste utilisateurs, statistiques globales. Accessible uniquement avec rôle <code>agent</code>.</p>
+
+  <h4>MessagingPage.jsx</h4>
+  <p>Chat complet avec : conversations directes + groupes, typing indicators temps réel, réactions aux messages (émojis), messages épinglés, suppression (soi / tous), statut lecture/livraison, partage d'événements, polls (types <code>'poll'</code> ET <code>'event_poll'</code>).</p>
+
+  <h3>Composants critiques</h3>
+
+  <h4>Layout.jsx</h4>
+  <p>Wrapper global. Contient <code>handleProtectedNav(path)</code> qui intercepte les navigations vers des routes protégées et ouvre <code>AuthModal</code> si l'utilisateur n'est pas connecté. Le bottom nav mobile est en <code>position: fixed</code> (pas sticky).</p>
+
+  <h4>AuthModal.jsx</h4>
+  <p>Modal global pour les prompts de connexion. Appelé via <code>openAuthModal()</code> depuis <code>useAuth()</code>. Ne pas dupliquer la logique auth ici — LoginPage.jsx est la source de vérité.</p>
+
+  <h4>EventCard.jsx</h4>
+  <p>Carte événement réutilisable avec variants image/gradient, hover animations, tags catégorie, mode partage. Utilisée sur HomePage et EventsPage.</p>
+</div>
+
+<!-- ─── CHAPITRE 10 ─── -->
+<div class="chapter" id="ch10">
+  <div class="chapter-header">
+    <div class="chapter-num">10</div>
+    <div class="chapter-title">Déploiement & configuration</div>
+  </div>
+
+  <h3>Infrastructure</h3>
+  <table>
+    <thead><tr><th>Composant</th><th>Service</th><th>URL</th></tr></thead>
+    <tbody>
+      <tr><td>Frontend + API</td><td>Vercel</td><td>liveinblack.com</td></tr>
+      <tr><td>Base de données</td><td>Firebase Firestore</td><td>Projet : liveinblack-15d30</td></tr>
+      <tr><td>Auth</td><td>Firebase Auth</td><td>idem</td></tr>
+      <tr><td>Stockage fichiers</td><td>Firebase Storage</td><td>idem</td></tr>
+      <tr><td>Notifications push</td><td>Firebase Cloud Messaging</td><td>idem</td></tr>
+      <tr><td>Paiements</td><td>Stripe</td><td>dashboard.stripe.com</td></tr>
+      <tr><td>Code source</td><td>GitHub</td><td>github.com/Chadyhage/liveinblack</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Déploiement automatique</h3>
+  <div class="callout info">
+    <div class="icon">🚀</div>
+    <div class="body">
+      Vercel est connecté au repo GitHub. <strong>Chaque push sur la branche <code>main</code> déclenche automatiquement un déploiement en production</strong> sur liveinblack.com. Pas besoin de commande manuelle.
+    </div>
+  </div>
+
+  <h3>Configuration Vercel (vercel.json)</h3>
+  <pre>{
+  <span class="key">"builds"</span>: [{ <span class="key">"src"</span>: <span class="string">"package.json"</span>, <span class="key">"use"</span>: <span class="string">"@vercel/static-build"</span> }],
+  <span class="key">"rewrites"</span>: [
+    { <span class="key">"source"</span>: <span class="string">"/api/:path*"</span>, <span class="key">"destination"</span>: <span class="string">"/api/:path*"</span> },
+    { <span class="key">"source"</span>: <span class="string">"/(.*)"</span>, <span class="key">"destination"</span>: <span class="string">"/"</span> }  <span class="comment">// SPA fallback</span>
+  ]
+}</pre>
+
+  <h3>Variables d'environnement Vercel (à configurer dans le dashboard)</h3>
+  <table>
+    <thead><tr><th>Variable</th><th>Valeur</th><th>Environnement</th></tr></thead>
+    <tbody>
+      <tr><td><code>VITE_STRIPE_PUBLISHABLE_KEY</code></td><td>pk_live_...</td><td>Production</td></tr>
+      <tr><td><code>STRIPE_SECRET_KEY</code></td><td>sk_live_...</td><td>Production (serverless uniquement)</td></tr>
+      <tr><td><code>VITE_STRIPE_PUBLISHABLE_KEY</code></td><td>pk_test_...</td><td>Preview/Dev</td></tr>
+      <tr><td><code>STRIPE_SECRET_KEY</code></td><td>sk_test_...</td><td>Preview/Dev</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Développement local</h3>
+  <pre><span class="comment"># Cloner le repo</span>
+git clone https://github.com/Chadyhage/liveinblack.git
+cd liveinblack
+
+<span class="comment"># Installer les dépendances</span>
+npm install
+
+<span class="comment"># Créer .env.local avec les clés Stripe</span>
+<span class="comment"># Lancer le serveur de développement</span>
+npm run dev           <span class="comment"># → http://localhost:5173</span>
+
+<span class="comment"># Build de production</span>
+npm run build</pre>
+</div>
+
+<!-- ─── CHAPITRE 11 ─── -->
+<div class="chapter" id="ch11">
+  <div class="chapter-header">
+    <div class="chapter-num">11</div>
+    <div class="chapter-title">Messagerie & temps réel</div>
+  </div>
+
+  <h3>Architecture messagerie</h3>
+  <p>La messagerie est entièrement gérée dans <code>src/utils/messaging.js</code> (805 lignes) avec sync Firestore temps réel.</p>
+
+  <table>
+    <thead><tr><th>Fonctionnalité</th><th>Fonction</th></tr></thead>
+    <tbody>
+      <tr><td>Créer conversation directe</td><td><code>createDirectConversation(uid1, uid2)</code></td></tr>
+      <tr><td>Créer groupe</td><td><code>createGroup(creatorId, name, members[])</code></td></tr>
+      <tr><td>Envoyer message</td><td><code>sendMessage(convId, senderId, content, type)</code></td></tr>
+      <tr><td>Réagir à un message</td><td><code>reactToMessage(convId, msgId, uid, emoji)</code></td></tr>
+      <tr><td>Épingler message</td><td><code>pinMessage(convId, msgId)</code></td></tr>
+      <tr><td>Supprimer (soi)</td><td><code>deleteMessageForSelf(convId, msgId, uid)</code></td></tr>
+      <tr><td>Supprimer (tous)</td><td><code>deleteMessageForAll(convId, msgId)</code></td></tr>
+      <tr><td>Typing indicator</td><td><code>setTyping(uid, convId)</code> / <code>getTypingUsers(convId)</code></td></tr>
+      <tr><td>Marquer lu</td><td><code>markMessagesRead(convId, uid)</code></td></tr>
+      <tr><td>Bloquer utilisateur</td><td><code>blockUser(uid, targetUid)</code></td></tr>
+      <tr><td>Demande d'ami</td><td><code>sendFriendRequest(fromUid, toUid)</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Types de messages</h3>
+  <table>
+    <thead><tr><th>Type</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><code>text</code></td><td>Message texte standard</td></tr>
+      <tr><td><code>image</code></td><td>Image partagée</td></tr>
+      <tr><td><code>event</code></td><td>Carte événement partagé (depuis EventsPage ?share=)</td></tr>
+      <tr><td><code>poll</code></td><td>Sondage simple</td></tr>
+      <tr><td><code>event_poll</code></td><td>Sondage lié à un événement (même handler que <code>poll</code> dans <code>voteOnPoll</code>)</td></tr>
+      <tr><td><code>system</code></td><td>Message système (membre ajouté, groupe créé...)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="icon">⚠️</div>
+    <div class="body">
+      <strong>Point critique :</strong> <code>voteOnPoll</code> dans messaging.js gère les deux types <code>'poll'</code> ET <code>'event_poll'</code>. Ne pas casser cette logique. Les deux types doivent passer par la même fonction.
+    </div>
+  </div>
+
+  <h3>Présence utilisateur (online/offline)</h3>
+  <pre><span class="comment">// Heartbeat toutes les 60 secondes</span>
+setInterval(() => setOnline(uid), <span class="number">60000</span>)
+
+<span class="comment">// Offline quand l'onglet est caché</span>
+document.addEventListener(<span class="string">'visibilitychange'</span>, () => {
+  document.hidden ? setOffline(uid) : setOnline(uid)
+})</pre>
+</div>
+
+<!-- ─── CHAPITRE 12 ─── -->
+<div class="chapter" id="ch12">
+  <div class="chapter-header">
+    <div class="chapter-num">12</div>
+    <div class="chapter-title">Points critiques & problèmes connus</div>
+  </div>
+
+  <h3>Problèmes identifiés (historique git)</h3>
+  <table>
+    <thead><tr><th>Problème</th><th>Statut</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Event cross-device disparu</td>
+        <td><span class="badge green">Corrigé</span></td>
+        <td>Un événement apparaissait puis disparaissait sur d'autres devices. Fix : sync Firestore correctement awaitée.</td>
+      </tr>
+      <tr>
+        <td>Sync Firestore non awaitée</td>
+        <td><span class="badge green">Corrigé</span></td>
+        <td>syncDoc() non awaitée sur certaines opérations critiques causait des données perdues. Migré vers syncDocAwaitable().</td>
+      </tr>
+      <tr>
+        <td>Bandeau d'erreur invisible</td>
+        <td><span class="badge green">Corrigé</span></td>
+        <td>L'UI d'erreur ne s'affichait pas correctement.</td>
+      </tr>
+      <tr>
+        <td>Sync Firestore cross-device</td>
+        <td><span class="badge yellow">À tester</span></td>
+        <td>La sync bidirectionnelle n'a pas encore été testée en conditions réelles sur plusieurs appareils simultanément.</td>
+      </tr>
+      <tr>
+        <td>Webhooks Stripe manquants</td>
+        <td><span class="badge red">À faire</span></td>
+        <td>Confirmation de paiement côté serveur non implémentée. Actuellement, on vérifie la session côté client uniquement (risque faible mais pas robuste).</td>
+      </tr>
+      <tr>
+        <td>Super admin hard-codé</td>
+        <td><span class="badge yellow">À améliorer</span></td>
+        <td>Email hagechady4@gmail.com hard-codé dans LoginPage.jsx. À déplacer dans Firestore.</td>
+      </tr>
+      <tr>
+        <td>Données légales incomplètes</td>
+        <td><span class="badge yellow">En attente</span></td>
+        <td>SIREN, RCS, capital non renseignés dans legal.js. À compléter après immatriculation.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Zones fragiles — à ne pas casser</h3>
+  <div class="callout danger">
+    <div class="icon">⛔</div>
+    <div class="body">
+      <strong>handleProtectedNav(path)</strong> dans Layout.jsx : intercepte toute navigation protégée. Toute modification peut casser la protection de toutes les routes de l'app.
+    </div>
+  </div>
+  <div class="callout danger">
+    <div class="icon">⛔</div>
+    <div class="body">
+      <strong>voteOnPoll</strong> dans messaging.js : gère les types 'poll' ET 'event_poll'. Ne séparer qu'avec des tests complets.
+    </div>
+  </div>
+  <div class="callout danger">
+    <div class="icon">⛔</div>
+    <div class="body">
+      <strong>Bottom nav mobile</strong> : doit rester en <code>position: fixed</code>, pas <code>sticky</code>. Changement connu pour casser l'affichage sur certains devices.
+    </div>
+  </div>
+  <div class="callout danger">
+    <div class="icon">⛔</div>
+    <div class="body">
+      <strong>Import dynamique firestore-sync</strong> : ne jamais passer en import statique dans les pages. Utiliser <code>import('../utils/firestore-sync').then(...)</code>.
+    </div>
+  </div>
+</div>
+
+<!-- ─── CHAPITRE 13 ─── -->
+<div class="chapter" id="ch13">
+  <div class="chapter-header">
+    <div class="chapter-num">13</div>
+    <div class="chapter-title">Recommandations & prochaines étapes</div>
+  </div>
+
+  <h3>Priorités immédiates</h3>
+  <table>
+    <thead><tr><th>Priorité</th><th>Tâche</th><th>Impact</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge red">P0</span></td>
+        <td>Implémenter webhook Stripe <code>checkout.session.completed</code></td>
+        <td>Robustesse des paiements — actuellement vulnérable si l'utilisateur ferme la page avant la vérification</td>
+      </tr>
+      <tr>
+        <td><span class="badge red">P0</span></td>
+        <td>Test stress sync Firestore cross-device</td>
+        <td>Cœur de l'architecture, jamais testé en prod avec plusieurs utilisateurs simultanés</td>
+      </tr>
+      <tr>
+        <td><span class="badge yellow">P1</span></td>
+        <td>Compléter legal.js après immatriculation</td>
+        <td>Conformité légale obligatoire avant montée en charge</td>
+      </tr>
+      <tr>
+        <td><span class="badge yellow">P1</span></td>
+        <td>Migrer super admin vers Firestore</td>
+        <td>Sécurité et scalabilité (actuellement hard-codé)</td>
+      </tr>
+      <tr>
+        <td><span class="badge blue">P2</span></td>
+        <td>Ajouter Firestore Security Rules</td>
+        <td>Actuellement, les règles Firestore ne sont pas documentées. Risque de lecture/écriture non autorisée.</td>
+      </tr>
+      <tr>
+        <td><span class="badge blue">P2</span></td>
+        <td>Internationalisation des prix (CFA, GHS)</td>
+        <td>Nécessaire pour expansion Afrique de l'Ouest</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Refactoring recommandé</h3>
+  <p><strong>LoginPage.jsx (1424 lignes)</strong> est la page la plus complexe et risquée. Recommandation : découper en hooks custom (<code>useEmailAuth</code>, <code>useOAuthProviders</code>, <code>useMultiAccount</code>) sans toucher à la logique.</p>
+  <p><strong>firestore-sync.js (481 lignes)</strong> : bien structuré, ne pas refactoriser sans tests complets.</p>
+  <p><strong>messaging.js (805 lignes)</strong> : pourrait être découpé en modules (social.js, conversations.js, messages.js) à terme.</p>
+
+  <h3>Features à développer</h3>
+  <table>
+    <thead><tr><th>Feature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Tableau de bord organisateur avancé</td><td>Stats ventes temps réel, gestion des capacités, remboursements</td></tr>
+      <tr><td>Notif push FCM</td><td>Service worker configuré, clé VAPID présente — connexion à l'UI à finaliser</td></tr>
+      <tr><td>Recherche avancée événements</td><td>Filtres date, prix, distance, capacité restante</td></tr>
+      <tr><td>Système de reviews</td><td>Notes et avis post-événement pour organisateurs et prestataires</td></tr>
+      <tr><td>App mobile (React Native)</td><td>La structure actuelle est très adapatable pour un portage React Native</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Conseils au développeur entrant</h3>
+  <div class="callout info">
+    <div class="icon">👋</div>
+    <div class="body">
+      <strong>Pour commencer :</strong> Lire <code>AuthContext.js</code>, <code>firestore-sync.js</code> et <code>Layout.jsx</code> en priorité. Ces 3 fichiers sont la colonne vertébrale de l'app. Tout le reste s'appuie sur ces fondations.
+    </div>
+  </div>
+  <div class="callout info">
+    <div class="icon">🧪</div>
+    <div class="body">
+      <strong>Pour tester :</strong> Créer 3 comptes test (client, organisateur, agent) avec des emails différents. L'organisateur doit passer par le workflow d'approbation admin avant d'avoir accès. Utiliser les clés Stripe test pour les paiements.
+    </div>
+  </div>
+  <div class="callout warn">
+    <div class="icon">🤖</div>
+    <div class="body">
+      <strong>Contexte particulier :</strong> Cette application a été entièrement construite en collaboration avec une IA (Claude / Anthropic). Le code est fonctionnel mais certaines parties manquent de commentaires et de tests unitaires. Procéder avec méthode, tester chaque modification, et documenter les changements importants.
+    </div>
+  </div>
+
+  <br><br>
+  <div style="text-align:center;padding:40px;border-top:1px solid #e2e2f0;margin-top:40px;color:#888;font-size:12px;">
+    <div style="font-size:24px;font-weight:800;letter-spacing:0.1em;color:#0b0b12;margin-bottom:8px">
+      L<span style="color:#4ee8c8">|</span>VE IN <span style="color:#c8a96e;font-style:italic">BLACK</span>
+    </div>
+    <div>Document généré le 14 mai 2026 · Confidentiel — usage interne uniquement</div>
+    <div style="margin-top:4px">Contact : hagechady@liveinblack.com · Chady Hage, Fondateur</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

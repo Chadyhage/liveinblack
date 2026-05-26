@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { isBoostSlotTaken, getActiveBoostsByRegion } from '../utils/ticket'
+import { isBoostSlotTaken } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
 import { startStripeBoostCheckout } from '../utils/stripe'
 
@@ -114,7 +114,6 @@ const S = {
 }
 
 export default function BoostModal({ event, onClose, onBoostDone }) {
-  const navigate = useNavigate()
   const { user } = useAuth()
   const [selectedPlan, setSelectedPlan] = useState(null) // { position, tierIdx }
   const [step, setStep] = useState('pick') // 'pick' | 'pay' | 'done'

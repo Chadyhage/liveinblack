@@ -8,8 +8,19 @@ import {
   requestAdditionalRole, getAccountByPhone, updateAccount, deleteAccount,
 } from '../utils/accounts'
 
-// ─── Constants ────────────────────────────────────────────────────────────
-const SUPER_ADMIN_EMAIL = 'hagechady4@gmail.com'
+// ─── Super admin ──────────────────────────────────────────────────────────
+// Liste d'emails admin lue depuis l'env (VITE_SUPER_ADMIN_EMAILS, séparés par virgules).
+// Configurer dans .env.local en dev et dans Vercel → Project Settings → Environment Variables en prod.
+// Si la variable est vide, AUCUN super admin email-based n'existe (les comptes role:'agent' en Firestore continuent à fonctionner normalement).
+const SUPER_ADMIN_EMAILS = (import.meta.env.VITE_SUPER_ADMIN_EMAILS || '')
+  .split(',')
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean)
+
+function isSuperAdminEmail(email) {
+  if (!email) return false
+  return SUPER_ADMIN_EMAILS.includes(email.toLowerCase())
+}
 
 // ─── Auth adapters ────────────────────────────────────────────────────────
 
@@ -36,7 +47,7 @@ async function doEmailLogin(email, password, role = null) {
   const { auth, db } = await import('../firebase')
   const { doc, getDoc } = await import('firebase/firestore')
   const cred = await signInWithEmailAndPassword(auth, email, password)
-  const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+  const isSuperAdmin = isSuperAdminEmail(email)
   // Read Firestore profile BEFORE the email-verification check.
   // Organisateur/prestataire accounts are created silently during onboarding (no verification email sent).
   // They must be allowed to log in so OnboardingGuard can redirect them to /mon-dossier.
@@ -91,7 +102,7 @@ async function doEmailLogin(email, password, role = null) {
 
 async function doEmailRegister(data) {
   const { email, password, name, phone, role, prestataireType } = data
-  const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+  const isSuperAdmin = isSuperAdminEmail(email)
 
   // Each role creates a DEDICATED account — no upgrades.
   // organisateur/prestataire → status:'onboarding' until they submit their full dossier,
@@ -522,7 +533,7 @@ export default function LoginPage() {
         setUnverifiedEmail(email)
       } else if (
         err.code === 'auth/user-not-found' &&
-        email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+        isSuperAdminEmail(email)
       ) {
         // Super admin hasn't created their account yet → switch to registration pre-filled
         setMode('register')
