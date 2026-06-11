@@ -28,5 +28,14 @@ service firebase.storage {
                    && request.resource.size < 25 * 1024 * 1024;
     }
 
+    // Affiches d'événements — lecture publique (affichées à tous les visiteurs),
+    // écriture par tout organisateur authentifié, images < 8 Mo
+    match /events/{eventId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 8 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
   }
 }

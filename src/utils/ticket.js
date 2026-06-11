@@ -1,4 +1,11 @@
-// Anti-fraud signed ticket token utilities
+// Ticket token utilities — signature de COMMODITÉ uniquement.
+//
+// ⚠️ Ce SECRET est dans le bundle JS public : il ne protège RIEN contre un
+// fraudeur motivé. La vraie défense anti-fraude est le registre Firestore
+// tickets/{ticketCode} : seul le webhook Stripe (Admin SDK) peut y écrire
+// paid:true, et le ScannerPage vérifie l'existence du billet dans ce registre
+// avant de l'accepter. La signature ici sert seulement de pré-filtre rapide
+// (rejeter les QR aléatoires sans requête réseau).
 const SECRET = 'LIB_S3CR3T_K3Y_2026_PRIV'
 
 function computeHash(str) {

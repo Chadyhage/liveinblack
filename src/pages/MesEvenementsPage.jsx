@@ -258,6 +258,7 @@ export default function MesEvenementsPage() {
   const [boostTargetEvent, setBoostTargetEvent] = useState(null)
   const [showBoostToast, setShowBoostToast] = useState(false)
   const [justPublishedEvent, setJustPublishedEvent] = useState(null)
+  const [publishing, setPublishing] = useState(false)
   const toastTimerRef = useRef(null)
 
   // Step 0: Bases
@@ -428,8 +429,28 @@ export default function MesEvenementsPage() {
       return
     }
 
+    const eventId = editingEventId || String(Date.now())
+
+    // ── Affiche : Firestore limite chaque document à 1 Mo. Une image base64
+    // pleine résolution fait échouer l'écriture events/{id} → event invisible
+    // cross-device. On upload donc l'affiche sur Storage et on ne stocke que
+    // l'URL. Secours si Storage échoue : version compressée < 1 Mo.
+    let finalImageUrl = imagePreview
+    if (imagePreview && imagePreview.startsWith('data:')) {
+      setPublishing(true)
+      try {
+        const { uploadEventPoster } = await import('../utils/uploadImage')
+        finalImageUrl = await uploadEventPoster(eventId, imagePreview)
+      } catch {
+        try {
+          const { compressDataUrl } = await import('../utils/uploadImage')
+          finalImageUrl = await compressDataUrl(imagePreview, 700, 0.6)
+        } catch {}
+      }
+    }
+
     const eventData = {
-      id: editingEventId || String(Date.now()),
+      id: eventId,
       name: form.name,
       subtitle: form.description?.slice(0, 60) || '',
       date: form.date,
@@ -439,7 +460,7 @@ export default function MesEvenementsPage() {
       location: [venue.name, venue.city].filter(Boolean).join(', '),
       city: venue.city,
       region: form.region || venue.city,
-      imageUrl: imagePreview,
+      imageUrl: finalImageUrl,
       color: '#c8a96e',
       accentColor: '#e8d49e',
       category: category === 'Autre' ? (customGenre.trim() || 'Autre') : (category || 'Autre'),
@@ -508,8 +529,10 @@ export default function MesEvenementsPage() {
       } else {
         setSyncErrorBanner(null)
       }
-      // user_events est non-bloquant
-      syncDoc(`user_events/${fbUid}`, { items: updated })
+      // user_events est non-bloquant — on sanitise les vieilles images base64
+      // pour rester sous la limite Firestore de 1 Mo par document
+      const { sanitizeEventsForSync } = await import('../utils/uploadImage')
+      sanitizeEventsForSync(updated).then(items => syncDoc(`user_events/${fbUid}`, { items }))
     } catch {
       setSyncErrorBanner({
         title: 'Erreur réseau',
@@ -527,6 +550,7 @@ export default function MesEvenementsPage() {
       }
     }
 
+    setPublishing(false)
     const wasEditing = !!editingEventId
     setEditingEventId(null)
     if (!wasEditing) {
@@ -654,9 +678,12 @@ export default function MesEvenementsPage() {
     setDeleteConfirm(null)
     setCancellationMessageDraft('')
     // Remove from shared Firestore collection too
-    import('../utils/firestore-sync').then(({ syncDelete, syncDoc }) => {
+    import('../utils/firestore-sync').then(async ({ syncDelete, syncDoc }) => {
       syncDelete(`events/${id}`)
-      if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: updated })
+      if (user?.uid) {
+        const { sanitizeEventsForSync } = await import('../utils/uploadImage')
+        syncDoc(`user_events/${user.uid}`, { items: await sanitizeEventsForSync(updated) })
+      }
     }).catch(() => {})
   }
 
@@ -675,9 +702,13 @@ export default function MesEvenementsPage() {
     // Sync à Firestore — l'event reste dans la collection events/ pour que les billets
     // existants puissent toujours afficher le message d'annulation cross-device
     const cancelledEvent = updated.find(ev => ev.id === id)
-    import('../utils/firestore-sync').then(({ syncDoc }) => {
-      if (cancelledEvent) syncDoc(`events/${id}`, cancelledEvent)
-      if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: updated })
+    import('../utils/firestore-sync').then(async ({ syncDoc }) => {
+      const { sanitizeEventsForSync } = await import('../utils/uploadImage')
+      if (cancelledEvent) {
+        const [clean] = await sanitizeEventsForSync([cancelledEvent])
+        syncDoc(`events/${id}`, clean)
+      }
+      if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: await sanitizeEventsForSync(updated) })
     }).catch(() => {})
   }
 
@@ -1957,8 +1988,14 @@ export default function MesEvenementsPage() {
               ))}
             </div>
 
-            <button style={S.btnGold} onClick={handlePublish}>
-              {editingEventId ? 'Enregistrer les modifications' : 'Publier mon événement'}
+            <button
+              style={{ ...S.btnGold, opacity: publishing ? 0.6 : 1, cursor: publishing ? 'wait' : 'pointer' }}
+              onClick={handlePublish}
+              disabled={publishing}
+            >
+              {publishing
+                ? 'Publication en cours…'
+                : editingEventId ? 'Enregistrer les modifications' : 'Publier mon événement'}
             </button>
           </div>
         )}

@@ -173,6 +173,26 @@ async function finalizeBooking(db, session, meta) {
     finalizedBy: 'webhook',
   }, { merge: true })
 
+  // Registre plat tickets/{ticketCode} — source de vérité anti-fraude pour le scanner.
+  // Seul le webhook (Admin SDK) peut écrire paid:true — les règles Firestore
+  // interdisent aux clients de créer un billet "payé". Un QR falsifié ne
+  // correspondra à aucune entrée de ce registre → rejeté au scan.
+  const batch = db.batch()
+  for (const t of tickets) {
+    batch.set(db.collection('tickets').doc(t.ticketCode), {
+      ticketCode: t.ticketCode,
+      eventId,
+      eventName,
+      place: placeType,
+      userId,
+      paid: true,
+      source: 'stripe-webhook',
+      bookedAt: t.bookedAt,
+      stripeSessionId: session.id,
+    })
+  }
+  await batch.commit()
+
   // Mirror dans user_bookings/{userId}.items pour que syncOnLogin les pousse en local
   if (userId) {
     // arrayUnion sur des objets : ne dédoublonne que sur égalité stricte.

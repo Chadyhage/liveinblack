@@ -139,6 +139,22 @@ export default function PaiementReussiPage() {
           import('../utils/firestore-sync').then(({ syncDoc }) => {
             const myBookings = allBookings.filter(b => b.userId === pending.userId)
             if (myBookings.length) syncDoc(`user_bookings/${pending.userId}`, { items: myBookings })
+            // Registre anti-fraude tickets/{code} — filet si le webhook Stripe
+            // n'a pas encore tourné. Les règles n'autorisent que paid:false côté
+            // client ; le webhook (Admin SDK) écrasera avec paid:true.
+            for (const b of newBookings) {
+              syncDoc(`tickets/${b.ticketCode}`, {
+                ticketCode: b.ticketCode,
+                eventId: b.eventId,
+                eventName: b.eventName,
+                place: b.place,
+                userId: pending.userId,
+                paid: false,
+                source: 'client-postpay',
+                bookedAt: b.bookedAt,
+                stripeSessionId: sessionId,
+              })
+            }
           }).catch(() => {})
         }
 

@@ -192,8 +192,26 @@ export default function ScannerPage() {
     }
   }
 
+  // ── Vérification autoritaire contre le registre Firestore tickets/{code} ──
+  // C'est LA défense anti-fraude : un billet payé n'existe dans ce registre que
+  // s'il a été créé par le webhook Stripe (Admin SDK). Un QR falsifié — même
+  // avec une signature valide — ne correspondra à aucune entrée → rejeté.
+  async function lookupTicketRegistry(code) {
+    try {
+      const { db, USE_REAL_FIREBASE } = await import('../firebase')
+      if (!USE_REAL_FIREBASE) return { error: true }
+      const { doc, getDoc } = await import('firebase/firestore')
+      const snap = await getDoc(doc(db, 'tickets', code))
+      if (!snap.exists()) return { found: false }
+      const d = snap.data()
+      return { found: true, paid: d.paid === true, data: d }
+    } catch {
+      return { error: true }
+    }
+  }
+
   // ── Code processing ──
-  function processCode(rawValue) {
+  async function processCode(rawValue) {
     setCameraActive(false)
     const val = rawValue.trim()
     // Merge in-memory set with persisted set to catch cross-device validations
@@ -213,11 +231,19 @@ export default function ScannerPage() {
       if (!valid || !data) { setResult({ code: val, status: 'invalid' }); return }
       const tc = data.tc
       const isUsed = currentUsed.has(tc)
+      const reg = await lookupTicketRegistry(tc)
+      if (reg.found === false) {
+        // Signature OK mais billet absent du registre = jamais émis par l'app
+        setResult({ code: tc, status: 'invalid', sub: 'Billet introuvable dans le registre — possible falsification' })
+        return
+      }
       setResult({
         code: tc,
         status: isUsed ? 'used' : 'valid',
         ticket: { holder: 'Participant', type: data.pl, event: data.en, date: data.ed, price: `${data.tp}€` },
         preorders: data.po || [],
+        paidConfirmed: reg.found ? reg.paid : undefined,
+        offline: !!reg.error,
       })
       return
     }
@@ -225,7 +251,22 @@ export default function ScannerPage() {
     // Raw ticket code (LIB-XXX-XXXXXX)
     const clean = val.toUpperCase()
 
-    // Check real bookings in localStorage
+    // Registre Firestore d'abord — fonctionne cross-device (le billet du client
+    // n'est jamais dans le localStorage du scanner)
+    const reg = await lookupTicketRegistry(clean)
+    if (reg.found) {
+      const isUsed = currentUsed.has(clean)
+      setResult({
+        code: clean,
+        status: isUsed ? 'used' : 'valid',
+        ticket: { holder: 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—', date: '', price: '' },
+        preorders: [],
+        paidConfirmed: reg.paid,
+      })
+      return
+    }
+
+    // Check real bookings in localStorage (fallback hors-ligne / legacy)
     try {
       const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
       const booking = bookings.find(b => b.ticketCode === clean)
@@ -236,6 +277,7 @@ export default function ScannerPage() {
           status: isUsed ? 'used' : 'valid',
           ticket: { holder: booking.userName || 'Participant', type: booking.place, event: booking.eventName, date: booking.eventDate, price: `${booking.totalPrice}€` },
           preorders: (booking.preorderSummary || []).map(i => ({ n: i.name, e: i.emoji || '', q: (booking.preorderItems || {})[i.name] || 0, p: i.price })),
+          offline: !!reg.error,
         })
         return
       }
@@ -509,7 +551,16 @@ export default function ScannerPage() {
                       <p style={{ fontFamily: FONTS.mono, fontSize: 20, fontWeight: 700, color: cfg.iconColor, margin: 0, letterSpacing: '0.06em' }}>
                         {cfg.label}
                       </p>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '3px 0 0' }}>{cfg.sub}</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '3px 0 0' }}>{result.sub || cfg.sub}</p>
+                      {result.paidConfirmed === true && (
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ PAIEMENT CONFIRMÉ</p>
+                      )}
+                      {result.paidConfirmed === false && (
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, margin: '3px 0 0', letterSpacing: '0.1em' }}>⚠ PAIEMENT NON CONFIRMÉ (gratuit ou en attente)</p>
+                      )}
+                      {result.offline && (
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.muted, margin: '3px 0 0', letterSpacing: '0.1em' }}>VÉRIFICATION HORS-LIGNE — registre injoignable</p>
+                      )}
                     </div>
                   </div>
 

@@ -543,6 +543,20 @@ export default function EventDetailPage() {
       import('../utils/firestore-sync').then(({ syncDoc }) => {
         const myBookings = allBookings.filter(b => b.userId === uid)
         if (myBookings.length) syncDoc(`user_bookings/${uid}`, { items: myBookings })
+        // Registre anti-fraude tickets/{code} — le scanner vérifie l'existence
+        // réelle du billet ici (les règles n'autorisent que paid:false côté client)
+        for (const b of newBookings) {
+          syncDoc(`tickets/${b.ticketCode}`, {
+            ticketCode: b.ticketCode,
+            eventId: b.eventId,
+            eventName: b.eventName,
+            place: b.place,
+            userId: uid,
+            paid: false,
+            source: 'free',
+            bookedAt: b.bookedAt,
+          })
+        }
       }).catch(() => {})
 
       setBookedTickets(newTickets)

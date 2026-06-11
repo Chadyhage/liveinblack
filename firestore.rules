@@ -71,24 +71,65 @@ service cloud.firestore {
       allow read, write: if isOwner(uid) || isAgent();
     }
     // ── Conversations & messages ───────────────────────────────────────────────
+    // Membre = présent dans participants (conv directe) ou participantIds (groupe).
+    // Les requêtes clientes utilisent déjà array-contains sur ces champs,
+    // donc ces règles sont compatibles avec les listeners existants.
+    function isMemberOf(data) {
+      return request.auth.uid in data.get('participants', [])
+          || request.auth.uid in data.get('participantIds', []);
+    }
+
     match /conversations/{id} {
-      allow read, write: if isSignedIn();
+      allow read:   if isSignedIn() && (isMemberOf(resource.data) || isAgent());
+      allow create: if isSignedIn() && isMemberOf(request.resource.data);
+      allow update, delete: if isSignedIn() && (isMemberOf(resource.data) || isAgent());
     }
-    match /conv_messages/{id} {
-      allow read, write: if isSignedIn();
+
+    // conv_messages/{convId} : l'ID du doc = l'ID de la conversation.
+    // On vérifie l'appartenance via le doc conversation. Si la conversation
+    // n'existe pas/plus (création en cours ou suppression), on tolère —
+    // nécessaire car les écritures conv/messages ne sont pas transactionnelles.
+    match /conv_messages/{convId} {
+      allow read, write: if isSignedIn() && (
+        !exists(/databases/$(database)/documents/conversations/$(convId)) ||
+        isMemberOf(get(/databases/$(database)/documents/conversations/$(convId)).data) ||
+        isAgent()
+      );
     }
+
     match /friend_requests/{id} {
-      allow read, write: if isSignedIn();
+      allow read:   if isSignedIn() && (resource.data.toId == request.auth.uid || resource.data.fromId == request.auth.uid || isAgent());
+      allow create: if isSignedIn() && request.resource.data.fromId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (resource.data.toId == request.auth.uid || resource.data.fromId == request.auth.uid || isAgent());
     }
+
     match /group_bookings/{id} {
-      allow read, write: if isSignedIn();
+      allow read:   if isSignedIn() && (isMemberOf(resource.data) || isAgent());
+      allow create: if isSignedIn() && isMemberOf(request.resource.data);
+      allow update, delete: if isSignedIn() && (isMemberOf(resource.data) || isAgent());
     }
+
     match /service_orders/{id} {
-      allow read, write: if isSignedIn();
+      allow read:   if isSignedIn() && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAgent());
+      allow create: if isSignedIn() && (request.resource.data.buyerId == request.auth.uid || request.resource.data.sellerId == request.auth.uid);
+      allow update, delete: if isSignedIn() && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAgent());
     }
+
     // ── Photos partagées dans les conversations (fallback base64) ──────────────
+    // IDs aléatoires non devinables ; pas de champ convId exploitable en règle.
     match /conv_photos/{id} {
       allow read, write: if isSignedIn();
+    }
+
+    // ── Registre anti-fraude des billets ───────────────────────────────────────
+    // Source de vérité du ScannerPage. Seul le webhook Stripe (Admin SDK,
+    // qui contourne ces règles) peut écrire paid:true. Côté client :
+    // création uniquement avec paid:false (billets gratuits / en attente),
+    // jamais de modification ni suppression.
+    match /tickets/{code} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.paid == false;
+      allow update, delete: if isAgent();
     }
     // ── Statut de lecture cross-device ────────────────────────────────────────
     match /user_read_status/{uid} {
