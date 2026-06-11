@@ -116,6 +116,11 @@ export default function EventsPage() {
   // Filter: show public events + unlocked private events
   const visibleEvents = allEvents.filter(e => !e.isPrivate || unlockedEvents.includes(String(e.id)))
 
+  // Compteur d'events réellement disponibles (mêmes critères de visibilité
+  // que la liste, hors recherche/catégorie) — sinon on affiche « 2 soirées
+  // disponibles » au-dessus d'une liste vide quand les events sont passés
+  const availableCount = visibleEvents.filter(e => isEventVisible(e)).length
+
   const filtered = visibleEvents.filter((e) => {
     const q = search.toLowerCase()
     const matchSearch =
@@ -226,7 +231,7 @@ export default function EventsPage() {
               Événements
             </h2>
             <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '6px 0 0' }}>
-              {visibleEvents.length} soirées disponibles
+              {availableCount} soirée{availableCount > 1 ? 's' : ''} disponible{availableCount > 1 ? 's' : ''}
             </p>
           </div>
           {!shareConvId && (
