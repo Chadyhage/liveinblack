@@ -147,6 +147,12 @@ function usePersistedUser() {
             let current = null
             try { current = JSON.parse(localStorage.getItem('lib_user') || 'null') } catch {}
             if (!current) return
+            // GARDE ANTI-RACE : si la session a changé de compte depuis l'abonnement
+            // (connexion à un 2e compte), ce listener écoute l'ANCIEN uid. Sans ce
+            // check, un dernier snapshot de l'ancien compte (déclenché par ex. par
+            // le heartbeat de présence) écrase la nouvelle session avec le profil
+            // de l'ancien compte. Bug historique « mon compte a changé tout seul ».
+            if (current.uid !== uid) return
             // Mettre à jour si le rôle ou le statut a changé
             const roleChanged   = remote.role   && remote.role   !== current.role
             const statusChanged = remote.status && remote.status !== current.status

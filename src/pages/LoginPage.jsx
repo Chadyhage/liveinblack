@@ -59,9 +59,10 @@ async function doEmailLogin(email, password, role = null) {
     // their account is verified by the admin validation process instead.
     // So skip the emailVerified check entirely for these roles (at any status).
     const isOrgOrPrest = profile.role === 'organisateur' || profile.role === 'prestataire'
-    if (!cred.user.emailVerified && !isSuperAdmin && !isPendingOrDraft && !isOrgOrPrest) {
-      throw { code: 'auth/email-not-verified' }
-    }
+    // Email non vérifié ≠ blocage : la délivrabilité des emails Firebase par
+    // défaut est trop aléatoire pour conditionner l'accès. On laisse entrer
+    // et le profil garde emailVerified:false (rappel possible dans l'app).
+    void isOrgOrPrest
     if (!isSuperAdmin) {
       // pending / draft → allow login, OnboardingGuard handles redirect to /mon-dossier or /inscription
       if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
@@ -78,8 +79,10 @@ async function doEmailLogin(email, password, role = null) {
       setUserDoc(doc(db, 'users', cred.user.uid), agentPatch, { merge: true }).catch(() => {})
       return { ...profile, ...agentPatch, uid: cred.user.uid }
     }
-    // Email was verified by Firebase — persist that flag so phone is now "locked"
-    if (!profile.emailVerified) {
+    // Email réellement vérifié côté Firebase Auth → persister le flag
+    // (uniquement si Firebase le confirme — les non-vérifiés entrent quand
+    // même mais gardent emailVerified:false)
+    if (!profile.emailVerified && cred.user.emailVerified) {
       const { setDoc: setUserDoc } = await import('firebase/firestore')
       await setUserDoc(doc(db, 'users', cred.user.uid), { emailVerified: true }, { merge: true })
       return { ...profile, emailVerified: true }
@@ -221,10 +224,17 @@ async function doEmailRegister(data) {
   if (isDedicated) {
     const { createApplication } = await import('../utils/applications')
     createApplication(cred.user.uid, email, name, baseRole)
-    return isSuperAdmin ? userObj : { ...userObj, _pendingOrgOnboarding: baseRole, _needsEmailVerification: true }
+    // Pas de mur de vérification email : direction l'onboarding directement
+    // (le compte sera validé manuellement par l'admin de toute façon)
+    return isSuperAdmin ? userObj : { ...userObj, _pendingOrgOnboarding: baseRole }
   }
 
-  return isSuperAdmin ? userObj : { ...userObj, _needsEmailVerification: true }
+  // Clients : connexion immédiate après inscription. L'email de vérification
+  // est envoyé (ci-dessus) mais ne BLOQUE plus l'accès — la délivrabilité des
+  // emails Firebase par défaut est trop aléatoire (testé : jamais reçu), et
+  // bloquer l'inscription dessus tue la conversion. Les organisateurs et
+  // prestataires passent par la validation admin de toute façon.
+  return userObj
 }
 
 async function doGoogleLogin() {

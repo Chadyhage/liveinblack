@@ -243,6 +243,7 @@ export default function ScannerPage() {
         ticket: { holder: 'Participant', type: data.pl, event: data.en, date: data.ed, price: `${data.tp}€` },
         preorders: data.po || [],
         paidConfirmed: reg.found ? reg.paid : undefined,
+        freeTicket: reg.found ? reg.data?.source === 'free' : undefined,
         offline: !!reg.error,
       })
       return
@@ -262,6 +263,7 @@ export default function ScannerPage() {
         ticket: { holder: 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—', date: '', price: '' },
         preorders: [],
         paidConfirmed: reg.paid,
+        freeTicket: reg.data?.source === 'free',
       })
       return
     }
@@ -555,8 +557,11 @@ export default function ScannerPage() {
                       {result.paidConfirmed === true && (
                         <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ PAIEMENT CONFIRMÉ</p>
                       )}
-                      {result.paidConfirmed === false && (
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, margin: '3px 0 0', letterSpacing: '0.1em' }}>⚠ PAIEMENT NON CONFIRMÉ (gratuit ou en attente)</p>
+                      {result.paidConfirmed === false && result.freeTicket && (
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ BILLET GRATUIT — ENTRÉE LIBRE</p>
+                      )}
+                      {result.paidConfirmed === false && !result.freeTicket && (
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, margin: '3px 0 0', letterSpacing: '0.1em' }}>⚠ PAIEMENT NON CONFIRMÉ (en attente Stripe)</p>
                       )}
                       {result.offline && (
                         <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.muted, margin: '3px 0 0', letterSpacing: '0.1em' }}>VÉRIFICATION HORS-LIGNE — registre injoignable</p>

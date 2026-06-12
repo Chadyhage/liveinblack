@@ -204,7 +204,9 @@ export async function syncOnLogin(uid) {
     if (userProfile) {
       try {
         const current = JSON.parse(localStorage.getItem('lib_user') || 'null')
-        if (current) {
+        // Garde anti-race : ne merger que si la session active correspond toujours
+        // au uid demandé (sinon un sync en vol pollue la session d'un autre compte)
+        if (current && current.uid === uid) {
           const safeMeta = {}
           if (userProfile.avatar != null) safeMeta.avatar = userProfile.avatar
           if (userProfile.username) safeMeta.username = userProfile.username

@@ -984,7 +984,9 @@ export default function EventDetailPage() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
                           <span style={S.muted}>Paiement</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8', letterSpacing: '0.1em' }}>FICTIF — STRIPE À VENIR</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8', letterSpacing: '0.1em' }}>
+                            {grandTotal > 0 ? 'SÉCURISÉ VIA STRIPE' : 'GRATUIT'}
+                          </span>
                         </div>
                       </div>
 
