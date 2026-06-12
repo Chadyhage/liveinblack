@@ -133,26 +133,66 @@ async function finalizeBooking(db, session, meta) {
   const eventName = meta.eventName || ''
   const placeType = meta.placeType || ''
 
-  // Génère un billet par qty — codes 6 chars alphanum compatibles `LIB-XXX-XXXXXX`
-  const tickets = []
-  for (let i = 0; i < qty; i++) {
-    const code = generateTicketCode()
-    const ticketCode = `LIB-${String(eventId).padStart(3, '0')}-${code}`
-    tickets.push({
-      id: code,
-      ticketCode,
+  // ── ANTI-DUPLICATION : si le client (page /paiement-reussi) a déjà créé ses
+  // billets pour cette session Stripe, on ADOPTE ses codes : on les confirme
+  // (paid:true) au lieu d'en minter d'autres. Sinon 1 achat = 2 jeux de billets.
+  const existing_q = await db.collection('tickets')
+    .where('stripeSessionId', '==', session.id)
+    .get()
+  const clientTickets = existing_q.docs
+    .map(d => d.data())
+    .filter(t => t.source === 'client-postpay')
+
+  let tickets
+  let clientAlreadyFinalized = false
+
+  if (clientTickets.length) {
+    clientAlreadyFinalized = true
+    tickets = clientTickets.map(t => ({
+      id: t.ticketCode.split('-').pop(),
+      ticketCode: t.ticketCode,
       eventId,
       eventName,
-      place: placeType,
-      bookedAt: new Date().toISOString(),
+      place: t.place || placeType,
+      bookedAt: t.bookedAt || new Date().toISOString(),
       paid: true,
       paymentMethod: 'stripe',
       stripeSessionId: session.id,
       userId,
-      // Note : pas de `token` signé ici — la page /paiement-reussi génère le token côté
-      // client à partir de la signature actuelle. Quand le fix #10 (signature serveur)
-      // sera en place, le token sera généré ici directement.
-    })
+    }))
+    // Confirmer les billets client dans le registre anti-fraude
+    const confirmBatch = db.batch()
+    for (const t of clientTickets) {
+      confirmBatch.set(db.collection('tickets').doc(t.ticketCode), {
+        paid: true,
+        source: 'stripe-webhook',
+        confirmedAt: new Date().toISOString(),
+      }, { merge: true })
+    }
+    await confirmBatch.commit()
+    console.log('[webhook] billets client adoptés et confirmés:', tickets.map(t => t.ticketCode))
+  } else {
+    // Client jamais revenu (onglet fermé) — on mint les billets nous-mêmes
+    tickets = []
+    for (let i = 0; i < qty; i++) {
+      const code = generateTicketCode()
+      const ticketCode = `LIB-${String(eventId).padStart(3, '0')}-${code}`
+      tickets.push({
+        id: code,
+        ticketCode,
+        eventId,
+        eventName,
+        place: placeType,
+        bookedAt: new Date().toISOString(),
+        paid: true,
+        paymentMethod: 'stripe',
+        stripeSessionId: session.id,
+        userId,
+        // Note : pas de `token` signé ici — la page /paiement-reussi génère le token côté
+        // client à partir de la signature actuelle. La vraie validation au scan passe par
+        // ce registre tickets/{code}, pas par le token.
+      })
+    }
   }
 
   await ref.set({
@@ -173,42 +213,47 @@ async function finalizeBooking(db, session, meta) {
     finalizedBy: 'webhook',
   }, { merge: true })
 
-  // Registre plat tickets/{ticketCode} — source de vérité anti-fraude pour le scanner.
-  // Seul le webhook (Admin SDK) peut écrire paid:true — les règles Firestore
-  // interdisent aux clients de créer un billet "payé". Un QR falsifié ne
-  // correspondra à aucune entrée de ce registre → rejeté au scan.
-  const batch = db.batch()
-  for (const t of tickets) {
-    batch.set(db.collection('tickets').doc(t.ticketCode), {
-      ticketCode: t.ticketCode,
-      eventId,
-      eventName,
-      place: placeType,
-      userId,
-      paid: true,
-      source: 'stripe-webhook',
-      bookedAt: t.bookedAt,
-      stripeSessionId: session.id,
-    })
+  // Les étapes suivantes ne concernent que le cas « client jamais revenu » :
+  // si le client a déjà finalisé, il a déjà créé le registre (confirmé plus
+  // haut), syncé user_bookings et attribué les points — refaire = doublons.
+  if (!clientAlreadyFinalized) {
+    // Registre plat tickets/{ticketCode} — source de vérité anti-fraude pour le scanner.
+    // Seul le webhook (Admin SDK) peut écrire paid:true — les règles Firestore
+    // interdisent aux clients de créer un billet "payé". Un QR falsifié ne
+    // correspondra à aucune entrée de ce registre → rejeté au scan.
+    const batch = db.batch()
+    for (const t of tickets) {
+      batch.set(db.collection('tickets').doc(t.ticketCode), {
+        ticketCode: t.ticketCode,
+        eventId,
+        eventName,
+        place: placeType,
+        userId,
+        paid: true,
+        source: 'stripe-webhook',
+        bookedAt: t.bookedAt,
+        stripeSessionId: session.id,
+      })
+    }
+    await batch.commit()
+
+    // Mirror dans user_bookings/{userId}.items pour que syncOnLogin les pousse en local
+    if (userId) {
+      // arrayUnion sur des objets : ne dédoublonne que sur égalité stricte.
+      // Comme on n'écrit qu'une fois (idempotence ci-dessus), pas de doublon possible.
+      await db.collection('user_bookings').doc(userId).set({
+        items: FieldValue.arrayUnion(...tickets),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+
+      // Points fidélité : 1 point par billet
+      await db.collection('users').doc(userId).set({
+        points: FieldValue.increment(qty),
+      }, { merge: true })
+    }
   }
-  await batch.commit()
 
-  // Mirror dans user_bookings/{userId}.items pour que syncOnLogin les pousse en local
-  if (userId) {
-    // arrayUnion sur des objets : ne dédoublonne que sur égalité stricte.
-    // Comme on n'écrit qu'une fois (idempotence ci-dessus), pas de doublon possible.
-    await db.collection('user_bookings').doc(userId).set({
-      items: FieldValue.arrayUnion(...tickets),
-      updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true })
-
-    // Points fidélité : 1 point par billet
-    await db.collection('users').doc(userId).set({
-      points: FieldValue.increment(qty),
-    }, { merge: true })
-  }
-
-  console.log('[webhook] booking finalized:', bookingId, '— tickets:', tickets.length)
+  console.log('[webhook] booking finalized:', bookingId, '— tickets:', tickets.length, clientAlreadyFinalized ? '(codes client adoptés)' : '(codes mintés)')
 }
 
 // ── Boost ────────────────────────────────────────────────────────────────────

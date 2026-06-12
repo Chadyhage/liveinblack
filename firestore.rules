@@ -121,6 +121,15 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    // ── Réservations finalisées par le webhook Stripe ──────────────────────────
+    // Écrites uniquement par le webhook (Admin SDK). Le client lit la sienne
+    // sur /paiement-reussi pour ADOPTER les billets du serveur au lieu d'en
+    // générer en double.
+    match /bookings/{id} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAgent());
+      allow write: if false;
+    }
+
     // ── Registre anti-fraude des billets ───────────────────────────────────────
     // Source de vérité du ScannerPage. Seul le webhook Stripe (Admin SDK,
     // qui contourne ces règles) peut écrire paid:true. Côté client :

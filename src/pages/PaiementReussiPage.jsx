@@ -81,6 +81,71 @@ export default function PaiementReussiPage() {
         return
       }
 
+      // 2.5) ANTI-DUPLICATION : si le webhook Stripe a déjà finalisé cette
+      // réservation côté serveur (bookings/{bookingId}), on ADOPTE ses billets
+      // au lieu d'en générer d'autres — sinon 1 achat = 2 jeux de billets.
+      // Le webhook a aussi déjà attribué les points dans ce scénario.
+      try {
+        const { db } = await import('../firebase')
+        const { doc, getDoc } = await import('firebase/firestore')
+        // 2 tentatives : le webhook peut finir 1-2 s après notre arrivée
+        let snap = await getDoc(doc(db, 'bookings', bookingId))
+        if (!snap.exists()) {
+          await new Promise(r => setTimeout(r, 1800))
+          if (cancelled) return
+          snap = await getDoc(doc(db, 'bookings', bookingId))
+        }
+        if (!cancelled && snap.exists() && snap.data().paid === true && (snap.data().tickets || []).length) {
+          const serverTickets = snap.data().tickets
+          const adopted = []
+          const adoptedBookings = []
+          for (const st of serverTickets) {
+            const booking = {
+              id: st.id,
+              ticketCode: st.ticketCode,
+              eventId: pending.eventId,
+              eventName: pending.eventName,
+              eventDate: pending.eventDate,
+              eventDateISO: pending.eventDateISO,
+              eventStartTime: pending.eventStartTime,
+              eventEndTime: pending.eventEndTime,
+              place: pending.placeType,
+              placePrice: pending.unitPriceEUR,
+              preorderItems: {},
+              preorderSummary: [],
+              preorderShowSelections: {},
+              totalPrice: pending.unitPriceEUR,
+              bookedAt: st.bookedAt || new Date().toISOString(),
+              userId: pending.userId,
+              userName: pending.userName || null,
+              userEmail: pending.userEmail || null,
+              paid: true,
+              paymentMethod: 'stripe',
+              stripeSessionId: sessionId,
+            }
+            const token = generateTicketToken(booking)
+            booking.token = token
+            adopted.push({ ticketCode: st.ticketCode, ticketToken: token, id: st.id })
+            adoptedBookings.push(booking)
+          }
+          const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+            .filter(b => b.stripeSessionId !== sessionId) // au cas où
+          const all = [...prev, ...adoptedBookings]
+          localStorage.setItem('lib_bookings', JSON.stringify(all))
+          if (pending.userId) {
+            import('../utils/firestore-sync').then(({ syncDoc }) => {
+              const mine = all.filter(b => b.userId === pending.userId)
+              if (mine.length) syncDoc(`user_bookings/${pending.userId}`, { items: mine })
+            }).catch(() => {})
+          }
+          try { localStorage.removeItem(PENDING_KEY(bookingId)) } catch {}
+          setEventName(pending.eventName || '')
+          setTickets(adopted)
+          setState('success')
+          return
+        }
+      } catch {} // pas de doc / pas de droits → flux normal ci-dessous
+
       // 3) Générer les billets définitifs (1 par billet acheté)
       const newTickets = []
       const newBookings = []
