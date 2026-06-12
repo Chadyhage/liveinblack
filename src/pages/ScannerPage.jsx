@@ -198,8 +198,11 @@ export default function ScannerPage() {
   // avec une signature valide — ne correspondra à aucune entrée → rejeté.
   async function lookupTicketRegistry(code) {
     try {
-      const { db, USE_REAL_FIREBASE } = await import('../firebase')
+      const { db, auth, USE_REAL_FIREBASE } = await import('../firebase')
       if (!USE_REAL_FIREBASE) return { error: true }
+      // Session Firebase expirée → les règles refuseraient la lecture et le
+      // billet paraîtrait faussement invalide. On le signale explicitement.
+      if (!auth?.currentUser) return { error: true, authMissing: true }
       const { doc, getDoc } = await import('firebase/firestore')
       const snap = await getDoc(doc(db, 'tickets', code))
       if (!snap.exists()) return { found: false }
@@ -232,6 +235,10 @@ export default function ScannerPage() {
       const tc = data.tc
       const isUsed = currentUsed.has(tc)
       const reg = await lookupTicketRegistry(tc)
+      if (reg.authMissing) {
+        setResult({ code: tc, status: 'invalid', sub: 'Session expirée — déconnecte-toi et reconnecte-toi pour scanner' })
+        return
+      }
       if (reg.found === false) {
         // Signature OK mais billet absent du registre = jamais émis par l'app
         setResult({ code: tc, status: 'invalid', sub: 'Billet introuvable dans le registre — possible falsification' })
@@ -253,8 +260,18 @@ export default function ScannerPage() {
     const clean = val.toUpperCase()
 
     // Registre Firestore d'abord — fonctionne cross-device (le billet du client
-    // n'est jamais dans le localStorage du scanner)
-    const reg = await lookupTicketRegistry(clean)
+    // n'est jamais dans le localStorage du scanner).
+    // Les IDs de documents sont sensibles à la casse : on tente le code tel
+    // que saisi PUIS la version majuscules (saisie manuelle approximative).
+    let reg = await lookupTicketRegistry(val)
+    if (!reg.found && !reg.error && clean !== val) reg = await lookupTicketRegistry(clean)
+
+    // Session expirée : impossible de vérifier — le dire clairement plutôt
+    // que d'afficher un faux « invalide » au videur
+    if (reg.authMissing) {
+      setResult({ code: clean, status: 'invalid', sub: 'Session expirée — déconnecte-toi et reconnecte-toi pour scanner' })
+      return
+    }
     if (reg.found) {
       const isUsed = currentUsed.has(clean)
       setResult({
@@ -504,7 +521,7 @@ export default function ScannerPage() {
                       style={{ ...inputStyle, flex: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }}
                       placeholder="LIB-001-XXXXXX"
                       value={manualCode}
-                      onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                      onChange={(e) => setManualCode(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && manualCode && processCode(manualCode)}
                     />
                     <button
