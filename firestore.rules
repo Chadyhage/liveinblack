@@ -157,6 +157,15 @@ service cloud.firestore {
       allow write: if isOwner(uid) || isAgent();
     }
 
+    // Collection globale des boosts actifs — source de vérité partagée du Top 3.
+    // Lecture PUBLIQUE (le Top 3 doit s'afficher pour les visiteurs non connectés).
+    // Écriture réservée au webhook Stripe (Admin SDK, contourne ces règles) :
+    // un client ne doit jamais pouvoir s'auto-attribuer un slot Top 3 sans payer.
+    match /boosts/{id} {
+      allow read:  if true;
+      allow write: if isAgent();
+    }
+
     // ── Billets scannés ────────────────────────────────────────────────────────
     match /used_tickets/{uid} {
       allow read, write: if isOwner(uid) || isAgent();

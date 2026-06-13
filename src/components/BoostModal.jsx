@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { isBoostSlotTaken } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
@@ -118,6 +118,17 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
   const [selectedPlan, setSelectedPlan] = useState(null) // { position, tierIdx }
   const [step, setStep] = useState('pick') // 'pick' | 'pay' | 'done'
   const [paying, setPaying] = useState(false)
+
+  // Boosts globaux (cross-user) — pour savoir quels slots sont DÉJÀ pris par
+  // d'autres organisateurs dans cette région, pas seulement par soi.
+  const [globalBoosts, setGlobalBoosts] = useState([])
+  useEffect(() => {
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenBoosts }) => {
+      unsub = listenBoosts(setGlobalBoosts)
+    }).catch(() => {})
+    return () => unsub()
+  }, [])
 
   if (!event) return null
 
@@ -330,7 +341,7 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
               </p>
 
               {BOOST_PLANS.map(plan => {
-                const slotTaken = isBoostSlotTaken(plan.position, event.region || '', event.id)
+                const slotTaken = isBoostSlotTaken(plan.position, event.region || '', event.id, globalBoosts)
                 return (
                 <div key={plan.position}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: slotTaken ? 6 : 10 }}>

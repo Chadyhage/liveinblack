@@ -99,27 +99,36 @@ export function saveBoost(eventId, position, days, price, region = '', userId = 
 }
 
 // Active boosts for a specific region (region-aware Top 3)
-export function getActiveBoostsByRegion(regionName = '') {
-  const active = getActiveBoosts()
-  if (!regionName) return active
+// boostsOverride : liste de boosts déjà chargée (ex : collection globale `boosts`
+// streamée par listenBoosts). Si absent → fallback sur lib_boosts (localStorage,
+// = uniquement les boosts du user courant — insuffisant pour un visiteur).
+export function getActiveBoostsByRegion(regionName = '', boostsOverride = null) {
+  const now = Date.now()
+  const active = Array.isArray(boostsOverride)
+    ? boostsOverride.filter(b => {
+        try { return new Date(b.expiresAt).getTime() > now } catch { return false }
+      })
+    : getActiveBoosts()
+  if (!regionName || regionName === 'Toutes') return active
   // A boost matches if its region equals the viewer's region
   // (legacy boosts with no region field are shown everywhere for backward compat)
   return active.filter(b => !b.region || b.region === regionName)
 }
 
 // Check if a given Top-N slot is already taken in a given region
-export function isBoostSlotTaken(position, region = '', excludeEventId = null) {
+// boostsOverride : liste globale (cross-user) ; sinon fallback localStorage
+export function isBoostSlotTaken(position, region = '', excludeEventId = null, boostsOverride = null) {
   try {
-    const active = getActiveBoostsByRegion(region)
-    return active.some(b => b.position === position && b.eventId !== excludeEventId)
+    const active = getActiveBoostsByRegion(region, boostsOverride)
+    return active.some(b => Number(b.position) === Number(position) && String(b.eventId) !== String(excludeEventId))
   } catch { return false }
 }
 
 // Get the event name occupying a slot in a given region
-export function getBoostSlotOccupant(position, region = '', allEvents = []) {
+export function getBoostSlotOccupant(position, region = '', allEvents = [], boostsOverride = null) {
   try {
-    const active = getActiveBoostsByRegion(region)
-    const b = active.find(b => b.position === position)
+    const active = getActiveBoostsByRegion(region, boostsOverride)
+    const b = active.find(b => Number(b.position) === Number(position))
     if (!b) return null
     const ev = allEvents.find(e => e.id === b.eventId)
     return ev ? ev.name : 'un autre événement'

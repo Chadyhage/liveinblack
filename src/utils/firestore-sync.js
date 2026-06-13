@@ -29,6 +29,25 @@ export function listenUserEvents(uid, callback) {
   } catch { return () => {} }
 }
 
+// Listen to the GLOBAL boosts collection (boosts/{boostId} — écrits par le webhook
+// Stripe). C'est la source de vérité partagée du Top 3 : un boost acheté par un
+// organisateur doit apparaître dans le Top 3 de TOUS les visiteurs de sa région,
+// pas seulement dans le navigateur de l'acheteur (lib_boosts local ne contient
+// que ses propres boosts). Filtre les boosts expirés côté client.
+export function listenBoosts(callback) {
+  try {
+    return onSnapshot(collection(db, 'boosts'), snap => {
+      const now = Date.now()
+      const boosts = snap.docs
+        .map(d => ({ ...d.data(), id: d.data().id || d.id }))
+        .filter(b => {
+          try { return new Date(b.expiresAt).getTime() > now } catch { return false }
+        })
+      callback(boosts)
+    }, () => {})
+  } catch { return () => {} }
+}
+
 export function listenDoc(path, callback) {
   try {
     const ref = doc(db, ...path.split('/'))

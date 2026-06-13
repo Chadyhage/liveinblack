@@ -228,6 +228,18 @@ export default function HomePage() {
     return () => unsub()
   }, [])
 
+  // Boosts globaux (collection partagée `boosts`) — pour que le Top 3 boosté
+  // s'affiche pour TOUS les visiteurs, pas seulement l'acheteur. lib_boosts local
+  // ne contient que les boosts du user courant.
+  const [globalBoosts, setGlobalBoosts] = useState([])
+  useEffect(() => {
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenBoosts }) => {
+      unsub = listenBoosts(setGlobalBoosts)
+    }).catch(() => {})
+    return () => unsub()
+  }, [])
+
   // Dédupliquer (statiques vs créés ayant le même id)
   const allEvents = (() => {
     const seen = new Set()
@@ -252,8 +264,9 @@ export default function HomePage() {
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 10) // plus de candidats pour le fallback
 
-  // Boosts filtrés par la région du visiteur
-  const activeBoosts = getActiveBoostsByRegion(regionName)
+  // Boosts filtrés par la région du visiteur — source = collection globale
+  // (cross-device/cross-user), avec fallback localStorage si Firestore indispo
+  const activeBoosts = getActiveBoostsByRegion(regionName, globalBoosts)
 
   const boostedByPosition = {}
   activeBoosts.forEach(b => {
