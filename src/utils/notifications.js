@@ -21,9 +21,27 @@ export function createNotification(uid, type, title, body, data = {}) {
     const updated = [notif, ...all].slice(0, 50)
     localStorage.setItem(KEY(uid), JSON.stringify(updated))
 
-    // Sync Firestore fire-and-forget
-    import('./firestore-sync').then(({ syncDoc }) => {
-      syncDoc(`notifications/${uid}`, { items: updated, updatedAt: Date.now() })
+    // Sync Firestore — read-merge-write OBLIGATOIRE ici car createNotification
+    // est souvent appelé CROSS-USER (l'admin notifie le candidat). Le cache
+    // local de l'admin ne contient pas les notifs du destinataire ; un simple
+    // overwrite effacerait ses notifications existantes. On lit donc Firestore
+    // d'abord et on fusionne (dédup par id, cap 50, tri par date).
+    import('../firebase').then(async ({ USE_REAL_FIREBASE, db }) => {
+      if (!USE_REAL_FIREBASE) return
+      const { doc, getDoc, setDoc } = await import('firebase/firestore')
+      let remoteItems = []
+      try {
+        const snap = await getDoc(doc(db, 'notifications', uid))
+        if (snap.exists()) remoteItems = snap.data().items || []
+      } catch {}
+      const byId = new Map()
+      for (const n of [notif, ...updated, ...remoteItems]) {
+        if (n && n.id && !byId.has(n.id)) byId.set(n.id, n)
+      }
+      const merged = [...byId.values()]
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        .slice(0, 50)
+      await setDoc(doc(db, 'notifications', uid), { items: merged, updatedAt: Date.now() }, { merge: true })
     }).catch(() => {})
 
     return notif

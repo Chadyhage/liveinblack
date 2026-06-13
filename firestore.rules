@@ -171,6 +171,13 @@ service cloud.firestore {
       allow read, write: if isOwner(uid) || isAgent();
     }
 
+    // ── Notifications in-app (cross-device) ─────────────────────────────────────
+    // Sans cette règle, la collection était en deny par défaut → la sync
+    // cross-device des notifications échouait silencieusement.
+    match /notifications/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+
     // ── Signalements ──────────────────────────────────────────────────────────
     match /reports/{id} {
       allow read:  if isAgent();

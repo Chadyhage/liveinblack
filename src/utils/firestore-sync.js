@@ -360,6 +360,12 @@ export async function syncOnLogin(uid) {
     const usedTix = await loadDoc(`used_tickets/${uid}`)
     if (usedTix?.items) localStorage.setItem('lib_used_tickets', JSON.stringify(usedTix.items))
 
+    // ── 13b. Notifications in-app (cross-device) ──
+    try {
+      const { syncNotificationsFromFirestore } = await import('./notifications')
+      await syncNotificationsFromFirestore(uid)
+    } catch {}
+
     // ── 14. Reports (only reports submitted by this user) ──
     const reports = await loadCollection('reports', [where('fromId', '==', uid)])
     if (reports.length) localStorage.setItem('lib_reports', JSON.stringify(reports))
