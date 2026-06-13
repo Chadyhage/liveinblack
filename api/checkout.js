@@ -30,6 +30,8 @@ export default async function handler(req, res) {
       userId,
       userEmail,
       bookingId,
+      groupBookingId,
+      isGroupShare,
     } = req.body || {}
 
     if (!eventId || !eventName || !placeType || !bookingId) {
@@ -92,6 +94,10 @@ export default async function handler(req, res) {
         qty: String(qty),
         userId: String(userId || ''),
         bookingId: String(bookingId),
+        // Part de groupe : permet au webhook de marquer la part payée même si
+        // le client ferme l'onglet avant de revenir sur /paiement-reussi
+        ...(groupBookingId ? { groupBookingId: String(groupBookingId) } : {}),
+        ...(isGroupShare ? { isGroupShare: '1' } : {}),
       },
       // Stripe collecte aussi le nom complet du payeur
       billing_address_collection: 'auto',

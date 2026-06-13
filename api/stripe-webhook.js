@@ -253,6 +253,21 @@ async function finalizeBooking(db, session, meta) {
     }
   }
 
+  // ── Part de réservation de groupe ──
+  // Marque la part de l'utilisateur comme payée dans group_bookings/{id}.
+  // Filet serveur : si le payeur ferme l'onglet avant de revenir sur
+  // /paiement-reussi, la part est quand même créditée. Idempotent (merge).
+  if (meta.groupBookingId && userId) {
+    try {
+      await db.collection('group_bookings').doc(String(meta.groupBookingId)).set({
+        payments: { [userId]: true },
+      }, { merge: true })
+      console.log('[webhook] part de groupe marquée payée:', meta.groupBookingId, '/', userId)
+    } catch (e) {
+      console.warn('[webhook] échec maj group_booking:', e.message)
+    }
+  }
+
   console.log('[webhook] booking finalized:', bookingId, '— tickets:', tickets.length, clientAlreadyFinalized ? '(codes client adoptés)' : '(codes mintés)')
 }
 

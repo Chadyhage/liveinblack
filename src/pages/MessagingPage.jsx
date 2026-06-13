@@ -1300,6 +1300,10 @@ export default function MessagingPage() {
       userId: myId,
       userEmail: user?.email,
       bookingId: pendingId,
+      // Propagés jusqu'au webhook : si le payeur ferme l'onglet avant le retour
+      // sur /paiement-reussi, le webhook marque quand même sa part payée.
+      groupBookingId: bookingId,
+      isGroupShare: true,
     })
     if (!result.ok) {
       showToast('Erreur Stripe — réessaye dans un instant', 'error')
