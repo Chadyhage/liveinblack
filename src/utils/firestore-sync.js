@@ -48,6 +48,20 @@ export function listenBoosts(callback) {
   } catch { return () => {} }
 }
 
+// Listen to ALL prestataire catalogs (collection catalogs/{userId}). Comme les
+// boosts, un catalogue doit être visible par les ACHETEURS (organisateurs/agents)
+// sur n'importe quel device — or getCatalog() ne lit que le localStorage du user
+// courant. Renvoie un map { userId: items[] } pour la marketplace.
+export function listenCatalogs(callback) {
+  try {
+    return onSnapshot(collection(db, 'catalogs'), snap => {
+      const byUser = {}
+      snap.docs.forEach(d => { byUser[d.id] = d.data().items || [] })
+      callback(byUser)
+    }, () => {})
+  } catch { return () => {} }
+}
+
 export function listenDoc(path, callback) {
   try {
     const ref = doc(db, ...path.split('/'))

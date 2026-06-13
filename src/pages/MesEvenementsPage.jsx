@@ -19,6 +19,22 @@ function getEventCodes() {
 function saveEventCodes(data) {
   try { localStorage.setItem('lib_event_codes', JSON.stringify(data)) } catch {}
 }
+// Publie chaque code dans la collection plate event_access_codes/{code} pour
+// qu'un client sur N'IMPORTE QUEL device puisse le valider (lookup O(1)) et
+// que le statut « utilisé » se synchronise. Avant, les codes restaient dans le
+// localStorage de l'organisateur → inutilisables cross-device.
+function syncEventCodesToFirestore(eventId, codes) {
+  import('../utils/firestore-sync').then(({ syncDoc }) => {
+    for (const c of codes) {
+      if (!c?.code) continue
+      syncDoc(`event_access_codes/${c.code}`, {
+        code: c.code,
+        eventId: String(eventId),
+        usedBy: c.usedBy || null,
+      })
+    }
+  }).catch(() => {})
+}
 
 const CREATION_STEPS = ['Bases', 'Places & Prix', 'Lieu & Infos', 'Options avancées', 'Publier']
 
@@ -375,6 +391,7 @@ export default function MesEvenementsPage() {
     const all = getEventCodes()
     all[String(codesTargetEvent.id)] = [...(all[String(codesTargetEvent.id)] || []), ...codes]
     saveEventCodes(all)
+    syncEventCodesToFirestore(codesTargetEvent.id, codes)
     setGeneratedCodes(codes)
   }
 
@@ -545,8 +562,10 @@ export default function MesEvenementsPage() {
       const all = getEventCodes()
       const key = String(eventData.id)
       if (!all[key]?.find(c => c.code === form.privateCode.trim())) {
-        all[key] = [...(all[key] || []), { code: form.privateCode.trim(), usedBy: null }]
+        const newCode = { code: form.privateCode.trim(), usedBy: null }
+        all[key] = [...(all[key] || []), newCode]
         saveEventCodes(all)
+        syncEventCodesToFirestore(eventData.id, [newCode])
       }
     }
 

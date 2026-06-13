@@ -963,6 +963,22 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
   const [cart, setCart] = useState([])
   const [orderSuccess, setOrderSuccess] = useState(false)
 
+  // Catalogues de TOUS les prestataires depuis Firestore (collection partagée
+  // catalogs/). getCatalog() ne lit que le localStorage du user courant → les
+  // catalogues des autres prestataires étaient invisibles cross-device. Même
+  // correctif que les boosts Top 3.
+  const [catalogsByUser, setCatalogsByUser] = useState({})
+  useEffect(() => {
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenCatalogs }) => {
+      unsub = listenCatalogs(setCatalogsByUser)
+    }).catch(() => {})
+    return () => unsub()
+  }, [])
+  // Helper : préfère la source Firestore (cross-device), retombe sur le local
+  // (utile pour le prestataire qui consulte son propre catalogue hors-ligne).
+  const catalogOf = (userId) => catalogsByUser[userId] || getCatalog(userId)
+
   const cat = CATEGORIES.find(c => c.id === selected)
   const allProviders = [...STATIC_PROVIDERS, ...createdProviders, ...getAllProviderProfiles().map(p => ({
     id: `account_${p.userId}`, userId: p.userId,
@@ -970,7 +986,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
     color: CATEGORIES.find(c => c.id === p.prestataireType)?.color || '#c8a96e',
     name: p.name, typeLabel: CATEGORIES.find(c => c.id === p.prestataireType)?.title?.replace("J'ai ", '').replace("Je suis un ", '').replace("Je donne des ", '') || p.prestataireType,
     description: p.description, location: p.location, tags: [], rating: 0, pending: false,
-    hasCatalog: getCatalog(p.userId).filter(i => i.available).length > 0,
+    hasCatalog: catalogOf(p.userId).filter(i => i.available).length > 0,
   }))]
 
   function toggleExtra(ex) {
@@ -1215,7 +1231,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, margin: 0 }}>Aucun prestataire trouvé</p>
               </div>
             ) : filteredProviders.map(prov => {
-              const provCatalog = prov.userId ? getCatalog(prov.userId).filter(i => i.available) : []
+              const provCatalog = prov.userId ? catalogOf(prov.userId).filter(i => i.available) : []
               return (
                 <div key={prov.id} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {prov.photos?.length > 0 && (
@@ -1377,11 +1393,11 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                 <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {orderModal.userId ? (
                     <>
-                      {getCatalog(orderModal.userId).filter(i => i.available).length === 0 ? (
+                      {catalogOf(orderModal.userId).filter(i => i.available).length === 0 ? (
                         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.35)', textAlign: 'center', padding: '32px 0', margin: 0 }}>Catalogue vide pour le moment.</p>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {getCatalog(orderModal.userId).filter(i => i.available).map(item => (
+                          {catalogOf(orderModal.userId).filter(i => i.available).map(item => (
                             <div key={item.id} style={{ ...S.card, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{item.name}</p>

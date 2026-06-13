@@ -178,6 +178,14 @@ service cloud.firestore {
       allow read, write: if isOwner(uid) || isAgent();
     }
 
+    // ── Codes d'accès aux événements privés ─────────────────────────────────────
+    // Collection plate {code} → { eventId, usedBy }. L'organisateur crée les
+    // codes, le client connecté les valide (lookup O(1)) et marque usedBy.
+    // Lecture/écriture réservée aux connectés (un code est un secret d'accès).
+    match /event_access_codes/{code} {
+      allow read, write: if isSignedIn();
+    }
+
     // ── Signalements ──────────────────────────────────────────────────────────
     match /reports/{id} {
       allow read:  if isAgent();

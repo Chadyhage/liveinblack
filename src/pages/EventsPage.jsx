@@ -133,49 +133,78 @@ export default function EventsPage() {
     return matchSearch && matchCategory && isEventVisible(e)
   })
 
-  function handleCodeSubmit() {
+  function unlockAndGo(eventId) {
+    const unlocked = getUnlockedEvents()
+    if (!unlocked.includes(String(eventId))) {
+      localStorage.setItem('lib_unlocked_events', JSON.stringify([...unlocked, String(eventId)]))
+    }
+    setCodeMsg({ type: 'success', text: 'Code valide — événement débloqué.' })
+    setTimeout(() => {
+      setShowCodeModal(false)
+      setCodeInput('')
+      setCodeMsg(null)
+      navigate(`/evenements/${eventId}`)
+    }, 1200)
+  }
+
+  async function handleCodeSubmit() {
     const code = codeInput.trim().toUpperCase()
     if (!code) return
 
-    const eventCodes = getEventCodes()
-    let found = false
+    // ── Source de vérité : collection plate event_access_codes/{code} ────────
+    // Permet de valider un code créé par un organisateur sur un AUTRE device
+    // (avant, on ne lisait que le localStorage local → inutilisable cross-device).
+    try {
+      const { db, USE_REAL_FIREBASE } = await import('../firebase')
+      if (USE_REAL_FIREBASE) {
+        const { doc, getDoc, setDoc } = await import('firebase/firestore')
+        const snap = await getDoc(doc(db, 'event_access_codes', code))
+        if (snap.exists()) {
+          const data = snap.data()
+          if (data.usedBy) {
+            setCodeMsg({ type: 'error', text: 'Ce code a déjà été utilisé.' })
+            return
+          }
+          // Marquer utilisé côté serveur (atomique au mieux via merge)
+          const usedBy = user?.uid || ('user_' + Date.now())
+          await setDoc(doc(db, 'event_access_codes', code), { usedBy, usedAt: Date.now() }, { merge: true })
+          // Refléter en local aussi
+          const eventCodes = getEventCodes()
+          const key = String(data.eventId)
+          const list = eventCodes[key] || []
+          const i = list.findIndex(c => c.code === code)
+          if (i !== -1) list[i].usedBy = usedBy
+          else list.push({ code, usedBy })
+          eventCodes[key] = list
+          localStorage.setItem('lib_event_codes', JSON.stringify(eventCodes))
+          unlockAndGo(data.eventId)
+          return
+        }
+      }
+    } catch {} // Firestore indispo → fallback localStorage ci-dessous
 
+    // ── Fallback localStorage (hors-ligne / legacy même device) ──────────────
+    const eventCodes = getEventCodes()
     for (const [eventId, codes] of Object.entries(eventCodes)) {
       const idx = codes.findIndex(c => c.code === code && !c.usedBy)
       if (idx !== -1) {
-        // Mark code as used
-        codes[idx].usedBy = 'user_' + Date.now()
+        codes[idx].usedBy = user?.uid || ('user_' + Date.now())
         localStorage.setItem('lib_event_codes', JSON.stringify(eventCodes))
-
-        // Unlock the event for this user
-        const unlocked = getUnlockedEvents()
-        if (!unlocked.includes(eventId)) {
-          localStorage.setItem('lib_unlocked_events', JSON.stringify([...unlocked, eventId]))
-        }
-
-        found = true
-        setCodeMsg({ type: 'success', text: 'Code valide — événement débloqué.' })
-        setTimeout(() => {
-          setShowCodeModal(false)
-          setCodeInput('')
-          setCodeMsg(null)
-          navigate(`/evenements/${eventId}`)
-        }, 1200)
-        break
+        // Best-effort sync du statut utilisé
+        import('../utils/firestore-sync').then(({ syncDoc }) => {
+          syncDoc(`event_access_codes/${code}`, { code, eventId: String(eventId), usedBy: codes[idx].usedBy, usedAt: Date.now() })
+        }).catch(() => {})
+        unlockAndGo(eventId)
+        return
       }
     }
 
-    if (!found) {
-      // Check if code was already used
-      let alreadyUsed = false
-      for (const codes of Object.values(eventCodes)) {
-        if (codes.find(c => c.code === code && c.usedBy)) {
-          alreadyUsed = true
-          break
-        }
-      }
-      setCodeMsg({ type: 'error', text: alreadyUsed ? 'Ce code a déjà été utilisé.' : 'Code invalide ou expiré.' })
+    // Code introuvable / déjà utilisé en local
+    let alreadyUsed = false
+    for (const codes of Object.values(eventCodes)) {
+      if (codes.find(c => c.code === code && c.usedBy)) { alreadyUsed = true; break }
     }
+    setCodeMsg({ type: 'error', text: alreadyUsed ? 'Ce code a déjà été utilisé.' : 'Code invalide ou expiré.' })
   }
 
   return (
