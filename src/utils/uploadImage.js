@@ -8,9 +8,13 @@
 
 export async function uploadEventPoster(eventId, dataUrl) {
   if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl // déjà une URL http(s)
-  const { storage } = await import('../firebase')
+  const { storage, auth } = await import('../firebase')
   const { ref, uploadString, getDownloadURL } = await import('firebase/storage')
-  const path = `events/${eventId}/poster_${Date.now()}.jpg`
+  // Chemin uid-scopé : events/{uid}/{eventId}/... — la règle Storage exige
+  // request.auth.uid == uid, donc un user ne peut uploader que pour ses events.
+  const uid = auth?.currentUser?.uid
+  if (!uid) throw new Error('Non authentifié — impossible d\'uploader l\'affiche')
+  const path = `events/${uid}/${eventId}/poster_${Date.now()}.jpg`
   const snap = await uploadString(ref(storage, path), dataUrl, 'data_url')
   return await getDownloadURL(snap.ref)
 }

@@ -2,16 +2,17 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Documents de candidature — accessible uniquement à l'utilisateur propriétaire (upload)
-    // et aux admins (lecture via token custom ou backend)
-    match /applications/{appId}/{allPaths=**} {
-      // Écriture : utilisateur authentifié uniquement, fichiers < 15 Mo
-      allow write: if request.auth != null
-                   && request.resource.size < 15 * 1024 * 1024;
-
-      // Lecture : utilisateur authentifié (l'admin est authentifié)
-      allow read: if request.auth != null;
-    }
+    // ── Principe de sécurité ──────────────────────────────────────────────────
+    // Storage ne peut pas lire Firestore pour vérifier une propriété. On scope
+    // donc chaque chemin par l'UID de l'uploadeur : {collection}/{uid}/{...}.
+    // La règle exige request.auth.uid == uid → un user ne peut écrire QUE sous
+    // son propre préfixe.
+    //
+    // Compatibilité legacy : le wildcard {uid} matche aussi les anciens chemins
+    // ({collection}/{eventId|convId|appId}/...). La LECTURE y reste donc possible
+    // (le 1er segment est libre), mais l'ÉCRITURE échoue (auth.uid != eventId),
+    // ce qui ferme la faille sans casser l'accès aux fichiers déjà uploadés.
+    // De toute façon les fichiers existants sont servis via des URLs à token.
 
     // Avatars utilisateur
     match /avatars/{userId}/{allPaths=**} {
@@ -20,19 +21,27 @@ service firebase.storage {
                    && request.resource.size < 5 * 1024 * 1024;
     }
 
-    // Pièces jointes des messages (voix, images, fichiers) — utilisateurs authentifiés
-    // Lecture publique pour que les destinataires puissent y accéder via URL signée
-    match /messages/{convId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null
+    // Documents de candidature — seul le propriétaire écrit sous son préfixe.
+    // Empêche l'injection de faux documents dans le dossier d'autrui.
+    match /applications/{uid}/{allPaths=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
+                   && request.resource.size < 15 * 1024 * 1024;
+    }
+
+    // Pièces jointes des messages — seul l'expéditeur écrit sous son préfixe.
+    // Lecture réservée aux authentifiés (destinataires via URL à token).
+    match /messages/{uid}/{allPaths=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
                    && request.resource.size < 25 * 1024 * 1024;
     }
 
-    // Affiches d'événements — lecture publique (affichées à tous les visiteurs),
-    // écriture par tout organisateur authentifié, images < 8 Mo
-    match /events/{eventId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null
+    // Affiches d'événements — seul l'organisateur écrit sous son préfixe.
+    // Empêche le defacement par upload d'affiche d'un tiers. Lecture publique.
+    match /events/{uid}/{allPaths=**} {
+      allow read:  if true;
+      allow write: if request.auth != null && request.auth.uid == uid
                    && request.resource.size < 8 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }

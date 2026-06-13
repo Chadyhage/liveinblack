@@ -274,11 +274,16 @@ export async function uploadDocument(appId, docKey, file) {
 
     if (USE_REAL_FIREBASE) {
       try {
-        const { storage, db } = await import('../firebase')
+        const { storage, db, auth } = await import('../firebase')
         const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
         const { doc, setDoc } = await import('firebase/firestore')
 
-        const path = `applications/${appId}/${docKey}/${Date.now()}_${file.name}`
+        // Chemin uid-scopé : applications/{uid}/{appId}/... — la règle Storage
+        // exige request.auth.uid == uid, donc un user ne peut déposer de
+        // documents que dans SON propre dossier (pas sabotage d'un tiers).
+        const uid = auth?.currentUser?.uid
+        if (!uid) throw new Error('Non authentifié — impossible d\'uploader le document')
+        const path = `applications/${uid}/${appId}/${docKey}/${Date.now()}_${file.name}`
         const storageRef = ref(storage, path)
 
         // 30s timeout — PDF can be heavy

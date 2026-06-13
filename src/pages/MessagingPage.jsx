@@ -937,7 +937,9 @@ export default function MessagingPage() {
     try {
       const { storage } = await import('../firebase')
       const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
-      const path = `messages/${activeConvId}/${Date.now()}.jpg`
+      // Chemin uid-scopé : messages/{uid}/{convId}/... — la règle Storage exige
+      // request.auth.uid == uid (seul l'expéditeur peut écrire sous son préfixe)
+      const path = `messages/${myId}/${activeConvId}/${Date.now()}.jpg`
       const snap = await uploadBytes(ref(storage, path), blob)
       const url = await getDownloadURL(snap.ref)
       sendMessage(activeConvId, myId, myName, 'image', url, extra)
@@ -1006,7 +1008,8 @@ export default function MessagingPage() {
         try {
           const { storage } = await import('../firebase')
           const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
-          const path = `messages/${activeConvId}/${Date.now()}_voice.${ext}`
+          // Chemin uid-scopé : messages/{uid}/{convId}/... (cf. règle Storage)
+          const path = `messages/${myId}/${activeConvId}/${Date.now()}_voice.${ext}`
           const snap = await uploadBytes(ref(storage, path), blob)
           const url = await getDownloadURL(snap.ref)
           sendMessage(activeConvId, myId, myName, 'voice', url, extra)
