@@ -409,49 +409,52 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
   }
 
   // ── Approbation : upgrader le rôle + copier les permissions dans le profil ──
+  // PAS de try/catch ici : l'écriture du rôle est CRITIQUE. Si elle échoue,
+  // l'erreur remonte → l'admin voit un échec au lieu d'un faux « approuvé ».
   if (status === 'approved') {
     const app = all[idx]
-    try {
-      const { updateAccount } = await import('./accounts')
-      const { syncDoc } = await import('./firestore-sync')
+    const { updateAccount } = await import('./accounts')
+    const { syncDocAwaitable } = await import('./firestore-sync')
 
-      // Permissions dérivées du formulaire
-      const perms = {
-        role: app.type === 'organisateur' ? 'organisateur' : 'prestataire',
-        status: 'active',
-        emailVerified: true,   // validé par l'admin = email vérifié
-        canSellAlcohol:   !!(app.formData?.alcool),
-        approvedAt:       now,
-        approvedBy:       adminName,
-      }
-      if (app.type === 'prestataire') {
-        perms.prestataireType = app.formData?.prestataireType || null
-        // Display name: stage name for artistes, else commercial name, else real name
-        const fd = app.formData || {}
-        const displayName =
-          (fd.prestataireType === 'artiste' && fd.nomScene?.trim())
-            ? fd.nomScene.trim()
-            : fd.nomCommercial?.trim() ||
-              [fd.prenom, fd.nom].filter(Boolean).map(s => s.trim()).join(' ')
-        if (displayName) perms.name = displayName
-      }
+    // Permissions dérivées du formulaire
+    const perms = {
+      role: app.type === 'organisateur' ? 'organisateur' : 'prestataire',
+      status: 'active',
+      emailVerified: true,   // validé par l'admin = email vérifié
+      canSellAlcohol:   !!(app.formData?.alcool),
+      approvedAt:       now,
+      approvedBy:       adminName,
+    }
+    if (app.type === 'prestataire') {
+      perms.prestataireType = app.formData?.prestataireType || null
+      // Display name: stage name for artistes, else commercial name, else real name
+      const fd = app.formData || {}
+      const displayName =
+        (fd.prestataireType === 'artiste' && fd.nomScene?.trim())
+          ? fd.nomScene.trim()
+          : fd.nomCommercial?.trim() ||
+            [fd.prenom, fd.nom].filter(Boolean).map(s => s.trim()).join(' ')
+      if (displayName) perms.name = displayName
+    }
 
-      // Mettre à jour localStorage (lib_registered_users)
-      updateAccount(app.uid, perms)
-
-      // Sync Firestore profil utilisateur
-      syncDoc(`users/${app.uid}`, perms)
-    } catch {}
+    // Écriture CRITIQUE du rôle EN PREMIER, awaitée
+    const roleResult = await syncDocAwaitable(`users/${app.uid}`, perms)
+    if (!roleResult.ok) {
+      throw new Error(`Échec de l'attribution du rôle (${roleResult.code || 'erreur serveur'})`)
+    }
+    // Local seulement après succès serveur
+    updateAccount(app.uid, perms)
   }
 
-  // Sync Firestore application
-  try {
+  // Sync Firestore application (important mais secondaire — le rôle est déjà
+  // accordé ci-dessus ; on l'attend quand même pour cohérence de l'audit trail)
+  {
     const { USE_REAL_FIREBASE, db } = await import('../firebase')
     if (USE_REAL_FIREBASE) {
       const { doc, setDoc } = await import('firebase/firestore')
       await setDoc(doc(db, 'applications', id), patch, { merge: true })
     }
-  } catch {}
+  }
 
   return all[idx]
 }

@@ -112,29 +112,30 @@ export async function approveValidation(uid) {
     status: 'active',
     approvedAt: Date.now(),
   }
+  // ── Firestore EN PREMIER (source de vérité) ──────────────────────────────
+  // On n'avale plus l'erreur : si l'écriture du rôle échoue, la fonction throw
+  // AVANT de toucher le localStorage → le compte reste « pending » partout de
+  // façon cohérente, et l'admin voit un échec au lieu d'un faux « validé ».
+  const { USE_REAL_FIREBASE, db } = await import('../firebase')
+  if (USE_REAL_FIREBASE) {
+    const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
+    // Écriture CRITIQUE du rôle — laisse remonter l'erreur si elle échoue
+    await setDoc(doc(db, 'users', uid), {
+      status: 'active',
+      approvedAt: Date.now(),
+      role: resolvedRole,
+      activeRole: resolvedRole,
+      enabledRoles: approved.enabledRoles,
+    }, { merge: true })
+    // Nettoyage de la file pending — non-critique (le rôle est déjà accordé)
+    const pendingDocId = pending._docId || pending.id || uid
+    try { await setDoc(doc(db, 'pending_validations', pendingDocId), { status: 'approved' }, { merge: true }) } catch {}
+    try { await deleteDoc(doc(db, 'pending_validations', pendingDocId)) } catch {}
+  }
+
+  // Local SEULEMENT après succès serveur
   saveAccount(approved)
   removePendingValidation(uid)
-
-  // Sync to Firestore if Firebase is active
-  try {
-    const { USE_REAL_FIREBASE, db } = await import('../firebase')
-    if (USE_REAL_FIREBASE) {
-      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
-      // Use setDoc with merge to preserve existing fields AND create doc if missing
-      await setDoc(doc(db, 'users', uid), {
-        status: 'active',
-        approvedAt: Date.now(),
-        role: resolvedRole,
-        activeRole: resolvedRole,
-        enabledRoles: approved.enabledRoles,
-      }, { merge: true })
-      // _docId = vrai ID Firestore du document (ajouté par loadCollection), sinon fallback sur pending.id ou uid
-      const pendingDocId = pending._docId || pending.id || uid
-      // Marquer comme approuvé avant de supprimer (si delete échoue, le filtre le masquera)
-      try { await setDoc(doc(db, 'pending_validations', pendingDocId), { status: 'approved' }, { merge: true }) } catch {}
-      await deleteDoc(doc(db, 'pending_validations', pendingDocId))
-    }
-  } catch {}
 
   // Mark in session if it's the current user
   try {
@@ -256,12 +257,6 @@ export async function approveRoleRequest(requestId) {
   const req = requests.find(r => r.id === requestId)
   if (!req) return null
 
-  // Update request status
-  const updatedRequests = requests.map(r =>
-    r.id === requestId ? { ...r, status: 'approved', approvedAt: Date.now() } : r
-  )
-  localStorage.setItem(ROLE_REQ_KEY, JSON.stringify(updatedRequests))
-
   // Update user account
   const account = getAccountById(req.uid)
   if (!account) return null
@@ -276,17 +271,23 @@ export async function approveRoleRequest(requestId) {
       : { prestStatus: 'active', prestataireType: req.prestataireType, prestValidatedAt: Date.now() }
     ),
   }
-  const updatedAccount = updateAccount(req.uid, patch)
 
-  // Sync Firestore
-  try {
-    const { USE_REAL_FIREBASE, db } = await import('../firebase')
-    if (USE_REAL_FIREBASE) {
-      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
-      await setDoc(doc(db, 'users', req.uid), patch, { merge: true })
-      await deleteDoc(doc(db, 'pending_validations', requestId))
-    }
-  } catch {}
+  // ── Firestore EN PREMIER (source de vérité), erreur non avalée ───────────
+  // Si l'octroi du rôle échoue côté serveur, on throw avant de muter le local
+  // → l'admin voit l'échec, le rôle n'apparaît pas accordé à tort.
+  const { USE_REAL_FIREBASE, db } = await import('../firebase')
+  if (USE_REAL_FIREBASE) {
+    const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
+    await setDoc(doc(db, 'users', req.uid), patch, { merge: true }) // throw si échec
+    try { await deleteDoc(doc(db, 'pending_validations', requestId)) } catch {}
+  }
+
+  // Local seulement après succès serveur
+  const updatedRequests = requests.map(r =>
+    r.id === requestId ? { ...r, status: 'approved', approvedAt: Date.now() } : r
+  )
+  localStorage.setItem(ROLE_REQ_KEY, JSON.stringify(updatedRequests))
+  const updatedAccount = updateAccount(req.uid, patch)
 
   // Update session user if it's them
   try {

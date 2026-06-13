@@ -373,9 +373,14 @@ export default function AgentPage() {
   })
 
   async function handleApprove(uid) {
-    await approveValidation(uid)
-    refresh()
-    showToast('Compte validé')
+    try {
+      await approveValidation(uid)
+      refresh()
+      showToast('Compte validé')
+    } catch (e) {
+      // L'écriture serveur a échoué — le compte reste en attente, pas de faux succès
+      showToast('Échec serveur — le compte reste en attente. Réessaie.', 'error')
+    }
     setConfirmAction(null)
   }
 
@@ -467,9 +472,13 @@ export default function AgentPage() {
   }
 
   async function handleApproveRoleRequest(requestId) {
-    await approveRoleRequest(requestId)
-    refresh()
-    showToast('Accès activé')
+    try {
+      await approveRoleRequest(requestId)
+      refresh()
+      showToast('Accès activé')
+    } catch (e) {
+      showToast('Échec serveur — le rôle n\'a pas été accordé. Réessaie.', 'error')
+    }
     setConfirmAction(null)
   }
 
@@ -512,7 +521,14 @@ export default function AgentPage() {
 
   async function handleAppAction(appId, status, note) {
     const adminNoteValue = appAdminNote || ''
-    const updatedApp = await updateApplicationStatus(appId, status, user?.uid, user?.name || 'Agent', note, adminNoteValue)
+    let updatedApp
+    try {
+      updatedApp = await updateApplicationStatus(appId, status, user?.uid, user?.name || 'Agent', note, adminNoteValue)
+    } catch (e) {
+      // L'attribution de rôle a échoué côté serveur — pas de faux « approuvé »
+      showToast('Échec serveur — dossier non mis à jour. Réessaie.', 'error')
+      return
+    }
     refresh()
     setSelectedApp(apps => apps ? { ...apps, status, ...(status === 'approved' ? { approvedAt: Date.now() } : {}), ...(status === 'rejected' ? { rejectionReason: note } : {}), ...(status === 'needs_changes' ? { requestedChanges: note } : {}) } : null)
     showToast(status === 'approved' ? 'Dossier approuvé' : status === 'rejected' ? 'Dossier refusé' : status === 'needs_changes' ? 'Corrections demandées' : status === 'under_review' ? 'Dossier en révision' : 'Dossier mis à jour')
