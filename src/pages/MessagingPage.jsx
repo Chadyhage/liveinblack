@@ -1585,7 +1585,7 @@ export default function MessagingPage() {
                 ) : msg.type === 'story' ? (
                   <StoryCard content={msg.content} />
                 ) : msg.type === 'group_booking' ? (
-                  <GroupBookingCard bookingId={msg.content} myId={myId} myName={myName} conv={activeConv} onValidate={handleValidateBooking} onPay={handlePayBooking} onSong={bId => { setSongPickerModal(bId); setSongInput({ title: '', artist: '' }) }} groupBookings={groupBookings} />
+                  <GroupBookingCard bookingId={msg.content} myId={myId} myName={myName} conv={activeConv} onValidate={handleValidateBooking} onPay={handlePayBooking} onSong={bId => { setSongPickerModal(bId); setSongInput({ title: '', artist: '' }) }} onNudge={(names) => { sendMessage(activeConvId, myId, myName, 'text', `⏳ ${names} — on vous attend pour la sortie, validez/payez votre part 👀`); setMessages(getMessages(activeConvId)); showToast('Relance envoyée') }} groupBookings={groupBookings} />
                 ) : msg.type === 'event' ? (
                   <EventCard content={msg.content} />
                 ) : (
@@ -2645,7 +2645,7 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
 }
 
 // ─── Group Booking Card ────────────────────────────────────────────────────────
-function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, onSong, groupBookings }) {
+function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, onSong, onNudge, groupBookings }) {
   const booking = groupBookings[bookingId]
   if (!booking) return <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>Réservation introuvable</span>
 
@@ -2658,9 +2658,21 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
   const hasValidated = validations[myId]
   const hasPaid      = payments[myId]
   const allValidated = total > 0 && validCount >= total
+  const allPaid      = total > 0 && payCount >= total
   const myMember     = members.find(m => m.userId === myId)
   const myPct        = myMember?.contributionPct ?? Math.round(100 / Math.max(total, 1))
   const myShare      = Math.round((booking.totalPrice * myPct / 100) * 100) / 100
+
+  // Statut par membre (qui a payé / validé / traîne) — visibilité critique pour
+  // savoir qui bloque le groupe. payé > validé > en attente.
+  const memberStatus = (m) => payments[m.userId] ? 'paid' : validations[m.userId] ? 'validated' : 'pending'
+  const STATUS_META = {
+    paid:      { label: 'Payé',       color: '#22c55e', dot: '#22c55e' },
+    validated: { label: 'Validé',     color: '#4ee8c8', dot: '#4ee8c8' },
+    pending:   { label: 'En attente', color: 'rgba(255,255,255,0.32)', dot: 'rgba(255,255,255,0.22)' },
+  }
+  // Membres en retard (à relancer) = ceux qui n'ont pas encore payé (hors moi)
+  const laggards = members.filter(m => m.userId !== myId && memberStatus(m) !== 'paid')
 
   return (
     <div style={{ minWidth: 230, maxWidth: 290 }}>
@@ -2691,6 +2703,44 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
             <div style={{ height: '100%', borderRadius: 99, width: `${total ? payCount / total * 100 : 0}%`, background: '#4ee8c8', transition: 'width 0.4s' }} />
           </div>
         </>)}
+      </div>
+
+      {/* Groupe complet — célébration quand tout le monde a payé */}
+      {allPaid && (
+        <div style={{ background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.30)', borderRadius: 8, padding: '8px 10px', marginBottom: 10, textAlign: 'center' }}>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#22c55e', margin: 0, letterSpacing: '0.04em' }}>🎉 Groupe complet — tout le monde a payé !</p>
+        </div>
+      )}
+
+      {/* Roster : statut par membre (qui bloque le groupe) */}
+      <div style={{ marginBottom: 10 }}>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>Qui est prêt</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {members.map(m => {
+            const st = memberStatus(m)
+            const meta = STATUS_META[st]
+            const initial = (m.name || m.userId || '?').charAt(0).toUpperCase()
+            return (
+              <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{initial}</div>
+                  <div style={{ position: 'absolute', right: -1, bottom: -1, width: 8, height: 8, borderRadius: '50%', background: meta.dot, border: '1.5px solid #0a0a14' }} />
+                </div>
+                <span style={{ flex: 1, fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.72)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {m.userId === myId ? 'Toi' : (m.name || 'Membre')}
+                </span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8.5, color: meta.color, letterSpacing: '0.04em', flexShrink: 0 }}>{meta.label}</span>
+              </div>
+            )
+          })}
+        </div>
+        {/* Relance : visible s'il reste des retardataires et que j'ai agi */}
+        {!allPaid && laggards.length > 0 && (hasValidated || hasPaid) && onNudge && (
+          <button onClick={() => onNudge(laggards.map(m => m.name || 'membre').join(', '))}
+            style={{ width: '100%', marginTop: 7, padding: '6px', borderRadius: 5, cursor: 'pointer', background: 'transparent', border: '1px dashed rgba(224,90,170,0.30)', color: 'rgba(224,90,170,0.8)', fontFamily: "'DM Mono', monospace", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            👋 Relancer ({laggards.length})
+          </button>
+        )}
       </div>
 
       {/* CTA */}
