@@ -45,6 +45,7 @@ const STATUS = {
   just_validated: { borderColor: 'rgba(78,232,200,0.40)',  bg: 'rgba(78,232,200,0.07)',  iconColor: COLORS.teal, label: 'VALIDÉ',         sub: 'Billet marqué comme utilisé' },
   used:           { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'DÉJÀ UTILISÉ',   sub: 'Ce billet a déjà été scanné' },
   invalid:        { borderColor: 'rgba(224,90,170,0.40)',  bg: 'rgba(224,90,170,0.07)',  iconColor: COLORS.pink, label: 'INVALIDE',       sub: 'QR code non reconnu' },
+  offline:        { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'HORS-LIGNE',      sub: 'Vérification impossible — reconnecte-toi' },
 }
 
 // ── Camera component ────────────────────────────────────────────────
@@ -236,7 +237,7 @@ export default function ScannerPage() {
       const isUsed = currentUsed.has(tc)
       const reg = await lookupTicketRegistry(tc)
       if (reg.authMissing) {
-        setResult({ code: tc, status: 'invalid', sub: 'Session expirée — déconnecte-toi et reconnecte-toi pour scanner' })
+        setResult({ code: tc, status: 'offline', offline: true, sub: 'Session expirée — déconnecte-toi et reconnecte-toi pour scanner' })
         return
       }
       if (reg.found === false) {
@@ -269,7 +270,7 @@ export default function ScannerPage() {
     // Session expirée : impossible de vérifier — le dire clairement plutôt
     // que d'afficher un faux « invalide » au videur
     if (reg.authMissing) {
-      setResult({ code: clean, status: 'invalid', sub: 'Session expirée — déconnecte-toi et reconnecte-toi pour scanner' })
+      setResult({ code: clean, status: 'offline', offline: true, sub: 'Session expirée — déconnecte-toi et reconnecte-toi pour scanner' })
       return
     }
     if (reg.found) {
@@ -304,7 +305,17 @@ export default function ScannerPage() {
 
     // Demo / mock fallback
     const ticket = MOCK_TICKETS[clean]
-    if (!ticket) { setResult({ code: clean, status: 'invalid' }); return }
+    if (!ticket) {
+      // Si le registre Firestore était INJOIGNABLE (réseau) et qu'on n'a rien
+      // trouvé en local, on ne peut PAS conclure « invalide » — ce serait un
+      // faux positif de fraude. On le signale comme vérification hors-ligne.
+      if (reg.error) {
+        setResult({ code: clean, status: 'offline', offline: true, sub: 'Registre injoignable — vérifie ta connexion et re-scanne' })
+      } else {
+        setResult({ code: clean, status: 'invalid' })
+      }
+      return
+    }
     if (ticket.used || currentUsed.has(clean)) { setResult({ code: clean, status: 'used', ticket }); return }
     setResult({ code: clean, status: 'valid', ticket })
   }
@@ -565,6 +576,7 @@ export default function ScannerPage() {
                       {isTeal && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>}
                       {result.status === 'used' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>}
                       {result.status === 'invalid' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
+                      {result.status === 'offline' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.58 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01" /></svg>}
                     </div>
                     <div>
                       <p style={{ fontFamily: FONTS.mono, fontSize: 20, fontWeight: 700, color: cfg.iconColor, margin: 0, letterSpacing: '0.06em' }}>
