@@ -469,6 +469,8 @@ export default function MessagingPage() {
   const [view, setView]           = useState('list') // list | chat | search | new-group | contacts
   const [chatSubView, setChatSubView] = useState('messages') // messages | settings
   const [activeConvId, setActiveConvId] = useState(null)
+  const [showMsgSearch, setShowMsgSearch] = useState(false) // barre de recherche dans la conversation
+  const [msgSearch, setMsgSearch] = useState('')
 
   // ── Data ──
   const [conversations, setConversations]   = useState([])
@@ -1985,6 +1987,13 @@ export default function MessagingPage() {
             </p>
           </div>
           {chatSubView === 'messages' && (
+            <button onClick={() => { setShowMsgSearch(v => !v); setMsgSearch('') }} aria-label="Rechercher" style={{ background: 'none', border: 'none', cursor: 'pointer', color: showMsgSearch ? T.teal : T.dim, padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          )}
+          {chatSubView === 'messages' && (
             <button onClick={() => setChatSubView('settings')} aria-label="Paramètres" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"/>
@@ -2222,12 +2231,42 @@ export default function MessagingPage() {
               </div>
             )}
 
+            {/* ── Barre de recherche dans la conversation ── */}
+            {showMsgSearch && (() => {
+              const q = msgSearch.trim().toLowerCase()
+              const matchCount = q ? messages.filter(m => !m.deletedForAll && m.type === 'text' && (m.content || '').toLowerCase().includes(q)).length : 0
+              return (
+                <div style={{ background: 'rgba(4,4,14,0.95)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.dim} strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input
+                    autoFocus
+                    value={msgSearch}
+                    onChange={e => setMsgSearch(e.target.value)}
+                    placeholder="Rechercher dans la conversation…"
+                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13 }}
+                  />
+                  {q && <span style={{ fontFamily: T.dmMono, fontSize: 10, color: matchCount ? T.teal : T.dim, flexShrink: 0 }}>{matchCount} résultat{matchCount > 1 ? 's' : ''}</span>}
+                  <button onClick={() => { setShowMsgSearch(false); setMsgSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 15, padding: 0, flexShrink: 0 }}>✕</button>
+                </div>
+              )
+            })()}
+
             {/* ── Messages area ── */}
             <div
               ref={chatScrollRef}
               onScroll={handleChatScroll}
               style={{ flex: 1, overflowY: 'auto', padding: '8px 10px 4px', position: 'relative' }}>
-              {messages.map((msg, idx) => renderMessageBubble(msg, idx))}
+              {(() => {
+                const q = msgSearch.trim().toLowerCase()
+                // En mode recherche active : ne montrer que les messages texte qui matchent
+                const shown = (showMsgSearch && q)
+                  ? messages.filter(m => !m.deletedForAll && m.type === 'text' && (m.content || '').toLowerCase().includes(q))
+                  : messages
+                if (showMsgSearch && q && shown.length === 0) {
+                  return <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, textAlign: 'center', padding: '24px 0' }}>Aucun message trouvé</p>
+                }
+                return shown.map((msg, idx) => renderMessageBubble(msg, idx))
+              })()}
 
               {/* Typing indicator */}
               {typingUsers.length > 0 && (
