@@ -14,7 +14,7 @@ import {
   getUnreadCount, voteOnPoll, pinMessage, unpinMessage,
   setTyping, getTypingUsers, setOnline, isOnline,
   seedDemoData, DEMO_USERS,
-  getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking,
+  getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking, withdrawFromGroupBooking,
   blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory,
 } from '../utils/messaging'
 import { startStripeCheckout } from '../utils/stripe'
@@ -1181,8 +1181,11 @@ export default function MessagingPage() {
       validations: {},
       payments: {},
       songSelections: {},
+      withdrawnMembers: [],
       createdBy: myId,
       createdAt: new Date().toISOString(),
+      // Deadline pour compléter la résa de groupe (urgence). 72h par défaut.
+      deadline: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
     }
     saveGroupBooking(booking)
     sendMessage(activeConvId, myId, myName, 'group_booking', bookingId)
@@ -1587,7 +1590,7 @@ export default function MessagingPage() {
                 ) : msg.type === 'story' ? (
                   <StoryCard content={msg.content} />
                 ) : msg.type === 'group_booking' ? (
-                  <GroupBookingCard bookingId={msg.content} myId={myId} myName={myName} conv={activeConv} onValidate={handleValidateBooking} onPay={handlePayBooking} onSong={bId => { setSongPickerModal(bId); setSongInput({ title: '', artist: '' }) }} onNudge={(names) => { sendMessage(activeConvId, myId, myName, 'text', `⏳ ${names} — on vous attend pour la sortie, validez/payez votre part 👀`); setMessages(getMessages(activeConvId)); showToast('Relance envoyée') }} groupBookings={groupBookings} />
+                  <GroupBookingCard bookingId={msg.content} myId={myId} myName={myName} conv={activeConv} onValidate={handleValidateBooking} onPay={handlePayBooking} onSong={bId => { setSongPickerModal(bId); setSongInput({ title: '', artist: '' }) }} onNudge={(names) => { sendMessage(activeConvId, myId, myName, 'text', `⏳ ${names} — on vous attend pour la sortie, validez/payez votre part 👀`); setMessages(getMessages(activeConvId)); showToast('Relance envoyée') }} onWithdraw={(bId) => { withdrawFromGroupBooking(bId, myId); setGroupBookings(getGroupBookings()); sendMessage(activeConvId, myId, myName, 'text', `${myName} s'est retiré de la sortie — les parts ont été ré-équilibrées.`); setMessages(getMessages(activeConvId)); showToast('Tu t\'es retiré du groupe') }} groupBookings={groupBookings} />
                 ) : msg.type === 'event' ? (
                   <EventCard content={msg.content} />
                 ) : (
@@ -2684,33 +2687,58 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
 }
 
 // ─── Group Booking Card ────────────────────────────────────────────────────────
-function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, onSong, onNudge, groupBookings }) {
+function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, onSong, onNudge, onWithdraw, groupBookings }) {
   const booking = groupBookings[bookingId]
+  // Tick temps réel pour le compte à rebours (rafraîchit toutes les 30s)
+  const [nowTick, setNowTick] = useState(Date.now())
+  useEffect(() => {
+    if (!booking?.deadline) return
+    const id = setInterval(() => setNowTick(Date.now()), 30000)
+    return () => clearInterval(id)
+  }, [booking?.deadline])
   if (!booking) return <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>Réservation introuvable</span>
 
-  const members    = conv?.members || []
+  const withdrawn  = new Set(booking.withdrawnMembers || [])
+  const allMembers = conv?.members || []
+  const members    = allMembers.filter(m => !withdrawn.has(m.userId)) // membres actifs
   const total      = members.length
   const validations = booking.validations || {}
   const payments    = booking.payments   || {}
-  const validCount  = Object.keys(validations).length
-  const payCount    = Object.keys(payments).length
+  const validCount  = members.filter(m => validations[m.userId]).length
+  const payCount    = members.filter(m => payments[m.userId]).length
   const hasValidated = validations[myId]
   const hasPaid      = payments[myId]
+  const iAmWithdrawn = withdrawn.has(myId)
   const allValidated = total > 0 && validCount >= total
   const allPaid      = total > 0 && payCount >= total
   const myMember     = members.find(m => m.userId === myId)
   const myPct        = myMember?.contributionPct ?? Math.round(100 / Math.max(total, 1))
   const myShare      = Math.round((booking.totalPrice * myPct / 100) * 100) / 100
 
-  // Statut par membre (qui a payé / validé / traîne) — visibilité critique pour
-  // savoir qui bloque le groupe. payé > validé > en attente.
-  const memberStatus = (m) => payments[m.userId] ? 'paid' : validations[m.userId] ? 'validated' : 'pending'
+  // Compte à rebours
+  const deadlineTs = booking.deadline ? new Date(booking.deadline).getTime() : null
+  const msLeft     = deadlineTs ? deadlineTs - nowTick : null
+  const expired    = msLeft != null && msLeft <= 0 && !allPaid
+  const countdown  = (() => {
+    if (msLeft == null || msLeft <= 0) return null
+    const h = Math.floor(msLeft / 3600000)
+    const d = Math.floor(h / 24)
+    if (d >= 1) return `${d}j ${h % 24}h`
+    if (h >= 1) return `${h}h ${Math.floor((msLeft % 3600000) / 60000)}min`
+    return `${Math.max(1, Math.floor(msLeft / 60000))}min`
+  })()
+  const urgent = msLeft != null && msLeft > 0 && msLeft < 12 * 3600000 // < 12h
+
+  // Statut par membre (qui a payé / validé / traîne / retiré) — visibilité
+  // critique pour savoir qui bloque le groupe. payé > validé > en attente.
+  const memberStatus = (m) => withdrawn.has(m.userId) ? 'withdrawn' : payments[m.userId] ? 'paid' : validations[m.userId] ? 'validated' : 'pending'
   const STATUS_META = {
     paid:      { label: 'Payé',       color: '#22c55e', dot: '#22c55e' },
     validated: { label: 'Validé',     color: '#4ee8c8', dot: '#4ee8c8' },
     pending:   { label: 'En attente', color: 'rgba(255,255,255,0.32)', dot: 'rgba(255,255,255,0.22)' },
+    withdrawn: { label: 'Retiré',     color: 'rgba(220,110,110,0.7)', dot: 'rgba(220,110,110,0.5)' },
   }
-  // Membres en retard (à relancer) = ceux qui n'ont pas encore payé (hors moi)
+  // Membres en retard (à relancer) = membres actifs n'ayant pas payé (hors moi)
   const laggards = members.filter(m => m.userId !== myId && memberStatus(m) !== 'paid')
 
   return (
@@ -2723,6 +2751,21 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
           {booking.placeName} · {booking.groupMin}–{booking.groupMax > 0 ? booking.groupMax : '∞'} pers.
         </p>
       </div>
+
+      {/* Compte à rebours / deadline */}
+      {countdown && !allPaid && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: urgent ? 'rgba(224,90,170,0.10)' : 'rgba(200,169,110,0.07)', border: `1px solid ${urgent ? 'rgba(224,90,170,0.30)' : 'rgba(200,169,110,0.18)'}`, borderRadius: 8, padding: '6px 10px', marginBottom: 10 }}>
+          <span style={{ fontSize: 11 }}>⏳</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: urgent ? '#e05aaa' : '#c8a96e', letterSpacing: '0.03em' }}>
+            Plus que <strong>{countdown}</strong> pour compléter
+          </span>
+        </div>
+      )}
+      {expired && (
+        <div style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.25)', borderRadius: 8, padding: '6px 10px', marginBottom: 10, textAlign: 'center' }}>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,110,110,0.9)' }}>⌛ Délai dépassé — relancez ou annulez</span>
+        </div>
+      )}
 
       {/* Progress */}
       <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
@@ -2755,17 +2798,18 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
       <div style={{ marginBottom: 10 }}>
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>Qui est prêt</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {members.map(m => {
+          {allMembers.map(m => {
             const st = memberStatus(m)
             const meta = STATUS_META[st]
+            const isOut = st === 'withdrawn'
             const initial = (m.name || m.userId || '?').charAt(0).toUpperCase()
             return (
-              <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: isOut ? 0.5 : 1 }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{initial}</div>
                   <div style={{ position: 'absolute', right: -1, bottom: -1, width: 8, height: 8, borderRadius: '50%', background: meta.dot, border: '1.5px solid #0a0a14' }} />
                 </div>
-                <span style={{ flex: 1, fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.72)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ flex: 1, fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.72)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: isOut ? 'line-through' : 'none' }}>
                   {m.userId === myId ? 'Toi' : (m.name || 'Membre')}
                 </span>
                 <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8.5, color: meta.color, letterSpacing: '0.04em', flexShrink: 0 }}>{meta.label}</span>
@@ -2780,13 +2824,21 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
             👋 Relancer ({laggards.length})
           </button>
         )}
+        {/* Me retirer : avant paiement, si je ne suis pas déjà retiré et qu'il
+            reste au moins un autre membre actif */}
+        {!hasPaid && !iAmWithdrawn && total > 1 && onWithdraw && (
+          <button onClick={() => onWithdraw(bookingId)}
+            style={{ width: '100%', marginTop: 6, padding: '6px', borderRadius: 5, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.4)', fontFamily: "'DM Mono', monospace", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Me retirer du groupe
+          </button>
+        )}
       </div>
 
       {/* CTA */}
       {!hasValidated && (
         <button onClick={() => onValidate(bookingId)}
-          style={{ width: '100%', padding: '9px', borderRadius: 5, cursor: 'pointer', background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.30)', color: '#c8a96e', fontFamily: "'DM Mono', monospace", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-          ✓ Je valide la sortie
+          style={{ width: '100%', padding: '9px', borderRadius: 5, cursor: 'pointer', background: iAmWithdrawn ? 'rgba(78,232,200,0.10)' : 'rgba(200,169,110,0.10)', border: `1px solid ${iAmWithdrawn ? 'rgba(78,232,200,0.30)' : 'rgba(200,169,110,0.30)'}`, color: iAmWithdrawn ? '#4ee8c8' : '#c8a96e', fontFamily: "'DM Mono', monospace", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+          {iAmWithdrawn ? '↩ Rejoindre le groupe' : '✓ Je valide la sortie'}
         </button>
       )}
       {hasValidated && !hasPaid && allValidated && (
@@ -2818,8 +2870,12 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
 
       {/* Price */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>Ta part ({myPct}%)</span>
-        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{myShare}€</span>
+        {iAmWithdrawn ? (
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(220,110,110,0.7)' }}>Tu t'es retiré de cette sortie</span>
+        ) : (<>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>Ta part ({myPct}%)</span>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{myShare}€</span>
+        </>)}
       </div>
     </div>
   )

@@ -645,15 +645,31 @@ export function getGroupBookingById(id) {
 }
 
 // Step 1: validate (agree to participate, no payment yet)
+// Sert aussi de RE-JOIN : valider après s'être retiré te ré-inscrit (retire de
+// withdrawnMembers) et ré-équilibre les parts à parts égales.
 export function validateGroupBooking(bookingId, userId) {
   const all = getGroupBookings()
-  if (!all[bookingId]) return null
-  all[bookingId].validations = { ...(all[bookingId].validations || {}), [userId]: true }
+  const b = all[bookingId]
+  if (!b) return null
+  b.validations = { ...(b.validations || {}), [userId]: true }
+  if ((b.withdrawnMembers || []).includes(userId)) {
+    b.withdrawnMembers = b.withdrawnMembers.filter(u => u !== userId)
+    // Ré-équilibrer à parts égales entre les membres actifs (retirés exclus)
+    const out = new Set(b.withdrawnMembers)
+    const active = (b.members || []).filter(m => !out.has(m.userId))
+    if (active.length > 0) {
+      const evenPct = Math.floor(100 / active.length)
+      const remainder = 100 - evenPct * active.length
+      const pctByUser = {}
+      active.forEach((m, i) => { pctByUser[m.userId] = evenPct + (i === 0 ? remainder : 0) })
+      b.members = (b.members || []).map(m => out.has(m.userId) ? m : { ...m, contributionPct: pctByUser[m.userId] })
+    }
+  }
   localStorage.setItem('lib_group_bookings', JSON.stringify(all))
   import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`group_bookings/${bookingId}`, all[bookingId])
+    syncDoc(`group_bookings/${bookingId}`, b)
   }).catch(() => {})
-  return all[bookingId]
+  return b
 }
 
 // Step 2: pay share (only after all validated)
@@ -666,6 +682,35 @@ export function payGroupBookingShare(bookingId, userId) {
     syncDoc(`group_bookings/${bookingId}`, all[bookingId])
   }).catch(() => {})
   return all[bookingId]
+}
+
+// Retrait d'un membre AVANT paiement : l'exclut de la résa, retire sa validation,
+// et ré-équilibre les parts à parts ÉGALES entre les membres restants. Refusé si
+// le membre a déjà payé (remboursement = support). Renvoie la résa mise à jour.
+export function withdrawFromGroupBooking(bookingId, userId) {
+  const all = getGroupBookings()
+  const b = all[bookingId]
+  if (!b) return null
+  if ((b.payments || {})[userId]) return b // déjà payé → ne pas retirer ici
+  const withdrawn = new Set(b.withdrawnMembers || [])
+  withdrawn.add(userId)
+  b.withdrawnMembers = [...withdrawn]
+  // Retirer sa validation
+  if (b.validations) { const v = { ...b.validations }; delete v[userId]; b.validations = v }
+  // Ré-équilibrer les parts à parts égales entre les membres restants (non retirés)
+  const remaining = (b.members || []).filter(m => !withdrawn.has(m.userId))
+  if (remaining.length > 0) {
+    const evenPct = Math.floor(100 / remaining.length)
+    const remainder = 100 - evenPct * remaining.length
+    const pctByUser = {}
+    remaining.forEach((m, i) => { pctByUser[m.userId] = evenPct + (i === 0 ? remainder : 0) })
+    b.members = (b.members || []).map(m => withdrawn.has(m.userId) ? m : { ...m, contributionPct: pctByUser[m.userId] })
+  }
+  localStorage.setItem('lib_group_bookings', JSON.stringify(all))
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`group_bookings/${bookingId}`, b)
+  }).catch(() => {})
+  return b
 }
 
 // Legacy compatibility — keep for EventDetailPage

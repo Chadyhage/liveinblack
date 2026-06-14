@@ -1883,7 +1883,9 @@ export default function EventDetailPage() {
             validations: { [myId]: true },
             payments: {},
             songSelections: {},
+            withdrawnMembers: [],
             createdAt: Date.now(),
+            deadline: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
           })
           sendMessage(groupSendConvId, myId, myName, 'group_booking', bookingId)
           setShowGroupSendModal(false)
