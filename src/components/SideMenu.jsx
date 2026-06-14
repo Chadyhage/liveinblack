@@ -226,7 +226,7 @@ export default function SideMenu({ open, onClose }) {
                 <RoleRequestCard role="organisateur" status={orgStatus}
                   onRequest={() => go('/onboarding-organisateur')}
                   onViewDossier={() => go('/mon-dossier')}
-                  onCancel={async () => { await cancelRoleRequest(user.uid, 'organisateur'); const u = JSON.parse(localStorage.getItem('lib_user') || 'null'); if (u) setUser(u) }}
+                  onCancel={async () => { await cancelRoleRequest(user.uid, 'organisateur'); const u = JSON.parse(localStorage.getItem('lib_user') || 'null'); if (u && u.uid === user.uid) setUser(u) }}
                   onModify={() => go('/onboarding-organisateur')}
                 />
               )}
@@ -234,7 +234,7 @@ export default function SideMenu({ open, onClose }) {
                 <RoleRequestCard role="prestataire" status={prestStatus}
                   onRequest={() => go('/onboarding-prestataire')}
                   onViewDossier={() => go('/mon-dossier')}
-                  onCancel={async () => { await cancelRoleRequest(user.uid, 'prestataire'); const u = JSON.parse(localStorage.getItem('lib_user') || 'null'); if (u) setUser(u) }}
+                  onCancel={async () => { await cancelRoleRequest(user.uid, 'prestataire'); const u = JSON.parse(localStorage.getItem('lib_user') || 'null'); if (u && u.uid === user.uid) setUser(u) }}
                   onModify={() => go('/onboarding-prestataire')}
                 />
               )}

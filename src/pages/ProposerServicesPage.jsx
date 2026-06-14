@@ -1531,7 +1531,9 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                     // Mettre à jour le contexte utilisateur
                     try {
                       const updated = JSON.parse(localStorage.getItem('lib_user') || 'null')
-                      if (updated) setUser(updated)
+                      // Garde anti-race : ne pas écraser la session si l'utilisateur
+                      // a changé de compte pendant l'await (croisement de compte)
+                      if (updated && updated.uid === user?.uid) setUser(updated)
                     } catch {}
                     setMode('landing')
                     setRoleRequestState('idle')
@@ -1610,7 +1612,8 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                     // Mettre à jour la session
                     try {
                       const updated = JSON.parse(localStorage.getItem('lib_user') || 'null')
-                      if (updated) setUser(updated)
+                      // Garde anti-race : ne pas écraser la session d'un autre compte
+                      if (updated && updated.uid === user?.uid) setUser(updated)
                     } catch {}
                     setRoleRequestState('done')
                   } catch {

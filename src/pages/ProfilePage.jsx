@@ -546,6 +546,10 @@ export default function ProfilePage() {
     if (panel !== 'settings') return
     import('../firebase').then(({ USE_REAL_FIREBASE, auth }) => {
       if (!USE_REAL_FIREBASE || !auth.currentUser) return
+      // Garde anti-race : si la session a changé de compte pendant l'import
+      // async, on n'applique rien (sinon on injecterait l'email d'un autre
+      // compte dans la session courante). user est capturé en closure.
+      if (auth.currentUser.uid !== user?.uid) return
       const firebaseEmail = auth.currentUser.email
       if (firebaseEmail && firebaseEmail !== user?.email) {
         // L'e-mail a été vérifié et mis à jour dans Firebase Auth
@@ -576,7 +580,7 @@ export default function ProfilePage() {
         }).catch(() => {})
       }
     }).catch(() => {})
-  }, [panel]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [panel, user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Changer le mot de passe ───────────────────────────────────────────────
   async function changePassword() {
