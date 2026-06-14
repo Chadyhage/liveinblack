@@ -88,13 +88,13 @@ export function saveBoost(eventId, position, days, price, region = '', userId = 
       !(b.position === position && (b.region || '') === (region || ''))
     )
     const updated = [...filtered, boost]
+    // Mise à jour LOCALE uniquement (affichage immédiat). On NE sync PLUS
+    // user_boosts/{uid} ici : le webhook Stripe en est le seul propriétaire
+    // (comme pour les billets). Le client écrivait un id différent du webhook
+    // → doublon dans user_boosts. La collection globale boosts/ (source du
+    // Top 3) est aussi écrite par le webhook. Au prochain login, syncOnLogin
+    // récupère la liste propre du serveur.
     localStorage.setItem('lib_boosts', JSON.stringify(updated))
-    // Sync to Firestore immediately
-    if (userId) {
-      import('./firestore-sync').then(({ syncDoc }) => {
-        syncDoc(`user_boosts/${userId}`, { items: updated.filter(b => b.userId === userId) })
-      }).catch(() => {})
-    }
   } catch {}
 }
 

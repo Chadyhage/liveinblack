@@ -623,12 +623,20 @@ export function getGroupBookings() {
 }
 
 export function saveGroupBooking(booking) {
+  // CRITIQUE : dériver participantIds depuis members. Les règles Firestore
+  // (isMemberOf) vérifient participantIds/participants ; sans ce champ, les
+  // écritures des membres (ex: payGroupBookingShare → payments[uid]) étaient
+  // rejetées silencieusement → part payée jamais visible par les autres.
+  const participantIds = booking.participantIds?.length
+    ? booking.participantIds
+    : (booking.members || []).map(m => m.userId).filter(Boolean)
+  const withIds = { ...booking, participantIds }
   const all = getGroupBookings()
-  all[booking.id] = booking
+  all[withIds.id] = withIds
   localStorage.setItem('lib_group_bookings', JSON.stringify(all))
   // Sync to Firestore so all group members can see/interact with the booking
   import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`group_bookings/${booking.id}`, booking)
+    syncDoc(`group_bookings/${withIds.id}`, withIds)
   }).catch(() => {})
 }
 

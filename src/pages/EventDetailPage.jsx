@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import Layout from '../components/Layout'
@@ -288,6 +288,10 @@ export default function EventDetailPage() {
   const [allBookedThisSession, setAllBookedThisSession] = useState([]) // { place, tickets, preorderSummary, totalPrice }
   const [showShareModal, setShowShareModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  // Garde de réentrance pour la réservation gratuite (anti double-clic / multi-onglet,
+  // sinon double création de billets + double points). Le chemin payant est déjà
+  // protégé par stripeRedirecting.
+  const freeBookingLockRef = useRef(false)
   const [stripeRedirecting, setStripeRedirecting] = useState(false)
   const [stripeError, setStripeError] = useState('')
   const [showGroupSendModal, setShowGroupSendModal] = useState(false)
@@ -497,6 +501,10 @@ export default function EventDetailPage() {
     }
 
     // ─── ÉVÉNEMENT GRATUIT — création directe (pas de paiement) ──────────
+    // Garde anti double-exécution : un 2e clic rapide créerait des billets
+    // et des points en double.
+    if (freeBookingLockRef.current) return
+    freeBookingLockRef.current = true
     const newTickets = []
     try {
       const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
@@ -563,8 +571,10 @@ export default function EventDetailPage() {
       if (user && uid) {
         const newPoints = (user.points || 0) + ticketQty
         setUser({ ...user, points: newPoints })
-        import('../utils/firestore-sync').then(({ syncDoc }) => {
-          syncDoc(`users/${uid}`, { points: newPoints })
+        // Incrément ATOMIQUE côté serveur (et non écriture d'une valeur fixe) :
+        // évite la perte de points en cas de double-clic / multi-onglet.
+        import('../utils/firestore-sync').then(({ syncIncrement }) => {
+          syncIncrement(`users/${uid}`, 'points', ticketQty)
         }).catch(() => {})
         import('../utils/accounts').then(({ updateAccount }) => {
           updateAccount(uid, { points: newPoints })
@@ -582,6 +592,8 @@ export default function EventDetailPage() {
     } catch {
       setShowConfirmModal(false)
       return
+    } finally {
+      freeBookingLockRef.current = false
     }
     if (hasPlaylist) {
       setPlaylistTabBlink(true)

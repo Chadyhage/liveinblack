@@ -244,12 +244,13 @@ export default function PaiementReussiPage() {
           } catch {}
         }
 
-        // Points fidélité
+        // Points fidélité — incrément ATOMIQUE serveur (évite la perte de
+        // points en multi-onglet sur la page de succès ; cohérent avec le webhook)
         if (user && pending.userId === user.uid) {
           const newPoints = (user.points || 0) + qty
           setUser({ ...user, points: newPoints })
-          import('../utils/firestore-sync').then(({ syncDoc }) => {
-            syncDoc(`users/${user.uid}`, { points: newPoints })
+          import('../utils/firestore-sync').then(({ syncIncrement }) => {
+            syncIncrement(`users/${user.uid}`, 'points', qty)
           }).catch(() => {})
           import('../utils/accounts').then(({ updateAccount }) => {
             updateAccount(user.uid, { points: newPoints })

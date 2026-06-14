@@ -4,7 +4,7 @@
 // On login → pull from Firestore into localStorage (async)
 
 import { db } from '../firebase'
-import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
+import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, onSnapshot, increment } from 'firebase/firestore'
 
 // ── Real-time listeners ────────────────────────────────────────────────────────
 // Each returns an unsubscribe function. Call it on unmount to stop listening.
@@ -176,6 +176,19 @@ export async function syncDocAwaitable(path, data) {
   } catch (e) {
     console.error('[sync] AWAIT write FAILED:', path, e.code, e.message)
     return { ok: false, error: e.message || String(e), code: e.code }
+  }
+}
+
+// Incrément ATOMIQUE d'un champ numérique côté serveur (FieldValue.increment).
+// Évite les pertes du pattern read-modify-write (multi-onglet, double-clic) :
+// deux incréments concurrents s'additionnent au lieu de s'écraser. Utilisé pour
+// les points de fidélité, comme le fait déjà le webhook Stripe.
+export function syncIncrement(path, field, amount) {
+  try {
+    const ref = doc(db, ...path.split('/'))
+    setDoc(ref, { [field]: increment(amount), _syncedAt: Date.now() }, { merge: true })
+  } catch (e) {
+    console.warn('[sync] increment failed:', path, e.message)
   }
 }
 
