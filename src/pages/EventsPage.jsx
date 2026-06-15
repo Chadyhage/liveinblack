@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import { events } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { getUserId, sendMessage } from '../utils/messaging'
+import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/eventUrgency'
 
 function getCreatedEvents() {
   try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
@@ -529,6 +530,9 @@ export default function EventsPage() {
 
 function EventCard({ event, onClick, shareMode, shared }) {
   const [hovered, setHovered] = useState(false)
+  const countdown = getEventCountdown(event)
+  const urgent = isCountdownUrgent(event)
+  const stock = getStockBadge(event)
 
   return (
     <button
@@ -626,6 +630,23 @@ function EventCard({ event, onClick, shareMode, shared }) {
             }}>
               Envoyé
             </div>
+          </div>
+        )}
+
+        {/* Badges urgence/FOMO — coin haut-droit */}
+        {!shareMode && (countdown || stock) && (
+          <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
+            {countdown && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 99, background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(8,10,20,0.78)', backdropFilter: 'blur(8px)', border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}`, fontFamily: "'DM Mono', monospace", fontSize: 8.5, fontWeight: 600, letterSpacing: '0.08em', color: urgent ? '#fff' : '#4ee8c8' }}>
+                <span style={{ width: 4, height: 4, borderRadius: '50%', background: urgent ? '#fff' : '#4ee8c8' }} />
+                {countdown}
+              </span>
+            )}
+            {stock && (
+              <span style={{ padding: '3px 8px', borderRadius: 99, background: 'rgba(8,10,20,0.78)', backdropFilter: 'blur(8px)', border: `1px solid ${stock.color}66`, fontFamily: "'DM Mono', monospace", fontSize: 8.5, fontWeight: 600, letterSpacing: '0.08em', color: stock.color }}>
+                {stock.label}
+              </span>
+            )}
           </div>
         )}
 

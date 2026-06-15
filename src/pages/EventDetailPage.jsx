@@ -398,6 +398,46 @@ export default function EventDetailPage() {
   })()
   const bookingDisabled = isEventCancelled || isEventSoldOut || isEventClosed
 
+  // ── Urgence & FOMO ──────────────────────────────────────────────────────────
+  // Timestamp de DÉBUT de l'event (pour le compte à rebours « avant la soirée »)
+  const eventStartTimestamp = (() => {
+    if (!event.date) return 0
+    try {
+      const [sh, sm] = (event.time || '23:00').split(':').map(Number)
+      const d = new Date(event.date + 'T00:00:00'); d.setHours(sh, sm, 0, 0)
+      return d.getTime()
+    } catch { return 0 }
+  })()
+  // Libellé du compte à rebours : « CE SOIR », « DEMAIN », « J-3 », « DANS 4H »…
+  const countdownLabel = (() => {
+    if (!eventStartTimestamp || isEventCancelled || isEventClosed) return null
+    const ms = eventStartTimestamp - now
+    if (ms <= 0) return eventEndTimestamp > now ? 'EN COURS' : null
+    const h = Math.floor(ms / 3600000)
+    if (h < 1) return `DANS ${Math.max(1, Math.floor(ms / 60000))} MIN`
+    if (h < 8) return `DANS ${h}H`
+    const startDay = new Date(eventStartTimestamp); startDay.setHours(0, 0, 0, 0)
+    const today = new Date(now); today.setHours(0, 0, 0, 0)
+    const days = Math.round((startDay.getTime() - today.getTime()) / 86400000)
+    if (days <= 0) return 'CE SOIR'
+    if (days === 1) return 'DEMAIN'
+    return `J-${days}`
+  })()
+  const countdownUrgent = eventStartTimestamp > 0 && (eventStartTimestamp - now) < 48 * 3600000 && (eventStartTimestamp - now) > 0
+  // Remplissage des places (jauge globale + urgence stock)
+  const totalCapacity = (event.places || []).reduce((s, p) => s + (Number(p.total) || 0), 0)
+  const totalAvailable = (event.places || []).reduce((s, p) => s + (Number(p.available) || 0), 0)
+  const soldCount = Math.max(0, totalCapacity - totalAvailable)
+  const fillPct = totalCapacity > 0 ? Math.round(soldCount / totalCapacity * 100) : 0
+  // Badge stock : « COMPLET » / « DERNIÈRES PLACES » / « BIENTÔT COMPLET »
+  const stockBadge = (() => {
+    if (isEventCancelled || isEventClosed || totalCapacity === 0) return null
+    if (totalAvailable === 0) return { label: 'COMPLET', color: '#e05aaa' }
+    if (totalAvailable <= 5) return { label: `PLUS QUE ${totalAvailable} PLACE${totalAvailable > 1 ? 'S' : ''}`, color: '#e05aaa' }
+    if (fillPct >= 80) return { label: 'BIENTÔT COMPLET', color: '#c8a96e' }
+    return null
+  })()
+
   function updatePreorder(name, delta) {
     setPerTicketOrders(prev => prev.map((t, i) =>
       i === activePreorderTicket
@@ -803,6 +843,17 @@ export default function EventDetailPage() {
           borderBottom: '1px solid rgba(255,255,255,0.07)',
           overflowX: 'auto',
         }}>
+          {countdownLabel && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, padding: '3px 9px', borderRadius: 99, background: countdownUrgent ? 'rgba(224,90,170,0.12)' : 'rgba(78,232,200,0.10)', border: `1px solid ${countdownUrgent ? 'rgba(224,90,170,0.35)' : 'rgba(78,232,200,0.30)'}` }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: countdownUrgent ? '#e05aaa' : '#4ee8c8', boxShadow: `0 0 6px ${countdownUrgent ? '#e05aaa' : '#4ee8c8'}` }} />
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 600, color: countdownUrgent ? '#e05aaa' : '#4ee8c8', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{countdownLabel}</span>
+            </div>
+          )}
+          {stockBadge && (
+            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, padding: '3px 9px', borderRadius: 99, background: `${stockBadge.color}1f`, border: `1px solid ${stockBadge.color}55` }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 600, color: stockBadge.color, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{stockBadge.label}</span>
+            </div>
+          )}
           {[
             { Icon: CalendarIcon, val: event.dateDisplay },
             { Icon: ClockIcon, val: `${event.time} → ${event.endTime}` },
@@ -872,6 +923,21 @@ export default function EventDetailPage() {
                   <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 20, color: 'white', margin: 0 }}>
                     Choisir ton type de place
                   </h3>
+
+                  {/* Preuve sociale + jauge de remplissage globale (FOMO) */}
+                  {totalCapacity > 0 && soldCount >= 3 && !isEventCancelled && !isEventClosed && (
+                    <div style={{ margin: '2px 0 4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8', letterSpacing: '0.04em' }}>
+                          🔥 {soldCount} {soldCount > 1 ? 'personnes y vont' : 'personne y va'}
+                        </span>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{fillPct}% rempli</span>
+                      </div>
+                      <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', borderRadius: 99, width: `${fillPct}%`, background: fillPct >= 80 ? 'linear-gradient(90deg,#c8a96e,#e05aaa)' : 'linear-gradient(90deg,#4ee8c8,#c8a96e)', transition: 'width 0.5s' }} />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Utilisateur connecté avec mauvais rôle → avertissement */}
                   {user && !userCanBook && (

@@ -6,6 +6,7 @@ import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { getActiveBoostsByRegion } from '../utils/ticket'
+import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/eventUrgency'
 import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 import { IconTent, IconMic } from '../components/icons'
@@ -461,6 +462,17 @@ export default function HomePage() {
                             Boosté
                           </div>
                         )}
+                        {(() => {
+                          const cd = getEventCountdown(event); const urg = isCountdownUrgent(event); const st = getStockBadge(event)
+                          return (<>
+                            {cd && (
+                              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', color: urg ? '#fff' : '#4ee8c8', background: urg ? 'rgba(224,90,170,0.9)' : 'rgba(5,6,10,0.6)', backdropFilter: 'blur(10px)', padding: '4px 9px', borderRadius: 999, border: `1px solid ${urg ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{cd}</div>
+                            )}
+                            {st && (
+                              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: st.color, background: 'rgba(5,6,10,0.6)', backdropFilter: 'blur(10px)', padding: '4px 9px', borderRadius: 999, border: `1px solid ${st.color}66` }}>{st.label}</div>
+                            )}
+                          </>)
+                        })()}
                       </div>
 
                       {/* Info */}
