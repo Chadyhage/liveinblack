@@ -16,6 +16,7 @@ import {
   seedDemoData, DEMO_USERS,
   getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking, withdrawFromGroupBooking,
   blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory,
+  editMessage, isConvMuted, toggleMuteConv,
 } from '../utils/messaging'
 import { startStripeCheckout } from '../utils/stripe'
 
@@ -484,6 +485,8 @@ export default function MessagingPage() {
   // ── Input ──
   const [inputText, setInputText]   = useState('')
   const [replyTo, setReplyTo]       = useState(null)     // { id, senderName, preview }
+  const [editingMsg, setEditingMsg] = useState(null)     // { id } — édition d'un message texte
+  const [muteTick, setMuteTick]     = useState(0)        // force le re-render au toggle mute
   const [highlightedMsgId, setHighlightedMsgId] = useState(null) // message glow on reply-preview click
   const [forwardMsg, setForwardMsg] = useState(null)     // message to forward
 
@@ -867,6 +870,16 @@ export default function MessagingPage() {
   function handleSend() {
     const text = inputText.trim()
     if (!text || !activeConvId) return
+    // Mode édition : on modifie le message existant au lieu d'en envoyer un nouveau
+    if (editingMsg) {
+      editMessage(activeConvId, editingMsg.id, myId, text)
+      setEditingMsg(null)
+      setInputText('')
+      setMessages(getMessages(activeConvId))
+      setConversations(getConversations(myId))
+      setTyping(activeConvId, myId, false)
+      return
+    }
     const extra = replyTo ? { replyTo } : {}
     sendMessage(activeConvId, myId, myName, 'text', text, extra)
     setInputText('')
@@ -874,6 +887,16 @@ export default function MessagingPage() {
     setMessages(getMessages(activeConvId))
     setConversations(getConversations(myId))
     setTyping(activeConvId, myId, false)
+  }
+
+  function handleEditStart(msg) {
+    setReplyTo(null)
+    setEditingMsg({ id: msg.id })
+    setInputText(msg.content || '')
+  }
+  function handleEditCancel() {
+    setEditingMsg(null)
+    setInputText('')
   }
 
   // ── Typing indicator ──
@@ -1578,7 +1601,10 @@ export default function MessagingPage() {
                     🚫 Ce message a été supprimé
                   </span>
                 ) : msg.type === 'text' ? (
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.88)', margin: 0, wordBreak: 'break-word', lineHeight: 1.5 }}>{msg.content}</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.88)', margin: 0, wordBreak: 'break-word', lineHeight: 1.5 }}>
+                    {msg.content}
+                    {msg.editedAt && <span style={{ fontSize: 8.5, color: T.dim, marginLeft: 5, fontStyle: 'italic' }}>(modifié)</span>}
+                  </p>
                 ) : msg.type === 'image' ? (
                   <ImageBubble msg={msg} myId={myId} setPhotoViewer={setPhotoViewer} />
                 ) : msg.type === 'voice' ? (
@@ -1698,15 +1724,21 @@ export default function MessagingPage() {
           }).map(conv => {
             const d = getConvDisplay(conv)
             const unread = getUnreadCount(conv.id, myId)
+            const muted = isConvMuted(myId, conv.id)
             return (
               <button key={conv.id} onClick={() => openConv(conv.id)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 {d.isGroup ? <GroupAvatar conv={conv} size={44} /> : <Avatar user={d.user} size={44} showOnline />}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 16, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</p>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 16, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</p>
+                      {muted && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.dim} strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>}
+                    </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                      {unread > 0 && <span style={{ background: T.teal, color: '#000', borderRadius: 10, padding: '1px 6px', fontFamily: T.dmMono, fontSize: 9, fontWeight: 700 }}>{unread}</span>}
+                      {unread > 0 && (muted
+                        ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.dim }} />
+                        : <span style={{ background: T.teal, color: '#000', borderRadius: 10, padding: '1px 6px', fontFamily: T.dmMono, fontSize: 9, fontWeight: 700 }}>{unread}</span>)}
                       <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>{formatTime(conv.updatedAt)}</span>
                     </div>
                   </div>
@@ -2012,6 +2044,23 @@ export default function MessagingPage() {
         {chatSubView === 'settings' ? (
           // ── Settings panel ──
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+            {/* Notifications (mute) — vaut pour groupe ET conversation directe */}
+            {activeConvId && (() => {
+              const convMuted = isConvMuted(myId, activeConvId)
+              void muteTick // dépendance pour re-render
+              return (
+                <button
+                  onClick={() => { toggleMuteConv(myId, activeConvId); setMuteTick(t => t + 1); setConversations(getConversations(myId)); showToast(isConvMuted(myId, activeConvId) ? 'Conversation en sourdine' : 'Notifications réactivées') }}
+                  style={{ width: '100%', marginBottom: 16, padding: '12px 14px', borderRadius: 10, cursor: 'pointer', background: convMuted ? 'rgba(200,169,110,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${convMuted ? 'rgba(200,169,110,0.25)' : 'rgba(255,255,255,0.08)'}`, color: convMuted ? T.gold : 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    {convMuted
+                      ? <><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></>
+                      : <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>}
+                  </svg>
+                  {convMuted ? 'Réactiver les notifications' : 'Mettre en sourdine'}
+                </button>
+              )
+            })()}
             {activeConv?.type === 'group' && (<>
               {/* Group photo */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 24 }}>
@@ -2295,8 +2344,17 @@ export default function MessagingPage() {
               </button>
             )}
 
+            {/* ── Edit bar ── */}
+            {editingMsg && (
+              <div style={{ background: 'rgba(200,169,110,0.07)', borderTop: '1px solid rgba(200,169,110,0.18)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12 }}>✏️</span>
+                <p style={{ flex: 1, fontFamily: T.dmMono, fontSize: 10, color: T.gold, margin: 0 }}>Modifier le message</p>
+                <button onClick={handleEditCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 14, padding: 0 }}>✕</button>
+              </div>
+            )}
+
             {/* ── Reply preview bar ── */}
-            {replyTo && (
+            {replyTo && !editingMsg && (
               <div style={{ background: 'rgba(78,232,200,0.06)', borderTop: '1px solid rgba(78,232,200,0.15)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.teal, margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
@@ -2397,6 +2455,7 @@ export default function MessagingPage() {
               {/* Actions */}
               {[
                 !contextMenu.msg.deletedForAll && { label: '↩ Répondre', fn: () => handleReply(contextMenu.msg) },
+                !contextMenu.msg.deletedForAll && contextMenu.msg.senderId === myId && contextMenu.msg.type === 'text' && { label: '✏️ Éditer', fn: () => handleEditStart(contextMenu.msg) },
                 !contextMenu.msg.deletedForAll && { label: '↗ Transférer', fn: () => handleForward(contextMenu.msg) },
                 !contextMenu.msg.deletedForAll && amAdmin && { label: activeConv?.pinnedMessageId === contextMenu.msg.id ? '📌 Désépingler' : '📌 Épingler', fn: () => handlePin(contextMenu.msg) },
                 !contextMenu.msg.deletedForAll && { label: '🗑 Supprimer pour moi', fn: () => handleDeleteForSelf(contextMenu.msg) },

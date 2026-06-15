@@ -499,6 +499,27 @@ export function reactToMessage(convId, msgId, userId, emoji) {
   syncMessagesToFirestore(convId, updated)
 }
 
+// Édition d'un message texte (par son auteur). Persiste + sync Firestore +
+// marque editedAt pour afficher « (modifié) ». Renvoie true si édité.
+export function editMessage(convId, msgId, userId, newContent) {
+  const text = (newContent || '').trim()
+  if (!text) return false
+  const msgs = getMessages(convId)
+  let changed = false
+  const updated = msgs.map(m => {
+    if (m.id !== msgId || m.deletedForAll) return m
+    if (m.senderId !== userId) return m       // seul l'auteur édite
+    if (m.type !== 'text') return m            // texte uniquement
+    if (m.content === text) return m
+    changed = true
+    return { ...m, content: text, editedAt: new Date().toISOString() }
+  })
+  if (!changed) return false
+  saveMessages(convId, updated)
+  syncMessagesToFirestore(convId, updated)
+  return true
+}
+
 export function deleteMessageForSelf(convId, msgId, userId) {
   const msgs = getMessages(convId)
   const updated = msgs.map(m =>
@@ -792,13 +813,39 @@ export function getTotalUnreadCount(myId) {
   if (!myId) return 0
   try {
     const convs = getConversations(myId)
-    return convs.reduce((sum, c) => sum + getUnreadCount(c.id, myId), 0)
+    const muted = new Set(getMutedConvs(myId))
+    // Les conversations en sourdine ne pèsent pas dans le badge global
+    return convs.reduce((sum, c) => sum + (muted.has(c.id) ? 0 : getUnreadCount(c.id, myId)), 0)
   } catch { return 0 }
 }
 
 // ─── Block / Unblock ─────────────────────────────────────────────────────────
 export function getBlockedUsers(myId) {
   try { return JSON.parse(localStorage.getItem('lib_blocked') || '{}')[myId] || [] } catch { return [] }
+}
+
+// ── Mute de conversation (par user) ─────────────────────────────────────────
+// Stocké comme lib_muted_convs = { [userId]: [convId] }, synchronisé dans
+// user_social/{uid}.mutedConvs. Une conv mutée ne compte plus dans le badge
+// non-lus et n'émet pas de notification.
+export function getMutedConvs(myId) {
+  try { return JSON.parse(localStorage.getItem('lib_muted_convs') || '{}')[myId] || [] } catch { return [] }
+}
+export function isConvMuted(myId, convId) {
+  return getMutedConvs(myId).includes(convId)
+}
+export function toggleMuteConv(myId, convId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_muted_convs') || '{}')
+    const cur = new Set(all[myId] || [])
+    if (cur.has(convId)) cur.delete(convId); else cur.add(convId)
+    all[myId] = [...cur]
+    localStorage.setItem('lib_muted_convs', JSON.stringify(all))
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`user_social/${myId}`, { mutedConvs: all[myId] })
+    }).catch(() => {})
+    return cur.has(convId)
+  } catch { return false }
 }
 
 export function blockUser(myId, userId) {

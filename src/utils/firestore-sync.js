@@ -331,6 +331,11 @@ export async function syncOnLogin(uid) {
         b[uid] = social.blocked
         localStorage.setItem('lib_blocked', JSON.stringify(b))
       }
+      if (social.mutedConvs) {
+        const m = safeParseObj('lib_muted_convs')
+        m[uid] = social.mutedConvs
+        localStorage.setItem('lib_muted_convs', JSON.stringify(m))
+      }
     }
 
     // ── 7. Friend requests (to me) ──
@@ -478,9 +483,11 @@ export async function pushLocalToFirestore(uid) {
     // Friends + blocked
     const friends = safeParseObj('lib_friends')
     const blocked = safeParseObj('lib_blocked')
+    const muted = safeParseObj('lib_muted_convs')
     syncDoc(`user_social/${uid}`, {
       friends: friends[uid] || [],
       blocked: blocked[uid] || [],
+      mutedConvs: muted[uid] || [],
     })
 
     // Friend requests (sent by me)
