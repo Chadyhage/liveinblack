@@ -882,6 +882,14 @@ export default function MessagingPage() {
     }
     const extra = replyTo ? { replyTo } : {}
     sendMessage(activeConvId, myId, myName, 'text', text, extra)
+    // Notifier les membres mentionnés (@Nom) en groupe
+    const mentioned = findMentionedMembers(text)
+    if (mentioned.length) {
+      const convName = activeConv?.name || 'un groupe'
+      import('../utils/notifications').then(({ createNotification }) => {
+        mentioned.forEach(m => createNotification(m.userId, 'mention', `${myName} t'a mentionné`, `${convName} : ${text.slice(0, 80)}`, { convId: activeConvId }))
+      }).catch(() => {})
+    }
     setInputText('')
     setReplyTo(null)
     setMessages(getMessages(activeConvId))
@@ -897,6 +905,25 @@ export default function MessagingPage() {
   function handleEditCancel() {
     setEditingMsg(null)
     setInputText('')
+  }
+
+  // ── @mentions (groupes) ──
+  // Détecte un token « @… » en fin de saisie pour proposer les membres.
+  const mentionCtx = (() => {
+    if (activeConv?.type !== 'group') return null
+    const m = inputText.match(/(?:^|\s)@([^\s@]*)$/)
+    return m ? { query: m[1].toLowerCase() } : null
+  })()
+  const mentionMatches = mentionCtx
+    ? (activeConv?.members || []).filter(mm => mm.userId !== myId && (mm.name || '').toLowerCase().includes(mentionCtx.query)).slice(0, 5)
+    : []
+  function applyMention(member) {
+    setInputText(prev => prev.replace(/((?:^|\s)@)[^\s@]*$/, `$1${member.name} `))
+  }
+  // Repère les membres mentionnés dans un texte (pour notifier)
+  function findMentionedMembers(text) {
+    const members = activeConv?.members || []
+    return members.filter(m => m.userId !== myId && m.name && text.includes(`@${m.name}`))
   }
 
   // ── Typing indicator ──
@@ -1602,7 +1629,7 @@ export default function MessagingPage() {
                   </span>
                 ) : msg.type === 'text' ? (
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.88)', margin: 0, wordBreak: 'break-word', lineHeight: 1.5 }}>
-                    {msg.content}
+                    <MentionText content={msg.content} members={activeConv?.members} />
                     {msg.editedAt && <span style={{ fontSize: 8.5, color: T.dim, marginLeft: 5, fontStyle: 'italic' }}>(modifié)</span>}
                   </p>
                 ) : msg.type === 'image' ? (
@@ -2344,6 +2371,20 @@ export default function MessagingPage() {
               </button>
             )}
 
+            {/* ── @mention autocomplete ── */}
+            {mentionMatches.length > 0 && (
+              <div style={{ background: 'rgba(8,10,20,0.97)', borderTop: '1px solid rgba(78,232,200,0.15)', maxHeight: 160, overflowY: 'auto' }}>
+                {mentionMatches.map(m => (
+                  <button key={m.userId} onClick={() => applyMention(m)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(78,232,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.dmMono, fontSize: 11, color: T.teal, flexShrink: 0 }}>{(m.name || '?').charAt(0).toUpperCase()}</span>
+                    <span style={{ fontFamily: T.dmMono, fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>{m.name}</span>
+                    <span style={{ marginLeft: 'auto', fontFamily: T.dmMono, fontSize: 9, color: T.teal }}>@</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* ── Edit bar ── */}
             {editingMsg && (
               <div style={{ background: 'rgba(200,169,110,0.07)', borderTop: '1px solid rgba(200,169,110,0.18)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2746,6 +2787,24 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
 }
 
 // ─── Group Booking Card ────────────────────────────────────────────────────────
+// Rend un texte en surlignant les @mentions correspondant aux membres du groupe.
+function MentionText({ content, members }) {
+  const text = content || ''
+  const names = (members || []).map(m => m.name).filter(Boolean).sort((a, b) => b.length - a.length)
+  if (!names.length || !text.includes('@')) return <>{text}</>
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const rx = new RegExp(`@(?:${names.map(esc).join('|')})`, 'g')
+  const out = []
+  let last = 0, m, k = 0
+  while ((m = rx.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index))
+    out.push(<span key={k++} style={{ color: '#4ee8c8', fontWeight: 600 }}>{m[0]}</span>)
+    last = m.index + m[0].length
+  }
+  if (last < text.length) out.push(text.slice(last))
+  return <>{out}</>
+}
+
 function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, onSong, onNudge, onWithdraw, groupBookings }) {
   const booking = groupBookings[bookingId]
   // Tick temps réel pour le compte à rebours (rafraîchit toutes les 30s)

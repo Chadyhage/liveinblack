@@ -107,4 +107,5 @@ export const NOTIF_CONFIG = {
   application_needs_changes:  { icon: '⚠️', color: '#f59e0b', label: 'Corrections requises' },
   new_order:                  { icon: '🛒', color: '#4ee8c8', label: 'Nouvelle commande' },
   message:                    { icon: '💬', color: '#8b5cf6', label: 'Nouveau message'   },
+  mention:                    { icon: '📣', color: '#4ee8c8', label: 'Mention'           },
 }
