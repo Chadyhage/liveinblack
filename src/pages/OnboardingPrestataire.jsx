@@ -447,6 +447,15 @@ export default function OnboardingPrestataire() {
       const result = await submitApplication(app.id, f, candidateNote)
       setApp(result)
 
+      // Email d'accusé de réception (best-effort — le dossier vient d'être
+      // synchronisé dans Firestore par submitApplication, donc /api/send-email
+      // le retrouvera pour envoyer à l'email du dossier).
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appId: app.id, type: 'application_received' }),
+      }).catch(() => {})
+
       // Sync display name to user profile (logged-in mode)
       if (user) {
         try {

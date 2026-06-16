@@ -560,6 +560,21 @@ export default function AgentPage() {
       } catch {}
     }
 
+    // Email transactionnel (best-effort : ne bloque jamais l'action agent).
+    // Le statut + le message viennent d'être awaités dans updateApplicationStatus,
+    // donc /api/send-email relira le bon requestedChanges/rejectionReason.
+    const emailType =
+      status === 'approved'      ? 'application_approved'      :
+      status === 'needs_changes' ? 'application_needs_changes' :
+      status === 'rejected'      ? 'application_rejected'      : null
+    if (emailType) {
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appId, type: emailType }),
+      }).catch(() => {})
+    }
+
     setAppNote('')
     setAppAdminNote('')
     setActiveAction(null)
