@@ -268,6 +268,34 @@ async function finalizeBooking(db, session, meta) {
     }
   }
 
+  // ── Notification de vente à l'organisateur (engagement) ──
+  // On lit l'event pour trouver son organisateur, puis on ajoute une notif.
+  // Read-merge-write pour ne pas écraser les notifs existantes de l'orga.
+  try {
+    if (eventId) {
+      const evSnap = await db.collection('events').doc(String(eventId)).get()
+      const organizerUid = evSnap.exists ? (evSnap.data().organizerId || evSnap.data().createdBy) : null
+      if (organizerUid && organizerUid !== userId) {
+        const notif = {
+          id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
+          type: 'new_order',
+          title: '🎫 Nouvelle vente',
+          body: `${qty} × ${placeType} — ${eventName}`,
+          data: { eventId: String(eventId) },
+          read: false,
+          createdAt: Date.now(),
+        }
+        const ref = db.collection('notifications').doc(String(organizerUid))
+        const cur = await ref.get()
+        const items = cur.exists ? (cur.data().items || []) : []
+        await ref.set({ items: [notif, ...items].slice(0, 50), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+        console.log('[webhook] organisateur notifié de la vente:', organizerUid)
+      }
+    }
+  } catch (e) {
+    console.warn('[webhook] échec notif organisateur:', e.message)
+  }
+
   console.log('[webhook] booking finalized:', bookingId, '— tickets:', tickets.length, clientAlreadyFinalized ? '(codes client adoptés)' : '(codes mintés)')
 }
 

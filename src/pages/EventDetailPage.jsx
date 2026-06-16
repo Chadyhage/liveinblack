@@ -622,6 +622,18 @@ export default function EventDetailPage() {
         setShowPointsToast(true)
         setTimeout(() => setShowPointsToast(false), 2500)
       }
+      // Notifier l'organisateur de la réservation gratuite (engagement).
+      // Passe par un endpoint serveur car les règles Firestore interdisent à un
+      // client d'écrire dans notifications/{organizerUid} (anti-spam). Les ventes
+      // payées sont notifiées par le webhook Stripe. Fire-and-forget.
+      const organizerUid = event.organizerId || event.createdBy
+      if (organizerUid && organizerUid !== uid) {
+        fetch('/api/notify-sale', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId: event.id, qty: ticketQty, place: selectedPlace, buyerId: uid }),
+        }).catch(() => {})
+      }
       setAllBookedThisSession(prev => [...prev, {
         place: selectedPlace,
         tickets: newTickets,
