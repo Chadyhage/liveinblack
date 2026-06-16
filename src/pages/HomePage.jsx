@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import RegionSelector from '../components/RegionSelector'
+import EmptyState from '../components/EmptyState'
 import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
@@ -526,14 +527,11 @@ export default function HomePage() {
                   </button>
                 </RevealSection>
               )) : (
-                <div style={{ textAlign: 'center', padding: '80px 0' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>
-                    Aucun événement dans cette zone
-                  </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.15)' }}>
-                    Change de région ou explore tout
-                  </p>
-                </div>
+                <EmptyState
+                  icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>}
+                  title="Aucun événement dans cette zone"
+                  subtitle="Change de région ou explore tous les événements"
+                />
               )}
             </div>
 

@@ -5,6 +5,7 @@ import { events } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { getUserId, sendMessage } from '../utils/messaging'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/eventUrgency'
+import EmptyState from '../components/EmptyState'
 
 function getCreatedEvents() {
   try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
@@ -370,14 +371,11 @@ export default function EventsPage() {
         {/* Events list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '64px 0' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px' }}>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: 0 }}>
-                Aucun événement trouvé
-              </p>
-            </div>
+            <EmptyState
+              icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
+              title="Aucun événement trouvé"
+              subtitle={search ? 'Essaie un autre mot-clé ou une autre catégorie' : 'Reviens bientôt — de nouvelles soirées arrivent'}
+            />
           ) : (
             filtered.map((event) => (
               <EventCard
