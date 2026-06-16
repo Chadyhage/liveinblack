@@ -311,6 +311,10 @@ export default function MesEvenementsPage() {
   const [showBookingsPanel, setShowBookingsPanel] = useState(false)
   const [bookingsPanelEvent, setBookingsPanelEvent] = useState(null)
 
+  // Analytics : billets vendus (vraie source = registre tickets/ Firestore)
+  const [salesTickets, setSalesTickets] = useState([])
+  const [salesLoading, setSalesLoading] = useState(false)
+
   // Dashboard codes state
   const [showCodesModal, setShowCodesModal] = useState(false)
   const [codesTargetEvent, setCodesTargetEvent] = useState(null)
@@ -350,6 +354,25 @@ export default function MesEvenementsPage() {
     }).catch(() => {})
     return () => unsub()
   }, [user?.uid])
+
+  // ── Charge les ventes réelles (registre tickets/) pour les events de l'orga ──
+  const myEventIds = (() => {
+    const uid = user?.uid
+    return createdEvents
+      .filter(ev => !ev.createdBy || ev.createdBy === uid || ev.organizerId === uid)
+      .map(ev => String(ev.id))
+  })()
+  const myEventIdsKey = myEventIds.join(',')
+  useEffect(() => {
+    if (!myEventIds.length) { setSalesTickets([]); return }
+    let cancelled = false
+    setSalesLoading(true)
+    import('../utils/firestore-sync').then(async ({ loadTicketsForEvents }) => {
+      const tix = await loadTicketsForEvents(myEventIds)
+      if (!cancelled) { setSalesTickets(tix); setSalesLoading(false) }
+    }).catch(() => { if (!cancelled) setSalesLoading(false) })
+    return () => { cancelled = true }
+  }, [myEventIdsKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleImage(e) {
     const file = e.target.files[0]
@@ -871,6 +894,13 @@ export default function MesEvenementsPage() {
               </div>
             </button>
           </div>
+
+          {/* Analytics — ventes réelles (registre tickets/) */}
+          <OrganizerAnalytics
+            events={createdEvents.filter(ev => !ev.createdBy || ev.createdBy === user?.uid || ev.organizerId === user?.uid)}
+            tickets={salesTickets}
+            loading={salesLoading}
+          />
 
           {/* Events list */}
           <div>
@@ -2285,12 +2315,146 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
   )
 }
 
+// ─── Analytics organisateur ──────────────────────────────────────────────────
+// Statistiques de ventes RÉELLES, calculées depuis le registre tickets/ Firestore
+// (un billet = une vente, cross-device), joint aux prix des places de l'event.
+function OrganizerAnalytics({ events, tickets, loading }) {
+  const COMMISSION = 0.10 // 10% plateforme → l'organisateur garde 90%
+  const eventById = Object.fromEntries((events || []).map(e => [String(e.id), e]))
+  const priceOf = (t) => {
+    const ev = eventById[String(t.eventId)]
+    const place = ev?.places?.find(p => p.type === t.place)
+    return Number(place?.price) || 0
+  }
+  const totalTickets = tickets.length
+  const grossRevenue = tickets.reduce((s, t) => s + priceOf(t), 0)
+  const netRevenue = Math.round(grossRevenue * (1 - COMMISSION) * 100) / 100
+  const paidCount = tickets.filter(t => t.paid).length
+  const totalCap = (events || []).reduce((s, e) => s + (e.places || []).reduce((a, p) => a + (Number(p.total) || 0), 0), 0)
+  const fillPct = totalCap > 0 ? Math.round(totalTickets / totalCap * 100) : 0
+
+  // Par événement (avec ventes), trié par revenu décroissant
+  const perEvent = (events || []).map(e => {
+    const evTix = tickets.filter(t => String(t.eventId) === String(e.id))
+    const cap = (e.places || []).reduce((a, p) => a + (Number(p.total) || 0), 0)
+    const rev = evTix.reduce((s, t) => s + priceOf(t), 0)
+    return { event: e, sold: evTix.length, cap, rev, fill: cap > 0 ? Math.round(evTix.length / cap * 100) : 0 }
+  }).filter(x => x.sold > 0).sort((a, b) => b.rev - a.rev).slice(0, 6)
+
+  // Ventes des 7 derniers jours (par jour)
+  const days = []
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000)
+    const next = d.getTime() + 86400000
+    const count = tickets.filter(t => { const ts = new Date(t.bookedAt).getTime(); return ts >= d.getTime() && ts < next }).length
+    days.push({ label: ['D', 'L', 'M', 'M', 'J', 'V', 'S'][d.getDay()], count })
+  }
+  const maxDay = Math.max(1, ...days.map(d => d.count))
+
+  const card = { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12 }
+  const mono = "'DM Mono', monospace"
+
+  if (loading && totalTickets === 0) {
+    return (
+      <div style={{ ...card, padding: 20, textAlign: 'center' }}>
+        <p style={{ fontFamily: mono, fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em' }}>Chargement des ventes…</p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <p style={{ fontFamily: mono, fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', margin: 0 }}>Statistiques de ventes</p>
+
+      {totalTickets === 0 ? (
+        <div style={{ ...card, padding: '28px 20px', textAlign: 'center' }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: 'rgba(255,255,255,0.6)', margin: '0 0 4px' }}>Aucune vente pour l'instant</p>
+          <p style={{ fontFamily: mono, fontSize: 10, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Tes ventes apparaîtront ici dès le premier billet.</p>
+        </div>
+      ) : (<>
+        {/* KPI cards */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ ...card, flex: 1.4, padding: '16px 18px', background: 'linear-gradient(135deg, rgba(200,169,110,0.14), rgba(200,169,110,0.03))', border: '1px solid rgba(200,169,110,0.30)' }}>
+            <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.8)', margin: '0 0 6px' }}>Revenus nets</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 300, color: '#c8a96e', margin: 0, lineHeight: 1 }}>{netRevenue.toLocaleString('fr-FR')}€</p>
+            <p style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.30)', margin: '5px 0 0' }}>brut {grossRevenue.toLocaleString('fr-FR')}€ · comm. 10%</p>
+          </div>
+          <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
+            <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 6px' }}>Billets</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: '#4ee8c8', margin: 0, lineHeight: 1 }}>{totalTickets}</p>
+            <p style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.30)', margin: '5px 0 0' }}>{paidCount} payé{paidCount > 1 ? 's' : ''}</p>
+          </div>
+          <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
+            <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 6px' }}>Remplissage</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: '#fff', margin: 0, lineHeight: 1 }}>{fillPct}%</p>
+            <p style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.30)', margin: '5px 0 0' }}>{totalTickets}/{totalCap} places</p>
+          </div>
+        </div>
+
+        {/* Graphique 7 jours */}
+        <div style={{ ...card, padding: '14px 16px' }}>
+          <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 12px' }}>Ventes · 7 derniers jours</p>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 56 }}>
+            {days.map((d, i) => (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: '100%', height: 44, display: 'flex', alignItems: 'flex-end' }}>
+                  <div style={{ width: '100%', height: `${Math.round(d.count / maxDay * 100)}%`, minHeight: d.count > 0 ? 4 : 0, borderRadius: 3, background: 'linear-gradient(180deg, #4ee8c8, rgba(78,232,200,0.3))' }} />
+                </div>
+                <span style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.3)' }}>{d.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Par événement */}
+        {perEvent.length > 0 && (
+          <div style={{ ...card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Par événement</p>
+            {perEvent.map(({ event, sold, cap, rev, fill }) => (
+              <div key={event.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, gap: 8 }}>
+                  <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.name}</span>
+                  <span style={{ fontFamily: mono, fontSize: 11, color: '#c8a96e', flexShrink: 0 }}>{rev.toLocaleString('fr-FR')}€</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${fill}%`, borderRadius: 99, background: fill >= 80 ? 'linear-gradient(90deg,#c8a96e,#e05aaa)' : 'linear-gradient(90deg,#4ee8c8,#c8a96e)' }} />
+                  </div>
+                  <span style={{ fontFamily: mono, fontSize: 8.5, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{sold}/{cap}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </>)}
+    </div>
+  )
+}
+
 // ─── Bookings Panel ──────────────────────────────────────────────────────────
 function BookingsPanel({ event, onClose }) {
-  const allBookings = (() => {
+  const localBookings = (() => {
     try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]') } catch { return [] }
   })()
-  const eventBookings = allBookings.filter(b => String(b.eventId) === String(event.id))
+  const localEventBookings = localBookings.filter(b => String(b.eventId) === String(event.id))
+  // Source RÉELLE des réservations = registre tickets/ Firestore (cross-device).
+  // lib_bookings local ne contient que les achats faits sur CE device → invisible
+  // pour l'organisateur. On charge le registre et on l'enrichit du détail local
+  // (préco) quand il existe, sinon fallback local hors-ligne.
+  const [remoteTickets, setRemoteTickets] = useState([])
+  useEffect(() => {
+    let cancelled = false
+    import('../utils/firestore-sync').then(async ({ loadTicketsForEvents }) => {
+      const tix = await loadTicketsForEvents([event.id])
+      if (!cancelled) setRemoteTickets(tix)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [event.id])
+  const localByCode = Object.fromEntries(localEventBookings.map(b => [b.ticketCode, b]))
+  const eventBookings = remoteTickets.length
+    ? remoteTickets.map(t => ({ ...(localByCode[t.ticketCode] || {}), ticketCode: t.ticketCode, place: t.place, eventId: t.eventId, paid: t.paid, id: t.ticketCode }))
+    : localEventBookings
 
   const byPlace = eventBookings.reduce((acc, b) => {
     if (!acc[b.place]) acc[b.place] = []

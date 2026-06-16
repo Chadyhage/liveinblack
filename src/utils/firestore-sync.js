@@ -48,6 +48,29 @@ export function listenBoosts(callback) {
   } catch { return () => {} }
 }
 
+// Charge tous les billets (registre tickets/) pour une liste d'eventIds.
+// C'est la VRAIE source de ventes d'un organisateur (cross-device, écrite par
+// le webhook Stripe + le flux client), contrairement à lib_bookings (per-device).
+// Renvoie un tableau de billets : { ticketCode, eventId, place, userId, paid, source, bookedAt }.
+export async function loadTicketsForEvents(eventIds) {
+  const ids = [...new Set((eventIds || []).map(String))].filter(Boolean)
+  if (!ids.length) return []
+  try {
+    const out = []
+    // where('eventId','in', …) limité à 10 valeurs → on découpe en lots
+    for (let i = 0; i < ids.length; i += 10) {
+      const chunk = ids.slice(i, i + 10)
+      const q = query(collection(db, 'tickets'), where('eventId', 'in', chunk))
+      const snap = await getDocs(q)
+      snap.forEach(d => out.push({ ...d.data(), ticketCode: d.data().ticketCode || d.id }))
+    }
+    return out
+  } catch (e) {
+    console.warn('[sync] loadTicketsForEvents failed:', e.message)
+    return []
+  }
+}
+
 // Listen to ALL prestataire catalogs (collection catalogs/{userId}). Comme les
 // boosts, un catalogue doit être visible par les ACHETEURS (organisateurs/agents)
 // sur n'importe quel device — or getCatalog() ne lit que le localStorage du user
