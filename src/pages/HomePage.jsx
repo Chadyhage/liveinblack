@@ -121,7 +121,9 @@ function HeroGooeyText({ user, orgName }) {
       return { texts: txts, colors: clrs }
     }
     return {
-      texts: ['Bienvenue', 'sur L|VE IN BLACK'],
+      // La 2e frame est le nom de marque propre (au lieu de « sur L|VE IN BLACK »
+      // qui, figé, laissait un « sur » orphelin peu lisible).
+      texts: ['Bienvenue', 'L|VE IN BLACK'],
       colors: [VIOLET, WHITE],
     }
   }, [user?.name, user?.role, orgName])
