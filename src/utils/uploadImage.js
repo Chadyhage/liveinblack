@@ -6,6 +6,17 @@
 // les autres comptes/appareils. (C'était LA cause du bug cross-device.)
 // La solution : uploader l'image sur Storage et ne stocker que l'URL.
 
+// Photo de profil prestataire → Storage avatars/{uid}/ (lecture publique,
+// écriture par le propriétaire — règle déjà en place). Renvoie l'URL.
+export async function uploadProviderPhoto(uid, dataUrl) {
+  if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl
+  const { storage } = await import('../firebase')
+  const { ref, uploadString, getDownloadURL } = await import('firebase/storage')
+  const path = `avatars/${uid}/provider_${Date.now()}.jpg`
+  const snap = await uploadString(ref(storage, path), dataUrl, 'data_url')
+  return await getDownloadURL(snap.ref)
+}
+
 export async function uploadEventPoster(eventId, dataUrl) {
   if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl // déjà une URL http(s)
   const { storage, auth } = await import('../firebase')

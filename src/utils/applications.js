@@ -449,6 +449,38 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
     }
     // Local seulement après succès serveur
     updateAccount(app.uid, perms)
+
+    // ── Prestataire : créer son PROFIL d'annuaire à l'approbation ──
+    // Sans ça, le prestataire validé avait le rôle mais n'apparaissait nulle
+    // part dans la marketplace (il fallait qu'il édite son profil à la main).
+    // On le crée maintenant à partir du dossier, et saveProviderProfile le
+    // synchronise dans providers/{uid} → visible immédiatement par tous.
+    if (app.type === 'prestataire') {
+      try {
+        const { getProviderProfile, saveProviderProfile } = await import('./services')
+        const existing = getProviderProfile(app.uid)
+        if (!existing) {
+          const fd = app.formData || {}
+          const profile = {
+            userId: app.uid,
+            name: perms.name || fd.nomCommercial || [fd.prenom, fd.nom].filter(Boolean).join(' ') || 'Prestataire',
+            prestataireType: fd.prestataireType || null,
+            description: (fd.description || '').trim(),
+            location: (fd.ville || fd.adresseLieu || '').trim(),
+            phone: (fd.telephone || '').trim(),
+            website: (fd.instagram || fd.portfolio || '').trim(),
+            zonesIntervention: fd.zonesIntervention || [],
+            photoUrl: fd.photoUrl || null,
+            tags: [],
+            verified: true,        // validé par l'admin → badge ✓
+            createdAt: now,
+          }
+          saveProviderProfile(profile) // sync providers/{uid}
+        } else if (!existing.verified) {
+          saveProviderProfile({ ...existing, verified: true })
+        }
+      } catch {} // non-bloquant : le rôle est déjà accordé
+    }
   }
 
   // Sync Firestore application (important mais secondaire — le rôle est déjà

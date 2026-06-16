@@ -85,6 +85,18 @@ export function listenCatalogs(callback) {
   } catch { return () => {} }
 }
 
+// Listen to ALL prestataire profiles (collection providers/{uid}). L'annuaire de
+// la marketplace doit montrer les profils créés sur N'IMPORTE QUEL device, pas
+// seulement lib_provider_profiles local. Renvoie le tableau des profils.
+export function listenProviders(callback) {
+  try {
+    return onSnapshot(collection(db, 'providers'), snap => {
+      const list = snap.docs.map(d => ({ ...d.data(), userId: d.data().userId || d.id }))
+      callback(list)
+    }, () => {})
+  } catch { return () => {} }
+}
+
 export function listenDoc(path, callback) {
   try {
     const ref = doc(db, ...path.split('/'))

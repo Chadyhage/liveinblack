@@ -245,11 +245,15 @@ export default function ProposerServicesPage() {
   const { user } = useAuth()
   const uid = getUserId(user)
 
-  if (user?.role === 'prestataire' || user?.role === 'organisateur') {
+  // Prestataire → son espace vendeur (catalogue, commandes, profil).
+  if (user?.role === 'prestataire') {
     return <PrestataireDashboard user={user} navigate={navigate} />
   }
 
-  if (user?.role === 'agent') {
+  // Organisateur & agent → la MARKETPLACE pour TROUVER et contacter des
+  // prestataires (c'est la nav « Services » côté demande). agentMode cache la
+  // section « Rejoindre la marketplace » et oriente vers la recherche.
+  if (user?.role === 'organisateur' || user?.role === 'agent') {
     return <PublicServicesView user={user} uid={uid} navigate={navigate} agentMode />
   }
 
@@ -276,6 +280,8 @@ function PrestataireDashboard({ user, navigate }) {
   const photoInputRef = useRef(null)
 
   const [profileFormMode, setProfileFormMode] = useState(!profile)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const providerPhotoRef = useRef(null)
   const [profileForm, setProfileForm] = useState(profile || {
     name: user?.name || '',
     type: prestType,
@@ -324,6 +330,35 @@ function PrestataireDashboard({ user, navigate }) {
     setProfile(saved)
     setProfileFormMode(false)
     showToast('Profil mis à jour')
+  }
+
+  function handleProviderPhoto(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { showToast('Format invalide (JPG/PNG/WEBP)'); return }
+    if (file.size > 5 * 1024 * 1024) { showToast('Image trop lourde (max 5 Mo)'); return }
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target.result
+      setProfileForm(f => ({ ...f, photoUrl: dataUrl })) // preview immédiate
+      setPhotoUploading(true)
+      try {
+        const { uploadProviderPhoto } = await import('../utils/uploadImage')
+        const url = await uploadProviderPhoto(uid, dataUrl)
+        setProfileForm(f => ({ ...f, photoUrl: url }))
+      } catch {
+        // Secours si Storage échoue : compresser pour rester sous la limite
+        // Firestore (1 Mo) puisque le profil providers/{uid} contient photoUrl.
+        try {
+          const { compressDataUrl } = await import('../utils/uploadImage')
+          const small = await compressDataUrl(dataUrl, 400, 0.6)
+          setProfileForm(f => ({ ...f, photoUrl: small }))
+        } catch {}
+      }
+      setPhotoUploading(false)
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   function handleAddItem() {
@@ -633,6 +668,21 @@ function PrestataireDashboard({ user, navigate }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <Eyebrow>Profil prestataire</Eyebrow>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.05em', margin: 0 }}>Complète ton profil prestataire</p>
+                {/* Photo de profil */}
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '4px 0 6px' }}>
+                  <button onClick={() => providerPhotoRef.current?.click()} disabled={photoUploading}
+                    style={{ position: 'relative', width: 92, height: 92, borderRadius: '50%', overflow: 'hidden', cursor: photoUploading ? 'wait' : 'pointer', border: '1px solid rgba(78,232,200,0.30)', background: profileForm.photoUrl ? 'none' : 'rgba(78,232,200,0.06)', padding: 0 }}>
+                    {profileForm.photoUrl
+                      ? <img src={profileForm.photoUrl} alt="profil" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: photoUploading ? 0.5 : 1 }} />
+                      : <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 5 }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.7)" strokeWidth="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 7.5, color: 'rgba(78,232,200,0.7)', letterSpacing: '0.1em' }}>PHOTO</span>
+                        </div>}
+                    {photoUploading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: 22, height: 22, border: '2px solid rgba(78,232,200,0.3)', borderTopColor: '#4ee8c8', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>}
+                  </button>
+                  <input ref={providerPhotoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProviderPhoto} style={{ display: 'none' }} />
+                  <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+                </div>
                 <FocusInput placeholder="Nom commercial / enseigne" value={profileForm.name} onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
                 <textarea
                   style={{ ...S.inputBase, resize: 'none', height: 80 }}
@@ -649,7 +699,15 @@ function PrestataireDashboard({ user, navigate }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{profile.name}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {profile.photoUrl
+                      ? <img src={profile.photoUrl} alt={profile.name} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(78,232,200,0.25)', flexShrink: 0 }} />
+                      : <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(78,232,200,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: '#4ee8c8', flexShrink: 0 }}>{(profile.name || '?').charAt(0).toUpperCase()}</div>}
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{profile.name}</p>
+                      {profile.verified && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.1em', color: '#4ee8c8', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 2 }}><svg width="9" height="9" viewBox="0 0 24 24" fill="#4ee8c8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>VÉRIFIÉ</span>}
+                    </div>
+                  </div>
                   {profile.description && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: 0 }}>{profile.description}</p>}
                   {profile.location && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -979,13 +1037,33 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
   // (utile pour le prestataire qui consulte son propre catalogue hors-ligne).
   const catalogOf = (userId) => catalogsByUser[userId] || getCatalog(userId)
 
+  // Annuaire des prestataires depuis Firestore (collection partagée providers/).
+  // getAllProviderProfiles() ne lit que le localStorage → un prestataire créé
+  // sur un autre device était invisible. On fusionne Firestore + local (dédup
+  // par userId, Firestore prioritaire).
+  const [remoteProviders, setRemoteProviders] = useState([])
+  useEffect(() => {
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenProviders }) => {
+      unsub = listenProviders(setRemoteProviders)
+    }).catch(() => {})
+    return () => unsub()
+  }, [])
+  const providerProfiles = (() => {
+    const byId = {}
+    for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
+    for (const p of remoteProviders) if (p.userId) byId[p.userId] = p // Firestore gagne
+    return Object.values(byId)
+  })()
+
   const cat = CATEGORIES.find(c => c.id === selected)
-  const allProviders = [...STATIC_PROVIDERS, ...createdProviders, ...getAllProviderProfiles().map(p => ({
+  const allProviders = [...STATIC_PROVIDERS, ...createdProviders, ...providerProfiles.map(p => ({
     id: `account_${p.userId}`, userId: p.userId,
     type: p.prestataireType, icon: CATEGORIES.find(c => c.id === p.prestataireType)?.icon || 'mic',
     color: CATEGORIES.find(c => c.id === p.prestataireType)?.color || '#c8a96e',
     name: p.name, typeLabel: CATEGORIES.find(c => c.id === p.prestataireType)?.title?.replace("J'ai ", '').replace("Je suis un ", '').replace("Je donne des ", '') || p.prestataireType,
     description: p.description, location: p.location, tags: [], rating: 0, pending: false,
+    photoUrl: p.photoUrl || null, verified: !!p.verified,
     hasCatalog: catalogOf(p.userId).filter(i => i.available).length > 0,
   }))]
 
@@ -1240,12 +1318,17 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 8, background: (prov.color || '#c8a96e') + '18', border: `1px solid ${(prov.color || '#c8a96e')}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <CatIcon id={prov.icon} color={prov.color || '#c8a96e'} size={20} />
-                    </div>
+                    {prov.photoUrl
+                      ? <img src={prov.photoUrl} alt={prov.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${(prov.color || '#c8a96e')}55`, flexShrink: 0 }} />
+                      : <div style={{ width: 48, height: 48, borderRadius: 8, background: (prov.color || '#c8a96e') + '18', border: `1px solid ${(prov.color || '#c8a96e')}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <CatIcon id={prov.icon} color={prov.color || '#c8a96e'} size={20} />
+                        </div>}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{prov.name}</p>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
+                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prov.name}</p>
+                          {prov.verified && <svg width="13" height="13" viewBox="0 0 24 24" fill="#4ee8c8" style={{ flexShrink: 0 }}><path d="M12 2l2.4 2.4 3.3-.6.6 3.3L21 12l-2.7 2.6.6 3.3-3.3.6L12 22l-2.6-2.7-3.3.6-.6-3.3L3 12l2.5-2.6-.6-3.3 3.3.6z"/><path d="M10.5 14.5L8 12l-1 1 3.5 3.5L17 9l-1-1z" fill="#04040b"/></svg>}
+                        </span>
                         {prov.rating > 0 && (
                           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3 }}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="#c8a96e" stroke="#c8a96e" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
@@ -1351,8 +1434,19 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                   <button onClick={() => {
                     if (!contact.name || !contact.message) return
                     const myName = user?.name || contact.name
-                    const providerId = `provider_${contact.provider?.id || 'unknown'}`
+                    // VRAI uid du prestataire (compte réel) — pas un id fabriqué,
+                    // sinon le message partait vers un utilisateur fantôme et le
+                    // prestataire ne recevait jamais rien.
+                    const providerId = contact.provider?.userId
+                    if (!providerId) {
+                      // Prestataire de démo sans compte réel → pas de conversation
+                      setContact(c => ({ ...c, sent: true }))
+                      return
+                    }
                     const conv = createDirectConversation(uid, myName, providerId, contact.provider?.name || 'Prestataire')
+                    // Le message arrive dans la boîte du prestataire (conversation
+                    // + badge non-lu via son listener Firestore) — c'est le vrai
+                    // mécanisme de notification in-app, sans surface de spam.
                     if (conv) sendMessage(conv.id, uid, myName, 'text', contact.message)
                     navigate('/messagerie')
                   }}
