@@ -17,6 +17,8 @@ import {
   fetchDeletionRequestsFromFirestore,
   resolveDeletionRequest,
 } from '../utils/accountDeletion'
+// Source unique des taux (mêmes valeurs que le back-end api/checkout.js)
+import { computeTicketFeeCents } from '../../lib/fees.js'
 
 const ADMIN_EMAIL = 'hagechady4@gmail.com'
 
@@ -324,8 +326,16 @@ export default function AgentPage() {
   const gmvOrders = allOrders.filter(o => o.status === 'done').reduce((sum, o) => sum + (Number(o.subtotal) || 0), 0)
   const gmvBoosts = allBoosts.reduce((sum, b) => sum + (Number(b.price) || 0), 0)
   const totalGMV = gmvTickets + gmvOrders + gmvBoosts
-  // Revenus plateforme (commissions)
-  const platformRevenue = (gmvTickets * PLATFORM_COMMISSION_RATE) + (gmvOrders * PLATFORM_COMMISSION_RATE) + gmvBoosts // boost = 100% pour la plateforme
+  // Revenus plateforme RÉELS (encaissés) :
+  // - frais de service billets = 5%+0,49€/billet plafonné 2,50€ (computeTicketFeeCents), sur le prix de la place
+  // - boosts = 100% plateforme
+  // La commission services (10%) n'est PAS encore encaissée (paiement services hors plateforme) → "potentiel", hors total.
+  const ticketFeeRevenue = allBookings.reduce(
+    (sum, b) => sum + computeTicketFeeCents(Math.round((Number(b.placePrice) || 0) * 100), 1) / 100,
+    0
+  )
+  const serviceCommissionPotential = gmvOrders * PLATFORM_COMMISSION_RATE
+  const platformRevenue = ticketFeeRevenue + gmvBoosts // boost = 100% pour la plateforme
   // Activité événementielle
   const totalTicketsSold = allBookings.length
   const totalEventsPublished = allEvents.length
@@ -695,13 +705,13 @@ export default function AgentPage() {
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
                   <div>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Commission billets</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Frais billets</p>
                     <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
-                      {(gmvTickets * PLATFORM_COMMISSION_RATE).toFixed(2)} €
+                      {ticketFeeRevenue.toFixed(2)} €
                     </p>
                   </div>
                   <div>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Commission services</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Services (potentiel)</p>
                     <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
                       {(gmvOrders * PLATFORM_COMMISSION_RATE).toFixed(2)} €
                     </p>
