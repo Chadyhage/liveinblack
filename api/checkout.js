@@ -7,8 +7,14 @@
 //   unitPriceEUR (number), preorderItems? [{ name, qty, priceEUR }],
 //   userId, userEmail (optionnel mais recommandé), bookingId (id local généré côté client)
 // }
+//
+// Monétisation : un FRAIS DE SERVICE acheteur (lib/fees.js) est ajouté au paiement.
+// Si l'organisateur a un compte Stripe Connect éligible (UE/zone Stripe), on reverse
+// automatiquement (destination charge + application_fee = le frais). Sinon, la plateforme
+// encaisse 100% et le webhook crédite un solde interne (seller_balances) à reverser à la main.
 
 import Stripe from 'stripe'
+import { computeTicketFeeCents, isStripeConnectCountry } from '../lib/fees.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
@@ -77,6 +83,57 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Aucun montant à payer (place gratuite ?)' })
     }
 
+    // ── Frais de service LIVEINBLACK (payé par l'acheteur) ──
+    // Calculé côté SERVEUR (jamais reçu du client). Sur le prix unitaire du billet.
+    const feeCents = computeTicketFeeCents(placeUnitCents, qty)
+    if (feeCents > 0) {
+      line_items.push({
+        price_data: {
+          currency: 'eur',
+          product_data: { name: 'Frais de service LIVEINBLACK' },
+          unit_amount: feeCents,
+        },
+        quantity: 1,
+      })
+    }
+
+    // ── Routage du reversement vendeur (organisateur) ──
+    // Best-effort : si Admin SDK indisponible, on encaisse 100% sans router (le fee
+    // reste tout de même collecté). On résout le vendeur côté serveur (jamais le client).
+    let sellerUid = ''
+    let connectMode = 'none' // 'auto' (transfer Stripe) | 'ledger' (solde interne) | 'none'
+    let paymentIntentData = null
+    try {
+      const { getDb } = await import('../lib/firebaseAdmin.js')
+      const db = getDb()
+      const evSnap = await db.collection('events').doc(String(eventId)).get()
+      if (evSnap.exists) {
+        const ev = evSnap.data()
+        sellerUid = ev.organizerId || ev.createdBy || ''
+        if (sellerUid && sellerUid !== userId) {
+          const uSnap = await db.collection('users').doc(String(sellerUid)).get()
+          const u = uSnap.exists ? uSnap.data() : {}
+          const eligible = !!u.stripeAccountId && u.stripeChargesEnabled === true &&
+            isStripeConnectCountry(u.stripeCountry || u.country)
+          if (eligible && feeCents > 0) {
+            // Destination charge : Stripe reverse (total - fee) au vendeur, la plateforme garde le fee.
+            paymentIntentData = {
+              transfer_data: { destination: u.stripeAccountId },
+              application_fee_amount: feeCents,
+              metadata: { sellerUid, feeCents: String(feeCents) },
+            }
+            connectMode = 'auto'
+          } else {
+            // Pas (encore) de Connect → la plateforme encaisse tout, on tracera la dette au webhook.
+            connectMode = 'ledger'
+          }
+        }
+      }
+    } catch (e) {
+      // Admin SDK indisponible → on n'empêche jamais l'encaissement, juste pas de routage.
+      console.warn('[/api/checkout] seller resolution skipped:', e.message)
+    }
+
     // URL de retour — déduit l'origine de la requête
     const origin = req.headers.origin || `https://${req.headers.host}`
 
@@ -84,6 +141,7 @@ export default async function handler(req, res) {
       mode: 'payment',
       payment_method_types: ['card'],
       line_items,
+      ...(paymentIntentData ? { payment_intent_data: paymentIntentData } : {}),
       ...(userEmail ? { customer_email: userEmail } : {}),
       success_url: `${origin}/paiement-reussi?session_id={CHECKOUT_SESSION_ID}&booking_id=${encodeURIComponent(bookingId)}`,
       cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}`,
@@ -94,6 +152,10 @@ export default async function handler(req, res) {
         qty: String(qty),
         userId: String(userId || ''),
         bookingId: String(bookingId),
+        // Monétisation : le webhook utilise feeCents + sellerUid + connectMode
+        feeCents: String(feeCents),
+        sellerUid: String(sellerUid || ''),
+        connectMode,
         // Part de groupe : permet au webhook de marquer la part payée même si
         // le client ferme l'onglet avant de revenir sur /paiement-reussi
         ...(groupBookingId ? { groupBookingId: String(groupBookingId) } : {}),

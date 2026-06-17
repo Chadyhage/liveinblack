@@ -217,5 +217,23 @@ service cloud.firestore {
       allow read:  if isSignedIn();
       allow write: if isOwner(uid) || isAgent();
     }
+
+    // ── Soldes vendeurs (ledger de reversement) ───────────────────────────────
+    // Montant que la plateforme doit au vendeur quand le paiement n'a pas été
+    // reversé automatiquement via Stripe Connect (ex. vendeur hors zone Stripe).
+    // Écrit UNIQUEMENT par le webhook Stripe (Admin SDK, contourne ces règles) :
+    // un vendeur ne doit jamais pouvoir gonfler son propre solde.
+    match /seller_balances/{uid} {
+      allow read:  if isOwner(uid) || isAgent();
+      allow write: if false;
+    }
+
+    // ── Demandes de reversement (paiement manuel : virement / mobile money) ────
+    // Le vendeur crée une demande sur SON solde ; l'agent la traite (marque payé).
+    match /payout_requests/{id} {
+      allow read:   if isSignedIn() && (resource.data.sellerId == request.auth.uid || isAgent());
+      allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if isAgent();
+    }
   }
 }

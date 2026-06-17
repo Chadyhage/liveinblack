@@ -18,32 +18,13 @@
 //   Events: checkout.session.completed
 
 import Stripe from 'stripe'
-import { initializeApp, cert, getApps } from 'firebase-admin/app'
-import { getFirestore, FieldValue } from 'firebase-admin/firestore'
+import { getDb, FieldValue } from '../lib/firebaseAdmin.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
 // Vercel doit nous laisser lire le RAW body pour vérifier la signature Stripe
 export const config = {
   api: { bodyParser: false },
-}
-
-// ── Init Firebase Admin (singleton — réutilisé entre invocations chaudes) ────
-function getDb() {
-  if (!getApps().length) {
-    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
-      throw new Error('Firebase Admin credentials missing — set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY')
-    }
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Les private keys ont des "\n" littéraux dans les env vars Vercel — on les rétablit
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      }),
-    })
-  }
-  return getFirestore()
 }
 
 // ── Lecture du raw body (nécessaire pour la vérif de signature) ──────────────
@@ -82,6 +63,18 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('[webhook] signature verification failed:', err.message)
     return res.status(400).json({ error: 'Invalid signature' })
+  }
+
+  // ── Compte Connect mis à jour : on suit l'éligibilité du vendeur (charges/payouts) ──
+  if (event.type === 'account.updated') {
+    try {
+      const db = getDb()
+      await finalizeAccountUpdate(db, event.data.object)
+    } catch (err) {
+      console.error('[webhook] account.updated error:', err)
+      return res.status(500).json({ error: err.message || 'Internal error' })
+    }
+    return res.status(200).json({ received: true })
   }
 
   // On ne traite que les sessions complétées
@@ -213,6 +206,27 @@ async function finalizeBooking(db, session, meta) {
     finalizedBy: 'webhook',
   }, { merge: true })
 
+  // ── Ledger de reversement vendeur ──
+  // Si le paiement n'a PAS été reversé automatiquement (vendeur sans Connect éligible,
+  // ex. Afrique), la plateforme a encaissé 100% → on enregistre la dette envers le
+  // vendeur (montant net = total - frais de service), à reverser manuellement.
+  // Idempotent : on est dans la garde anti-duplication (booking.paid déjà vérifié en tête),
+  // donc ce crédit ne s'exécute qu'UNE fois par booking.
+  const feeCents = Math.max(0, Number(meta.feeCents || 0))
+  const sellerUid = meta.sellerUid || ''
+  if (meta.connectMode === 'ledger' && sellerUid) {
+    const owedCents = Math.max(0, (session.amount_total || 0) - feeCents)
+    if (owedCents > 0) {
+      await db.collection('seller_balances').doc(String(sellerUid)).set({
+        sellerUid: String(sellerUid),
+        amountDueCents: FieldValue.increment(owedCents),
+        currency: session.currency || 'eur',
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+      console.log('[webhook] ledger vendeur crédité:', sellerUid, '+', owedCents, 'centimes')
+    }
+  }
+
   // Les étapes suivantes ne concernent que le cas « client jamais revenu » :
   // si le client a déjà finalisé, il a déjà créé le registre (confirmé plus
   // haut), syncé user_bookings et attribué les points — refaire = doublons.
@@ -342,6 +356,26 @@ async function finalizeBoost(db, session, meta) {
   }
 
   console.log('[webhook] boost finalized:', boostId)
+}
+
+// ── Compte Connect (account.updated) ─────────────────────────────────────────
+// Met à jour l'éligibilité reversement du vendeur dans users/{uid}. La source de
+// vérité de chargesEnabled vient d'ICI (webhook), jamais d'une écriture client —
+// pour qu'un vendeur ne puisse pas se déclarer "éligible" et détourner un transfert.
+async function finalizeAccountUpdate(db, account) {
+  const uid = account?.metadata?.uid
+  if (!uid) {
+    console.warn('[webhook] account.updated sans metadata.uid — ignoré:', account?.id)
+    return
+  }
+  await db.collection('users').doc(String(uid)).set({
+    stripeAccountId: account.id,
+    stripeChargesEnabled: account.charges_enabled === true,
+    stripePayoutsEnabled: account.payouts_enabled === true,
+    stripeDetailsSubmitted: account.details_submitted === true,
+    stripeAccountUpdatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true })
+  console.log('[webhook] account.updated → users/' + uid, 'charges:', account.charges_enabled, 'payouts:', account.payouts_enabled)
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
