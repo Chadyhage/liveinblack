@@ -185,6 +185,8 @@ export default function AgentPage() {
   const [toast, setToast] = useState(null)
   const [deletionRequests, setDeletionRequests] = useState([])
   const [delResNote, setDelResNote]             = useState('')  // note admin pour résolution
+  const [sellerBalances, setSellerBalances]     = useState([])  // soldes vendeurs à reverser (ledger)
+  const [payoutRequests, setPayoutRequests]     = useState([])  // demandes de virement en attente
 
   function refresh() {
     setAccounts(getAllAccounts())
@@ -259,6 +261,14 @@ export default function AgentPage() {
         // Demandes de suppression depuis Firestore
         const delReqs = await fetchDeletionRequestsFromFirestore()
         setDeletionRequests(delReqs)
+
+        // Reversements vendeurs : soldes dus + demandes de virement en attente
+        const [balances, payouts] = await Promise.all([
+          loadCollection('seller_balances'),
+          loadCollection('payout_requests'),
+        ])
+        setSellerBalances((balances || []).filter(b => Number(b.amountDueCents) > 0))
+        setPayoutRequests((payouts || []).filter(p => p.status === 'pending'))
       } catch {}
     }
     fetchFromFirestore()
@@ -529,6 +539,40 @@ export default function AgentPage() {
   // Note : la fonction d'ajustement de solde a été retirée — le wallet interne
   // a été remplacé par Stripe. Les remboursements se font côté Stripe Dashboard.
 
+  // ── Reversement manuel : marquer un solde vendeur comme payé ──
+  // Décrémente seller_balances/{uid} (l'agent peut écrire — règle isAgent), journalise
+  // dans payout_logs, et résout la demande payout_requests si elle existe.
+  async function handleMarkPaid(sellerUid, amountCents, requestId) {
+    const amt = Math.abs(Number(amountCents) || 0)
+    if (!sellerUid || amt <= 0) return
+    try {
+      const { db } = await import('../firebase')
+      const { doc, setDoc, increment, serverTimestamp } = await import('firebase/firestore')
+      await setDoc(doc(db, 'seller_balances', sellerUid), {
+        amountDueCents: increment(-amt),
+        updatedAt: serverTimestamp(),
+      }, { merge: true })
+      await setDoc(doc(db, 'payout_logs', `pl_${sellerUid}_${Date.now()}`), {
+        sellerUid, amountCents: amt, by: user?.uid || '', byName: user?.name || 'Agent', at: Date.now(),
+      })
+      if (requestId) {
+        await setDoc(doc(db, 'payout_requests', requestId), {
+          status: 'paid', paidAt: Date.now(), paidBy: user?.uid || '',
+        }, { merge: true })
+      }
+      // MAJ locale
+      setSellerBalances(prev => prev
+        .map(b => ((b.sellerUid || b.id) === sellerUid)
+          ? { ...b, amountDueCents: Math.max(0, Number(b.amountDueCents) - amt) }
+          : b)
+        .filter(b => Number(b.amountDueCents) > 0))
+      setPayoutRequests(prev => prev.filter(p => p.id !== requestId))
+      showToast('Reversement marqué payé')
+    } catch (e) {
+      showToast('Échec du marquage — réessaie', 'error')
+    }
+  }
+
   async function handleAppAction(appId, status, note) {
     const adminNoteValue = appAdminNote || ''
     let updatedApp
@@ -655,6 +699,7 @@ export default function AgentPage() {
           { key: 'users',        label: 'Comptes' },
           { key: 'events',       label: `Events${allEvents.length > 0 ? ` (${allEvents.length})` : ''}` },
           { key: 'dossiers',     label: `Dossiers${totalAppsSubmitted > 0 ? ` (${totalAppsSubmitted})` : ''}` },
+          { key: 'reversements', label: `Reversements${payoutRequests.length > 0 ? ` (${payoutRequests.length})` : ''}` },
           { key: 'suppressions', label: `Suppressions${deletionRequests.length > 0 ? ` (${deletionRequests.length})` : ''}` },
         ].map(t => (
           <button
@@ -2577,6 +2622,7 @@ export default function AgentPage() {
               {confirmAction.type === 'appChanges'  && `Demander des corrections pour le dossier de ${confirmAction.name} ?`}
               {confirmAction.type === 'appReject'   && `Refuser le dossier de ${confirmAction.name} ?`}
               {confirmAction.type === 'appSuspend'  && `Suspendre le dossier de ${confirmAction.name} ?`}
+              {confirmAction.type === 'markPaid'    && `Confirmer le reversement de ${((confirmAction.amountCents || 0) / 100).toFixed(2)} € à ${confirmAction.name} ? (à faire APRÈS avoir envoyé l'argent)`}
             </p>
 
             <div style={{ display: 'flex', gap: 8 }}>
@@ -2597,11 +2643,12 @@ export default function AgentPage() {
                   if (confirmAction.type === 'appChanges')  handleAppAction(confirmAction.appId, 'needs_changes', appNote)
                   if (confirmAction.type === 'appReject')   handleAppAction(confirmAction.appId, 'rejected', appNote)
                   if (confirmAction.type === 'appSuspend')  handleAppAction(confirmAction.appId, 'suspended', appNote)
+                  if (confirmAction.type === 'markPaid')    { handleMarkPaid(confirmAction.uid, confirmAction.amountCents, confirmAction.requestId); setConfirmAction(null) }
                 }}
                 style={{
                   flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
                   fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
-                  ...((confirmAction.type === 'approve' || confirmAction.type === 'approveRole' || confirmAction.type === 'appApprove')
+                  ...((confirmAction.type === 'approve' || confirmAction.type === 'approveRole' || confirmAction.type === 'appApprove' || confirmAction.type === 'markPaid')
                     ? { background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))', border: '1px solid rgba(78,232,200,0.35)', color: COLORS.teal }
                     : confirmAction.type === 'appChanges'
                     ? { background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.40)', color: '#f59e0b' }
@@ -2758,6 +2805,104 @@ export default function AgentPage() {
           )}
         </div>
       )}
+
+      {/* ══════════════════════════════════════════════
+          REVERSEMENTS — soldes vendeurs à régler à la main (ledger)
+      ══════════════════════════════════════════════ */}
+      {tab === 'reversements' && (() => {
+        const fmt = (c) => (Number(c || 0) / 100).toFixed(2) + ' €'
+        const acctOf = (uid) => accounts.find(x => (x.uid || x.id) === uid)
+        const nameOf = (uid) => { const a = acctOf(uid); return a ? getDisplayName(a) : (uid || '—') }
+        const emailOf = (uid) => acctOf(uid)?.email || ''
+        const reqSellerIds = new Set(payoutRequests.map(p => p.sellerId))
+        const balancesNoReq = sellerBalances.filter(b => !reqSellerIds.has(b.sellerUid || b.id))
+        const totalDueCents = sellerBalances.reduce((s, b) => s + Number(b.amountDueCents || 0), 0)
+        const empty = payoutRequests.length === 0 && sellerBalances.length === 0
+
+        const PayoutCard = ({ uid, amountCents, requestId, date }) => (
+          <div style={{ ...CARD, padding: 16, borderColor: requestId ? 'rgba(200,169,110,0.30)' : 'rgba(255,255,255,0.10)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontFamily: FONTS.display, fontSize: 17, fontWeight: 300, color: '#fff', margin: '0 0 2px' }}>{nameOf(uid)}</p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {emailOf(uid) || uid}{date ? ` · demandé le ${formatDate(date)}` : ''}
+                </p>
+              </div>
+              <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: COLORS.gold, margin: 0, flexShrink: 0 }}>{fmt(amountCents)}</p>
+            </div>
+            <button
+              onClick={() => setConfirmAction({ type: 'markPaid', uid, amountCents, requestId, name: nameOf(uid) })}
+              style={{
+                width: '100%', marginTop: 12, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
+                background: 'rgba(34,197,94,0.14)', border: '1px solid rgba(34,197,94,0.40)',
+                color: '#22c55e', fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
+              }}>
+              ✓ Marquer payé ({fmt(amountCents)})
+            </button>
+          </div>
+        )
+
+        return (
+          <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>
+              Reversements vendeurs
+            </p>
+
+            {!empty && (
+              <div style={{ ...CARD, padding: 18, marginBottom: 18, borderColor: 'rgba(200,169,110,0.30)', background: 'linear-gradient(135deg, rgba(200,169,110,0.08), rgba(200,169,110,0.02))' }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
+                  Total à reverser
+                </p>
+                <p style={{ fontFamily: FONTS.display, fontSize: 34, fontWeight: 300, color: COLORS.gold, margin: '4px 0 0', lineHeight: 1 }}>
+                  {fmt(totalDueCents)}
+                </p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '8px 0 0', lineHeight: 1.6 }}>
+                  Vendeurs hors zone Stripe (Afrique) ou sans Connect — à régler par virement / Wave / Orange Money, puis marquer payé ici.
+                </p>
+              </div>
+            )}
+
+            {empty ? (
+              <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
+                <p style={{ fontFamily: FONTS.display, fontSize: 18, fontWeight: 300, color: COLORS.muted, margin: 0 }}>
+                  Aucun reversement en attente
+                </p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '8px 0 0' }}>
+                  Les soldes vendeurs non reversés automatiquement apparaîtront ici.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {payoutRequests.length > 0 && (
+                  <div>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>
+                      ⏳ Demandes de virement ({payoutRequests.length})
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {payoutRequests.map(p => (
+                        <PayoutCard key={p.id} uid={p.sellerId} amountCents={p.amountDueCents} requestId={p.id} date={p.createdAt} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {balancesNoReq.length > 0 && (
+                  <div>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>
+                      Soldes dus (sans demande)
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {balancesNoReq.map(b => (
+                        <PayoutCard key={b.sellerUid || b.id} uid={b.sellerUid || b.id} amountCents={b.amountDueCents} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* ── Toast ── */}
       {toast && (
