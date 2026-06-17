@@ -42,21 +42,6 @@ function getDb() {
 }
 
 export default async function handler(req, res) {
-  // Diagnostic léger : présence (booléen) des variables d'env requises.
-  // Ne révèle JAMAIS les valeurs — juste si elles sont configurées côté Vercel.
-  if (req.method === 'GET') {
-    return res.status(200).json({
-      marker: 'diag-v5',
-      env: {
-        RESEND_API_KEY: !!process.env.RESEND_API_KEY,
-        EMAIL_FROM: !!process.env.EMAIL_FROM,
-        EMAIL_FROM_value_starts: (process.env.EMAIL_FROM || '').slice(0, 14) || null,
-        FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
-        FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
-        FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
-      },
-    })
-  }
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
