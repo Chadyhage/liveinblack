@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   // Ne révèle JAMAIS les valeurs — juste si elles sont configurées côté Vercel.
   if (req.method === 'GET') {
     return res.status(200).json({
-      marker: 'diag-v3',
+      marker: 'diag-v4',
       env: {
         RESEND_API_KEY: !!process.env.RESEND_API_KEY,
         EMAIL_FROM: !!process.env.EMAIL_FROM,
@@ -100,7 +100,7 @@ export default async function handler(req, res) {
     if (!r.ok) {
       const detail = await r.text().catch(() => '')
       console.error('[/api/send-email] Resend error:', r.status, detail.slice(0, 300))
-      return res.status(502).json({ error: 'email_provider_error', status: r.status })
+      return res.status(502).json({ error: 'email_provider_error', status: r.status, detail: detail.slice(0, 300) })
     }
 
     return res.status(200).json({ ok: true })
