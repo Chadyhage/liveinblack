@@ -225,7 +225,9 @@ service cloud.firestore {
     // un vendeur ne doit jamais pouvoir gonfler son propre solde.
     match /seller_balances/{uid} {
       allow read:  if isOwner(uid) || isAgent();
-      allow write: if false;
+      // Incrémenté par le webhook (Admin SDK, contourne ces règles). L'agent peut
+      // décrémenter le solde au moment d'un reversement manuel (admin de confiance).
+      allow write: if isAgent();
     }
 
     // ── Demandes de reversement (paiement manuel : virement / mobile money) ────
@@ -234,6 +236,12 @@ service cloud.firestore {
       allow read:   if isSignedIn() && (resource.data.sellerId == request.auth.uid || isAgent());
       allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
       allow update, delete: if isAgent();
+    }
+
+    // ── Journal des reversements effectués (audit) ────────────────────────────
+    match /payout_logs/{id} {
+      allow read:  if isAgent();
+      allow write: if isAgent();
     }
   }
 }

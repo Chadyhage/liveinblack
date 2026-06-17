@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
+import PayoutPanel from '../components/PayoutPanel'
 import { useAuth } from '../context/AuthContext'
 import { services } from '../data/events'
 import { getUserId, createDirectConversation, sendMessage } from '../utils/messaging'
@@ -521,6 +522,8 @@ function PrestataireDashboard({ user, navigate }) {
         {/* ── APERÇU TAB ── */}
         {tab === 'apercu' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Reversements — connecter son compte / solde / demander un virement */}
+            <PayoutPanel uid={uid} returnPath={typeof window !== 'undefined' ? window.location.pathname : '/'} />
             {/* Mini graphique 7 derniers jours */}
             <div style={{ ...S.card, padding: 18 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>

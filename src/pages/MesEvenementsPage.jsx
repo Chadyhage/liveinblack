@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import Layout from '../components/Layout'
+import PayoutPanel from '../components/PayoutPanel'
 import { useAuth } from '../context/AuthContext'
 import BoostModal from '../components/BoostModal'
 import { IconHourglass } from '../components/icons'
@@ -820,6 +821,9 @@ export default function MesEvenementsPage() {
               Crée et gère tes soirées
             </p>
           </div>
+
+          {/* Reversements — connecter son compte / solde / demander un virement */}
+          <PayoutPanel uid={user?.uid || user?.id} returnPath={typeof window !== 'undefined' ? window.location.pathname : '/'} />
 
           {/* Bandeau d'erreur de sync — l'event n'a pas pu être publié sur Firestore */}
           {syncErrorBanner && (
