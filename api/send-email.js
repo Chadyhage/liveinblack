@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   // Ne révèle JAMAIS les valeurs — juste si elles sont configurées côté Vercel.
   if (req.method === 'GET') {
     return res.status(200).json({
-      marker: 'diag-v4',
+      marker: 'diag-v5',
       env: {
         RESEND_API_KEY: !!process.env.RESEND_API_KEY,
         EMAIL_FROM: !!process.env.EMAIL_FROM,
