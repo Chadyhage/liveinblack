@@ -167,7 +167,8 @@ export default async function handler(req, res) {
       locale: 'fr',
     })
 
-    return res.status(200).json({ url: session.url, sessionId: session.id })
+    // feeCents + connectMode renvoyés pour transparence (le front peut afficher le frais).
+    return res.status(200).json({ url: session.url, sessionId: session.id, feeCents, connectMode })
   } catch (err) {
     console.error('[/api/checkout] error:', err)
     return res.status(500).json({ error: err.message || 'Stripe error' })
