@@ -1,172 +1,110 @@
-import { useNavigate } from 'react-router-dom'
-
-// ─── Design tokens ────────────────────────────────────────────────────────
-const CARD = {
-  background: 'rgba(8,10,20,0.55)',
-  backdropFilter: 'blur(22px) saturate(1.6)',
-  border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 12,
-}
-
-const FONTS = {
-  display: "'Cormorant Garamond', Georgia, serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
-}
-
-const COLORS = {
-  gold: '#c8a96e',
-  muted: 'rgba(255,255,255,0.42)',
-  dim: 'rgba(255,255,255,0.22)',
-}
-
-const SECTIONS = [
-  {
-    n: '01',
-    title: 'Présentation de la plateforme',
-    body: "LIVEINBLACK est une marketplace événementielle qui met en relation des organisateurs d'événements, des prestataires de services et des participants. La plateforme permet la réservation de billets, la gestion de playlists interactives et la précommande de consommations.",
-  },
-  {
-    n: '02',
-    title: "Acceptation des conditions",
-    body: "En utilisant la plateforme LIVEINBLACK, l'utilisateur accepte sans réserve les présentes Conditions Générales d'Utilisation. Si l'utilisateur n'accepte pas ces conditions, il doit cesser toute utilisation de la plateforme.",
-  },
-  {
-    n: '03',
-    title: "Inscription et compte utilisateur",
-    body: "L'inscription à LIVEINBLACK est gratuite et ouverte à toute personne physique majeure. L'utilisateur s'engage à fournir des informations exactes et à jour lors de son inscription. Chaque utilisateur est responsable de la confidentialité de ses identifiants de connexion.",
-  },
-  {
-    n: '04',
-    title: "Billetterie et réservations",
-    body: "Les réservations effectuées sur la plateforme sont fermes et définitives. Aucun remboursement ne sera accordé sauf en cas d'annulation de l'événement par l'organisateur. Les billets sont strictement personnels et non transmissibles sans autorisation préalable.",
-  },
-  {
-    n: '05',
-    title: "Données personnelles",
-    body: "LIVEINBLACK collecte et traite les données personnelles des utilisateurs conformément au RGPD. Les données sont utilisées exclusivement pour la gestion des comptes et des transactions. L'utilisateur dispose d'un droit d'accès, de rectification et de suppression de ses données.",
-  },
-  {
-    n: '07',
-    title: "Propriété intellectuelle",
-    body: "L'ensemble des contenus présents sur LIVEINBLACK (logos, textes, visuels, code source) sont protégés par le droit de la propriété intellectuelle. Toute reproduction ou utilisation sans autorisation est strictement interdite.",
-  },
-  {
-    n: '08',
-    title: "Responsabilité",
-    body: "LIVEINBLACK ne saurait être tenu responsable des dommages directs ou indirects résultant de l'utilisation de la plateforme. Les informations publiées sur les événements sont sous la responsabilité exclusive des organisateurs concernés.",
-  },
-  {
-    n: '09',
-    title: "Modification des CGU",
-    body: "LIVEINBLACK se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs seront informés des modifications par notification dans l'application. La poursuite de l'utilisation après modification vaut acceptation des nouvelles conditions.",
-  },
-  {
-    n: '10',
-    title: "Contact",
-    body: null,
-    contact: 'hagechady@liveinblack.com',
-  },
-]
+// src/pages/CGUPage.jsx
+// CGU + CGV — marketplace billetterie & services événementiels.
+// Couvre le rôle d'intermédiaire technique d'encaissement, les frais de service,
+// la commission, le droit de rétractation (exception billetterie L221-28 12°),
+// les remboursements et les reversements vendeurs.
+import LegalPageLayout from '../components/LegalPageLayout'
+import { LEGAL } from '../data/legal'
 
 export default function CGUPage() {
-  const navigate = useNavigate()
+  const sections = [
+    {
+      n: '01',
+      title: 'Objet et présentation',
+      body: `${LEGAL.brand} édite une marketplace événementielle qui met en relation des organisateurs d'événements, des prestataires de services (artistes, lieux, matériel, traiteurs) et des participants. La plateforme permet notamment la réservation de billets, la mise en relation avec des prestataires, la messagerie et la précommande de consommations.
+
+${LEGAL.brand} agit en qualité d'intermédiaire technique. ${LEGAL.brand} n'est ni l'organisateur des événements, ni le prestataire des services proposés : ces derniers sont seuls responsables de leurs offres, de la tenue de leurs événements et de l'exécution de leurs prestations.`,
+    },
+    {
+      n: '02',
+      title: 'Acceptation des conditions',
+      body: `En créant un compte ou en utilisant la plateforme ${LEGAL.domain}, l'utilisateur accepte sans réserve les présentes Conditions Générales d'Utilisation et de Vente (CGU/CGV). À défaut d'acceptation, il doit cesser toute utilisation de la plateforme.`,
+    },
+    {
+      n: '03',
+      title: 'Inscription et compte',
+      body: `L'inscription est gratuite et réservée aux personnes physiques majeures (18 ans révolus) ou aux personnes morales dûment représentées. L'utilisateur s'engage à fournir des informations exactes et à jour, et demeure responsable de la confidentialité de ses identifiants. Tout compte créé avec des informations fausses pourra être suspendu.`,
+    },
+    {
+      n: '04',
+      title: 'Rôle de la plateforme et encaissement pour compte de tiers',
+      body: `Pour les ventes réalisées via la plateforme (billets, services), ${LEGAL.brand} encaisse les paiements pour le compte de l'organisateur ou du prestataire vendeur, via son prestataire de services de paiement Stripe. ${LEGAL.brand} agit comme mandataire d'encaissement : les sommes correspondant au prix de la prestation appartiennent au vendeur et lui sont reversées, déduction faite de la commission applicable.
+
+${LEGAL.brand} n'est pas partie au contrat de vente conclu entre l'acheteur et le vendeur. La responsabilité de la fourniture du billet, de l'accès à l'événement ou de l'exécution du service incombe exclusivement au vendeur.`,
+    },
+    {
+      n: '05',
+      title: 'Prix, frais de service et commission',
+      body: `Le prix des billets et des prestations est fixé librement par l'organisateur ou le prestataire. Des frais de service ${LEGAL.brand} (actuellement 5 % + 0,49 € par billet, plafonnés à 2,50 € par billet, gratuits sur les billets gratuits) sont ajoutés au prix et payés par l'acheteur. Ces frais sont affichés clairement avant la validation du paiement.
+
+Pour les prestations de services réservées et payées via la plateforme, une commission (actuellement 10 %) est prélevée sur le montant dû au prestataire. Les options de mise en avant (« boosts », placements sponsorisés, abonnements) sont des services payants distincts, facturés directement par ${LEGAL.brand}. Les frais de service et commissions ne sont pas remboursables, sauf disposition légale impérative contraire.`,
+    },
+    {
+      n: '06',
+      title: 'Droit de rétractation',
+      body: `Conformément à l'article L.221-28 12° du Code de la consommation, le droit de rétractation ne s'applique pas aux prestations de services de loisirs (billetterie d'événements, spectacles) fournies à une date ou selon une périodicité déterminée. L'achat d'un billet pour un événement daté est donc ferme et définitif dès sa confirmation, sous réserve des cas de remboursement ci-dessous.`,
+    },
+    {
+      n: '07',
+      title: 'Annulation et remboursement',
+      body: `En cas d'annulation d'un événement par l'organisateur, l'acheteur est remboursé du prix du billet. Le remboursement est traité par l'organisateur via la plateforme ; ${LEGAL.brand} facilite l'opération sans en être le débiteur final.
+
+Toute demande de remboursement, contestation ou litige relatif à un événement ou à une prestation doit être adressée en priorité au vendeur concerné. ${LEGAL.brand} peut intervenir à titre de facilitateur mais n'est pas garant du remboursement dû par un vendeur défaillant.`,
+    },
+    {
+      n: '08',
+      title: 'Obligations des organisateurs et prestataires',
+      body: `Les organisateurs et prestataires s'engagent à : fournir des informations exactes sur leurs offres ; respecter l'ensemble des obligations légales et réglementaires applicables à leur activité (autorisations, sécurité, capacité d'accueil, licences, vente d'alcool, fiscalité, droits d'auteur) ; honorer les réservations confirmées ; et s'acquitter des commissions dues. Ils garantissent ${LEGAL.brand} contre toute réclamation de tiers liée à leur activité.`,
+    },
+    {
+      n: '09',
+      title: 'Reversements aux vendeurs',
+      body: `Les sommes dues aux vendeurs (prix de la prestation, après commission) leur sont reversées sur le compte bancaire qu'ils ont renseigné. Pour les vendeurs situés dans un pays pris en charge par Stripe, le reversement est automatisé via Stripe Connect. Pour les vendeurs situés dans un pays non pris en charge par Stripe, ${LEGAL.brand} procède au reversement par un autre moyen (virement, paiement mobile) après réception de la demande, dans un délai raisonnable. Le vendeur est responsable de l'exactitude de ses coordonnées de paiement et de ses obligations fiscales et déclaratives.`,
+    },
+    {
+      n: '10',
+      title: 'Comportement et contenus',
+      body: `L'utilisateur s'interdit de publier des contenus illicites, trompeurs, diffamatoires, haineux ou portant atteinte aux droits de tiers, ainsi que d'utiliser la plateforme à des fins frauduleuses ou de contourner les mécanismes de paiement et de commission. ${LEGAL.brand} peut retirer tout contenu et suspendre tout compte en cas de manquement.`,
+    },
+    {
+      n: '11',
+      title: 'Propriété intellectuelle',
+      body: `L'ensemble des éléments de la plateforme (marque ${LEGAL.brand}, logos, textes, visuels, code source) est protégé par le droit de la propriété intellectuelle. Toute reproduction ou utilisation sans autorisation écrite préalable est interdite. Les contenus publiés par les utilisateurs restent leur propriété, ${LEGAL.brand} bénéficiant d'une licence d'utilisation aux seules fins d'exploitation de la plateforme.`,
+    },
+    {
+      n: '12',
+      title: 'Responsabilité',
+      body: `${LEGAL.brand} fournit la plateforme « en l'état » et met en œuvre les moyens raisonnables pour en assurer la disponibilité et la sécurité, sans garantie d'absence totale d'interruption ou d'erreur. En sa qualité d'intermédiaire, ${LEGAL.brand} ne saurait être tenu responsable de l'inexécution ou de la mauvaise exécution des prestations vendues par les organisateurs et prestataires, ni des informations qu'ils publient.`,
+    },
+    {
+      n: '13',
+      title: 'Données personnelles',
+      body: `Le traitement des données personnelles est décrit dans la Politique de confidentialité accessible depuis le pied de page, conforme au RGPD. L'utilisateur y dispose notamment de droits d'accès, de rectification et de suppression.`,
+    },
+    {
+      n: '14',
+      title: 'Modification des conditions',
+      body: `${LEGAL.brand} peut modifier les présentes CGU/CGV à tout moment, notamment pour refléter une évolution légale ou de ses services (dont les taux de frais et commissions). Les utilisateurs sont informés des modifications par notification dans l'application. La poursuite de l'utilisation vaut acceptation des nouvelles conditions.`,
+    },
+    {
+      n: '15',
+      title: 'Droit applicable, médiation et litiges',
+      body: `Les présentes sont régies par le droit français. Conformément aux articles L.611-1 et suivants du Code de la consommation, le consommateur peut recourir gratuitement à un médiateur de la consommation. La plateforme européenne de règlement en ligne des litiges est accessible à : https://ec.europa.eu/consumers/odr. À défaut de résolution amiable, les tribunaux français sont compétents.`,
+    },
+    {
+      n: '16',
+      title: 'Contact',
+      body: 'Pour toute question relative aux présentes CGU/CGV :',
+      contact: LEGAL.contactEmail,
+    },
+  ]
 
   return (
-    <div style={{
-      minHeight: '100vh', position: 'relative', zIndex: 1,
-      padding: '20px 16px 48px',
-    }}>
-      <div style={{ maxWidth: 680, margin: '0 auto' }}>
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: COLORS.muted, fontSize: 18, lineHeight: 1,
-            }}>
-            ‹
-          </button>
-          <div>
-            <h1 style={{
-              fontFamily: FONTS.display, fontWeight: 300,
-              fontSize: 26, color: '#fff', margin: 0,
-              letterSpacing: '0.04em',
-            }}>
-              Conditions Générales d'Utilisation
-            </h1>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '4px 0 0', letterSpacing: '0.06em' }}>
-              Dernière mise à jour : Janvier 2026
-            </p>
-          </div>
-        </div>
-
-        {/* Sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {SECTIONS.map((s) => (
-            <div key={s.n} style={{
-              ...CARD,
-              padding: '20px 20px',
-              marginBottom: 0,
-            }}>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                {/* Gold section number */}
-                <span style={{
-                  fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold,
-                  letterSpacing: '0.08em', flexShrink: 0, marginTop: 2, minWidth: 24,
-                }}>
-                  {s.n}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <h2 style={{
-                    fontFamily: FONTS.display, fontWeight: 400,
-                    fontSize: 18, color: '#fff', margin: '0 0 10px',
-                    letterSpacing: '0.02em',
-                  }}>
-                    {s.title}
-                  </h2>
-                  {s.body && (
-                    <p style={{
-                      fontFamily: FONTS.mono, fontSize: 12,
-                      color: COLORS.muted, margin: 0,
-                      lineHeight: 1.8, letterSpacing: '0.01em',
-                    }}>
-                      {s.body}
-                    </p>
-                  )}
-                  {s.contact && (
-                    <p style={{
-                      fontFamily: FONTS.mono, fontSize: 12,
-                      color: COLORS.muted, margin: 0, lineHeight: 1.8,
-                    }}>
-                      Pour toute question relative aux présentes CGU, contactez notre équipe à :{' '}
-                      <span style={{ color: COLORS.gold }}>{s.contact}</span>
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer notice */}
-        <div style={{
-          ...CARD,
-          borderColor: 'rgba(255,255,255,0.06)',
-          padding: '14px 18px', marginTop: 16,
-        }}>
-          <p style={{
-            fontFamily: FONTS.mono, fontSize: 10,
-            color: 'rgba(255,255,255,0.22)', textAlign: 'center', margin: 0,
-            lineHeight: 1.6, letterSpacing: '0.04em',
-          }}>
-            Document provisoire — La version définitive sera rédigée par un juriste avant le lancement commercial.
-          </p>
-        </div>
-      </div>
-    </div>
+    <LegalPageLayout
+      title="Conditions Générales d'Utilisation et de Vente"
+      lastUpdate={LEGAL.lastUpdate}
+      sections={sections}
+      footerNotice="Document provisoire à valeur informative — la version définitive devra être validée par un juriste avant le lancement commercial, notamment sur le statut d'intermédiaire de paiement et les obligations associées."
+    />
   )
 }

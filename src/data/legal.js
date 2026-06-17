@@ -39,7 +39,8 @@ export const LEGAL = {
   subprocessors: [
     { name: 'Vercel Inc.', purpose: 'Hébergement', country: 'USA', dpa: 'https://vercel.com/legal/dpa' },
     { name: 'Google LLC (Firebase)', purpose: 'Authentification, base de données, stockage', country: 'USA / UE', dpa: 'https://firebase.google.com/terms/data-processing-terms' },
-    { name: 'Stripe Inc.', purpose: 'Paiements en ligne', country: 'USA / Irlande', dpa: 'https://stripe.com/legal/dpa' },
+    { name: 'Stripe Inc.', purpose: 'Paiements en ligne et reversements vendeurs (Stripe Connect)', country: 'USA / Irlande', dpa: 'https://stripe.com/legal/dpa' },
+    { name: 'Resend, Inc.', purpose: 'Envoi des emails transactionnels (validation de dossier, notifications)', country: 'USA', dpa: 'https://resend.com/legal/dpa' },
   ],
   // DPO
   dpo: null, // ex: { name: 'XX', email: 'dpo@liveinblack.com' }
