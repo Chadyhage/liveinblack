@@ -666,7 +666,7 @@ export default function LoginPage() {
 
   // ── Real password reset ──
   async function handleSendReset() {
-    if (!resetEmail) return
+    if (!resetEmail.trim()) { setResetError('Entre ton adresse email.'); return }
     setResetLoading(true)
     setResetError('')
     try {
@@ -1312,7 +1312,7 @@ export default function LoginPage() {
               Mot de passe oublié
             </h3>
             {!resetSent ? (
-              <>
+              <form onSubmit={e => { e.preventDefault(); handleSendReset() }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
                   Entre ton adresse email et on t'envoie un lien de réinitialisation.
                 </p>
@@ -1322,13 +1322,13 @@ export default function LoginPage() {
                     value={resetEmail} onChange={e => { setResetEmail(e.target.value); setResetError('') }} />
                 </div>
                 {resetError && <p style={S.errorText}>{resetError}</p>}
-                <button onClick={handleSendReset} disabled={resetLoading} style={{ ...S.btnGold, opacity: resetLoading ? 0.6 : 1 }}>
+                <button type="submit" disabled={resetLoading} style={{ ...S.btnGold, opacity: resetLoading ? 0.6 : 1 }}>
                   {resetLoading ? <Spinner text="Envoi..." /> : 'Envoyer'}
                 </button>
-                <button onClick={() => setShowResetModal(false)} style={{ ...S.btnGhost }}>
+                <button type="button" onClick={() => setShowResetModal(false)} style={{ ...S.btnGhost }}>
                   Annuler
                 </button>
-              </>
+              </form>
             ) : (
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '12px', padding: '8px 0' }}>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
