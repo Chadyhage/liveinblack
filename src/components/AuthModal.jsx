@@ -8,7 +8,7 @@ const dmMono = "'DM Mono', monospace"
 const cormorant = "'Cormorant Garamond', serif"
 
 const ROLE_LABELS = { client: 'Client', user: 'Client', organisateur: 'Organisateur', prestataire: 'Prestataire', agent: 'Admin' }
-const ROLE_COLORS = { client: '#22c55e', user: '#22c55e', organisateur: '#3b82f6', prestataire: '#8b5cf6', agent: '#d4af37' }
+const ROLE_COLORS = { client: '#22c55e', user: '#22c55e', organisateur: '#3b82f6', prestataire: '#8b5cf6', agent: '#c8a96e' }
 const ROLE_ICONS  = { client: '🎫', user: '🎫', organisateur: '🎪', prestataire: '🎤', agent: '🔑' }
 
 export default function AuthModal({ open, reason, onSuccess, onClose }) {
@@ -60,7 +60,7 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
           } else if (err.code === 'auth/too-many-requests') {
             setError('Trop de tentatives. Réessaie dans quelques minutes.')
           } else {
-            setError('Erreur de connexion. Réessaie.')
+            setError('La connexion a échoué. Vérifie ta connexion internet et réessaie.')
           }
           setLoading(false)
           return
@@ -78,7 +78,7 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
           navigate('/mon-dossier')
           return
         }
-        if (profile.status === 'rejected') { setError('Compte rejeté. Contacte le support.'); setLoading(false); return }
+        if (profile.status === 'rejected') { setError('Ton compte a été refusé. Écris-nous à support@liveinblack.com.'); setLoading(false); return }
 
         setLoading(false)
         setUser(profile)
@@ -106,8 +106,8 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
           : accounts.find(a => a.uid === selectedUid)
 
         if (!account)                      { setError('Compte introuvable.'); setLoading(false); return }
-        if (account.status === 'rejected') { setError('Compte rejeté. Contacte le support.'); setLoading(false); return }
-        if (account.status === 'pending')  { setError('Compte en attente de validation.'); setLoading(false); return }
+        if (account.status === 'rejected') { setError('Ton compte a été refusé. Écris-nous à support@liveinblack.com.'); setLoading(false); return }
+        if (account.status === 'pending')  { setError('Ton compte est en attente de validation par l\'équipe LIVEINBLACK. Tu recevras une confirmation sous 24h.'); setLoading(false); return }
         if (account.password !== password) { setError('Mot de passe incorrect.'); setLoading(false); return }
 
         setLoading(false)
@@ -165,7 +165,7 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
         {showRolePicker ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <p style={{ fontFamily: dmMono, fontSize: 9, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-              PLUSIEURS ESPACES DÉTECTÉS — CHOISISSEZ :
+              PLUSIEURS ESPACES DÉTECTÉS — CHOISIS :
             </p>
             {roleChoices.map(r => (
               <button key={r.uid} onClick={() => setSelectedUid(r.uid)} style={{

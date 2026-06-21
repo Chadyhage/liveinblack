@@ -933,7 +933,7 @@ export default function EventDetailPage() {
               {bookingStep === 'place' && (
                 <>
                   <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 20, color: 'white', margin: 0 }}>
-                    Choisir ton type de place
+                    Choisis ton type de place
                   </h3>
 
                   {/* Preuve sociale + jauge de remplissage globale (FOMO) */}
@@ -1441,7 +1441,7 @@ export default function EventDetailPage() {
                           disabled={!userCanBook}
                           style={{ ...S.btnGhost, width: '100%', padding: '10px', opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                         >
-                          Ignorer et réserver sans précommande
+                          Réserver sans précommande
                         </button>
                       )}
                     </>
@@ -1842,7 +1842,7 @@ export default function EventDetailPage() {
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, letterSpacing: '0.03em' }}>
                 Une fois confirmée, tu ne pourras{' '}
                 <span style={{ color: 'white' }}>plus modifier</span>{' '}
-                ta précommande ni ton son de playlist.
+                ta réservation.
               </p>
               {event.preorder && preorderTotal === 0 && (
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.05em' }}>
@@ -2141,7 +2141,7 @@ export default function EventDetailPage() {
               </label>
               <input
                 style={S.input}
-                placeholder="Votre réponse..."
+                placeholder="Ta réponse…"
                 value={showInfoInput}
                 onChange={e => setShowInfoInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && confirmShowInfo()}

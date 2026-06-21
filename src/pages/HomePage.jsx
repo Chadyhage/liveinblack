@@ -355,7 +355,7 @@ export default function HomePage() {
                   margin: 0,
                   color: '#fff',
                 }}>
-                  {selectedRegion?.name || 'Monde'}
+                  {selectedRegion?.name || 'Partout'}
                 </h2>
                 <span style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',

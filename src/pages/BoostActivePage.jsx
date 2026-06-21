@@ -50,7 +50,7 @@ export default function BoostActivePage() {
         setState('error')
         setErrorMsg(result?.paymentStatus
           ? `Paiement non confirmé (${result.paymentStatus}).`
-          : 'Impossible de vérifier le paiement.')
+          : 'Impossible de vérifier le paiement. Si tu as été débité, écris-nous à support@liveinblack.com — on régularise ton boost.')
         return
       }
       // Activer le boost à partir des metadata Stripe (source de vérité)

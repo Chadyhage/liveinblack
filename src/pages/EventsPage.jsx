@@ -206,7 +206,7 @@ export default function EventsPage() {
     for (const codes of Object.values(eventCodes)) {
       if (codes.find(c => c.code === code && c.usedBy)) { alreadyUsed = true; break }
     }
-    setCodeMsg({ type: 'error', text: alreadyUsed ? 'Ce code a déjà été utilisé.' : 'Code invalide ou expiré.' })
+    setCodeMsg({ type: 'error', text: alreadyUsed ? 'Ce code a déjà été utilisé.' : 'Ce code est invalide ou expiré.' })
   }
 
   return (
@@ -241,7 +241,7 @@ export default function EventsPage() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Mode partage</p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '3px 0 0' }}>Appuie sur un événement pour l'envoyer dans la conversation</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '3px 0 0' }}>Touche un événement pour l'envoyer dans la conversation</p>
             </div>
             <button
               onClick={() => navigate('/messagerie')}
@@ -314,7 +314,7 @@ export default function EventsPage() {
               boxSizing: 'border-box',
               transition: 'border-color 0.2s',
             }}
-            placeholder="Recherche par nom, ville, style..."
+            placeholder="Recherche un nom, une ville, un style…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={e => e.target.style.borderColor = '#4ee8c8'}
@@ -451,7 +451,7 @@ export default function EventsPage() {
                 marginBottom: 12,
                 transition: 'border-color 0.2s',
               }}
-              placeholder="EX: NEON2026"
+              placeholder="Ex. NEON2026"
               value={codeInput}
               onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeMsg(null) }}
               onKeyDown={e => e.key === 'Enter' && handleCodeSubmit()}
@@ -695,7 +695,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
                   flexShrink: 0,
                   marginLeft: 12,
                 }}>
-                  Mon event
+                  Mon événement
                 </span>
               )}
             </div>

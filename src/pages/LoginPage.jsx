@@ -733,7 +733,7 @@ export default function LoginPage() {
             </p>
             {[
               '1. Ouvre ta boîte mail',
-              '2. Cherche un email de noreply@liveinblack-15d30.firebaseapp.com',
+              '2. Cherche un email de noreply@liveinblack.com',
               '3. Clique sur le lien dans cet email',
               '4. Reviens ici et connecte-toi',
             ].map((step) => (
@@ -744,7 +744,7 @@ export default function LoginPage() {
             L'email peut arriver dans les spams / courriers indésirables.
           </p>
           {resendSent && (
-            <p style={S.successText}>Email renvoyé — OK</p>
+            <p style={S.successText}>Email renvoyé, vérifie ta boîte.</p>
           )}
           <button onClick={handleResendVerification}
             style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
@@ -1238,7 +1238,7 @@ export default function LoginPage() {
               )}
 
               <button type="submit" disabled={loading} style={{ ...S.btnPrimary, marginTop: '4px', opacity: loading ? 0.6 : 1 }}>
-                {loading ? <Spinner text="Création..." /> : regRole === 'agent' ? 'Soumettre la demande' : 'Créer mon compte'}
+                {loading ? <Spinner text="Création..." /> : regRole === 'agent' ? 'Demander un accès agent' : 'Créer mon compte'}
               </button>
             </form>
           )}
@@ -1425,8 +1425,8 @@ function Spinner({ text }) {
 function getFirebaseError(code) {
   const messages = {
     'auth/user-not-found': 'Aucun compte associé à cet email.',
-    'auth/wrong-password': 'Mot de passe incorrect. Rappel : le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre.',
-    'auth/invalid-credential': 'Email ou mot de passe incorrect. Rappel : au moins 8 caractères, une majuscule et un chiffre.',
+    'auth/wrong-password': 'Mot de passe incorrect.',
+    'auth/invalid-credential': 'Email ou mot de passe incorrect.',
     'auth/email-already-in-use': 'Cet email est déjà utilisé par un compte actif.',
     'auth/email-unverified-ghost': "Cet email est associé à un compte non vérifié. Utilise \"Mot de passe oublié\" sur la page de connexion pour récupérer l'accès.",
     'auth/phone-already-in-use': 'Ce numéro de téléphone est déjà associé à un compte actif.',
