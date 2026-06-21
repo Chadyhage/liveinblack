@@ -75,7 +75,16 @@ function CameraScanner({ active, onScan, onError }) {
           videoRef.current.play().then(tick)
         }
       })
-      .catch(err => onError(err.message || 'Permission caméra refusée'))
+      .catch(err => {
+        const map = {
+          NotAllowedError: 'Caméra refusée. Autorise-la dans les réglages de ton navigateur, puis réessaie.',
+          NotFoundError: 'Aucune caméra détectée sur cet appareil.',
+          NotReadableError: 'Caméra déjà utilisée par une autre application. Ferme-la et réessaie.',
+          OverconstrainedError: 'Caméra incompatible. Essaie un autre appareil.',
+          SecurityError: 'Caméra bloquée. Vérifie que tu es bien en connexion sécurisée (HTTPS).',
+        }
+        onError(map[err?.name] || 'Caméra inaccessible. Réessaie ou utilise la saisie manuelle.')
+      })
 
     function tick() {
       if (!mounted) return
@@ -152,7 +161,7 @@ export default function ScannerPage() {
     return (
       <div style={{ minHeight: '100dvh', background: '#04040b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
         <span style={{ fontSize: 40 }}>🚫</span>
-        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, textAlign: 'center' }}>Accès réservé aux agents et organisateurs</p>
+        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, textAlign: 'center' }}>Cette page est réservée aux agents et aux organisateurs.</p>
         <button onClick={() => navigate('/')} style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, background: 'none', border: '1px solid rgba(78,232,200,0.3)', borderRadius: 6, padding: '8px 20px', cursor: 'pointer' }}>Retour</button>
       </div>
     )
@@ -174,7 +183,16 @@ export default function ScannerPage() {
   // Service mode
   const [serviceCode, setServiceCode] = useState('')
   const [serviceOrder, setServiceOrder] = useState(null)
-  const [servedItems, setServedItems] = useState({})
+  // Persisté en localStorage : si le serveur quitte la commande puis re-scanne
+  // le même client, les articles déjà servis restent marqués (anti double-service).
+  const [servedItems, setServedItems] = useState(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('lib_served_items') || '{}')
+      const out = {}
+      for (const k of Object.keys(raw)) out[k] = new Set(raw[k] || [])
+      return out
+    } catch { return {} }
+  })
 
   function markUsed(code) {
     // Re-read localStorage to catch validations from other scanners/devices
@@ -370,7 +388,13 @@ export default function ScannerPage() {
     setServedItems(prev => {
       const set = new Set(prev[code] || [])
       if (set.has(itemName)) set.delete(itemName); else set.add(itemName)
-      return { ...prev, [code]: set }
+      const next = { ...prev, [code]: set }
+      try {
+        const serial = {}
+        for (const k of Object.keys(next)) serial[k] = [...next[k]]
+        localStorage.setItem('lib_served_items', JSON.stringify(serial))
+      } catch {}
+      return next
     })
   }
 
@@ -519,7 +543,7 @@ export default function ScannerPage() {
                     color: cameraActive ? COLORS.muted : COLORS.teal,
                     outline: cameraActive ? '1px solid rgba(255,255,255,0.15)' : `1px solid rgba(78,232,200,0.35)`,
                   }}>
-                  {cameraActive ? 'Arrêter la caméra' : 'Scanner un QR Code'}
+                  {cameraActive ? 'Arrêter la caméra' : 'Ouvrir la caméra'}
                 </button>
 
                 {/* Manual entry */}
@@ -532,7 +556,7 @@ export default function ScannerPage() {
                       style={{ ...inputStyle, flex: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }}
                       placeholder="LIB-001-XXXXXX"
                       value={manualCode}
-                      onChange={(e) => setManualCode(e.target.value)}
+                      onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === 'Enter' && manualCode && processCode(manualCode)}
                     />
                     <button
@@ -545,7 +569,7 @@ export default function ScannerPage() {
                         fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em',
                         opacity: manualCode ? 1 : 0.4, transition: 'opacity 0.2s',
                       }}>
-                      OK
+                      Valider
                     </button>
                   </div>
                   <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)' }}>Format : LIB-XXX-XXXXXX</p>
@@ -655,7 +679,7 @@ export default function ScannerPage() {
                       color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
                       transition: 'all 0.2s',
                     }}>
-                      {isValid ? '✕' : 'Scanner suivant'}
+                      {isValid ? '✕' : 'Billet suivant'}
                     </button>
                   </div>
                 </div>
@@ -664,11 +688,9 @@ export default function ScannerPage() {
 
             {/* Stats */}
             {!result && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                 {[
-                  { label: 'Validés',      val: validatedCount,                    color: COLORS.teal },
-                  { label: 'Billets demo', val: Object.keys(MOCK_TICKETS).length,  color: '#fff' },
-                  { label: 'Capacité',     val: '350',                             color: COLORS.dim },
+                  { label: 'Billets validés (cet appareil)', val: validatedCount, color: COLORS.teal },
                 ].map(s => (
                   <div key={s.label} style={{ ...CARD, padding: 12, textAlign: 'center' }}>
                     <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 28, color: s.color, margin: 0 }}>{s.val}</p>
@@ -735,7 +757,7 @@ export default function ScannerPage() {
                     color: cameraActive ? COLORS.muted : COLORS.teal,
                     outline: cameraActive ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(78,232,200,0.35)',
                   }}>
-                  {cameraActive ? 'Arrêter' : 'Scanner le QR Client'}
+                  {cameraActive ? 'Arrêter la caméra' : 'Scanner le QR client'}
                 </button>
 
                 {/* Manual entry */}
@@ -761,7 +783,7 @@ export default function ScannerPage() {
                         fontFamily: FONTS.mono, fontSize: 11,
                         opacity: serviceCode ? 1 : 0.4, transition: 'opacity 0.2s',
                       }}>
-                      OK
+                      Valider
                     </button>
                   </div>
                 </div>
@@ -773,7 +795,7 @@ export default function ScannerPage() {
               if (!serviceOrder.order) {
                 return (
                   <div style={{
-                    borderRadius: 12, border: 'rgba(224,90,170,0.40)',
+                    borderRadius: 12, borderColor: 'rgba(224,90,170,0.40)',
                     background: 'rgba(224,90,170,0.07)', backdropFilter: 'blur(22px)',
                     padding: 24, textAlign: 'center',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
@@ -813,7 +835,7 @@ export default function ScannerPage() {
                     {order.items.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '12px 0' }}>
                         <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>Aucune précommande</p>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '4px 0 0' }}>Ce client n'a pas commandé de consommations</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '4px 0 0' }}>Ce client n'a rien précommandé</p>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
