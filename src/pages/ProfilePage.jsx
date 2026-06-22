@@ -662,14 +662,14 @@ export default function ProfilePage() {
         const currentUser = auth.currentUser
         if (!currentUser) throw { code: 'auth/requires-recent-login' }
         // Only re-auth with password for email/password accounts
-        if (currentUser.providerData?.[0]?.providerId === 'password') {
+        if (currentUser.providerData.some(p => p.providerId === 'password')) {
           const cred = EmailAuthProvider.credential(currentUser.email, deletePassword)
           await reauthenticateWithCredential(currentUser, cred)
         }
         // Delete all linked Firestore documents (fire-and-forget for non-critical ones)
         const { db } = await import('../firebase')
         const { doc, deleteDoc } = await import('firebase/firestore')
-        const linkedCollections = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social', 'user_boosts']
+        const linkedCollections = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social', 'user_boosts', 'catalogs', 'providers']
         await Promise.allSettled(
           linkedCollections.map(coll => deleteDoc(doc(db, coll, uid)))
         )

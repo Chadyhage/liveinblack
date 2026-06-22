@@ -1003,21 +1003,13 @@ function PrestataireDashboard({ user, navigate }) {
 
 function PublicServicesView({ user, uid, navigate, agentMode }) {
   const { setUser } = useAuth()
-  const photoInputRef = useRef(null)
   const [mode, setMode] = useState('landing')
   const [selected, setSelected] = useState(null)
-  const [step, setStep] = useState(1)
-  const [formValues, setFormValues] = useState({})
-  const [extras, setExtras] = useState([])
-  const [customOptionInput, setCustomOptionInput] = useState('')
-  const [showCustomInput, setShowCustomInput] = useState(false)
-  const [photoPreviews, setPhotoPreviews] = useState([])
-  const [formErrors, setFormErrors] = useState({})
-  const [createdProviders, setCreatedProviders] = useState(getCreatedProviders)
+  const [createdProviders] = useState(getCreatedProviders)
   const [roleRequestState, setRoleRequestState] = useState('idle')
   const [roleRequestType, setRoleRequestType] = useState(null)
   const [roleRequestPrestType, setRoleRequestPrestType] = useState(null)
-  const [contact, setContact] = useState({ open: false, provider: null, sent: false, name: '', message: '' })
+  const [contact, setContact] = useState({ open: false, provider: null, sent: false, demo: false, name: '', message: '' })
   const [browseSearch, setBrowseSearch] = useState('')
   const [browseCat, setBrowseCat] = useState('tous')
   const [orderModal, setOrderModal] = useState(null)
@@ -1070,46 +1062,6 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
     hasCatalog: catalogOf(p.userId).filter(i => i.available).length > 0,
   }))]
 
-  function toggleExtra(ex) {
-    setExtras(prev => prev.includes(ex) ? prev.filter(e => e !== ex) : [...prev, ex])
-  }
-  function addCustomOption() {
-    const val = customOptionInput.trim()
-    if (val && !extras.includes(val)) { setExtras(prev => [...prev, val]); setCustomOptionInput(''); setShowCustomInput(false) }
-  }
-  function handlePhotos(e) {
-    const files = Array.from(e.target.files)
-    files.forEach(file => {
-      if (file.size > 5 * 1024 * 1024) return
-      const reader = new FileReader()
-      reader.onload = ev => setPhotoPreviews(prev => prev.length < 5 ? [...prev, ev.target.result] : prev)
-      reader.readAsDataURL(file)
-    })
-  }
-  function validateStep2() {
-    const errs = {}
-    cat.fields.filter(f => f.required).forEach(f => {
-      if (!formValues[f.label]?.toString().trim()) errs[f.label] = 'Champ obligatoire'
-    })
-    setFormErrors(errs)
-    return Object.keys(errs).length === 0
-  }
-  function handlePublishProvider() {
-    const nameField = cat.fields[0]?.label
-    const priceField = cat.fields.find(f => f.label.toLowerCase().includes('tarif'))?.label
-    const newProvider = {
-      id: Date.now(), type: selected, icon: cat.icon, color: cat.color,
-      typeLabel: cat.id === 'salle' ? 'Salle / Lieu' : cat.id === 'prestation' ? formValues['Type de prestation'] || 'Prestation' : cat.id === 'materiel' ? 'Matériel' : 'Supermarché',
-      name: formValues[nameField] || 'Nouveau prestataire',
-      description: formValues[cat.fields.find(f => f.type === 'textarea')?.label] || '',
-      price: priceField ? `À partir de ${formValues[priceField] || '?'}€` : '—',
-      location: formValues['Adresse complète'] || formValues['Adresse'] || formValues["Ville(s) d'intervention"] || '',
-      rating: 0, tags: extras, photos: photoPreviews, pending: true, userCreated: true,
-    }
-    localStorage.setItem('lib_created_providers', JSON.stringify([...getCreatedProviders(), newProvider]))
-    setCreatedProviders(prev => [...prev, newProvider])
-    setStep(4)
-  }
   function startRoleRequest(catId) {
     if (!user) { navigate('/connexion?mode=register'); return }
     const isPending = catId === 'organisateur'
@@ -1382,7 +1334,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', gap: 8 }}>
                     <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prov.price || ''}</span>
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <button onClick={() => setContact({ open: true, provider: prov, sent: false, name: '', message: '' })}
+                      <button onClick={() => setContact({ open: true, provider: prov, sent: false, demo: false, name: '', message: '' })}
                         style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
                         Contacter
                       </button>
@@ -1416,7 +1368,14 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Contacter {contact.provider?.name}</p>
                 <button onClick={() => setContact(c => ({ ...c, open: false }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.42)', fontSize: 20, lineHeight: 1, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
               </div>
-              {contact.sent ? (
+              {contact.demo ? (
+                <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round"/><circle cx="12" cy="16.5" r="0.6" fill="#c8a96e"/></svg>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Profil de démonstration</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>Ce profil n'est pas encore relié à un compte réel — ton message ne peut pas être envoyé pour l'instant.</p>
+                  <button onClick={() => setContact(c => ({ ...c, open: false }))} style={{ ...S.btnGold, marginTop: 8 }}>Fermer</button>
+                </div>
+              ) : contact.sent ? (
                 <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Message envoyé</p>
@@ -1442,8 +1401,9 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                     // prestataire ne recevait jamais rien.
                     const providerId = contact.provider?.userId
                     if (!providerId) {
-                      // Prestataire de démo sans compte réel → pas de conversation
-                      setContact(c => ({ ...c, sent: true }))
+                      // Prestataire de démo sans compte réel → pas de conversation possible,
+                      // on ne doit pas prétendre qu'un message a été envoyé.
+                      setContact(c => ({ ...c, demo: true }))
                       return
                     }
                     const conv = createDirectConversation(uid, myName, providerId, contact.provider?.name || 'Prestataire')

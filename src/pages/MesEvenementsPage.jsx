@@ -315,6 +315,8 @@ export default function MesEvenementsPage() {
   // Analytics : billets vendus (vraie source = registre tickets/ Firestore)
   const [salesTickets, setSalesTickets] = useState([])
   const [salesLoading, setSalesLoading] = useState(false)
+  const [salesError, setSalesError] = useState(false)
+  const [salesRetry, setSalesRetry] = useState(0)
 
   // Dashboard codes state
   const [showCodesModal, setShowCodesModal] = useState(false)
@@ -365,15 +367,16 @@ export default function MesEvenementsPage() {
   })()
   const myEventIdsKey = myEventIds.join(',')
   useEffect(() => {
-    if (!myEventIds.length) { setSalesTickets([]); return }
+    if (!myEventIds.length) { setSalesTickets([]); setSalesError(false); return }
     let cancelled = false
     setSalesLoading(true)
+    setSalesError(false)
     import('../utils/firestore-sync').then(async ({ loadTicketsForEvents }) => {
       const tix = await loadTicketsForEvents(myEventIds)
       if (!cancelled) { setSalesTickets(tix); setSalesLoading(false) }
-    }).catch(() => { if (!cancelled) setSalesLoading(false) })
+    }).catch(() => { if (!cancelled) { setSalesLoading(false); setSalesError(true) } })
     return () => { cancelled = true }
-  }, [myEventIdsKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [myEventIdsKey, salesRetry]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleImage(e) {
     const file = e.target.files[0]
@@ -714,6 +717,22 @@ export default function MesEvenementsPage() {
   // En cas d'event annulé, on verrouille TOUT (lecture seule)
   const isReadOnly = editingEventCancelled
 
+  // Rattache un événement orphelin (créé par un compte supprimé/changé) à ce compte
+  function claimOrphanEvent(id) {
+    const uid = user?.uid
+    if (!uid) return
+    const updated = createdEvents.map(ev =>
+      ev.id === id ? { ...ev, createdBy: uid, organizerId: uid } : ev
+    )
+    localStorage.setItem('lib_created_events', JSON.stringify(updated))
+    setCreatedEvents(updated)
+    import('../utils/firestore-sync').then(async ({ syncDoc }) => {
+      const { sanitizeEventsForSync } = await import('../utils/uploadImage')
+      syncDoc(`events/${id}`, updated.find(ev => ev.id === id))
+      syncDoc(`user_events/${uid}`, { items: await sanitizeEventsForSync(updated.filter(ev => ev.createdBy === uid || ev.organizerId === uid)) })
+    }).catch(() => {})
+  }
+
   function deleteEvent(id) {
     const updated = createdEvents.filter(ev => ev.id !== id)
     localStorage.setItem('lib_created_events', JSON.stringify(updated))
@@ -900,11 +919,23 @@ export default function MesEvenementsPage() {
           </div>
 
           {/* Analytics — ventes réelles (registre tickets/) */}
-          <OrganizerAnalytics
-            events={createdEvents.filter(ev => !ev.createdBy || ev.createdBy === user?.uid || ev.organizerId === user?.uid)}
-            tickets={salesTickets}
-            loading={salesLoading}
-          />
+          {salesError ? (
+            <div style={{ background: 'rgba(220,160,50,0.10)', border: '1px solid rgba(220,160,50,0.30)', borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,220,100,0.85)', margin: 0, lineHeight: 1.6 }}>
+                Impossible de charger tes statistiques de vente. Vérifie ta connexion.
+              </p>
+              <button onClick={() => setSalesRetry(n => n + 1)}
+                style={{ padding: '7px 14px', borderRadius: 4, cursor: 'pointer', background: 'rgba(220,160,50,0.14)', border: '1px solid rgba(220,160,50,0.40)', color: 'rgba(255,220,100,0.9)', fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.1em' }}>
+                Réessayer
+              </button>
+            </div>
+          ) : (
+            <OrganizerAnalytics
+              events={createdEvents.filter(ev => !ev.createdBy || ev.createdBy === user?.uid || ev.organizerId === user?.uid)}
+              tickets={salesTickets}
+              loading={salesLoading}
+            />
+          )}
 
           {/* Events list */}
           <div>
@@ -1045,6 +1076,30 @@ export default function MesEvenementsPage() {
                       </div>
                     )
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Événements orphelins (créés par un ancien compte) ── */}
+            {orphanEvents.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <Eyebrow style={{ marginBottom: 14 }}>Événements orphelins</Eyebrow>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, marginBottom: 12 }}>
+                  Ces événements ont été créés par un compte qui n'existe plus. Tu peux te les attribuer pour les gérer.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {orphanEvents.map(ev => (
+                    <div key={ev.id} style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'center', gap: 12, opacity: 0.85 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.85)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                      </div>
+                      <button onClick={() => claimOrphanEvent(ev.id)}
+                        style={{ padding: '8px 14px', borderRadius: 4, cursor: 'pointer', background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)', color: '#c8a96e', fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0 }}>
+                        M'attribuer
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
