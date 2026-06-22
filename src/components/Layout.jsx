@@ -515,7 +515,7 @@ export default function Layout({ children, hideNav, chatMode }) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
               </svg>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'var(--violet)' }}>Connexion</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'var(--violet)' }}>Se connecter</span>
             </button>
           )}
         </div>
@@ -616,7 +616,7 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
       {recent.length > 0 && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '10px 16px', textAlign: 'center' }}>
           <span style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
-            {notifications.length > 8 ? `+${notifications.length - 8} autres` : `${notifications.length} notification${notifications.length > 1 ? 's' : ''}`}
+            {notifications.length > 8 ? `+${notifications.length - 8} notifications de plus` : `${notifications.length} notification${notifications.length > 1 ? 's' : ''}`}
           </span>
         </div>
       )}

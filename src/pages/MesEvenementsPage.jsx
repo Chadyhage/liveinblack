@@ -428,7 +428,7 @@ export default function MesEvenementsPage() {
       } else {
         const today = new Date(); today.setHours(0, 0, 0, 0)
         const picked = new Date(form.date + 'T00:00:00')
-        if (picked < today) errs.date = 'La date que vous avez renseignée est déjà passée'
+        if (picked < today) errs.date = 'La date que tu as choisie est déjà passée'
       }
       if (form.timeStart && form.timeEnd) {
         // Only block identical times — overnight events (end < start) are valid for clubs
@@ -1066,7 +1066,7 @@ export default function MesEvenementsPage() {
                     <div style={{ background: 'rgba(220,160,50,0.10)', border: '1px solid rgba(220,160,50,0.30)', borderRadius: 8, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                       <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
                       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,220,100,0.85)', lineHeight: 1.7, margin: 0 }}>
-                        <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. À vous de gérer légalement les remboursements éventuels.
+                        <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. C'est à toi de gérer les remboursements éventuels, dans le respect de la loi.
                       </p>
                     </div>
 

@@ -448,7 +448,7 @@ export default function ProfilePage() {
       return
     }
     if (nameChanged && nameOnCooldown) {
-      setSettingsMsg({ type: 'error', text: `Prochain changement de nom possible le ${formatNextDate(nextNameChange)}.` })
+      setSettingsMsg({ type: 'error', text: `Tu pourras changer ton nom à nouveau le ${formatNextDate(nextNameChange)}.` })
       return
     }
     setSaving(true)

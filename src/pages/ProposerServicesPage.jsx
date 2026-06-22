@@ -48,7 +48,7 @@ const CATEGORIES = [
       { label: 'Bio / description', placeholder: 'Présente-toi, ton style, ton expérience...', type: 'textarea' },
       { label: 'Lien réseau social ou site', placeholder: 'Instagram, SoundCloud...', type: 'text' },
     ],
-    extras: ['Disponible week-end', 'Matériel propre', 'Prestation extérieure', 'Équipe (groupe)', 'Vidéo available'],
+    extras: ['Disponible week-end', 'Matériel propre', 'Prestation extérieure', 'Équipe (groupe)', 'Vidéo disponible'],
     legalDocs: ["Pièce d'identité", 'SIRET ou statut auto-entrepreneur si applicable', "Attestation d'assurance"],
   },
   {
@@ -79,7 +79,7 @@ const CATEGORIES = [
       { label: 'Adresse', placeholder: 'Adresse complète', type: 'text', required: true },
       { label: 'Zone de livraison', placeholder: 'Ex: Paris intramuros, Île-de-France', type: 'text' },
       { label: 'Délai de livraison minimum', placeholder: "Ex: 48h avant l'événement", type: 'text' },
-      { label: 'Description', placeholder: 'Présentation de votre enseigne...', type: 'textarea' },
+      { label: 'Description', placeholder: 'Présentation de ton enseigne...', type: 'textarea' },
     ],
     extras: ['Livraison à domicile', 'Réfrigération disponible', 'Glace incluse', 'Click & Collect', 'Alcool certifié'],
     legalDocs: ['Licence de débit de boissons', 'SIRET', 'Assurance professionnelle'],
@@ -1265,7 +1265,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
             </button>
             <div>
               <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Prestataires</p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 2, margin: '2px 0 0' }}>{filteredProviders.length} profil(s)</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 2, margin: '2px 0 0' }}>{filteredProviders.length} profil{filteredProviders.length > 1 ? 's' : ''}</p>
             </div>
           </div>
 
