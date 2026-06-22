@@ -130,6 +130,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── Marqueurs anti-double-restock (session Stripe expirée → stock relâché) ──
+    // Purement serveur (Admin SDK) : empêche le webhook de restocker deux fois si
+    // Stripe retente l'envoi du même événement checkout.session.expired.
+    match /stock_releases/{sessionId} {
+      allow read, write: if false;
+    }
+
     // ── Registre anti-fraude des billets ───────────────────────────────────────
     // Source de vérité du ScannerPage. Seul le webhook Stripe (Admin SDK,
     // qui contourne ces règles) peut écrire paid:true. Côté client :

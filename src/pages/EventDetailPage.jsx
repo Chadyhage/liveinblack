@@ -350,13 +350,17 @@ export default function EventDetailPage() {
   const activeMenu = baseMenu.filter(item => !item.excludedPlaces?.includes(selectedPlace))
 
   const maxPerAccount = selectedPlaceObj?.maxPerAccount || 0
+  // Borne la quantité sélectionnable : stock dispo ET plafond par compte (si défini)
+  const maxQtyForSelectedPlace = Math.max(1, Math.min(
+    selectedPlaceObj?.available ?? 1,
+    maxPerAccount > 0 ? maxPerAccount : Infinity,
+  ))
 
   const placePrice = selectedPlaceObj?.price || 0
   const curTicketOrder = perTicketOrders[activePreorderTicket] || { items: {}, shows: {} }
   const preorderTotal = perTicketOrders.reduce((total, t) =>
     total + activeMenu.reduce((sum, item) => sum + (t.items[item.name] || 0) * item.price, 0), 0)
-  const totalPrice = placePrice + preorderTotal
-  // Correct total: place price × qty + preorder total (preorderTotal already sums all tickets)
+  // Place price × qty + preorder total (preorderTotal already sums all tickets)
   const grandTotal = placePrice * ticketQty + preorderTotal
   const isAuctionPlace = selectedPlaceObj?.auctionType === 'auction'
   const currentAuctionPrice = 0
@@ -545,6 +549,49 @@ export default function EventDetailPage() {
     // et des points en double.
     if (freeBookingLockRef.current) return
     freeBookingLockRef.current = true
+
+    // Décrément atomique du stock AVANT de créer les billets — empêche la survente
+    // si un autre acheteur réserve la dernière place au même moment. Passe par un
+    // endpoint serveur (Admin SDK) car les règles Firestore n'autorisent que
+    // l'organisateur à écrire dans events/{id} — pas un acheteur quelconque.
+    let stockReserved = false
+    try {
+      const stockRes = await fetch('/api/event-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: event.id, placeType: selectedPlace, qty: ticketQty, action: 'reserve' }),
+      })
+      const stockData = await stockRes.json().catch(() => ({}))
+      if (!stockRes.ok) {
+        freeBookingLockRef.current = false
+        setStripeError(stockData.error || 'Il ne reste plus assez de places disponibles.')
+        return
+      }
+      stockReserved = !stockData.skipped // pas de suivi de stock pour les events de démo statiques
+    } catch {
+      // Réseau indisponible — on ne bloque pas la réservation gratuite pour ça,
+      // mais on ne peut pas garantir l'absence de survente dans ce cas précis.
+    }
+    if (stockReserved) {
+      const newPlaces = event.places.map(p => p.type === selectedPlace ? { ...p, available: Math.max(0, (Number(p.available) || 0) - ticketQty) } : p)
+      setEvent(ev => ({ ...ev, places: newPlaces }))
+      try {
+        const created = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
+        const idx = created.findIndex(e => String(e.id) === String(event.id))
+        if (idx >= 0) {
+          created[idx] = { ...created[idx], places: newPlaces }
+          localStorage.setItem('lib_created_events', JSON.stringify(created))
+        } else {
+          const viewed = readEventViewCache()
+          const vIdx = viewed.findIndex(e => String(e.id) === String(event.id))
+          if (vIdx >= 0) {
+            viewed[vIdx] = { ...viewed[vIdx], places: newPlaces }
+            writeEventViewCache(viewed)
+          }
+        }
+      } catch {}
+    }
+
     const newTickets = []
     try {
       const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
@@ -642,6 +689,15 @@ export default function EventDetailPage() {
       setBookingStep('confirmed')
       setShowConfirmModal(false)
     } catch {
+      // La création des billets a échoué APRÈS le décrément de stock — on restocke
+      // pour ne pas perdre des places disponibles pour rien.
+      if (stockReserved) {
+        fetch('/api/event-stock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId: event.id, placeType: selectedPlace, qty: ticketQty, action: 'release' }),
+        }).catch(() => {})
+      }
       setShowConfirmModal(false)
       return
     } finally {
@@ -980,7 +1036,7 @@ export default function EventDetailPage() {
                     return (
                       <div
                         key={place.type}
-                        onClick={() => setSelectedPlace(place.type === selectedPlace ? null : place.type)}
+                        onClick={() => { setSelectedPlace(place.type === selectedPlace ? null : place.type); setTicketQty(1) }}
                         style={{
                           ...S.card,
                           cursor: 'pointer',
@@ -1060,17 +1116,56 @@ export default function EventDetailPage() {
                           <span style={S.muted}>Place sélectionnée</span>
                           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{selectedPlace}</span>
                         </div>
+
+                        {!isGroupPlace && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
+                            <span style={S.muted}>Quantité</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <button
+                                onClick={() => setTicketQty(q => Math.max(1, q - 1))}
+                                disabled={ticketQty <= 1}
+                                style={{
+                                  width: 26, height: 26, borderRadius: 4,
+                                  background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontFamily: "'DM Mono', monospace", fontSize: 13, color: 'rgba(255,255,255,0.5)',
+                                  cursor: ticketQty <= 1 ? 'not-allowed' : 'pointer', opacity: ticketQty <= 1 ? 0.3 : 1,
+                                }}
+                              >−</button>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: '#c8a96e', width: 16, textAlign: 'center' }}>
+                                {ticketQty}
+                              </span>
+                              <button
+                                onClick={() => setTicketQty(q => Math.min(maxQtyForSelectedPlace, q + 1))}
+                                disabled={ticketQty >= maxQtyForSelectedPlace}
+                                style={{
+                                  width: 26, height: 26, borderRadius: 4,
+                                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
+                                  border: '1px solid rgba(200,169,110,0.45)',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontFamily: "'DM Mono', monospace", fontSize: 15, color: '#c8a96e',
+                                  cursor: ticketQty >= maxQtyForSelectedPlace ? 'not-allowed' : 'pointer',
+                                  opacity: ticketQty >= maxQtyForSelectedPlace ? 0.3 : 1,
+                                }}
+                              >+</button>
+                            </div>
+                          </div>
+                        )}
+                        {!isGroupPlace && maxPerAccount > 0 && (
+                          <p style={{ ...S.label, marginTop: -4, textAlign: 'right' }}>Max {maxPerAccount} par compte</p>
+                        )}
+
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
                           <span style={S.muted}>
-                            {isAuctionPlace ? (currentAuctionPrice > 0 ? 'Enchère actuelle' : 'Prix de base') : 'Prix'}
+                            {isAuctionPlace ? (currentAuctionPrice > 0 ? 'Enchère actuelle' : 'Prix de base') : ticketQty > 1 ? `Prix (${placePrice}€ × ${ticketQty})` : 'Prix'}
                           </span>
                           <span style={{ ...S.price, fontSize: 20 }}>
-                            {isAuctionPlace ? (currentAuctionPrice > 0 ? currentAuctionPrice : placePrice) : placePrice}€
+                            {isAuctionPlace ? (currentAuctionPrice > 0 ? currentAuctionPrice : placePrice) : placePrice * ticketQty}€
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={S.muted}>Points gagnés</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8' }}>+1 point</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8' }}>+{ticketQty} point{ticketQty > 1 ? 's' : ''}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
                           <span style={S.muted}>Paiement</span>
@@ -1091,7 +1186,7 @@ export default function EventDetailPage() {
                           }}
                           disabled={user && !userCanBook}
                           onClick={() => requireUserThenDo(() => tryProceed(() => {
-                            setPerTicketOrders([{ items: {}, shows: {} }])
+                            setPerTicketOrders(Array.from({ length: ticketQty }, () => ({ items: {}, shows: {} })))
                             setActivePreorderTicket(0)
                             setBookingStep('preorder')
                           }))}
@@ -1194,6 +1289,32 @@ export default function EventDetailPage() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Sélecteur de billet à personnaliser (si plusieurs billets) */}
+                  {perTicketOrders.length > 1 && (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {perTicketOrders.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActivePreorderTicket(i)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 4,
+                            border: activePreorderTicket === i ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                            background: activePreorderTicket === i ? 'rgba(200,169,110,0.14)' : 'transparent',
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 9,
+                            letterSpacing: '0.15em',
+                            textTransform: 'uppercase',
+                            color: activePreorderTicket === i ? '#c8a96e' : 'rgba(255,255,255,0.4)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Billet {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {activeMenu.map((item) => {
@@ -1386,14 +1507,17 @@ export default function EventDetailPage() {
                   {/* Order total */}
                   <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={S.muted}>Place · {selectedPlace}</span>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{placePrice}€</span>
+                      <span style={S.muted}>Place · {selectedPlace}{ticketQty > 1 ? ` ×${ticketQty}` : ''}</span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{placePrice * ticketQty}€</span>
                     </div>
                     {perTicketOrders.map((t, n) => {
                       const ticketItems = activeMenu.filter(i => (t.items[i.name] || 0) > 0)
                       if (ticketItems.length === 0) return null
                       return (
                         <div key={n} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {perTicketOrders.length > 1 && (
+                            <span style={{ ...S.muted, fontSize: 9, color: '#c8a96e' }}>Billet {n + 1}</span>
+                          )}
                           {ticketItems.map(i => (
                             <div key={i.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={S.muted}>{i.name} ×{t.items[i.name]}</span>
@@ -1405,7 +1529,7 @@ export default function EventDetailPage() {
                     })}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8, marginTop: 4 }}>
                       <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white', letterSpacing: '0.1em' }}>Total</span>
-                      <span style={{ ...S.price, fontSize: 22 }}>{totalPrice}€</span>
+                      <span style={{ ...S.price, fontSize: 22 }}>{grandTotal}€</span>
                     </div>
                   </div>
 
@@ -1433,7 +1557,7 @@ export default function EventDetailPage() {
                         disabled={!userCanBook}
                         onClick={() => setShowConfirmModal(true)}
                       >
-                        {preorderTotal > 0 ? `Confirmer la commande — ${totalPrice}€` : 'Confirmer la réservation'}
+                        {preorderTotal > 0 ? `Confirmer la commande — ${grandTotal}€` : 'Confirmer la réservation'}
                       </button>
                       {preorderTotal > 0 && (
                         <button
@@ -1952,7 +2076,7 @@ export default function EventDetailPage() {
             groupMax,
             preorderData,
             preorderTotal,
-            totalPrice,
+            totalPrice: grandTotal,
             convId: groupSendConvId,
             convMemberCount: conv?.members?.length || 2,
             proposerId: myId,
@@ -2026,7 +2150,7 @@ export default function EventDetailPage() {
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 6, marginTop: 2 }}>
                   <span style={S.muted}>Total</span>
-                  <span style={{ ...S.price, fontSize: 16 }}>{totalPrice}€</span>
+                  <span style={{ ...S.price, fontSize: 16 }}>{grandTotal}€</span>
                 </div>
               </div>
 

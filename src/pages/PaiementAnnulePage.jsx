@@ -27,14 +27,25 @@ export default function PaiementAnnulePage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const eventId = params.get('event_id')
+  const placeType = params.get('place_type')
+  const qty = params.get('qty')
 
   useEffect(() => {
+    // Restocker la place réservée avant la session Stripe (api/checkout.js décrémente
+    // dès la création de la session — si l'acheteur annule, il faut rendre le stock).
+    if (eventId && placeType && qty) {
+      fetch('/api/event-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId, placeType, qty, action: 'release' }),
+      }).catch(() => {})
+    }
     // Nettoyer tous les pendings (au cas où — ils sont en localStorage)
     try {
       const keys = Object.keys(localStorage).filter(k => k.startsWith('lib_pending_booking_'))
       keys.forEach(k => localStorage.removeItem(k))
     } catch {}
-  }, [])
+  }, [eventId, placeType, qty])
 
   return (
     <Layout hideNav>

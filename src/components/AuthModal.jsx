@@ -71,15 +71,12 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
           ? snap.data()
           : { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', activeRole: 'user', enabledRoles: ['user'], status: 'active', emailVerified: true }
 
-        if (profile.status === 'pending')  {
-          setLoading(false)
-          setUser(profile)
-          close()
-          navigate('/mon-dossier')
-          return
-        }
         if (profile.status === 'rejected') { setError('Ton compte a été refusé. Écris-nous à support@liveinblack.com.'); setLoading(false); return }
 
+        // pending / draft → on laisse entrer (comme doEmailLogin de LoginPage) : OnboardingGuard
+        // redirige vers /mon-dossier ou /inscription-* sur les pages qui l'exigent, et laisse les
+        // pages publiques (événements, billets) accessibles — onSuccess() peut donc reprendre
+        // l'action d'origine (ex: réserver) sans être arraché vers une autre page sans explication.
         setLoading(false)
         setUser(profile)
         close()
@@ -107,8 +104,13 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
 
         if (!account)                      { setError('Compte introuvable.'); setLoading(false); return }
         if (account.status === 'rejected') { setError('Ton compte a été refusé. Écris-nous à support@liveinblack.com.'); setLoading(false); return }
-        if (account.status === 'pending')  { setError('Ton compte est en attente de validation par l\'équipe LIVEINBLACK. Tu recevras une confirmation sous 24h.'); setLoading(false); return }
-        if (account.password !== password) { setError('Mot de passe incorrect.'); setLoading(false); return }
+        // pending → on laisse entrer (comme doEmailLogin de LoginPage) : un compte en attente
+        // de validation n'a parfois pas encore de mot de passe défini, donc on ne bloque que
+        // si un mot de passe existe ET ne correspond pas.
+        const pwdMismatch = account.status === 'pending'
+          ? (account.password && account.password !== password)
+          : (account.password !== password)
+        if (pwdMismatch) { setError('Mot de passe incorrect.'); setLoading(false); return }
 
         setLoading(false)
         setUser(account)

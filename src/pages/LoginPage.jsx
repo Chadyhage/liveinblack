@@ -586,11 +586,8 @@ export default function LoginPage() {
         phone: isDedicatedRole ? (regDialCode + regPhone.trim()).replace(/\s/g, '') : '',
         role: regRole, prestataireType: regPrestType,
       })
-      if (userData._pendingOrgOnboarding && userData._needsEmailVerification) {
-        // Org/prest on Firebase: verify email first, then redirect to onboarding
-        setUnverifiedEmail(regEmail)
-      } else if (userData._pendingOrgOnboarding) {
-        // Org/prest on local: log them in and redirect to onboarding form
+      if (userData._pendingOrgOnboarding) {
+        // Org/prest : connecté directement, redirigé vers le formulaire d'onboarding
         const cleanUser = { ...userData }
         delete cleanUser._pendingOrgOnboarding
         setUser(cleanUser)
@@ -600,8 +597,6 @@ export default function LoginPage() {
           syncOnLogin(cleanUser.uid).catch(() => {})
         }).catch(() => {})
         navigate(userData._pendingOrgOnboarding === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire')
-      } else if (userData._needsEmailVerification) {
-        setUnverifiedEmail(regEmail)
       } else {
         setUser(userData)
         import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
@@ -860,7 +855,14 @@ export default function LoginPage() {
           {/* ── Mode tabs ── */}
           <div style={{ display: 'flex', gap: 6, padding: '4px', background: 'rgba(255,255,255,0.04)', borderRadius: '14px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.07)' }}>
             {[['login', 'Connexion'], ['register', "S'inscrire"]].map(([m, label]) => (
-              <button key={m} onClick={() => { setMode(m); setRegStep(1); setError('') }}
+              <button key={m} onClick={() => {
+                setMode(m); setRegStep(1); setError('')
+                // Reset complet — sinon un état laissé par l'onglet précédent (email non
+                // vérifié, compte en attente, choix de compte multi-rôle...) peut persister
+                // visuellement après le changement d'onglet.
+                setUnverifiedEmail(''); setResendSent(false); setPendingInfo(null)
+                setLoginAccounts(null); setLoginRole(null)
+              }}
                 style={{ flex: 1, padding: '9px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: 600, border: 'none', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.2s',
                   ...(mode === m ? { background: 'linear-gradient(135deg, rgba(132,68,255,0.85), rgba(255,77,166,0.75))', color: '#fff', boxShadow: '0 2px 12px rgba(132,68,255,0.3)' }
                   : { background: 'transparent', color: 'rgba(255,255,255,0.35)' }) }}>

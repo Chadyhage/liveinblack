@@ -77,6 +77,21 @@ export default async function handler(req, res) {
     return res.status(200).json({ received: true })
   }
 
+  // ── Session expirée sans paiement (acheteur qui ferme l'onglet sans annuler
+  // explicitement) : Stripe expire les sessions impayées automatiquement — c'est
+  // le filet de sécurité qui restocke la place réservée à la création de la session
+  // (api/checkout.js) quand /paiement-annule n'a jamais été visité. ──
+  if (event.type === 'checkout.session.expired') {
+    try {
+      const db = getDb()
+      await releaseExpiredSessionStock(db, event.data.object)
+    } catch (err) {
+      console.error('[webhook] checkout.session.expired error:', err)
+      return res.status(500).json({ error: err.message || 'Internal error' })
+    }
+    return res.status(200).json({ received: true })
+  }
+
   // On ne traite que les sessions complétées
   if (event.type !== 'checkout.session.completed') {
     return res.status(200).json({ received: true, ignored: event.type })
@@ -311,6 +326,43 @@ async function finalizeBooking(db, session, meta) {
   }
 
   console.log('[webhook] booking finalized:', bookingId, '— tickets:', tickets.length, clientAlreadyFinalized ? '(codes client adoptés)' : '(codes mintés)')
+}
+
+// ── Restock après expiration de session (filet de sécurité) ──────────────────
+async function releaseExpiredSessionStock(db, session) {
+  const meta = session.metadata || {}
+  const { eventId, placeType, qty, bookingId } = meta
+  if (!eventId || !placeType || !qty || !bookingId) return
+
+  // Si le booking a malgré tout été finalisé (paid) entre l'expiration Stripe et
+  // notre traitement, ne pas restocker une vente réelle.
+  const bookingSnap = await db.collection('bookings').doc(bookingId).get()
+  if (bookingSnap.exists && bookingSnap.data().paid === true) {
+    console.log('[webhook] session expirée mais booking déjà payé — pas de restock:', bookingId)
+    return
+  }
+
+  // Idempotence : Stripe peut renvoyer le même événement plusieurs fois.
+  const releaseRef = db.collection('stock_releases').doc(session.id)
+  const releaseSnap = await releaseRef.get()
+  if (releaseSnap.exists) return
+
+  const eventRef = db.collection('events').doc(String(eventId))
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(eventRef)
+    if (!snap.exists) return
+    const places = snap.data().places || []
+    const idx = places.findIndex(p => p.type === placeType)
+    if (idx === -1) return
+    const available = Number(places[idx].available) || 0
+    const total = Number(places[idx].total) || 0
+    const q = Math.max(0, Number(qty) || 0)
+    const nextAvailable = Math.max(0, Math.min(total || Infinity, available + q))
+    const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
+    tx.update(eventRef, { places: nextPlaces })
+  })
+  await releaseRef.set({ sessionId: session.id, eventId, placeType, qty, releasedAt: FieldValue.serverTimestamp() })
+  console.log('[webhook] stock restocké après expiration de session:', session.id, eventId, placeType, qty)
 }
 
 // ── Boost ────────────────────────────────────────────────────────────────────

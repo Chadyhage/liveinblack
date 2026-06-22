@@ -83,6 +83,42 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Aucun montant à payer (place gratuite ?)' })
     }
 
+    // ── Décrément atomique du stock AVANT de créer la session Stripe ──────────
+    // C'est le seul point fiable pour empêcher la survente sur le tunnel payant :
+    // une fois la session créée, l'acheteur peut payer même si le stock est épuisé
+    // entre-temps. On traite donc "accepter de payer" comme "réserver la place" —
+    // si le paiement est abandonné, /paiement-annule restocke (cf. PaiementAnnulePage).
+    // 'event_not_found'/'place_not_found' ne bloquent pas (events de démo statiques
+    // sans doc Firestore, ou config legacy) : seul un stock réellement insuffisant bloque.
+    let db = null
+    try {
+      const { getDb } = await import('../lib/firebaseAdmin.js')
+      db = getDb()
+      const eventRef = db.collection('events').doc(String(eventId))
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(eventRef)
+        if (!snap.exists) return
+        const places = snap.data().places || []
+        const idx = places.findIndex(p => p.type === placeType)
+        if (idx === -1) return
+        const available = Number(places[idx].available) || 0
+        if (available < qty) {
+          const err = new Error('insufficient_stock')
+          err.code = 'insufficient_stock'
+          throw err
+        }
+        const total = Number(places[idx].total) || 0
+        const nextAvailable = Math.max(0, Math.min(total || Infinity, available - qty))
+        const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
+        tx.update(eventRef, { places: nextPlaces })
+      })
+    } catch (e) {
+      if (e.code === 'insufficient_stock') {
+        return res.status(409).json({ error: 'Il ne reste plus assez de places disponibles pour cette quantité.' })
+      }
+      console.warn('[/api/checkout] stock check skipped:', e.message)
+    }
+
     // ── Frais de service LIVEINBLACK (payé par l'acheteur) ──
     // Calculé côté SERVEUR (jamais reçu du client). Sur le prix unitaire du billet.
     const feeCents = computeTicketFeeCents(placeUnitCents, qty)
@@ -104,8 +140,7 @@ export default async function handler(req, res) {
     let connectMode = 'none' // 'auto' (transfer Stripe) | 'ledger' (solde interne) | 'none'
     let paymentIntentData = null
     try {
-      const { getDb } = await import('../lib/firebaseAdmin.js')
-      const db = getDb()
+      if (!db) { const { getDb } = await import('../lib/firebaseAdmin.js'); db = getDb() }
       const evSnap = await db.collection('events').doc(String(eventId)).get()
       if (evSnap.exists) {
         const ev = evSnap.data()
@@ -144,7 +179,8 @@ export default async function handler(req, res) {
       ...(paymentIntentData ? { payment_intent_data: paymentIntentData } : {}),
       ...(userEmail ? { customer_email: userEmail } : {}),
       success_url: `${origin}/paiement-reussi?session_id={CHECKOUT_SESSION_ID}&booking_id=${encodeURIComponent(bookingId)}`,
-      cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}`,
+      // place_type + qty : pour que /paiement-annule puisse restocker la place réservée plus haut
+      cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}&place_type=${encodeURIComponent(placeType)}&qty=${encodeURIComponent(qty)}`,
       metadata: {
         eventId: String(eventId),
         eventName: String(eventName).slice(0, 200),
