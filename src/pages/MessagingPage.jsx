@@ -1300,7 +1300,7 @@ export default function MessagingPage() {
     const extra = { forwardedFrom: { senderName: forwardMsg.senderName, convName: getConvDisplay(activeConv)?.name || activeConv?.name || '?' } }
     sendMessage(convId, myId, myName, forwardMsg.type, forwardMsg.content, extra)
     setForwardMsg(null); setShowForwardPicker(false)
-    showToast(`Transféré vers ${fwdName}`)
+    showToast(`Message transféré à ${fwdName}`)
   }
 
   // ── Group booking 2-step ──
@@ -1804,7 +1804,7 @@ export default function MessagingPage() {
             {isOnline(u.id) && <span style={{ fontFamily: T.dmMono, fontSize: 8, color: '#22c55e' }}>En ligne</span>}
           </button>
         )) : userSearch && (
-          <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, textAlign: 'center', padding: '32px 0' }}>Aucun utilisateur trouvé pour "{userSearch}"</p>
+          <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, textAlign: 'center', padding: '32px 0' }}>Personne ne correspond à "{userSearch}"</p>
         )}
         {!userSearch && (
           <div style={{ marginTop: 8 }}>
@@ -2465,7 +2465,7 @@ export default function MessagingPage() {
                     <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.dim, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>↑ verrouiller</span>
                   )}
                   {isRecording && tapMode && !voiceLocked && (
-                    <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.pink, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>tap = stop</span>
+                    <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.pink, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>appuie = stop</span>
                   )}
                   {isRecording && <span style={{ position: 'absolute', bottom: -16, fontFamily: T.dmMono, fontSize: 8, color: T.pink }}>{recDuration}s</span>}
                 </div>
@@ -2649,7 +2649,7 @@ export default function MessagingPage() {
                     border: `1px solid ${confirmDialog.variant === 'safe' ? 'rgba(78,232,200,0.40)' : 'rgba(220,50,50,0.40)'}`,
                     color: confirmDialog.variant === 'safe' ? T.teal : 'rgba(220,100,100,0.9)',
                     fontFamily: T.dmMono, fontSize: 10 }}>
-                  Confirmer
+                  Valider
                 </button>
               </div>
             </div>

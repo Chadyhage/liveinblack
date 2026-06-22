@@ -942,7 +942,7 @@ export default function OnboardingPrestataire() {
               {
                 num: '02',
                 title: 'Connexion Stripe',
-                desc: 'Tu reçois un lien pour connecter ton compte bancaire via Stripe — la référence mondiale du paiement en ligne. Stripe vérifie ton identité et tes coordonnées bancaires de façon sécurisée (nous ne voyons jamais ton IBAN).',
+                desc: 'Tu reçois un lien pour connecter ton compte bancaire via Stripe — la référence mondiale du paiement en ligne.',
                 color: '#4ee8c8',
               },
               {
@@ -965,13 +965,9 @@ export default function OnboardingPrestataire() {
 
             <div style={{ padding: '10px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
               <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.55)', letterSpacing: '0.06em', margin: 0, lineHeight: 1.7 }}>
-                🔒 Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK. Stripe est certifié PCI-DSS niveau 1 (la norme de sécurité bancaire la plus élevée).
+                🔒 Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK et ne sont pas demandées ici — tu les renseigneras chez Stripe (certifié PCI-DSS niveau 1) après approbation.
               </p>
             </div>
-
-            <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.18)', margin: 0, letterSpacing: '0.05em' }}>
-              Aucune information bancaire n'est demandée ici — tu configureras tout après approbation.
-            </p>
           </div>
         )}
 
