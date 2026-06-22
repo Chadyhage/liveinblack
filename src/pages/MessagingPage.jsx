@@ -1440,7 +1440,7 @@ export default function MessagingPage() {
     reportUser(myId, myName, userId, userName, reportReason.trim())
     setShowReportModal(null)
     setReportReason('')
-    setConfirmDialog({ action: 'block_after_report', label: `Voulez-vous aussi bloquer ${userName} ?`, userId, userName })
+    setConfirmDialog({ action: 'block_after_report', label: `Bloquer aussi ${userName} ?`, userId, userName })
   }
 
   // ── Group management ──
@@ -1448,7 +1448,7 @@ export default function MessagingPage() {
     leaveGroup(activeConvId, myId, myName)
     setConversations(getConversations(myId))
     setView('list'); setActiveConvId(null)
-    showToast('Vous avez quitté le groupe')
+    showToast('Tu as quitté le groupe')
   }
   function handleDeleteGroup() {
     deleteGroup(activeConvId)
@@ -2279,7 +2279,7 @@ export default function MessagingPage() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => setConfirmDialog({ action: 'block_user', label: `Bloquer ${other.name} ? Vous ne recevrez plus ses messages.`, userId: otherId, userName: other.name })}
+                        onClick={() => setConfirmDialog({ action: 'block_user', label: `Bloquer ${other.name} ? Tu ne recevras plus ses messages.`, userId: otherId, userName: other.name })}
                         style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.2)', color: 'rgba(220,100,100,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                         Bloquer {other.name}
@@ -2884,7 +2884,7 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
       )}
       {expired && (
         <div style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.25)', borderRadius: 8, padding: '6px 10px', marginBottom: 10, textAlign: 'center' }}>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,110,110,0.9)' }}>⌛ Délai dépassé — relancez ou annulez</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,110,110,0.9)' }}>⌛ Délai dépassé — relance ou annule</span>
         </div>
       )}
 

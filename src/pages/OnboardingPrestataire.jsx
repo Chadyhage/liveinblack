@@ -377,7 +377,7 @@ export default function OnboardingPrestataire() {
         if (err.code === 'auth/email-already-in-use') {
           setErrors({ regEmail: 'Cet email est déjà lié à un compte. Connecte-toi sur /mon-dossier pour voir son état.' })
         } else {
-          setErrors({ regEmail: `Erreur : ${err.message || 'Réessaie.'}` })
+          setErrors({ regEmail: 'Impossible de créer ton compte pour le moment. Réessaie dans un instant.' })
         }
         return
       }
@@ -905,7 +905,7 @@ export default function OnboardingPrestataire() {
                   <Toggle value={f.alcoolFood} onChange={v => update('alcoolFood', v)} label="Alcool proposé" />
                   {f.alcoolFood && (
                     <p style={{ fontFamily: DM, fontSize: 9, color: GOLD, letterSpacing: '0.06em', margin: '2px 0 0 46px' }}>
-                      → Une licence alcool pourra vous être demandée
+                      → Une licence alcool pourra t'être demandée
                     </p>
                   )}
                 </div>
@@ -980,7 +980,7 @@ export default function OnboardingPrestataire() {
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>📎 Documents justificatifs</p>
             <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, margin: 0 }}>
-              Télécharge les documents requis pour ta catégorie. Stockés de façon privée, accessibles uniquement à l'équipe LIVEINBLACK.
+              Ajoute les documents requis pour ta catégorie. Ils sont stockés de façon privée et accessibles uniquement à l'équipe LIVEINBLACK.
             </p>
 
             {/* Documents requis par type */}
@@ -1045,7 +1045,7 @@ export default function OnboardingPrestataire() {
                         </p>
                       ))}
                       <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.2)', margin: '10px 0 0', lineHeight: 1.6 }}>
-                        Télécharge les documents ci-dessus pour débloquer la soumission.
+                        Ajoute les documents ci-dessus pour débloquer la soumission.
                       </p>
                     </>
                   ) : (

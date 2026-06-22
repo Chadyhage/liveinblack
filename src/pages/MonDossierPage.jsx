@@ -993,7 +993,7 @@ export default function MonDossierPage() {
                   ))}
                 </div>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', margin: '10px 0 0' }}>
-                  La configuration Stripe sera disponible après validation de votre dossier.
+                  La configuration Stripe sera disponible après validation de ton dossier.
                 </p>
               </div>
             )}
