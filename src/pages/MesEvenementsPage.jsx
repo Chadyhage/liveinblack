@@ -1884,11 +1884,8 @@ export default function MesEvenementsPage() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {regions.map(r => {
                     const selected = form.region === r.name
-                    // Code ISO 2 lettres extrait du flag emoji (fonctionne sur tous les OS)
-                    const code = r.id === 'amerique' ? '🌎'
-                      : r.id === 'cote-divoire' ? 'CI'
-                      : r.id === 'ghana' ? 'GH'
-                      : r.id === 'togo' ? 'TG'
+                    // Code ISO 2 lettres (fonctionne sur tous les OS, contrairement aux flags emoji)
+                    const code = r.id === 'togo' ? 'TG'
                       : r.id === 'benin' ? 'BJ'
                       : r.id === 'france' ? 'FR'
                       : r.id.slice(0, 2).toUpperCase()

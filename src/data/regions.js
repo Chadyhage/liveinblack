@@ -1,16 +1,14 @@
 // Pays disponibles sur LIVEINBLACK
+// Focus marché actuel : France, Togo, Bénin uniquement (volontairement limité).
+// France en premier = région par défaut (fallback de getRegionByName).
+// NB : les anciens dossiers/events tagués sur d'autres régions restent affichés
+// (le champ region est une simple chaîne) mais ne sont plus filtrables ; les maps
+// de traduction id→libellé d'AgentPage/ProfilePage gardent les anciens ids pour
+// continuer à afficher proprement ces dossiers historiques.
 export const regions = [
-  // ── Afrique de l'Ouest ────────────────────────────────────
-  { id: 'cote-divoire', name: "Côte d'Ivoire", country: "Côte d'Ivoire", flag: '🇨🇮', lat: 5.3,  lon: -4.0  },
-  { id: 'ghana',        name: 'Ghana',         country: 'Ghana',          flag: '🇬🇭', lat: 5.6,  lon: -0.2  },
-  { id: 'togo',         name: 'Togo',          country: 'Togo',           flag: '🇹🇬', lat: 6.1,  lon: 1.2   },
-  { id: 'benin',        name: 'Bénin',         country: 'Bénin',          flag: '🇧🇯', lat: 6.4,  lon: 2.4   },
-
-  // ── Europe ────────────────────────────────────────────────
-  { id: 'france',       name: 'France',        country: 'France',         flag: '🇫🇷', lat: 46.2, lon: 2.2   },
-
-  // ── Amériques ─────────────────────────────────────────────
-  { id: 'amerique',     name: 'Amérique',      country: 'Amérique',       flag: '🌎', lat: 18.0, lon: -77.0 },
+  { id: 'france', name: 'France', country: 'France', flag: '🇫🇷', lat: 46.2, lon: 2.2 },
+  { id: 'togo',   name: 'Togo',   country: 'Togo',   flag: '🇹🇬', lat: 6.1,  lon: 1.2 },
+  { id: 'benin',  name: 'Bénin',  country: 'Bénin',  flag: '🇧🇯', lat: 6.4,  lon: 2.4 },
 ]
 
 export function getRegionByName(name) {
