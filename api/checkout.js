@@ -91,16 +91,17 @@ export default async function handler(req, res) {
     // 'event_not_found'/'place_not_found' ne bloquent pas (events de démo statiques
     // sans doc Firestore, ou config legacy) : seul un stock réellement insuffisant bloque.
     let db = null
+    let stockDecremented = false
     try {
       const { getDb } = await import('../lib/firebaseAdmin.js')
       db = getDb()
       const eventRef = db.collection('events').doc(String(eventId))
-      await db.runTransaction(async (tx) => {
+      const decremented = await db.runTransaction(async (tx) => {
         const snap = await tx.get(eventRef)
-        if (!snap.exists) return
+        if (!snap.exists) return false
         const places = snap.data().places || []
         const idx = places.findIndex(p => p.type === placeType)
-        if (idx === -1) return
+        if (idx === -1) return false
         const available = Number(places[idx].available) || 0
         if (available < qty) {
           const err = new Error('insufficient_stock')
@@ -111,12 +112,39 @@ export default async function handler(req, res) {
         const nextAvailable = Math.max(0, Math.min(total || Infinity, available - qty))
         const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
         tx.update(eventRef, { places: nextPlaces })
+        return true
       })
+      stockDecremented = decremented === true
     } catch (e) {
       if (e.code === 'insufficient_stock') {
         return res.status(409).json({ error: 'Il ne reste plus assez de places disponibles pour cette quantité.' })
       }
       console.warn('[/api/checkout] stock check skipped:', e.message)
+    }
+
+    // Restocke la place réservée plus haut si la suite échoue (création de session
+    // Stripe, etc.) — sinon le stock reste décrémenté sans session pour le récupérer
+    // (le webhook checkout.session.expired ne se déclenche que s'il y a une session).
+    async function restockOnFailure() {
+      if (!stockDecremented || !db) return
+      try {
+        const eventRef = db.collection('events').doc(String(eventId))
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(eventRef)
+          if (!snap.exists) return
+          const places = snap.data().places || []
+          const idx = places.findIndex(p => p.type === placeType)
+          if (idx === -1) return
+          const total = Number(places[idx].total) || 0
+          const available = Number(places[idx].available) || 0
+          const nextAvailable = Math.max(0, Math.min(total || Infinity, available + qty))
+          const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
+          tx.update(eventRef, { places: nextPlaces })
+        })
+        console.warn('[/api/checkout] stock restocké après échec en aval')
+      } catch (restockErr) {
+        console.error('[/api/checkout] restock après échec ÉCHOUÉ:', restockErr.message)
+      }
     }
 
     // ── Frais de service LIVEINBLACK (payé par l'acheteur) ──
@@ -172,36 +200,43 @@ export default async function handler(req, res) {
     // URL de retour — déduit l'origine de la requête
     const origin = req.headers.origin || `https://${req.headers.host}`
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      line_items,
-      ...(paymentIntentData ? { payment_intent_data: paymentIntentData } : {}),
-      ...(userEmail ? { customer_email: userEmail } : {}),
-      success_url: `${origin}/paiement-reussi?session_id={CHECKOUT_SESSION_ID}&booking_id=${encodeURIComponent(bookingId)}`,
-      // place_type + qty : pour que /paiement-annule puisse restocker la place réservée plus haut
-      cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}&place_type=${encodeURIComponent(placeType)}&qty=${encodeURIComponent(qty)}`,
-      metadata: {
-        eventId: String(eventId),
-        eventName: String(eventName).slice(0, 200),
-        placeType: String(placeType),
-        qty: String(qty),
-        userId: String(userId || ''),
-        bookingId: String(bookingId),
-        // Monétisation : le webhook utilise feeCents + sellerUid + connectMode
-        feeCents: String(feeCents),
-        sellerUid: String(sellerUid || ''),
-        connectMode,
-        // Part de groupe : permet au webhook de marquer la part payée même si
-        // le client ferme l'onglet avant de revenir sur /paiement-reussi
-        ...(groupBookingId ? { groupBookingId: String(groupBookingId) } : {}),
-        ...(isGroupShare ? { isGroupShare: '1' } : {}),
-      },
-      // Stripe collecte aussi le nom complet du payeur
-      billing_address_collection: 'auto',
-      // Désactive la collecte des frais d'expédition (event en présentiel)
-      locale: 'fr',
-    })
+    let session
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items,
+        ...(paymentIntentData ? { payment_intent_data: paymentIntentData } : {}),
+        ...(userEmail ? { customer_email: userEmail } : {}),
+        success_url: `${origin}/paiement-reussi?session_id={CHECKOUT_SESSION_ID}&booking_id=${encodeURIComponent(bookingId)}`,
+        // place_type + qty : pour que /paiement-annule puisse restocker la place réservée plus haut
+        cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}&place_type=${encodeURIComponent(placeType)}&qty=${encodeURIComponent(qty)}`,
+        metadata: {
+          eventId: String(eventId),
+          eventName: String(eventName).slice(0, 200),
+          placeType: String(placeType),
+          qty: String(qty),
+          userId: String(userId || ''),
+          bookingId: String(bookingId),
+          // Monétisation : le webhook utilise feeCents + sellerUid + connectMode
+          feeCents: String(feeCents),
+          sellerUid: String(sellerUid || ''),
+          connectMode,
+          // Part de groupe : permet au webhook de marquer la part payée même si
+          // le client ferme l'onglet avant de revenir sur /paiement-reussi
+          ...(groupBookingId ? { groupBookingId: String(groupBookingId) } : {}),
+          ...(isGroupShare ? { isGroupShare: '1' } : {}),
+        },
+        // Stripe collecte aussi le nom complet du payeur
+        billing_address_collection: 'auto',
+        // Désactive la collecte des frais d'expédition (event en présentiel)
+        locale: 'fr',
+      })
+    } catch (stripeErr) {
+      // La session n'a pas pu être créée → restocke la place réservée plus haut.
+      await restockOnFailure()
+      throw stripeErr
+    }
 
     // feeCents + connectMode renvoyés pour transparence (le front peut afficher le frais).
     return res.status(200).json({ url: session.url, sessionId: session.id, feeCents, connectMode })
