@@ -24,18 +24,14 @@ const COLORS = {
 export default function RegionSelector({ isOpen, onClose, onSelect, currentRegion }) {
   const [search, setSearch] = useState('')
 
-  // Group regions by country
-  const grouped = useMemo(() => {
-    const filtered = regions.filter(
-      (r) =>
-        r.name.toLowerCase().includes(search.toLowerCase()) ||
-        r.country.toLowerCase().includes(search.toLowerCase())
+  // Liste filtrée (chaque région EST un pays — plus de regroupement ni de
+  // sous-titre redondant qui affichait deux fois le même nom).
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return regions
+    return regions.filter(
+      (r) => r.name.toLowerCase().includes(q) || r.country.toLowerCase().includes(q)
     )
-    return filtered.reduce((acc, region) => {
-      if (!acc[region.country]) acc[region.country] = []
-      acc[region.country].push(region)
-      return acc
-    }, {})
   }, [search])
 
   if (!isOpen) return null
@@ -103,7 +99,7 @@ export default function RegionSelector({ isOpen, onClose, onSelect, currentRegio
             </svg>
             <input
               type="text"
-              placeholder="Rechercher une ville ou un pays..."
+              placeholder="Rechercher un pays…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               autoFocus
@@ -163,68 +159,85 @@ export default function RegionSelector({ isOpen, onClose, onSelect, currentRegio
             )}
           </button>
 
-          {/* Grouped by country */}
-          {Object.entries(grouped).map(([country, regionList]) => (
-            <div key={country}>
-              <p style={{
-                fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim,
-                textTransform: 'uppercase', letterSpacing: '0.12em',
-                padding: '0 4px', marginBottom: 8,
-              }}>
-                {country}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {regionList.map((region) => {
-                  const isActive = currentRegion === region.name
-                  return (
-                    <button
-                      key={region.id}
-                      onClick={() => { onSelect(region); onClose() }}
-                      style={{
-                        width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                        padding: 10, borderRadius: 8, cursor: 'pointer',
-                        textAlign: 'left', transition: 'all 0.15s',
-                        background: isActive ? 'rgba(78,232,200,0.06)' : 'rgba(255,255,255,0.02)',
-                        border: isActive
-                          ? '1px solid rgba(78,232,200,0.35)'
-                          : '1px solid rgba(255,255,255,0.06)',
-                      }}>
+          {/* Section label */}
+          {filtered.length > 0 && (
+            <p style={{
+              fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim,
+              textTransform: 'uppercase', letterSpacing: '0.16em',
+              padding: '4px 4px 0', margin: 0,
+            }}>
+              Pays disponibles
+            </p>
+          )}
+
+          {/* Flat list — un pays = une ligne, drapeau + nom (plus de doublon) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {filtered.map((region) => {
+              const isActive = currentRegion === region.name
+              return (
+                <button
+                  key={region.id}
+                  onClick={() => { onSelect(region); onClose() }}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                    padding: '13px 14px', borderRadius: 12, cursor: 'pointer',
+                    textAlign: 'left', transition: 'all 0.18s',
+                    background: isActive
+                      ? 'linear-gradient(135deg, rgba(78,232,200,0.12), rgba(78,232,200,0.03))'
+                      : 'rgba(255,255,255,0.025)',
+                    border: isActive
+                      ? '1px solid rgba(78,232,200,0.40)'
+                      : '1px solid rgba(255,255,255,0.07)',
+                    boxShadow: isActive ? '0 4px 18px rgba(78,232,200,0.08)' : 'none',
+                  }}>
+                  {/* Flag badge */}
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+                    background: isActive ? 'rgba(78,232,200,0.10)' : 'rgba(255,255,255,0.05)',
+                    border: isActive ? '1px solid rgba(78,232,200,0.30)' : '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 22, lineHeight: 1,
+                  }}>
+                    <span style={{ fontFamily: FONTS.mono }}>{region.flag}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontFamily: FONTS.display, fontWeight: 400, fontSize: 19,
+                      letterSpacing: '0.02em',
+                      color: isActive ? '#fff' : 'rgba(255,255,255,0.82)', margin: 0,
+                    }}>
+                      {region.name}
+                    </p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '2px 0 0', letterSpacing: '0.08em' }}>
+                      Voir les événements
+                    </p>
+                  </div>
+                  {isActive
+                    ? (
                       <div style={{
-                        width: 32, height: 32, borderRadius: 6, flexShrink: 0,
-                        background: isActive ? 'rgba(78,232,200,0.08)' : 'rgba(255,255,255,0.04)',
-                        border: isActive ? '1px solid rgba(78,232,200,0.22)' : '1px solid rgba(255,255,255,0.06)',
+                        width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                        background: 'rgba(78,232,200,0.15)', border: `1px solid ${COLORS.teal}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isActive ? COLORS.teal : 'rgba(255,255,255,0.30)'} strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </div>
-                      <div style={{ textAlign: 'left', flex: 1 }}>
-                        <p style={{
-                          fontFamily: FONTS.display, fontWeight: 300, fontSize: 15,
-                          color: isActive ? '#fff' : COLORS.muted, margin: 0,
-                        }}>
-                          {region.name}
-                        </p>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0' }}>
-                          {region.country}
-                        </p>
-                      </div>
-                      {isActive && (
-                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: COLORS.teal, flexShrink: 0, boxShadow: `0 0 4px ${COLORS.teal}` }} />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
+                    )
+                    : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    )}
+                </button>
+              )
+            })}
+          </div>
 
-          {Object.keys(grouped).length === 0 && (
+          {filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, margin: 0 }}>
-                Aucune région trouvée
+                Aucun pays trouvé
               </p>
             </div>
           )}
