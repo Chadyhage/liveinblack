@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SideMenu from './SideMenu'
-import { getUserId, getTotalUnreadCount } from '../utils/messaging'
+import { getUserId, getTotalUnreadCount, getLastRead } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
-import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG } from '../utils/notifications'
+import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG, upsertMessageNotification } from '../utils/notifications'
 import { playNotifSound } from '../utils/notifSound'
 import { IconBell } from './icons'
 
@@ -78,6 +78,9 @@ export default function Layout({ children, hideNav, chatMode }) {
   // (null au premier passage → pas de bip au chargement initial).
   const prevMsgCountRef = useRef(null)
   const prevNotifCountRef = useRef(null)
+  // pathname courant lu dans les listeners sans les re-souscrire à chaque nav
+  const pathnameRef = useRef(location.pathname)
+  useEffect(() => { pathnameRef.current = location.pathname }, [location.pathname])
 
   // ── Hide header on scroll-down, reveal on scroll-up ──
   const [headerHidden, setHeaderHidden] = useState(false)
@@ -153,6 +156,62 @@ export default function Layout({ children, hideNav, chatMode }) {
       })
     }).catch(() => {})
     return () => { try { unsub() } catch {} }
+  }, [uid])
+
+  // Écouteur GLOBAL des conversations (temps réel partout) : détecte les
+  // nouveaux messages reçus quelle que soit la page → son + cloche + push +
+  // pastille Messages. Sur la page Messagerie (visible), c'est MessagingPage
+  // qui gère (avec sa finesse "conversation active"), donc on s'efface pour
+  // éviter le double déclenchement.
+  useEffect(() => {
+    if (!uid) return
+    const unsubs = []
+    const lastSeen = {}      // convId -> updatedAt déjà vu
+    const mountTime = Date.now() // fenêtre de grâce : pas d'alerte sur le snapshot initial
+
+    function pushBrowserNotif(title, body) {
+      try {
+        if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+        const n = new Notification(title, { body, icon: '/logo192.png', badge: '/logo192.png', tag: 'liveinblack-msg' })
+        n.onclick = () => { window.focus(); n.close() }
+      } catch {}
+    }
+
+    import('../utils/firestore-sync').then(({ listenDirectConversations, listenGroupConversations, mergeById }) => {
+      const handle = (convs) => {
+        // Fusionne dans localStorage pour que la pastille Messages soit juste partout
+        try {
+          const local = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
+          localStorage.setItem('lib_conversations', JSON.stringify(mergeById(local, convs)))
+        } catch {}
+        setUnreadMsgCount(getTotalUnreadCount(uid))
+
+        convs.forEach(c => {
+          const prev = lastSeen[c.id]
+          const isNewer = !prev || c.updatedAt > prev
+          if (isNewer) lastSeen[c.id] = c.updatedAt
+          // Fenêtre de grâce après montage : on enregistre sans alerter (snapshot initial)
+          if (Date.now() - mountTime < 4000) return
+          if (!isNewer || !c.lastMessage) return
+          if (!c.lastSenderId || c.lastSenderId === uid) return // pas mes propres messages
+          // Si l'utilisateur est sur la Messagerie et visible → MessagingPage gère
+          const onMessages = pathnameRef.current.startsWith('/messagerie') && document.visibilityState === 'visible'
+          if (onMessages) return
+          const lastRead = getLastRead(c.id)
+          if (lastRead && c.updatedAt <= lastRead) return // déjà lu
+          const senderName = c.type === 'group'
+            ? (c.name || 'Groupe')
+            : (c.names ? (Object.entries(c.names).find(([id]) => id !== uid)?.[1] || 'Message') : 'Message')
+          playNotifSound()
+          upsertMessageNotification(uid, c.id, senderName, c.lastMessage)
+          pushBrowserNotif(senderName, c.lastMessage)
+        })
+      }
+      unsubs.push(listenDirectConversations(uid, handle))
+      unsubs.push(listenGroupConversations(uid, handle))
+    }).catch(() => {})
+
+    return () => { unsubs.forEach(u => { try { u() } catch {} }) }
   }, [uid])
 
   // Close notif dropdown on outside click
