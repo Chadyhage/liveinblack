@@ -135,6 +135,26 @@ export default function Layout({ children, hideNav, chatMode }) {
     return () => clearInterval(id)
   }, [uid])
 
+  // Écouteur Firestore TEMPS RÉEL des notifications (cloche à jour sur n'importe
+  // quelle page, sans attendre le prochain poll) — ventes, dossiers, messages.
+  useEffect(() => {
+    if (!uid) return
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenDoc }) => {
+      unsub = listenDoc(`notifications/${uid}`, (data) => {
+        if (!data) return
+        const items = (data.items || []).slice(0, 50)
+        try { localStorage.setItem(`lib_notifications_${uid}`, JSON.stringify(items)) } catch {}
+        setNotifications(items)
+        const c = items.filter(n => !n.read).length
+        if (prevNotifCountRef.current != null && c > prevNotifCountRef.current) playNotifSound()
+        prevNotifCountRef.current = c
+        setUnreadNotifCount(c)
+      })
+    }).catch(() => {})
+    return () => { try { unsub() } catch {} }
+  }, [uid])
+
   // Close notif dropdown on outside click
   useEffect(() => {
     if (!notifOpen) return
