@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { USE_REAL_FIREBASE } from '../firebase'
+import { DIAL_CODES } from '../data/dialCodes'
 import {
   saveAccount, getAccountByEmail, getAllAccountsByEmail, getAccountByEmailAndRole,
   addPendingValidation, checkPasswordStrength, validatePassword, ROLES, PRESTATAIRE_TYPES,
@@ -237,37 +238,9 @@ async function doEmailRegister(data) {
   return userObj
 }
 
-// ─── Country dial codes ───────────────────────────────────────────────────
+// ─── Country dial codes (source partagée : src/data/dialCodes.js) ───────────
 
-const COUNTRY_CODES = [
-  { code: 'FR', dial: '+33',  flag: '🇫🇷', name: 'France' },
-  { code: 'BE', dial: '+32',  flag: '🇧🇪', name: 'Belgique' },
-  { code: 'CH', dial: '+41',  flag: '🇨🇭', name: 'Suisse' },
-  { code: 'LU', dial: '+352', flag: '🇱🇺', name: 'Luxembourg' },
-  { code: 'MC', dial: '+377', flag: '🇲🇨', name: 'Monaco' },
-  { code: 'MA', dial: '+212', flag: '🇲🇦', name: 'Maroc' },
-  { code: 'DZ', dial: '+213', flag: '🇩🇿', name: 'Algérie' },
-  { code: 'TN', dial: '+216', flag: '🇹🇳', name: 'Tunisie' },
-  { code: 'LB', dial: '+961', flag: '🇱🇧', name: 'Liban' },
-  { code: 'SN', dial: '+221', flag: '🇸🇳', name: 'Sénégal' },
-  { code: 'CI', dial: '+225', flag: '🇨🇮', name: "Côte d'Ivoire" },
-  { code: 'CM', dial: '+237', flag: '🇨🇲', name: 'Cameroun' },
-  { code: 'TG', dial: '+228', flag: '🇹🇬', name: 'Togo' },
-  { code: 'NE', dial: '+227', flag: '🇳🇪', name: 'Niger' },
-  { code: 'BJ', dial: '+229', flag: '🇧🇯', name: 'Bénin' },
-  { code: 'GH', dial: '+233', flag: '🇬🇭', name: 'Ghana' },
-  { code: 'NG', dial: '+234', flag: '🇳🇬', name: 'Nigeria' },
-  { code: 'CD', dial: '+243', flag: '🇨🇩', name: 'Congo (RDC)' },
-  { code: 'CG', dial: '+242', flag: '🇨🇬', name: 'Congo (Brazzaville)' },
-  { code: 'GA', dial: '+241', flag: '🇬🇦', name: 'Gabon' },
-  { code: 'GB', dial: '+44',  flag: '🇬🇧', name: 'Royaume-Uni' },
-  { code: 'DE', dial: '+49',  flag: '🇩🇪', name: 'Allemagne' },
-  { code: 'ES', dial: '+34',  flag: '🇪🇸', name: 'Espagne' },
-  { code: 'IT', dial: '+39',  flag: '🇮🇹', name: 'Italie' },
-  { code: 'PT', dial: '+351', flag: '🇵🇹', name: 'Portugal' },
-  { code: 'US', dial: '+1',   flag: '🇺🇸', name: 'États-Unis' },
-  { code: 'CA', dial: '+1',   flag: '🇨🇦', name: 'Canada' },
-]
+const COUNTRY_CODES = DIAL_CODES
 
 // ─── Design tokens ────────────────────────────────────────────────────────
 
@@ -1017,7 +990,7 @@ export default function LoginPage() {
                           maxHeight: '200px', overflowY: 'auto', width: '220px',
                         }}>
                           {COUNTRY_CODES.map(c => (
-                            <button key={c.code + c.dial} type="button"
+                            <button key={c.iso} type="button"
                               onClick={() => { setRegDialCode(c.dial); setShowDialPicker(false) }}
                               style={{
                                 width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
