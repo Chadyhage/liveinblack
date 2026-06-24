@@ -15,15 +15,15 @@ const CG = "'Cormorant Garamond', serif"
 const GOLD = '#c8a96e'
 
 const S = {
-  page:    { position: 'relative', zIndex: 1, padding: '24px 16px 8px', maxWidth: 560, margin: '0 auto' },
-  card:    { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '20px 20px' },
-  label:   { fontFamily: DM, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', display: 'block', marginBottom: 6, overflowWrap: 'break-word', wordBreak: 'break-word' },
-  input:   { width: '100%', background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.9)', padding: '10px 12px', outline: 'none', boxSizing: 'border-box' },
-  select:  { width: '100%', background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.9)', padding: '10px 12px', outline: 'none', boxSizing: 'border-box', appearance: 'none' },
-  section: { fontFamily: DM, fontSize: 8, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)', overflowWrap: 'break-word', wordBreak: 'break-word' },
-  btnGold: { width: '100%', padding: '13px', background: 'linear-gradient(135deg,rgba(200,169,110,0.22),rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', borderRadius: 4, fontFamily: DM, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, cursor: 'pointer' },
-  btnGhost:{ width: '100%', padding: '13px', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 4, fontFamily: DM, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' },
-  error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em' },
+  page:    { position: 'relative', zIndex: 1, padding: '32px 18px 16px', maxWidth: 600, margin: '0 auto' },
+  card:    { background: 'rgba(10,12,22,0.6)', backdropFilter: 'blur(24px) saturate(1.4)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '28px 26px', boxShadow: '0 24px 64px rgba(0,0,0,0.38)' },
+  label:   { fontFamily: DM, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.52)', display: 'block', marginBottom: 9, overflowWrap: 'break-word', wordBreak: 'break-word' },
+  input:   { width: '100%', background: 'rgba(6,8,16,0.85)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 10, fontFamily: DM, fontSize: 13, color: '#fff', padding: '13px 14px', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' },
+  select:  { width: '100%', background: 'rgba(6,8,16,0.85)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 10, fontFamily: DM, fontSize: 13, color: '#fff', padding: '13px 14px', outline: 'none', boxSizing: 'border-box', appearance: 'none' },
+  section: { fontFamily: DM, fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: 22, paddingBottom: 13, borderBottom: '1px solid rgba(255,255,255,0.08)', overflowWrap: 'break-word', wordBreak: 'break-word' },
+  btnGold: { width: '100%', padding: '15px', background: 'linear-gradient(135deg,rgba(200,169,110,0.26),rgba(200,169,110,0.08))', border: '1px solid rgba(200,169,110,0.5)', borderRadius: 9, fontFamily: DM, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, cursor: 'pointer' },
+  btnGhost:{ width: '100%', padding: '15px', background: 'transparent', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 9, fontFamily: DM, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' },
+  error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em', marginTop: 5 },
 }
 
 const COUNTRY_CODES = DIAL_CODES
@@ -398,38 +398,51 @@ export default function OnboardingOrganisateur() {
           </p>
         </div>
 
-        {/* Progress bar */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            {STEPS.map((s, i) => (
-              <button key={i} onClick={() => i < step && setStep(i)} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                background: 'none', border: 'none', cursor: i < step ? 'pointer' : 'default',
-                flex: 1,
-              }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%', fontSize: 13,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: i === step ? 'rgba(200,169,110,0.15)' : i < step ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
-                  border: i === step ? '1px solid rgba(200,169,110,0.5)' : i < step ? '1px solid rgba(78,232,200,0.4)' : '1px solid rgba(255,255,255,0.08)',
+        {/* Progress bar — étapes numérotées (style pro, sans emoji) */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+            {STEPS.map((s, i) => {
+              const done = i < step
+              const active = i === step
+              return (
+                <button key={i} onClick={() => i < step && setStep(i)} style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                  background: 'none', border: 'none', cursor: i < step ? 'pointer' : 'default',
+                  flex: 1, padding: 0,
                 }}>
-                  {i < step ? '✓' : s.icon}
-                </div>
-                <span style={{ fontFamily: DM, fontSize: 7, letterSpacing: '0.1em', color: i === step ? GOLD : i < step ? '#4ee8c8' : 'rgba(255,255,255,0.2)', textTransform: 'uppercase', display: 'none' }} className="md:block">
-                  {s.label}
-                </span>
-              </button>
-            ))}
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%', fontSize: 14, fontFamily: DM, fontWeight: 600,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: active ? GOLD : done ? '#4ee8c8' : 'rgba(255,255,255,0.35)',
+                    background: active ? 'rgba(200,169,110,0.16)' : done ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
+                    border: active ? '1px solid rgba(200,169,110,0.55)' : done ? '1px solid rgba(78,232,200,0.45)' : '1px solid rgba(255,255,255,0.10)',
+                    transition: 'all 0.25s',
+                    boxShadow: active ? '0 0 0 4px rgba(200,169,110,0.08)' : 'none',
+                  }}>
+                    {done ? (
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    ) : i + 1}
+                  </div>
+                  <span style={{
+                    fontFamily: DM, fontSize: 9, letterSpacing: '0.06em',
+                    color: active ? GOLD : done ? 'rgba(78,232,200,0.8)' : 'rgba(255,255,255,0.3)',
+                    textAlign: 'center', whiteSpace: 'nowrap',
+                  }}>
+                    {s.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-          <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 99 }}>
-            <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(to right,${GOLD},rgba(200,169,110,0.3))`, width: `${(step / (STEPS.length - 1)) * 100}%`, transition: 'width 0.4s' }} />
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(to right,${GOLD},rgba(200,169,110,0.4))`, width: `${(step / (STEPS.length - 1)) * 100}%`, transition: 'width 0.4s' }} />
           </div>
         </div>
 
         {/* ── STEP 0: Entreprise ── */}
         {step === 0 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>🏢 Informations de l'établissement</p>
+            <p style={S.section}>Informations de l'établissement</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
 
               {/* Nom commercial */}
@@ -577,7 +590,7 @@ export default function OnboardingOrganisateur() {
         {/* ── STEP 1: Activité ── */}
         {step === 1 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>🎪 Description de l'activité</p>
+            <p style={S.section}>Description de l'activité</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <Field label="Type d'établissement" required>
@@ -689,7 +702,7 @@ export default function OnboardingOrganisateur() {
         {/* ── STEP 2: Revenus ── */}
         {step === 2 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <p style={S.section}>💳 Tes revenus</p>
+            <p style={S.section}>Tes revenus</p>
 
             {/* Explication principale */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -750,7 +763,7 @@ export default function OnboardingOrganisateur() {
         {/* ── STEP 3: Documents ── */}
         {step === 3 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>📎 Documents justificatifs</p>
+            <p style={S.section}>Documents justificatifs</p>
             <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, margin: 0 }}>
               Ces documents nous permettent de vérifier ton identité et la légitimité de ton activité.
               Stockés de façon privée, accessibles uniquement à l'équipe LIVEINBLACK.
