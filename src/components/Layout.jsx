@@ -106,6 +106,19 @@ export default function Layout({ children, hideNav, chatMode }) {
     setHeaderHidden(false)
     lastScrollY.current = 0
   }, [location.pathname])
+
+  // Demande l'autorisation des notifications navigateur tôt et globalement
+  // (et non plus seulement sur la page Messages), de façon discrète après un
+  // court délai. Sans autorisation, le son + la cloche in-app marchent quand
+  // même — seule la bannière hors-onglet est concernée.
+  useEffect(() => {
+    if (!uid) return
+    if (typeof Notification === 'undefined') return
+    if (Notification.permission !== 'default') return
+    const t = setTimeout(() => { try { Notification.requestPermission().catch(() => {}) } catch {} }, 4000)
+    return () => clearTimeout(t)
+  }, [uid])
+
   useEffect(() => {
     if (!uid) return
     // reset des compteurs au changement de compte pour ne pas biper sur la bascule
