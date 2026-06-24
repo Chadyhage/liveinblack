@@ -48,6 +48,21 @@ export function createNotification(uid, type, title, body, data = {}) {
   } catch { return null }
 }
 
+// Crée/rafraîchit UNE notification de message par conversation (anti-spam) :
+// on retire l'éventuelle notif non lue déjà présente pour cette conversation
+// avant d'en créer une fraîche, pour que la cloche affiche une seule entrée
+// par conversation au lieu d'une par message.
+export function upsertMessageNotification(uid, convId, title, body) {
+  if (!uid || !convId) return null
+  try {
+    const pruned = getNotifications(uid).filter(
+      n => !(n.type === 'message' && n.data?.convId === convId && !n.read)
+    )
+    localStorage.setItem(KEY(uid), JSON.stringify(pruned))
+  } catch {}
+  return createNotification(uid, 'message', title, body, { convId })
+}
+
 export function getNotifications(uid) {
   if (!uid) return []
   try { return JSON.parse(localStorage.getItem(KEY(uid)) || '[]') } catch { return [] }

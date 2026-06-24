@@ -20,6 +20,8 @@ import {
   editMessage, isConvMuted, toggleMuteConv,
 } from '../utils/messaging'
 import { startStripeCheckout } from '../utils/stripe'
+import { playNotifSound } from '../utils/notifSound'
+import { upsertMessageNotification } from '../utils/notifications'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
@@ -615,20 +617,8 @@ export default function MessagingPage() {
     setShowScrollBtn(false)
   }
 
-  // ── Notification sound ──
-  const notifSound = useCallback(() => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)()
-      const o = ctx.createOscillator()
-      const g = ctx.createGain()
-      o.connect(g); g.connect(ctx.destination)
-      o.frequency.setValueAtTime(880, ctx.currentTime)
-      o.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.15)
-      g.gain.setValueAtTime(0.25, ctx.currentTime)
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35)
-      o.start(); o.stop(ctx.currentTime + 0.35)
-    } catch {}
-  }, [])
+  // ── Notification sound (util partagé, robuste — un seul AudioContext) ──
+  const notifSound = playNotifSound
 
   // ── Mirror activeConvId into ref (safe to use inside closures) ──
   useEffect(() => { activeConvIdRef.current = activeConvId }, [activeConvId])
@@ -745,6 +735,8 @@ export default function MessagingPage() {
                   : 'Message'
               triggerPushNotif(senderName, incoming.lastMessage)
               notifSound()
+              // Alimente aussi la cloche de notifications (1 entrée par conversation)
+              upsertMessageNotification(myId, incoming.id, senderName, incoming.lastMessage)
             }
           }
           // Always update our "last seen" tracker

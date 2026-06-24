@@ -5,6 +5,7 @@ import SideMenu from './SideMenu'
 import { getUserId, getTotalUnreadCount } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
 import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG } from '../utils/notifications'
+import { playNotifSound } from '../utils/notifSound'
 import { IconBell } from './icons'
 
 // ── Nav icons ──────────────────────────────────────────────────────────────────
@@ -73,6 +74,10 @@ export default function Layout({ children, hideNav, chatMode }) {
   const [notifications, setNotifications] = useState([])
   const [unreadNotifCount, setUnreadNotifCount] = useState(0)
   const notifBellRef = useRef(null)
+  // Compteurs précédents pour déclencher le son global UNE fois à la hausse
+  // (null au premier passage → pas de bip au chargement initial).
+  const prevMsgCountRef = useRef(null)
+  const prevNotifCountRef = useRef(null)
 
   // ── Hide header on scroll-down, reveal on scroll-up ──
   const [headerHidden, setHeaderHidden] = useState(false)
@@ -100,18 +105,30 @@ export default function Layout({ children, hideNav, chatMode }) {
   }, [location.pathname])
   useEffect(() => {
     if (!uid) return
-    setUnreadMsgCount(getTotalUnreadCount(uid))
-    const interval = setInterval(() => setUnreadMsgCount(getTotalUnreadCount(uid)), 3000)
+    // reset des compteurs au changement de compte pour ne pas biper sur la bascule
+    prevMsgCountRef.current = null
+    const tick = () => {
+      const c = getTotalUnreadCount(uid)
+      if (prevMsgCountRef.current != null && c > prevMsgCountRef.current) playNotifSound()
+      prevMsgCountRef.current = c
+      setUnreadMsgCount(c)
+    }
+    tick()
+    const interval = setInterval(tick, 3000)
     return () => clearInterval(interval)
   }, [uid])
 
-  // Poll notifications
+  // Poll notifications — joue le son global quand le nombre de non-lues monte
   useEffect(() => {
     if (!uid) return
+    prevNotifCountRef.current = null
     const refresh = () => {
       const notifs = getNotifications(uid)
       setNotifications(notifs)
-      setUnreadNotifCount(getUnreadCount(uid))
+      const c = getUnreadCount(uid)
+      if (prevNotifCountRef.current != null && c > prevNotifCountRef.current) playNotifSound()
+      prevNotifCountRef.current = c
+      setUnreadNotifCount(c)
     }
     refresh()
     const id = setInterval(refresh, 5000)
@@ -527,7 +544,22 @@ export default function Layout({ children, hideNav, chatMode }) {
 // ── Notification dropdown ─────────────────────────────────────────────────────
 function NotifDropdown({ notifications, onClose, uid, mobile }) {
   const DM = "'DM Mono', monospace"
+  const navigate = useNavigate()
   const recent = notifications.slice(0, 8)
+
+  // Destination de clic selon le type de notification
+  function routeFor(n) {
+    if (n.type === 'message') return '/messagerie'
+    if (n.type === 'new_order') return '/mes-evenements'
+    if (n.type?.startsWith('application_')) return '/mon-dossier'
+    return null
+  }
+  function handleClickNotif(n) {
+    if (uid) markRead(uid, n.id)
+    const dest = routeFor(n)
+    onClose?.()
+    if (dest) navigate(dest)
+  }
 
   function timeAgo(ts) {
     const diff = Date.now() - ts
@@ -575,12 +607,15 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
         ) : (
           recent.map(n => {
             const cfg = NOTIF_CONFIG[n.type] || { icon: '🔔', color: 'rgba(255,255,255,0.5)' }
+            const clickable = routeFor(n) != null
             return (
-              <div key={n.id} style={{
+              <div key={n.id}
+                onClick={clickable ? () => handleClickNotif(n) : undefined}
+                style={{
                 display: 'flex', gap: 12, padding: '12px 16px',
                 borderTop: '1px solid rgba(255,255,255,0.04)',
                 background: n.read ? 'transparent' : 'rgba(139,92,246,0.05)',
-                cursor: 'default',
+                cursor: clickable ? 'pointer' : 'default',
               }}>
                 <div style={{
                   width: 32, height: 32, borderRadius: 8, flexShrink: 0,
