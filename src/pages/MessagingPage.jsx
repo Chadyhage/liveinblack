@@ -253,16 +253,49 @@ function VoiceBubble({ content, isMe }) {
 
 // ─── Event card (simple preview) ───────────────────────────────────────────────
 function EventCard({ content }) {
+  const navigate = useNavigate()
   let ev
   try { ev = typeof content === 'string' ? JSON.parse(content) : content } catch { return <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.gold }}>🎟 Événement</span> }
+  const clickable = ev.id != null && ev.id !== ''
+  const go = (e) => { e.stopPropagation(); if (clickable) navigate(`/evenements/${ev.id}`) }
+  const priceLabel = ev.price == null ? null : (Number(ev.price) <= 0 ? 'Gratuit' : `dès ${ev.price}€`)
   return (
-    <div style={{ minWidth: 200, maxWidth: 260 }}>
-      {ev.image
-        ? <img src={ev.image} alt={ev.name} style={{ width: '100%', borderRadius: 6, maxHeight: 130, objectFit: 'cover', marginBottom: 8 }} />
-        : <div style={{ width: '100%', height: 80, borderRadius: 6, background: 'linear-gradient(135deg, rgba(200,169,110,0.15), rgba(78,232,200,0.08))', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, fontSize: 28 }}>🎟</div>
-      }
-      <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: '0 0 3px' }}>{ev.name}</p>
-      <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>{ev.date}{ev.price ? ` · ${ev.price}€` : ''}</p>
+    <div onClick={go} style={{
+      width: 252, borderRadius: 12, overflow: 'hidden',
+      cursor: clickable ? 'pointer' : 'default',
+      background: 'rgba(4,4,14,0.55)',
+      border: '1px solid rgba(255,255,255,0.10)',
+      boxShadow: '0 8px 28px rgba(0,0,0,0.30)',
+    }}>
+      {/* Affiche / placeholder */}
+      <div style={{ position: 'relative' }}>
+        {ev.image
+          ? <img src={ev.image} alt={ev.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
+          : <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg, rgba(200,169,110,0.20), rgba(78,232,200,0.10))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V9z"/><line x1="13" y1="7" x2="13" y2="17" strokeDasharray="2 2"/>
+              </svg>
+            </div>
+        }
+        {/* Gradient overlay bas pour lisibilité */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,14,0.65), transparent 55%)' }} />
+        {/* Eyebrow */}
+        <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: T.dmMono, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#fff', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 7px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.15)' }}>Événement</span>
+        {/* Badge prix */}
+        {priceLabel && (
+          <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.08em', color: T.gold, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 8px', borderRadius: 4, border: '1px solid rgba(200,169,110,0.35)' }}>{priceLabel}</span>
+        )}
+      </div>
+      {/* Infos + CTA */}
+      <div style={{ padding: '11px 13px 13px' }}>
+        <p style={{ fontFamily: T.cormorant, fontWeight: 500, fontSize: 16, color: '#fff', margin: '0 0 3px', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name || 'Événement'}</p>
+        <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 11px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{ev.date || ''}</p>
+        {clickable && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 7, background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.32)' }}>
+            <span style={{ fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: T.gold }}>Voir l'événement →</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
