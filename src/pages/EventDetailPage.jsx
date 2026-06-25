@@ -2078,6 +2078,14 @@ export default function EventDetailPage() {
             preorderTotal,
             totalPrice: grandTotal,
             convId: groupSendConvId,
+            // CRITIQUE : on passe les membres de la conversation pour que
+            // saveGroupBooking en dérive participantIds. Sans ça, participantIds
+            // restait vide → la règle Firestore isMemberOf refusait la création
+            // du doc (le proposeur n'est pas membre d'une liste vide) → la résa
+            // n'arrivait jamais en base et les autres membres voyaient
+            // « Réservation introuvable » sur leur appareil.
+            members: (conv?.members || []).map(m => ({ userId: m.userId, name: m.name })),
+            participantIds: (conv?.members || []).map(m => m.userId).filter(Boolean),
             convMemberCount: conv?.members?.length || 2,
             proposerId: myId,
             proposerName: myName,

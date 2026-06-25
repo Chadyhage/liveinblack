@@ -1340,10 +1340,11 @@ export default function MessagingPage() {
     const booking = getGroupBookings()[bookingId]
     if (!booking) return
     const conv = activeConv
-    const myMember = conv?.members?.find(m => m.userId === myId)
-    const memberCount = conv?.members?.length || Math.max(booking.groupMin || 1, 1)
-    const myPct = myMember?.contributionPct ?? Math.round(100 / memberCount)
-    const myShare = Math.round((booking.totalPrice * myPct / 100) * 100) / 100
+    // Part = partage égal entre membres ACTIFS (cohérent avec la carte et le
+    // ré-équilibrage au retrait).
+    const withdrawnSet = new Set(booking.withdrawnMembers || [])
+    const activeCount = (conv?.members || []).filter(m => !withdrawnSet.has(m.userId)).length || Math.max(booking.groupMin || 1, 1)
+    const myShare = Math.round((booking.totalPrice / Math.max(activeCount, 1)) * 100) / 100
 
     // Construire un pending booking — la page /paiement-reussi le finalisera
     const arr = new Uint32Array(2)
@@ -2834,7 +2835,25 @@ function MentionText({ content, members }) {
 }
 
 function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, onSong, onNudge, onWithdraw, groupBookings }) {
-  const booking = groupBookings[bookingId]
+  // Self-healing cross-device : si la résa n'est pas encore en local (le membre
+  // a reçu le message mais pas encore le doc), on la récupère depuis Firestore
+  // et on la persiste, pour que la carte s'affiche et que valider/payer marchent.
+  const [fetched, setFetched] = useState(null)
+  const booking = groupBookings[bookingId] || fetched
+  useEffect(() => {
+    if (groupBookings[bookingId]) return
+    let cancelled = false
+    import('../utils/firestore-sync').then(({ loadDoc }) => loadDoc(`group_bookings/${bookingId}`)).then(doc => {
+      if (cancelled || !doc) return
+      try {
+        const all = JSON.parse(localStorage.getItem('lib_group_bookings') || '{}')
+        all[bookingId] = doc
+        localStorage.setItem('lib_group_bookings', JSON.stringify(all))
+      } catch {}
+      setFetched(doc)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [bookingId, groupBookings])
   // Tick temps réel pour le compte à rebours (rafraîchit toutes les 30s)
   const [nowTick, setNowTick] = useState(Date.now())
   useEffect(() => {
@@ -2842,7 +2861,7 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
     const id = setInterval(() => setNowTick(Date.now()), 30000)
     return () => clearInterval(id)
   }, [booking?.deadline])
-  if (!booking) return <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>Réservation introuvable</span>
+  if (!booking) return <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>Chargement de la réservation…</span>
 
   const withdrawn  = new Set(booking.withdrawnMembers || [])
   const allMembers = conv?.members || []
@@ -2857,9 +2876,10 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
   const iAmWithdrawn = withdrawn.has(myId)
   const allValidated = total > 0 && validCount >= total
   const allPaid      = total > 0 && payCount >= total
-  const myMember     = members.find(m => m.userId === myId)
-  const myPct        = myMember?.contributionPct ?? Math.round(100 / Math.max(total, 1))
-  const myShare      = Math.round((booking.totalPrice * myPct / 100) * 100) / 100
+  // Part = partage ÉGAL entre les membres ACTIFS (hors retirés). Se ré-équilibre
+  // automatiquement quand quelqu'un se retire/rejoint, sans dépendre d'un
+  // contributionPct figé (qui divergeait entre conv.members et booking.members).
+  const myShare      = Math.round((booking.totalPrice / Math.max(total, 1)) * 100) / 100
 
   // Compte à rebours
   const deadlineTs = booking.deadline ? new Date(booking.deadline).getTime() : null
@@ -3019,7 +3039,7 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
         {iAmWithdrawn ? (
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(220,110,110,0.7)' }}>Tu t'es retiré de cette sortie</span>
         ) : (<>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>Ta part ({myPct}%)</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>Ta part ({Math.round(100 / Math.max(total, 1))}%)</span>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{myShare}€</span>
         </>)}
       </div>
