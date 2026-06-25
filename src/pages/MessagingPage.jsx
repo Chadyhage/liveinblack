@@ -2907,141 +2907,175 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
   // Membres en retard (à relancer) = membres actifs n'ayant pas payé (hors moi)
   const laggards = members.filter(m => m.userId !== myId && memberStatus(m) !== 'paid')
 
+  const F = "'Inter', system-ui, sans-serif"
+  const accent = urgent ? '#e05aaa' : '#c8a96e'
   return (
-    <div style={{ minWidth: 230, maxWidth: 290 }}>
-      {/* Event info */}
-      <div style={{ marginBottom: 10 }}>
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(200,169,110,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 3px' }}>Réservation de groupe</p>
-        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 16, color: '#fff', margin: '0 0 2px' }}>{booking.eventName}</p>
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-          {booking.placeName} · {booking.groupMin}–{booking.groupMax > 0 ? booking.groupMax : '∞'} pers.
-        </p>
-      </div>
+    <div style={{
+      width: 300, maxWidth: '100%', borderRadius: 20, overflow: 'hidden',
+      background: '#0b0d16',
+      border: '1px solid rgba(255,255,255,0.07)',
+      boxShadow: '0 22px 55px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02) inset',
+    }}>
+      {/* ── HERO : affiche + nom en gros ── */}
+      <div style={{ position: 'relative', height: 138 }}>
+        {booking.eventImage
+          ? <img src={booking.eventImage} alt={booking.eventName} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #2a2440 0%, #11202a 55%, #1a1320 100%)' }} />
+        }
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0b0d16 4%, rgba(11,13,22,0.35) 50%, rgba(11,13,22,0.55) 100%)' }} />
 
-      {/* Compte à rebours / deadline */}
-      {countdown && !allPaid && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: urgent ? 'rgba(224,90,170,0.10)' : 'rgba(200,169,110,0.07)', border: `1px solid ${urgent ? 'rgba(224,90,170,0.30)' : 'rgba(200,169,110,0.18)'}`, borderRadius: 8, padding: '6px 10px', marginBottom: 10 }}>
-          <span style={{ fontSize: 11 }}>⏳</span>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: urgent ? '#e05aaa' : '#c8a96e', letterSpacing: '0.03em' }}>
-            Plus que <strong>{countdown}</strong> pour compléter
+        {/* Eyebrow */}
+        <span style={{ position: 'absolute', top: 11, left: 12, fontFamily: F, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.92)', background: 'rgba(0,0,0,0.42)', backdropFilter: 'blur(8px)', padding: '4px 9px', borderRadius: 6 }}>
+          Sortie de groupe
+        </span>
+        {/* Countdown */}
+        {countdown && !allPaid && (
+          <span style={{ position: 'absolute', top: 11, right: 12, fontFamily: F, fontSize: 11, fontWeight: 800, letterSpacing: '0.02em', color: '#0b0d16', background: accent, padding: '4px 10px', borderRadius: 6, boxShadow: `0 4px 14px ${accent}66` }}>
+            {countdown}
           </span>
-        </div>
-      )}
-      {expired && (
-        <div style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.25)', borderRadius: 8, padding: '6px 10px', marginBottom: 10, textAlign: 'center' }}>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,110,110,0.9)' }}>⌛ Délai dépassé — relance ou annule</span>
-        </div>
-      )}
-
-      {/* Progress */}
-      <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Étape 1 — Validation</span>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: allValidated ? '#22c55e' : '#c8a96e' }}>{validCount}/{total}</span>
-        </div>
-        <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden', marginBottom: 8 }}>
-          <div style={{ height: '100%', borderRadius: 99, width: `${total ? validCount / total * 100 : 0}%`, background: allValidated ? '#22c55e' : '#c8a96e', transition: 'width 0.4s' }} />
-        </div>
-        {allValidated && (<>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Étape 2 — Paiements</span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: payCount >= total ? '#22c55e' : '#4ee8c8' }}>{payCount}/{total}</span>
-          </div>
-          <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: 99, width: `${total ? payCount / total * 100 : 0}%`, background: '#4ee8c8', transition: 'width 0.4s' }} />
-          </div>
-        </>)}
-      </div>
-
-      {/* Groupe complet — célébration quand tout le monde a payé */}
-      {allPaid && (
-        <div style={{ background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.30)', borderRadius: 8, padding: '8px 10px', marginBottom: 10, textAlign: 'center' }}>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#22c55e', margin: 0, letterSpacing: '0.04em' }}>🎉 Groupe complet — tout le monde a payé !</p>
-        </div>
-      )}
-
-      {/* Roster : statut par membre (qui bloque le groupe) */}
-      <div style={{ marginBottom: 10 }}>
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>Qui est prêt</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {allMembers.map(m => {
-            const st = memberStatus(m)
-            const meta = STATUS_META[st]
-            const isOut = st === 'withdrawn'
-            const initial = (m.name || m.userId || '?').charAt(0).toUpperCase()
-            return (
-              <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: isOut ? 0.5 : 1 }}>
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{initial}</div>
-                  <div style={{ position: 'absolute', right: -1, bottom: -1, width: 8, height: 8, borderRadius: '50%', background: meta.dot, border: '1.5px solid #0a0a14' }} />
-                </div>
-                <span style={{ flex: 1, fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.72)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: isOut ? 'line-through' : 'none' }}>
-                  {m.userId === myId ? 'Toi' : (m.name || 'Membre')}
-                </span>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8.5, color: meta.color, letterSpacing: '0.04em', flexShrink: 0 }}>{meta.label}</span>
-              </div>
-            )
-          })}
-        </div>
-        {/* Relance : visible s'il reste des retardataires et que j'ai agi */}
-        {!allPaid && laggards.length > 0 && (hasValidated || hasPaid) && onNudge && (
-          <button onClick={() => onNudge(laggards.map(m => m.name || 'membre').join(', '))}
-            style={{ width: '100%', marginTop: 7, padding: '6px', borderRadius: 5, cursor: 'pointer', background: 'transparent', border: '1px dashed rgba(224,90,170,0.30)', color: 'rgba(224,90,170,0.8)', fontFamily: "'DM Mono', monospace", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            👋 Relancer ({laggards.length})
-          </button>
         )}
-        {/* Me retirer : avant paiement, si je ne suis pas déjà retiré et qu'il
-            reste au moins un autre membre actif */}
-        {!hasPaid && !iAmWithdrawn && total > 1 && onWithdraw && (
-          <button onClick={() => onWithdraw(bookingId)}
-            style={{ width: '100%', marginTop: 6, padding: '6px', borderRadius: 5, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.4)', fontFamily: "'DM Mono', monospace", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Me retirer du groupe
-          </button>
-        )}
-      </div>
-
-      {/* CTA */}
-      {!hasValidated && (
-        <button onClick={() => onValidate(bookingId)}
-          style={{ width: '100%', padding: '9px', borderRadius: 5, cursor: 'pointer', background: iAmWithdrawn ? 'rgba(78,232,200,0.10)' : 'rgba(200,169,110,0.10)', border: `1px solid ${iAmWithdrawn ? 'rgba(78,232,200,0.30)' : 'rgba(200,169,110,0.30)'}`, color: iAmWithdrawn ? '#4ee8c8' : '#c8a96e', fontFamily: "'DM Mono', monospace", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-          {iAmWithdrawn ? '↩ Rejoindre le groupe' : '✓ Je valide la sortie'}
-        </button>
-      )}
-      {hasValidated && !hasPaid && allValidated && (
-        <button onClick={() => onPay(bookingId)}
-          style={{ width: '100%', padding: '9px', borderRadius: 5, cursor: 'pointer', background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))', border: '1px solid rgba(78,232,200,0.35)', color: '#4ee8c8', fontFamily: "'DM Mono', monospace", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-          💳 Payer ma part ({myShare}€)
-        </button>
-      )}
-      {hasValidated && !hasPaid && !allValidated && (
-        <div style={{ padding: '8px', background: 'rgba(200,169,110,0.05)', border: '1px solid rgba(200,169,110,0.15)', borderRadius: 5, marginBottom: 6 }}>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(200,169,110,0.6)', margin: 0, textAlign: 'center' }}>
-            ⏳ En attente des validations ({validCount}/{total})
+        {/* Titre */}
+        <div style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
+          <p style={{ fontFamily: F, fontWeight: 800, fontSize: 23, lineHeight: 1.04, letterSpacing: '-0.01em', color: '#fff', margin: 0, textShadow: '0 2px 12px rgba(0,0,0,0.6)', textTransform: 'uppercase' }}>
+            {booking.eventName}
+          </p>
+          <p style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.62)', margin: '4px 0 0' }}>
+            {booking.placeName} · {booking.groupMin}–{booking.groupMax > 0 ? booking.groupMax : '∞'} pers.
           </p>
         </div>
-      )}
-      {hasPaid && (
-        <div style={{ padding: '8px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.20)', borderRadius: 5, marginBottom: 6 }}>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#22c55e', margin: 0, textAlign: 'center' }}>✓ Tu as payé ta part ({myShare}€)</p>
+      </div>
+
+      {/* ── CORPS ── */}
+      <div style={{ padding: '14px 14px 15px' }}>
+
+        {/* Ta part — gros chiffre */}
+        {!iAmWithdrawn && (
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 13 }}>
+            <div>
+              <p style={{ fontFamily: F, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.38)', margin: '0 0 1px' }}>Ta part</p>
+              <p style={{ fontFamily: F, fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>{total} pers. · {Math.round(100 / Math.max(total, 1))}% chacun</p>
+            </div>
+            <span style={{ fontFamily: F, fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: '-0.02em', color: hasPaid ? '#22c55e' : '#c8a96e' }}>{myShare}€</span>
+          </div>
+        )}
+        {expired && (
+          <div style={{ background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.28)', borderRadius: 10, padding: '8px 10px', marginBottom: 12, textAlign: 'center' }}>
+            <span style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(230,120,120,0.95)' }}>Délai dépassé — relance ou annule</span>
+          </div>
+        )}
+
+        {/* Étapes */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 13 }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+              <span style={{ fontFamily: F, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>1 · Validation</span>
+              <span style={{ fontFamily: F, fontSize: 11, fontWeight: 800, color: allValidated ? '#22c55e' : '#c8a96e' }}>{validCount}/{total}</span>
+            </div>
+            <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 99, width: `${total ? validCount / total * 100 : 0}%`, background: allValidated ? '#22c55e' : 'linear-gradient(90deg,#c8a96e,#e0c690)', boxShadow: allValidated ? 'none' : '0 0 10px rgba(200,169,110,0.5)', transition: 'width 0.5s' }} />
+            </div>
+          </div>
+          {allValidated && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                <span style={{ fontFamily: F, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>2 · Paiements</span>
+                <span style={{ fontFamily: F, fontSize: 11, fontWeight: 800, color: allPaid ? '#22c55e' : '#4ee8c8' }}>{payCount}/{total}</span>
+              </div>
+              <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 99, width: `${total ? payCount / total * 100 : 0}%`, background: allPaid ? '#22c55e' : 'linear-gradient(90deg,#4ee8c8,#7af0d8)', boxShadow: '0 0 10px rgba(78,232,200,0.5)', transition: 'width 0.5s' }} />
+              </div>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Song selection */}
-      {(hasValidated || hasPaid) && (
-        <button onClick={() => onSong(bookingId)}
-          style={{ width: '100%', padding: '7px', borderRadius: 5, cursor: 'pointer', background: 'transparent', border: '1px dashed rgba(224,90,170,0.25)', color: 'rgba(224,90,170,0.7)', fontFamily: "'DM Mono', monospace", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          🎵 {booking.songSelections?.[myId] ? `${booking.songSelections[myId].title} — ${booking.songSelections[myId].artist}` : 'Choisir ma musique'}
-        </button>
-      )}
+        {/* Célébration */}
+        {allPaid && (
+          <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))', border: '1px solid rgba(34,197,94,0.35)', borderRadius: 12, padding: '10px', marginBottom: 13, textAlign: 'center' }}>
+            <p style={{ fontFamily: F, fontSize: 12, fontWeight: 800, color: '#22c55e', margin: 0 }}>Groupe complet · tout le monde a payé</p>
+          </div>
+        )}
 
-      {/* Price */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        {iAmWithdrawn ? (
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(220,110,110,0.7)' }}>Tu t'es retiré de cette sortie</span>
-        ) : (<>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>Ta part ({Math.round(100 / Math.max(total, 1))}%)</span>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{myShare}€</span>
-        </>)}
+        {/* Roster */}
+        <div style={{ marginBottom: 13 }}>
+          <p style={{ fontFamily: F, fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 8px' }}>Qui est prêt</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {allMembers.map(m => {
+              const st = memberStatus(m)
+              const meta = STATUS_META[st]
+              const isOut = st === 'withdrawn'
+              const initial = (m.name || m.userId || '?').charAt(0).toUpperCase()
+              return (
+                <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 9, opacity: isOut ? 0.45 : 1 }}>
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{initial}</div>
+                    <div style={{ position: 'absolute', right: -1, bottom: -1, width: 9, height: 9, borderRadius: '50%', background: meta.dot, border: '2px solid #0b0d16' }} />
+                  </div>
+                  <span style={{ flex: 1, fontFamily: F, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.82)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: isOut ? 'line-through' : 'none' }}>
+                    {m.userId === myId ? 'Toi' : (m.name || 'Membre')}
+                  </span>
+                  <span style={{ fontFamily: F, fontSize: 10, fontWeight: 700, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* CTA principal */}
+        {!hasValidated && (
+          <button onClick={() => onValidate(bookingId)}
+            style={{ width: '100%', padding: '13px', borderRadius: 12, cursor: 'pointer', border: 'none',
+              background: iAmWithdrawn ? 'linear-gradient(135deg,#4ee8c8,#39c9ab)' : 'linear-gradient(135deg,#d8b878,#c8a96e)',
+              color: '#0b0d16', fontFamily: F, fontSize: 12, fontWeight: 800, letterSpacing: '0.02em', marginBottom: 8,
+              boxShadow: iAmWithdrawn ? '0 8px 22px rgba(78,232,200,0.28)' : '0 8px 22px rgba(200,169,110,0.28)' }}>
+            {iAmWithdrawn ? 'Rejoindre le groupe' : 'Je valide la sortie'}
+          </button>
+        )}
+        {hasValidated && !hasPaid && allValidated && (
+          <button onClick={() => onPay(bookingId)}
+            style={{ width: '100%', padding: '13px', borderRadius: 12, cursor: 'pointer', border: 'none',
+              background: 'linear-gradient(135deg,#4ee8c8,#39c9ab)', color: '#0b0d16',
+              fontFamily: F, fontSize: 12, fontWeight: 800, letterSpacing: '0.02em', marginBottom: 8,
+              boxShadow: '0 8px 22px rgba(78,232,200,0.30)' }}>
+            Payer ma part · {myShare}€
+          </button>
+        )}
+        {hasValidated && !hasPaid && !allValidated && (
+          <div style={{ padding: '11px', background: 'rgba(200,169,110,0.07)', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 12, marginBottom: 8 }}>
+            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(200,169,110,0.85)', margin: 0, textAlign: 'center' }}>
+              En attente des validations · {validCount}/{total}
+            </p>
+          </div>
+        )}
+        {hasPaid && !allPaid && (
+          <div style={{ padding: '11px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.22)', borderRadius: 12, marginBottom: 8 }}>
+            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: '#22c55e', margin: 0, textAlign: 'center' }}>Tu as payé ta part · {myShare}€</p>
+          </div>
+        )}
+
+        {/* Actions secondaires */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {(hasValidated || hasPaid) && (
+            <button onClick={() => onSong(bookingId)}
+              style={{ width: '100%', padding: '10px', borderRadius: 10, cursor: 'pointer', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.28)', color: '#e05aaa', fontFamily: F, fontSize: 11, fontWeight: 600 }}>
+              {booking.songSelections?.[myId] ? `♪ ${booking.songSelections[myId].title} — ${booking.songSelections[myId].artist}` : '♪ Choisir ma musique'}
+            </button>
+          )}
+          {!allPaid && laggards.length > 0 && (hasValidated || hasPaid) && onNudge && (
+            <button onClick={() => onNudge(laggards.map(m => m.name || 'membre').join(', '))}
+              style={{ width: '100%', padding: '9px', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.6)', fontFamily: F, fontSize: 11, fontWeight: 600 }}>
+              Relancer les retardataires ({laggards.length})
+            </button>
+          )}
+          {!hasPaid && !iAmWithdrawn && total > 1 && onWithdraw && (
+            <button onClick={() => onWithdraw(bookingId)}
+              style={{ width: '100%', padding: '8px', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.32)', fontFamily: F, fontSize: 10, fontWeight: 600 }}>
+              Me retirer du groupe
+            </button>
+          )}
+          {iAmWithdrawn && (
+            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(230,120,120,0.75)', margin: '2px 0 0', textAlign: 'center' }}>Tu t'es retiré de cette sortie</p>
+          )}
+        </div>
       </div>
     </div>
   )
