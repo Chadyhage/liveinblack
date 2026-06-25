@@ -791,6 +791,27 @@ export default function MesEvenementsPage() {
     }).catch(() => {})
   }
 
+  // Retire un event ANNULÉ de la liste de l'organisateur (il reste dans events/
+  // pour que les détenteurs de billet voient toujours le message d'annulation).
+  // Tombstone local + retrait de user_events → disparaît du dashboard de l'orga
+  // partout, sans casser l'accès billet côté client.
+  function hideCancelledEvent(id) {
+    const sid = String(id)
+    try {
+      const tomb = JSON.parse(localStorage.getItem('lib_deleted_events') || '[]')
+      if (!tomb.includes(sid)) localStorage.setItem('lib_deleted_events', JSON.stringify([...tomb, sid].slice(-200)))
+    } catch {}
+    const updated = createdEvents.filter(ev => String(ev.id) !== sid)
+    localStorage.setItem('lib_created_events', JSON.stringify(updated))
+    setCreatedEvents(updated)
+    import('../utils/firestore-sync').then(async ({ syncDoc }) => {
+      if (user?.uid) {
+        const { sanitizeEventsForSync } = await import('../utils/uploadImage')
+        syncDoc(`user_events/${user.uid}`, { items: await sanitizeEventsForSync(updated) })
+      }
+    }).catch(() => {})
+  }
+
   // ─── Guards (after all hooks — respects Rules of Hooks) ───────────────────────
   // Compte en attente de validation
   if (user?.status === 'pending') {
@@ -969,8 +990,11 @@ export default function MesEvenementsPage() {
                 ev.createdBy && ev.createdBy !== uid &&
                 (!ev.organizerId || ev.organizerId !== uid)
               )
-              const upcomingEvents = myEvents.filter(ev => !isEventPast(ev))
-              const pastEvents = myEvents.filter(ev => isEventPast(ev))
+              // Les events ANNULÉS sortent de "en cours"/"passés" et vont dans leur
+              // propre section (ils restent en base pour les détenteurs de billet).
+              const upcomingEvents = myEvents.filter(ev => !isEventPast(ev) && !ev.cancelled)
+              const pastEvents = myEvents.filter(ev => isEventPast(ev) && !ev.cancelled)
+              const cancelledEvents = myEvents.filter(ev => ev.cancelled)
               return (
                 <>
             <Eyebrow style={{ marginBottom: 14 }}>Mes soirées en cours</Eyebrow>
@@ -1048,6 +1072,44 @@ export default function MesEvenementsPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* ── Événements annulés ── */}
+            {cancelledEvents.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <Eyebrow style={{ marginBottom: 14 }}>Annulés</Eyebrow>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {cancelledEvents.map(ev => (
+                    <div key={ev.id} style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'center', gap: 12, opacity: 0.9 }}>
+                      <button onClick={() => navigate(`/evenements/${ev.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                        {ev.imageUrl ? (
+                          <img src={ev.imageUrl} alt={ev.name} style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', flexShrink: 0, filter: 'grayscale(60%)' }} />
+                        ) : (
+                          <div style={{ width: 52, height: 52, borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.78)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(220,100,100,0.95)', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
+                            ANNULÉ
+                          </span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => hideCancelledEvent(ev.id)}
+                        title="Retirer de ma liste"
+                        style={{ flexShrink: 0, padding: '8px 12px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                        Retirer de ma liste
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, marginTop: 8 }}>
+                  Les événements annulés restent accessibles aux personnes ayant déjà un billet (elles voient ton message d'annulation). « Retirer de ma liste » les enlève seulement de ton tableau de bord.
+                </p>
               </div>
             )}
 
