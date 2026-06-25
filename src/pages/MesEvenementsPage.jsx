@@ -333,7 +333,8 @@ export default function MesEvenementsPage() {
   // le listener se met en place
   useEffect(() => {
     try {
-      const cached = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
+      const tomb = new Set((JSON.parse(localStorage.getItem('lib_deleted_events') || '[]')).map(String))
+      const cached = JSON.parse(localStorage.getItem('lib_created_events') || '[]').filter(e => !tomb.has(String(e.id)))
       if (cached.length) setCreatedEvents(cached)
     } catch {}
   }, [])
@@ -343,13 +344,20 @@ export default function MesEvenementsPage() {
     let unsub = () => {}
     import('../utils/firestore-sync').then(({ listenUserEvents }) => {
       unsub = listenUserEvents(user.uid, (firestoreItems) => {
+        // Tombstones : ids supprimés à ne jamais réafficher, même si un snapshot
+        // Firestore périmé les renvoie encore.
+        let tombSet = new Set()
+        try { tombSet = new Set((JSON.parse(localStorage.getItem('lib_deleted_events') || '[]')).map(String)) } catch {}
+        const fresh = firestoreItems.filter(e => !tombSet.has(String(e.id)))
         // Merge robuste : on ne supprime PAS les events locaux qui ne sont pas
         // (encore) dans Firestore — ça évite le flicker "ça part ça revient"
         // quand on vient de publier et que le sync n'a pas encore propagé.
+        // MAIS on exclut les events supprimés (tombstones) pour qu'ils ne soient
+        // pas reclassés "local non synchronisé" et gardés à vie.
         setCreatedEvents(prev => {
-          const incomingIds = new Set(firestoreItems.map(e => String(e.id)))
-          const localOnly = prev.filter(e => !incomingIds.has(String(e.id)))
-          const merged = [...firestoreItems, ...localOnly]
+          const incomingIds = new Set(fresh.map(e => String(e.id)))
+          const localOnly = prev.filter(e => !incomingIds.has(String(e.id)) && !tombSet.has(String(e.id)))
+          const merged = [...fresh, ...localOnly]
           try { localStorage.setItem('lib_created_events', JSON.stringify(merged)) } catch {}
           return merged
         })
@@ -734,7 +742,16 @@ export default function MesEvenementsPage() {
   }
 
   function deleteEvent(id) {
-    const updated = createdEvents.filter(ev => ev.id !== id)
+    const sid = String(id)
+    // Tombstone : marque l'event comme supprimé pour empêcher le "merge robuste"
+    // du listener de le ressusciter. Sinon un snapshot Firestore périmé pouvait
+    // le réinjecter dans le state, puis le merge le gardait à vie comme « event
+    // local pas encore synchronisé » → il restait affiché chez l'organisateur.
+    try {
+      const tomb = JSON.parse(localStorage.getItem('lib_deleted_events') || '[]')
+      if (!tomb.includes(sid)) localStorage.setItem('lib_deleted_events', JSON.stringify([...tomb, sid].slice(-200)))
+    } catch {}
+    const updated = createdEvents.filter(ev => String(ev.id) !== sid)
     localStorage.setItem('lib_created_events', JSON.stringify(updated))
     setCreatedEvents(updated)
     setDeleteConfirm(null)
