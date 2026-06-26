@@ -535,22 +535,12 @@ export default function Layout({ children, hideNav, chatMode }) {
             const isMsgItem = item.path === '/messagerie'
             return (
               <button key={item.path} onClick={() => navigate(item.path)}
-                className="group flex-1 relative"
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  padding: '11px 4px 9px', margin: '4px 3px', borderRadius: 14,
-                  background: active ? 'rgba(217,70,239,0.07)' : 'transparent',
-                  border: active ? '1px solid rgba(217,70,239,0.35)' : '1px solid transparent',
-                  boxShadow: active ? '0 4px 20px rgba(139,92,246,0.15)' : 'none',
-                  cursor: 'pointer', position: 'relative',
-                  transition: 'background 0.25s, border-color 0.25s',
-                }}>
-                {/* Équerres émeraude (coins) sur l'onglet actif */}
-                {active && (<>
-                  <span style={{ position: 'absolute', top: 5, left: 7, width: 7, height: 7, borderTop: '2px solid #34d399', borderLeft: '2px solid #34d399', borderTopLeftRadius: 2 }} />
-                  <span style={{ position: 'absolute', bottom: 5, right: 7, width: 7, height: 7, borderBottom: '2px solid #34d399', borderRight: '2px solid #34d399', borderBottomRightRadius: 2 }} />
-                </>)}
-                <div style={{ position: 'relative', transition: 'transform 0.25s', transform: active ? 'scale(1.06)' : 'scale(1)' }}>
+                className={`group flex-1 relative flex flex-col items-center gap-1 cursor-pointer rounded-2xl border transition-all duration-300 ${active ? 'border-fuchsia-500/35 bg-fuchsia-500/[0.07] shadow-[0_4px_20px_rgba(139,92,246,0.15)]' : 'border-transparent hover:bg-white/[0.04]'}`}
+                style={{ padding: '11px 4px 9px', margin: '4px 3px' }}>
+                {/* Équerres émeraude (coins) — glissent à l'apparition au survol, fixes si actif */}
+                <span className={`pointer-events-none absolute top-1.5 left-2 h-2 w-2 rounded-tl-sm border-t-2 border-l-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                <span className={`pointer-events-none absolute bottom-1.5 right-2 h-2 w-2 rounded-br-sm border-b-2 border-r-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                <div className="relative transition-transform duration-300 group-hover:scale-110 group-active:scale-95" style={active ? { transform: 'scale(1.06)' } : undefined}>
                   <NavIcon id={item.path} active={active} activeColor="#e879f9" />
                   {isMsgItem && unreadMsgCount > 0 && (
                     <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
@@ -558,13 +548,13 @@ export default function Layout({ children, hideNav, chatMode }) {
                     </span>
                   )}
                 </div>
-                <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 9, fontWeight: active ? 800 : 600, letterSpacing: '0.02em', textTransform: 'uppercase', color: active ? '#e879f9' : 'rgba(255,255,255,0.32)', whiteSpace: 'nowrap', transition: 'color 0.25s' }}>
+                <span className={`whitespace-nowrap uppercase transition-colors duration-300 ${active ? 'text-fuchsia-400' : 'text-white/30 group-hover:text-white'}`}
+                  style={{ fontFamily: "'Syne', sans-serif", fontSize: 9, fontWeight: active ? 800 : 600, letterSpacing: '0.02em' }}>
                   {item.label}
                 </span>
-                {/* Trait laser sous l'onglet actif */}
-                {active && (
-                  <span style={{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 1.5, borderRadius: 999, background: 'linear-gradient(90deg, rgba(52,211,153,0.4), #34d399, rgba(52,211,153,0.4))', boxShadow: '0 0 10px rgba(52,211,153,0.7)' }} />
-                )}
+                {/* Trait laser — pousse depuis le centre au survol, large si actif */}
+                <span className={`pointer-events-none absolute bottom-[3px] left-1/2 h-[1.5px] -translate-x-1/2 rounded-full transition-all duration-300 ${active ? 'w-[60%] opacity-100' : 'w-0 opacity-0 group-hover:w-[70%] group-hover:opacity-100'}`}
+                  style={{ background: 'linear-gradient(90deg, rgba(52,211,153,0.4), #34d399, rgba(52,211,153,0.4))', boxShadow: '0 0 10px rgba(52,211,153,0.7)' }} />
               </button>
             )
           })}
