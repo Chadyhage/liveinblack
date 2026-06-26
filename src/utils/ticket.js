@@ -38,6 +38,9 @@ export function generateTicketToken(booking) {
     })),
     tp: booking.totalPrice,
     ba: booking.bookedAt,
+    // gn = nom de l'invité — uniquement présent pour un billet guestlist, pour
+    // que /ticket/:token affiche son nom sans avoir besoin d'un compte/login.
+    ...(booking.guestName ? { gn: booking.guestName } : {}),
   }
   const sig = computeHash(JSON.stringify(payload) + SECRET)
   try {

@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom'
+import { QRCodeSVG } from 'qrcode.react'
 import { verifyTicketToken } from '../utils/ticket'
 
 // ─── Design tokens ────────────────────────────────────────────────────────
@@ -101,6 +102,26 @@ export default function TicketPage() {
           </p>
           <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, letterSpacing: '0.06em' }}>
             Scanné le {scannedAt}
+          </p>
+        </div>
+
+        {/* Guest name — uniquement présent sur les invitations guestlist */}
+        {data.gn && (
+          <div style={{ ...CARD, padding: '14px 20px', textAlign: 'center' }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 4px' }}>
+              Invité
+            </p>
+            <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0 }}>{data.gn}</p>
+          </div>
+        )}
+
+        {/* QR code — à présenter à l'entrée pour scan */}
+        <div style={{ ...CARD, padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+          <div style={{ padding: 14, background: 'white', borderRadius: 8 }}>
+            <QRCodeSVG value={typeof window !== 'undefined' ? window.location.href : ''} size={140} level="H" />
+          </div>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, letterSpacing: '0.08em', margin: 0 }}>
+            Présente ce QR code à l'entrée
           </p>
         </div>
 

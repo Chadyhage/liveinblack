@@ -16,6 +16,13 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    // Organisateur propriétaire de l'event (createdBy OU organizerId — les deux
+    // champs sont toujours écrits ensemble à la création, voir events/{id}).
+    function isEventOwnerOf(eventId) {
+      let ev = get(/databases/$(database)/documents/events/$(eventId)).data;
+      return isSignedIn() && (ev.createdBy == request.auth.uid || ev.organizerId == request.auth.uid);
+    }
+
     // ── Users ──────────────────────────────────────────────────────────────────
     // Read: any signed-in user can see profiles (needed for messaging contacts sync)
     // Write: only the owner can update their own profile, or an agent
@@ -145,7 +152,21 @@ service cloud.firestore {
     match /tickets/{code} {
       allow read:   if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.paid == false;
-      allow update, delete: if isAgent();
+      // L'agent peut tout modifier (validation scanner, etc). L'organisateur de
+      // l'event ne peut QUE révoquer une invitation guestlist ou marquer un
+      // check-in (jamais flipper `paid`, qui resterait réservé au webhook Stripe).
+      // _syncedAt est ajouté automatiquement par syncDoc() à CHAQUE écriture
+      // (voir firestore-sync.js) — doit être autorisé sinon le merge échoue.
+      allow update: if isAgent() || (
+        isEventOwnerOf(resource.data.eventId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['revoked', 'revokedAt', 'checkedInAt', 'checkedInBy', '_syncedAt'])
+      );
+      allow delete: if isAgent();
+    }
+
+    // ── Guestlist par événement (gérée par l'organisateur) ──────────────────────
+    match /guestlists/{eventId} {
+      allow read, write: if isEventOwnerOf(eventId) || isAgent();
     }
     // ── Statut de lecture cross-device ────────────────────────────────────────
     match /user_read_status/{uid} {

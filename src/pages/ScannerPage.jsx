@@ -207,6 +207,10 @@ export default function ScannerPage() {
     if (myId) {
       import('../utils/firestore-sync').then(({ syncDoc }) => {
         syncDoc(`used_tickets/${myId}`, { items: arr, updatedAt: new Date().toISOString() })
+        // Marque aussi le check-in directement sur le billet — utilisé par la
+        // guestlist de l'organisateur pour afficher « ✓ Arrivé » sans dépendre
+        // du registre per-agent ci-dessus (qui ne se croise pas entre scanners).
+        syncDoc(`tickets/${code}`, { checkedInAt: new Date().toISOString(), checkedInBy: myId })
       }).catch(() => {})
     }
   }
@@ -226,7 +230,7 @@ export default function ScannerPage() {
       const snap = await getDoc(doc(db, 'tickets', code))
       if (!snap.exists()) return { found: false }
       const d = snap.data()
-      return { found: true, paid: d.paid === true, data: d }
+      return { found: true, paid: d.paid === true, revoked: d.revoked === true, data: d }
     } catch {
       return { error: true }
     }
@@ -263,13 +267,18 @@ export default function ScannerPage() {
         setResult({ code: tc, status: 'invalid', sub: 'Billet introuvable dans le registre — possible falsification' })
         return
       }
+      if (reg.revoked) {
+        setResult({ code: tc, status: 'invalid', sub: "Invitation annulée par l'organisateur" })
+        return
+      }
       setResult({
         code: tc,
         status: isUsed ? 'used' : 'valid',
-        ticket: { holder: 'Participant', type: data.pl, event: data.en, date: data.ed, price: `${data.tp}€` },
+        ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en, date: data.ed, price: `${data.tp}€` },
         preorders: data.po || [],
         paidConfirmed: reg.found ? reg.paid : undefined,
         freeTicket: reg.found ? reg.data?.source === 'free' : undefined,
+        isGuestlist: reg.found ? reg.data?.source === 'guestlist' : undefined,
         offline: !!reg.error,
       })
       return
@@ -292,14 +301,19 @@ export default function ScannerPage() {
       return
     }
     if (reg.found) {
+      if (reg.revoked) {
+        setResult({ code: clean, status: 'invalid', sub: "Invitation annulée par l'organisateur" })
+        return
+      }
       const isUsed = currentUsed.has(clean)
       setResult({
         code: clean,
         status: isUsed ? 'used' : 'valid',
-        ticket: { holder: 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—', date: '', price: '' },
+        ticket: { holder: reg.data.guestName || 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—', date: '', price: '' },
         preorders: [],
         paidConfirmed: reg.paid,
         freeTicket: reg.data?.source === 'free',
+        isGuestlist: reg.data?.source === 'guestlist',
       })
       return
     }
@@ -610,10 +624,13 @@ export default function ScannerPage() {
                       {result.paidConfirmed === true && (
                         <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ PAIEMENT CONFIRMÉ</p>
                       )}
-                      {result.paidConfirmed === false && result.freeTicket && (
+                      {result.paidConfirmed === false && result.isGuestlist && (
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ INVITÉ — GUESTLIST</p>
+                      )}
+                      {result.paidConfirmed === false && result.freeTicket && !result.isGuestlist && (
                         <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ BILLET GRATUIT — ENTRÉE LIBRE</p>
                       )}
-                      {result.paidConfirmed === false && !result.freeTicket && (
+                      {result.paidConfirmed === false && !result.freeTicket && !result.isGuestlist && (
                         <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, margin: '3px 0 0', letterSpacing: '0.1em' }}>⚠ PAIEMENT NON CONFIRMÉ (en attente Stripe)</p>
                       )}
                       {result.offline && (

@@ -9,6 +9,7 @@ import { IconHourglass } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
 import { regions } from '../data/regions'
+import { getGuestlist, loadGuestlistRemote, addGuestlistEntry, removeGuestlistEntry } from '../utils/guestlist'
 
 function generateCode(len = 8) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -323,6 +324,16 @@ export default function MesEvenementsPage() {
   const [codesTargetEvent, setCodesTargetEvent] = useState(null)
   const [codesQty, setCodesQty] = useState(10)
   const [generatedCodes, setGeneratedCodes] = useState(null)
+
+  // Guestlist state
+  const [showGuestlistModal, setShowGuestlistModal] = useState(false)
+  const [guestlistTargetEvent, setGuestlistTargetEvent] = useState(null)
+  const [guestlistItems, setGuestlistItems] = useState([])
+  const [guestlistLoading, setGuestlistLoading] = useState(false)
+  const [guestForm, setGuestForm] = useState({ name: '', phone: '', note: '', placeType: '' })
+  const [guestlistError, setGuestlistError] = useState('')
+  const [guestlistAdding, setGuestlistAdding] = useState(false)
+  const [copiedGuestId, setCopiedGuestId] = useState(null)
 
   const [createdEvents, setCreatedEvents] = useState([])
   const [showStatsPanel, setShowStatsPanel] = useState(false)
@@ -812,6 +823,42 @@ export default function MesEvenementsPage() {
     }).catch(() => {})
   }
 
+  // ─── Guestlist ──────────────────────────────────────────────────────────────
+  function openGuestlistModal(ev) {
+    setGuestlistTargetEvent(ev)
+    setGuestlistItems(getGuestlist(ev.id))
+    setGuestForm({ name: '', phone: '', note: '', placeType: ev.places?.[0]?.type || 'Invité' })
+    setGuestlistError('')
+    setShowGuestlistModal(true)
+    setGuestlistLoading(true)
+    loadGuestlistRemote(ev.id).then(items => { setGuestlistItems(items); setGuestlistLoading(false) })
+  }
+
+  async function handleAddGuest() {
+    if (!guestlistTargetEvent) return
+    setGuestlistError('')
+    setGuestlistAdding(true)
+    const res = await addGuestlistEntry(guestlistTargetEvent, guestForm, user?.uid)
+    setGuestlistAdding(false)
+    if (!res.ok) { setGuestlistError(res.error || "Impossible d'ajouter cet invité."); return }
+    setGuestlistItems(getGuestlist(guestlistTargetEvent.id))
+    setGuestForm(f => ({ ...f, name: '', phone: '', note: '' }))
+  }
+
+  async function handleRemoveGuest(entryId) {
+    if (!guestlistTargetEvent) return
+    await removeGuestlistEntry(guestlistTargetEvent.id, entryId)
+    setGuestlistItems(getGuestlist(guestlistTargetEvent.id))
+  }
+
+  function copyGuestLink(entry) {
+    const url = `${window.location.origin}/ticket/${entry.ticketToken}`
+    navigator.clipboard?.writeText(url).then(() => {
+      setCopiedGuestId(entry.id)
+      setTimeout(() => setCopiedGuestId(null), 1800)
+    }).catch(() => {})
+  }
+
   // ─── Guards (after all hooks — respects Rules of Hooks) ───────────────────────
   // Compte en attente de validation
   if (user?.status === 'pending') {
@@ -1042,6 +1089,14 @@ export default function MesEvenementsPage() {
                         style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="1.8"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M15 9v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+                      </button>
+                      {/* Guestlist */}
+                      <button
+                        onClick={() => openGuestlistModal(ev)}
+                        title="Guestlist"
+                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
                       </button>
                       {/* Private codes */}
                       {ev.isPrivate && (
@@ -1360,6 +1415,113 @@ export default function MesEvenementsPage() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Guestlist modal */}
+        {showGuestlistModal && guestlistTargetEvent && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => setShowGuestlistModal(false)} />
+            <div style={{ ...S.card, position: 'relative', padding: 24, width: '100%', maxWidth: 420, maxHeight: '86vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.5"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Guestlist</p>
+                  </div>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+                    Invitations pour <span style={{ color: '#4ee8c8' }}>{guestlistTargetEvent.name}</span>
+                    {guestlistItems.length > 0 && (
+                      <> · {guestlistItems.length} invité{guestlistItems.length > 1 ? 's' : ''} · {guestlistItems.filter(g => g.checkedInAt).length} arrivé{guestlistItems.filter(g => g.checkedInAt).length > 1 ? 's' : ''}</>
+                    )}
+                  </p>
+                </div>
+                <button onClick={() => setShowGuestlistModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }}>
+                  <IconClose size={14} color="rgba(255,255,255,0.4)" />
+                </button>
+              </div>
+
+              {/* Add guest form */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, ...S.card, padding: 14, background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.14)' }}>
+                <InputField label="Nom de l'invité" value={guestForm.name} onChange={e => setGuestForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex : Aminata Koné" />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <InputField label="Téléphone (optionnel)" value={guestForm.phone} onChange={e => setGuestForm(f => ({ ...f, phone: e.target.value }))} placeholder="+228 90 00 00 00" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={S.label}>Type de place</label>
+                    {guestlistTargetEvent.places?.length ? (
+                      <select
+                        value={guestForm.placeType}
+                        onChange={e => setGuestForm(f => ({ ...f, placeType: e.target.value }))}
+                        style={{ ...S.inputBase, cursor: 'pointer' }}
+                      >
+                        {guestlistTargetEvent.places.map(p => (
+                          <option key={p.type} value={p.type}>{p.type}{p.price > 0 ? ` (offert, ${p.price}€)` : ''}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <InputField value={guestForm.placeType} onChange={e => setGuestForm(f => ({ ...f, placeType: e.target.value }))} placeholder="Invité" />
+                    )}
+                  </div>
+                </div>
+                <InputField label="Note (optionnel)" value={guestForm.note} onChange={e => setGuestForm(f => ({ ...f, note: e.target.value }))} placeholder="Ex : table 4, presse, artiste…" />
+                {guestlistError && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{guestlistError}</p>}
+                <button onClick={handleAddGuest} disabled={guestlistAdding || !guestForm.name.trim()} style={{ ...S.btnTeal, opacity: guestlistAdding || !guestForm.name.trim() ? 0.5 : 1, cursor: guestlistAdding || !guestForm.name.trim() ? 'not-allowed' : 'pointer' }}>
+                  {guestlistAdding ? 'Ajout…' : '+ Ajouter à la guestlist'}
+                </button>
+              </div>
+
+              {/* Guest list */}
+              {guestlistLoading ? (
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '12px 0' }}>Chargement…</p>
+              ) : guestlistItems.length === 0 ? (
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', textAlign: 'center', padding: '12px 0', lineHeight: 1.6 }}>
+                  Pas encore d'invité — ajoute le premier ci-dessus.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {guestlistItems.map(g => {
+                    const link = `${window.location.origin}/ticket/${g.ticketToken}`
+                    const waLink = g.phone ? `https://wa.me/${g.phone.replace(/[^\d+]/g, '').replace(/^\+/, '')}?text=${encodeURIComponent(`Salut ${g.name} ! Voici ton entrée pour ${guestlistTargetEvent.name} : ${link}`)}` : null
+                    return (
+                      <div key={g.id} style={{ ...S.card, padding: '10px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: 'rgba(255,255,255,0.92)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</p>
+                            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>
+                              {g.place}{g.note ? ` · ${g.note}` : ''}
+                            </p>
+                          </div>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, color: g.checkedInAt ? '#22c55e' : 'rgba(255,255,255,0.32)' }}>
+                            {g.checkedInAt ? '✓ Arrivé' : 'En attente'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                          <button onClick={() => copyGuestLink(g)} style={{ flex: 1, padding: '7px', borderRadius: 4, cursor: 'pointer', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.20)', color: '#4ee8c8', fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                            {copiedGuestId === g.id ? '✓ Copié' : 'Copier le lien'}
+                          </button>
+                          {waLink && (
+                            <a href={waLink} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: '7px', borderRadius: 4, textAlign: 'center', textDecoration: 'none', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e', fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                              WhatsApp
+                            </a>
+                          )}
+                          {!g.checkedInAt && (
+                            <button onClick={() => handleRemoveGuest(g.id)} title="Retirer" style={{ padding: '7px 10px', borderRadius: 4, cursor: 'pointer', background: 'rgba(220,50,50,0.06)', border: '1px solid rgba(220,50,50,0.16)', color: 'rgba(220,100,100,0.8)', fontFamily: "'DM Mono', monospace", fontSize: 9 }}>
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6, margin: 0 }}>
+                Chaque invité reçoit un billet réel (gratuit) à ce lien — il le présente à l'entrée, le videur le scanne comme n'importe quel billet.
+              </p>
             </div>
           </div>
         )}
