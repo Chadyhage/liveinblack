@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import { ROLES, getTotalPendingCount, getEnabledRoles, switchActiveRole, cancelRoleRequest } from '../utils/accounts'
+import RoleBadge from './RoleBadge'
 
 const ROLE_CONFIG = {
   client:       { label: 'Client',       icon: '🎫', color: '#8444ff', desc: 'Réserver des événements' },
@@ -10,6 +11,32 @@ const ROLE_CONFIG = {
   organisateur: { label: 'Organisateur', icon: '🎪', color: '#8444ff', desc: 'Gérer mes événements' },
   prestataire:  { label: 'Prestataire',  icon: '🎤', color: '#ff4da6', desc: 'Mes services & prestations' },
   agent:        { label: 'Admin',        icon: '🔑', color: '#c8a96e', desc: 'Interface administration' },
+}
+
+// Couleurs par rôle (cohérentes avec RoleBadge) pour les carrés d'icône SVG.
+const ROLE_VISUAL = {
+  client:       { color: '#60a5fa', bg: 'rgba(59,130,246,0.12)',  border: 'rgba(96,165,250,0.25)' },
+  user:         { color: '#60a5fa', bg: 'rgba(59,130,246,0.12)',  border: 'rgba(96,165,250,0.25)' },
+  organisateur: { color: '#a78bfa', bg: 'rgba(139,92,246,0.12)',  border: 'rgba(167,139,250,0.25)' },
+  prestataire:  { color: '#f472b6', bg: 'rgba(236,72,153,0.12)',  border: 'rgba(244,114,182,0.25)' },
+  agent:        { color: '#fb7185', bg: 'rgba(244,63,94,0.12)',   border: 'rgba(251,113,133,0.25)' },
+}
+
+function RoleGlyph({ role }) {
+  const p = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  if (role === 'organisateur') return <svg {...p}><path d="M12 2v3" /><path d="M12 5C6 7 3 11 3 13h18c0-2-3-6-9-8z" /><path d="M3 13v7h18v-7" /><path d="M8 13v7" /><path d="M12 13v7" /><path d="M16 13v7" /></svg>
+  if (role === 'prestataire') return <svg {...p}><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /><line x1="8" y1="22" x2="16" y2="22" /></svg>
+  if (role === 'agent') return <svg {...p}><circle cx="8" cy="15" r="4" /><path d="M10.8 12.2 19 4" /><path d="M18 5l2 2" /><path d="M15 8l2 2" /></svg>
+  return <svg {...p}><path d="M4 8a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a2 2 0 0 0 0 4v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a2 2 0 0 0 0-4z" /><path d="M14 7v12" strokeDasharray="1.5 2.5" /></svg>
+}
+
+function RoleIconSquare({ role, size = 34 }) {
+  const v = ROLE_VISUAL[role] || ROLE_VISUAL.client
+  return (
+    <div style={{ width: size, height: size, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: v.bg, border: `1px solid ${v.border}`, color: v.color }}>
+      <RoleGlyph role={role} />
+    </div>
+  )
 }
 
 export default function SideMenu({ open, onClose }) {
@@ -114,13 +141,9 @@ export default function SideMenu({ open, onClose }) {
             </div>
 
             {/* Stats row */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              {user.role && ROLES[user.role] && (
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 999, background: 'rgba(132,68,255,0.15)', border: '1px solid rgba(132,68,255,0.3)', color: '#c9b0ff' }}>
-                  {ROLES[user.role].icon} {ROLES[user.role].label}
-                </span>
-              )}
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {user.role && <RoleBadge role={user.role} />}
+              <span style={{ display: 'inline-flex', alignItems: 'center', height: 32, fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, padding: '0 12px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}>
                 {user.points || 0} pts
               </span>
             </div>
@@ -158,12 +181,17 @@ export default function SideMenu({ open, onClose }) {
               ] : []),
             ].map(item => (
               <button key={item.path} onClick={() => go(item.path)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', background: 'transparent', border: 'none', borderRadius: 12, cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, textAlign: 'left', transition: 'all 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#fff' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                className="group relative flex h-11 w-full items-center rounded-xl bg-transparent px-3 text-zinc-400 transition-all duration-300 hover:bg-[#121216]/60 hover:text-white hover:translate-x-1 active:scale-[0.96] active:translate-x-0"
+                style={{ cursor: 'pointer', border: 'none' }}
               >
-                {item.icon}
-                {item.label}
+                {/* Capsule émeraude à gauche */}
+                <span className="absolute left-0 top-3 h-5 w-[3px] scale-y-0 rounded-r-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100" />
+                <div className="flex h-5 w-5 items-center justify-center transition-colors duration-300 group-hover:text-emerald-400">
+                  {item.icon}
+                </div>
+                <span className="pl-3.5 text-[14px] font-bold tracking-wide transition-colors duration-300 group-hover:underline group-hover:underline-offset-[5px] group-hover:decoration-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  {item.label}
+                </span>
               </button>
             ))}
           </div>
@@ -191,7 +219,7 @@ export default function SideMenu({ open, onClose }) {
                         border: isActive ? '1px solid rgba(132,68,255,0.28)' : '1px solid rgba(255,255,255,0.07)',
                         transition: 'all 0.2s', opacity: switching ? 0.6 : 1,
                       }}>
-                      <span style={{ fontSize: 16 }}>{cfg.icon}</span>
+                      <RoleIconSquare role={role} />
                       <div style={{ flex: 1 }}>
                         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: isActive ? '#c9b0ff' : 'rgba(255,255,255,0.55)', margin: 0 }}>{cfg.label}</p>
                         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.22)', margin: 0 }}>{cfg.desc}</p>
@@ -282,48 +310,85 @@ export default function SideMenu({ open, onClose }) {
   )
 }
 
+// Icônes de rôle (SVG, pas d'emoji) — chapiteau pour l'organisateur, micro pour
+// le prestataire. `stroke=currentColor` pour hériter de la couleur du conteneur.
+function TentIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'relative', zIndex: 10 }}>
+      <path d="M12 2v3" /><path d="M12 5C6 7 3 11 3 13h18c0-2-3-6-9-8z" /><path d="M3 13v7h18v-7" /><path d="M8 13v7" /><path d="M12 13v7" /><path d="M16 13v7" />
+    </svg>
+  )
+}
+function MicIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'relative', zIndex: 10 }}>
+      <rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /><line x1="8" y1="22" x2="16" y2="22" />
+    </svg>
+  )
+}
+
+// Variantes statiques (Tailwind ne génère pas les classes dynamiquement) :
+// violet pour l'organisateur, rose pour le prestataire.
+const ROLE_CARD = {
+  organisateur: {
+    btn: 'border-violet-500/15 bg-[#12111a] hover:border-violet-500/35 hover:bg-[#151322] hover:shadow-[0_12px_30px_rgba(139,92,246,0.1)]',
+    iconBox: 'border-violet-500/20 bg-violet-500/10 text-violet-400 group-hover:bg-violet-500/20 group-hover:text-violet-300',
+    glow: 'radial-gradient(circle,rgba(139,92,246,0.3) 0%,transparent 70%)',
+    sub: 'group-hover:text-violet-400/80', arrow: 'group-hover:text-violet-400',
+    rgba: '139,92,246', Icon: TentIcon,
+  },
+  prestataire: {
+    btn: 'border-pink-500/15 bg-[#1a1016] hover:border-pink-500/35 hover:bg-[#1f1018] hover:shadow-[0_12px_30px_rgba(236,72,153,0.1)]',
+    iconBox: 'border-pink-500/20 bg-pink-500/10 text-pink-400 group-hover:bg-pink-500/20 group-hover:text-pink-300',
+    glow: 'radial-gradient(circle,rgba(236,72,153,0.3) 0%,transparent 70%)',
+    sub: 'group-hover:text-pink-400/80', arrow: 'group-hover:text-pink-400',
+    rgba: '236,72,153', Icon: MicIcon,
+  },
+}
+
 // ── Role request card ────────────────────────────────────────────────────────
 function RoleRequestCard({ role, status, onRequest, onViewDossier, onCancel, onModify }) {
   const cfg = ROLE_CONFIG[role]
+  const v = ROLE_CARD[role] || ROLE_CARD.organisateur
   const [cancelling, setCancelling] = useState(false)
   if (status === 'active') return null
 
   const isPending  = status === 'pending'
   const isRejected = status === 'rejected'
-  const accentColor = role === 'prestataire' ? 'rgba(255,77,166' : 'rgba(132,68,255'
 
   return (
     <div>
       <button onClick={isPending ? onViewDossier : onRequest}
-        style={{
-          width: '100%', padding: '14px 16px',
-          borderRadius: isPending ? '12px 12px 0 0' : 12,
-          background: `${accentColor},0.08)`,
-          border: `1px solid ${accentColor},0.22)`,
-          borderBottom: isPending ? 'none' : undefined,
-          display: 'flex', alignItems: 'center', gap: 12,
-          cursor: 'pointer', textAlign: 'left',
-        }}>
-        <span style={{ fontSize: 20 }}>{cfg.icon}</span>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: isPending ? 'var(--gold)' : '#fff', margin: '0 0 2px' }}>
-            {isPending ? 'Dossier en cours…' : isRejected ? `Nouveau dossier ${cfg.label}` : `Devenir ${cfg.label}`}
-          </p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
-            {isPending ? 'Voir le statut →' : isRejected ? 'Soumettre un nouveau dossier' : cfg.desc}
-          </p>
+        className={`group relative flex w-full items-center overflow-hidden border p-3 text-left transition-all duration-300 active:scale-[0.98] ${v.btn}`}
+        style={{ borderRadius: isPending ? '16px 16px 0 0' : 16, borderBottomWidth: isPending ? 0 : undefined, cursor: 'pointer' }}>
+        {/* Zone d'icône */}
+        <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${v.iconBox}`}>
+          <div className="pointer-events-none absolute -inset-3 -z-10 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:animate-bounce" style={{ background: v.glow }} />
+          <v.Icon />
         </div>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+        {/* Textes */}
+        <div className="relative z-10 flex flex-col pl-3">
+          <span className="text-[13px] font-bold tracking-wide text-zinc-200 transition-colors group-hover:text-white" style={{ fontFamily: 'Inter, sans-serif', color: isPending ? 'var(--gold)' : undefined }}>
+            {isPending ? 'Dossier en cours…' : isRejected ? `Nouveau dossier ${cfg.label}` : `Devenir ${cfg.label}`}
+          </span>
+          <span className={`text-[11px] font-medium text-zinc-500 mt-0.5 transition-colors ${v.sub}`} style={{ fontFamily: 'Inter, sans-serif' }}>
+            {isPending ? 'Voir le statut →' : isRejected ? 'Soumettre un nouveau dossier' : cfg.desc}
+          </span>
+        </div>
+        {/* Flèche */}
+        <div className={`ml-auto text-zinc-600 transition-all duration-300 group-hover:translate-x-0.5 ${v.arrow}`}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+        </div>
       </button>
 
       {isPending && (
-        <div style={{ display: 'flex', borderRadius: '0 0 12px 12px', border: `1px solid ${accentColor},0.22)`, borderTop: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-          <button onClick={onModify} style={{ flex: 1, padding: '9px', background: 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
-            ✏️ Modifier
+        <div style={{ display: 'flex', borderRadius: '0 0 16px 16px', border: `1px solid rgba(${v.rgba},0.18)`, borderTop: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+          <button onClick={onModify} style={{ flex: 1, padding: '9px', background: 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+            Modifier
           </button>
           <button disabled={cancelling} onClick={async () => { setCancelling(true); await onCancel(); setCancelling(false) }}
-            style={{ flex: 1, padding: '9px', background: 'transparent', border: 'none', cursor: cancelling ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: cancelling ? 'rgba(255,255,255,0.2)' : 'rgba(220,80,80,0.7)' }}>
-            {cancelling ? '…' : '✕ Annuler'}
+            style={{ flex: 1, padding: '9px', background: 'transparent', border: 'none', cursor: cancelling ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, color: cancelling ? 'rgba(255,255,255,0.2)' : 'rgba(220,80,80,0.75)' }}>
+            {cancelling ? '…' : 'Annuler'}
           </button>
         </div>
       )}

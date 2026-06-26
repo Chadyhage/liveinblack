@@ -41,6 +41,11 @@ export default {
         'metal-shine': 'metal-shine 4s linear infinite',
         'chrome-shimmer': 'chrome-shimmer 5s linear infinite',
         'glow-pulse': 'glow-pulse 6s ease-in-out infinite',
+        // ── Refonte LIB (menu, notifs, messagerie) ──
+        'laser-sweep': 'laser-sweep 1.5s linear infinite',
+        'bell-ring': 'bell-ring 0.6s ease-in-out',
+        'wiper-search': 'wiper-search 1.2s ease-in-out infinite',
+        'spin-decel': 'spin-decel 0.8s cubic-bezier(0.1,0.8,0.3,1) forwards',
       },
       keyframes: {
         'liquid-float': {
@@ -59,6 +64,25 @@ export default {
         'glow-pulse': {
           '0%, 100%': { opacity: '0.5', transform: 'scale(1)' },
           '50%':       { opacity: '0.9', transform: 'scale(1.05)' },
+        },
+        'laser-sweep': {
+          '0%':   { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        'bell-ring': {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '20%':       { transform: 'rotate(-10deg)' },
+          '40%':       { transform: 'rotate(10deg)' },
+          '60%':       { transform: 'rotate(-5deg)' },
+          '80%':       { transform: 'rotate(5deg)' },
+        },
+        'wiper-search': {
+          '0%, 100%': { transform: 'rotate(-15deg) scale(1.1)' },
+          '50%':       { transform: 'rotate(20deg) scale(1.1)' },
+        },
+        'spin-decel': {
+          '0%':   { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
         },
       },
       boxShadow: {

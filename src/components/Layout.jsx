@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SideMenu from './SideMenu'
+import AnimatedLogo from './AnimatedLogo'
+import AnimatedHamburger from './AnimatedHamburger'
 import { getUserId, getTotalUnreadCount, getLastRead } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
 import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG, upsertMessageNotification } from '../utils/notifications'
@@ -284,20 +286,9 @@ export default function Layout({ children, hideNav, chatMode }) {
             boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06) inset',
           }}>
             {/* Logo */}
-            <button onClick={() => navigate('/accueil')}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, marginRight: 8 }}>
-              <span style={{
-                width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-                background: 'radial-gradient(circle at 28% 28%, rgba(255,255,255,0.85), transparent 18%), linear-gradient(135deg, rgba(132,68,255,0.98), rgba(255,77,166,0.94))',
-                boxShadow: '0 0 20px rgba(132,68,255,0.4), 0 0 40px rgba(255,77,166,0.1)',
-              }} />
-              <span style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-                <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', letterSpacing: '0.08em', lineHeight: 1, color: 'white' }}>L</span>
-                <span style={{ display: 'inline-block', width: '2px', height: '12px', background: 'white', margin: '0 2px 1px', flexShrink: 0, alignSelf: 'center' }} />
-                <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', letterSpacing: '0.08em', lineHeight: 1, color: 'white' }}>VE IN</span>
-                <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontWeight: 900, fontSize: '1.05rem', letterSpacing: '0.02em', lineHeight: 1, color: 'white', marginLeft: '4px', position: 'relative', top: '1px' }}>BLACK</span>
-              </span>
-            </button>
+            <div style={{ flexShrink: 0, marginRight: 8 }}>
+              <AnimatedLogo size={30} onClick={() => navigate('/accueil')} />
+            </div>
 
             {/* Nav pills — centered */}
             <nav style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
@@ -360,17 +351,7 @@ export default function Layout({ children, hideNav, chatMode }) {
                 <>
                   {/* Notification bell */}
                   <div ref={notifBellRef} style={{ position: 'relative' }}>
-                    <button onClick={handleOpenNotifs}
-                      style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: notifOpen ? 'rgba(139,92,246,0.14)' : 'rgba(255,255,255,0.06)', border: `1px solid ${notifOpen ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.09)'}`, cursor: 'pointer', flexShrink: 0, position: 'relative' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                      </svg>
-                      {unreadNotifCount > 0 && (
-                        <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#e05aaa)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
-                          {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                        </span>
-                      )}
-                    </button>
+                    <NotifBell open={notifOpen} unread={unreadNotifCount} onClick={handleOpenNotifs} size={34} />
                     {notifOpen && (
                       <NotifDropdown notifications={notifications} onClose={() => setNotifOpen(false)} uid={uid} />
                     )}
@@ -386,12 +367,7 @@ export default function Layout({ children, hideNav, chatMode }) {
                   Se connecter
                 </button>
               )}
-              <button onClick={() => setMenuOpen(true)}
-                style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 34, height: 34, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 10, cursor: 'pointer', flexShrink: 0 }}>
-                <span style={{ width: 14, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.5)' }} />
-                <span style={{ width: 10, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.5)' }} />
-                <span style={{ width: 14, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.5)' }} />
-              </button>
+              <AnimatedHamburger size={34} active={menuOpen} onClick={() => setMenuOpen(o => !o)} />
             </div>
           </div>
         </div>
@@ -421,27 +397,10 @@ export default function Layout({ children, hideNav, chatMode }) {
             boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
           }}>
             {/* Hamburger */}
-            <button onClick={() => setMenuOpen(true)}
-              style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 32, height: 32, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 10, cursor: 'pointer' }}>
-              <span style={{ width: 14, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.7)' }} />
-              <span style={{ width: 10, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.7)' }} />
-              <span style={{ width: 14, height: 1.5, borderRadius: 1, background: 'rgba(255,255,255,0.7)' }} />
-            </button>
+            <AnimatedHamburger size={32} active={menuOpen} onClick={() => setMenuOpen(o => !o)} />
 
             {/* Logo */}
-            <button onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <span style={{
-                width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-                background: 'radial-gradient(circle at 28% 28%, rgba(255,255,255,0.85), transparent 18%), linear-gradient(135deg, rgba(132,68,255,0.98), rgba(255,77,166,0.94))',
-                boxShadow: '0 0 16px rgba(132,68,255,0.4)',
-              }} />
-              <span style={{ display: 'flex', alignItems: 'baseline' }}>
-                <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.05rem', letterSpacing: '0.08em', lineHeight: 1, color: 'white' }}>L</span>
-                <span style={{ display: 'inline-block', width: '2px', height: '11px', background: 'white', margin: '0 2px 1px', flexShrink: 0, alignSelf: 'center' }} />
-                <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.05rem', letterSpacing: '0.08em', lineHeight: 1, color: 'white' }}>VE IN</span>
-                <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontWeight: 900, fontSize: '1rem', letterSpacing: '0.02em', color: 'white', marginLeft: '4px', lineHeight: 1, position: 'relative', top: '1px' }}>BLACK</span>
-              </span>
-            </button>
+            <AnimatedLogo size={26} onClick={() => navigate('/accueil')} />
 
             {/* Right: avatar / connexion + notification bell */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -449,17 +408,7 @@ export default function Layout({ children, hideNav, chatMode }) {
                 <>
                   {/* Notification bell — mobile */}
                   <div ref={notifBellRef} style={{ position: 'relative' }}>
-                    <button onClick={handleOpenNotifs}
-                      style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: notifOpen ? 'rgba(139,92,246,0.14)' : 'rgba(255,255,255,0.07)', border: `1px solid ${notifOpen ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.10)'}`, cursor: 'pointer', position: 'relative' }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                      </svg>
-                      {unreadNotifCount > 0 && (
-                        <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 13, height: 13, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#e05aaa)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 7, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
-                          {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                        </span>
-                      )}
-                    </button>
+                    <NotifBell open={notifOpen} unread={unreadNotifCount} onClick={handleOpenNotifs} size={32} />
                     {notifOpen && (
                       <NotifDropdown notifications={notifications} onClose={() => setNotifOpen(false)} uid={uid} mobile />
                     )}
@@ -633,6 +582,24 @@ export default function Layout({ children, hideNav, chatMode }) {
   )
 }
 
+// ── Cloche de notification animée (Refonte LIB) ───────────────────────────────
+// Laser fuchsia qui sillonne le haut + tintement de la cloche au survol.
+function NotifBell({ open, unread, onClick, size = 34 }) {
+  return (
+    <button onClick={onClick} aria-label="Notifications"
+      className="group relative flex items-center justify-center overflow-hidden rounded-xl border bg-[#121216] transition-all duration-300 hover:border-fuchsia-500/40 hover:text-fuchsia-400 hover:shadow-[0_0_20px_rgba(217,70,239,0.15)] active:scale-95"
+      style={{ width: size, height: size, flexShrink: 0, borderColor: open ? 'rgba(217,70,239,0.45)' : 'rgba(255,255,255,0.08)', color: open ? '#e879f9' : 'rgba(255,255,255,0.55)' }}>
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-fuchsia-500 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:animate-laser-sweep" />
+      <svg className="group-hover:animate-bell-ring" width={Math.round(size * 0.47)} height={Math.round(size * 0.47)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+      {unread > 0 && (
+        <span className="absolute" style={{ top: size * 0.22, right: size * 0.22, width: 7, height: 7, borderRadius: '50%', background: '#d946ef', boxShadow: '0 0 8px rgba(217,70,239,0.9)' }} />
+      )}
+    </button>
+  )
+}
+
 // ── Notification dropdown ─────────────────────────────────────────────────────
 function NotifDropdown({ notifications, onClose, uid, mobile }) {
   const DM = "'DM Mono', monospace"
@@ -664,89 +631,90 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
   return (
     <div style={{
       position: 'absolute',
-      top: 'calc(100% + 10px)',
+      top: 'calc(100% + 12px)',
       right: 0,
-      width: mobile ? 'min(320px, calc(100vw - 24px))' : 320,
-      background: 'linear-gradient(180deg, rgba(14,16,30,0.98), rgba(8,10,20,0.98))',
-      border: '1px solid rgba(255,255,255,0.10)',
-      borderRadius: 14,
-      boxShadow: '0 20px 60px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.06) inset',
+      width: mobile ? 'min(340px, calc(100vw - 24px))' : 340,
+      background: '#101014',
+      border: '1px solid rgba(255,255,255,0.04)',
+      borderRadius: 24,
+      boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8)',
       backdropFilter: 'blur(24px)',
       zIndex: 999,
-      overflow: 'hidden',
+      padding: 12,
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px' }}>
-        <span style={{ fontFamily: DM, fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 12px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)' }}>
           Notifications
         </span>
         {notifications.length > 0 && (
-          <button onClick={() => { if (uid) markAllRead(uid) }} style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(139,92,246,0.7)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <button onClick={() => { if (uid) markAllRead(uid) }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(217,70,239,0.8)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             Tout lire
           </button>
         )}
       </div>
 
       {/* List */}
-      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+      <div style={{ maxHeight: 340, overflowY: 'auto', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
         {recent.length === 0 ? (
-          <div style={{ padding: '20px 16px', textAlign: 'center' }}>
+          <div style={{ padding: '24px 16px', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-              <IconBell size={26} color="rgba(255,255,255,0.20)" />
+              <IconBell size={26} color="rgba(255,255,255,0.18)" />
             </div>
-            <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: 0 }}>Aucune notification</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.28)', margin: 0 }}>Aucune notification</p>
           </div>
         ) : (
           recent.map(n => {
-            const cfg = NOTIF_CONFIG[n.type] || { icon: '🔔', color: 'rgba(255,255,255,0.5)' }
+            const cfg = NOTIF_CONFIG[n.type] || { color: 'rgba(255,255,255,0.5)' }
+            const accent = cfg.color || 'rgba(255,255,255,0.5)'
             const clickable = routeFor(n) != null
             return (
               <div key={n.id}
                 onClick={clickable ? () => handleClickNotif(n) : undefined}
-                style={{
-                display: 'flex', gap: 12, padding: '12px 16px',
-                borderTop: '1px solid rgba(255,255,255,0.04)',
-                background: n.read ? 'transparent' : 'rgba(139,92,246,0.05)',
-                cursor: clickable ? 'pointer' : 'default',
-              }}>
-                <div style={{
-                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: `${cfg.color}12`,
-                  border: `1px solid ${cfg.color}30`,
-                  fontSize: 14,
-                }}>
-                  {cfg.icon}
+                className="group flex items-start gap-3 rounded-xl p-2.5 transition-all duration-200 hover:bg-white/[0.025]"
+                style={{ cursor: clickable ? 'pointer' : 'default' }}>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-all"
+                  style={{ background: '#1a1a22', border: '1px solid rgba(255,255,255,0.03)', color: accent }}>
+                  <NotifGlyph type={n.type} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: DM, fontSize: 11, color: n.read ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.9)', margin: '0 0 3px', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {n.title}
-                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: n.read ? 'rgba(255,255,255,0.55)' : 'rgba(228,228,231,1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {n.title}
+                      </span>
+                      {!n.read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: accent, flexShrink: 0 }} />}
+                    </div>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{timeAgo(n.createdAt)}</span>
+                  </div>
                   {n.body && (
-                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '0 0 4px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {n.body}
                     </p>
                   )}
-                  <span style={{ fontFamily: DM, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}>
-                    {timeAgo(n.createdAt)}
-                  </span>
                 </div>
-                {!n.read && (
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, flexShrink: 0, marginTop: 4 }} />
-                )}
               </div>
             )
           })
         )}
       </div>
 
-      {recent.length > 0 && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '10px 16px', textAlign: 'center' }}>
-          <span style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
-            {notifications.length > 8 ? `+${notifications.length - 8} notifications de plus` : `${notifications.length} notification${notifications.length > 1 ? 's' : ''}`}
-          </span>
-        </div>
+      {notifications.length > recent.length && (
+        <button onClick={() => { onClose?.(); navigate('/profil') }}
+          className="mt-2 flex w-full items-center justify-center rounded-xl border border-white/[0.02] bg-[#16161c] py-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 transition-all duration-200 hover:bg-[#1c1c24] hover:text-zinc-200 active:scale-[0.99]"
+          style={{ fontFamily: 'Inter, sans-serif' }}>
+          +{notifications.length - recent.length} notifications de plus
+        </button>
       )}
     </div>
   )
+}
+
+// Icône SVG par type de notification (remplace les emojis NOTIF_CONFIG).
+function NotifGlyph({ type }) {
+  const p = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  if (type === 'message') return <svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+  if (type === 'new_order') return <svg {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+  if (type && type.startsWith('application_')) return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="16" y1="11" x2="22" y2="11" /></svg>
+  return <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
 }
