@@ -11,9 +11,9 @@ import { playNotifSound } from '../utils/notifSound'
 import { IconBell } from './icons'
 
 // ── Nav icons ──────────────────────────────────────────────────────────────────
-function NavIcon({ id, active }) {
-  const color = active ? 'var(--violet)' : 'rgba(255,255,255,0.28)'
-  const s = active ? 1.5 : 1.3
+function NavIcon({ id, active, activeColor = 'var(--violet)' }) {
+  const color = active ? activeColor : 'rgba(255,255,255,0.28)'
+  const s = active ? 1.6 : 1.3
   const props = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: s, strokeLinecap: 'round', strokeLinejoin: 'round' }
   if (id === '/accueil') return <svg {...props}><path d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
   if (id === '/evenements') return <svg {...props}><rect x="3" y="7" width="18" height="13" rx="1.5"/><path d="M8 7V5m8 2V5"/><path d="M7 13h2m2 0h2m2 0h2"/></svg>
@@ -535,32 +535,36 @@ export default function Layout({ children, hideNav, chatMode }) {
             const isMsgItem = item.path === '/messagerie'
             return (
               <button key={item.path} onClick={() => navigate(item.path)}
-                className={`flex-1 ${active ? 'nav-active-bounce' : ''}`}
+                className="group flex-1 relative"
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  padding: '12px 6px 10px',
-                  background: active ? 'rgba(132,68,255,0.12)' : 'transparent',
-                  border: 'none', cursor: 'pointer', position: 'relative',
-                  transition: 'background 0.2s',
+                  padding: '11px 4px 9px', margin: '4px 3px', borderRadius: 14,
+                  background: active ? 'rgba(217,70,239,0.07)' : 'transparent',
+                  border: active ? '1px solid rgba(217,70,239,0.35)' : '1px solid transparent',
+                  boxShadow: active ? '0 4px 20px rgba(139,92,246,0.15)' : 'none',
+                  cursor: 'pointer', position: 'relative',
+                  transition: 'background 0.25s, border-color 0.25s',
                 }}>
-                {active && (
-                  <span style={{
-                    position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-                    width: 28, height: 2, borderRadius: 999,
-                    background: 'linear-gradient(to right, var(--violet), var(--violet-end))',
-                  }} />
-                )}
-                <div style={{ position: 'relative' }}>
-                  <NavIcon id={item.path} active={active} />
+                {/* Équerres émeraude (coins) sur l'onglet actif */}
+                {active && (<>
+                  <span style={{ position: 'absolute', top: 5, left: 7, width: 7, height: 7, borderTop: '2px solid #34d399', borderLeft: '2px solid #34d399', borderTopLeftRadius: 2 }} />
+                  <span style={{ position: 'absolute', bottom: 5, right: 7, width: 7, height: 7, borderBottom: '2px solid #34d399', borderRight: '2px solid #34d399', borderBottomRightRadius: 2 }} />
+                </>)}
+                <div style={{ position: 'relative', transition: 'transform 0.25s', transform: active ? 'scale(1.06)' : 'scale(1)' }}>
+                  <NavIcon id={item.path} active={active} activeColor="#e879f9" />
                   {isMsgItem && unreadMsgCount > 0 && (
-                    <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8444ff,#ff4da6)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                    <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
                       {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
                     </span>
                   )}
                 </div>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.30)' }}>
+                <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 9, fontWeight: active ? 800 : 600, letterSpacing: '0.02em', textTransform: 'uppercase', color: active ? '#e879f9' : 'rgba(255,255,255,0.32)', whiteSpace: 'nowrap', transition: 'color 0.25s' }}>
                   {item.label}
                 </span>
+                {/* Trait laser sous l'onglet actif */}
+                {active && (
+                  <span style={{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 1.5, borderRadius: 999, background: 'linear-gradient(90deg, rgba(52,211,153,0.4), #34d399, rgba(52,211,153,0.4))', boxShadow: '0 0 10px rgba(52,211,153,0.7)' }} />
+                )}
               </button>
             )
           })}

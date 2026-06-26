@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Layout from '../components/Layout'
 import EmptyState from '../components/EmptyState'
+import { MessagingSearchBar, MessagingActionCard } from '../components/MessagingActions'
 import {
   getUserId, initUsers, getAllUsers, getUserById, getUserByUsername, searchUsers,
   getInitials, formatTime, formatMsgTime, formatDateSeparator, isSameDay,
@@ -1722,41 +1723,21 @@ export default function MessagingPage() {
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '0' }}>
         {/* Header */}
         <div style={{ padding: '16px 16px 10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h1 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 26, color: '#fff', margin: 0, letterSpacing: '0.05em' }}>Messages</h1>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {/* + person button with red dot if pending requests */}
-              <button
-                onClick={() => { setView('contacts'); setFriends(getFriends(myId)); setRequests(getFriendRequests(myId)); setContactSearch('') }}
-                style={{ position: 'relative', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 6, padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, color: T.teal }}>
-                {/* Person + icon */}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.teal} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <line x1="19" y1="8" x2="19" y2="14"/>
-                  <line x1="22" y1="11" x2="16" y2="11"/>
-                </svg>
-                {pendingRequests > 0 && (
-                  <span style={{ position: 'absolute', top: -4, right: -4, width: 10, height: 10, borderRadius: '50%', background: '#e05aaa', border: '1.5px solid #04040b' }} />
-                )}
-              </button>
-              {/* + Groupe */}
-              <button onClick={() => { setView('new-group'); setNewGroupStep(1); setNewGroupMembers([]); setNewGroupName(''); setNewGroupAvatar(null) }}
-                style={{ background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.25)', borderRadius: 6, padding: '7px 10px', cursor: 'pointer', color: T.gold, fontFamily: T.dmMono, fontSize: 10 }}>
-                + Groupe
-              </button>
-            </div>
-          </div>
-          {/* Search bar for existing contacts */}
-          <div style={{ position: 'relative' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.dim} strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              style={{ ...INPUT_S, paddingLeft: 32 }}
-              placeholder="Rechercher une conversation…"
-              value={contactSearch}
-              onChange={e => setContactSearch(e.target.value)}
+          <h1 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 26, color: '#fff', margin: '0 0 12px', letterSpacing: '0.05em' }}>Messages</h1>
+          {/* Search bar */}
+          <MessagingSearchBar value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
+          {/* Quick actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+            <MessagingActionCard
+              variant="friend"
+              title="Ajouter un ami"
+              badge={pendingRequests}
+              onClick={() => { setView('contacts'); setFriends(getFriends(myId)); setRequests(getFriendRequests(myId)); setContactSearch('') }}
+            />
+            <MessagingActionCard
+              variant="group"
+              title="Créer un groupe"
+              onClick={() => { setView('new-group'); setNewGroupStep(1); setNewGroupMembers([]); setNewGroupName(''); setNewGroupAvatar(null) }}
             />
           </div>
         </div>
