@@ -9,10 +9,15 @@ import { useState } from 'react'
 // l'animation via un état hover + transform inline plutôt que group-hover,
 // car Tailwind ne peut pas générer une classe arbitraire à partir d'une
 // valeur JS dynamique (il scanne le code source statiquement).
-export default function AnimatedLogo({ size = 64, onClick }) {
+export default function AnimatedLogo({ size = 64, onClick, textScale = 0.6 }) {
   const [hover, setHover] = useState(false)
-  const slide = size * 1.4375 // 92/64
-  const fontSize = size * 0.266 // 17/64
+  // Le texte est volontairement DÉCOUPLÉ de la taille de l'icône (sinon, dans une
+  // navbar à ~28px, il devenait minuscule). textScale pilote sa taille.
+  const fontSize = size * textScale
+  const textLeft = size + fontSize * 0.6
+  const textWidth = fontSize * 11.8 // largeur réelle de "L|VE IN BLACK" en Syne 800 (mesurée)
+  const totalWidth = textLeft + textWidth
+  const slide = totalWidth - size // au survol, l'icône glisse là où était le texte
   const ease = 'cubic-bezier(0.25,1,0.5,1)'
 
   return (
@@ -21,7 +26,7 @@ export default function AnimatedLogo({ size = 64, onClick }) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       className="relative flex items-center select-none cursor-pointer bg-transparent border-none p-0"
-      style={{ fontFamily: "'Syne', sans-serif", height: size, width: size + slide + fontSize * 6 }}
+      style={{ fontFamily: "'Syne', sans-serif", height: size, width: totalWidth }}
     >
       {/* 1. Icône graphique — pivote à 45° et glisse vers la droite */}
       <div
@@ -54,7 +59,7 @@ export default function AnimatedLogo({ size = 64, onClick }) {
       <div
         className="absolute flex items-center uppercase tracking-tighter font-black select-none text-fuchsia-400 will-change-transform"
         style={{
-          left: size + fontSize * 0.8, fontSize, lineHeight: 1,
+          left: textLeft, fontSize, lineHeight: 1,
           filter: 'drop-shadow(0 0 10px rgba(232,121,249,0.15))',
           transition: `opacity 0.5s ${ease}, filter 0.5s ${ease}, transform 0.5s ${ease}`,
           opacity: hover ? 0 : 1,

@@ -287,7 +287,7 @@ export default function Layout({ children, hideNav, chatMode }) {
           }}>
             {/* Logo */}
             <div style={{ flexShrink: 0, marginRight: 8 }}>
-              <AnimatedLogo size={30} onClick={() => navigate('/accueil')} />
+              <AnimatedLogo size={32} onClick={() => navigate('/accueil')} />
             </div>
 
             {/* Nav pills — centered */}
@@ -400,7 +400,7 @@ export default function Layout({ children, hideNav, chatMode }) {
             <AnimatedHamburger size={32} active={menuOpen} onClick={() => setMenuOpen(o => !o)} />
 
             {/* Logo */}
-            <AnimatedLogo size={26} onClick={() => navigate('/accueil')} />
+            <AnimatedLogo size={24} onClick={() => navigate('/accueil')} />
 
             {/* Right: avatar / connexion + notification bell */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
