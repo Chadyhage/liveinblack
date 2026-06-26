@@ -2462,7 +2462,9 @@ function OrganizerAnalytics({ events, tickets, loading }) {
     return Number(place?.price) || 0
   }
   const totalTickets = tickets.length
-  const grossRevenue = tickets.reduce((s, t) => s + priceOf(t), 0)
+  // Revenu = uniquement les billets PAYÉS. Un billet gratuit (guestlist / event
+  // gratuit) occupe une place mais ne rapporte rien — il ne doit pas gonfler le CA.
+  const grossRevenue = tickets.reduce((s, t) => s + (t.paid ? priceOf(t) : 0), 0)
   const netRevenue = Math.round(grossRevenue * (1 - COMMISSION) * 100) / 100
   const paidCount = tickets.filter(t => t.paid).length
   const totalCap = (events || []).reduce((s, e) => s + (e.places || []).reduce((a, p) => a + (Number(p.total) || 0), 0), 0)
@@ -2472,7 +2474,7 @@ function OrganizerAnalytics({ events, tickets, loading }) {
   const perEvent = (events || []).map(e => {
     const evTix = tickets.filter(t => String(t.eventId) === String(e.id))
     const cap = (e.places || []).reduce((a, p) => a + (Number(p.total) || 0), 0)
-    const rev = evTix.reduce((s, t) => s + priceOf(t), 0)
+    const rev = evTix.reduce((s, t) => s + (t.paid ? priceOf(t) : 0), 0)
     return { event: e, sold: evTix.length, cap, rev, fill: cap > 0 ? Math.round(evTix.length / cap * 100) : 0 }
   }).filter(x => x.sold > 0).sort((a, b) => b.rev - a.rev).slice(0, 6)
 
