@@ -102,11 +102,15 @@ function RevealSection({ children, delay = 0, style = {} }) {
 const VIOLET = '#8444ff'
 const WHITE  = '#ffffff'
 
-function HeroGooeyText({ user, orgName }) {
+function HeroGooeyText({ user, orgName, prestName }) {
   const { texts, colors } = useMemo(() => {
-    // Pour les organisateurs : afficher le nom de l'organisation
+    // Pour les organisateurs/prestataires : afficher le nom commercial plutôt
+    // que le prénom personnel — c'est l'identité sous laquelle ils opèrent
+    // dans CETTE interface (le prénom reste affiché côté client, lui).
     const displayName = (user?.role === 'organisateur' && orgName)
       ? orgName
+      : (user?.role === 'prestataire' && prestName)
+      ? prestName
       : user?.name?.trim() || null
     if (displayName) {
       const greeting = (() => {
@@ -126,7 +130,7 @@ function HeroGooeyText({ user, orgName }) {
       texts: ['Bienvenue', 'L|VE IN BLACK'],
       colors: [VIOLET, WHITE],
     }
-  }, [user?.name, user?.role, orgName])
+  }, [user?.name, user?.role, orgName, prestName])
 
   return (
     <div style={{ position: 'relative', height: 'clamp(52px, 13vw, 100px)', marginBottom: 4 }}>
@@ -159,6 +163,17 @@ export default function HomePage() {
     import('../utils/applications').then(({ getApplicationByUser }) => {
       const app = getApplicationByUser(user.uid, 'organisateur')
       setOrgName(app?.formData?.nomCommercial || null)
+    }).catch(() => {})
+  }, [user?.uid, user?.role])
+
+  // Pour les prestataires : récupérer le nom de scène/commercial de leur
+  // profil d'annuaire (providers/{uid}) — c'est l'identité publique sous
+  // laquelle ils opèrent dans cette interface, distincte de leur prénom.
+  const [prestName, setPrestName] = useState(null)
+  useEffect(() => {
+    if (user?.role !== 'prestataire') { setPrestName(null); return }
+    import('../utils/services').then(({ getProviderProfile }) => {
+      setPrestName(getProviderProfile(user.uid)?.name || null)
     }).catch(() => {})
   }, [user?.uid, user?.role])
 
@@ -327,7 +342,7 @@ export default function HomePage() {
 
         {/* ── Hero ── */}
         <div style={{ padding: '52px 0 48px' }}>
-          <HeroGooeyText user={user} orgName={orgName} />
+          <HeroGooeyText user={user} orgName={orgName} prestName={prestName} />
           <p style={{
             fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)',
             color: 'rgba(255,255,255,0.38)', marginTop: 20, maxWidth: 420, lineHeight: 1.55,

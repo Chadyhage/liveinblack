@@ -287,7 +287,7 @@ export default function Layout({ children, hideNav, chatMode }) {
           }}>
             {/* Logo */}
             <div style={{ flexShrink: 0, marginRight: 8 }}>
-              <AnimatedLogo size={32} onClick={() => navigate('/accueil')} />
+              <AnimatedLogo size={40} textScale={0.45} onClick={() => navigate('/accueil')} />
             </div>
 
             {/* Nav pills — centered */}
@@ -297,31 +297,26 @@ export default function Layout({ children, hideNav, chatMode }) {
                 const isMsgItem = item.path === '/messagerie'
                 return (
                   <button key={item.path} onClick={() => navigate(item.path)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 7,
-                      padding: '7px 16px',
-                      background: active ? 'rgba(132,68,255,0.18)' : 'transparent',
-                      border: `1px solid ${active ? 'rgba(132,68,255,0.28)' : 'transparent'}`,
-                      borderRadius: 999,
-                      boxShadow: active ? '0 0 20px rgba(132,68,255,0.2)' : 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      position: 'relative',
-                    }}>
-                    <div style={{ position: 'relative' }}>
-                      <NavIcon id={item.path} active={active} />
+                    className={`group relative flex items-center gap-1.5 rounded-xl border transition-all duration-300 ${active ? 'border-fuchsia-500/35 bg-fuchsia-500/[0.1] shadow-[0_0_22px_rgba(217,70,239,0.2)]' : 'border-transparent hover:bg-white/[0.05]'}`}
+                    style={{ padding: '7px 12px', cursor: 'pointer' }}>
+                    {/* Équerres émeraude (apparaissent au survol, fixes si actif) */}
+                    <span className={`pointer-events-none absolute top-1.5 left-2 h-2 w-2 rounded-tl-sm border-t-2 border-l-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                    <span className={`pointer-events-none absolute bottom-1.5 right-2 h-2 w-2 rounded-br-sm border-b-2 border-r-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                    <div className="relative transition-transform duration-300 group-hover:scale-110">
+                      <NavIcon id={item.path} active={active} activeColor="#e879f9" />
                       {isMsgItem && unreadMsgCount > 0 && (
-                        <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8444ff,#ff4da6)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                        <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
                           {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
                         </span>
                       )}
                     </div>
-                    <span style={{
-                      fontFamily: 'Inter, system-ui, sans-serif', fontSize: 13, fontWeight: active ? 600 : 400,
-                      color: active ? '#fff' : 'rgba(255,255,255,0.45)',
-                    }}>
+                    <span className={`uppercase transition-colors duration-300 ${active ? 'text-fuchsia-400' : 'text-white/45 group-hover:text-white'}`}
+                      style={{ fontFamily: "'Syne', sans-serif", fontSize: 12.5, fontWeight: active ? 800 : 600, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
                       {item.label}
                     </span>
+                    {/* Trait laser (pousse depuis le centre au survol, large si actif) */}
+                    <span className={`pointer-events-none absolute bottom-[3px] left-1/2 h-[1.5px] -translate-x-1/2 rounded-full transition-all duration-300 ${active ? 'w-[55%] opacity-100' : 'w-0 opacity-0 group-hover:w-[65%] group-hover:opacity-100'}`}
+                      style={{ background: 'linear-gradient(90deg, rgba(52,211,153,0.4), #34d399, rgba(52,211,153,0.4))', boxShadow: '0 0 10px rgba(52,211,153,0.7)' }} />
                   </button>
                 )
               })}
