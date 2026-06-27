@@ -536,7 +536,7 @@ export default function Layout({ children, hideNav, chatMode }) {
             return (
               <button key={item.path} onClick={() => navigate(item.path)}
                 className={`group flex-1 relative flex flex-col items-center gap-1 cursor-pointer rounded-2xl border transition-all duration-300 ${active ? 'border-fuchsia-500/35 bg-fuchsia-500/[0.07] shadow-[0_4px_20px_rgba(139,92,246,0.15)]' : 'border-transparent hover:bg-white/[0.04]'}`}
-                style={{ padding: '11px 4px 9px', margin: '4px 3px' }}>
+                style={{ padding: navItems.length >= 5 ? '11px 2px 9px' : '11px 4px 9px', margin: navItems.length >= 5 ? '4px 1px' : '4px 3px', minWidth: 0 }}>
                 {/* Équerres émeraude (coins) — glissent à l'apparition au survol, fixes si actif */}
                 <span className={`pointer-events-none absolute top-1.5 left-2 h-2 w-2 rounded-tl-sm border-t-2 border-l-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
                 <span className={`pointer-events-none absolute bottom-1.5 right-2 h-2 w-2 rounded-br-sm border-b-2 border-r-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
@@ -548,8 +548,12 @@ export default function Layout({ children, hideNav, chatMode }) {
                     </span>
                   )}
                 </div>
-                <span className={`whitespace-nowrap uppercase transition-colors duration-300 ${active ? 'text-fuchsia-400' : 'text-white/30 group-hover:text-white'}`}
-                  style={{ fontFamily: "'Syne', sans-serif", fontSize: 9, fontWeight: active ? 800 : 600, letterSpacing: '0.02em' }}>
+                <span className={`uppercase transition-colors duration-300 ${active ? 'text-fuchsia-400' : 'text-white/30 group-hover:text-white'}`}
+                  style={{
+                    fontFamily: "'Syne', sans-serif", fontWeight: active ? 800 : 600, letterSpacing: '0.02em',
+                    fontSize: navItems.length >= 5 ? 8 : 9,
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
                   {item.label}
                 </span>
                 {/* Trait laser — pousse depuis le centre au survol, large si actif */}
