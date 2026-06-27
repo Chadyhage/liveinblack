@@ -440,21 +440,31 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
       activeRole: newRole,
       enabledRoles,
       status: 'active',
+      // CRITIQUE : orgStatus/prestStatus à 'active' — c'est CE champ que
+      // RoleRequestCard (menu "Mes interfaces") regarde pour savoir si le
+      // rôle est déjà accordé. Sans lui, le bouton "Devenir Prestataire"
+      // restait affiché indéfiniment même après approbation (le compte avait
+      // bien le rôle, mais l'UI ne le savait pas).
+      ...(newRole === 'organisateur' ? { orgStatus: 'active' } : { prestStatus: 'active' }),
       emailVerified: true,   // validé par l'admin = email vérifié
       canSellAlcohol:   !!(app.formData?.alcool),
       approvedAt:       now,
       approvedBy:       adminName,
     }
+    // Nom d'affichage spécifique au prestataire (nom de scène / commercial) —
+    // utilisé UNIQUEMENT pour son profil d'annuaire (providers/{uid}), jamais
+    // pour écraser le `name` global du compte : sinon le nom commercial
+    // remplaçait le vrai prénom partout, y compris le "Bonjour {name}" côté
+    // interface CLIENT, qui n'a rien à voir avec l'activité de prestataire.
+    let providerDisplayName = null
     if (app.type === 'prestataire') {
       perms.prestataireType = app.formData?.prestataireType || null
-      // Display name: stage name for artistes, else commercial name, else real name
       const fd = app.formData || {}
-      const displayName =
+      providerDisplayName =
         (fd.prestataireType === 'artiste' && fd.nomScene?.trim())
           ? fd.nomScene.trim()
           : fd.nomCommercial?.trim() ||
             [fd.prenom, fd.nom].filter(Boolean).map(s => s.trim()).join(' ')
-      if (displayName) perms.name = displayName
     }
 
     // Écriture CRITIQUE du rôle EN PREMIER, awaitée
@@ -478,7 +488,7 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
           const fd = app.formData || {}
           const profile = {
             userId: app.uid,
-            name: perms.name || fd.nomCommercial || [fd.prenom, fd.nom].filter(Boolean).join(' ') || 'Prestataire',
+            name: providerDisplayName || fd.nomCommercial || [fd.prenom, fd.nom].filter(Boolean).join(' ') || 'Prestataire',
             prestataireType: fd.prestataireType || null,
             description: (fd.description || '').trim(),
             location: (fd.ville || fd.adresseLieu || '').trim(),
