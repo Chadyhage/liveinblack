@@ -418,12 +418,27 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
   // l'erreur remonte → l'admin voit un échec au lieu d'un faux « approuvé ».
   if (status === 'approved') {
     const app = all[idx]
-    const { updateAccount } = await import('./accounts')
-    const { syncDocAwaitable } = await import('./firestore-sync')
+    const { updateAccount, getEnabledRoles } = await import('./accounts')
+    const { syncDocAwaitable, loadDoc } = await import('./firestore-sync')
+    const newRole = app.type === 'organisateur' ? 'organisateur' : 'prestataire'
+
+    // CRITIQUE : ajouter le nouveau rôle à enabledRoles (pas juste flipper
+    // `role`), sinon le compte perd son badge "Mes interfaces" et reste
+    // bloqué sur l'interface organisateur/prestataire sans pouvoir revenir en
+    // client — lu en LIVE depuis Firestore (pas le cache local de l'admin,
+    // potentiellement périmé) pour ne pas écraser des rôles déjà accordés.
+    let enabledRoles = ['client']
+    try {
+      const liveDoc = await loadDoc(`users/${app.uid}`)
+      enabledRoles = getEnabledRoles(liveDoc || { role: 'client' })
+    } catch {}
+    if (!enabledRoles.includes(newRole)) enabledRoles = [...enabledRoles, newRole]
 
     // Permissions dérivées du formulaire
     const perms = {
-      role: app.type === 'organisateur' ? 'organisateur' : 'prestataire',
+      role: newRole,
+      activeRole: newRole,
+      enabledRoles,
       status: 'active',
       emailVerified: true,   // validé par l'admin = email vérifié
       canSellAlcohol:   !!(app.formData?.alcool),
