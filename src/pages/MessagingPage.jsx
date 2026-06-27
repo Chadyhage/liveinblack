@@ -1721,13 +1721,11 @@ export default function MessagingPage() {
   if (view === 'list') return (
     <Layout>
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '0' }}>
-        {/* Header */}
-        <div style={{ padding: '16px 16px 10px' }}>
-          <h1 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 26, color: '#fff', margin: '0 0 12px', letterSpacing: '0.05em' }}>Messages</h1>
-          {/* Search bar */}
+        {/* Header — titre retiré, l'espace est recyclé pour resserrer recherche + actions */}
+        <div style={{ padding: '14px 16px 10px' }}>
           <MessagingSearchBar value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
           {/* Quick actions — compactes, côte à côte */}
-          <div style={{ marginTop: 10 }}>
+          <div style={{ marginTop: 8 }}>
             <MessagingQuickActions
               friendBadge={pendingRequests}
               onAddFriend={() => { setView('contacts'); setFriends(getFriends(myId)); setRequests(getFriendRequests(myId)); setContactSearch('') }}
