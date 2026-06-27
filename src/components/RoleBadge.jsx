@@ -38,8 +38,13 @@ export default function RoleBadge({ role, label }) {
         className="pl-2.5 font-bold tracking-wide"
         style={{
           fontFamily: 'Inter, sans-serif', fontSize: 12,
-          background: `linear-gradient(to right, #e4e4e7, ${v.to})`,
-          WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+          // backgroundImage (longhand) plutôt que `background` (raccourci) :
+          // le raccourci `background` réinitialise background-clip dans la
+          // cascade CSS, ce qui annulait l'effet "texte en dégradé" et
+          // laissait voir un bloc plein au lieu du texte.
+          backgroundImage: `linear-gradient(to right, #e4e4e7, ${v.to})`,
+          WebkitBackgroundClip: 'text', backgroundClip: 'text',
+          WebkitTextFillColor: 'transparent', color: 'transparent',
         }}
       >
         {label || v.label}
