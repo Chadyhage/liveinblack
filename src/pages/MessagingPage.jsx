@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Layout from '../components/Layout'
 import EmptyState from '../components/EmptyState'
-import { MessagingSearchBar, MessagingActionCard } from '../components/MessagingActions'
+import { MessagingSearchBar, MessagingQuickActions } from '../components/MessagingActions'
 import {
   getUserId, initUsers, getAllUsers, getUserById, getUserByUsername, searchUsers,
   getInitials, formatTime, formatMsgTime, formatDateSeparator, isSameDay,
@@ -1726,67 +1726,71 @@ export default function MessagingPage() {
           <h1 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 26, color: '#fff', margin: '0 0 12px', letterSpacing: '0.05em' }}>Messages</h1>
           {/* Search bar */}
           <MessagingSearchBar value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
-          {/* Quick actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-            <MessagingActionCard
-              variant="friend"
-              title="Ajouter un ami"
-              badge={pendingRequests}
-              onClick={() => { setView('contacts'); setFriends(getFriends(myId)); setRequests(getFriendRequests(myId)); setContactSearch('') }}
-            />
-            <MessagingActionCard
-              variant="group"
-              title="Créer un groupe"
-              onClick={() => { setView('new-group'); setNewGroupStep(1); setNewGroupMembers([]); setNewGroupName(''); setNewGroupAvatar(null) }}
+          {/* Quick actions — compactes, côte à côte */}
+          <div style={{ marginTop: 10 }}>
+            <MessagingQuickActions
+              friendBadge={pendingRequests}
+              onAddFriend={() => { setView('contacts'); setFriends(getFriends(myId)); setRequests(getFriendRequests(myId)); setContactSearch('') }}
+              onCreateGroup={() => { setView('new-group'); setNewGroupStep(1); setNewGroupMembers([]); setNewGroupName(''); setNewGroupAvatar(null) }}
             />
           </div>
         </div>
 
         {/* Conversation list */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {conversations.filter(conv => {
+        {(() => {
+          const filtered = conversations.filter(conv => {
             if (!contactSearch.trim()) return true
             const d = getConvDisplay(conv)
             return d.name.toLowerCase().includes(contactSearch.toLowerCase()) || conv.lastMessage?.toLowerCase().includes(contactSearch.toLowerCase())
-          }).length === 0 ? (
-            <EmptyState
-              icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>}
-              title="Aucune conversation"
-              subtitle="Ajoute un contact et commence à discuter"
-            />
-          ) : conversations.filter(conv => {
-            if (!contactSearch.trim()) return true
-            const d = getConvDisplay(conv)
-            return d.name.toLowerCase().includes(contactSearch.toLowerCase()) || conv.lastMessage?.toLowerCase().includes(contactSearch.toLowerCase())
-          }).map(conv => {
-            const d = getConvDisplay(conv)
-            const unread = getUnreadCount(conv.id, myId)
-            const muted = isConvMuted(myId, conv.id)
-            return (
-              <button key={conv.id} onClick={() => openConv(conv.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                {d.isGroup ? <GroupAvatar conv={conv} size={44} /> : <Avatar user={d.user} size={44} showOnline />}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                      <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 16, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</p>
-                      {muted && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.dim} strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>}
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                      {unread > 0 && (muted
-                        ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.dim }} />
-                        : <span style={{ background: T.teal, color: '#000', borderRadius: 10, padding: '1px 6px', fontFamily: T.dmMono, fontSize: 9, fontWeight: 700 }}>{unread}</span>)}
-                      <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>{formatTime(conv.updatedAt)}</span>
-                    </div>
-                  </div>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 10, color: unread > 0 ? T.muted : T.dim, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {d.isGroup && conv.type === 'group' ? `${d.memberCount} membres · ` : ''}{conv.lastMessage}
-                  </p>
-                </div>
-              </button>
-            )
-          })}
-        </div>
+          })
+          if (filtered.length === 0) return (
+            <div style={{ padding: '0 16px' }}>
+              <EmptyState
+                icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>}
+                title="Aucune conversation"
+                subtitle="Ajoute un contact et commence à discuter"
+              />
+            </div>
+          )
+          return (
+            <div style={{ padding: '6px 12px 0' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: '6px 4px 8px' }}>
+                Conversations
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {filtered.map(conv => {
+                  const d = getConvDisplay(conv)
+                  const unread = getUnreadCount(conv.id, myId)
+                  const muted = isConvMuted(myId, conv.id)
+                  return (
+                    <button key={conv.id} onClick={() => openConv(conv.id)}
+                      className="group transition-all duration-200 hover:bg-white/[0.04]"
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 16, background: unread > 0 ? 'rgba(217,70,239,0.05)' : 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', textAlign: 'left' }}>
+                      {d.isGroup ? <GroupAvatar conv={conv} size={46} /> : <Avatar user={d.user} size={46} showOnline />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14.5, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</p>
+                            {muted && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.dim} strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            {unread > 0 && (muted
+                              ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.dim }} />
+                              : <span style={{ background: '#d946ef', color: '#fff', borderRadius: 10, minWidth: 18, textAlign: 'center', padding: '1px 6px', fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800 }}>{unread}</span>)}
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: T.dim }}>{formatTime(conv.updatedAt)}</span>
+                          </div>
+                        </div>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: unread > 0 ? 'rgba(255,255,255,0.6)' : T.dim, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {d.isGroup && conv.type === 'group' ? `${d.memberCount} membres · ` : ''}{conv.lastMessage}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
       </div>
     </Layout>
   )
