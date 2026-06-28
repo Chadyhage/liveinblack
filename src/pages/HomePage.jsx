@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import RegionSelector from '../components/RegionSelector'
 import EmptyState from '../components/EmptyState'
+import TonightCarousel, { remainingPlaces } from '../components/TonightCarousel'
 import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
@@ -308,6 +309,22 @@ export default function HomePage() {
     }
   }
 
+  // « Réservez pour ce soir » : soirées du JOUR MÊME, dans la région, où il
+  // reste des places. Discovery dernière minute pour les sorties spontanées.
+  const tonightEvents = (() => {
+    const todayKey = new Date(); todayKey.setHours(0, 0, 0, 0)
+    return regionEvents
+      .filter(e => isEventVisible(e) && !isEventClosed(e) && !isEventPast(e))
+      .filter(e => {
+        try {
+          const d = new Date(e.date + 'T00:00:00'); d.setHours(0, 0, 0, 0)
+          return d.getTime() === todayKey.getTime()
+        } catch { return false }
+      })
+      .filter(e => remainingPlaces(e) > 0)
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+  })()
+
   const handleRegionSelect = (region) => {
     setSelectedRegion(region)
     localStorage.setItem('lib_region', region ? JSON.stringify({ id: region.id }) : 'null')
@@ -551,6 +568,19 @@ export default function HomePage() {
                 />
               )}
             </div>
+
+            {/* ── Réservez pour ce soir ── (n'apparaît que s'il y a des soirées ce soir) */}
+            {tonightEvents.length > 0 && (
+              <RevealSection delay={150}>
+                <div style={{ marginTop: 28 }}>
+                  <TonightCarousel
+                    events={tonightEvents}
+                    regionName={selectedRegion?.name}
+                    onOpen={(id) => navigate(`/evenements/${id}`)}
+                  />
+                </div>
+              </RevealSection>
+            )}
 
             {/* See all CTA */}
             <RevealSection delay={400}>

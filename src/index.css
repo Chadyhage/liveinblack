@@ -54,6 +54,10 @@
     border-radius: 2px;
   }
 
+  /* Carrousels horizontaux : scrollbar masquée (scroll au doigt/trackpad) */
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .hide-scrollbar::-webkit-scrollbar { display: none; height: 0; }
+
 /* ─── Nebula background ──────────────────────────────────────────────────── */
 .nebula-bg {
   position: fixed;
