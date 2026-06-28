@@ -135,7 +135,7 @@ function HeroGooeyText({ user, orgName, prestName }) {
   }, [user?.name, user?.role, orgName, prestName])
 
   return (
-    <div style={{ position: 'relative', height: 'clamp(52px, 13vw, 100px)', marginBottom: 4 }}>
+    <div style={{ position: 'relative', height: 'clamp(46px, 11.5vw, 88px)', marginBottom: 0 }}>
       <GooeyText
         texts={texts}
         textColors={colors}
@@ -359,15 +359,16 @@ export default function HomePage() {
       <div style={{ paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))' }}>
 
         {/* ── Hero ── */}
-        <div style={{ padding: '52px 0 48px', display: 'flex', alignItems: 'center', gap: 48 }}>
+        <div style={{ padding: '22px 0 40px', display: 'flex', alignItems: 'center', gap: 48 }}>
           {/* Colonne gauche : titre + accroche + bouton vidéo */}
           <div style={{ flex: '1 1 0', minWidth: 0 }}>
             <HeroGooeyText user={user} orgName={orgName} prestName={prestName} />
             <p style={{
-              fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)',
-              color: 'rgba(255,255,255,0.38)', marginTop: 20, maxWidth: 420, lineHeight: 1.55,
+              fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)', fontWeight: 500,
+              color: 'rgba(255,255,255,0.5)', marginTop: 10, maxWidth: 420, lineHeight: 1.5,
             }}>
-              Découvre les meilleurs événements près de toi. Achète tes billets, booste tes soirées.
+              Trouve ta soirée, réserve ta place,{' '}
+              <span style={{ color: '#4ee8c8', fontWeight: 700 }}>vis la nuit.</span>
             </p>
 
             {/* Recherche globale animée — événements, artistes, organisateurs, prestataires */}
