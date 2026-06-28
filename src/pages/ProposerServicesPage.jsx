@@ -1119,24 +1119,31 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
             </p>
           </div>
 
-          {/* Browse banner */}
-          <button onClick={() => setMode('browse')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+          {/* Browse banner — entrée vers la communauté des prestataires */}
+          <button onClick={() => setMode('browse')} className="lib-press lib-lift" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'transform 0.18s ease' }}>
             <div style={{
-              position: 'relative', overflow: 'hidden', borderRadius: 12,
-              border: '1px solid rgba(200,169,110,0.30)',
-              background: 'linear-gradient(135deg, rgba(200,169,110,0.08) 0%, transparent 60%)',
+              position: 'relative', overflow: 'hidden', borderRadius: 18,
+              border: '1px solid rgba(78,232,200,0.22)',
+              background: 'linear-gradient(135deg, rgba(78,232,200,0.10) 0%, rgba(200,169,110,0.06) 55%, transparent 100%)',
               padding: 20,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <div style={{ width: 28, height: 1, background: '#c8a96e' }} />
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Annuaire</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#4ee8c8', margin: '0 0 6px' }}>La communauté</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 10px' }}>Explore les prestataires</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* pile d'avatars (aperçu) */}
+                <div style={{ display: 'flex' }}>
+                  {allProviders.slice(0, 4).map((p, i) => (
+                    <div key={p.id} style={{ width: 30, height: 30, borderRadius: '50%', marginLeft: i ? -10 : 0, border: '2px solid #0b0d14', background: (p.color || '#c8a96e') + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                      {p.photoUrl ? <img src={p.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <CatIcon id={p.icon} color={p.color || '#c8a96e'} size={13} />}
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+                  {allProviders.length} profil{allProviders.length > 1 ? 's' : ''} · salles, DJs, artistes, matériel…
+                </p>
               </div>
-              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Parcourir les prestataires</p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>
-                {allProviders.length} profil{allProviders.length > 1 ? 's' : ''} · Salles, DJs, artistes, matériel...
-              </p>
-              <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', opacity: 0.12 }}>
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
             </div>
           </button>
@@ -1212,139 +1219,146 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
 
           {/* Browse header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button onClick={() => setMode('landing')} style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+            <button onClick={() => setMode('landing')} className="lib-press" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div>
-              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Prestataires</p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 2, margin: '2px 0 0' }}>{filteredProviders.length} profil{filteredProviders.length > 1 ? 's' : ''}</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0, lineHeight: 1.1 }}>Communauté</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.42)', margin: '2px 0 0' }}>{filteredProviders.length} prestataire{filteredProviders.length > 1 ? 's' : ''} à découvrir</p>
             </div>
           </div>
 
-          {/* Search */}
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </span>
-            <FocusInput
-              placeholder="Recherche par nom, type, tags..."
+          {/* Search — pilule arrondie (même look que les messages) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              placeholder="Rechercher un nom, un style, une ville…"
               value={browseSearch}
               onChange={e => setBrowseSearch(e.target.value)}
-              style={{ paddingLeft: 36 }}
+              style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 14 }}
             />
             {browseSearch && (
-              <button onClick={() => setBrowseSearch('')} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.42)', fontSize: 16, lineHeight: 1 }}>×</button>
+              <button onClick={() => setBrowseSearch('')} className="lib-press" style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.42)', fontSize: 15, lineHeight: 1 }}>✕</button>
             )}
           </div>
 
           {/* Category filter pills */}
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
             {BROWSE_CATS.map(bc => (
-              <button key={bc.id} onClick={() => setBrowseCat(bc.id)}
+              <button key={bc.id} onClick={() => setBrowseCat(bc.id)} className="lib-press"
                 style={{
-                  flexShrink: 0, padding: '6px 14px', borderRadius: 4, cursor: 'pointer',
-                  fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase',
+                  flexShrink: 0, padding: '8px 16px', borderRadius: 999, cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
                   border: '1px solid', transition: 'all 0.2s',
                   ...(browseCat === bc.id
-                    ? { background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', borderColor: 'rgba(200,169,110,0.45)', color: '#c8a96e' }
-                    : { background: 'transparent', borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.42)' }),
+                    ? { background: 'rgba(78,232,200,0.12)', borderColor: 'rgba(78,232,200,0.5)', color: '#4ee8c8' }
+                    : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.5)' }),
                 }}>
                 {bc.label}
               </button>
             ))}
           </div>
 
-          {/* Provider cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Provider cards — façon réseau social */}
+          <div className={filteredProviders.length ? 'lib-stagger' : ''} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {filteredProviders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.28)' }}>
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
+              <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.35)' }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" style={{ margin: '0 auto 12px', display: 'block' }}>
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, margin: 0 }}>Aucun prestataire trouvé</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, margin: 0 }}>Aucun prestataire trouvé</p>
               </div>
             ) : filteredProviders.map(prov => {
               const provCatalog = prov.userId ? catalogOf(prov.userId).filter(i => i.available) : []
+              const accent = prov.color || '#c8a96e'
               return (
-                <div key={prov.id} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {prov.photos?.length > 0 && (
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-                      {prov.photos.map((src, i) => <img key={i} src={src} alt="" style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />)}
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    {prov.photoUrl
-                      ? <img src={prov.photoUrl} alt={prov.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${(prov.color || '#c8a96e')}55`, flexShrink: 0 }} />
-                      : <div style={{ width: 48, height: 48, borderRadius: 8, background: (prov.color || '#c8a96e') + '18', border: `1px solid ${(prov.color || '#c8a96e')}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <CatIcon id={prov.icon} color={prov.color || '#c8a96e'} size={20} />
-                        </div>}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
-                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prov.name}</p>
-                          {prov.verified && <svg width="13" height="13" viewBox="0 0 24 24" fill="#4ee8c8" style={{ flexShrink: 0 }}><path d="M12 2l2.4 2.4 3.3-.6.6 3.3L21 12l-2.7 2.6.6 3.3-3.3.6L12 22l-2.6-2.7-3.3.6-.6-3.3L3 12l2.5-2.6-.6-3.3 3.3.6z"/><path d="M10.5 14.5L8 12l-1 1 3.5 3.5L17 9l-1-1z" fill="#04040b"/></svg>}
-                        </span>
-                        {prov.rating > 0 && (
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3 }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="#c8a96e" stroke="#c8a96e" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
-                            {prov.rating}
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 2, margin: '2px 0 0' }}>{prov.typeLabel}</p>
-                      {prov.location && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{prov.location}</p>
-                        </div>
-                      )}
-                      {prov.capacity && (
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2, margin: '2px 0 0' }}>{prov.capacity}</p>
-                      )}
-                    </div>
+                <div key={prov.id} className="lib-lift" style={{
+                  borderRadius: 18, overflow: 'hidden', cursor: 'default',
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                  transition: 'transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                }}>
+                  {/* Bandeau de couverture coloré (identité du prestataire) */}
+                  <div style={{ height: 60, background: `linear-gradient(120deg, ${accent}33, ${accent}0a 70%)`, position: 'relative' }}>
+                    {prov.photos?.length > 0 && (
+                      <img src={prov.photos[0]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />
+                    )}
+                    {prov.rating > 0 && (
+                      <span style={{ position: 'absolute', top: 12, right: 14, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 999, background: 'rgba(5,6,10,0.6)', backdropFilter: 'blur(8px)', border: '1px solid rgba(200,169,110,0.35)', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#e0c690' }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="#e0c690"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                        {prov.rating}
+                      </span>
+                    )}
                   </div>
 
-                  {prov.description ? (
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: 0 }}>{prov.description}</p>
-                  ) : null}
-
-                  {prov.tags?.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {prov.tags.map(t => (
-                        <span key={t} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 8px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.42)' }}>{t}</span>
-                      ))}
-                    </div>
-                  )}
-
-                  {provCatalog.length > 0 && (
-                    <div style={{ ...S.card, padding: 12, background: 'rgba(6,8,16,0.6)' }}>
-                      <Eyebrow>Aperçu du catalogue</Eyebrow>
-                      {provCatalog.slice(0, 3).map(item => (
-                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.80)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#c8a96e', flexShrink: 0, marginLeft: 8 }}>{item.price}€/{item.unit}</span>
+                  <div style={{ padding: '0 16px 16px', marginTop: -26 }}>
+                    {/* Avatar + nom */}
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, marginBottom: 10 }}>
+                      {prov.photoUrl
+                        ? <img src={prov.photoUrl} alt={prov.name} style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '3px solid #0b0d14', background: '#0b0d14', flexShrink: 0 }} />
+                        : <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#0b0d14', border: '3px solid #0b0d14', boxShadow: `inset 0 0 0 1px ${accent}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <CatIcon id={prov.icon} color={accent} size={22} />
+                          </div>}
+                      <div style={{ flex: 1, minWidth: 0, paddingBottom: 2 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 800, letterSpacing: '-0.3px', color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prov.name}</p>
+                          {prov.verified && <svg width="14" height="14" viewBox="0 0 24 24" fill="#4ee8c8" style={{ flexShrink: 0 }}><path d="M12 2l2.4 2.4 3.3-.6.6 3.3L21 12l-2.7 2.6.6 3.3-3.3.6L12 22l-2.6-2.7-3.3.6-.6-3.3L3 12l2.5-2.6-.6-3.3 3.3.6z"/><path d="M10.5 14.5L8 12l-1 1 3.5 3.5L17 9l-1-1z" fill="#04040b"/></svg>}
                         </div>
-                      ))}
-                      {provCatalog.length > 3 && (
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 4, margin: '4px 0 0' }}>+{provCatalog.length - 3} autres articles</p>
-                      )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 9px', borderRadius: 999, background: `${accent}1a`, border: `1px solid ${accent}44`, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: accent }}>{prov.typeLabel}</span>
+                          {prov.location && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                              {prov.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', gap: 8 }}>
-                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prov.price || ''}</span>
-                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <button onClick={() => setContact({ open: true, provider: prov, sent: false, demo: false, name: '', message: '' })}
-                        style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+                    {prov.description && (
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: '0 0 10px' }}>{prov.description}</p>
+                    )}
+
+                    {(prov.tags?.length > 0 || prov.capacity) && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                        {prov.capacity && (
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)' }}>{prov.capacity}</span>
+                        )}
+                        {prov.tags?.map(t => (
+                          <span key={t} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)' }}>{t}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {provCatalog.length > 0 && (
+                      <div style={{ borderRadius: 12, background: 'rgba(6,8,16,0.5)', border: '1px solid rgba(255,255,255,0.05)', padding: 12, marginBottom: 12 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', margin: '0 0 8px' }}>Au catalogue</p>
+                        {provCatalog.slice(0, 3).map(item => (
+                          <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#e0c690', flexShrink: 0, marginLeft: 8 }}>{item.price}€<span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.4)' }}>/{item.unit}</span></span>
+                          </div>
+                        ))}
+                        {provCatalog.length > 3 && (
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '6px 0 0' }}>+{provCatalog.length - 3} autres articles</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {prov.price && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginRight: 'auto', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prov.price}</span>}
+                      <button onClick={() => setContact({ open: true, provider: prov, sent: false, demo: false, name: '', message: '' })} className="lib-press"
+                        style={{ marginLeft: prov.price ? 0 : 'auto', padding: '9px 16px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 999, fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', cursor: 'pointer' }}>
                         Contacter
                       </button>
                       {(prov.userId || prov.type === 'supermarche') && (
-                        <button onClick={() => { setOrderModal(prov); setCart([]); setOrderSuccess(false) }}
+                        <button onClick={() => { setOrderModal(prov); setCart([]); setOrderSuccess(false) }} className="lib-press"
                           style={{
-                            padding: '7px 14px', borderRadius: 4, cursor: 'pointer',
-                            background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                            border: '1px solid rgba(200,169,110,0.45)',
-                            fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: '#c8a96e',
+                            padding: '9px 18px', borderRadius: 999, cursor: 'pointer', border: 'none',
+                            background: 'linear-gradient(135deg, #c8a96e, #e0c690)',
+                            fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#04040b',
+                            boxShadow: '0 6px 18px -6px rgba(200,169,110,0.5)',
                           }}>
                           {prov.type === 'supermarche' ? 'Commander' : 'Réserver'}
                         </button>

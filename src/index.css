@@ -76,9 +76,29 @@
   .lib-text-in { animation: lib-text-in 0.7s cubic-bezier(0.2,0.9,0.25,1) 0.28s both; }
   @keyframes lib-text-in { from { opacity: 0; transform: translateY(14px); letter-spacing: 0.12em; } to { opacity: 1; transform: none; letter-spacing: -0.01em; } }
 
+  /* ── Animations réutilisables (entrées + interactions) ── */
+  .lib-rise { animation: lib-rise 0.55s cubic-bezier(0.22,0.9,0.3,1) both; }
+  @keyframes lib-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .lib-fade { animation: lib-fade 0.6s ease both; }
+  @keyframes lib-fade { from { opacity: 0; } to { opacity: 1; } }
+  /* stagger : applique un délai croissant sur les enfants directs */
+  .lib-stagger > * { animation: lib-rise 0.5s cubic-bezier(0.22,0.9,0.3,1) both; }
+  .lib-stagger > *:nth-child(1){animation-delay:.03s}.lib-stagger > *:nth-child(2){animation-delay:.08s}
+  .lib-stagger > *:nth-child(3){animation-delay:.13s}.lib-stagger > *:nth-child(4){animation-delay:.18s}
+  .lib-stagger > *:nth-child(5){animation-delay:.23s}.lib-stagger > *:nth-child(6){animation-delay:.28s}
+  .lib-stagger > *:nth-child(7){animation-delay:.33s}.lib-stagger > *:nth-child(8){animation-delay:.38s}
+  /* pression tactile + lift au survol pour boutons/cartes */
+  .lib-press { transition: transform 0.18s cubic-bezier(0.3,0.9,0.3,1), box-shadow 0.2s ease, border-color 0.2s ease; }
+  .lib-press:active { transform: scale(0.96); }
+  .lib-lift:hover { transform: translateY(-3px); }
+  /* bras de la platine vinyle */
+  .lib-tonearm { transition: transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275); transform-origin: 80% 18%; }
+
   @media (prefers-reduced-motion: reduce) {
     .lib-spin { animation: none; }
-    .lib-star-in, .lib-text-in, .lib-glow-in { animation-duration: 0.01s; }
+    .lib-star-in, .lib-text-in, .lib-glow-in,
+    .lib-rise, .lib-fade, .lib-stagger > * { animation-duration: 0.01s; }
+    .lib-press, .lib-lift, .lib-tonearm { transition: none; }
   }
 
 /* ─── Nebula background ──────────────────────────────────────────────────── */

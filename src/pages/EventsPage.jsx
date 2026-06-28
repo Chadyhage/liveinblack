@@ -255,9 +255,6 @@ export default function EventsPage() {
         {/* Title + Code button */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: '0 0 6px' }}>
-              Découvrir
-            </p>
             <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 34, color: 'white', margin: 0, lineHeight: 1 }}>
               Événements
             </h2>
@@ -268,6 +265,7 @@ export default function EventsPage() {
           {!shareConvId && (
             <button
               onClick={() => setShowCodeModal(true)}
+              className="lib-press"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -293,49 +291,33 @@ export default function EventsPage() {
           )}
         </div>
 
-        {/* Search */}
-        <div style={{ position: 'relative', marginBottom: 16 }}>
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.25)', pointerEvents: 'none' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </span>
+        {/* Search — même look que la barre de recherche des messages
+            (pilule arrondie, fond léger, police Inter, icône intégrée) */}
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
+            padding: '11px 16px', borderRadius: 999,
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            transition: 'border-color 0.2s, background 0.2s',
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
           <input
-            style={{
-              width: '100%',
-              padding: '12px 14px 12px 38px',
-              background: 'rgba(6,8,16,0.6)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              borderRadius: 4,
-              fontFamily: "'DM Mono', monospace",
-              fontSize: 13,
-              color: 'white',
-              outline: 'none',
-              boxSizing: 'border-box',
-              transition: 'border-color 0.2s',
-            }}
+            style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 14 }}
             placeholder="Recherche un nom, une ville, un style…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onFocus={e => e.target.style.borderColor = '#4ee8c8'}
-            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.10)'}
+            onFocus={e => { const p = e.target.parentElement; p.style.borderColor = 'rgba(78,232,200,0.55)'; p.style.background = 'rgba(78,232,200,0.04)' }}
+            onBlur={e => { const p = e.target.parentElement; p.style.borderColor = 'rgba(255,255,255,0.08)'; p.style.background = 'rgba(255,255,255,0.05)' }}
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              style={{
-                position: 'absolute',
-                right: 14,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'rgba(255,255,255,0.3)',
-                fontSize: 14,
-                padding: 0,
-                lineHeight: 1,
-              }}
+              className="lib-press"
+              style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 15, padding: 0, lineHeight: 1 }}
             >
               ✕
             </button>
@@ -369,7 +351,7 @@ export default function EventsPage() {
         </div>
 
         {/* Events list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className={filtered.length ? 'lib-stagger' : ''} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {filtered.length === 0 ? (
             <EmptyState
               icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
@@ -669,7 +651,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
             </div>
             <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 20, color: event.accentColor, margin: '0 0 4px', lineHeight: 1.2 }}>
+                <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 19, letterSpacing: '-0.4px', color: event.accentColor, margin: '0 0 4px', lineHeight: 1.15 }}>
                   {event.name}
                 </h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -755,7 +737,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
 
             {/* Card body */}
             <div style={{ padding: '14px 16px' }}>
-              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 22, color: event.accentColor, margin: '0 0 4px', lineHeight: 1.2 }}>
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 21, letterSpacing: '-0.5px', color: event.accentColor, margin: '0 0 4px', lineHeight: 1.15 }}>
                 {event.name}
               </h3>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.30)', margin: '0 0 12px', letterSpacing: '0.08em' }}>

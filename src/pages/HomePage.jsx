@@ -366,6 +366,24 @@ export default function HomePage() {
           }}>
             Découvre les meilleurs événements près de toi. Achète tes billets, booste tes soirées.
           </p>
+          {/* CTA Découvrir — remplace l'ancien libellé « Découvrir » de l'onglet Événements */}
+          <button
+            onClick={() => navigate('/evenements')}
+            className="lib-press lib-lift"
+            style={{
+              marginTop: 26, display: 'inline-flex', alignItems: 'center', gap: 10,
+              padding: '13px 24px', borderRadius: 999, cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, letterSpacing: '0.01em',
+              color: '#04040b',
+              background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)',
+              border: 'none', boxShadow: '0 10px 30px -8px rgba(78,232,200,0.5)',
+            }}
+          >
+            Découvrir les événements
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#04040b" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
         </div>
 
         {/* ── Top 3 Events ── */}

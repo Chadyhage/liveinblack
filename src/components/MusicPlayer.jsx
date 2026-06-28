@@ -2,18 +2,42 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { DISCS, subscribe, play, stop, toggle, playRandom, setVolume, getSavedDiscId } from '../utils/musicEngine'
 
-// Vinyle SVG (disque + sillons + étiquette centrale)
-function Vinyl({ size = 30, color = '#e05aaa', spinning }) {
+// Platine vinyle SVG — disque noir à sillons + pastille « disque d'or » + bras
+// de lecture qui s'avance vers le centre quand ça joue. `arm` active le bras
+// (pour les grandes vignettes : bouton flottant + now-playing).
+function Vinyl({ size = 30, color = '#e05aaa', spinning, arm = false }) {
+  const gid = 'g' + size
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" className={spinning ? 'lib-spin' : ''} style={{ display: 'block' }}>
-      <circle cx="50" cy="50" r="48" fill="#0c0c12" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
-      <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-      <circle cx="50" cy="50" r="33" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-      <circle cx="50" cy="50" r="26" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-      <circle cx="50" cy="50" r="17" fill={color} />
-      <circle cx="50" cy="50" r="3.2" fill="#0c0c12" />
-      {/* reflet */}
-      <path d="M50 4 A46 46 0 0 1 90 30" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2.5" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: 'block', overflow: 'visible' }}>
+      <defs>
+        <radialGradient id={gid + 'gold'} cx="35%" cy="30%" r="75%">
+          <stop offset="0%" stopColor="#fcf6ba" />
+          <stop offset="35%" stopColor="#e0b94e" />
+          <stop offset="70%" stopColor="#b38728" />
+          <stop offset="100%" stopColor="#8a6516" />
+        </radialGradient>
+      </defs>
+      {/* Disque (tourne) */}
+      <g className={spinning ? 'lib-spin' : ''} style={{ transformOrigin: '50px 50px' }}>
+        <circle cx="50" cy="50" r="48" fill="#0b0b10" stroke="rgba(255,255,255,0.10)" strokeWidth="1.5" />
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        {/* pastille or */}
+        <circle cx="50" cy="50" r="18" fill={`url(#${gid}gold)`} stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" />
+        <circle cx="50" cy="50" r="3" fill="#0b0b10" />
+        {/* éclat qui tourne avec le disque */}
+        <path d="M50 4 A46 46 0 0 1 88 28" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="2.4" strokeLinecap="round" />
+      </g>
+      {/* Bras de lecture (fixe, pivote) */}
+      {arm && (
+        <g className="lib-tonearm" style={{ transform: spinning ? 'rotate(0deg)' : 'rotate(-22deg)' }}>
+          <line x1="80" y1="18" x2="55" y2="46" stroke="#d8d8de" strokeWidth="3.4" strokeLinecap="round" />
+          <line x1="80" y1="18" x2="55" y2="46" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
+          <circle cx="80" cy="18" r="5" fill="#2a2a30" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+          <circle cx="55" cy="46" r="2.6" fill="#555" />
+        </g>
+      )}
     </svg>
   )
 }
@@ -65,7 +89,7 @@ export default function MusicPlayer() {
 
           {/* Now playing */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: 12 }}>
-            <Vinyl size={42} color={accent} spinning={st.playing} />
+            <Vinyl size={42} color={accent} spinning={st.playing} arm />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 800, color: '#fff' }}>{current.name}</p>
               <p style={{ margin: '1px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{st.playing ? 'En lecture…' : current.desc}</p>
@@ -116,7 +140,7 @@ export default function MusicPlayer() {
           boxShadow: st.playing ? `0 8px 28px ${accent}40, 0 0 0 1px ${accent}22` : '0 8px 24px rgba(0,0,0,0.5)',
           transition: 'border-color 0.3s, box-shadow 0.3s',
         }}>
-        <Vinyl size={34} color={accent} spinning={st.playing} />
+        <Vinyl size={30} color={accent} spinning={st.playing} arm />
         {st.playing && <span style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, boxShadow: `0 0 8px ${accent}`, animation: 'lib-pulse 1.4s infinite' }} />}
       </button>
     </div>
