@@ -358,32 +358,74 @@ export default function HomePage() {
       <div style={{ paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))' }}>
 
         {/* ── Hero ── */}
-        <div style={{ padding: '52px 0 48px' }}>
-          <HeroGooeyText user={user} orgName={orgName} prestName={prestName} />
-          <p style={{
-            fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)',
-            color: 'rgba(255,255,255,0.38)', marginTop: 20, maxWidth: 420, lineHeight: 1.55,
-          }}>
-            Découvre les meilleurs événements près de toi. Achète tes billets, booste tes soirées.
-          </p>
-          {/* CTA Découvrir — remplace l'ancien libellé « Découvrir » de l'onglet Événements */}
-          <button
-            onClick={() => navigate('/evenements')}
-            className="lib-press lib-lift"
-            style={{
-              marginTop: 26, display: 'inline-flex', alignItems: 'center', gap: 10,
-              padding: '13px 24px', borderRadius: 999, cursor: 'pointer',
-              fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, letterSpacing: '0.01em',
-              color: '#04040b',
-              background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)',
-              border: 'none', boxShadow: '0 10px 30px -8px rgba(78,232,200,0.5)',
-            }}
-          >
-            Découvrir les événements
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#04040b" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-            </svg>
-          </button>
+        <div style={{ padding: '52px 0 48px', display: 'flex', alignItems: 'center', gap: 48 }}>
+          {/* Colonne gauche : titre + accroche + bouton vidéo */}
+          <div style={{ flex: '1 1 0', minWidth: 0 }}>
+            <HeroGooeyText user={user} orgName={orgName} prestName={prestName} />
+            <p style={{
+              fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)',
+              color: 'rgba(255,255,255,0.38)', marginTop: 20, maxWidth: 420, lineHeight: 1.55,
+            }}>
+              Découvre les meilleurs événements près de toi. Achète tes billets, booste tes soirées.
+            </p>
+
+            {/* CTA Découvrir — la vidéo joue À L'INTÉRIEUR du bouton, le libellé reste lisible en haut */}
+            <button
+              onClick={() => navigate('/evenements')}
+              className="lib-press lib-lift"
+              aria-label="Découvrir les événements"
+              style={{
+                marginTop: 26, position: 'relative', overflow: 'hidden', display: 'block', textAlign: 'left',
+                width: 'min(440px, 100%)', height: 132, padding: 0, borderRadius: 20, cursor: 'pointer',
+                border: '1px solid rgba(78,232,200,0.4)',
+                boxShadow: '0 18px 44px -14px rgba(78,232,200,0.45)',
+              }}
+            >
+              <video src="/discover.mp4" autoPlay loop muted playsInline
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              {/* Voile dégradé : sombre en haut pour le texte, et en bas pour l'ancrage */}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,4,11,0.82) 0%, rgba(4,4,11,0.18) 42%, rgba(4,4,11,0.45) 100%)' }} />
+              <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '15px 18px' }}>
+                {/* Texte en haut */}
+                <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 17, letterSpacing: '-0.3px', color: '#fff', textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
+                  Découvrir les événements
+                </span>
+                {/* Pastille flèche en bas */}
+                <span style={{ alignSelf: 'flex-end', width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)', boxShadow: '0 6px 18px rgba(78,232,200,0.5)' }}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#04040b" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                  </svg>
+                </span>
+              </div>
+            </button>
+          </div>
+
+          {/* Colonne droite : panneau vidéo cinématique (desktop) — comble le vide du hero */}
+          <div className="hidden md:block" style={{ flexShrink: 0, width: 360 }}>
+            <div style={{ position: 'relative' }}>
+              {/* halo */}
+              <div style={{ position: 'absolute', inset: -30, background: 'radial-gradient(60% 55% at 60% 35%, rgba(78,232,200,0.18), transparent 70%)', filter: 'blur(20px)', pointerEvents: 'none' }} />
+              <div className="lib-lift" style={{
+                position: 'relative', borderRadius: 26, overflow: 'hidden', aspectRatio: '4 / 5',
+                border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 40px 90px -24px rgba(0,0,0,0.75)',
+                transition: 'transform 0.25s ease',
+              }}>
+                <video src="/discover.mp4" autoPlay loop muted playsInline
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                {/* vignette + dégradé bas */}
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,4,11,0.35) 0%, transparent 30%, rgba(4,4,11,0.85) 100%)' }} />
+                {/* étoile LIB en haut */}
+                <svg width="26" height="26" viewBox="0 0 100 100" fill="none" style={{ position: 'absolute', top: 16, left: 16, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }}>
+                  <path d="M50 5 L60 40 L95 50 L60 60 L50 95 L40 60 L5 50 L40 40 Z" fill="none" stroke="#e879f9" strokeWidth="3" strokeLinejoin="round" />
+                </svg>
+                {/* légende bas */}
+                <div style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4ee8c8', margin: '0 0 4px' }}>Live in black</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0, lineHeight: 1.1 }}>Vis chaque nuit.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ── Top 3 Events ── */}
