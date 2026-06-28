@@ -101,6 +101,38 @@ function RevealSection({ children, delay = 0, style = {} }) {
   )
 }
 
+// Révèle un fragment de phrase quand il entre dans le viewport : il « pop »
+// en grossissant avec un léger overshoot et une rotation désordonnée (variée
+// selon l'index) → effet ludique, un fragment à la fois au fil du scroll.
+function ScrollPhrase({ children, i = 0, color }) {
+  const ref = useRef(null)
+  const [vis, setVis] = useState(false)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) { setVis(true); return }
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect() } },
+      { threshold: 0.7, rootMargin: '0px 0px -10% 0px' }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  const hidden = [
+    'translateY(26px) scale(0.35) rotate(-6deg)',
+    'translateY(32px) scale(0.5) rotate(7deg)',
+    'translateY(20px) scale(0.42) rotate(-3deg)',
+    'translateY(28px) scale(0.45) rotate(4deg)',
+  ][i % 4]
+  return (
+    <span ref={ref} style={{
+      display: 'inline-block', color: color || undefined, whiteSpace: 'nowrap',
+      opacity: vis ? 1 : 0, transform: vis ? 'none' : hidden,
+      transformOrigin: 'left center', willChange: 'transform, opacity',
+      transition: `opacity 0.5s ease ${i * 110}ms, transform 0.6s cubic-bezier(0.18,1.5,0.4,1) ${i * 110}ms`,
+    }}>{children}</span>
+  )
+}
+
 const VIOLET = '#8444ff'
 const WHITE  = '#ffffff'
 
@@ -363,13 +395,17 @@ export default function HomePage() {
           {/* Colonne gauche : titre + accroche + bouton vidéo */}
           <div style={{ flex: '1 1 0', minWidth: 0 }}>
             <HeroGooeyText user={user} orgName={orgName} prestName={prestName} />
-            <p style={{
-              fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)', fontWeight: 500,
-              color: 'rgba(255,255,255,0.5)', marginTop: 10, maxWidth: 420, lineHeight: 1.5,
-            }}>
-              Trouve ta soirée, réserve ta place,{' '}
-              <span style={{ color: '#4ee8c8', fontWeight: 700 }}>vis la nuit.</span>
-            </p>
+            <div style={{ marginTop: 12, maxWidth: 460 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, letterSpacing: '-0.5px', fontSize: 'clamp(21px, 6vw, 34px)', lineHeight: 1.18, color: '#fff', margin: 0 }}>
+                <ScrollPhrase i={0}>Les meilleures soirées,</ScrollPhrase>{' '}
+                <ScrollPhrase i={1}>au bout des doigts.</ScrollPhrase>
+              </p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 'clamp(15px, 4.2vw, 20px)', lineHeight: 1.4, margin: '8px 0 0' }}>
+                <ScrollPhrase i={2} color="#4ee8c8">Réserve,</ScrollPhrase>{' '}
+                <ScrollPhrase i={3} color="#c8a96e">booste,</ScrollPhrase>{' '}
+                <ScrollPhrase i={4} color="#e05aaa">profite.</ScrollPhrase>
+              </p>
+            </div>
 
             {/* Recherche globale animée — événements, artistes, organisateurs, prestataires */}
             <HeroSearch />
