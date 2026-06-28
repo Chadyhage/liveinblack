@@ -344,17 +344,23 @@ export default function HomePage() {
 
   // « Réservez pour ce soir » : soirées du JOUR MÊME, dans la région, où il
   // reste des places. Discovery dernière minute pour les sorties spontanées.
+  // « Ce soir » = soirée à venir dans les ~18 prochaines heures (inclut les
+  // events qui croisent minuit), encore en cours, avec des places. Plus robuste
+  // qu'un « aujourd'hui pile » qui disparaissait au passage de minuit.
   const tonightEvents = (() => {
-    const todayKey = new Date(); todayKey.setHours(0, 0, 0, 0)
+    const now = Date.now()
+    const WINDOW = 18 * 3600 * 1000     // à venir dans 18h
+    const GRACE = 6 * 3600 * 1000        // ou démarré il y a moins de 6h
     return regionEvents
       .filter(e => isEventVisible(e) && !isEventClosed(e) && !isEventPast(e))
+      .filter(e => remainingPlaces(e) > 0)
       .filter(e => {
         try {
-          const d = new Date(e.date + 'T00:00:00'); d.setHours(0, 0, 0, 0)
-          return d.getTime() === todayKey.getTime()
+          const start = new Date(`${e.date}T${e.time || '20:00'}:00`).getTime()
+          const delta = start - now
+          return delta <= WINDOW && delta >= -GRACE
         } catch { return false }
       })
-      .filter(e => remainingPlaces(e) > 0)
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
   })()
 
@@ -670,18 +676,16 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* ── Réservez pour ce soir ── (n'apparaît que s'il y a des soirées ce soir) */}
-            {tonightEvents.length > 0 && (
-              <RevealSection delay={150}>
-                <div style={{ marginTop: 28 }}>
-                  <TonightCarousel
-                    events={tonightEvents}
-                    regionName={selectedRegion?.name}
-                    onOpen={(id) => navigate(`/evenements/${id}`)}
-                  />
-                </div>
-              </RevealSection>
-            )}
+            {/* ── Réservez pour ce soir ── (toujours visible : carrousel ou état vide) */}
+            <RevealSection delay={150}>
+              <div style={{ marginTop: 28 }}>
+                <TonightCarousel
+                  events={tonightEvents}
+                  regionName={selectedRegion?.name}
+                  onOpen={(id) => navigate(`/evenements/${id}`)}
+                />
+              </div>
+            </RevealSection>
 
             {/* See all CTA */}
             <RevealSection delay={400}>

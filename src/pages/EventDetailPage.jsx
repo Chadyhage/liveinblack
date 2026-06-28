@@ -236,8 +236,9 @@ const S = {
     color: 'rgba(255,255,255,0.42)',
   },
   price: {
-    fontFamily: "'Cormorant Garamond', serif",
-    fontWeight: 300,
+    fontFamily: 'Inter, sans-serif',
+    fontWeight: 800,
+    letterSpacing: '-0.5px',
     color: '#c8a96e',
   },
   muted: {
@@ -781,7 +782,7 @@ export default function EventDetailPage() {
             <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.08 }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 80, color: event.color, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 80, color: event.color, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {event.name}
               </span>
             </div>
@@ -869,12 +870,13 @@ export default function EventDetailPage() {
               )}
             </div>
             <h1 style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontWeight: 300,
-              fontSize: 36,
-              letterSpacing: '0.04em',
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 800,
+              fontSize: 'clamp(30px, 8vw, 44px)',
+              letterSpacing: '-1px',
+              textTransform: 'uppercase',
               color: event.accentColor || 'white',
-              lineHeight: 1,
+              lineHeight: 0.98,
               margin: 0,
             }}>
               {event.name}
@@ -988,7 +990,7 @@ export default function EventDetailPage() {
               {/* Step 1: choose place */}
               {bookingStep === 'place' && (
                 <>
-                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 20, color: 'white', margin: 0 }}>
+                  <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 21, letterSpacing: '-0.4px', color: 'white', margin: 0 }}>
                     Choisis ton type de place
                   </h3>
 
@@ -1050,7 +1052,7 @@ export default function EventDetailPage() {
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 18, color: 'white', margin: 0 }}>
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px', color: 'white', margin: 0 }}>
                                 {place.type}
                               </p>
                               <p style={{ ...S.label, marginTop: 0 }}>
@@ -1281,7 +1283,7 @@ export default function EventDetailPage() {
                       <BackIcon size={14} color="rgba(255,255,255,0.5)" />
                     </button>
                     <div>
-                      <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 20, color: 'white', margin: 0 }}>
+                      <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 20, letterSpacing: '-0.4px', color: 'white', margin: 0 }}>
                         Précommande de consommations
                       </h3>
                       <p style={{ ...S.label, marginTop: 3 }}>
@@ -1354,7 +1356,7 @@ export default function EventDetailPage() {
                               )}
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: 'white', margin: 0 }}>
+                                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: 'white', margin: 0 }}>
                                     {item.name}
                                   </p>
                                   {item.description && (
@@ -1621,14 +1623,14 @@ export default function EventDetailPage() {
                           }}>
                             {a.role}
                           </span>
-                          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 18, color: 'white' }}>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 18, color: 'white' }}>
                             {a.name}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 18, color: 'white' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 18, color: 'white' }}>
                       {event.dj}
                     </p>
                   )}
@@ -1661,7 +1663,7 @@ export default function EventDetailPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontFamily: "'Cormorant Garamond', serif",
+                    fontFamily: 'Inter, sans-serif',
                     fontWeight: 400,
                     fontSize: 18,
                     color: '#c8a96e',
@@ -1670,7 +1672,7 @@ export default function EventDetailPage() {
                     {event.organizer?.[0]}
                   </div>
                   <div>
-                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 18, color: 'white', margin: 0 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 18, color: 'white', margin: 0 }}>
                       {event.organizer}
                     </p>
                     <p style={{ ...S.muted, marginTop: 2 }}>Organisateur vérifié</p>
@@ -1732,7 +1734,7 @@ export default function EventDetailPage() {
                 </div>
               )}
               <div>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 20, color: 'white', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 20, color: 'white', margin: 0 }}>
                   {descModal.name}
                 </p>
                 <p style={{ ...S.price, fontSize: 16 }}>{descModal.price}€</p>
@@ -1868,7 +1870,7 @@ export default function EventDetailPage() {
                   <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
                 </svg>
               </div>
-              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 24, color: 'white', margin: 0 }}>
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 24, color: 'white', margin: 0 }}>
                 Conflit de créneau
               </h3>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, letterSpacing: '0.04em', margin: 0 }}>
@@ -1895,7 +1897,7 @@ export default function EventDetailPage() {
                 </svg>
               </div>
               <div>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
                   {conflictBooking.eventName}
                 </p>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0', letterSpacing: '0.1em' }}>
@@ -1960,7 +1962,7 @@ export default function EventDetailPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, paddingTop: 4 }}>
               <WarnIcon size={28} color="rgba(200,169,110,0.8)" />
-              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: 'white', margin: 0 }}>
                 {grandTotal > 0 ? 'Procéder au paiement ?' : 'Confirmer la réservation ?'}
               </h3>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, letterSpacing: '0.03em' }}>
@@ -1986,7 +1988,7 @@ export default function EventDetailPage() {
                     {ticketQty} {selectedPlace}{ticketQty > 1 ? 's' : ''}{preorderTotal > 0 ? ' + précommandes' : ''}
                   </p>
                 </div>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 300, color: '#4ee8c8', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 26, fontWeight: 300, color: '#4ee8c8', margin: 0 }}>
                   {grandTotal.toFixed(2)} €
                 </p>
               </div>
@@ -2119,7 +2121,7 @@ export default function EventDetailPage() {
               <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,0.15)', borderRadius: 2, margin: '0 auto' }} />
 
               <div>
-                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
+                <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
                   Proposer au groupe
                 </h3>
                 <p style={{ ...S.label, marginTop: 4 }}>Choisis une conversation de groupe</p>
@@ -2262,7 +2264,7 @@ export default function EventDetailPage() {
           }}>
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <SparkleIcon size={22} color="#c8a96e" />
-              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
                 {showInfoModal.opt.label}
               </h3>
               <p style={{ ...S.label }}>Pour {showInfoModal.itemName}</p>
@@ -2356,7 +2358,7 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 20, color: 'white', margin: 0 }}>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 20, letterSpacing: '-0.4px', color: 'white', margin: 0 }}>
           Réservation confirmée !
         </p>
       </div>
@@ -2436,7 +2438,7 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 6, marginTop: 2 }}>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Total payé</span>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{totalPrice}€</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{totalPrice}€</span>
           </div>
         </div>
       )}

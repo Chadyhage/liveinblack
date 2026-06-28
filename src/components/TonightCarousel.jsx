@@ -29,7 +29,7 @@ function hasCarreDispo(ev) {
 }
 
 export default function TonightCarousel({ events, onOpen, regionName }) {
-  if (!events || events.length === 0) return null
+  const empty = !events || events.length === 0
 
   return (
     <div style={{ marginTop: 8, marginBottom: 12 }}>
@@ -41,10 +41,28 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
             Réservez pour ce soir
           </span>
         </span>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.32)' }}>
-          {events.length} soirée{events.length > 1 ? 's' : ''}{regionName && regionName !== 'Toutes' ? ` · ${regionName}` : ''}
-        </span>
+        {!empty && (
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.32)' }}>
+            {events.length} soirée{events.length > 1 ? 's' : ''}{regionName && regionName !== 'Toutes' ? ` · ${regionName}` : ''}
+          </span>
+        )}
       </div>
+
+      {/* État vide : aucune soirée dans les prochaines heures */}
+      {empty && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 18, background: 'rgba(255,255,255,0.025)', border: '1px dashed rgba(255,255,255,0.12)' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.25)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0-6 6c0 4-2 5-2 5h16s-2-1-2-5a6 6 0 0 0-6-6z"/><path d="M10 20a2 2 0 0 0 4 0"/><line x1="3" y1="3" x2="21" y2="21" stroke="#e05aaa" strokeWidth="1.4"/></svg>
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: '#fff' }}>Rien pour ce soir… pour l'instant</p>
+            <p style={{ margin: '3px 0 0', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
+              Aucune soirée dans les prochaines heures{regionName && regionName !== 'Toutes' ? ` à ${regionName}` : ''}. Reviens vite, ça bouge tout le temps 👀
+            </p>
+          </div>
+        </div>
+      )}
+      {!empty && (<>
 
       {/* Carrousel horizontal */}
       <div className="hide-scrollbar" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
@@ -97,6 +115,7 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
           )
         })}
       </div>
+      </>)}
     </div>
   )
 }

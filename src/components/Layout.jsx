@@ -597,7 +597,7 @@ function NotifBell({ open, unread, onClick, size = 34 }) {
 function NotifDropdown({ notifications, onClose, uid, mobile }) {
   const DM = "'DM Mono', monospace"
   const navigate = useNavigate()
-  const recent = notifications.slice(0, 8)
+  const recent = notifications.slice(0, 6)
 
   // Destination de clic selon le type de notification
   function routeFor(n) {
@@ -626,14 +626,16 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
       position: 'absolute',
       top: 'calc(100% + 12px)',
       right: 0,
-      width: mobile ? 'min(340px, calc(100vw - 24px))' : 340,
+      width: mobile ? 'min(330px, calc(100vw - 24px))' : 340,
+      maxHeight: 'calc(100vh - 110px)',
+      display: 'flex', flexDirection: 'column',
       background: '#101014',
       border: '1px solid rgba(255,255,255,0.04)',
-      borderRadius: 24,
+      borderRadius: 20,
       boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8)',
       backdropFilter: 'blur(24px)',
       zIndex: 999,
-      padding: 12,
+      padding: 10,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 12px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -648,7 +650,7 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
       </div>
 
       {/* List */}
-      <div style={{ maxHeight: 340, overflowY: 'auto', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ flex: 1, minHeight: 0, maxHeight: 'min(46vh, 300px)', overflowY: 'auto', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
         {recent.length === 0 ? (
           <div style={{ padding: '24px 16px', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
