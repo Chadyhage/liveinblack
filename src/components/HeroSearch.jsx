@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAllProviderProfiles } from '../utils/services'
+import { MessagingSearchBar } from './MessagingActions'
 
 // Recherche globale de l'accueil : cherche À LA FOIS les événements, les
 // artistes/organisateurs (via les champs des events) et les prestataires
@@ -103,28 +104,14 @@ export default function HeroSearch() {
 
   return (
     <div ref={wrapRef} style={{ position: 'relative', marginTop: 24, maxWidth: 480, zIndex: 20 }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', borderRadius: 999,
-        background: 'rgba(255,255,255,0.06)', border: `1px solid ${open ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.1)'}`,
-        boxShadow: open ? '0 0 0 4px rgba(78,232,200,0.06)' : 'none', transition: 'border-color 0.2s, box-shadow 0.2s',
-        backdropFilter: 'blur(12px)',
-      }}>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
-          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          value={q}
-          onChange={e => { setQ(e.target.value); setOpen(true) }}
-          onFocus={() => setOpen(true)}
-          onKeyDown={e => e.key === 'Enter' && submit()}
-          placeholder={q ? 'Rechercher un événement, artiste, prestataire…' : placeholder}
-          style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 15 }}
-        />
-        {q && (
-          <button onClick={() => { setQ(''); setOpen(false) }} className="lib-press"
-            style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 16, lineHeight: 1 }}>✕</button>
-        )}
-      </div>
+      {/* Barre identique à celle des messages (laser émeraude + loupe essuie-glace) */}
+      <MessagingSearchBar
+        value={q}
+        onChange={e => { setQ(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={e => e.key === 'Enter' && submit()}
+        placeholder={q ? 'Rechercher un événement, artiste, prestataire…' : placeholder}
+      />
 
       {/* Dropdown résultats */}
       {open && query && (

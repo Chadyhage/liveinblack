@@ -3,7 +3,7 @@
 // / "Créer un groupe" (doré). Adaptés en pleine largeur (les maquettes étaient
 // figées à 290px) et câblés aux handlers réels.
 
-export function MessagingSearchBar({ value, onChange, placeholder = 'Rechercher une conversation…' }) {
+export function MessagingSearchBar({ value, onChange, placeholder = 'Rechercher une conversation…', onFocus, onKeyDown, inputRef, autoFocus }) {
   return (
     <div className="group relative flex h-[52px] w-full items-center overflow-hidden rounded-[18px] bg-[#121216] px-3 border border-zinc-800/50 transition-all duration-300 hover:border-emerald-500/30 hover:bg-[#16161c] focus-within:border-emerald-500/50 focus-within:bg-[#121216] focus-within:shadow-[0_0_25px_rgba(16,185,129,0.12)]">
       {/* Laser émeraude qui sillonne le bord supérieur */}
@@ -15,9 +15,13 @@ export function MessagingSearchBar({ value, onChange, placeholder = 'Rechercher 
         </svg>
       </div>
       <input
+        ref={inputRef}
         type="text"
         value={value}
         onChange={onChange}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
+        autoFocus={autoFocus}
         placeholder={placeholder}
         className="relative z-10 h-full w-full bg-transparent pl-3 text-[14px] font-medium tracking-wide text-zinc-200 placeholder-zinc-500 outline-none"
         style={{ fontFamily: 'Inter, sans-serif', border: 'none' }}

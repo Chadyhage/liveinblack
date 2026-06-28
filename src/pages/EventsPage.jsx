@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { getUserId, sendMessage } from '../utils/messaging'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/eventUrgency'
 import EmptyState from '../components/EmptyState'
+import { MessagingSearchBar } from '../components/MessagingActions'
 
 function getCreatedEvents() {
   try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
@@ -291,85 +292,61 @@ export default function EventsPage() {
           )}
         </div>
 
-        {/* Search — même look que la barre de recherche des messages
-            (pilule arrondie, fond léger, police Inter, icône intégrée) */}
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
-            padding: '11px 16px', borderRadius: 999,
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            transition: 'border-color 0.2s, background 0.2s',
-          }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input
-            style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 14 }}
-            placeholder="Recherche un nom, une ville, un style…"
+        {/* Search — barre identique à celle des messages */}
+        <div style={{ marginBottom: 16 }}>
+          <MessagingSearchBar
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onFocus={e => { const p = e.target.parentElement; p.style.borderColor = 'rgba(78,232,200,0.55)'; p.style.background = 'rgba(78,232,200,0.04)' }}
-            onBlur={e => { const p = e.target.parentElement; p.style.borderColor = 'rgba(255,255,255,0.08)'; p.style.background = 'rgba(255,255,255,0.05)' }}
+            placeholder="Recherche un nom, une ville, un style…"
           />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="lib-press"
-              style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 15, padding: 0, lineHeight: 1 }}
-            >
-              ✕
-            </button>
-          )}
         </div>
 
-        {/* Categories */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 24, scrollbarWidth: 'none' }}>
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              style={{
-                flexShrink: 0,
-                padding: '7px 18px',
-                background: activeCategory === cat ? 'rgba(78,232,200,0.10)' : 'rgba(255,255,255,0.07)',
-                border: `1px solid ${activeCategory === cat ? '#4ee8c8' : 'rgba(255,255,255,0.13)'}`,
-                borderRadius: 999,
-                cursor: 'pointer',
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 10,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: activeCategory === cat ? '#4ee8c8' : 'rgba(255,255,255,0.45)',
-                transition: 'all 0.2s',
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Events list */}
-        <div className={filtered.length ? 'lib-stagger' : ''} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {filtered.length === 0 ? (
+        {/* Recherche active ou mode partage → liste verticale de résultats.
+            Sinon → rangées horizontales par genre (façon Netflix). */}
+        {(search.trim() || shareConvId) ? (
+          <div className={filtered.length ? 'lib-stagger' : ''} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {filtered.length === 0 ? (
+              <EmptyState
+                icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
+                title="Aucun événement trouvé"
+                subtitle="Essaie un autre mot-clé ou une autre catégorie"
+              />
+            ) : (
+              filtered.map((event) => (
+                <EventCard key={event.id} event={event} shareMode={!!shareConvId} shared={sharedEventId === event.id}
+                  onClick={() => shareConvId ? handleShareEvent(event) : navigate(`/evenements/${event.id}`)} />
+              ))
+            )}
+          </div>
+        ) : (() => {
+          const live = visibleEvents.filter(isEventVisible)
+          const rows = []
+          const featured = live.filter(e => e.featured)
+          if (featured.length) rows.push({ title: 'À la une', events: featured })
+          const tonight = live.filter(e => /ce soir/i.test(getEventCountdown(e) || ''))
+          if (tonight.length) rows.push({ title: 'Ce soir', events: tonight })
+          for (const cat of KNOWN_CATEGORIES) {
+            const list = live.filter(e => e.category === cat)
+            if (list.length) rows.push({ title: cat, events: list })
+          }
+          const others = live.filter(e => !KNOWN_CATEGORIES.includes(e.category))
+          if (others.length) rows.push({ title: 'Autres soirées', events: others })
+          if (rows.length === 0) return (
             <EmptyState
               icon={<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
-              title="Aucun événement trouvé"
-              subtitle={search ? 'Essaie un autre mot-clé ou une autre catégorie' : 'Reviens bientôt — de nouvelles soirées arrivent'}
+              title="Aucun événement pour l'instant"
+              subtitle="Reviens bientôt — de nouvelles soirées arrivent"
             />
-          ) : (
-            filtered.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                shareMode={!!shareConvId}
-                shared={sharedEventId === event.id}
-                onClick={() => shareConvId ? handleShareEvent(event) : navigate(`/evenements/${event.id}`)}
-              />
-            ))
-          )}
-        </div>
+          )
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+              {rows.map(row => (
+                <EventRow key={row.title} title={row.title} events={row.events}
+                  onOpen={(id) => navigate(`/evenements/${id}`)} />
+              ))}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Code modal */}
@@ -505,6 +482,54 @@ export default function EventsPage() {
         </div>
       )}
     </Layout>
+  )
+}
+
+// ── Rangée horizontale par genre (façon Netflix) ──
+function EventRow({ title, events, onOpen }) {
+  return (
+    <div>
+      <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 18, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 12px' }}>
+        {title}
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>{events.length}</span>
+      </h3>
+      <div className="hide-scrollbar" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
+        {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
+      </div>
+    </div>
+  )
+}
+
+// ── Affiche compacte (poster) ──
+function EventPoster({ event, onClick }) {
+  const countdown = getEventCountdown(event)
+  const urgent = isCountdownUrgent(event)
+  const prices = (event.places || []).map(p => Number(p.price) || 0)
+  const minP = prices.length ? Math.min(...prices) : null
+  const accent = event.accentColor || event.color || '#4ee8c8'
+  return (
+    <button onClick={onClick} className="lib-press"
+      style={{ scrollSnapAlign: 'start', flexShrink: 0, width: 148, padding: 0, border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '3 / 4', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0b0d14' }}>
+        {event.imageUrl
+          ? <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <div style={{ width: '100%', height: '100%', background: `radial-gradient(circle at 30% 25%, ${(event.color || '#2a2440')}aa, transparent 60%), linear-gradient(150deg, #1a1426, #0b0d14)` }} />}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,9,14,0.95) 6%, transparent 55%)' }} />
+        {/* Countdown */}
+        {countdown && (
+          <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: urgent ? '#fff' : '#4ee8c8', background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(5,6,10,0.6)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{countdown}</span>
+        )}
+        {/* Prix */}
+        {minP != null && (
+          <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: '#c8a96e', background: 'rgba(5,6,10,0.65)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: '1px solid rgba(200,169,110,0.4)' }}>{minP > 0 ? `dès ${minP}€` : 'Gratuit'}</span>
+        )}
+        {/* Nom + meta */}
+        <div style={{ position: 'absolute', left: 9, right: 9, bottom: 9 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 13.5, letterSpacing: '-0.3px', color: accent, margin: 0, lineHeight: 1.15, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{event.name}</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ')}</p>
+        </div>
+      </div>
+    </button>
   )
 }
 

@@ -905,33 +905,32 @@ export default function EventDetailPage() {
           </div>
         </div>
 
-        {/* ── Quick info strip ─────────────────────────────────────────────── */}
-        <div style={{
-          display: 'flex',
-          padding: '12px 16px',
-          gap: 20,
+        {/* ── Quick info strip ── puces propres (Inter, fonds subtils) ──────── */}
+        <div className="hide-scrollbar" style={{
+          display: 'flex', alignItems: 'center',
+          padding: '12px 16px', gap: 8,
           borderBottom: '1px solid rgba(255,255,255,0.07)',
           overflowX: 'auto',
         }}>
           {countdownLabel && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, padding: '3px 9px', borderRadius: 99, background: countdownUrgent ? 'rgba(224,90,170,0.12)' : 'rgba(78,232,200,0.10)', border: `1px solid ${countdownUrgent ? 'rgba(224,90,170,0.35)' : 'rgba(78,232,200,0.30)'}` }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: countdownUrgent ? '#e05aaa' : '#4ee8c8', boxShadow: `0 0 6px ${countdownUrgent ? '#e05aaa' : '#4ee8c8'}` }} />
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 600, color: countdownUrgent ? '#e05aaa' : '#4ee8c8', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{countdownLabel}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, padding: '6px 11px', borderRadius: 999, background: countdownUrgent ? 'rgba(224,90,170,0.14)' : 'rgba(78,232,200,0.12)', border: `1px solid ${countdownUrgent ? 'rgba(224,90,170,0.4)' : 'rgba(78,232,200,0.35)'}` }}>
+              <span className="animate-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: countdownUrgent ? '#e05aaa' : '#4ee8c8', boxShadow: `0 0 8px ${countdownUrgent ? '#e05aaa' : '#4ee8c8'}` }} />
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: countdownUrgent ? '#e05aaa' : '#4ee8c8', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>{countdownLabel}</span>
             </div>
           )}
           {stockBadge && (
-            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, padding: '3px 9px', borderRadius: 99, background: `${stockBadge.color}1f`, border: `1px solid ${stockBadge.color}55` }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 600, color: stockBadge.color, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{stockBadge.label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, padding: '6px 11px', borderRadius: 999, background: `${stockBadge.color}22`, border: `1px solid ${stockBadge.color}55` }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: stockBadge.color, whiteSpace: 'nowrap' }}>{stockBadge.label}</span>
             </div>
           )}
           {[
             { Icon: CalendarIcon, val: event.dateDisplay },
             { Icon: ClockIcon, val: `${event.time} → ${event.endTime}` },
             { Icon: PinIcon, val: event.location },
-          ].map((item, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <item.Icon size={12} color="rgba(200,169,110,0.7)" />
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap' }}>
+          ].filter(it => it.val).map((item, idx) => (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0, padding: '6px 11px', borderRadius: 999, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <item.Icon size={13} color="rgba(200,169,110,0.85)" />
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>
                 {item.val}
               </span>
             </div>
@@ -1012,19 +1011,19 @@ export default function EventDetailPage() {
                   {/* Utilisateur connecté avec mauvais rôle → avertissement */}
                   {user && !userCanBook && (
                     <div style={{
-                      margin: '4px 0 12px', padding: '14px 16px',
-                      background: 'rgba(200,169,110,0.08)',
-                      border: '1px solid rgba(200,169,110,0.25)',
-                      borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 12,
+                      margin: '4px 0 14px', padding: '14px 16px',
+                      background: 'rgba(200,169,110,0.07)',
+                      border: '1px solid rgba(200,169,110,0.22)',
+                      borderRadius: 14, display: 'flex', alignItems: 'flex-start', gap: 12,
                     }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#c8a96e" style={{ flexShrink: 0, marginTop: 2 }}>
-                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                      </svg>
-                      <div>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#c8a96e', letterSpacing: '0.1em', margin: 0 }}>
+                      <span style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.3)' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#e0c690', margin: 0, lineHeight: 1.4 }}>
                           {bookingBlockedReason}
                         </p>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, marginBottom: 0, letterSpacing: '0.05em' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0', lineHeight: 1.45 }}>
                           Pour réserver des places, utilise un compte client.
                         </p>
                       </div>
@@ -1039,58 +1038,56 @@ export default function EventDetailPage() {
                       <div
                         key={place.type}
                         onClick={() => { setSelectedPlace(place.type === selectedPlace ? null : place.type); setTicketQty(1) }}
+                        className="lib-press"
                         style={{
-                          ...S.card,
-                          cursor: 'pointer',
-                          borderColor: isSelected ? 'rgba(200,169,110,0.45)' : 'rgba(255,255,255,0.10)',
-                          background: isSelected
-                            ? 'rgba(200,169,110,0.06)'
-                            : 'rgba(8,10,20,0.55)',
-                          transition: 'all 0.2s',
+                          position: 'relative', display: 'flex', cursor: 'pointer',
+                          borderRadius: 16, overflow: 'hidden',
+                          border: `1px solid ${isSelected ? 'rgba(200,169,110,0.6)' : 'rgba(255,255,255,0.10)'}`,
+                          background: isSelected ? 'rgba(200,169,110,0.07)' : 'rgba(11,13,20,0.7)',
+                          boxShadow: isSelected ? '0 10px 30px -10px rgba(200,169,110,0.4)' : 'none',
+                          transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px', color: 'white', margin: 0 }}>
-                                {place.type}
-                              </p>
-                              <p style={{ ...S.label, marginTop: 0 }}>
-                                {place.available}/{place.total} restantes
-                              </p>
-                              {place.groupType === 'group' && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                                  <GroupIcon size={11} color="#4ee8c8" />
-                                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8', letterSpacing: '0.1em' }}>
-                                    {place.groupMin || '?'}–{place.groupMax || '?'} pers.
-                                  </span>
-                                </div>
-                              )}
-                              {bookedCount > 0 && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                                  <CheckIcon size={10} color="#4ee8c8" />
-                                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8' }}>
-                                    {bookedCount} billet{bookedCount > 1 ? 's' : ''} réservé{bookedCount > 1 ? 's' : ''}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                        {/* Rail couleur (bord gauche du billet) */}
+                        <div style={{ width: 5, flexShrink: 0, background: place.available < 10 ? '#dc3232' : (event.color || '#c8a96e') }} />
+
+                        {/* Corps du billet */}
+                        <div style={{ flex: 1, minWidth: 0, padding: '14px 14px' }}>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 17, letterSpacing: '-0.3px', color: 'white', margin: 0 }}>
+                            {place.type}
+                          </p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, color: place.available < 10 ? '#ff8a8a' : 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
+                            {place.available}/{place.total} restantes
+                          </p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                            {place.groupType === 'group' && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 999, background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.28)', fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: '#4ee8c8' }}>
+                                <GroupIcon size={11} color="#4ee8c8" />
+                                {place.groupMin || '?'}–{place.groupMax || '?'} pers.
+                              </span>
+                            )}
+                            {bookedCount > 0 && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 999, background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.28)', fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: '#4ee8c8' }}>
+                                <CheckIcon size={10} color="#4ee8c8" />
+                                {bookedCount} réservé{bookedCount > 1 ? 's' : ''}
+                              </span>
+                            )}
                           </div>
-                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <p style={{ ...S.price, fontSize: 24, margin: 0 }}>{place.price}€</p>
+                          {/* Jauge de remplissage */}
+                          <div style={{ marginTop: 12, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', borderRadius: 99, width: `${(place.available / place.total) * 100}%`, background: place.available < 10 ? 'rgba(220,50,50,0.85)' : event.color, transition: 'width 0.4s' }} />
                           </div>
                         </div>
-                        {/* Progress bar */}
-                        <div style={{ marginTop: 12, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1, overflow: 'hidden' }}>
-                          <div
-                            style={{
-                              height: '100%',
-                              borderRadius: 1,
-                              width: `${(place.available / place.total) * 100}%`,
-                              background: place.available < 10 ? 'rgba(220,50,50,0.8)' : event.color,
-                              transition: 'width 0.4s',
-                            }}
-                          />
+
+                        {/* Perforation + talon de prix (l'aspect « vrai billet ») */}
+                        <div style={{ position: 'relative', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '0 18px', borderLeft: '2px dashed rgba(255,255,255,0.16)' }}>
+                          {/* encoches cut-out haut/bas */}
+                          <span style={{ position: 'absolute', top: -8, left: -8, width: 16, height: 16, borderRadius: '50%', background: '#04040b' }} />
+                          <span style={{ position: 'absolute', bottom: -8, left: -8, width: 16, height: 16, borderRadius: '50%', background: '#04040b' }} />
+                          <p style={{ ...S.price, fontSize: 26, margin: 0, lineHeight: 1 }}>{place.price}€</p>
+                          {isSelected
+                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: '#c8a96e' }}><CheckIcon size={11} color="#c8a96e" /> Choisi</span>
+                            : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}>Choisir →</span>}
                         </div>
                       </div>
                     )
