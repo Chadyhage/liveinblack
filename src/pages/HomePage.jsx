@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import RegionSelector from '../components/RegionSelector'
 import EmptyState from '../components/EmptyState'
 import TonightCarousel, { remainingPlaces } from '../components/TonightCarousel'
+import HeroSearch from '../components/HeroSearch'
 import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
@@ -368,6 +369,9 @@ export default function HomePage() {
             }}>
               Découvre les meilleurs événements près de toi. Achète tes billets, booste tes soirées.
             </p>
+
+            {/* Recherche globale animée — événements, artistes, organisateurs, prestataires */}
+            <HeroSearch />
 
             {/* CTA Découvrir — la vidéo joue À L'INTÉRIEUR du bouton, le libellé reste lisible en haut */}
             <button

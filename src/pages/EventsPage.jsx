@@ -64,7 +64,7 @@ export default function EventsPage() {
   const myName = user?.name || 'Moi'
   const [searchParams] = useSearchParams()
   const shareConvId = searchParams.get('share')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(searchParams.get('q') || '')
   const [activeCategory, setActiveCategory] = useState('Tous')
   const [showCodeModal, setShowCodeModal] = useState(false)
   const [codeInput, setCodeInput] = useState('')
