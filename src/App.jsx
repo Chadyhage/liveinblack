@@ -26,6 +26,8 @@ import PolitiqueCookiesPage from './pages/PolitiqueCookiesPage'
 import { AuthContext } from './context/AuthContext'
 import AuthModal from './components/AuthModal'
 import CookieConsent from './components/CookieConsent'
+import IntroOverlay from './components/IntroOverlay'
+import MusicPlayer from './components/MusicPlayer'
 
 // Normalize user: Firebase users have uid but no id — getUserId() needs user.id to match Firestore paths
 function normalizeUser(val) {
@@ -281,6 +283,12 @@ export default function App() {
 
           {/* Cookie consent banner — appears on first visit */}
           <CookieConsent />
+
+          {/* Lecteur de disque flottant (musique procédurale, persiste entre les pages) */}
+          <MusicPlayer />
+
+          {/* Splash d'intro animé (logo plein écran → se repositionne dans la navbar) */}
+          <IntroOverlay />
 
           <OnboardingGuard user={user}>
           <Routes>
