@@ -187,13 +187,27 @@ export default function AgentPage() {
   const [delResNote, setDelResNote]             = useState('')  // note admin pour résolution
   const [sellerBalances, setSellerBalances]     = useState([])  // soldes vendeurs à reverser (ledger)
   const [payoutRequests, setPayoutRequests]     = useState([])  // demandes de virement en attente
+  const [reports, setReports]                   = useState([])  // signalements d'utilisateurs
 
+  function loadReports() {
+    try { return JSON.parse(localStorage.getItem('lib_reports') || '[]').filter(r => !r.handled) } catch { return [] }
+  }
   function refresh() {
     setAccounts(getAllAccounts())
     setPending(getPendingValidations())
     setRoleRequests(getPendingRoleRequests().filter(r => r.status === 'pending'))
     setApplications(getAllApplications())
     setDeletionRequests(getAllDeletionRequests())
+    setReports(loadReports())
+  }
+  function resolveReport(id) {
+    try {
+      const all = JSON.parse(localStorage.getItem('lib_reports') || '[]')
+      const i = all.findIndex(r => r.id === id)
+      if (i !== -1) { all[i] = { ...all[i], handled: true, handledAt: new Date().toISOString() }; localStorage.setItem('lib_reports', JSON.stringify(all)) }
+      import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`reports/${id}`, { handled: true, handledAt: new Date().toISOString() })).catch(() => {})
+      setReports(loadReports())
+    } catch {}
   }
 
   // Returns the org/business name for organisateurs & prestataires, personal name otherwise
@@ -701,6 +715,7 @@ export default function AgentPage() {
           { key: 'dossiers',     label: `Dossiers${totalAppsSubmitted > 0 ? ` (${totalAppsSubmitted})` : ''}` },
           { key: 'reversements', label: `Reversements${payoutRequests.length > 0 ? ` (${payoutRequests.length})` : ''}` },
           { key: 'suppressions', label: `Suppressions${deletionRequests.length > 0 ? ` (${deletionRequests.length})` : ''}` },
+          { key: 'reports',      label: `Signalements${reports.length > 0 ? ` (${reports.length})` : ''}` },
         ].map(t => (
           <button
             key={t.key}
@@ -2665,6 +2680,42 @@ export default function AgentPage() {
       {/* ══════════════════════════════════════════════
           SUPPRESSIONS
       ══════════════════════════════════════════════ */}
+      {tab === 'reports' && (
+        <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>
+            Signalements d'utilisateurs
+          </p>
+          {reports.length === 0 ? (
+            <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 18, fontWeight: 300, color: COLORS.muted, margin: 0 }}>Aucun signalement</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {reports.slice().reverse().map(r => (
+                <div key={r.id} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,0.28)', background: 'rgba(224,90,170,0.04)' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <p style={{ fontFamily: FONTS.display, fontSize: 17, fontWeight: 300, color: '#fff', margin: '0 0 2px' }}>
+                        {r.targetName} <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>signalé·e</span>
+                      </p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0 }}>
+                        par {r.fromName} · {r.reportedAt ? new Date(r.reportedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                      </p>
+                    </div>
+                    <span style={{ padding: '3px 9px', borderRadius: 4, flexShrink: 0, background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.35)', fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink || '#e05aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>À traiter</span>
+                  </div>
+                  <div style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, marginBottom: 12 }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Motif</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{r.reason || '—'}</p>
+                  </div>
+                  <button onClick={() => resolveReport(r.id)} style={{ padding: '9px 16px', borderRadius: 999, cursor: 'pointer', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.32)', color: '#22c55e', fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em' }}>Marquer traité</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {tab === 'suppressions' && (
         <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
           <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>
