@@ -208,11 +208,12 @@ function EyebrowLabel({ text }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
       <div style={{ width: '28px', height: '1px', background: '#4ee8c8', flexShrink: 0 }} />
       <span style={{
-        fontFamily: '"DM Mono", monospace',
-        fontSize: '9px',
-        letterSpacing: '0.4em',
+        fontFamily: 'Inter, sans-serif',
+        fontSize: '11px',
+        fontWeight: 700,
+        letterSpacing: '0.08em',
         textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.25)',
+        color: 'rgba(255,255,255,0.4)',
       }}>{text}</span>
     </div>
   )
@@ -237,48 +238,51 @@ const S = {
     padding: '16px',
   },
   label: {
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '9px',
-    letterSpacing: '0.35em',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.28)',
+    color: 'rgba(255,255,255,0.4)',
   },
   labelGold: {
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '9px',
-    letterSpacing: '0.35em',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
     color: '#c8a96e',
   },
   labelOrange: {
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '9px',
-    letterSpacing: '0.35em',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
     color: 'rgba(251,146,60,0.9)',
   },
   sectionTitle: {
     fontFamily: 'Inter, sans-serif',
-    fontWeight: 300,
+    fontWeight: 800,
     fontSize: '28px',
-    letterSpacing: '0.08em',
-    color: 'rgba(255,255,255,0.92)',
+    letterSpacing: '-0.5px',
+    color: '#fff',
   },
   bodyText: {
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '12px',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '13px',
     color: 'rgba(255,255,255,0.55)',
     lineHeight: 1.6,
   },
   input: {
     width: '100%',
-    background: 'rgba(6,8,16,0.6)',
+    background: 'rgba(255,255,255,0.04)',
     border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: '4px',
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '13px',
-    color: 'rgba(255,255,255,0.9)',
-    padding: '11px 14px',
+    borderRadius: '12px',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '14px',
+    color: 'rgba(255,255,255,0.92)',
+    padding: '12px 15px',
     outline: 'none',
     boxSizing: 'border-box',
     transition: 'border-color 0.18s',
@@ -291,53 +295,56 @@ const S = {
     borderColor: 'rgba(239,68,68,0.6)',
   },
   inputLabel: {
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '9px',
-    letterSpacing: '0.3em',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.06em',
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.28)',
+    color: 'rgba(255,255,255,0.4)',
     display: 'block',
-    marginBottom: '7px',
+    marginBottom: '8px',
   },
   btnPrimary: {
     width: '100%',
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(78,232,200,0.12))',
-    border: '1px solid rgba(255,255,255,0.28)',
-    borderRadius: '4px',
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '11px',
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.88)',
+    padding: '14px 28px',
+    background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)',
+    border: 'none',
+    borderRadius: '999px',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '13px',
+    fontWeight: 700,
+    letterSpacing: '0.01em',
+    color: '#04040b',
     cursor: 'pointer',
-    transition: 'opacity 0.18s',
+    transition: 'opacity 0.18s, transform 0.18s',
+    boxShadow: '0 8px 24px -8px rgba(78,232,200,0.5)',
   },
   btnGold: {
     width: '100%',
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-    border: '1px solid rgba(200,169,110,0.45)',
-    borderRadius: '4px',
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '11px',
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: '#c8a96e',
+    padding: '14px 28px',
+    background: 'linear-gradient(135deg, #c8a96e, #e0c690)',
+    border: 'none',
+    borderRadius: '999px',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '13px',
+    fontWeight: 700,
+    letterSpacing: '0.01em',
+    color: '#04040b',
     cursor: 'pointer',
-    transition: 'opacity 0.18s',
+    transition: 'opacity 0.18s, transform 0.18s',
+    boxShadow: '0 8px 24px -8px rgba(200,169,110,0.5)',
   },
   btnGhost: {
     flex: 1,
-    padding: '11px',
-    background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.18)',
-    borderRadius: '4px',
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '11px',
-    letterSpacing: '0.15em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.5)',
+    padding: '12px',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: '999px',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '13px',
+    fontWeight: 600,
+    letterSpacing: '0.01em',
+    color: 'rgba(255,255,255,0.7)',
     cursor: 'pointer',
   },
   backBtn: {
@@ -358,9 +365,9 @@ const S = {
     margin: '8px 0',
   },
   emptyIcon: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '4px',
+    width: '44px',
+    height: '44px',
+    borderRadius: '12px',
     border: '1px solid rgba(255,255,255,0.08)',
     background: 'rgba(255,255,255,0.03)',
     margin: '0 auto 12px',
@@ -369,15 +376,15 @@ const S = {
     justifyContent: 'center',
   },
   emptyText: {
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '11px',
-    letterSpacing: '0.1em',
-    color: 'rgba(255,255,255,0.22)',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.4)',
   },
   emptySubText: {
-    fontFamily: '"DM Mono", monospace',
-    fontSize: '10px',
-    color: 'rgba(255,255,255,0.15)',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '12px',
+    color: 'rgba(255,255,255,0.25)',
     marginTop: '6px',
   },
 }
@@ -741,7 +748,7 @@ export default function ProfilePage() {
                     style={nameOnCooldown ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   />
                   {nameOnCooldown && (
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.12em', color: 'rgba(200,169,110,0.7)', marginTop: 6 }}>
+                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: 9, letterSpacing: '0.12em', color: 'rgba(200,169,110,0.7)', marginTop: 6 }}>
                       ⏳ Prochain changement possible le {formatNextDate(nextNameChange)}
                     </p>
                   )}
@@ -749,7 +756,7 @@ export default function ProfilePage() {
                 {settingsMsg && (
                   <div style={{
                     padding: '10px 14px', borderRadius: 4,
-                    fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.05em',
+                    fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.05em',
                     ...(settingsMsg.type === 'success'
                       ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
                       : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
@@ -773,8 +780,8 @@ export default function ProfilePage() {
                 {/* E-mail actuel affiché */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.03em' }}>{user?.email}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(78,232,200,0.7)', textTransform: 'uppercase' }}>Actuel</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.03em' }}>{user?.email}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(78,232,200,0.7)', textTransform: 'uppercase' }}>Actuel</span>
                 </div>
 
                 {/* Bannière en attente */}
@@ -782,15 +789,15 @@ export default function ProfilePage() {
                   <div style={{ padding: '10px 14px', borderRadius: 4, background: 'rgba(251,146,60,0.07)', border: '1px solid rgba(251,146,60,0.3)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                     <span style={{ fontSize: 14, marginTop: 1 }}>⏳</span>
                     <div>
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(251,146,60,0.9)', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(251,146,60,0.9)', letterSpacing: '0.05em', marginBottom: 2 }}>
                         Vérification en attente
                       </p>
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.03em' }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.03em' }}>
                         Un lien a été envoyé à <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{emailPending}</strong>. Ouvre-le pour confirmer le changement.
                       </p>
                       <button
                         onClick={() => setEmailPending(null)}
-                        style={{ marginTop: 8, background: 'none', border: 'none', fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(251,146,60,0.6)', cursor: 'pointer', padding: 0 }}
+                        style={{ marginTop: 8, background: 'none', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(251,146,60,0.6)', cursor: 'pointer', padding: 0 }}
                       >
                         Annuler la demande
                       </button>
@@ -816,7 +823,7 @@ export default function ProfilePage() {
                       onChange={e => setEmailForm(f => ({ ...f, password: e.target.value }))}
                     />
                     {user?.role === 'organisateur' && (
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', color: 'rgba(78,232,200,0.55)', lineHeight: 1.6 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.1em', color: 'rgba(78,232,200,0.55)', lineHeight: 1.6 }}>
                         Cet e-mail est aussi utilisé comme e-mail professionnel de ton dossier.
                       </p>
                     )}
@@ -826,7 +833,7 @@ export default function ProfilePage() {
                 {emailMsg && (
                   <div style={{
                     padding: '10px 14px', borderRadius: 4,
-                    fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.05em', lineHeight: 1.5,
+                    fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.05em', lineHeight: 1.5,
                     ...(emailMsg.type === 'success'
                       ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
                       : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
@@ -876,7 +883,7 @@ export default function ProfilePage() {
                         <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: 2, transition: 'width 0.3s ease, background 0.3s ease' }} />
                         </div>
-                        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.2em', color: s.color, marginTop: 4 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: s.color, marginTop: 4 }}>
                           FORCE : {s.label}
                         </p>
                       </div>
@@ -895,7 +902,7 @@ export default function ProfilePage() {
                 {passwordMsg && (
                   <div style={{
                     padding: '10px 14px', borderRadius: 4,
-                    fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.05em',
+                    fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.05em',
                     ...(passwordMsg.type === 'success'
                       ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
                       : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
@@ -920,7 +927,7 @@ export default function ProfilePage() {
                   disabled={sendingReset}
                   style={{
                     background: 'none', border: 'none', padding: '4px 0',
-                    fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.15em',
+                    fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em',
                     textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)',
                     cursor: sendingReset ? 'wait' : 'pointer', textDecoration: 'underline',
                     textDecorationColor: 'rgba(255,255,255,0.15)',
@@ -936,7 +943,7 @@ export default function ProfilePage() {
             {/* ── Zone danger ── */}
             <div style={{ marginTop: 8 }}>
               <hr style={S.divider} />
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.18)', margin: '16px 0 10px' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.18)', margin: '16px 0 10px' }}>
                 Zone de danger
               </p>
               <button
@@ -944,7 +951,7 @@ export default function ProfilePage() {
                 style={{
                   width: '100%', padding: '12px 28px', borderRadius: 4,
                   background: 'rgba(220,50,50,0.07)', border: '1px solid rgba(220,50,50,0.28)',
-                  fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.2em',
+                  fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.2em',
                   textTransform: 'uppercase', color: 'rgba(220,100,100,0.75)', cursor: 'pointer',
                 }}
               >
@@ -977,7 +984,7 @@ export default function ProfilePage() {
             <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 22, color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: 8 }}>
               Supprimer mon compte
             </p>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(255,255,255,0.35)', textAlign: 'center', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 20 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', textAlign: 'center', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 20 }}>
               Cette action est <span style={{ color: 'rgba(220,100,100,0.8)' }}>irréversible</span>. Toutes tes données, billets et solde seront définitivement supprimés.
             </p>
 
@@ -997,7 +1004,7 @@ export default function ProfilePage() {
             </div>
 
             {deleteError && (
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginBottom: 12 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginBottom: 12 }}>
                 {deleteError}
               </p>
             )}
@@ -1015,7 +1022,7 @@ export default function ProfilePage() {
                 style={{
                   flex: 1, padding: '12px', borderRadius: 4,
                   background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.40)',
-                  fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.15em',
+                  fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.15em',
                   textTransform: 'uppercase', color: 'rgba(220,100,100,0.9)', cursor: !deletePassword || deleting ? 'not-allowed' : 'pointer',
                   opacity: !deletePassword || deleting ? 0.5 : 1, transition: 'opacity 0.2s',
                 }}
@@ -1122,7 +1129,7 @@ export default function ProfilePage() {
                           color: 'rgba(255,255,255,0.7)',
                         }}>{item.name}</span>
                         <span style={{
-                          fontFamily: '"DM Mono", monospace',
+                          fontFamily: 'Inter, sans-serif',
                           fontSize: '11px',
                           color: 'rgba(255,255,255,0.4)',
                         }}>×{b.preorderItems[item.name]} · {item.price * b.preorderItems[item.name]}€</span>
@@ -1142,7 +1149,7 @@ export default function ProfilePage() {
                     </span>
                   </div>
                   <p style={{
-                    fontFamily: '"DM Mono", monospace',
+                    fontFamily: 'Inter, sans-serif',
                     fontSize: '9px',
                     color: 'rgba(255,255,255,0.18)',
                     marginTop: '8px',
@@ -1202,7 +1209,7 @@ export default function ProfilePage() {
                         </p>
                       </div>
                       <span style={{
-                        fontFamily: '"DM Mono", monospace',
+                        fontFamily: 'Inter, sans-serif',
                         fontSize: '9px',
                         letterSpacing: '0.2em',
                         textTransform: 'uppercase',
@@ -1227,7 +1234,7 @@ export default function ProfilePage() {
                             color: 'rgba(255,255,255,0.65)',
                           }}>{it.name} × {it.qty}</span>
                           <span style={{
-                            fontFamily: '"DM Mono", monospace',
+                            fontFamily: 'Inter, sans-serif',
                             fontSize: '12px',
                             color: 'rgba(255,255,255,0.55)',
                           }}>{(it.price * it.qty).toFixed(2)}€</span>
@@ -1373,7 +1380,7 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
             {user?.role && ROLES[user.role] && (
               <span style={{
-                fontFamily: '"DM Mono", monospace',
+                fontFamily: 'Inter, sans-serif',
                 fontSize: '9px',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
@@ -1388,7 +1395,7 @@ export default function ProfilePage() {
             )}
             {user?.role !== 'organisateur' && (
               <span style={{
-                fontFamily: '"DM Mono", monospace',
+                fontFamily: 'Inter, sans-serif',
                 fontSize: '9px',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
@@ -1473,7 +1480,7 @@ export default function ProfilePage() {
             borderRadius: '4px',
             border: '1px solid rgba(239,68,68,0.2)',
             background: 'transparent',
-            fontFamily: '"DM Mono", monospace',
+            fontFamily: 'Inter, sans-serif',
             fontSize: '11px',
             letterSpacing: '0.25em',
             textTransform: 'uppercase',
@@ -1550,7 +1557,7 @@ export default function ProfilePage() {
                   borderRadius: '4px',
                   background: 'rgba(239,68,68,0.15)',
                   border: '1px solid rgba(239,68,68,0.3)',
-                  fontFamily: '"DM Mono", monospace',
+                  fontFamily: 'Inter, sans-serif',
                   fontSize: '11px',
                   letterSpacing: '0.15em',
                   textTransform: 'uppercase',
@@ -1604,7 +1611,7 @@ function MenuRow({ label, onClick, gold = false, icon = null }) {
           </span>
         )}
         <span style={{
-          fontFamily: '"DM Mono", monospace',
+          fontFamily: 'Inter, sans-serif',
           fontSize: '11px',
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
@@ -1627,7 +1634,7 @@ function FocusInput({ label, value, onChange, type = 'text', placeholder, hasErr
           background: 'rgba(6,8,16,0.6)',
           border: `1px solid ${hasError ? 'rgba(239,68,68,0.6)' : focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)'}`,
           borderRadius: '4px',
-          fontFamily: '"DM Mono", monospace',
+          fontFamily: 'Inter, sans-serif',
           fontSize: '13px',
           color: 'rgba(255,255,255,0.9)',
           padding: '11px 14px',
@@ -1696,7 +1703,7 @@ function EventTicketGroup({ group }) {
             }}>{group.eventName}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
               <p style={{
-                fontFamily: '"DM Mono", monospace',
+                fontFamily: 'Inter, sans-serif',
                 fontSize: '9px',
                 letterSpacing: '0.25em',
                 textTransform: 'uppercase',
@@ -1704,7 +1711,7 @@ function EventTicketGroup({ group }) {
                 margin: 0,
               }}>{group.eventDate}</p>
               {showCancellationBanner && (
-                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.9)', background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.3)', borderRadius: 3, padding: '1px 6px' }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.9)', background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.3)', borderRadius: 3, padding: '1px 6px' }}>
                   ANNULÉ
                 </span>
               )}
@@ -1712,7 +1719,7 @@ function EventTicketGroup({ group }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{
-              fontFamily: '"DM Mono", monospace',
+              fontFamily: 'Inter, sans-serif',
               fontSize: '9px',
               letterSpacing: '0.15em',
               textTransform: 'uppercase',
@@ -1740,15 +1747,15 @@ function EventTicketGroup({ group }) {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 6 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 6 }}>
                 Événement annulé
               </p>
               {cancellationMessage ? (
-                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {cancellationMessage}
                 </p>
               ) : (
-                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: 0 }}>
                   Cet événement n'aura pas lieu. Pour toute question concernant ton billet ou un remboursement, contacte le support.
                 </p>
               )}
@@ -1759,7 +1766,7 @@ function EventTicketGroup({ group }) {
             style={{
               alignSelf: 'flex-start',
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              fontFamily: '"DM Mono", monospace',
+              fontFamily: 'Inter, sans-serif',
               fontSize: 9,
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
@@ -1797,7 +1804,7 @@ function EventTicketGroup({ group }) {
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
           <span style={{
-            fontFamily: '"DM Mono", monospace',
+            fontFamily: 'Inter, sans-serif',
             fontSize: '9px',
             letterSpacing: '0.25em',
             textTransform: 'uppercase',
@@ -1832,7 +1839,7 @@ function EventTicketGroup({ group }) {
             {/* music note icon */}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="#c8a96e"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
             <span style={{
-              fontFamily: '"DM Mono", monospace',
+              fontFamily: 'Inter, sans-serif',
               fontSize: '9px',
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
@@ -1878,7 +1885,7 @@ function EventTicketGroup({ group }) {
           {/* Header */}
           <div style={{ padding: '4px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <div>
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
                 Playlist interactive
               </p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 18, color: 'white', margin: '2px 0 0' }}>
@@ -1939,7 +1946,7 @@ function SingleTicketCard({ booking: b, index }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontFamily: '"DM Mono", monospace',
+            fontFamily: 'Inter, sans-serif',
             fontSize: '10px',
             color: '#c8a96e',
             flexShrink: 0,
@@ -1954,7 +1961,7 @@ function SingleTicketCard({ booking: b, index }) {
               color: 'rgba(255,255,255,0.85)',
             }}>{b.place}</p>
             <p style={{
-              fontFamily: '"DM Mono", monospace',
+              fontFamily: 'Inter, sans-serif',
               fontSize: '9px',
               color: 'rgba(255,255,255,0.22)',
               marginTop: '2px',
@@ -1968,7 +1975,7 @@ function SingleTicketCard({ booking: b, index }) {
               style={{
                 padding: '5px 10px',
                 borderRadius: '4px',
-                fontFamily: '"DM Mono", monospace',
+                fontFamily: 'Inter, sans-serif',
                 fontSize: '9px',
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
@@ -1987,7 +1994,7 @@ function SingleTicketCard({ booking: b, index }) {
       {b.preorderSummary?.length > 0 && (
         <div style={{ padding: '0 12px 10px' }}>
           <p style={{
-            fontFamily: '"DM Mono", monospace',
+            fontFamily: 'Inter, sans-serif',
             fontSize: '9px',
             letterSpacing: '0.15em',
             color: 'rgba(200,169,110,0.55)',
@@ -2023,7 +2030,7 @@ function SingleTicketCard({ booking: b, index }) {
               borderRadius: '4px',
               background: 'rgba(200,169,110,0.08)',
               border: '1px solid rgba(200,169,110,0.25)',
-              fontFamily: '"DM Mono", monospace',
+              fontFamily: 'Inter, sans-serif',
               fontSize: '9px',
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
@@ -2037,7 +2044,7 @@ function SingleTicketCard({ booking: b, index }) {
             Télécharger le QR code
           </button>
           <p style={{
-            fontFamily: '"DM Mono", monospace',
+            fontFamily: 'Inter, sans-serif',
             fontSize: '8px',
             letterSpacing: '0.2em',
             color: 'rgba(255,255,255,0.15)',
@@ -2221,7 +2228,7 @@ function AvatarUpload({ user, setUser }) {
                 color: 'rgba(255,255,255,0.88)',
               }}>Recadrer la photo</p>
               <p style={{
-                fontFamily: '"DM Mono", monospace',
+                fontFamily: 'Inter, sans-serif',
                 fontSize: '9px',
                 letterSpacing: '0.25em',
                 textTransform: 'uppercase',
@@ -2265,7 +2272,7 @@ function AvatarUpload({ user, setUser }) {
 
             <div>
               <p style={{
-                fontFamily: '"DM Mono", monospace',
+                fontFamily: 'Inter, sans-serif',
                 fontSize: '9px',
                 letterSpacing: '0.3em',
                 textTransform: 'uppercase',
@@ -2299,7 +2306,7 @@ function AvatarUpload({ user, setUser }) {
                   borderRadius: '4px',
                   background: 'linear-gradient(135deg, rgba(200,169,110,0.35), rgba(200,169,110,0.15))',
                   border: '1px solid rgba(200,169,110,0.55)',
-                  fontFamily: '"DM Mono", monospace',
+                  fontFamily: 'Inter, sans-serif',
                   fontSize: '11px',
                   letterSpacing: '0.2em',
                   textTransform: 'uppercase',
