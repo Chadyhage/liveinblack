@@ -20,6 +20,7 @@ import {
   blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory, deleteConversationCompletely,
   editMessage, isConvMuted, toggleMuteConv,
   toggleStarMessage, isMessageStarred, getStarredMessages,
+  getMyPrivacy, userShowsPhoto,
 } from '../utils/messaging'
 import { startStripeCheckout } from '../utils/stripe'
 import { playNotifSound } from '../utils/notifSound'
@@ -45,7 +46,7 @@ function Avatar({ user, size = 38, showOnline }) {
   const online = showOnline && user?.id ? isOnline(user.id) : false
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
-      {user?.avatar
+      {user?.avatar && userShowsPhoto(user)
         ? <img src={user.avatar} alt={user?.name} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover' }} />
         : <div style={{ width: size, height: size, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 700, fontSize: size <= 32 ? 10 : 12, fontFamily: T.dmMono }}>
             {getInitials(user?.name || '?')}
@@ -352,7 +353,11 @@ function ReadReceipt({ msg, myId, conv }) {
   const others = conv.type === 'direct'
     ? (conv.participants || []).filter(id => id !== myId)
     : (conv.members || []).map(m => m.userId).filter(id => id !== myId)
-  const readByOthers  = others.some(id => msg.readBy?.[id])
+  // Réciprocité : si J'AI désactivé les accusés de lecture, je ne peux pas voir
+  // si les autres ont lu mes messages (et je n'en diffuse pas non plus — voir
+  // le gate sur markMessagesRead). On n'affiche alors jamais le « lu ».
+  const canSeeRead = getMyPrivacy().readReceipts
+  const readByOthers  = canSeeRead && others.some(id => msg.readBy?.[id])
   const delivToOthers = others.some(id => msg.deliveredTo?.[id])
   if (readByOthers)  return <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.teal }}>✓✓</span>
   if (delivToOthers) return <span style={{ fontFamily: T.dmMono, fontSize: 9, color: 'rgba(255,255,255,0.45)' }}>✓✓</span>

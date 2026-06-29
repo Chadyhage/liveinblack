@@ -724,6 +724,27 @@ export default function ProfilePage() {
 
   // ── Settings Panel ────────────────────────────────────────────────────────
   if (panel === 'settings') {
+    // Confidentialité (défauts = tout activé). Écriture directe (action user,
+    // pas un merge async → pas de garde anti-race nécessaire ici).
+    const pv = {
+      showOnline: user?.privacy?.showOnline !== false,
+      showPhoto: user?.privacy?.showPhoto !== false,
+      showInfo: user?.privacy?.showInfo !== false,
+      readReceipts: user?.privacy?.readReceipts !== false,
+    }
+    const togglePriv = (key) => {
+      const next = { ...(user?.privacy || {}), [key]: !pv[key] }
+      const updated = { ...user, privacy: next }
+      setUser(updated)
+      try { localStorage.setItem('lib_user', JSON.stringify(updated)) } catch {}
+      if (user?.uid) import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`users/${user.uid}`, { privacy: next })).catch(() => {})
+    }
+    const PRIV_ROWS = [
+      { key: 'showOnline', label: 'Statut en ligne', desc: 'Les autres voient quand tu es connecté·e.' },
+      { key: 'showPhoto', label: 'Photo de profil', desc: 'Les autres voient ta photo (sinon : initiales).' },
+      { key: 'showInfo', label: 'Infos personnelles', desc: 'Email / téléphone visibles sur ton profil.' },
+      { key: 'readReceipts', label: 'Confirmations de lecture', desc: 'Si désactivé, tu ne sais pas si on a lu tes messages — et personne ne sait si tu as lu les leurs.' },
+    ]
     return (
       <>
       <Layout>
@@ -769,6 +790,25 @@ export default function ProfilePage() {
                 >
                   {saving ? 'Enregistrement...' : 'Enregistrer le nom'}
                 </button>
+              </div>
+            </div>
+
+            {/* ── Confidentialité ── */}
+            <div style={S.card}>
+              <EyebrowLabel text="Confidentialité" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {PRIV_ROWS.map((row, i) => (
+                  <div key={row.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderTop: i ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: '#fff', margin: 0 }}>{row.label}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0', lineHeight: 1.45 }}>{row.desc}</p>
+                    </div>
+                    <button onClick={() => togglePriv(row.key)} aria-label={row.label} role="switch" aria-checked={pv[row.key]}
+                      style={{ flexShrink: 0, marginTop: 2, width: 44, height: 26, borderRadius: 999, border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', background: pv[row.key] ? 'linear-gradient(135deg,#4ee8c8,#7af0d8)' : 'rgba(255,255,255,0.12)' }}>
+                      <span style={{ position: 'absolute', top: 3, left: pv[row.key] ? 21 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
 

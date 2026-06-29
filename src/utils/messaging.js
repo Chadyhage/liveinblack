@@ -92,7 +92,29 @@ export function getUserAvatar(userId) {
 }
 
 // ─── Online status ────────────────────────────────────────────────────────────
+// ── Confidentialité (réglages perso, stockés sur le profil lib_user.privacy) ──
+// Défauts = tout activé. Lus en direct depuis lib_user pour rester cohérents.
+export function getMyPrivacy() {
+  try {
+    const u = JSON.parse(localStorage.getItem('lib_user') || '{}')
+    const p = u.privacy || {}
+    return {
+      showOnline: p.showOnline !== false,
+      showPhoto: p.showPhoto !== false,
+      showInfo: p.showInfo !== false,
+      readReceipts: p.readReceipts !== false,
+    }
+  } catch { return { showOnline: true, showPhoto: true, showInfo: true, readReceipts: true } }
+}
+// Le profil d'un AUTRE utilisateur expose-t-il sa photo ? (privacy synchronisée)
+export function userShowsPhoto(user) {
+  return user?.privacy?.showPhoto !== false
+}
+
 export function setOnline(userId) {
+  // Confidentialité : si l'utilisateur masque son statut en ligne, on ne diffuse
+  // jamais « en ligne » — il apparaît hors-ligne pour tout le monde.
+  if (!getMyPrivacy().showOnline) { setOffline(userId); return }
   try {
     const all = JSON.parse(localStorage.getItem('lib_online') || '{}')
     all[userId] = Date.now()
@@ -542,6 +564,9 @@ export function deleteMessageForAll(convId, msgId) {
 }
 
 export function markMessagesRead(convId, userId) {
+  // Confidentialité : si J'ai désactivé les accusés de lecture, je ne diffuse
+  // PAS mes lectures (readBy). Le badge non-lu, lui, reste géré par setLastRead.
+  if (!getMyPrivacy().readReceipts) return
   const msgs = getMessages(convId)
   const now = new Date().toISOString()
   const updated = msgs.map(m =>
