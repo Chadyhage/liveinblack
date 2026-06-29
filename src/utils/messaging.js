@@ -925,9 +925,10 @@ export function deleteConversationHistory(convId) {
     const convs = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
     const i = convs.findIndex(c => c.id === convId)
     if (i !== -1) { convs[i] = { ...convs[i], lastMessage: '', lastMessageType: 'text', updatedAt: new Date().toISOString() }; localStorage.setItem('lib_conversations', JSON.stringify(convs)) }
-    // Persistance Firestore : on vide la sous-collection messages côté serveur.
+    // Persistance Firestore : le champ réel est `items` (pas `messages`). Sans
+    // ça, le listener réhydratait les anciens messages → effacement inopérant.
     import('./firestore-sync').then(({ syncDoc }) => {
-      syncDoc(`conv_messages/${convId}`, { messages: [] })
+      syncDoc(`conv_messages/${convId}`, { items: [] })
       if (i !== -1) syncDoc(`conversations/${convId}`, { lastMessage: '', updatedAt: convs[i].updatedAt })
     }).catch(() => {})
   } catch {}

@@ -19,7 +19,7 @@ import {
   getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking, withdrawFromGroupBooking,
   blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory, deleteConversationCompletely,
   editMessage, isConvMuted, toggleMuteConv,
-  toggleStarMessage, isMessageStarred,
+  toggleStarMessage, isMessageStarred, getStarredMessages,
 } from '../utils/messaging'
 import { startStripeCheckout } from '../utils/stripe'
 import { playNotifSound } from '../utils/notifSound'
@@ -710,6 +710,7 @@ export default function MessagingPage() {
             icon: '/logo192.png',
             badge: '/logo192.png',
             tag: 'liveinblack-msg', // regroupe les notifs
+            silent: true,           // pas de son (désactivé produit)
           })
           n.onclick = () => { window.focus(); n.close() }
         } catch {}
@@ -1741,6 +1742,19 @@ export default function MessagingPage() {
               onCreateGroup={() => { setView('new-group'); setNewGroupStep(1); setNewGroupMembers([]); setNewGroupName(''); setNewGroupAvatar(null) }}
             />
           </div>
+          {/* Accès : messages importants + confidentialité (bloqués / signalés) */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button onClick={() => setView('starred')} className="lib-press"
+              style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 14, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.2)', cursor: 'pointer', color: '#e0c690', fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="#e0c690" stroke="#e0c690" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+              Importants
+            </button>
+            <button onClick={() => { setView('blocked'); setBlockedUsers(getBlockedUsers(myId)) }} className="lib-press"
+              style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Bloqués & signalés
+            </button>
+          </div>
         </div>
 
         {/* Conversation list */}
@@ -1803,6 +1817,102 @@ export default function MessagingPage() {
   )
 
   // ── User search / new DM ──
+  // ── Vue : messages importants (étoilés) ──
+  if (view === 'starred') {
+    const items = getStarredMessages(myId).map(k => {
+      const idx = k.indexOf(':'); const convId = k.slice(0, idx); const msgId = k.slice(idx + 1)
+      const conv = conversations.find(c => c.id === convId) || getConversationById(convId)
+      const msg = getMessages(convId).find(m => String(m.id) === String(msgId))
+      if (!conv || !msg || msg.deletedForAll) return null
+      return { convId, msg, name: getConvDisplay(conv).name }
+    }).filter(Boolean).sort((a, b) => new Date(b.msg.timestamp) - new Date(a.msg.timestamp))
+    return (
+      <Layout>
+        <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <button onClick={() => setView('list')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0 }}>←</button>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>Messages importants</h2>
+          </div>
+          {items.length === 0 ? (
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: T.dim, textAlign: 'center', padding: '48px 16px', lineHeight: 1.6 }}>Aucun message important.<br />Maintiens un message (ou clic droit) → « Marquer important ».</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {items.map(({ convId, msg, name }) => (
+                <button key={convId + msg.id} onClick={() => openConv(convId)} className="lib-press"
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', textAlign: 'left' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#e0c690" stroke="#e0c690" strokeWidth="1" style={{ flexShrink: 0, marginTop: 2 }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: T.dim, flexShrink: 0 }}>{formatMsgTime(msg.timestamp)}</span>
+                    </div>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.6)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.type === 'text' ? msg.content : `📎 ${msg.type}`}</p>
+                  </div>
+                  <span onClick={(e) => { e.stopPropagation(); toggleStarMessage(myId, convId, msg.id); setMessages(getMessages(activeConvId || convId)); setView('list'); setTimeout(() => setView('starred'), 0) }}
+                    style={{ flexShrink: 0, color: T.dim, fontSize: 16, padding: 2 }} title="Retirer">✕</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </Layout>
+    )
+  }
+
+  // ── Vue : bloqués & signalés ──
+  if (view === 'blocked') {
+    const blocked = getBlockedUsers(myId)
+    let myReports = []
+    try { myReports = JSON.parse(localStorage.getItem('lib_reports') || '[]').filter(r => r.fromId === myId) } catch {}
+    return (
+      <Layout>
+        <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <button onClick={() => setView('list')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0 }}>←</button>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>Bloqués & signalés</h2>
+          </div>
+
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 10px' }}>Comptes bloqués</p>
+          {blocked.length === 0 ? (
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: T.dim, margin: '0 0 24px' }}>Aucun compte bloqué.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+              {blocked.map(bid => {
+                const u = getUserById(bid) || allUsers.find(x => x.id === bid) || { id: bid, name: bid }
+                return (
+                  <div key={bid} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <Avatar user={u} size={38} />
+                    <span style={{ flex: 1, minWidth: 0, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</span>
+                    <button onClick={() => { handleUnblockUser(bid, u.name); setBlockedUsers(getBlockedUsers(myId)) }} className="lib-press"
+                      style={{ flexShrink: 0, padding: '7px 14px', borderRadius: 999, background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.28)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Débloquer</button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 10px' }}>Signalements envoyés</p>
+          {myReports.length === 0 ? (
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: T.dim, margin: 0 }}>Aucun signalement envoyé.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {myReports.slice().reverse().map(r => (
+                <div key={r.id} style={{ padding: '12px 14px', borderRadius: 14, background: 'rgba(224,90,170,0.05)', border: '1px solid rgba(224,90,170,0.18)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 13.5, color: '#fff' }}>{r.targetName}</span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: T.dim, flexShrink: 0 }}>{r.reportedAt ? new Date(r.reportedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : ''}</span>
+                  </div>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.6)', margin: '4px 0 0', lineHeight: 1.5 }}>{r.reason}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: r.handled ? '#22c55e' : '#e0a060', margin: '6px 0 0', fontWeight: 600 }}>{r.handled ? '✓ Traité par l\'équipe' : 'En cours de traitement'}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Layout>
+    )
+  }
+
   if (view === 'search') return (
     <Layout>
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>

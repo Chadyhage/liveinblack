@@ -187,7 +187,7 @@ export default function Layout({ children, hideNav, chatMode }) {
     function pushBrowserNotif(title, body) {
       try {
         if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
-        const n = new Notification(title, { body, icon: '/logo192.png', badge: '/logo192.png', tag: 'liveinblack-msg' })
+        const n = new Notification(title, { body, icon: '/logo192.png', badge: '/logo192.png', tag: 'liveinblack-msg', silent: true })
         n.onclick = () => { window.focus(); n.close() }
       } catch {}
     }
