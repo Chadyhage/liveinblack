@@ -1692,42 +1692,51 @@ function EventTicketGroup({ group }) {
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <p style={{
-              fontFamily: 'Inter, sans-serif',
-              fontWeight: 400,
-              fontSize: '16px',
-              color: showCancellationBanner ? 'rgba(220,100,100,0.7)' : 'rgba(255,255,255,0.88)',
-              textDecoration: showCancellationBanner ? 'line-through' : 'none',
-            }}>{group.eventName}</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+            {/* Vignette de l'événement : image si dispo, sinon pastille pro */}
+            <div style={{ width: 48, height: 48, borderRadius: 12, overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(140deg, rgba(78,232,200,0.18), rgba(11,13,20,0.6))', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: showCancellationBanner ? 'grayscale(0.7)' : 'none' }}>
+              {event?.imageUrl
+                ? <img src={event.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/><line x1="12" y1="5" x2="12" y2="19" strokeDasharray="2 3"/></svg>}
+            </div>
+            <div style={{ minWidth: 0 }}>
               <p style={{
                 fontFamily: 'Inter, sans-serif',
-                fontSize: '9px',
-                letterSpacing: '0.25em',
-                textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.28)',
-                margin: 0,
-              }}>{group.eventDate}</p>
-              {showCancellationBanner && (
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.9)', background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.3)', borderRadius: 3, padding: '1px 6px' }}>
-                  ANNULÉ
-                </span>
-              )}
+                fontWeight: 700,
+                fontSize: '16px',
+                letterSpacing: '-0.2px',
+                color: showCancellationBanner ? 'rgba(255,140,140,0.85)' : '#fff',
+                textDecoration: showCancellationBanner ? 'line-through' : 'none',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{group.eventName}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <p style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.4)',
+                  margin: 0,
+                }}>{group.eventDate}</p>
+                {showCancellationBanner && (
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#ff8a8a', background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.35)', borderRadius: 999, padding: '2px 8px' }}>
+                    Annulé
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <span style={{
               fontFamily: 'Inter, sans-serif',
-              fontSize: '9px',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              padding: '3px 10px',
-              borderRadius: '4px',
-              border: '1px solid rgba(78,232,200,0.22)',
-              background: 'rgba(78,232,200,0.06)',
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '4px 11px',
+              borderRadius: '999px',
+              border: '1px solid rgba(78,232,200,0.3)',
+              background: 'rgba(78,232,200,0.1)',
               color: '#4ee8c8',
+              whiteSpace: 'nowrap',
             }}>
               {group.tickets.length} billet{group.tickets.length > 1 ? 's' : ''}
             </span>
@@ -1744,10 +1753,12 @@ function EventTicketGroup({ group }) {
           padding: '14px 16px',
           display: 'flex', flexDirection: 'column', gap: 10,
         }} onClick={e => e.stopPropagation()}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <span style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.32)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff8a8a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 6 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: '#ff8a8a', margin: 0, marginBottom: 5 }}>
                 Événement annulé
               </p>
               {cancellationMessage ? (
@@ -1763,22 +1774,22 @@ function EventTicketGroup({ group }) {
           </div>
           <button
             onClick={openSupport}
+            className="lib-press"
             style={{
               alignSelf: 'flex-start',
               display: 'inline-flex', alignItems: 'center', gap: 8,
               fontFamily: 'Inter, sans-serif',
-              fontSize: 9,
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: '#c8a96e',
-              background: 'rgba(200,169,110,0.10)',
-              border: '1px solid rgba(200,169,110,0.30)',
-              borderRadius: 4,
-              padding: '8px 14px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#e0c690',
+              background: 'rgba(200,169,110,0.12)',
+              border: '1px solid rgba(200,169,110,0.32)',
+              borderRadius: 999,
+              padding: '9px 16px',
               cursor: 'pointer',
             }}
           >
-            <IconMail size={12} color="#c8a96e" />
+            <IconMail size={13} color="#e0c690" />
             Contacter le support
           </button>
         </div>
@@ -1805,10 +1816,9 @@ function EventTicketGroup({ group }) {
         >
           <span style={{
             fontFamily: 'Inter, sans-serif',
-            fontSize: '9px',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
-            color: '#c8a96e',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#e0c690',
           }}>{expanded ? 'Masquer mes places' : 'Voir mes places'}</span>
           <span style={{
             color: '#c8a96e',
@@ -1938,17 +1948,18 @@ function SingleTicketCard({ booking: b, index }) {
       <div style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{
-            width: '24px',
-            height: '24px',
-            borderRadius: '4px',
+            width: '28px',
+            height: '28px',
+            borderRadius: '8px',
             background: 'rgba(200,169,110,0.15)',
-            border: '1px solid rgba(200,169,110,0.25)',
+            border: '1px solid rgba(200,169,110,0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontFamily: 'Inter, sans-serif',
-            fontSize: '10px',
-            color: '#c8a96e',
+            fontSize: '12px',
+            fontWeight: 700,
+            color: '#e0c690',
             flexShrink: 0,
           }}>
             {index + 1}
@@ -1956,14 +1967,14 @@ function SingleTicketCard({ booking: b, index }) {
           <div>
             <p style={{
               fontFamily: 'Inter, sans-serif',
-              fontWeight: 400,
+              fontWeight: 600,
               fontSize: '15px',
-              color: 'rgba(255,255,255,0.85)',
+              color: 'rgba(255,255,255,0.9)',
             }}>{b.place}</p>
             <p style={{
               fontFamily: 'Inter, sans-serif',
-              fontSize: '9px',
-              color: 'rgba(255,255,255,0.22)',
+              fontSize: '11px',
+              color: 'rgba(255,255,255,0.3)',
               marginTop: '2px',
             }}>{b.ticketCode}</p>
           </div>
@@ -1972,20 +1983,22 @@ function SingleTicketCard({ booking: b, index }) {
           {qrUrl && (
             <button
               onClick={() => setShowQr(v => !v)}
+              className="lib-press"
               style={{
-                padding: '5px 10px',
-                borderRadius: '4px',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '7px 13px',
+                borderRadius: '999px',
                 fontFamily: 'Inter, sans-serif',
-                fontSize: '9px',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: '#c8a96e',
-                background: 'rgba(200,169,110,0.08)',
-                border: '1px solid rgba(200,169,110,0.22)',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#e0c690',
+                background: 'rgba(200,169,110,0.1)',
+                border: '1px solid rgba(200,169,110,0.28)',
                 cursor: 'pointer',
               }}
             >
-              {showQr ? 'Fermer' : 'QR'}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="14" y2="14.01"/><line x1="21" y1="14" x2="21" y2="14.01"/><line x1="14" y1="21" x2="21" y2="21"/><line x1="21" y1="17" x2="21" y2="21"/></svg>
+              {showQr ? 'Fermer' : 'Mon QR'}
             </button>
           )}
         </div>
