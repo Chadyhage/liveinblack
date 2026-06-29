@@ -20,7 +20,7 @@ import Layout from '../components/Layout'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────
 const FONTS = {
-  display: "'Cormorant Garamond', Georgia, serif",
+  display: "Inter, sans-serif",
   mono: "'DM Mono', 'Fira Mono', monospace",
 }
 const COLORS = {
@@ -85,7 +85,7 @@ function openValidationReceipt(app) {
       border-bottom: 1px solid #e0e0ec;
     }
     .logo {
-      font-family: 'Cormorant Garamond', serif;
+      font-family: Inter, sans-serif;
       font-size: 26px;
       font-weight: 300;
       letter-spacing: 0.12em;
@@ -123,7 +123,7 @@ function openValidationReceipt(app) {
       margin-bottom: 8px;
     }
     h1 {
-      font-family: 'Cormorant Garamond', serif;
+      font-family: Inter, sans-serif;
       font-size: 36px;
       font-weight: 300;
       color: #0a0a18;
@@ -168,7 +168,7 @@ function openValidationReceipt(app) {
       color: #4a3010;
       display: block;
       margin-bottom: 2px;
-      font-family: 'Cormorant Garamond', serif;
+      font-family: Inter, sans-serif;
       font-weight: 600;
       font-size: 16px;
     }
@@ -208,7 +208,7 @@ function openValidationReceipt(app) {
     .footer-left { font-size: 9px; color: #bbb; letter-spacing: 0.06em; line-height: 1.8; }
     .signature { text-align: right; }
     .signature .sig-name {
-      font-family: 'Cormorant Garamond', serif;
+      font-family: Inter, sans-serif;
       font-size: 18px;
       font-weight: 300;
       font-style: italic;

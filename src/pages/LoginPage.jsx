@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import AnimatedLogo from '../components/AnimatedLogo'
 import { USE_REAL_FIREBASE } from '../firebase'
 import { DIAL_CODES } from '../data/dialCodes'
 import {
@@ -562,7 +563,7 @@ export default function LoginPage() {
               <path d="M2 7l10 7 10-7"/>
             </svg>
           </div>
-          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
+          <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
             Vérifie ton email
           </h2>
           <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
@@ -629,7 +630,7 @@ export default function LoginPage() {
               <polyline points="12 6 12 12 16 14"/>
             </svg>
           </div>
-          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
+          <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
             {isRoleReq ? 'Demande envoyée !' : 'Validation en cours'}
           </h2>
           {isRoleReq ? (
@@ -685,16 +686,10 @@ export default function LoginPage() {
       <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.15) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
       <div style={{ position: 'fixed', bottom: '-5%', right: '-5%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,77,166,0.10) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
-      {/* Logo */}
+      {/* Logo — vrai logo de marque (étoile + L|VE IN BLACK) */}
       <div className="relative z-10 mb-8 text-center">
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <span style={{ width: 36, height: 36, borderRadius: 11, background: 'radial-gradient(circle at 28% 28%, rgba(255,255,255,0.85), transparent 18%), linear-gradient(135deg, rgba(132,68,255,0.98), rgba(255,77,166,0.94))', boxShadow: '0 0 24px rgba(132,68,255,0.45)', flexShrink: 0, display: 'inline-block' }} />
-          <h1 style={{ letterSpacing: '0.05em', lineHeight: 1, margin: 0 }}>
-            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '32px', color: 'white', letterSpacing: '0.1em' }}>L</span>
-            <span style={{ display: 'inline-block', width: '2px', height: '18px', background: 'white', margin: '0 3px 2px', verticalAlign: 'middle' }} />
-            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '32px', color: 'white', letterSpacing: '0.1em' }}>VE IN </span>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 900, fontSize: '30px', color: 'white', letterSpacing: '0.02em' }}>BLACK</span>
-          </h1>
+        <div style={{ display: 'inline-flex', justifyContent: 'center', marginBottom: 10 }}>
+          <AnimatedLogo size={34} textScale={0.62} onClick={() => navigate('/accueil')} />
         </div>
         <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px', color: 'rgba(255,255,255,0.28)', letterSpacing: '0.06em' }}>
           La marketplace de l'événementiel
@@ -1107,6 +1102,24 @@ export default function LoginPage() {
             </p>
           )}
         </div>
+
+        {/* Continuer sans compte — accès invité à l'accueil */}
+        <button
+          onClick={() => navigate('/accueil')}
+          className="lib-press"
+          style={{
+            width: '100%', marginTop: 14, padding: '13px', borderRadius: 12, cursor: 'pointer',
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+            fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'border-color 0.2s, color 0.2s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(78,232,200,0.4)'; e.currentTarget.style.color = '#fff' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
+        >
+          Continuer sans compte
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
       </div>
 
       {/* ── Reset password modal ── */}
@@ -1115,7 +1128,7 @@ export default function LoginPage() {
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }}
             onClick={() => setShowResetModal(false)} />
           <div style={{ position: 'relative', ...S.card, padding: '28px 24px', width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: '20px', letterSpacing: '0.04em', color: 'white', margin: 0 }}>
+            <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: '20px', letterSpacing: '0.04em', color: 'white', margin: 0 }}>
               Mot de passe oublié
             </h3>
             {!resetSent ? (

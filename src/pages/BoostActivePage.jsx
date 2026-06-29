@@ -9,7 +9,7 @@ import { saveBoost } from '../utils/ticket'
 import { IconMail } from '../components/icons'
 
 const FONTS = {
-  display: "'Cormorant Garamond', Georgia, serif",
+  display: "Inter, sans-serif",
   mono: "'DM Mono', 'Fira Mono', monospace",
 }
 const COLORS = {

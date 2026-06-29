@@ -251,7 +251,7 @@ export default function PlaylistSystem({ event, booked }) {
     return (
       <div style={{ textAlign: 'center', padding: '48px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <LockIcon size={36} color="rgba(255,255,255,0.15)" />
-        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 20, color: 'white', margin: 0 }}>
+        <p style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 20, color: 'white', margin: 0 }}>
           Playlist réservée aux participants
         </p>
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', letterSpacing: '0.1em', margin: 0 }}>
@@ -267,7 +267,7 @@ export default function PlaylistSystem({ event, booked }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
+          <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
             Playlist interactive
           </h3>
           <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4 }}>
@@ -388,7 +388,7 @@ export default function PlaylistSystem({ event, booked }) {
                           </button>
                           <div style={{ minWidth: 0 }}>
                             <p style={{
-                              fontFamily: "'Cormorant Garamond', serif",
+                              fontFamily: "Inter, sans-serif",
                               fontWeight: 400,
                               fontSize: 15,
                               color: 'white',
@@ -571,7 +571,7 @@ export default function PlaylistSystem({ event, booked }) {
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
-                  fontFamily: "'Cormorant Garamond', serif",
+                  fontFamily: "Inter, sans-serif",
                   fontWeight: i === 0 ? 400 : 300,
                   fontSize: 16,
                   color: i === 0 ? 'white' : 'rgba(255,255,255,0.75)',

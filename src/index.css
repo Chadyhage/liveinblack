@@ -335,11 +335,16 @@
 
   /* ── Section title ── */
   .section-title {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: Inter, sans-serif;
     font-size: clamp(1.6rem, 4vw, 2.2rem);
-    font-weight: 300;
-    letter-spacing: 0.06em;
+    font-weight: 800;
+    letter-spacing: -0.02em;
   }
+
+  /* ── Transition d'entrée des pages (changement d'onglet) ── */
+  .lib-page { animation: lib-page-in 0.34s cubic-bezier(0.22,0.9,0.3,1) both; }
+  @keyframes lib-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .lib-page { animation: none; } }
 }
 
 /* ─── Animations ───────────────────────────────────────────────────────────── */

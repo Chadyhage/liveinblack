@@ -68,7 +68,7 @@ export default function AgeVerificationModal({ minAge = 18, onVerified, onCancel
               Événement {minAge}+
             </span>
           </div>
-          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
             Réservé aux {minAge} ans et plus
           </p>
         </div>

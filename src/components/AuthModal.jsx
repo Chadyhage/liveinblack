@@ -5,7 +5,7 @@ import { getAllAccountsByEmail } from '../utils/accounts'
 import { USE_REAL_FIREBASE } from '../firebase'
 
 const dmMono = "'DM Mono', monospace"
-const cormorant = "'Cormorant Garamond', serif"
+const cormorant = "Inter, sans-serif"
 
 const ROLE_LABELS = { client: 'Client', user: 'Client', organisateur: 'Organisateur', prestataire: 'Prestataire', agent: 'Admin' }
 const ROLE_COLORS = { client: '#22c55e', user: '#22c55e', organisateur: '#3b82f6', prestataire: '#8b5cf6', agent: '#c8a96e' }

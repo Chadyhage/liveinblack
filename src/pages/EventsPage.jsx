@@ -256,7 +256,7 @@ export default function EventsPage() {
         {/* Title + Code button */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 34, color: 'white', margin: 0, lineHeight: 1 }}>
+            <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 34, color: 'white', margin: 0, lineHeight: 1 }}>
               Événements
             </h2>
             <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '6px 0 0' }}>
@@ -383,7 +383,7 @@ export default function EventsPage() {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
               </div>
-              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 22, color: 'white', margin: '0 0 8px' }}>
+              <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 22, color: 'white', margin: '0 0 8px' }}>
                 Code d'accès privé
               </h3>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.28)', margin: 0, lineHeight: 1.6 }}>
@@ -726,7 +726,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
               }} />
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{
-                  fontFamily: "'Cormorant Garamond', serif",
+                  fontFamily: "Inter, sans-serif",
                   fontWeight: 300,
                   fontSize: 38,
                   letterSpacing: '0.08em',

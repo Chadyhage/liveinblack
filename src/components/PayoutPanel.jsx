@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react'
 
 const DM = "'DM Mono', monospace"
-const CG = "'Cormorant Garamond', serif"
+const CG = "Inter, sans-serif"
 
 const card = {
   background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(18px)',

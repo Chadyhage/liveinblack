@@ -12,7 +12,7 @@ import {
 } from '../utils/applications'
 
 const DM = "'DM Mono', monospace"
-const CG = "'Cormorant Garamond', serif"
+const CG = "Inter, sans-serif"
 const GOLD = '#c8a96e'
 const PURPLE = '#8b5cf6'
 

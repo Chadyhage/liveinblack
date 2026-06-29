@@ -19,7 +19,7 @@ export default function EmptyState({ icon, title, subtitle, action, compact = fa
         </div>
       )}
       <div>
-        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 20, color: 'rgba(255,255,255,0.72)', margin: '0 0 5px', letterSpacing: '0.01em' }}>
+        <p style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 20, color: 'rgba(255,255,255,0.72)', margin: '0 0 5px', letterSpacing: '0.01em' }}>
           {title}
         </p>
         {subtitle && (

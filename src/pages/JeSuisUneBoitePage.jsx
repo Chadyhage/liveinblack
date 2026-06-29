@@ -222,7 +222,7 @@ export default function JeSuisUneBoitePage() {
             color: 'rgba(255,255,255,0.25)',
             marginBottom: 8,
           }}>Inscription professionnelle</p>
-          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, letterSpacing: '0.02em', lineHeight: 1.1 }}>
+          <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, letterSpacing: '0.02em', lineHeight: 1.1 }}>
             Je suis <span style={{ color: '#c8a96e' }}>une boîte</span>
           </h2>
           <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', marginTop: 8, letterSpacing: '0.04em', lineHeight: 1.6 }}>
@@ -273,7 +273,7 @@ export default function JeSuisUneBoitePage() {
                 {/* Form */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <Eyebrow>Informations de l'établissement</Eyebrow>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
                     Informations de l'établissement
                   </p>
 
@@ -404,7 +404,7 @@ export default function JeSuisUneBoitePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <Eyebrow>Configuration</Eyebrow>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
                     Configuration de ta page
                   </p>
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', marginTop: 4, margin: 0 }}>
@@ -462,7 +462,7 @@ export default function JeSuisUneBoitePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <Eyebrow>Location</Eyebrow>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
                     Veux-tu louer ta salle ?
                   </p>
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', marginTop: 4, margin: 0 }}>
@@ -552,7 +552,7 @@ export default function JeSuisUneBoitePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <Eyebrow>Vérification</Eyebrow>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 24, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
                     Récapitulatif
                   </p>
                 </div>
@@ -600,7 +600,7 @@ export default function JeSuisUneBoitePage() {
                 <path d="M8 3v6"/><path d="M16 3v6"/>
               </svg>
             </div>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 28, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
               Bienvenue dans la famille !
             </p>
             <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, maxWidth: 280, margin: 0 }}>

@@ -47,7 +47,7 @@ const CARD = {
 }
 
 const FONTS = {
-  display: "'Cormorant Garamond', Georgia, serif",
+  display: "Inter, sans-serif",
   mono: "'DM Mono', 'Fira Mono', monospace",
 }
 
@@ -2925,7 +2925,7 @@ export default function AgentPage() {
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 const FONTS_SUB = {
-  display: "'Cormorant Garamond', Georgia, serif",
+  display: "Inter, sans-serif",
   mono: "'DM Mono', 'Fira Mono', monospace",
 }
 

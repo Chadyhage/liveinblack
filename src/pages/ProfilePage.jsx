@@ -258,7 +258,7 @@ const S = {
     color: 'rgba(251,146,60,0.9)',
   },
   sectionTitle: {
-    fontFamily: '"Cormorant Garamond", serif',
+    fontFamily: 'Inter, sans-serif',
     fontWeight: 300,
     fontSize: '28px',
     letterSpacing: '0.08em',
@@ -974,7 +974,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <p style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 300, fontSize: 22, color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: 8 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 22, color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: 8 }}>
               Supprimer mon compte
             </p>
             <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(255,255,255,0.35)', textAlign: 'center', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 20 }}>
@@ -1105,7 +1105,7 @@ export default function ProfilePage() {
               {bookings.map((b) => (
                 <div key={b.id} style={S.card}>
                   <p style={{
-                    fontFamily: '"Cormorant Garamond", serif',
+                    fontFamily: 'Inter, sans-serif',
                     fontWeight: 400,
                     fontSize: '16px',
                     color: 'rgba(255,255,255,0.88)',
@@ -1116,7 +1116,7 @@ export default function ProfilePage() {
                     {b.preorderSummary.map(item => (
                       <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{
-                          fontFamily: '"Cormorant Garamond", serif',
+                          fontFamily: 'Inter, sans-serif',
                           fontWeight: 400,
                           fontSize: '14px',
                           color: 'rgba(255,255,255,0.7)',
@@ -1133,7 +1133,7 @@ export default function ProfilePage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                     <span style={{ ...S.label }}>Total commande</span>
                     <span style={{
-                      fontFamily: '"Cormorant Garamond", serif',
+                      fontFamily: 'Inter, sans-serif',
                       fontWeight: 300,
                       fontSize: '20px',
                       color: '#c8a96e',
@@ -1192,7 +1192,7 @@ export default function ProfilePage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                       <div>
                         <p style={{
-                          fontFamily: '"Cormorant Garamond", serif',
+                          fontFamily: 'Inter, sans-serif',
                           fontWeight: 400,
                           fontSize: '16px',
                           color: 'rgba(255,255,255,0.88)',
@@ -1221,7 +1221,7 @@ export default function ProfilePage() {
                       {order.items.map((it, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{
-                            fontFamily: '"Cormorant Garamond", serif',
+                            fontFamily: 'Inter, sans-serif',
                             fontWeight: 400,
                             fontSize: '14px',
                             color: 'rgba(255,255,255,0.65)',
@@ -1238,7 +1238,7 @@ export default function ProfilePage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                       <span style={S.label}>Total payé</span>
                       <span style={{
-                        fontFamily: '"Cormorant Garamond", serif',
+                        fontFamily: 'Inter, sans-serif',
                         fontWeight: 300,
                         fontSize: '20px',
                         color: '#c8a96e',
@@ -1288,7 +1288,7 @@ export default function ProfilePage() {
                     }}
                   >
                     <p style={{
-                      fontFamily: '"Cormorant Garamond", serif',
+                      fontFamily: 'Inter, sans-serif',
                       fontWeight: 400,
                       fontSize: '15px',
                       color: 'rgba(255,255,255,0.82)',
@@ -1359,7 +1359,7 @@ export default function ProfilePage() {
         <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
           <AvatarUpload user={user} setUser={setUser} />
           <h2 style={{
-            fontFamily: '"Cormorant Garamond", serif',
+            fontFamily: 'Inter, sans-serif',
             fontWeight: 300,
             fontSize: '26px',
             color: 'rgba(255,255,255,0.92)',
@@ -1418,7 +1418,7 @@ export default function ProfilePage() {
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, 1fr)`, gap: '8px' }}>
               {stats.map((s) => (
                 <div key={s.label} style={{ ...S.card, textAlign: 'center', padding: '14px 8px' }}>
-                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 300, fontSize: '28px', color: 'rgba(255,255,255,0.9)', lineHeight: 1 }}>{s.val}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: '28px', color: 'rgba(255,255,255,0.9)', lineHeight: 1 }}>{s.val}</p>
                   <p style={{ ...S.label, marginTop: '6px' }}>{s.label}</p>
                 </div>
               ))}
@@ -1515,7 +1515,7 @@ export default function ProfilePage() {
             borderColor: 'rgba(239,68,68,0.2)',
           }}>
             <p style={{
-              fontFamily: '"Cormorant Garamond", serif',
+              fontFamily: 'Inter, sans-serif',
               fontWeight: 300,
               fontSize: '22px',
               textAlign: 'center',
@@ -1688,7 +1688,7 @@ function EventTicketGroup({ group }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{
-              fontFamily: '"Cormorant Garamond", serif',
+              fontFamily: 'Inter, sans-serif',
               fontWeight: 400,
               fontSize: '16px',
               color: showCancellationBanner ? 'rgba(220,100,100,0.7)' : 'rgba(255,255,255,0.88)',
@@ -1881,7 +1881,7 @@ function EventTicketGroup({ group }) {
               <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
                 Playlist interactive
               </p>
-              <p style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 300, fontSize: 18, color: 'white', margin: '2px 0 0' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 18, color: 'white', margin: '2px 0 0' }}>
                 {group.eventName}
               </p>
             </div>
@@ -1948,7 +1948,7 @@ function SingleTicketCard({ booking: b, index }) {
           </span>
           <div>
             <p style={{
-              fontFamily: '"Cormorant Garamond", serif',
+              fontFamily: 'Inter, sans-serif',
               fontWeight: 400,
               fontSize: '15px',
               color: 'rgba(255,255,255,0.85)',
@@ -2156,7 +2156,7 @@ function AvatarUpload({ user, setUser }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontFamily: '"Cormorant Garamond", serif',
+            fontFamily: 'Inter, sans-serif',
             fontWeight: 300,
             fontSize: '32px',
             color: '#c8a96e',
@@ -2215,7 +2215,7 @@ function AvatarUpload({ user, setUser }) {
           }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{
-                fontFamily: '"Cormorant Garamond", serif',
+                fontFamily: 'Inter, sans-serif',
                 fontWeight: 300,
                 fontSize: '20px',
                 color: 'rgba(255,255,255,0.88)',

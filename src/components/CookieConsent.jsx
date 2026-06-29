@@ -77,7 +77,7 @@ export default function CookieConsent() {
         </svg>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p id="cookie-consent-title" style={{
-            fontFamily: "'Cormorant Garamond', serif",
+            fontFamily: "Inter, sans-serif",
             fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.92)',
             margin: 0, marginBottom: 6, letterSpacing: '0.01em',
           }}>

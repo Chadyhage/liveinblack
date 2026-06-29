@@ -2722,7 +2722,7 @@ export default function MessagingPage() {
 function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
   const [search, setSearch] = useState('')
   const dmMono = "'DM Mono', monospace"
-  const cormorant = "'Cormorant Garamond', serif"
+  const cormorant = "Inter, sans-serif"
 
   // Load events from all available sources
   const events = useMemo(() => {

@@ -444,7 +444,7 @@ function PrestataireDashboard({ user, navigate }) {
             <CatIcon id={catConfig.icon} color={catConfig.color} size={22} />
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
               {profile?.name || user?.name}
             </p>
             <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 2, margin: 0 }}>
@@ -469,7 +469,7 @@ function PrestataireDashboard({ user, navigate }) {
             <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
               Revenus — 30 derniers jours
             </p>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: '#c8a96e', margin: '4px 0 0', lineHeight: 1 }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 36, fontWeight: 300, color: '#c8a96e', margin: '4px 0 0', lineHeight: 1 }}>
               {revenue30d.toFixed(2)} €
             </p>
             {revenue > 0 && (
@@ -480,14 +480,14 @@ function PrestataireDashboard({ user, navigate }) {
           </div>
           {/* Commandes en attente */}
           <div style={{ ...S.card, padding: 14, textAlign: 'center', borderColor: pendingOrders > 0 ? 'rgba(200,169,110,0.35)' : undefined }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 300, color: pendingOrders > 0 ? '#c8a96e' : 'rgba(255,255,255,0.90)', margin: 0 }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 30, fontWeight: 300, color: pendingOrders > 0 ? '#c8a96e' : 'rgba(255,255,255,0.90)', margin: 0 }}>
               {pendingOrders}
             </p>
             <p style={{ ...S.label, marginBottom: 0, marginTop: 4 }}>À traiter</p>
           </div>
           {/* Articles actifs */}
           <div style={{ ...S.card, padding: 14, textAlign: 'center' }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 30, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
               {availableItems}
               {availableItems !== catalog.length && (
                 <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.32)' }}> /{catalog.length}</span>
@@ -584,7 +584,7 @@ function PrestataireDashboard({ user, navigate }) {
                   {recentPendingOrders.map(order => (
                     <div key={order.id} style={{ ...S.card, padding: '14px 16px', borderColor: 'rgba(200,169,110,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.92)', margin: 0 }}>
+                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.92)', margin: 0 }}>
                           {order.buyerName}
                         </p>
                         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: '2px 0 0' }}>
@@ -610,7 +610,7 @@ function PrestataireDashboard({ user, navigate }) {
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#4ee8c8', margin: 0 }}>
                     Profil à compléter
                   </p>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: '#4ee8c8', margin: 0, lineHeight: 1 }}>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: '#4ee8c8', margin: 0, lineHeight: 1 }}>
                     {profileCompletion}%
                   </p>
                 </div>
@@ -634,7 +634,7 @@ function PrestataireDashboard({ user, navigate }) {
             {/* Empty states ciblés */}
             {orders.length === 0 && catalog.length === 0 && (
               <div style={{ ...S.card, padding: 20, textAlign: 'center' }}>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: 0 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: 0 }}>
                   Bienvenue sur ton espace prestataire.
                 </p>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: '10px 0 16px' }}>
@@ -650,13 +650,13 @@ function PrestataireDashboard({ user, navigate }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div style={{ ...S.card, padding: 14 }}>
                 <p style={{ ...S.label, margin: 0, marginBottom: 4 }}>Commandes en cours</p>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
                   {confirmedOrders}
                 </p>
               </div>
               <div style={{ ...S.card, padding: 14 }}>
                 <p style={{ ...S.label, margin: 0, marginBottom: 4 }}>Commandes terminées</p>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
                   {orders.filter(o => o.status === 'done').length}
                 </p>
               </div>
@@ -705,9 +705,9 @@ function PrestataireDashboard({ user, navigate }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {profile.photoUrl
                       ? <img src={profile.photoUrl} alt={profile.name} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(78,232,200,0.25)', flexShrink: 0 }} />
-                      : <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(78,232,200,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: '#4ee8c8', flexShrink: 0 }}>{(profile.name || '?').charAt(0).toUpperCase()}</div>}
+                      : <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(78,232,200,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "Inter, sans-serif", fontSize: 22, color: '#4ee8c8', flexShrink: 0 }}>{(profile.name || '?').charAt(0).toUpperCase()}</div>}
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{profile.name}</p>
+                      <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{profile.name}</p>
                       {profile.verified && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.1em', color: '#4ee8c8', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 2 }}><svg width="9" height="9" viewBox="0 0 24 24" fill="#4ee8c8"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>VÉRIFIÉ</span>}
                     </div>
                   </div>
@@ -753,7 +753,7 @@ function PrestataireDashboard({ user, navigate }) {
 
             {showAddItem && (
               <div style={{ ...S.card, padding: 16, borderColor: 'rgba(200,169,110,0.20)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Nouvel article</p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Nouvel article</p>
                 <FocusInput placeholder="Nom du produit / service *" value={newItem.name} onChange={e => setNewItem(i => ({ ...i, name: e.target.value }))} />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <FocusInput type="number" placeholder="Prix (€) *" value={newItem.price} onChange={e => setNewItem(i => ({ ...i, price: e.target.value }))} />
@@ -781,7 +781,7 @@ function PrestataireDashboard({ user, navigate }) {
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ marginBottom: 4 }}>
                   <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
                 </svg>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.42)', margin: 0 }}>Catalogue vide</p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.42)', margin: 0 }}>Catalogue vide</p>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7, maxWidth: 240, textAlign: 'center', margin: 0 }}>
                   Ajoute tes produits ou services pour qu'ils apparaissent sur ton profil public.
                 </p>
@@ -813,7 +813,7 @@ function PrestataireDashboard({ user, navigate }) {
                       }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{item.name}</p>
+                            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{item.name}</p>
                             {item.category && (
                               <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8', background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', padding: '1px 7px', borderRadius: 3, flexShrink: 0, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{item.category}</span>
                             )}
@@ -900,7 +900,7 @@ function PrestataireDashboard({ user, navigate }) {
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ marginBottom: 4 }}>
                   <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>
                 </svg>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.42)', margin: 0 }}>Aucune commande</p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.42)', margin: 0 }}>Aucune commande</p>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7, maxWidth: 240, textAlign: 'center', margin: 0 }}>
                   Les commandes passées depuis ton profil apparaîtront ici.
                 </p>
@@ -927,7 +927,7 @@ function PrestataireDashboard({ user, navigate }) {
                   <div key={order.id} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                       <div>
-                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{order.buyerName}</p>
+                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{order.buyerName}</p>
                         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2, margin: '2px 0 0' }}>{new Date(order.createdAt).toLocaleDateString('fr-FR')}</p>
                       </div>
                       <span style={{
@@ -1111,7 +1111,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
               marginBottom: 8,
               margin: '0 0 8px',
             }}>Marketplace</p>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 8px', lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 8px', lineHeight: 1.1 }}>
               Services <span style={{ color: '#c8a96e' }}>& Prestataires</span>
             </h2>
             <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', margin: 0, letterSpacing: '0.04em' }}>
@@ -1379,20 +1379,20 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
           >
             <div style={{ width: '100%', maxWidth: 480, background: 'rgba(8,10,20,0.98)', backdropFilter: 'blur(22px)', borderTop: '1px solid rgba(255,255,255,0.10)', borderRadius: '12px 12px 0 0', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Contacter {contact.provider?.name}</p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Contacter {contact.provider?.name}</p>
                 <button onClick={() => setContact(c => ({ ...c, open: false }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.42)', fontSize: 20, lineHeight: 1, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
               </div>
               {contact.demo ? (
                 <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round"/><circle cx="12" cy="16.5" r="0.6" fill="#c8a96e"/></svg>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Profil de démonstration</p>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Profil de démonstration</p>
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>Ce profil n'est pas encore relié à un compte réel — ton message ne peut pas être envoyé pour l'instant.</p>
                   <button onClick={() => setContact(c => ({ ...c, open: false }))} style={{ ...S.btnGold, marginTop: 8 }}>Fermer</button>
                 </div>
               ) : contact.sent ? (
                 <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Message envoyé</p>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Message envoyé</p>
                   <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>Le prestataire recevra ta demande sous 24-48h.</p>
                   <button onClick={() => setContact(c => ({ ...c, open: false }))} style={{ ...S.btnGold, marginTop: 8 }}>Fermer</button>
                 </div>
@@ -1446,15 +1446,15 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                 {orderSuccess ? (
                   <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Commande envoyée</p>
+                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: 24, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Commande envoyée</p>
                     <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>
                       Ta commande a été transmise à <span style={{ color: 'rgba(255,255,255,0.90)' }}>{orderModal.name}</span>. Tu seras notifié(e) dès confirmation.
                     </p>
-                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: '#c8a96e', margin: 0 }}>Total : {cartTotal.toFixed(2)}€</p>
+                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: '#c8a96e', margin: 0 }}>Total : {cartTotal.toFixed(2)}€</p>
                     <button onClick={() => { setOrderModal(null); setCart([]) }} style={{ ...S.btnGold, marginTop: 8 }}>Fermer</button>
                   </div>
                 ) : (
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', textAlign: 'center', margin: 0 }}>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', textAlign: 'center', margin: 0 }}>
                     {orderModal.type === 'supermarche' ? 'Commander' : 'Réserver'} — {orderModal.name}
                   </p>
                 )}
@@ -1471,7 +1471,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                           {catalogOf(orderModal.userId).filter(i => i.available).map(item => (
                             <div key={item.id} style={{ ...S.card, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{item.name}</p>
+                                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{item.name}</p>
                                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: '#c8a96e', marginTop: 2, margin: '2px 0 0' }}>{item.price}€ / {item.unit}</p>
                                 {item.category && (
                                   <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8', background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', padding: '1px 7px', borderRadius: 3, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'inline-block', marginTop: 3 }}>{item.category}</span>
@@ -1518,7 +1518,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)' }}>Total à payer</span>
-                          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: '#c8a96e' }}>{cartTotal.toFixed(2)}€</span>
+                          <span style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: '#c8a96e' }}>{cartTotal.toFixed(2)}€</span>
                         </div>
                         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.32)', margin: 0, letterSpacing: '0.1em' }}>Paiement à régler directement avec le prestataire</p>
                       </div>
@@ -1585,7 +1585,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                 }}>
                   <IconHourglass size={26} color="#c8a96e" />
                 </div>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Candidature en cours</p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Candidature en cours</p>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
                   Ta demande de compte <span style={{ color: '#c8a96e' }}>{roleLabel}</span> est en cours de traitement. Tu seras notifié(e) sous 24h.
                 </p>
@@ -1620,7 +1620,7 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
           {roleRequestState === 'done' && (
             <div style={{ ...contentBg, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
               <span style={{ fontSize: 32 }}>✅</span>
-              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Candidature envoyée</p>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Candidature envoyée</p>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
                 Ta demande de compte <span style={{ color: '#4ee8c8' }}>{roleLabel}</span> a été transmise. Ton compte Client reste actif. Tu recevras une confirmation sous <strong style={{ color: 'white' }}>24h</strong>.
               </p>

@@ -193,7 +193,7 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 24, color: 'white', margin: 0 }}>
+              <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 24, color: 'white', margin: 0 }}>
                 Booster mon événement
               </h2>
               <p style={{ ...S.label, marginTop: 4, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -235,7 +235,7 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
               }}>
                 <RocketIcon size={36} color="#4ee8c8" />
               </div>
-              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 26, color: 'white', margin: 0 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 26, color: 'white', margin: 0 }}>
                 Événement boosté !
               </p>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
@@ -293,7 +293,7 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
                     marginTop: 4,
                   }}>
                     <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white', letterSpacing: '0.1em' }}>Total</span>
-                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 24, color: '#c8a96e' }}>
+                    <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 24, color: '#c8a96e' }}>
                       {chosenTier?.price}€
                     </span>
                   </div>
@@ -394,7 +394,7 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
                             {tier.label}
                           </p>
                           <p style={{
-                            fontFamily: "'Cormorant Garamond', serif",
+                            fontFamily: "Inter, sans-serif",
                             fontWeight: 300,
                             fontSize: 22,
                             color: isSelected ? '#c8a96e' : plan.color,

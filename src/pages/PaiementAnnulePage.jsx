@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 
 const FONTS = {
-  display: "'Cormorant Garamond', Georgia, serif",
+  display: "Inter, sans-serif",
   mono: "'DM Mono', 'Fira Mono', monospace",
 }
 const COLORS = {

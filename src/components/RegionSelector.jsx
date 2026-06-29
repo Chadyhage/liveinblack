@@ -10,7 +10,7 @@ const CARD = {
 }
 
 const FONTS = {
-  display: "'Cormorant Garamond', Georgia, serif",
+  display: "Inter, sans-serif",
   mono: "'DM Mono', 'Fira Mono', monospace",
 }
 
