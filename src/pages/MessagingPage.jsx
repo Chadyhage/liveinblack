@@ -546,6 +546,8 @@ export default function MessagingPage() {
   const [toast, setToast]                         = useState(null)
   const [photoViewer, setPhotoViewer]             = useState(null) // null | { src }
   const [photoPreview, setPhotoPreview]           = useState(null) // null | { dataUrl, blob, viewOnce }
+  const [listPhoto, setListPhoto]                 = useState(null) // photo capturée depuis la liste → choix du destinataire
+  const listCameraRef                             = useRef(null)
 
   // ── New DM search ──
   const [userSearch, setUserSearch]         = useState('')
@@ -1011,42 +1013,41 @@ export default function MessagingPage() {
   // ── Send photo from preview (Storage → conv_photos Firestore doc fallback) ──
   async function handleSendPhoto() {
     if (!photoPreview) return
-    const { dataUrl, file } = photoPreview
+    const photo = photoPreview
     setPhotoPreview(null)
     const extra = replyTo ? { replyTo } : {}
+    setReplyTo(null)
+    await sendPhotoTo(activeConvId, photo, extra)
+  }
 
-    // Compress before upload
+  // Envoi d'une photo vers UNE conversation précise (réutilisé par le parcours
+  // « appareil photo » depuis la liste des conversations).
+  async function sendPhotoTo(convId, photo, extra = {}) {
+    if (!photo || !convId) return
+    const { dataUrl, file } = photo
     let blob = file
     try { blob = await compressImage(file) } catch {}
-
-    // Try Firebase Storage first
     let sent = false
     try {
       const { storage } = await import('../firebase')
       const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
-      // Chemin uid-scopé : messages/{uid}/{convId}/... — la règle Storage exige
-      // request.auth.uid == uid (seul l'expéditeur peut écrire sous son préfixe)
-      const path = `messages/${myId}/${activeConvId}/${Date.now()}.jpg`
+      const path = `messages/${myId}/${convId}/${Date.now()}.jpg`
       const snap = await uploadBytes(ref(storage, path), blob)
       const url = await getDownloadURL(snap.ref)
-      sendMessage(activeConvId, myId, myName, 'image', url, extra)
+      sendMessage(convId, myId, myName, 'image', url, extra)
       sent = true
     } catch {}
-
     if (!sent) {
-      // Fallback: store base64 in separate conv_photos Firestore doc (bypasses 1MB message limit)
       const photoId = 'ph_' + Date.now()
       const cache = (() => { try { return JSON.parse(localStorage.getItem('lib_photo_cache') || '{}') } catch { return {} } })()
       cache[photoId] = { data: dataUrl }
       localStorage.setItem('lib_photo_cache', JSON.stringify(cache))
       import('../utils/firestore-sync').then(({ syncDocOverwrite }) => {
-        syncDocOverwrite(`conv_photos/${photoId}`, { data: dataUrl, convId: activeConvId, senderId: myId, timestamp: new Date().toISOString() })
+        syncDocOverwrite(`conv_photos/${photoId}`, { data: dataUrl, convId, senderId: myId, timestamp: new Date().toISOString() })
       }).catch(() => {})
-      sendMessage(activeConvId, myId, myName, 'image', photoId, extra)
+      sendMessage(convId, myId, myName, 'image', photoId, extra)
     }
-
-    setReplyTo(null)
-    setMessages(getMessages(activeConvId))
+    if (convId === activeConvId) setMessages(getMessages(convId))
     setConversations(getConversations(myId))
   }
 
@@ -1738,7 +1739,18 @@ export default function MessagingPage() {
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '0' }}>
         {/* Header — titre retiré, l'espace est recyclé pour resserrer recherche + actions */}
         <div style={{ padding: '14px 16px 10px' }}>
-          <MessagingSearchBar value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <MessagingSearchBar value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
+            </div>
+            {/* Appareil photo → capture puis choix du destinataire */}
+            <button onClick={() => listCameraRef.current?.click()} aria-label="Appareil photo" className="lib-press"
+              style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 18, background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4ee8c8' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
+            <input ref={listCameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setListPhoto({ dataUrl: ev.target.result, file: f }); r.readAsDataURL(f); e.target.value = '' }} />
+          </div>
           {/* Quick actions — compactes, côte à côte */}
           <div style={{ marginTop: 8 }}>
             <MessagingQuickActions
@@ -1818,6 +1830,41 @@ export default function MessagingPage() {
           )
         })()}
       </div>
+
+      {/* ── Appareil photo : choix du destinataire (bottom sheet) ── */}
+      {listPhoto && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)' }} onClick={() => setListPhoto(null)} />
+          <div style={{ position: 'relative', width: '100%', maxWidth: 520, background: 'rgba(8,10,20,0.98)', borderTop: '1px solid rgba(255,255,255,0.1)', borderRadius: '18px 18px 0 0', maxHeight: '86vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+              <div style={{ width: 40, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.15)' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 18px 12px' }}>
+              <img src={listPhoto.dataUrl} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 16, color: '#fff', margin: 0 }}>Envoyer la photo à…</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>Choisis une conversation</p>
+              </div>
+              <button onClick={() => setListPhoto(null)} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 20 }}>✕</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '4px 10px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {conversations.length === 0 ? (
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: T.dim, textAlign: 'center', padding: '24px 0' }}>Aucune conversation.</p>
+              ) : conversations.map(conv => {
+                const d = getConvDisplay(conv)
+                return (
+                  <button key={conv.id} onClick={async () => { const photo = listPhoto; setListPhoto(null); await sendPhotoTo(conv.id, photo); openConv(conv.id) }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', textAlign: 'left' }}>
+                    {d.isGroup ? <GroupAvatar conv={conv} size={42} /> : <Avatar user={d.user} size={42} />}
+                    <span style={{ flex: 1, minWidth: 0, fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 
