@@ -17,8 +17,9 @@ import {
   setTyping, getTypingUsers, setOnline, isOnline,
   seedDemoData, DEMO_USERS,
   getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking, withdrawFromGroupBooking,
-  blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory,
+  blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory, deleteConversationCompletely,
   editMessage, isConvMuted, toggleMuteConv,
+  toggleStarMessage, isMessageStarred,
 } from '../utils/messaging'
 import { startStripeCheckout } from '../utils/stripe'
 import { playNotifSound } from '../utils/notifSound'
@@ -601,6 +602,7 @@ export default function MessagingPage() {
   const messagesEndRef      = useRef(null)
   const chatScrollRef       = useRef(null)
   const photoInputRef       = useRef(null)
+  const cameraInputRef      = useRef(null)
   const activeConvIdRef     = useRef(null)
   const lastConvUpdatedRef  = useRef({}) // { [convId]: updatedAt ISO } — détecte les nouveaux messages
   const storyImgRef     = useRef(null)
@@ -1443,18 +1445,22 @@ export default function MessagingPage() {
   }
   function handleRemoveFriend(fid) {
     removeFriend(myId, fid)
-    // Find and delete conversation history
+    // Retrait d'ami → on supprime VRAIMENT la conversation (pas un simple effacement).
     const conv = conversations.find(c => c.type === 'direct' && c.participants?.includes(fid))
-    if (conv) deleteConversationHistory(conv.id)
+    if (conv) deleteConversationCompletely(conv.id)
     setFriends(prev => prev.filter(id => id !== fid))
     refresh()
     showToast('Contact supprimé')
   }
   function handleBlockUser(userId, userName) {
+    // Blocage RÉEL : on garde la conversation et l'ami, mais on n'échange plus.
+    // Une notice système est inscrite et l'envoi est verrouillé tant que bloqué ;
+    // les messages reçus de cette personne sont filtrés à l'affichage.
     blockUser(myId, userId)
-    removeFriend(myId, userId)
+    const conv = conversations.find(c => c.type === 'direct' && c.participants?.includes(userId))
+    if (conv) sendMessage(conv.id, 'system', 'Système', 'system', `Tu as bloqué ${userName}. Tu ne recevras plus ses messages.`)
     setBlockedUsers(getBlockedUsers(myId))
-    setFriends(getFriends(myId))
+    if (conv) { setConversations(getConversations(myId)); setMessages(getMessages(conv.id)) }
     showToast(`${userName} bloqué·e`)
   }
   function handleUnblockUser(userId, userName) {
@@ -1700,8 +1706,11 @@ export default function MessagingPage() {
                 </div>
               )}
 
-              {/* Time + read receipt */}
+              {/* Time + read receipt + étoile important */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                {isMessageStarred(myId, activeConvId, msg.id) && (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="#e0c690" stroke="#e0c690" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+                )}
                 <span style={{ fontFamily: T.dmMono, fontSize: 8, color: T.dim }}>{formatMsgTime(msg.timestamp)}</span>
                 {isMe && <ReadReceipt msg={msg} myId={myId} conv={activeConv} />}
               </div>
@@ -2042,6 +2051,10 @@ export default function MessagingPage() {
 
   // ── Chat view ──
   const convDisplay = getConvDisplay(activeConv)
+  // Blocage : l'autre participant d'une conv directe est-il bloqué ? → on
+  // verrouille l'envoi et on affiche une notice à la place de la barre.
+  const directOtherId = activeConv?.type === 'direct' ? activeConv.participants?.find(id => id !== myId) : null
+  const otherBlocked = !!(directOtherId && isBlocked(myId, directOtherId))
 
   return (
     <Layout hideNav chatMode>
@@ -2349,10 +2362,14 @@ export default function MessagingPage() {
               style={{ flex: 1, overflowY: 'auto', padding: '8px 10px 4px', position: 'relative' }}>
               {(() => {
                 const q = msgSearch.trim().toLowerCase()
+                // Blocage RÉEL : on masque les messages reçus d'un contact bloqué
+                // (on garde les nôtres et les messages système).
+                const blockedSet = new Set(getBlockedUsers(myId))
+                const base = messages.filter(m => m.type === 'system' || m.senderId === myId || !blockedSet.has(m.senderId))
                 // En mode recherche active : ne montrer que les messages texte qui matchent
                 const shown = (showMsgSearch && q)
-                  ? messages.filter(m => !m.deletedForAll && m.type === 'text' && (m.content || '').toLowerCase().includes(q))
-                  : messages
+                  ? base.filter(m => !m.deletedForAll && m.type === 'text' && (m.content || '').toLowerCase().includes(q))
+                  : base
                 if (showMsgSearch && q && shown.length === 0) {
                   return <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, textAlign: 'center', padding: '24px 0' }}>Aucun message trouvé</p>
                 }
@@ -2397,6 +2414,16 @@ export default function MessagingPage() {
               </div>
             )}
 
+            {/* ── Notice de blocage (remplace la barre d'envoi) ── */}
+            {otherBlocked && (
+              <div style={{ background: 'rgba(220,50,50,0.06)', borderTop: '1px solid rgba(220,50,50,0.18)', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,160,160,0.92)', lineHeight: 1.4 }}>Tu as bloqué ce contact — vous ne pouvez plus échanger.</span>
+                <button onClick={() => { unblockUser(myId, directOtherId); setBlockedUsers(getBlockedUsers(myId)); sendMessage(activeConvId, 'system', 'Système', 'system', 'Tu as débloqué ce contact.'); setMessages(getMessages(activeConvId)); showToast('Débloqué·e') }}
+                  className="lib-press" style={{ flexShrink: 0, padding: '9px 16px', borderRadius: 999, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.3)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Débloquer</button>
+              </div>
+            )}
+
+            {!otherBlocked && (<>
             {/* ── Edit bar ── */}
             {editingMsg && (
               <div style={{ background: 'rgba(200,169,110,0.07)', borderTop: '1px solid rgba(200,169,110,0.18)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2428,6 +2455,7 @@ export default function MessagingPage() {
                 {showAttachMenu && (
                   <div style={{ position: 'absolute', bottom: 44, left: 0, background: 'rgba(8,10,20,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: 4, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 160, zIndex: 20 }}>
                     {[
+                      { label: 'Appareil photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>, action: () => { cameraInputRef.current?.click(); setShowAttachMenu(false) } },
                       { label: 'Photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>, action: () => { photoInputRef.current?.click(); setShowAttachMenu(false) } },
                       { label: 'Sondage', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, action: () => { setShowPollCreator(true); setShowAttachMenu(false) } },
                       { label: 'Partager un événement', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/></svg>, action: () => { setShowEventPicker(true); setShowAttachMenu(false) } },
@@ -2442,6 +2470,7 @@ export default function MessagingPage() {
                   </div>
                 )}
                 <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoSelect} />
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handlePhotoSelect} />
               </div>
 
               {/* Text input */}
@@ -2488,6 +2517,7 @@ export default function MessagingPage() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
+            </>)}
           </>
         )}
 
@@ -2511,6 +2541,7 @@ export default function MessagingPage() {
               {[
                 !contextMenu.msg.deletedForAll && { label: '↩ Répondre', fn: () => handleReply(contextMenu.msg) },
                 !contextMenu.msg.deletedForAll && contextMenu.msg.senderId === myId && contextMenu.msg.type === 'text' && { label: '✏️ Éditer', fn: () => handleEditStart(contextMenu.msg) },
+                !contextMenu.msg.deletedForAll && { label: isMessageStarred(myId, activeConvId, contextMenu.msg.id) ? '★ Retirer des importants' : '☆ Marquer important', fn: () => { toggleStarMessage(myId, activeConvId, contextMenu.msg.id); setMessages(getMessages(activeConvId)) } },
                 !contextMenu.msg.deletedForAll && { label: '↗ Transférer', fn: () => handleForward(contextMenu.msg) },
                 !contextMenu.msg.deletedForAll && amAdmin && { label: activeConv?.pinnedMessageId === contextMenu.msg.id ? '📌 Désépingler' : '📌 Épingler', fn: () => handlePin(contextMenu.msg) },
                 !contextMenu.msg.deletedForAll && { label: '🗑 Supprimer pour moi', fn: () => handleDeleteForSelf(contextMenu.msg) },

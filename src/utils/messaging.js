@@ -876,6 +876,28 @@ export function isBlocked(myId, userId) {
   return getBlockedUsers(myId).includes(userId)
 }
 
+// ── Messages importants (étoile, personnels, façon WhatsApp) ─────────────────
+// Stocké lib_starred = { [userId]: ["convId:msgId", …] }, synchronisé dans
+// user_social/{uid}.starred.
+export function getStarredMessages(myId) {
+  try { return JSON.parse(localStorage.getItem('lib_starred') || '{}')[myId] || [] } catch { return [] }
+}
+export function isMessageStarred(myId, convId, msgId) {
+  return getStarredMessages(myId).includes(`${convId}:${msgId}`)
+}
+export function toggleStarMessage(myId, convId, msgId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_starred') || '{}')
+    const key = `${convId}:${msgId}`
+    const cur = new Set(all[myId] || [])
+    if (cur.has(key)) cur.delete(key); else cur.add(key)
+    all[myId] = [...cur]
+    localStorage.setItem('lib_starred', JSON.stringify(all))
+    import('./firestore-sync').then(({ syncDoc }) => { syncDoc(`user_social/${myId}`, { starred: all[myId] }) }).catch(() => {})
+    return cur.has(key)
+  } catch { return false }
+}
+
 // ─── Reports ─────────────────────────────────────────────────────────────────
 export function reportUser(fromId, fromName, targetId, targetName, reason) {
   try {
@@ -890,14 +912,35 @@ export function reportUser(fromId, fromName, targetId, targetName, reason) {
   } catch {}
 }
 
-// ─── Delete conversation history ─────────────────────────────────────────────
+// ─── Effacer l'historique d'une conversation ─────────────────────────────────
+// Vide UNIQUEMENT les messages. La conversation (et donc le contact/ami) est
+// CONSERVÉE — on remet juste son aperçu à zéro. Avant, on supprimait aussi la
+// conv, ce qui faisait disparaître la personne de la liste (bug signalé).
 export function deleteConversationHistory(convId) {
   try {
-    // Supprime les messages
+    const msgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
+    msgs[convId] = []
+    localStorage.setItem('lib_messages', JSON.stringify(msgs))
+    // Reset de l'aperçu de la conversation (lastMessage), sans la retirer.
+    const convs = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
+    const i = convs.findIndex(c => c.id === convId)
+    if (i !== -1) { convs[i] = { ...convs[i], lastMessage: '', lastMessageType: 'text', updatedAt: new Date().toISOString() }; localStorage.setItem('lib_conversations', JSON.stringify(convs)) }
+    // Persistance Firestore : on vide la sous-collection messages côté serveur.
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`conv_messages/${convId}`, { messages: [] })
+      if (i !== -1) syncDoc(`conversations/${convId}`, { lastMessage: '', updatedAt: convs[i].updatedAt })
+    }).catch(() => {})
+  } catch {}
+}
+
+// Supprimer DÉFINITIVEMENT une conversation (retire la conv + messages). À
+// n'utiliser que pour un retrait d'ami / suppression volontaire, pas pour un
+// simple « effacer l'historique ».
+export function deleteConversationCompletely(convId) {
+  try {
     const msgs = JSON.parse(localStorage.getItem('lib_messages') || '{}')
     delete msgs[convId]
     localStorage.setItem('lib_messages', JSON.stringify(msgs))
-    // Supprime la conversation elle-même
     const convs = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
     localStorage.setItem('lib_conversations', JSON.stringify(convs.filter(c => c.id !== convId)))
   } catch {}

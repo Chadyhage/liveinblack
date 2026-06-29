@@ -31,6 +31,10 @@ function ensureContext() {
  * plusieurs messages arrivent d'un coup, et les double-déclenchements).
  */
 export function playNotifSound() {
+  // ⏸️ Son de notification DÉSACTIVÉ (demande produit — on y reviendra).
+  // Le mute/badge restent gérés ailleurs ; ici on ne joue plus aucun bip.
+  return
+  // eslint-disable-next-line no-unreachable
   try {
     const now = Date.now()
     if (now - _lastPlay < 800) return
