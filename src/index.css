@@ -341,6 +341,15 @@
     letter-spacing: -0.02em;
   }
 
+  /* ── Cartes « Réservez pour ce soir » : compactes sur mobile, plus
+     présentes sur desktop pour réduire l'écart avec le Top 3 ── */
+  .tonight-card { width: 230px; }
+  .tonight-card-img { height: 130px; }
+  @media (min-width: 768px) {
+    .tonight-card { width: 320px; }
+    .tonight-card-img { height: 180px; }
+  }
+
   /* ── Transition d'entrée des pages (changement d'onglet) ── */
   .lib-page { animation: lib-page-in 0.34s cubic-bezier(0.22,0.9,0.3,1) both; }
   @keyframes lib-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }

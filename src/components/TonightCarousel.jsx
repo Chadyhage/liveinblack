@@ -73,11 +73,12 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
           const lowStock = rem > 0 && rem <= 25
           return (
             <button key={ev.id} onClick={() => onOpen(ev.id)}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0, width: 230, textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.07)', background: '#0b0d14', borderRadius: 18, overflow: 'hidden', padding: 0, transition: 'transform 0.25s ease, border-color 0.25s ease' }}
+              className="tonight-card"
+              style={{ scrollSnapAlign: 'start', flexShrink: 0, textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.07)', background: '#0b0d14', borderRadius: 18, overflow: 'hidden', padding: 0, transition: 'transform 0.25s ease, border-color 0.25s ease' }}
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'rgba(224,90,170,0.35)' }}
               onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)' }}>
               {/* Visuel */}
-              <div style={{ position: 'relative', height: 130 }}>
+              <div className="tonight-card-img" style={{ position: 'relative' }}>
                 {ev.imageUrl
                   ? <img src={ev.imageUrl} alt={ev.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <div style={{ width: '100%', height: '100%', background: `radial-gradient(circle at 30% 30%, ${ev.color || '#2a2440'}99, transparent 60%), linear-gradient(135deg, #1a1426, #0b0d14)` }} />

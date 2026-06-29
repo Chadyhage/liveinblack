@@ -110,12 +110,18 @@ function ScrollPhrase({ children, i = 0, color }) {
   useEffect(() => {
     const el = ref.current; if (!el) return
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) { setVis(true); return }
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect() } },
-      { threshold: 0.7, rootMargin: '0px 0px -10% 0px' }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
+    let r1, r2, t
+    const reveal = () => { r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setVis(true)) }) }
+    // Déjà visible au chargement (hero en haut) → on joue l'anim direct, de façon
+    // FIABLE (double rAF : on peint d'abord l'état caché, puis on révèle).
+    const rect = el.getBoundingClientRect()
+    if (rect.top < window.innerHeight && rect.bottom > 0) { reveal() }
+    else {
+      const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { reveal(); obs.disconnect() } }, { threshold: 0.3 })
+      obs.observe(el)
+      return () => { obs.disconnect(); cancelAnimationFrame(r1); cancelAnimationFrame(r2) }
+    }
+    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); clearTimeout(t) }
   }, [])
   const hidden = [
     'translateY(26px) scale(0.35) rotate(-6deg)',
@@ -130,6 +136,97 @@ function ScrollPhrase({ children, i = 0, color }) {
       transformOrigin: 'left center', willChange: 'transform, opacity',
       transition: `opacity 0.5s ease ${i * 110}ms, transform 0.6s cubic-bezier(0.18,1.5,0.4,1) ${i * 110}ms`,
     }}>{children}</span>
+  )
+}
+
+// ── Galerie vidéo du hero (desktop) ──────────────────────────────────────────
+const HERO_VIDEOS = [
+  { src: '/discover.mp4', title: 'Vis chaque nuit.' },
+  { src: '/discover3.mp4', title: 'Brûle la piste.' },
+]
+
+// Marque LIB complète (étoile laser + œil + « LIB ») — pas juste l'étoile.
+function LibMark({ size = 30 }) {
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} fill="none" style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7))' }}>
+      <path d="M50 5 L60 40 L95 50 L60 60 L50 95 L40 60 L5 50 L40 40 Z" fill="none" stroke="#e879f9" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M22 50C22 50 35 32 50 32C65 32 78 50 78 50" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M22 50C22 50 35 68 50 68C65 68 78 50 78 50" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+      <text x="50" y="52" fill="#050507" stroke="#050507" strokeWidth="4" strokeLinejoin="round" fontSize="12.5" fontFamily="sans-serif" fontWeight="900" letterSpacing="-0.2" dominantBaseline="middle" textAnchor="middle">LIB</text>
+      <text x="50" y="52" fill="#fff" fontSize="12.5" fontFamily="sans-serif" fontWeight="900" letterSpacing="-0.2" dominantBaseline="middle" textAnchor="middle">LIB</text>
+    </svg>
+  )
+}
+
+function HeroVideoGallery() {
+  const [idx, setIdx] = useState(0)
+  const n = HERO_VIDEOS.length
+  const go = (d) => setIdx(i => (i + d + n) % n)
+  const prev = (idx - 1 + n) % n
+  const next = (idx + 1) % n
+  const cur = HERO_VIDEOS[idx]
+
+  const Peek = ({ i, side }) => (
+    <button onClick={() => setIdx(i)} aria-label="Vidéo suivante"
+      style={{
+        position: 'absolute', top: '50%', [side]: -2, transform: 'translateY(-50%)',
+        width: 64, height: '74%', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', padding: 0,
+        border: '1px solid rgba(255,255,255,0.1)', background: '#0b0d14', zIndex: 1,
+        boxShadow: '0 20px 40px -20px rgba(0,0,0,0.7)',
+      }}>
+      <video src={HERO_VIDEOS[i].src} muted playsInline preload="auto"
+        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, filter: 'blur(1px) saturate(0.85)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: side === 'left' ? 'linear-gradient(90deg, transparent, rgba(4,4,11,0.7))' : 'linear-gradient(270deg, transparent, rgba(4,4,11,0.7))' }} />
+    </button>
+  )
+
+  const Arrow = ({ side, onClick }) => (
+    <button onClick={onClick} aria-label={side === 'left' ? 'Précédent' : 'Suivant'} className="lib-press"
+      style={{
+        position: 'absolute', top: '50%', [side]: -16, transform: 'translateY(-50%)', zIndex: 4,
+        width: 38, height: 38, borderRadius: '50%', cursor: 'pointer',
+        background: 'rgba(8,9,14,0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.15)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
+      }}>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        {side === 'left' ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 18 15 12 9 6" />}
+      </svg>
+    </button>
+  )
+
+  return (
+    <div style={{ position: 'relative', width: 380 }}>
+      <div style={{ position: 'absolute', inset: -30, background: 'radial-gradient(60% 55% at 50% 35%, rgba(78,232,200,0.16), transparent 70%)', filter: 'blur(20px)', pointerEvents: 'none' }} />
+
+      {/* Aperçus latéraux (vidéos qui suivent, en retrait) */}
+      {n > 1 && <Peek i={prev} side="left" />}
+      {n > 1 && <Peek i={next} side="right" />}
+
+      {/* Carte vidéo active (au centre) */}
+      <div style={{ position: 'relative', zIndex: 2, width: 300, margin: '0 auto' }}>
+        <div style={{ position: 'relative', borderRadius: 26, overflow: 'hidden', aspectRatio: '4 / 5', border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 40px 90px -24px rgba(0,0,0,0.78)' }}>
+          <video key={cur.src} src={cur.src} autoPlay loop muted playsInline
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,4,11,0.35) 0%, transparent 30%, rgba(4,4,11,0.88) 100%)' }} />
+          {/* logo LIB complet */}
+          <div style={{ position: 'absolute', top: 14, left: 14 }}><LibMark size={30} /></div>
+          {/* légende */}
+          <div style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4ee8c8', margin: '0 0 4px' }}>Live in black</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0, lineHeight: 1.1 }}>{cur.title}</p>
+          </div>
+          {/* points */}
+          <div style={{ position: 'absolute', top: 16, right: 14, display: 'flex', gap: 5 }}>
+            {HERO_VIDEOS.map((_, i) => (
+              <span key={i} style={{ width: i === idx ? 16 : 6, height: 6, borderRadius: 999, background: i === idx ? '#4ee8c8' : 'rgba(255,255,255,0.4)', transition: 'all 0.25s' }} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {n > 1 && <Arrow side="left" onClick={() => go(-1)} />}
+      {n > 1 && <Arrow side="right" onClick={() => go(1)} />}
+    </div>
   )
 }
 
@@ -447,31 +544,9 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Colonne droite : panneau vidéo cinématique (desktop) — comble le vide du hero */}
-          <div className="hidden md:block" style={{ flexShrink: 0, width: 360 }}>
-            <div style={{ position: 'relative' }}>
-              {/* halo */}
-              <div style={{ position: 'absolute', inset: -30, background: 'radial-gradient(60% 55% at 60% 35%, rgba(78,232,200,0.18), transparent 70%)', filter: 'blur(20px)', pointerEvents: 'none' }} />
-              <div className="lib-lift" style={{
-                position: 'relative', borderRadius: 26, overflow: 'hidden', aspectRatio: '4 / 5',
-                border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 40px 90px -24px rgba(0,0,0,0.75)',
-                transition: 'transform 0.25s ease',
-              }}>
-                <video src="/discover.mp4" autoPlay loop muted playsInline
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                {/* vignette + dégradé bas */}
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,4,11,0.35) 0%, transparent 30%, rgba(4,4,11,0.85) 100%)' }} />
-                {/* étoile LIB en haut */}
-                <svg width="26" height="26" viewBox="0 0 100 100" fill="none" style={{ position: 'absolute', top: 16, left: 16, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }}>
-                  <path d="M50 5 L60 40 L95 50 L60 60 L50 95 L40 60 L5 50 L40 40 Z" fill="none" stroke="#e879f9" strokeWidth="3" strokeLinejoin="round" />
-                </svg>
-                {/* légende bas */}
-                <div style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4ee8c8', margin: '0 0 4px' }}>Live in black</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0, lineHeight: 1.1 }}>Vis chaque nuit.</p>
-                </div>
-              </div>
-            </div>
+          {/* Colonne droite : galerie vidéo (desktop) — flèches + aperçus latéraux */}
+          <div className="hidden md:block" style={{ flexShrink: 0 }}>
+            <HeroVideoGallery />
           </div>
         </div>
 

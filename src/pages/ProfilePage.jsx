@@ -1047,7 +1047,19 @@ export default function ProfilePage() {
       acc[key].tickets.push(b)
       return acc
     }, {})
-    const groups = Object.values(grouped)
+    // Tri : événements actifs en premier (par date la plus proche), annulés
+    // relégués tout en bas → on n'a plus « Événement annulé » qui domine la liste.
+    const evById = {}
+    getAllEvents().forEach(e => { evById[String(e.id)] = e })
+    const groups = Object.values(grouped).map(g => {
+      const ev = evById[String(g.eventId)]
+      const cancelled = !ev || !!ev?.cancelled
+      const ts = ev?.date ? new Date(ev.date + 'T00:00:00').getTime() : 0
+      return { ...g, _cancelled: cancelled, _ts: ts }
+    }).sort((a, b) => {
+      if (a._cancelled !== b._cancelled) return a._cancelled ? 1 : -1
+      return a._cancelled ? (b._ts - a._ts) : (a._ts - b._ts)
+    })
 
     return (
       <Layout>
@@ -1665,7 +1677,22 @@ function EventTicketGroup({ group }) {
   const isCancelled = !!event?.cancelled
   const isDeleted = !event   // l'event n'existe plus du tout
   const cancellationMessage = event?.cancellationMessage || ''
-  const showCancellationBanner = isCancelled || isDeleted
+  const cancelled = isCancelled || isDeleted
+  // Bannière d'annulation masquable : une fois lue, l'utilisateur la ferme et
+  // elle ne réapparaît plus (mémorisée par event). Le billet, lui, reste classé en bas.
+  const DKEY = 'lib_dismissed_cancel'
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    try { return (JSON.parse(localStorage.getItem(DKEY) || '[]')).includes(String(group.eventId)) } catch { return false }
+  })
+  function dismissBanner() {
+    setBannerDismissed(true)
+    try {
+      const list = JSON.parse(localStorage.getItem(DKEY) || '[]')
+      if (!list.includes(String(group.eventId))) { list.push(String(group.eventId)); localStorage.setItem(DKEY, JSON.stringify(list)) }
+    } catch {}
+  }
+  const showCancellationBanner = cancelled   // pour le style « annulé » du header (barré, vignette grise)
+  const showCancelDetails = cancelled && !bannerDismissed   // le cartouche détaillé, masquable
 
   function openSupport() {
     const subject = encodeURIComponent(`Événement annulé — ${group.eventName}`)
@@ -1745,8 +1772,8 @@ function EventTicketGroup({ group }) {
         </div>
       </div>
 
-      {/* Cartouche d'annulation — message de l'organisateur + lien support */}
-      {showCancellationBanner && (
+      {/* Cartouche d'annulation — message de l'organisateur + lien support (masquable) */}
+      {showCancelDetails && (
         <div style={{
           borderTop: '1px solid rgba(220,50,50,0.20)',
           background: 'rgba(220,50,50,0.05)',
@@ -1758,9 +1785,12 @@ function EventTicketGroup({ group }) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff8a8a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: '#ff8a8a', margin: 0, marginBottom: 5 }}>
-                Événement annulé
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 5 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: '#ff8a8a', margin: 0 }}>
+                  Événement annulé
+                </p>
+                <button onClick={dismissBanner} aria-label="Masquer" className="lib-press" style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 15, lineHeight: 1, padding: 0 }}>✕</button>
+              </div>
               {cancellationMessage ? (
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {cancellationMessage}
