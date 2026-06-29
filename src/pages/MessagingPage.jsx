@@ -1637,12 +1637,12 @@ export default function MessagingPage() {
               <div
                 onContextMenu={e => { e.preventDefault(); setContextMenu({ msg, x: e.clientX, y: e.clientY }) }}
                 style={{
-                  padding: isDeleted ? '7px 12px' : msg.type === 'image' || msg.type === 'poll' || msg.type === 'story' ? '6px' : '9px 13px',
-                  borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
+                  padding: isDeleted ? '8px 14px' : msg.type === 'image' || msg.type === 'poll' || msg.type === 'story' ? '6px' : '10px 14px',
+                  borderRadius: isMe ? '18px 18px 5px 18px' : '18px 18px 18px 5px',
                   background: isMe
-                    ? 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.10))'
-                    : 'rgba(255,255,255,0.07)',
-                  border: `1px solid ${isMe ? 'rgba(78,232,200,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                    ? 'linear-gradient(135deg, rgba(78,232,200,0.26), rgba(78,232,200,0.13))'
+                    : 'rgba(255,255,255,0.06)',
+                  border: `1px solid ${isMe ? 'rgba(78,232,200,0.3)' : 'rgba(255,255,255,0.08)'}`,
                   maxWidth: '100%',
                   cursor: 'context-menu',
                   position: 'relative',
@@ -1656,7 +1656,7 @@ export default function MessagingPage() {
                     🚫 Ce message a été supprimé
                   </span>
                 ) : msg.type === 'text' ? (
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.88)', margin: 0, wordBreak: 'break-word', lineHeight: 1.5 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: isMe ? '#eafff9' : 'rgba(255,255,255,0.92)', margin: 0, wordBreak: 'break-word', lineHeight: 1.45 }}>
                     <MentionText content={msg.content} members={activeConv?.members} />
                     {msg.editedAt && <span style={{ fontSize: 8.5, color: T.dim, marginLeft: 5, fontStyle: 'italic' }}>(modifié)</span>}
                   </p>
@@ -2428,13 +2428,15 @@ export default function MessagingPage() {
                 {showAttachMenu && (
                   <div style={{ position: 'absolute', bottom: 44, left: 0, background: 'rgba(8,10,20,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: 4, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 160, zIndex: 20 }}>
                     {[
-                      { label: '📷 Photo', action: () => { photoInputRef.current?.click(); setShowAttachMenu(false) } },
-                      { label: '📊 Sondage', action: () => { setShowPollCreator(true); setShowAttachMenu(false) } },
-                      { label: '🎟 Partager un événement', action: () => { setShowEventPicker(true); setShowAttachMenu(false) } },
+                      { label: 'Photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>, action: () => { photoInputRef.current?.click(); setShowAttachMenu(false) } },
+                      { label: 'Sondage', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, action: () => { setShowPollCreator(true); setShowAttachMenu(false) } },
+                      { label: 'Partager un événement', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/></svg>, action: () => { setShowEventPicker(true); setShowAttachMenu(false) } },
                     ].map(item => (
                       <button key={item.label} onClick={item.action}
-                        style={{ padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.8)', fontFamily: T.dmMono, fontSize: 11, textAlign: 'left', borderRadius: 6 }}>
-                        {item.label}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, textAlign: 'left', borderRadius: 8 }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                        {item.icon}{item.label}
                       </button>
                     ))}
                   </div>
@@ -2449,7 +2451,7 @@ export default function MessagingPage() {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 placeholder="Message…"
                 rows={1}
-                style={{ ...INPUT_S, flex: 1, resize: 'none', maxHeight: 100, lineHeight: 1.5, paddingTop: 8, paddingBottom: 8 }}
+                style={{ ...INPUT_S, flex: 1, resize: 'none', maxHeight: 100, lineHeight: 1.5, borderRadius: 22, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 16px' }}
               />
 
               {/* Voice button — tap une fois ou maintenir (glisser vers le haut pour verrouiller) */}
