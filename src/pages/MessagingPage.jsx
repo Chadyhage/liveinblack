@@ -548,6 +548,14 @@ export default function MessagingPage() {
   const [photoPreview, setPhotoPreview]           = useState(null) // null | { dataUrl, blob, viewOnce }
   const [listPhoto, setListPhoto]                 = useState(null) // photo capturée depuis la liste → choix du destinataire
   const listCameraRef                             = useRef(null)
+  // Split-view PC (façon WhatsApp) : liste à gauche + conversation à droite.
+  const [isDesktop, setIsDesktop]                 = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 768px)')?.matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const on = e => setIsDesktop(e.matches)
+    mq.addEventListener?.('change', on)
+    return () => mq.removeEventListener?.('change', on)
+  }, [])
 
   // ── New DM search ──
   const [userSearch, setUserSearch]         = useState('')
@@ -1734,11 +1742,11 @@ export default function MessagingPage() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   // ── List view ──
-  if (view === 'list') return (
-    <Layout>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0' }}>
-        {/* Header — titre retiré, l'espace est recyclé pour resserrer recherche + actions */}
-        <div style={{ padding: '14px 16px 10px' }}>
+  function renderListPane() {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: isDesktop ? '100%' : 'auto', minHeight: 0 }}>
+        {/* Header — recherche + actions */}
+        <div style={{ padding: '14px 16px 10px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <MessagingSearchBar value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
@@ -1774,7 +1782,8 @@ export default function MessagingPage() {
           </div>
         </div>
 
-        {/* Conversation list */}
+        {/* Conversation list (scrollable sur desktop) */}
+        <div style={{ flex: isDesktop ? '1 1 0' : 'none', minHeight: 0, overflowY: isDesktop ? 'auto' : 'visible' }}>
         {(() => {
           const filtered = conversations.filter(conv => {
             if (!contactSearch.trim()) return true
@@ -1829,7 +1838,7 @@ export default function MessagingPage() {
             </div>
           )
         })()}
-      </div>
+        </div>
 
       {/* ── Appareil photo : choix du destinataire (bottom sheet) ── */}
       {listPhoto && (
@@ -1865,8 +1874,20 @@ export default function MessagingPage() {
           </div>
         </div>
       )}
-    </Layout>
-  )
+      </div>
+    )
+  }
+
+  if (view === 'list') {
+    if (isDesktop) return renderDesktopSplit(renderChatPlaceholder())
+    return (
+      <Layout>
+        <div style={{ maxWidth: 520, margin: '0 auto' }}>
+          {renderListPane()}
+        </div>
+      </Layout>
+    )
+  }
 
   // ── User search / new DM ──
   // ── Vue : messages importants (étoilés) ──
@@ -2211,20 +2232,19 @@ export default function MessagingPage() {
     </Layout>
   )
 
-  // ── Chat view ──
-  const convDisplay = getConvDisplay(activeConv)
-  // Blocage : l'autre participant d'une conv directe est-il bloqué ? → on
-  // verrouille l'envoi et on affiche une notice à la place de la barre.
-  const directOtherId = activeConv?.type === 'direct' ? activeConv.participants?.find(id => id !== myId) : null
-  const otherBlocked = !!(directOtherId && isBlocked(myId, directOtherId))
-
-  return (
-    <Layout hideNav chatMode>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', maxWidth: 520, margin: '0 auto', position: 'relative', overflow: 'hidden' }}>
+  // ── Panneau Conversation (réutilisé : plein écran mobile / colonne droite desktop) ──
+  function renderChatPane() {
+    const convDisplay = getConvDisplay(activeConv)
+    // Blocage : l'autre participant d'une conv directe est-il bloqué ?
+    const directOtherId = activeConv?.type === 'direct' ? activeConv.participants?.find(id => id !== myId) : null
+    const otherBlocked = !!(directOtherId && isBlocked(myId, directOtherId))
+    return (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', height: isDesktop ? '100%' : '100dvh', maxWidth: isDesktop ? 'none' : 520, width: '100%', margin: isDesktop ? 0 : '0 auto', position: 'relative', overflow: 'hidden' }}>
 
         {/* ── Header ── */}
         <div style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(4,4,14,0.95)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => { setView('list'); setActiveConvId(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0, flexShrink: 0 }}>←</button>
+          {!isDesktop && <button onClick={() => { setView('list'); setActiveConvId(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0, flexShrink: 0 }}>←</button>}
           {convDisplay.isGroup ? <GroupAvatar conv={activeConv} size={38} /> : <Avatar user={convDisplay.user} size={38} showOnline />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{convDisplay.name}</p>
@@ -2909,6 +2929,45 @@ export default function MessagingPage() {
           </a>
         </div>
       )}
+    </>
+    )
+  }
+
+  // ── Placeholder colonne droite (desktop, aucune conv sélectionnée) ──
+  function renderChatPlaceholder() {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
+        <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 18, color: '#fff', margin: 0 }}>Tes messages</p>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0, maxWidth: 280, lineHeight: 1.5 }}>Sélectionne une conversation à gauche pour commencer à discuter.</p>
+      </div>
+    )
+  }
+
+  // ── Rendu desktop : split-view façon WhatsApp (liste à gauche + conv à droite) ──
+  function renderDesktopSplit(rightNode) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', height: 'calc(100dvh - 120px)', maxWidth: 1180, margin: '8px auto 0', borderRadius: 22, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(8,10,20,0.4)' }}>
+          <aside style={{ width: 360, flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {renderListPane()}
+          </aside>
+          <section style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {rightNode}
+          </section>
+        </div>
+      </Layout>
+    )
+  }
+
+  // Desktop : conversation ouverte → split avec la conv à droite.
+  if (isDesktop) return renderDesktopSplit(renderChatPane())
+  // Mobile : conversation plein écran.
+  return (
+    <Layout hideNav chatMode>
+      {renderChatPane()}
     </Layout>
   )
 }
