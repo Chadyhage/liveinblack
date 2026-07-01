@@ -1015,7 +1015,7 @@ export default function MesEvenementsPage() {
           )}
 
           {/* Quick actions */}
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <button onClick={startCreate} style={{ flex: 1, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
               <div style={{
                 position: 'relative',
@@ -1026,20 +1026,56 @@ export default function MesEvenementsPage() {
                 padding: 20,
                 height: '100%',
               }}>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 4 }}>Nouveau</p>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Créer un événement</p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>De A à Z — lieux, places, options</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 6 }}>Nouveau</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: '0 0 4px', letterSpacing: '-0.01em' }}>Créer un événement</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.45)' }}>De A à Z — lieux, places, options</p>
                 <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.10 }}>
                   <svg width="36" height="36" viewBox="0 0 24 24" fill="#c8a96e"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
                 </div>
               </div>
             </button>
-            <button onClick={() => navigate('/scanner')} style={{ flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-              <div style={{ ...S.card, width: 90, padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5">
-                  <path d="M3 4h2v2H3V4zm4 0h1v2H7V4zM3 7h1v1H3V7zM3 9h3v3H3V9zM3 13h2v2H3v-2zm4 0h1v2H7v-2zM3 16h1v1H3v-1zM3 18h3v3H3v-3zM7 18h1v3H7v-3zM9 3h3v3H9V3zm4 0h2v2h-2V3zm3 0h1v2h-1V3zm-8 4h1v1H8V7zm4 0h1v1h-1V7zm4 0h1v1h-1V7zM9 9h3v3H9V9zm4 0h3v3h-3V9zm-4 4h1v1H9v-1zm4 0h3v3h-3v-3zm-4 3h3v3h-3v-3z"/>
+
+            {/* Scanner — bouton pleine largeur séparé, accent teal (outil d'entrée) */}
+            <button onClick={() => navigate('/scanner')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+              <div style={{
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: 12,
+                border: '1px solid rgba(78,232,200,0.28)',
+                background: 'linear-gradient(135deg, rgba(78,232,200,0.07) 0%, transparent 60%)',
+                padding: '16px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+              }}>
+                {/* Viseur de scan */}
+                <div style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 10,
+                  background: 'rgba(78,232,200,0.10)',
+                  border: '1px solid rgba(78,232,200,0.30)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                    <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                    <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                  </svg>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#4ee8c8', marginBottom: 4 }}>Entrée</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: 0, letterSpacing: '-0.01em' }}>Scanner les billets</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Vérifie les QR à l'entrée en temps réel</p>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <polyline points="9 18 15 12 9 6"/>
                 </svg>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', lineHeight: 1.3, textAlign: 'center' }}>Scanner</p>
               </div>
             </button>
           </div>
@@ -2722,55 +2758,55 @@ function OrganizerAnalytics({ events, tickets, loading }) {
   const maxDay = Math.max(1, ...days.map(d => d.count))
 
   const card = { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12 }
-  const mono = "'DM Mono', monospace"
+  const inter = 'Inter, sans-serif'
 
   if (loading && totalTickets === 0) {
     return (
       <div style={{ ...card, padding: 20, textAlign: 'center' }}>
-        <p style={{ fontFamily: mono, fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em' }}>Chargement des ventes…</p>
+        <p style={{ fontFamily: inter, fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.4)' }}>Chargement des ventes…</p>
       </div>
     )
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <p style={{ fontFamily: mono, fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', margin: 0 }}>Statistiques de ventes</p>
+      <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Statistiques de ventes</p>
 
       {totalTickets === 0 ? (
         <div style={{ ...card, padding: '28px 20px', textAlign: 'center' }}>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 18, color: 'rgba(255,255,255,0.6)', margin: '0 0 4px' }}>Aucune vente pour l'instant</p>
-          <p style={{ fontFamily: mono, fontSize: 10, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Tes ventes apparaîtront ici dès le premier billet.</p>
+          <p style={{ fontFamily: inter, fontSize: 18, fontWeight: 500, color: 'rgba(255,255,255,0.6)', margin: '0 0 6px' }}>Aucune vente pour l'instant</p>
+          <p style={{ fontFamily: inter, fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.32)', margin: 0 }}>Tes ventes apparaîtront ici dès le premier billet.</p>
         </div>
       ) : (<>
         {/* KPI cards */}
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ ...card, flex: 1.4, padding: '16px 18px', background: 'linear-gradient(135deg, rgba(200,169,110,0.14), rgba(200,169,110,0.03))', border: '1px solid rgba(200,169,110,0.30)' }}>
-            <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.8)', margin: '0 0 6px' }}>Revenus nets</p>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 30, fontWeight: 300, color: '#c8a96e', margin: 0, lineHeight: 1 }}>{netRevenue.toLocaleString('fr-FR')}€</p>
-            <p style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.30)', margin: '5px 0 0' }}>brut {grossRevenue.toLocaleString('fr-FR')}€ · comm. 10%</p>
+            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', margin: '0 0 6px' }}>Revenus nets</p>
+            <p style={{ fontFamily: inter, fontSize: 30, fontWeight: 600, color: '#c8a96e', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{netRevenue.toLocaleString('fr-FR')} €</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>brut {grossRevenue.toLocaleString('fr-FR')} € · comm. 10%</p>
           </div>
           <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
-            <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 6px' }}>Billets</p>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 28, fontWeight: 300, color: '#4ee8c8', margin: 0, lineHeight: 1 }}>{totalTickets}</p>
-            <p style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.30)', margin: '5px 0 0' }}>{paidCount} payé{paidCount > 1 ? 's' : ''}</p>
+            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Billets</p>
+            <p style={{ fontFamily: inter, fontSize: 28, fontWeight: 600, color: '#4ee8c8', margin: 0, lineHeight: 1 }}>{totalTickets}</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>{paidCount} payé{paidCount > 1 ? 's' : ''}</p>
           </div>
           <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
-            <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 6px' }}>Remplissage</p>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 28, fontWeight: 300, color: '#fff', margin: 0, lineHeight: 1 }}>{fillPct}%</p>
-            <p style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.30)', margin: '5px 0 0' }}>{totalTickets}/{totalCap} places</p>
+            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Remplissage</p>
+            <p style={{ fontFamily: inter, fontSize: 28, fontWeight: 600, color: '#fff', margin: 0, lineHeight: 1 }}>{fillPct}%</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>{totalTickets}/{totalCap} places</p>
           </div>
         </div>
 
         {/* Graphique 7 jours */}
         <div style={{ ...card, padding: '14px 16px' }}>
-          <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 12px' }}>Ventes · 7 derniers jours</p>
+          <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 12px' }}>Ventes · 7 derniers jours</p>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 56 }}>
             {days.map((d, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: '100%', height: 44, display: 'flex', alignItems: 'flex-end' }}>
                   <div style={{ width: '100%', height: `${Math.round(d.count / maxDay * 100)}%`, minHeight: d.count > 0 ? 4 : 0, borderRadius: 3, background: 'linear-gradient(180deg, #4ee8c8, rgba(78,232,200,0.3))' }} />
                 </div>
-                <span style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.3)' }}>{d.label}</span>
+                <span style={{ fontFamily: inter, fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.4)' }}>{d.label}</span>
               </div>
             ))}
           </div>
@@ -2779,18 +2815,18 @@ function OrganizerAnalytics({ events, tickets, loading }) {
         {/* Par événement */}
         {perEvent.length > 0 && (
           <div style={{ ...card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontFamily: mono, fontSize: 8.5, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Par événement</p>
+            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>Par événement</p>
             {perEvent.map(({ event, sold, cap, rev, fill }) => (
               <div key={event.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, gap: 8 }}>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: 15, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.name}</span>
-                  <span style={{ fontFamily: mono, fontSize: 11, color: '#c8a96e', flexShrink: 0 }}>{rev.toLocaleString('fr-FR')}€</span>
+                  <span style={{ fontFamily: inter, fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.name}</span>
+                  <span style={{ fontFamily: inter, fontSize: 14, fontWeight: 600, color: '#c8a96e', flexShrink: 0 }}>{rev.toLocaleString('fr-FR')} €</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${fill}%`, borderRadius: 99, background: fill >= 80 ? 'linear-gradient(90deg,#c8a96e,#e05aaa)' : 'linear-gradient(90deg,#4ee8c8,#c8a96e)' }} />
                   </div>
-                  <span style={{ fontFamily: mono, fontSize: 8.5, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{sold}/{cap}</span>
+                  <span style={{ fontFamily: inter, fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{sold}/{cap}</span>
                 </div>
               </div>
             ))}
@@ -2857,8 +2893,8 @@ function BookingsPanel({ event, onClose }) {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 500, color: 'rgba(255,255,255,0.92)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{event.name}</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>
             Réservations · {eventBookings.length} billet{eventBookings.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -2870,7 +2906,7 @@ function BookingsPanel({ event, onClose }) {
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
               <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11 }}>Aucune réservation pour l'instant.</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400 }}>Aucune réservation pour l'instant.</p>
           </div>
         ) : (
           <>
@@ -2879,8 +2915,8 @@ function BookingsPanel({ event, onClose }) {
               <Eyebrow style={{ marginBottom: 8 }}>Résumé par type de place</Eyebrow>
               {Object.entries(byPlace).map(([place, bks]) => (
                 <div key={place} style={{ ...S.card, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{place}</span>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: '#c8a96e' }}>{bks.length}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>{place}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 600, color: '#c8a96e' }}>{bks.length}</span>
                 </div>
               ))}
             </div>
@@ -2892,19 +2928,19 @@ function BookingsPanel({ event, onClose }) {
                 {Object.entries(itemTotals).map(([name, data]) => (
                   <div key={name} style={{ ...S.card, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{data.emoji} {name}</span>
-                      <span style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: '#c8a96e' }}>x{data.qty}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>{data.emoji} {name}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 600, color: '#c8a96e' }}>×{data.qty}</span>
                     </div>
                     {Object.entries(data.shows).map(([showLabel, showData]) => (
                       <div key={showLabel} style={{ paddingLeft: 12, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{showLabel}</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>x{showData.count}</span>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)' }}>{showLabel}</span>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)' }}>×{showData.count}</span>
                         </div>
                         {showData.infos.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {showData.infos.map((info, idx) => (
-                              <span key={idx} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, background: 'rgba(200,169,110,0.08)', color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', padding: '2px 8px', borderRadius: 3 }}>
+                              <span key={idx} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, background: 'rgba(200,169,110,0.08)', color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', padding: '3px 9px', borderRadius: 4 }}>
                                 {info}
                               </span>
                             ))}
@@ -2924,11 +2960,11 @@ function BookingsPanel({ event, onClose }) {
                 <div key={b.id || idx} style={{ ...S.card, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.15em' }}>{b.ticketCode}</p>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>{b.place} · {b.placePrice}€</p>
-                      {b.userName && <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, fontWeight: 300, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>{b.userName}</p>}
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.12em' }}>{b.ticketCode}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{b.place} · {b.placePrice} €</p>
+                      {b.userName && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{b.userName}</p>}
                     </div>
-                    <span style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: '#c8a96e' }}>{b.totalPrice}€</span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 600, color: '#c8a96e', letterSpacing: '-0.01em' }}>{b.totalPrice} €</span>
                   </div>
                   {b.preorderSummary?.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 8, borderLeft: '2px solid rgba(255,255,255,0.05)' }}>
@@ -2937,11 +2973,11 @@ function BookingsPanel({ event, onClose }) {
                         return (
                           <div key={item.name}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{item.emoji} {item.name}</span>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>x{b.preorderItems?.[item.name]}</span>
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.55)' }}>{item.emoji} {item.name}</span>
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.45)' }}>×{b.preorderItems?.[item.name]}</span>
                             </div>
                             {sel?.showLabel && (
-                              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#c8a96e', paddingLeft: 8, marginTop: 2 }}>
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, color: '#c8a96e', paddingLeft: 8, marginTop: 2 }}>
                                 {sel.showLabel}{sel.showInfo ? ` — ${sel.showInfo}` : ''}
                               </p>
                             )}
@@ -3002,9 +3038,9 @@ function StatsPanel({ event, onClose }) {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
-            STATISTIQUES · {event.dateDisplay || event.date}
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 500, color: 'rgba(255,255,255,0.92)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{event.name}</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginTop: 3 }}>
+            Statistiques · {event.dateDisplay || event.date}
           </p>
         </div>
       </div>
@@ -3018,9 +3054,9 @@ function StatsPanel({ event, onClose }) {
             { label: 'Dont billetterie', value: `${(totalRevenue - preorderRevenue).toFixed(0)} €`, color: 'rgba(255,255,255,0.55)' },
             { label: 'Dont précommandes', value: `${preorderRevenue.toFixed(0)} €`, color: 'rgba(255,255,255,0.55)' },
           ].map(k => (
-            <div key={k.label} style={{ ...S.card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', margin: 0 }}>{k.label.toUpperCase()}</p>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: 28, fontWeight: 300, color: k.color, margin: 0, lineHeight: 1 }}>{k.value}</p>
+            <div key={k.label} style={{ ...S.card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{k.label}</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 26, fontWeight: 600, color: k.color, margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{k.value}</p>
             </div>
           ))}
         </div>
@@ -3034,10 +3070,10 @@ function StatsPanel({ event, onClose }) {
               return (
                 <div key={place} style={{ ...S.card, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{place}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e' }}>{data.revenue.toFixed(0)} €</span>
-                      <span style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: '#4ee8c8' }}>{data.count}</span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>{place}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e' }}>{data.revenue.toFixed(0)} €</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 600, color: '#4ee8c8' }}>{data.count}</span>
                     </div>
                   </div>
                   <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
@@ -3055,10 +3091,10 @@ function StatsPanel({ event, onClose }) {
             <Eyebrow style={{ marginBottom: 8 }}>Précommandes consommées</Eyebrow>
             {Object.entries(itemTotals).sort((a, b) => b[1].qty - a[1].qty).map(([name, data]) => (
               <div key={name} style={{ ...S.card, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)' }}>{data.emoji} {name}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e' }}>{data.revenue.toFixed(0)} €</span>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: '#4ee8c8' }}>×{data.qty}</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>{data.emoji} {name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e' }}>{data.revenue.toFixed(0)} €</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 600, color: '#4ee8c8' }}>×{data.qty}</span>
                 </div>
               </div>
             ))}
@@ -3071,7 +3107,7 @@ function StatsPanel({ event, onClose }) {
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11 }}>Aucune réservation enregistrée.</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400 }}>Aucune réservation enregistrée.</p>
           </div>
         )}
       </div>
