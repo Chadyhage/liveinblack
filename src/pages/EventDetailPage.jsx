@@ -246,6 +246,42 @@ const S = {
     fontSize: 10,
     color: 'rgba(255,255,255,0.42)',
   },
+  // Onglet Info — typo Inter propre (fini le mono « pixélisé »)
+  infoLabel: {
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+    color: '#c8a96e',
+  },
+  infoBody: {
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 14,
+    fontWeight: 400,
+    color: 'rgba(255,255,255,0.72)',
+    lineHeight: 1.7,
+    margin: 0,
+  },
+  // CTA paiement — plein, doré, aguicheur (cohérent interface de paiement)
+  btnCheckout: {
+    width: '100%',
+    padding: '15px 22px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    background: 'linear-gradient(135deg, #e9cd90 0%, #c8a96e 52%, #b8975a 100%)',
+    border: 'none',
+    borderRadius: 11,
+    fontFamily: 'Inter, sans-serif',
+    fontWeight: 800,
+    fontSize: 15.5,
+    letterSpacing: '0.005em',
+    color: '#1a1206',
+    cursor: 'pointer',
+    boxShadow: '0 10px 26px -8px rgba(200,169,110,0.6), inset 0 1px 0 rgba(255,255,255,0.4)',
+  },
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -1164,12 +1200,13 @@ export default function EventDetailPage() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={S.muted}>Points gagnés</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8' }}>+{ticketQty} point{ticketQty > 1 ? 's' : ''}</span>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#c8a96e' }}>+{ticketQty} point{ticketQty > 1 ? 's' : ''}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
                           <span style={S.muted}>Paiement</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8', letterSpacing: '0.1em' }}>
-                            {grandTotal > 0 ? 'SÉCURISÉ VIA STRIPE' : 'GRATUIT'}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            {grandTotal > 0 ? 'Sécurisé · Stripe' : 'Gratuit'}
                           </span>
                         </div>
                       </div>
@@ -1209,7 +1246,7 @@ export default function EventDetailPage() {
                       ) : (
                         <button
                           style={{
-                            ...S.btnGold,
+                            ...S.btnCheckout,
                             opacity: (user && !userCanBook) || bookingDisabled ? 0.4 : 1,
                             cursor: (user && !userCanBook) || bookingDisabled ? 'not-allowed' : 'pointer',
                             pointerEvents: (user && !userCanBook) || bookingDisabled ? 'none' : 'auto',
@@ -1217,7 +1254,15 @@ export default function EventDetailPage() {
                           disabled={(user && !userCanBook) || bookingDisabled}
                           onClick={() => !bookingDisabled && requireUserThenDo(() => tryProceed(() => setShowConfirmModal(true)))}
                         >
-                          {isEventCancelled ? 'Événement annulé' : isEventSoldOut ? 'Complet' : isEventClosed ? 'Réservations closes' : 'Confirmer la réservation'}
+                          {isEventCancelled || isEventSoldOut || isEventClosed ? (
+                            isEventCancelled ? 'Événement annulé' : isEventSoldOut ? 'Complet' : 'Réservations closes'
+                          ) : (() => {
+                            const amount = isAuctionPlace ? (currentAuctionPrice > 0 ? currentAuctionPrice : placePrice) : placePrice * ticketQty
+                            return (<>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a1206" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                              {amount > 0 ? `Réserver · ${amount}€` : 'Réserver — Gratuit'}
+                            </>)
+                          })()}
                         </button>
                       )}
                     </div>
@@ -1593,41 +1638,42 @@ export default function EventDetailPage() {
 
           {/* ──────────────── INFO ─────────────────────────────────────────── */}
           {activeTab === 'Info' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
               <div>
-                <p style={{ ...S.label, color: '#c8a96e', marginBottom: 8 }}>Description</p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.8, letterSpacing: '0.03em' }}>
+                <p style={{ ...S.infoLabel, marginBottom: 9 }}>Description</p>
+                <p style={S.infoBody}>
                   {event.description}
                 </p>
               </div>
               {(event.artists?.length > 0 || event.dj) && (
                 <div>
-                  <p style={{ ...S.label, color: '#c8a96e', marginBottom: 10 }}>Artistes / DJ</p>
+                  <p style={{ ...S.infoLabel, marginBottom: 12 }}>Artistes / DJ</p>
                   {event.artists?.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {event.artists.map((a, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <span style={{
-                            fontFamily: "'DM Mono', monospace",
-                            fontSize: 8,
-                            letterSpacing: '0.2em',
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: '0.12em',
                             textTransform: 'uppercase',
-                            padding: '3px 8px',
-                            borderRadius: 3,
-                            background: 'rgba(200,169,110,0.08)',
-                            border: '1px solid rgba(200,169,110,0.25)',
+                            padding: '3px 9px',
+                            borderRadius: 999,
+                            background: 'rgba(200,169,110,0.10)',
+                            border: '1px solid rgba(200,169,110,0.3)',
                             color: '#c8a96e',
                           }}>
                             {a.role}
                           </span>
-                          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 18, color: 'white' }}>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 17, color: 'white' }}>
                             {a.name}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 18, color: 'white' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 17, color: 'white', margin: 0 }}>
                       {event.dj}
                     </p>
                   )}
@@ -1635,12 +1681,12 @@ export default function EventDetailPage() {
               )}
               {event.performers?.length > 0 && (
                 <div>
-                  <p style={{ ...S.label, color: '#c8a96e', marginBottom: 10 }}>Performances</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <p style={{ ...S.infoLabel, marginBottom: 12 }}>Performances</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                     {event.performers.map((p) => (
-                      <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <SparkleIcon size={10} color="#c8a96e" />
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>
+                      <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                        <SparkleIcon size={12} color="#c8a96e" />
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.72)' }}>
                           {p}
                         </span>
                       </div>
@@ -1649,11 +1695,11 @@ export default function EventDetailPage() {
                 </div>
               )}
               <div>
-                <p style={{ ...S.label, color: '#c8a96e', marginBottom: 10 }}>Organisateur</p>
-                <div style={{ ...S.card, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <p style={{ ...S.infoLabel, marginBottom: 12 }}>Organisateur</p>
+                <div style={{ ...S.card, display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{
-                    width: 40,
-                    height: 40,
+                    width: 46,
+                    height: 46,
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
                     border: '1px solid rgba(200,169,110,0.35)',
@@ -1661,34 +1707,41 @@ export default function EventDetailPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontFamily: 'Inter, sans-serif',
-                    fontWeight: 400,
-                    fontSize: 18,
+                    fontWeight: 700,
+                    fontSize: 20,
                     color: '#c8a96e',
                     flexShrink: 0,
                   }}>
                     {event.organizer?.[0]}
                   </div>
-                  <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 18, color: 'white', margin: 0 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 18, color: 'white', margin: 0 }}>
                       {event.organizer}
                     </p>
-                    <p style={{ ...S.muted, marginTop: 2 }}>Organisateur vérifié</p>
+                    <p style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                      Organisateur vérifié
+                    </p>
                   </div>
                 </div>
               </div>
               <div>
-                <p style={{ ...S.label, color: '#c8a96e', marginBottom: 10 }}>Lieu</p>
+                <p style={{ ...S.infoLabel, marginBottom: 12 }}>Lieu</p>
                 <div style={{ ...S.card }}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0 }}>
-                    {event.location}
-                  </p>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14.5, fontWeight: 500, color: 'rgba(255,255,255,0.82)', margin: 0, lineHeight: 1.4 }}>
+                      {event.location}
+                    </p>
+                  </div>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || event.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', marginTop: 6, display: 'block', textDecoration: 'none' }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e', marginTop: 12, textDecoration: 'none' }}
                   >
-                    Voir sur la carte →
+                    Voir sur la carte
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </a>
                 </div>
               </div>
