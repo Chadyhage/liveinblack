@@ -396,6 +396,7 @@ export default function EventDetailPage() {
   const [showInfoModal, setShowInfoModal] = useState(null) // { itemName, opt } — popup for requiresInfo
   const [showInfoInput, setShowInfoInput] = useState('')
   const [descModal, setDescModal] = useState(null) // item description to display
+  const [photoGallery, setPhotoGallery] = useState(null) // { type, photos[], index } — aperçu photos d'une place
   const [bookedTickets, setBookedTickets] = useState([]) // tickets for the LAST confirmed booking
   const [allBookedThisSession, setAllBookedThisSession] = useState([]) // { place, tickets, preorderSummary, totalPrice }
   const [showShareModal, setShowShareModal] = useState(false)
@@ -1107,17 +1108,17 @@ export default function EventDetailPage() {
               {bookingStep === 'place' && (
                 <>
                   <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 21, letterSpacing: '-0.4px', color: 'white', margin: 0 }}>
-                    Choisis ton type de place
+                    Choisis ta place
                   </h3>
 
                   {/* Preuve sociale + jauge de remplissage globale (FOMO) */}
                   {totalCapacity > 0 && soldCount >= 3 && !isEventCancelled && !isEventClosed && (
                     <div style={{ margin: '2px 0 4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8', letterSpacing: '0.04em' }}>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#4ee8c8', letterSpacing: '0.01em' }}>
                           🔥 {soldCount} {soldCount > 1 ? 'personnes y vont' : 'personne y va'}
                         </span>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{fillPct}% rempli</span>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.4)' }}>{fillPct}% rempli</span>
                       </div>
                       <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
                         <div style={{ height: '100%', borderRadius: 99, width: `${fillPct}%`, background: fillPct >= 80 ? 'linear-gradient(90deg,#c8a96e,#e05aaa)' : 'linear-gradient(90deg,#4ee8c8,#c8a96e)', transition: 'width 0.5s' }} />
@@ -1194,6 +1195,19 @@ export default function EventDetailPage() {
                           <div style={{ marginTop: 12, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
                             <div style={{ height: '100%', borderRadius: 99, width: `${(place.available / place.total) * 100}%`, background: place.available < 10 ? 'rgba(220,50,50,0.85)' : event.color, transition: 'width 0.4s' }} />
                           </div>
+
+                          {/* Aperçu photos de la place (fourni par l'organisateur) */}
+                          {Array.isArray(place.photos) && place.photos.length > 0 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setPhotoGallery({ type: place.type, photos: place.photos, index: 0 }) }}
+                              className="lib-press"
+                              style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 9, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.32)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                              Voir à quoi ressemble ma place
+                              <span style={{ opacity: 0.7, fontWeight: 500 }}>· {place.photos.length}</span>
+                            </button>
+                          )}
                         </div>
 
                         {/* Perforation + talon de prix (l'aspect « vrai billet ») */}
@@ -1832,6 +1846,59 @@ export default function EventDetailPage() {
           )}
         </div>
       </div>
+
+      {/* ── Galerie photos d'une place (lightbox / carrousel) ───────────────── */}
+      {photoGallery && (
+        <div
+          onClick={() => setPhotoGallery(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4ee8c8', margin: 0 }}>À quoi ressemble ta place</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 19, fontWeight: 800, color: '#fff', margin: '2px 0 0' }}>{photoGallery.type}</p>
+              </div>
+              <button onClick={() => setPhotoGallery(null)} aria-label="Fermer" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}>×</button>
+            </div>
+
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 3', borderRadius: 16, overflow: 'hidden', background: '#0b0d14', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <img src={photoGallery.photos[photoGallery.index]} alt={`${photoGallery.type} — photo ${photoGallery.index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {photoGallery.photos.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setPhotoGallery(g => ({ ...g, index: (g.index - 1 + g.photos.length) % g.photos.length }))}
+                    aria-label="Photo précédente"
+                    style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >‹</button>
+                  <button
+                    onClick={() => setPhotoGallery(g => ({ ...g, index: (g.index + 1) % g.photos.length }))}
+                    aria-label="Photo suivante"
+                    style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >›</button>
+                  <span style={{ position: 'absolute', top: 10, right: 12, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,0.55)', padding: '3px 9px', borderRadius: 999 }}>
+                    {photoGallery.index + 1} / {photoGallery.photos.length}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {photoGallery.photos.length > 1 && (
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }} className="hide-scrollbar">
+                {photoGallery.photos.map((ph, k) => (
+                  <button
+                    key={k}
+                    onClick={() => setPhotoGallery(g => ({ ...g, index: k }))}
+                    style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 8, overflow: 'hidden', padding: 0, cursor: 'pointer', background: 'none', border: k === photoGallery.index ? '2px solid #4ee8c8' : '2px solid rgba(255,255,255,0.12)' }}
+                  >
+                    <img src={ph} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: k === photoGallery.index ? 1 : 0.6 }} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Description modal ───────────────────────────────────────────────── */}
       {descModal && (

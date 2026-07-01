@@ -472,6 +472,28 @@ export default function MesEvenementsPage() {
     if (Object.keys(errs).length === 0) setCreateStep(currentStep + 1)
   }
 
+  // Ajoute des photos à une place (lecture fichier → compression → aperçu data:).
+  // L'upload Storage réel se fait à la publication (handlePublish). Max 6/place.
+  async function handlePlacePhotos(placeIndex, fileList) {
+    const files = Array.from(fileList || []).filter(f => f.type.startsWith('image/'))
+    if (!files.length) return
+    const { compressDataUrl } = await import('../utils/uploadImage')
+    for (const file of files) {
+      const dataUrl = await new Promise((res) => {
+        const r = new FileReader()
+        r.onload = () => res(r.result)
+        r.onerror = () => res(null)
+        r.readAsDataURL(file)
+      })
+      if (!dataUrl) continue
+      let light = dataUrl
+      try { light = await compressDataUrl(dataUrl, 1100, 0.72) } catch { /* garde l'original */ }
+      setPlaces(prev => prev.map((p, j) => j === placeIndex
+        ? { ...p, photos: [...(p.photos || []), light].slice(0, 6) }
+        : p))
+    }
+  }
+
   async function handlePublish() {
     // Vérification critique : un event ne peut être publié que par un user authentifié Firebase Auth
     // Sinon les rules Firestore rejettent silencieusement et l'event reste invisible cross-device
@@ -512,6 +534,24 @@ export default function MesEvenementsPage() {
       }
     }
 
+    // ── Photos par type de place → Storage (mêmes raisons que l'affiche : jamais
+    // de base64 dans Firestore). On upload chaque photo data: et on ne garde que
+    // les URLs. Secours si Storage échoue : version compressée. Les URLs http(s)
+    // déjà présentes (édition sans changement) sont conservées telles quelles.
+    let placesPhotos = places.map(p => (Array.isArray(p.photos) ? p.photos : []))
+    if (placesPhotos.some(arr => arr.some(ph => typeof ph === 'string' && ph.startsWith('data:')))) {
+      setPublishing(true)
+      const { uploadPlacePhoto, compressDataUrl } = await import('../utils/uploadImage')
+      placesPhotos = await Promise.all(placesPhotos.map(async (arr, i) => {
+        const out = await Promise.all(arr.map(async (ph, k) => {
+          if (typeof ph !== 'string' || !ph.startsWith('data:')) return ph
+          try { return await uploadPlacePhoto(eventId, ph, `${i}_${k}`) }
+          catch { try { return await compressDataUrl(ph, 900, 0.6) } catch { return null } }
+        }))
+        return out.filter(Boolean)
+      }))
+    }
+
     const eventData = {
       id: eventId,
       name: form.name,
@@ -530,7 +570,7 @@ export default function MesEvenementsPage() {
       tags: [],
       organizer: user?.name || 'Organisateur',
       description: form.description,
-      places: places.map(p => ({
+      places: places.map((p, i) => ({
         type: p.type || 'Entrée',
         price: Number(p.price) || 0,
         available: Number(p.qty) || 50,
@@ -540,6 +580,7 @@ export default function MesEvenementsPage() {
         groupType: p.groupType || 'solo',
         groupMin: Number(p.groupMin) || 0,
         groupMax: Number(p.groupMax) || 0,
+        photos: placesPhotos[i] || [],
       })),
       playlist: options.playlist,
       preorder: options.preorder,
@@ -700,7 +741,7 @@ export default function MesEvenementsPage() {
       city: ev.city || '',
       country: ev.region !== ev.city ? ev.region || '' : '',
     })
-    setPlaces(ev.places?.map(p => ({ type: p.type, price: p.price, qty: p.total, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '' })) || [{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
+    setPlaces(ev.places?.map(p => ({ type: p.type, price: p.price, qty: p.total, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '', photos: Array.isArray(p.photos) ? p.photos : [] })) || [{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', photos: [] }])
     setOptions({ playlist: ev.playlist || false, preorder: ev.preorder || false, qr: true })
     setMenuItems(ev.menu?.length ? ev.menu : [{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
     setPublishAt(ev.publishAt || '')
@@ -2073,6 +2114,35 @@ export default function MesEvenementsPage() {
                     <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Validé dès le min atteint · accepté jusqu'au max avec marge</p>
                   </div>
                 )}
+
+                {/* Photos de la place — ce que le client verra via « Voir à quoi
+                    ressemble ma place » sur la fiche de l'événement */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
+                  <p style={{ ...S.label }}>Photos de cette place <span style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: 0 }}>(optionnel)</span></p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                    {(place.photos || []).map((ph, k) => (
+                      <div key={k} style={{ position: 'relative', width: 66, height: 66, borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
+                        <img src={ph} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {!isReadOnly && (
+                          <button
+                            onClick={() => setPlaces(places.map((p, j) => j === i ? { ...p, photos: (p.photos || []).filter((_, m) => m !== k) } : p))}
+                            title="Retirer"
+                            style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 12, lineHeight: '15px', cursor: 'pointer', padding: 0 }}>×</button>
+                        )}
+                      </div>
+                    ))}
+                    {!isReadOnly && (place.photos || []).length < 6 && (
+                      <label style={{ width: 66, height: 66, borderRadius: 8, border: '1px dashed rgba(200,169,110,0.4)', background: 'rgba(200,169,110,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', color: '#c8a96e', flexShrink: 0 }}>
+                        <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => { handlePlacePhotos(i, e.target.files); e.target.value = '' }} />
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8.5, fontWeight: 700 }}>Ajouter</span>
+                      </label>
+                    )}
+                  </div>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 8, lineHeight: 1.4 }}>
+                    Montre le carré, la table, la vue… Le client les verra avant de réserver. Max 6.
+                  </p>
+                </div>
               </div>
               )
             })}

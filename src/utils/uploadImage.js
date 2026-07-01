@@ -17,6 +17,21 @@ export async function uploadProviderPhoto(uid, dataUrl) {
   return await getDownloadURL(snap.ref)
 }
 
+// Photo d'un TYPE DE PLACE (ex. le Carré VIP) → Storage events/{uid}/{eventId}/...
+// Même logique que l'affiche : on ne stocke que l'URL dans Firestore (jamais du
+// base64, sinon on dépasse la limite 1 Mo du doc events/{id}). `suffix` évite
+// les collisions de nom entre places/photos. Renvoie l'URL http(s).
+export async function uploadPlacePhoto(eventId, dataUrl, suffix = '') {
+  if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl // déjà une URL
+  const { storage, auth } = await import('../firebase')
+  const { ref, uploadString, getDownloadURL } = await import('firebase/storage')
+  const uid = auth?.currentUser?.uid
+  if (!uid) throw new Error('Non authentifié — impossible d\'uploader la photo de place')
+  const path = `events/${uid}/${eventId}/place_${suffix}_${Date.now()}.jpg`
+  const snap = await uploadString(ref(storage, path), dataUrl, 'data_url')
+  return await getDownloadURL(snap.ref)
+}
+
 export async function uploadEventPoster(eventId, dataUrl) {
   if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl // déjà une URL http(s)
   const { storage, auth } = await import('../firebase')
