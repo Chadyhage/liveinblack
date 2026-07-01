@@ -52,12 +52,13 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
       {empty && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 18, background: 'rgba(255,255,255,0.025)', border: '1px dashed rgba(255,255,255,0.12)' }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.25)' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0-6 6c0 4-2 5-2 5h16s-2-1-2-5a6 6 0 0 0-6-6z"/><path d="M10 20a2 2 0 0 0 4 0"/><line x1="3" y1="3" x2="21" y2="21" stroke="#e05aaa" strokeWidth="1.4"/></svg>
+            {/* Boule à facettes barrée — « rien qui tourne ce soir » */}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="5"/><circle cx="12" cy="13" r="8"/><line x1="4" y1="13" x2="20" y2="13"/><line x1="6" y1="8.4" x2="18" y2="8.4"/><line x1="6" y1="17.6" x2="18" y2="17.6"/><ellipse cx="12" cy="13" rx="3" ry="8"/><line x1="12" y1="5" x2="12" y2="21"/><line x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
           </div>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: '#fff' }}>Rien pour ce soir… pour l'instant</p>
             <p style={{ margin: '3px 0 0', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
-              Aucune soirée dans les prochaines heures{regionName && regionName !== 'Toutes' ? ` à ${regionName}` : ''}. Reviens vite, ça bouge tout le temps 👀
+              Aucune soirée dans les prochaines heures{regionName && regionName !== 'Toutes' ? ` à ${regionName}` : ''}. Reviens vite, ça bouge tout le temps !
             </p>
           </div>
         </div>

@@ -119,11 +119,6 @@ export default function EventsPage() {
   // Filter: show public events + unlocked private events
   const visibleEvents = allEvents.filter(e => !e.isPrivate || unlockedEvents.includes(String(e.id)))
 
-  // Compteur d'events réellement disponibles (mêmes critères de visibilité
-  // que la liste, hors recherche/catégorie) — sinon on affiche « 2 soirées
-  // disponibles » au-dessus d'une liste vide quand les events sont passés
-  const availableCount = visibleEvents.filter(e => isEventVisible(e)).length
-
   const filtered = visibleEvents.filter((e) => {
     const q = search.toLowerCase()
     const matchSearch =
@@ -212,7 +207,7 @@ export default function EventsPage() {
 
   return (
     <Layout>
-      <div style={{ position: 'relative', zIndex: 1, background: 'transparent', padding: '20px 16px 32px' }}>
+      <div style={{ position: 'relative', zIndex: 1, background: 'transparent', padding: '12px 16px 32px' }}>
 
         {/* Share mode banner */}
         {shareConvId && (
@@ -253,17 +248,9 @@ export default function EventsPage() {
           </div>
         )}
 
-        {/* Title + Code button */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div>
-            <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 34, color: 'white', margin: 0, lineHeight: 1 }}>
-              Événements
-            </h2>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '6px 0 0' }}>
-              {availableCount} soirée{availableCount > 1 ? 's' : ''} disponible{availableCount > 1 ? 's' : ''}
-            </p>
-          </div>
-          {!shareConvId && (
+        {/* Bouton « J'ai un code » — titre « Événements » retiré pour gagner de la place */}
+        {!shareConvId && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
             <button
               onClick={() => setShowCodeModal(true)}
               className="lib-press"
@@ -289,8 +276,8 @@ export default function EventsPage() {
               </svg>
               J'ai un code
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Search — barre identique à celle des messages */}
         <div style={{ marginBottom: 16 }}>
@@ -493,28 +480,49 @@ function EventRow({ title, events, onOpen }) {
         {title}
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>{events.length}</span>
       </h3>
-      <div className="hide-scrollbar" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
+      {/* paddingTop/Bottom : de l'air pour que l'agrandissement au survol ne soit pas rogné */}
+      <div className="hide-scrollbar" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingTop: 24, paddingBottom: 24, marginTop: -24, marginBottom: -14, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
         {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
       </div>
     </div>
   )
 }
 
-// ── Affiche compacte (poster) ──
+// ── Affiche compacte (poster) — s'agrandit façon Netflix au survol prolongé ──
 function EventPoster({ event, onClick }) {
   const countdown = getEventCountdown(event)
   const urgent = isCountdownUrgent(event)
   const prices = (event.places || []).map(p => Number(p.price) || 0)
   const minP = prices.length ? Math.min(...prices) : null
   const accent = event.accentColor || event.color || '#4ee8c8'
+
+  // Survol > 500 ms → la carte grandit et révèle des infos supplémentaires
+  const [expanded, setExpanded] = useState(false)
+  const timerRef = useRef(null)
+  const handleEnter = () => { clearTimeout(timerRef.current); timerRef.current = setTimeout(() => setExpanded(true), 500) }
+  const handleLeave = () => { clearTimeout(timerRef.current); setExpanded(false) }
+  useEffect(() => () => clearTimeout(timerRef.current), [])
+
   return (
-    <button onClick={onClick} className="lib-press"
-      style={{ scrollSnapAlign: 'start', flexShrink: 0, width: 148, padding: 0, border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}>
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '3 / 4', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0b0d14' }}>
+    <button onClick={onClick} onMouseEnter={handleEnter} onMouseLeave={handleLeave} className="lib-press"
+      style={{
+        scrollSnapAlign: 'start', flexShrink: 0, width: 148, padding: 0, border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left',
+        position: 'relative', zIndex: expanded ? 6 : 1,
+        transform: expanded ? 'scale(1.14)' : 'scale(1)',
+        transformOrigin: 'center bottom',
+        transition: 'transform 0.35s cubic-bezier(0.22,0.9,0.3,1)',
+      }}>
+      <div style={{
+        position: 'relative', width: '100%', aspectRatio: '3 / 4', borderRadius: 14, overflow: 'hidden', background: '#0b0d14',
+        border: expanded ? `1px solid ${accent}` : '1px solid rgba(255,255,255,0.08)',
+        boxShadow: expanded ? `0 20px 44px -10px rgba(0,0,0,0.75), 0 0 24px -6px ${accent}55` : 'none',
+        transition: 'border-color 0.35s ease, box-shadow 0.35s ease',
+      }}>
         {event.imageUrl
-          ? <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ? <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: expanded ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.6s cubic-bezier(0.22,0.9,0.3,1)' }} />
           : <div style={{ width: '100%', height: '100%', background: `radial-gradient(circle at 30% 25%, ${(event.color || '#2a2440')}aa, transparent 60%), linear-gradient(150deg, #1a1426, #0b0d14)` }} />}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,9,14,0.95) 6%, transparent 55%)' }} />
+        {/* Voile bas — plus opaque quand la carte est ouverte pour lire les infos */}
+        <div style={{ position: 'absolute', inset: 0, background: expanded ? 'linear-gradient(to top, rgba(8,9,14,0.97) 18%, rgba(8,9,14,0.4) 55%, transparent 80%)' : 'linear-gradient(to top, rgba(8,9,14,0.95) 6%, transparent 55%)', transition: 'background 0.35s ease' }} />
         {/* Countdown */}
         {countdown && (
           <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: urgent ? '#fff' : '#4ee8c8', background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(5,6,10,0.6)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{countdown}</span>
@@ -527,6 +535,22 @@ function EventPoster({ event, onClick }) {
         <div style={{ position: 'absolute', left: 9, right: 9, bottom: 9 }}>
           <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 13.5, letterSpacing: '-0.3px', color: accent, margin: 0, lineHeight: 1.15, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{event.name}</p>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ')}</p>
+
+          {/* Bloc révélé au survol prolongé */}
+          <div style={{ maxHeight: expanded ? 90 : 0, opacity: expanded ? 1 : 0, overflow: 'hidden', transition: 'max-height 0.35s ease, opacity 0.3s ease 0.05s' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
+              {event.category && (
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8.5, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.16)', padding: '2px 7px', borderRadius: 999 }}>{event.category}</span>
+              )}
+              {event.time && (
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8.5, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.16)', padding: '2px 7px', borderRadius: 999 }}>{event.time}</span>
+              )}
+            </div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: '#0b0d14', background: accent, padding: '5px 11px', borderRadius: 8, boxShadow: `0 4px 14px ${accent}55` }}>
+              Réserver
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0b0d14" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
         </div>
       </div>
     </button>
