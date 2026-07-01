@@ -14,3 +14,12 @@ export const regions = [
 export function getRegionByName(name) {
   return regions.find((r) => r.name === name) || regions[0]
 }
+
+// Préposition correcte par région : « au Togo », « au Bénin », « en France ».
+// Renvoie la chaîne complète prête à insérer (ex. « au Togo »). Fallback « à ».
+const REGION_PREPOSITION = { France: 'en', Togo: 'au', Bénin: 'au' }
+export function inRegion(name) {
+  if (!name) return ''
+  const prep = REGION_PREPOSITION[name] || 'à'
+  return `${prep} ${name}`
+}

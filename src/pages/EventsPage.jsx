@@ -255,19 +255,21 @@ export default function EventsPage() {
               onClick={() => setShowCodeModal(true)}
               className="lib-press"
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: 7,
-                padding: '10px 16px',
-                background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                border: '1px solid rgba(200,169,110,0.45)',
-                borderRadius: 4,
+                gap: 8,
+                padding: '10px 18px',
+                background: 'linear-gradient(135deg, rgba(200,169,110,0.20), rgba(200,169,110,0.04))',
+                border: '1px solid rgba(200,169,110,0.55)',
+                borderRadius: 999,
                 cursor: 'pointer',
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 10,
-                letterSpacing: '0.2em',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                color: '#c8a96e',
+                color: '#e2c68c',
+                boxShadow: '0 6px 20px -6px rgba(200,169,110,0.45), inset 0 1px 0 rgba(255,255,255,0.08)',
                 transition: 'all 0.2s',
               }}
             >

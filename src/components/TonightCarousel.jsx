@@ -3,6 +3,8 @@
 // où il reste des places. Pensé pour quelqu'un qui décide de sortir le soir
 // même : il ouvre l'appli, voit ce qui se passe ce soir, et réserve direct.
 
+import { inRegion } from '../data/regions'
+
 // Places encore disponibles (somme des `available`, fallback `total`).
 // Exporté pour que HomePage filtre les events « il reste des places ».
 export function remainingPlaces(ev) {
@@ -58,7 +60,7 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: '#fff' }}>Rien pour ce soir… pour l'instant</p>
             <p style={{ margin: '3px 0 0', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
-              Aucune soirée dans les prochaines heures{regionName && regionName !== 'Toutes' ? ` à ${regionName}` : ''}. Reviens vite, ça bouge tout le temps !
+              Aucune soirée dans les prochaines heures{regionName && regionName !== 'Toutes' ? ` ${inRegion(regionName)}` : ''}. Reviens vite, ça bouge tout le temps !
             </p>
           </div>
         </div>

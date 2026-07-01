@@ -395,7 +395,7 @@ export default function Layout({ children, hideNav, chatMode }) {
             <AnimatedHamburger size={32} active={menuOpen} onClick={() => setMenuOpen(o => !o)} />
 
             {/* Logo */}
-            <span data-navlogo><AnimatedLogo size={24} onClick={() => navigate('/accueil')} /></span>
+            <span data-navlogo><AnimatedLogo size={30} textScale={0.46} onClick={() => navigate('/accueil')} /></span>
 
             {/* Right: avatar / connexion + notification bell */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

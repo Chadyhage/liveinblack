@@ -246,6 +246,19 @@ const S = {
     fontSize: 10,
     color: 'rgba(255,255,255,0.42)',
   },
+  // Libellé de ligne (récap réservation) — Inter, fini le mono « pixélisé »
+  rowLabel: {
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 12.5,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  rowValue: {
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 13.5,
+    fontWeight: 600,
+    color: 'white',
+  },
   // Onglet Info — typo Inter propre (fini le mono « pixélisé »)
   infoLabel: {
     fontFamily: 'Inter, sans-serif',
@@ -282,6 +295,68 @@ const S = {
     cursor: 'pointer',
     boxShadow: '0 10px 26px -8px rgba(200,169,110,0.6), inset 0 1px 0 rgba(255,255,255,0.4)',
   },
+}
+
+// ── Carte du lieu — géocode l'adresse (Nominatim, gratuit) puis affiche une
+// carte OpenStreetMap librement intégrable (pas de clé API, pas de blocage X-Frame
+// comme l'embed Google Maps). Fallback : on garde le lien « Ouvrir dans Google Maps ».
+function LocationMap({ query, fallback }) {
+  const [coords, setCoords] = useState(null)
+  const [status, setStatus] = useState('loading') // loading | ok | error
+
+  useEffect(() => {
+    // On tente l'adresse complète, puis on retombe sur la ville/région si le nom
+    // de salle n'est pas géocodable (fréquent pour des lieux privés).
+    const queries = [query, fallback].filter((q, i, arr) => q && arr.indexOf(q) === i)
+    if (!queries.length) { setStatus('error'); return }
+    let cancelled = false
+    setStatus('loading')
+    async function geocode(q) {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' } })
+      if (!r.ok) return null
+      const list = await r.json()
+      return list && list[0] ? { lat: parseFloat(list[0].lat), lon: parseFloat(list[0].lon) } : null
+    }
+    ;(async () => {
+      for (const q of queries) {
+        try {
+          const c = await geocode(q)
+          if (cancelled) return
+          if (c) { setCoords(c); setStatus('ok'); return }
+        } catch { /* try next */ }
+      }
+      if (!cancelled) setStatus('error')
+    })()
+    return () => { cancelled = true }
+  }, [query, fallback])
+
+  if (status === 'error') return null
+
+  const wrap = { marginTop: 12, height: 190, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', position: 'relative' }
+
+  if (status === 'loading' || !coords) {
+    return (
+      <div style={{ ...wrap, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Chargement de la carte…</span>
+      </div>
+    )
+  }
+
+  const d = 0.008
+  const bbox = `${coords.lon - d},${coords.lat - d},${coords.lon + d},${coords.lat + d}`
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${coords.lat},${coords.lon}`
+  return (
+    <div style={wrap}>
+      <iframe
+        title="Carte du lieu"
+        width="100%"
+        height="190"
+        style={{ border: 0, display: 'block', filter: 'grayscale(0.15) brightness(0.92) contrast(1.05)' }}
+        loading="lazy"
+        src={src}
+      />
+    </div>
+  )
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -973,10 +1048,15 @@ export default function EventDetailPage() {
           ))}
         </div>
 
-        {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-        <div style={{
+        {/* ── Tabs (segmented control — clairement cliquable) ───────────────── */}
+        <div className="hide-scrollbar" style={{
           display: 'flex',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          gap: 6,
+          padding: 4,
+          margin: '4px 16px 0',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
           overflowX: 'auto',
         }}>
           {/* Keyframe pour le clignotement de l'onglet Playlist */}
@@ -994,19 +1074,20 @@ export default function EventDetailPage() {
               key={tab}
               onClick={() => { setActiveTab(tab); if (tab === 'Playlist') setPlaylistTabBlink(false) }}
               style={{
-                flexShrink: 0,
-                padding: '14px 16px 12px',
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 9,
-                letterSpacing: '0.25em',
-                textTransform: 'uppercase',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: activeTab === tab ? '1px solid #4ee8c8' : '1px solid transparent',
-                color: activeTab === tab ? '#4ee8c8' : 'rgba(255,255,255,0.3)',
+                flex: 1,
+                minWidth: 'max-content',
+                whiteSpace: 'nowrap',
+                padding: '9px 16px',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                background: activeTab === tab ? 'linear-gradient(135deg, rgba(78,232,200,0.18), rgba(78,232,200,0.06))' : 'transparent',
+                border: activeTab === tab ? '1px solid rgba(78,232,200,0.4)' : '1px solid transparent',
+                borderRadius: 9,
+                color: activeTab === tab ? '#4ee8c8' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                marginBottom: -1,
                 animation: isPlaylistBlink ? 'playlistTabBlink 0.7s ease-in-out infinite' : 'none',
               }}
             >
@@ -1148,13 +1229,13 @@ export default function EventDetailPage() {
                       {/* Summary card */}
                       <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={S.muted}>Place sélectionnée</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{selectedPlace}</span>
+                          <span style={S.rowLabel}>Place sélectionnée</span>
+                          <span style={S.rowValue}>{selectedPlace}</span>
                         </div>
 
                         {!isGroupPlace && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
-                            <span style={S.muted}>Quantité</span>
+                            <span style={S.rowLabel}>Quantité</span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               <button
                                 onClick={() => setTicketQty(q => Math.max(1, q - 1))}
@@ -1167,7 +1248,7 @@ export default function EventDetailPage() {
                                   cursor: ticketQty <= 1 ? 'not-allowed' : 'pointer', opacity: ticketQty <= 1 ? 0.3 : 1,
                                 }}
                               >−</button>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: '#c8a96e', width: 16, textAlign: 'center' }}>
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 15, color: '#c8a96e', width: 18, textAlign: 'center' }}>
                                 {ticketQty}
                               </span>
                               <button
@@ -1191,7 +1272,7 @@ export default function EventDetailPage() {
                         )}
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
-                          <span style={S.muted}>
+                          <span style={S.rowLabel}>
                             {isAuctionPlace ? (currentAuctionPrice > 0 ? 'Enchère actuelle' : 'Prix de base') : ticketQty > 1 ? `Prix (${placePrice}€ × ${ticketQty})` : 'Prix'}
                           </span>
                           <span style={{ ...S.price, fontSize: 20 }}>
@@ -1199,11 +1280,11 @@ export default function EventDetailPage() {
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={S.muted}>Points gagnés</span>
+                          <span style={S.rowLabel}>Points gagnés</span>
                           <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#c8a96e' }}>+{ticketQty} point{ticketQty > 1 ? 's' : ''}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
-                          <span style={S.muted}>Paiement</span>
+                          <span style={S.rowLabel}>Paiement</span>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                             {grandTotal > 0 ? 'Sécurisé · Stripe' : 'Gratuit'}
@@ -1734,13 +1815,15 @@ export default function EventDetailPage() {
                       {event.location}
                     </p>
                   </div>
+                  {/* Carte interactive intégrée (OpenStreetMap, sans clé API) */}
+                  <LocationMap query={event.location || event.city} fallback={[event.city, event.region].filter(Boolean).join(', ')} />
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || event.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e', marginTop: 12, textDecoration: 'none' }}
                   >
-                    Voir sur la carte
+                    Ouvrir dans Google Maps
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </a>
                 </div>
