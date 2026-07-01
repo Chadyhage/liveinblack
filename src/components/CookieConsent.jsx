@@ -27,103 +27,171 @@ function writeConsent(value) {
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false)
+  const [phase, setPhase] = useState('entering') // entering | visible | leaving
 
   useEffect(() => {
-    // Affiche après 800ms pour ne pas perturber le first paint
     const t = setTimeout(() => {
-      if (!readConsent()) setVisible(true)
+      if (!readConsent()) {
+        setVisible(true)
+        // Petit délai pour que le DOM soit monté avant l'animation
+        requestAnimationFrame(() => setPhase('visible'))
+      }
     }, 800)
     return () => clearTimeout(t)
   }, [])
 
   if (!visible) return null
 
-  function accept() {
-    writeConsent('accepted')
-    setVisible(false)
-  }
-  function refuse() {
-    writeConsent('refused')
-    setVisible(false)
+  function dismiss(value) {
+    writeConsent(value)
+    setPhase('leaving')
+    setTimeout(() => setVisible(false), 400)
   }
 
   return (
-    <div
-      role="dialog"
-      aria-labelledby="cookie-consent-title"
-      style={{
-        position: 'fixed',
-        left: 16, right: 16, bottom: 16,
-        zIndex: 999,
-        maxWidth: 520, margin: '0 auto',
-        background: 'rgba(8,10,20,0.96)',
-        backdropFilter: 'blur(22px) saturate(1.6)',
-        WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
-        border: '1px solid rgba(255,255,255,0.12)',
-        borderRadius: 12,
-        padding: '18px 20px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
-        fontFamily: "'DM Mono', monospace",
-      }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-        {/* Icône cookie SVG */}
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          <circle cx="9" cy="11" r="0.8" fill="#c8a96e" />
-          <circle cx="14" cy="14" r="0.8" fill="#c8a96e" />
-          <circle cx="13" cy="9" r="0.8" fill="#c8a96e" />
-          <circle cx="16" cy="11" r="0.5" fill="#c8a96e" />
-          <circle cx="11" cy="15" r="0.5" fill="#c8a96e" />
-        </svg>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p id="cookie-consent-title" style={{
-            fontFamily: "Inter, sans-serif",
-            fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.92)',
-            margin: 0, marginBottom: 6, letterSpacing: '0.01em',
-          }}>
-            Quelques cookies pour bien fonctionner
+    <>
+      <style>{`
+        .cc-root {
+          position: fixed;
+          left: 50%; bottom: 20px;
+          transform: translateX(-50%) translateY(24px);
+          opacity: 0;
+          z-index: 999;
+          width: calc(100% - 32px);
+          max-width: 460px;
+          border-radius: 16px;
+          overflow: hidden;
+          transition: transform 0.5s cubic-bezier(0.22,0.9,0.3,1),
+                      opacity 0.5s cubic-bezier(0.22,0.9,0.3,1);
+        }
+        .cc-root.cc-visible {
+          transform: translateX(-50%) translateY(0);
+          opacity: 1;
+        }
+        .cc-root.cc-leaving {
+          transform: translateX(-50%) translateY(16px);
+          opacity: 0;
+          transition-duration: 0.35s;
+        }
+
+        .cc-stripe {
+          height: 1px;
+          background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(132,68,255,0.6) 20%,
+            rgba(255,77,166,0.5) 50%,
+            rgba(132,68,255,0.6) 80%,
+            transparent 100%
+          );
+        }
+
+        .cc-body {
+          background: rgba(10,10,18,0.88);
+          backdrop-filter: blur(40px) saturate(1.6);
+          -webkit-backdrop-filter: blur(40px) saturate(1.6);
+          border: 1px solid rgba(255,255,255,0.06);
+          border-top: none;
+          padding: 20px 22px 18px;
+        }
+
+        .cc-title {
+          font-family: Inter, system-ui, sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          color: rgba(255,255,255,0.92);
+          margin: 0 0 8px 0;
+          letter-spacing: 0.01em;
+        }
+
+        .cc-desc {
+          font-family: Inter, system-ui, sans-serif;
+          font-size: 12.5px;
+          color: rgba(255,255,255,0.44);
+          margin: 0 0 16px 0;
+          line-height: 1.65;
+          letter-spacing: 0.005em;
+        }
+        .cc-desc strong {
+          color: rgba(255,255,255,0.68);
+          font-weight: 500;
+        }
+        .cc-desc a {
+          color: rgba(255,255,255,0.52);
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+        .cc-desc a:hover {
+          color: rgba(255,255,255,0.85);
+        }
+
+        .cc-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        .cc-btn {
+          flex: 1;
+          padding: 10px 16px;
+          border-radius: 10px;
+          cursor: pointer;
+          font-family: Inter, system-ui, sans-serif;
+          font-size: 12.5px;
+          font-weight: 500;
+          letter-spacing: 0.01em;
+          transition: all 0.2s ease;
+          outline: none;
+        }
+
+        .cc-btn-refuse {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.48);
+        }
+        .cc-btn-refuse:hover {
+          background: rgba(255,255,255,0.07);
+          border-color: rgba(255,255,255,0.14);
+          color: rgba(255,255,255,0.72);
+        }
+
+        .cc-btn-accept {
+          background: rgba(255,255,255,0.92);
+          border: 1px solid transparent;
+          color: #0a0a12;
+        }
+        .cc-btn-accept:hover {
+          background: #fff;
+          box-shadow: 0 0 20px rgba(255,255,255,0.12);
+        }
+        .cc-btn-accept:active {
+          transform: scale(0.97);
+        }
+      `}</style>
+
+      <div
+        role="dialog"
+        aria-labelledby="cookie-consent-title"
+        className={`cc-root ${phase === 'leaving' ? 'cc-leaving' : phase === 'visible' ? 'cc-visible' : ''}`}
+      >
+        <div className="cc-stripe" />
+        <div className="cc-body">
+          <p id="cookie-consent-title" className="cc-title">
+            Cookies & vie privée
           </p>
-          <p style={{
-            fontSize: 11, color: 'rgba(255,255,255,0.55)',
-            margin: 0, lineHeight: 1.7, letterSpacing: '0.01em',
-          }}>
-            On utilise des cookies essentiels pour ta connexion et tes billets, plus quelques cookies de confort. <strong style={{ color: 'rgba(255,255,255,0.78)', fontWeight: 500 }}>Aucun pisteur publicitaire, aucune revente.</strong>{' '}
-            <Link to="/cookies" style={{ color: '#c8a96e', textDecoration: 'underline', textDecorationColor: 'rgba(200,169,110,0.5)' }}>
-              En savoir plus
-            </Link>
+          <p className="cc-desc">
+            Cookies essentiels pour ta connexion et tes billets.{' '}
+            <strong>Aucun tracking, aucune pub.</strong>{' '}
+            <Link to="/cookies">En savoir plus →</Link>
           </p>
+          <div className="cc-actions">
+            <button className="cc-btn cc-btn-refuse" onClick={() => dismiss('refused')}>
+              Refuser
+            </button>
+            <button className="cc-btn cc-btn-accept" onClick={() => dismiss('accepted')}>
+              Accepter
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Actions — refuser et accepter ont un poids visuel équivalent */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          onClick={refuse}
-          style={{
-            flex: 1,
-            padding: '10px 14px', borderRadius: 6, cursor: 'pointer',
-            fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.18em',
-            textTransform: 'uppercase', fontWeight: 500,
-            background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.18)',
-            color: 'rgba(255,255,255,0.72)',
-          }}>
-            Refuser
-        </button>
-        <button
-          onClick={accept}
-          style={{
-            flex: 1,
-            padding: '10px 14px', borderRadius: 6, cursor: 'pointer',
-            fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.18em',
-            textTransform: 'uppercase', fontWeight: 500,
-            background: 'rgba(78,232,200,0.16)',
-            border: '1px solid rgba(78,232,200,0.50)',
-            color: '#4ee8c8',
-          }}>
-            Accepter
-        </button>
-      </div>
-    </div>
+    </>
   )
 }

@@ -1,9 +1,9 @@
-// Moteur de musique procédural (Web Audio) — "disques" générés en temps réel.
+// Moteur de musique procédural (Web Audio) — "disques" générés en temps réel
+// avec support hybride pour les fichiers MP3 réels fournis par le client.
 //
-// Pourquoi procédural ? Aucun fichier audio à héberger, aucun souci de droits,
-// ça marche toujours (offline inclus), et chaque "disque" = une ambiance
-// distincte (House, Afro, Techno, Lo-Fi, Nuit). Le son démarre uniquement sur
-// un geste utilisateur (clic) → conforme aux règles d'autoplay des navigateurs.
+// Pourquoi ce système ? Il joue les fichiers audios réels (.mp3) s'ils existent
+// (House, Afro, Lo-Fi) et bascule sur le synthétiseur procédural Web Audio
+// si aucun fichier n'est disponible (Techno, Nuit).
 //
 // Le moteur est un SINGLETON module : la musique continue quand on navigue
 // entre les pages (l'UI MusicPlayer est démontée/remontée, pas le son).
@@ -20,12 +20,24 @@ const mtof = m => 440 * Math.pow(2, (m - 69) / 12)
 const VOL_KEY = 'lib_music_volume'
 const DISC_KEY = 'lib_music_disc'
 
+// Fichiers MP3 réels copiés depuis le dossier Musique du bureau
+const ACTIVE_MP3S = {
+  house: '/music_house.mp3',
+  afro: '/music_afro.mp3',
+  lofi: '/music_lofi.mp3',
+  techno: '/music_techno.mp3'
+}
+
 let ctx = null, master = null, comp = null, delay = null, delayGain = null
 let crackleSrc = null
 let playing = false, schedulerId = null
 let curDiscIdx = 0, step = 0, bar = 0, nextTime = 0
 let volume = (() => { const v = parseFloat(localStorage.getItem(VOL_KEY)); return Number.isFinite(v) ? v : 0.5 })()
 const listeners = new Set()
+
+// Variables pour le lecteur HTML5 connecté au graphe Web Audio
+let audioHtmlElement = null
+let audioSourceNode = null
 
 const LOOKAHEAD = 0.025, SCHEDULE_AHEAD = 0.12
 
@@ -49,7 +61,55 @@ function ensureGraph() {
   master.connect(comp); comp.connect(ctx.destination)
 }
 
-// ── Voix ──────────────────────────────────────────────────────────────────────
+// ── Gestion de la lecture de fichiers audio MP3 ──────────────────────────────
+function stopAudioFile() {
+  if (audioHtmlElement) {
+    try {
+      audioHtmlElement.pause()
+      audioHtmlElement.src = ''
+    } catch {}
+    audioHtmlElement = null
+  }
+  if (audioSourceNode) {
+    try {
+      audioSourceNode.disconnect()
+    } catch {}
+    audioSourceNode = null
+  }
+}
+
+function playAudioFile(url) {
+  stopAudioFile()
+  
+  audioHtmlElement = new Audio(url)
+  audioHtmlElement.loop = true
+  audioHtmlElement.volume = volume
+  
+  audioHtmlElement.play().catch((err) => {
+    const errName = err ? err.name : 'UnknownError'
+    const errMsg = err ? err.message : 'No message'
+    if (errName !== 'NotAllowedError') {
+      const div = document.createElement('div')
+      div.style.position = 'fixed'
+      div.style.top = '10px'
+      div.style.left = '10px'
+      div.style.right = '10px'
+      div.style.background = 'rgba(255, 100, 0, 0.95)'
+      div.style.color = '#fff'
+      div.style.padding = '15px'
+      div.style.borderRadius = '8px'
+      div.style.zIndex = '99999'
+      div.style.fontFamily = 'monospace'
+      div.style.fontSize = '12px'
+      div.style.whiteSpace = 'pre-wrap'
+      div.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)'
+      div.innerHTML = `<strong>PLAYBACK ERROR (${url}):</strong> ${errName} - ${errMsg}`
+      document.body.appendChild(div)
+    }
+  })
+}
+
+// ── Voix Synthétiseur Procédural (Fallback / Techno & Nuit) ──────────────────
 function kick(t, g = 1) {
   const o = ctx.createOscillator(), gain = ctx.createGain()
   o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.11)
@@ -100,11 +160,10 @@ function pluck(t, m, g = 0.24, type = 'triangle') {
   o.connect(gain); gain.connect(master); gain.connect(delay); o.start(t); o.stop(t + 0.3)
 }
 
-// ── Motifs par disque ───────────────────────────────────────────────────────
-// Chaque fonction joue ce qu'il faut au pas `s` (0..15) du temps `t`.
+// ── Motifs par disque (Fallback synthétiseur) ────────────────────────────────
 const PAT = {
   house(s, b, t) {
-    const prog = [45, 41, 48, 43] // Am F C G (basse)
+    const prog = [45, 41, 48, 43]
     const r = prog[b % 4]
     if (s % 4 === 0) kick(t, 1)
     if (s % 2 === 1) hat(t, false, 0.16)
@@ -114,41 +173,37 @@ const PAT = {
     if (s === 4 || s === 12) chord(t, [r + 24, r + 27, r + 31], 0.2, 0.13)
   },
   afro(s, b, t) {
-    const pent = [57, 60, 62, 64, 67, 69] // A C D E G A
+    const pent = [57, 60, 62, 64, 67, 69]
     const roots = [45, 50, 43, 48]
     const r = roots[b % 4]
     if (s === 0 || s === 6 || s === 10) kick(t, 0.95)
     if (s % 2 === 0) hat(t, false, 0.12)
     if (s === 4 || s === 12) clap(t, 0.22)
     if ([0, 3, 7, 8, 11].includes(s)) bass(t, mtof(r), 0.2, 0.42)
-    // marimba pentatonique
     if ([0, 2, 5, 6, 9, 11, 13].includes(s)) {
       const note = pent[(s + b * 3) % pent.length] + (s > 8 ? 12 : 0)
       pluck(t, note, 0.18, 'triangle')
     }
   },
   techno(s, b, t) {
-    const r = 41 // F-ish dark root with movement
+    const r = 41
     if (s % 4 === 0) kick(t, 1)
     hat(t, false, s % 4 === 2 ? 0.18 : 0.1)
     if (s === 14) hat(t, true, 0.16)
-    // basse roulante 16e (offbeat)
     if (s % 2 === 1) bass(t, mtof(r + (s % 8 === 7 ? 12 : 0)), 0.12, 0.4, 'square')
     if (b % 2 === 1 && s === 4) chord(t, [r + 24, r + 30, r + 36], 0.16, 0.1)
   },
   lofi(s, b, t) {
-    // Cmaj7 Am7 Dm7 G7 — voicings doux
     const chords = [[48, 52, 55, 59], [45, 48, 52, 55], [50, 53, 57, 60], [43, 47, 50, 53]]
     const c = chords[b % 4]
     if (s === 0 || s === 8) kick(t, 0.8)
     if (s === 10) kick(t, 0.3)
     if (s === 4 || s === 12) clap(t, 0.22)
     if (s % 2 === 0) hat(t, false, 0.09)
-    if (s === 0) chord(t, c, 1.7, 0.12)         // nappe sur 2 temps
+    if (s === 0) chord(t, c, 1.7, 0.12)
     if ([0, 6].includes(s)) bass(t, mtof(c[0] - 12), 0.4, 0.38, 'sine')
   },
   nuit(s, b, t) {
-    // Am9 — Fmaj7 — nappes longues, pas de batterie
     const chords = [[57, 60, 64, 67, 71], [53, 57, 60, 64], [55, 59, 62, 66], [52, 55, 59, 62]]
     const c = chords[Math.floor(b / 2) % 4]
     if (s === 0 && b % 2 === 0) chord(t, c, 4.2, 0.1)
@@ -183,16 +238,31 @@ function startCrackle() {
 }
 function stopCrackle() { if (crackleSrc) { try { crackleSrc.stop() } catch {} crackleSrc = null } }
 
+// ── API Publique de contrôle ──────────────────────────────────────────────────
 export async function play(discId) {
   ensureGraph()
   if (ctx.state === 'suspended') { try { await ctx.resume() } catch {} }
   if (discId) { const i = DISCS.findIndex(d => d.id === discId); if (i >= 0) curDiscIdx = i }
   try { localStorage.setItem(DISC_KEY, DISCS[curDiscIdx].id) } catch {}
-  step = 0; bar = 0; nextTime = ctx.currentTime + 0.06
+  
+  const currentDisc = DISCS[curDiscIdx]
   playing = true
-  stopCrackle(); startCrackle()
-  if (schedulerId) clearInterval(schedulerId)
-  schedulerId = setInterval(scheduler, LOOKAHEAD * 1000)
+
+  // Reset des canaux audios actifs
+  if (schedulerId) { clearInterval(schedulerId); schedulerId = null }
+  stopCrackle()
+  stopAudioFile()
+
+  const mp3Path = ACTIVE_MP3S[currentDisc.id]
+  if (mp3Path) {
+    // Si un fichier MP3 existe, on le joue
+    playAudioFile(mp3Path)
+  } else {
+    // Sinon, on bascule en synthèse Web Audio
+    step = 0; bar = 0; nextTime = ctx.currentTime + 0.06
+    startCrackle()
+    schedulerId = setInterval(scheduler, LOOKAHEAD * 1000)
+  }
   notify()
 }
 
@@ -200,6 +270,7 @@ export function stop() {
   playing = false
   if (schedulerId) { clearInterval(schedulerId); schedulerId = null }
   stopCrackle()
+  stopAudioFile()
   notify()
 }
 
@@ -218,6 +289,9 @@ export function setVolume(v) {
   volume = Math.max(0, Math.min(1, v))
   try { localStorage.setItem(VOL_KEY, String(volume)) } catch {}
   if (master) master.gain.setTargetAtTime(volume, ctx.currentTime, 0.02)
+  if (audioHtmlElement) {
+    try { audioHtmlElement.volume = volume } catch {}
+  }
   notify()
 }
 

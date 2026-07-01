@@ -14,6 +14,144 @@ import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 import { IconTent, IconMic } from '../components/icons'
 
+function HostStatsWidget() {
+  const [percent, setPercent] = useState(0)
+  const [revenue, setRevenue] = useState(0)
+  const [contacts, setContacts] = useState(0)
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPercent(72)
+      
+      let startRev = 0
+      const targetRev = 4280
+      const revInterval = setInterval(() => {
+        startRev += 107
+        if (startRev >= targetRev) {
+          setRevenue(targetRev)
+          clearInterval(revInterval)
+        } else {
+          setRevenue(startRev)
+        }
+      }, 30)
+
+      let startCont = 0
+      const targetCont = 1099
+      const contInterval = setInterval(() => {
+        startCont += 31
+        if (startCont >= targetCont) {
+          setContacts(targetCont)
+          clearInterval(contInterval)
+        } else {
+          setContacts(startCont)
+        }
+      }, 30)
+    }, 450)
+
+    return () => clearTimeout(t)
+  }, [])
+
+  const radius = 34
+  const circ = 2 * Math.PI * radius
+  const strokeDashoffset = circ - (percent / 100) * circ
+
+  return (
+    <div style={{
+      background: 'rgba(6, 6, 12, 0.48)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      border: '1px solid rgba(255, 255, 255, 0.05)',
+      borderRadius: 20,
+      padding: '20px 24px',
+      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.02)',
+      width: '100%',
+      maxWidth: 320,
+      minWidth: 260,
+      margin: '0 auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 16,
+      textAlign: 'left',
+      pointerEvents: 'none',
+      userSelect: 'none',
+    }}>
+      {/* Header Widget */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ee8c8', boxShadow: '0 0 6px #4ee8c8' }} />
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255, 255, 255, 0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ventes en direct</span>
+        </div>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: '#c9b0ff', background: 'rgba(132,68,255,0.18)', padding: '2px 8px', borderRadius: 999 }}>LIVE</span>
+      </div>
+
+      {/* Main content: Donut + Stat Cards */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        {/* SVG Donut Chart */}
+        <div style={{ position: 'relative', width: 88, height: 88, flexShrink: 0 }}>
+          <svg width="88" height="88" viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
+            <circle cx="44" cy="44" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="8" />
+            <circle
+              cx="44"
+              cy="44"
+              r={radius}
+              fill="none"
+              stroke="url(#widgetGrad)"
+              strokeWidth="8"
+              strokeDasharray={circ}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              style={{ transition: 'stroke-dashoffset 1.8s cubic-bezier(0.22, 1, 0.36, 1)' }}
+            />
+            <defs>
+              <linearGradient id="widgetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8444ff" />
+                <stop offset="100%" stopColor="#ff4da6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            lineHeight: 1,
+          }}>
+            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#fff', letterSpacing: '0.02em' }}>{percent}%</span>
+            <span style={{ fontSize: 7, color: 'rgba(255, 255, 255, 0.3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 2 }}>Rempli</span>
+          </div>
+        </div>
+
+        {/* Text metrics */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <p style={{ margin: 0, fontSize: 8.5, color: 'rgba(255, 255, 255, 0.35)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revenue</p>
+            <p style={{ margin: '1px 0 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: '#fff', letterSpacing: '0.02em' }}>{revenue.toLocaleString()} €</p>
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 8.5, color: 'rgba(255, 255, 255, 0.35)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Audience</p>
+            <p style={{ margin: '1px 0 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: '#ff4da6', letterSpacing: '0.02em' }}>{contacts.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Mini graph lines */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 22, paddingTop: 4, borderTop: '1px solid rgba(255, 255, 255, 0.04)' }}>
+        {[30, 45, 25, 60, 40, 75, 55, 90, 65, 80, 95].map((h, i) => (
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              height: `${(h * percent) / 100}%`,
+              background: `linear-gradient(0deg, rgba(132, 68, 255, 0.1) 0%, ${i === 10 ? '#ff4da6' : '#8444ff'} 100%)`,
+              borderRadius: '2px 2px 0 0',
+              opacity: 0.8,
+              transition: 'height 1.5s cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function isEventPast(ev) {
   try {
     if (!ev.date) return false
@@ -471,6 +609,64 @@ export default function HomePage() {
 
   return (
     <Layout>
+      <style>{`
+        /* Perspective on cards for 3D depth */
+        .lib-org-card {
+          perspective: 1200px;
+          transform-style: preserve-3d;
+        }
+
+        /* Widget floating & 3D tilt styles */
+        .stats-widget-wrapper {
+          transform-style: preserve-3d;
+          transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.7s ease;
+          animation: libWidgetFloat 5s ease-in-out infinite alternate;
+          width: 100%;
+          max-width: 320px;
+        }
+
+        /* Hovering the card lifts and tilts the widget */
+        .lib-org-card:hover .stats-widget-wrapper {
+          transform: translateZ(35px) rotateY(-14deg) rotateX(10deg) translateY(-8px);
+          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(132, 68, 255, 0.15);
+        }
+
+        @keyframes libWidgetFloat {
+          0% {
+            transform: translateY(0px) rotateY(-3deg) rotateX(2deg);
+          }
+          100% {
+            transform: translateY(-8px) rotateY(3deg) rotateX(-2deg);
+          }
+        }
+
+        /* Card hover effects on HomePage */
+        .lib-org-card:hover .lib-org-cta {
+          background: #8444ff !important;
+          color: #fff !important;
+          box-shadow: 0 0 24px rgba(132,68,255,0.45);
+          border-color: rgba(255,255,255,0.3) !important;
+        }
+        .lib-org-card:hover .lib-org-cta svg {
+          transform: translateX(4px);
+        }
+        .lib-org-cta svg {
+          transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .lib-prest-card:hover .lib-prest-cta {
+          background: #ff4da6 !important;
+          color: #fff !important;
+          box-shadow: 0 0 24px rgba(255,77,166,0.45);
+          border-color: rgba(255,255,255,0.3) !important;
+        }
+        .lib-prest-card:hover .lib-prest-cta svg {
+          transform: translateX(4px);
+        }
+        .lib-prest-cta svg {
+          transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+      `}</style>
       {/* geo toast */}
       {geoToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
@@ -494,7 +690,7 @@ export default function HomePage() {
       <div style={{ paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))' }}>
 
         {/* ── Hero ── */}
-        <div style={{ padding: '22px 0 40px', display: 'flex', alignItems: 'center', gap: 48 }}>
+        <div style={{ padding: 'clamp(22px, 5vw, 44px) 0 40px', display: 'flex', alignItems: 'center', gap: 48 }}>
           {/* Colonne gauche : titre + accroche + bouton vidéo */}
           <div style={{ flex: '1 1 0', minWidth: 0 }}>
             <HeroGooeyText user={user} orgName={orgName} prestName={prestName} />
@@ -555,7 +751,10 @@ export default function HomePage() {
           <div style={{ marginBottom: 56 }}>
             {/* section header */}
             <div style={{ marginBottom: 36 }}>
-              <p className="eyebrow" style={{ marginBottom: 12, color: 'rgba(255,255,255,0.35)' }}>À ne pas manquer</p>
+              <p className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, color: 'var(--teal)' }}>
+                <span style={{ width: 22, height: 2, borderRadius: 2, background: 'var(--teal)', boxShadow: '0 0 8px var(--teal)' }} />
+                À ne pas manquer
+              </p>
               <button
                 onClick={() => setShowRegionSelector(true)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
@@ -930,7 +1129,7 @@ export default function HomePage() {
                       onClick={() => navigate(orgStatus !== 'none' ? '/mon-dossier' : '/inscription-organisateur')}
                       style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                     >
-                      <div style={{
+                      <div className="lib-org-card" style={{
                         position: 'relative', overflow: 'hidden',
                         borderRadius: 24,
                         background: 'linear-gradient(135deg, rgba(132,68,255,0.14) 0%, rgba(132,68,255,0.04) 100%)',
@@ -943,44 +1142,57 @@ export default function HomePage() {
                         {/* Glow */}
                         <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-                        <div style={{
-                          width: 56, height: 56, borderRadius: 14, marginBottom: 18,
-                          background: 'rgba(132,68,255,0.16)', border: '1px solid rgba(132,68,255,0.32)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <IconTent size={26} color="#c9b0ff" />
-                        </div>
-                        <h3 style={{
-                          fontFamily: 'Inter, sans-serif', fontWeight: 800,
-                          fontSize: 'clamp(22px, 5vw, 30px)',
-                          letterSpacing: '-0.8px', lineHeight: 1.1,
-                          color: '#fff', margin: '0 0 12px',
-                        }}>
-                          Organiser<br />un événement
-                        </h3>
-                        <p style={{
-                          fontFamily: 'Inter, sans-serif', fontSize: 15,
-                          color: 'rgba(255,255,255,0.45)', lineHeight: 1.6,
-                          margin: '0 0 24px', maxWidth: 360,
-                        }}>
-                          Crée tes événements, gère la billetterie, booste ta visibilité et connecte avec les meilleurs prestataires.
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 8,
-                            padding: '10px 20px', borderRadius: 999,
-                            background: 'rgba(132,68,255,0.22)',
-                            border: '1px solid rgba(132,68,255,0.35)',
-                            fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c9b0ff',
-                          }}>
-                            {orgStatus !== 'none' ? 'Voir mon dossier →' : 'Créer un compte organisateur'}
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-                          </span>
-                          {orgStatus === 'pending' && (
-                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
-                              En attente
-                            </span>
-                          )}
+                        <div className="flex flex-col md:flex-row gap-8 md:items-center justify-between" style={{ position: 'relative', zIndex: 2 }}>
+                          {/* Left Column (Text Info) */}
+                          <div style={{ flex: '1 1 55%', minWidth: 0 }}>
+                            <div style={{
+                              width: 56, height: 56, borderRadius: 14, marginBottom: 18,
+                              background: 'rgba(132,68,255,0.16)', border: '1px solid rgba(132,68,255,0.32)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <IconTent size={26} color="#c9b0ff" />
+                            </div>
+                            <h3 style={{
+                              fontFamily: 'Inter, sans-serif', fontWeight: 800,
+                              fontSize: 'clamp(22px, 5vw, 30px)',
+                              letterSpacing: '-0.8px', lineHeight: 1.1,
+                              color: '#fff', margin: '0 0 12px',
+                            }}>
+                              Organiser<br />un événement
+                            </h3>
+                            <p style={{
+                              fontFamily: 'Inter, sans-serif', fontSize: 15,
+                              color: 'rgba(255,255,255,0.45)', lineHeight: 1.6,
+                              margin: '0 0 24px', maxWidth: 360,
+                            }}>
+                              Crée tes événements, gère la billetterie, booste ta visibilité et connecte avec les meilleurs prestataires.
+                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <span className="lib-org-cta" style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 8,
+                                padding: '10px 20px', borderRadius: 999,
+                                background: 'rgba(132,68,255,0.22)',
+                                border: '1px solid rgba(132,68,255,0.35)',
+                                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c9b0ff',
+                                transition: 'all 0.25s cubic-bezier(0.22, 1, 0.36, 1)',
+                              }}>
+                                {orgStatus !== 'none' ? 'Voir mon dossier' : 'Créer un compte organisateur'}
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ transition: 'transform 0.2s ease' }}><path d="M9 18l6-6-6-6"/></svg>
+                              </span>
+                              {orgStatus === 'pending' && (
+                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
+                                  En attente
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right Column (Widget) */}
+                          <div style={{ flex: '1 1 40%', minWidth: 0, display: 'flex', justifyContent: 'center' }}>
+                            <div className="stats-widget-wrapper">
+                              <HostStatsWidget />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -994,7 +1206,7 @@ export default function HomePage() {
                       onClick={() => navigate(prestStatus !== 'none' ? '/mon-dossier' : '/inscription-prestataire')}
                       style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                     >
-                      <div style={{
+                      <div className="lib-prest-card" style={{
                         position: 'relative', overflow: 'hidden',
                         borderRadius: 24,
                         background: 'linear-gradient(135deg, rgba(255,77,166,0.12) 0%, rgba(255,77,166,0.03) 100%)',
@@ -1007,44 +1219,53 @@ export default function HomePage() {
                         {/* Glow */}
                         <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,77,166,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-                        <div style={{
-                          width: 56, height: 56, borderRadius: 14, marginBottom: 18,
-                          background: 'rgba(255,77,166,0.16)', border: '1px solid rgba(255,77,166,0.32)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <IconMic size={26} color="#ffb3d9" />
-                        </div>
-                        <h3 style={{
-                          fontFamily: 'Inter, sans-serif', fontWeight: 800,
-                          fontSize: 'clamp(22px, 5vw, 30px)',
-                          letterSpacing: '-0.8px', lineHeight: 1.1,
-                          color: '#fff', margin: '0 0 12px',
-                        }}>
-                          Proposer<br />mes services
-                        </h3>
-                        <p style={{
-                          fontFamily: 'Inter, sans-serif', fontSize: 15,
-                          color: 'rgba(255,255,255,0.45)', lineHeight: 1.6,
-                          margin: '0 0 24px', maxWidth: 360,
-                        }}>
-                          DJ, salle, matériel, traiteur, photographe… Rejoins la plateforme et connecte avec les organisateurs.
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 8,
-                            padding: '10px 20px', borderRadius: 999,
-                            background: 'rgba(255,77,166,0.18)',
-                            border: '1px solid rgba(255,77,166,0.32)',
-                            fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#ffb3d9',
-                          }}>
-                            {prestStatus !== 'none' ? 'Voir mon dossier →' : 'Créer un compte prestataire'}
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-                          </span>
-                          {prestStatus === 'pending' && (
-                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
-                              En attente
-                            </span>
-                          )}
+                        <div className="flex flex-col md:flex-row gap-8 md:items-center justify-between" style={{ position: 'relative', zIndex: 2 }}>
+                          {/* Left Column (Text Info) */}
+                          <div style={{ flex: '1 1 55%', minWidth: 0 }}>
+                            <div style={{
+                              width: 56, height: 56, borderRadius: 14, marginBottom: 18,
+                              background: 'rgba(255,77,166,0.16)', border: '1px solid rgba(255,77,166,0.32)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <IconMic size={26} color="#ffb3d9" />
+                            </div>
+                            <h3 style={{
+                              fontFamily: 'Inter, sans-serif', fontWeight: 800,
+                              fontSize: 'clamp(22px, 5vw, 30px)',
+                              letterSpacing: '-0.8px', lineHeight: 1.1,
+                              color: '#fff', margin: '0 0 12px',
+                            }}>
+                              Proposer<br />mes services
+                            </h3>
+                            <p style={{
+                              fontFamily: 'Inter, sans-serif', fontSize: 15,
+                              color: 'rgba(255,255,255,0.45)', lineHeight: 1.6,
+                              margin: '0 0 24px', maxWidth: 360,
+                            }}>
+                              DJ, salle, matériel, traiteur, photographe… Rejoins la plateforme et connecte avec les organisateurs.
+                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <span className="lib-prest-cta" style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 8,
+                                padding: '10px 20px', borderRadius: 999,
+                                background: 'rgba(255,77,166,0.18)',
+                                border: '1px solid rgba(255,77,166,0.32)',
+                                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#ffb3d9',
+                                transition: 'all 0.25s cubic-bezier(0.22, 1, 0.36, 1)',
+                              }}>
+                                {prestStatus !== 'none' ? 'Voir mon dossier' : 'Créer un compte prestataire'}
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ transition: 'transform 0.2s ease' }}><path d="M9 18l6-6-6-6"/></svg>
+                              </span>
+                              {prestStatus === 'pending' && (
+                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
+                                  En attente
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Empty space for alignment/structure on Prestataire (could be a service-matching mockup later) */}
+                          <div style={{ flex: '1 1 40%', minWidth: 0, display: 'none', md: 'block' }} />
                         </div>
                       </div>
                     </button>
