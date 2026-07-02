@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import SideMenu from './SideMenu'
 import AnimatedLogo from './AnimatedLogo'
 import AnimatedHamburger from './AnimatedHamburger'
-import { getUserId, getTotalUnreadCount, getLastRead } from '../utils/messaging'
+import { getUserId, getTotalUnreadCount, getLastRead, getConversationById, getUserById, getInitials, userShowsPhoto } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
 import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG, upsertMessageNotification } from '../utils/notifications'
 import { playNotifSound } from '../utils/notifSound'
@@ -688,10 +688,7 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
                 onClick={clickable ? () => handleClickNotif(n) : undefined}
                 className="group flex items-start gap-3 rounded-xl p-2.5 transition-all duration-200 hover:bg-white/[0.025]"
                 style={{ cursor: clickable ? 'pointer' : 'default' }}>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-all"
-                  style={{ background: '#1a1a22', border: '1px solid rgba(255,255,255,0.03)', color: accent }}>
-                  <NotifGlyph type={n.type} />
-                </div>
+                <NotifIcon n={n} uid={uid} accent={accent} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
@@ -733,6 +730,76 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
           Réduire
         </button>
       )}
+    </div>
+  )
+}
+
+// Icône de notification « intelligente » : pour les messages/mentions, on
+// affiche l'AVATAR réel de l'expéditeur (ou du groupe) — comme WhatsApp —
+// avec un mini-badge selon le contenu (photo, événement, sondage, vocal…).
+// Les autres types (commande, dossier…) gardent leur picto dédié.
+function NotifIcon({ n, uid, accent }) {
+  const isMsg = (n.type === 'message' || n.type === 'mention') && n.data?.convId
+
+  if (isMsg) {
+    // Résoudre l'expéditeur / le groupe depuis la conversation
+    let avatar = null
+    let name = n.title || '?'
+    let isGroup = false
+    try {
+      const conv = getConversationById(n.data.convId)
+      if (conv?.type === 'group') {
+        isGroup = true
+        name = conv.name || name
+        avatar = conv.avatar || null
+      } else if (conv) {
+        const otherId = (conv.participants || []).find(id => id !== uid)
+        const u = otherId ? getUserById(otherId) : null
+        if (u) {
+          name = u.name || name
+          avatar = (u.avatar && userShowsPhoto(u)) ? u.avatar : null
+        }
+      }
+    } catch {}
+    // Couleur d'initiales : même palette/hachage que l'avatar de la messagerie
+    const colors = ['#c8a96e', '#8b5cf6', '#e05aaa', '#3b82f6', '#4ee8c8', '#f59e0b']
+    const color = colors[(name.charCodeAt(name.length - 1) || 0) % colors.length]
+
+    // Mini-badge par type de contenu (déduit de l'aperçu du message)
+    const body = n.body || ''
+    const bp = { width: 9, height: 9, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 2.4, strokeLinecap: 'round', strokeLinejoin: 'round' }
+    let badge = <svg {...bp}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+    let badgeBg = '#8b5cf6'
+    if (/📷|Photo/i.test(body)) { badge = <svg {...bp}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="3"/></svg>; badgeBg = '#4ee8c8' }
+    else if (/🎟|Événement/i.test(body)) { badge = <svg {...bp}><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/></svg>; badgeBg = '#c8a96e' }
+    else if (/📊|Sondage/i.test(body)) { badge = <svg {...bp}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>; badgeBg = '#e05aaa' }
+    else if (/🎤|🎵|[Vv]ocal|[Aa]udio/.test(body)) { badge = <svg {...bp}><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="22"/></svg>; badgeBg = '#3b82f6' }
+    else if (n.type === 'mention') { badge = <svg {...bp}><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>; badgeBg = '#4ee8c8' }
+
+    return (
+      <div style={{ position: 'relative', flexShrink: 0, width: 40, height: 40 }}>
+        {avatar ? (
+          <img src={avatar} alt={name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+        ) : (
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 13 }}>
+            {isGroup
+              ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              : getInitials(name)}
+          </div>
+        )}
+        {/* Mini-badge de type de contenu */}
+        <span style={{ position: 'absolute', bottom: -2, right: -2, width: 17, height: 17, borderRadius: '50%', background: badgeBg, border: '2px solid #101014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {badge}
+        </span>
+      </div>
+    )
+  }
+
+  // Types non-message : picto dédié dans une pastille carrée arrondie
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-all"
+      style={{ background: '#1a1a22', border: '1px solid rgba(255,255,255,0.03)', color: accent }}>
+      <NotifGlyph type={n.type} />
     </div>
   )
 }
