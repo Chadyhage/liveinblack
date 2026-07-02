@@ -91,12 +91,12 @@ const STATIC_PROVIDERS = [
     id: `salle_${s.id}`, type: 'salle', icon: 'building', color: '#7b2fff',
     name: s.name, typeLabel: 'Salle / Lieu', description: s.description,
     price: s.price, location: `${s.owner} · ${s.location}`, capacity: `${s.capacity} pers.`,
-    rating: s.rating, tags: s.tags, pending: false,
+    rating: 0, tags: s.tags, pending: false,
   })),
   ...services.prestations.map(p => ({
     id: `presta_${p.id}`, type: 'prestation', icon: 'mic', color: '#ff6b1a',
     name: p.name, typeLabel: p.type, description: '', price: p.price,
-    location: '', rating: p.rating, tags: p.tags, pending: false,
+    location: '', rating: 0, tags: p.tags, pending: false,
   })),
 ]
 
@@ -1406,12 +1406,11 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
                     {prov.photos?.length > 0 && (
                       <img src={prov.photos[0]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />
                     )}
-                    {prov.rating > 0 && (
-                      <span style={{ position: 'absolute', top: 12, right: 14, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 999, background: 'rgba(5,6,10,0.6)', backdropFilter: 'blur(8px)', border: '1px solid rgba(200,169,110,0.35)', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#e0c690' }}>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="#e0c690"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
-                        {prov.rating}
-                      </span>
-                    )}
+                    {/* Note masquée : aucun système d'avis réel n'existe encore.
+                        On n'affiche PAS d'étoile tant qu'elle ne repose pas sur de
+                        vrais avis (sinon = note trompeuse). À réactiver quand les
+                        avis prestataires seront implémentés (moyenne calculée +
+                        nombre d'avis), pas avec une valeur codée en dur. */}
                   </div>
 
                   <div style={{ padding: '0 16px 16px', marginTop: -26 }}>
