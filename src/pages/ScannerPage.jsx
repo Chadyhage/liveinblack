@@ -10,6 +10,38 @@ const MOCK_TICKETS = {}
 
 const MOCK_ORDERS = {}
 
+// ── Validité métier de l'événement d'un billet (anti « ancien événement ») ──
+// Récupère l'event réel côté Firestore pour vérifier qu'un billet scanné
+// concerne bien un événement en cours (et, pour un organisateur, LE SIEN).
+async function fetchEventForScan(eventId) {
+  try {
+    const { db, USE_REAL_FIREBASE } = await import('../firebase')
+    if (!USE_REAL_FIREBASE || !eventId) return null
+    const { doc, getDoc } = await import('firebase/firestore')
+    const snap = await getDoc(doc(db, 'events', String(eventId)))
+    return snap.exists() ? { id: String(eventId), ...snap.data() } : null
+  } catch { return null }
+}
+
+// L'événement est-il terminé ? (annulé, ou fin + 12h de tolérance dépassée).
+// On sert les consos PENDANT la soirée : au-delà, un billet passé ne l'ouvre plus.
+function isEventOver(ev) {
+  try {
+    if (!ev) return false
+    if (ev.cancelled) return true
+    const GRACE = 12 * 3600 * 1000
+    if (ev.closingDate) return new Date(ev.closingDate).getTime() + GRACE < Date.now()
+    if (!ev.date) return false
+    const endTime = ev.endTime || ev.time || '23:59'
+    const [h, m] = String(endTime).split(':').map(Number)
+    const d = new Date(ev.date + 'T00:00:00'); d.setHours(h, m, 0, 0)
+    const startTime = ev.time || '00:00'
+    const [sh, sm] = String(startTime).split(':').map(Number)
+    if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1) // croise minuit
+    return d.getTime() + GRACE < Date.now()
+  } catch { return false }
+}
+
 // ─── Design tokens ────────────────────────────────────────────────────────
 const CARD = {
   background: 'rgba(8,10,20,0.55)',
@@ -37,6 +69,7 @@ const STATUS = {
   used:           { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'DÉJÀ UTILISÉ',   sub: 'Ce billet a déjà été scanné' },
   invalid:        { borderColor: 'rgba(224,90,170,0.40)',  bg: 'rgba(224,90,170,0.07)',  iconColor: COLORS.pink, label: 'INVALIDE',       sub: 'QR code non reconnu' },
   offline:        { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'HORS-LIGNE',      sub: 'Vérification impossible — reconnecte-toi' },
+  wrong_event:    { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'BILLET REFUSÉ',   sub: 'Ce billet ne concerne pas cet événement' },
 }
 
 // ── Camera component ────────────────────────────────────────────────
@@ -269,6 +302,10 @@ export default function ScannerPage() {
         setResult({ code: tc, status: 'offline', offline: true, sub: 'Registre injoignable — impossible de certifier ce billet. Re-scanne avec du réseau.' })
         return
       }
+      // Garde événement : billet d'un event terminé / pas le tien → refusé
+      // (avant, un billet d'un ancien événement passait « VALIDE »).
+      const guard = await eventScanGuard(reg.data?.eventId || data.ei)
+      if (guard) { setResult({ code: tc, status: 'wrong_event', sub: guard.sub, ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en } }); return }
       // Précommandes : le REGISTRE (écrit par le webhook depuis les line_items
       // Stripe) prime sur le token — le token est signé côté client avec une
       // clé publique, donc falsifiable (champagne gratuit au bar sinon).
@@ -309,6 +346,8 @@ export default function ScannerPage() {
         setResult({ code: clean, status: 'invalid', sub: "Invitation annulée par l'organisateur" })
         return
       }
+      const guard = await eventScanGuard(reg.data?.eventId)
+      if (guard) { setResult({ code: clean, status: 'wrong_event', sub: guard.sub, ticket: { holder: reg.data.guestName || 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—' } }); return }
       const isUsed = currentUsed.has(clean)
       setResult({
         code: clean,
@@ -370,6 +409,20 @@ export default function ScannerPage() {
 
   function reset() { setResult(null); setManualCode(''); setCameraError('') }
 
+  // Garde métier partagée (entrée ET service) : renvoie un motif de rejet si
+  // l'événement du billet est terminé ou n'appartient pas à l'organisateur qui
+  // scanne. Best-effort : hors-ligne / event introuvable → null (on ne bloque pas).
+  async function eventScanGuard(eventId) {
+    if (!eventId) return null
+    const ev = await fetchEventForScan(eventId)
+    if (!ev) return null
+    if (isEventOver(ev)) return { title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé." }
+    if (userRole === 'organisateur' && String(ev.organizerId || '') !== String(myId) && String(ev.createdBy || '') !== String(myId)) {
+      return { title: 'Pas ton événement', sub: "Ce billet appartient à un événement que tu n'organises pas." }
+    }
+    return null
+  }
+
   // ── Service mode ──
   // Les consos affichées au bar viennent EN PRIORITÉ du registre tickets/
   // (préco figées par le webhook depuis les line_items Stripe payés) — le
@@ -378,40 +431,59 @@ export default function ScannerPage() {
   async function lookupOrder(rawValue) {
     setCameraActive(false)
     const val = rawValue.trim()
+    const clean = val.toUpperCase()
 
     const regItems = (reg) => Array.isArray(reg?.data?.preorders)
       ? reg.data.preorders.map(i => ({ name: i.name, emoji: i.emoji || '', qty: Number(i.qty) || 0, price: Number(i.priceEUR) || 0 })).filter(i => i.qty > 0)
       : null
 
-    // URL token → extract code from token
+    // 1) Résoudre le code + le payload token (le cas échéant)
     const tokenMatch = val.match(/\/ticket\/([A-Za-z0-9_-]+)/)
+    let code = clean, tokenData = null
     if (tokenMatch) {
       const { valid, data } = verifyTicketToken(tokenMatch[1])
       if (!valid || !data) { setServiceOrder({ code: val, order: null }); return }
-      const tc = data.tc
-      const reg = await lookupTicketRegistry(tc)
-      const certified = reg?.found ? regItems(reg) : null
-      const items = certified ?? (data.po || []).map(i => ({ name: i.n, emoji: i.e || '', qty: i.q, price: i.p })).filter(i => i.qty > 0)
-      setServiceOrder({ code: tc, order: { holder: 'Participant', place: data.pl, event: data.en, items, certified: certified != null } })
-      return
+      tokenData = data; code = data.tc
     }
 
-    const clean = val.toUpperCase()
+    // 2) Registre autoritaire (cross-device, certifié par le webhook)
+    let reg = await lookupTicketRegistry(code)
+    if (!reg.found && !reg.error && clean !== code) reg = await lookupTicketRegistry(clean)
 
-    // Registre Firestore d'abord (cross-device, certifié)
-    try {
-      let reg = await lookupTicketRegistry(val)
-      if (!reg.found && !reg.error && clean !== val) reg = await lookupTicketRegistry(clean)
-      if (reg.found) {
-        const certified = regItems(reg)
-        if (certified) {
-          setServiceOrder({ code: clean, order: { holder: reg.data.guestName || 'Participant', place: reg.data.place || '—', event: reg.data.eventName || '—', items: certified, certified: true } })
+    // 3) VALIDATION MÉTIER — l'événement du billet doit être EN COURS et, pour
+    //    un organisateur, LE SIEN. Ferme la faille : on ne peut plus ouvrir /
+    //    servir les précommandes d'un billet d'un ANCIEN (ou autre) événement.
+    //    eventId vient du registre (autoritaire) en priorité, sinon du token.
+    const eventId = reg?.data?.eventId || tokenData?.ei || null
+    if (eventId) {
+      const ev = await fetchEventForScan(eventId)
+      if (ev) {
+        if (isEventOver(ev)) {
+          setServiceOrder({ code, order: null, rejected: { title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé — ses précommandes ne sont plus servables." } })
+          return
+        }
+        if (userRole === 'organisateur' && String(ev.organizerId || '') !== String(myId) && String(ev.createdBy || '') !== String(myId)) {
+          setServiceOrder({ code, order: null, rejected: { title: 'Pas ton événement', sub: "Ce billet appartient à un événement que tu n'organises pas." } })
           return
         }
       }
-    } catch {}
+    }
 
-    // Real booking in localStorage (fallback legacy/hors-ligne)
+    // 4) Précommandes — registre certifié en priorité, sinon token, sinon local
+    if (reg?.found) {
+      const certified = regItems(reg)
+      if (certified) {
+        setServiceOrder({ code, order: { holder: reg.data.guestName || 'Participant', place: reg.data.place || '—', event: reg.data.eventName || '—', items: certified, certified: true } })
+        return
+      }
+    }
+    if (tokenData) {
+      const items = (tokenData.po || []).map(i => ({ name: i.n, emoji: i.e || '', qty: i.q, price: i.p })).filter(i => i.qty > 0)
+      setServiceOrder({ code, order: { holder: 'Participant', place: tokenData.pl, event: tokenData.en, items } })
+      return
+    }
+
+    // Fallback legacy/hors-ligne : booking localStorage
     try {
       const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
       const booking = bookings.find(b => b.ticketCode === clean)
@@ -647,6 +719,7 @@ export default function ScannerPage() {
                       {result.status === 'used' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>}
                       {result.status === 'invalid' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
                       {result.status === 'offline' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.58 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01" /></svg>}
+                      {result.status === 'wrong_event' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>}
                     </div>
                     <div>
                       <p style={{ fontFamily: FONTS.mono, fontSize: 20, fontWeight: 700, color: cfg.iconColor, margin: 0, letterSpacing: '0.06em' }}>
@@ -841,6 +914,29 @@ export default function ScannerPage() {
 
             {/* Order result */}
             {serviceOrder && (() => {
+              // Rejet métier (événement terminé / pas le tien) — distinct du « code inconnu »
+              if (serviceOrder.rejected) {
+                return (
+                  <div style={{
+                    ...CARD, borderColor: 'rgba(200,169,110,0.40)',
+                    background: 'rgba(200,169,110,0.07)',
+                    padding: 24, textAlign: 'center',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+                  }}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.gold} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 20, letterSpacing: '-0.4px', color: COLORS.gold, margin: 0 }}>{serviceOrder.rejected.title}</p>
+                    <p style={{ fontFamily: FONTS.display, fontSize: 13, color: COLORS.muted, margin: 0, lineHeight: 1.5, maxWidth: 280 }}>{serviceOrder.rejected.sub}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, letterSpacing: '0.06em' }}>{serviceOrder.code}</p>
+                    <button
+                      onClick={() => { setServiceOrder(null); setServiceCode('') }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONTS.display, fontSize: 12, fontWeight: 600, color: COLORS.muted, textDecoration: 'underline', marginTop: 4 }}>
+                      Scanner un autre billet
+                    </button>
+                  </div>
+                )
+              }
               if (!serviceOrder.order) {
                 return (
                   <div style={{
