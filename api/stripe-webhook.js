@@ -127,6 +127,11 @@ async function finalizeBooking(db, session, meta) {
   const bookingId = meta.bookingId
   if (!bookingId) return
 
+  // Prix unitaire payé (en €), figé au moment du checkout. Les stats organisateur
+  // lisent ticket.placePrice en priorité — sans ce snapshot, un changement de
+  // tarif réécrirait rétroactivement le CA des ventes passées (risque fiscal).
+  const unitPriceEUR = Math.max(0, Number(meta.unitPriceCents || 0)) / 100
+
   // Idempotence : si on a déjà traité ce bookingId on ne refait rien
   const ref = db.collection('bookings').doc(bookingId)
   const existing = await ref.get()
@@ -162,6 +167,7 @@ async function finalizeBooking(db, session, meta) {
       eventId,
       eventName,
       place: t.place || placeType,
+      placePrice: t.placePrice != null ? Number(t.placePrice) : unitPriceEUR,
       bookedAt: t.bookedAt || new Date().toISOString(),
       paid: true,
       paymentMethod: 'stripe',
@@ -175,6 +181,8 @@ async function finalizeBooking(db, session, meta) {
         paid: true,
         source: 'stripe-webhook',
         confirmedAt: new Date().toISOString(),
+        // Fige le prix payé si le billet client ne l'avait pas
+        ...(t.placePrice == null ? { placePrice: unitPriceEUR } : {}),
       }, { merge: true })
     }
     await confirmBatch.commit()
@@ -191,6 +199,7 @@ async function finalizeBooking(db, session, meta) {
         eventId,
         eventName,
         place: placeType,
+        placePrice: unitPriceEUR,
         bookedAt: new Date().toISOString(),
         paid: true,
         paymentMethod: 'stripe',
@@ -257,6 +266,7 @@ async function finalizeBooking(db, session, meta) {
         eventId,
         eventName,
         place: placeType,
+        placePrice: unitPriceEUR,
         userId,
         paid: true,
         source: 'stripe-webhook',
@@ -397,6 +407,25 @@ async function finalizeBoost(db, session, meta) {
     stripeSessionId: session.id,
     finalizedBy: 'webhook',
   }
+
+  // Garde-fou résiduel anti double-vente : checkout-boost refuse déjà un créneau
+  // occupé AVANT paiement, mais deux checkouts strictement simultanés peuvent
+  // passer. Si un boost actif occupe déjà (région, position), on marque le
+  // conflit — à traiter manuellement (remboursement ou re-slot), jamais silencieux.
+  try {
+    const dupSnap = await db.collection('boosts')
+      .where('region', '==', String(region))
+      .where('position', '==', position)
+      .get()
+    const now = Date.now()
+    const clash = dupSnap.docs.map(d => d.data())
+      .find(b => b.id !== boostId && (() => { try { return new Date(b.expiresAt).getTime() > now } catch { return false } })())
+    if (clash) {
+      boost.conflict = true
+      boost.conflictWith = clash.id
+      console.error('[webhook] ⚠ CONFLIT BOOST — deux ventes sur le même créneau:', boostId, 'vs', clash.id, `(Top ${position}, ${region}) — rembourser ou re-sloter manuellement`)
+    }
+  } catch {}
 
   await ref.set(boost)
 

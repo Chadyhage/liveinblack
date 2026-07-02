@@ -4,7 +4,35 @@
 // On login → pull from Firestore into localStorage (async)
 
 import { db } from '../firebase'
-import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, onSnapshot, increment } from 'firebase/firestore'
+import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, onSnapshot, increment, runTransaction } from 'firebase/firestore'
+
+// ── Merge concurrent-safe d'un tableau d'items keyés par id ───────────────────
+// Écrire le tableau complet depuis le cache local = « dernier écrivain gagne » :
+// deux appareils (ex. deux videurs sur la guestlist) s'écrasent mutuellement.
+// Ici : transaction Firestore = lire l'état SERVEUR, y appliquer nos upserts/
+// suppressions, écrire — atomique, aucun ajout concurrent perdu.
+// Renvoie le tableau mergé (pour rafraîchir le cache local), ou null si échec.
+export async function mergeItemsById(path, { field = 'items', idKey = 'id', upserts = [], removeIds = [] } = {}) {
+  try {
+    const [col, id] = path.split('/')
+    const ref = doc(db, col, id)
+    const removeSet = new Set(removeIds.map(String))
+    let result = null
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref)
+      const remote = (snap.exists() && Array.isArray(snap.data()[field])) ? snap.data()[field] : []
+      const byId = new Map(remote.map(it => [String(it[idKey]), it]))
+      for (const it of upserts) byId.set(String(it[idKey]), it)
+      for (const rid of removeSet) byId.delete(rid)
+      result = [...byId.values()]
+      tx.set(ref, { [field]: result, updatedAt: new Date().toISOString() }, { merge: true })
+    })
+    return result
+  } catch (e) {
+    console.warn('[sync] mergeItemsById failed:', path, e?.message)
+    return null
+  }
+}
 
 // ── Real-time listeners ────────────────────────────────────────────────────────
 // Each returns an unsubscribe function. Call it on unmount to stop listening.
@@ -165,6 +193,28 @@ export function listenTicketsForEvent(eventId, callback, onError = () => {}) {
   }
 }
 
+// Like/unlike transactionnel d'un morceau de playlist. Incrémente le compteur
+// sur l'état SERVEUR (pas l'état local) : deux likes simultanés donnent bien +2,
+// et les positions sur l'écran DJ ne sautent plus de façon erratique.
+export async function adjustPlaylistLike(eventId, songId, delta) {
+  try {
+    const ref = doc(db, 'event_playlists', String(eventId))
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref)
+      if (!snap.exists()) return
+      const songs = Array.isArray(snap.data().songs) ? snap.data().songs : []
+      const next = songs.map(s => String(s.id) === String(songId)
+        ? { ...s, likes: Math.max(0, (Number(s.likes) || 0) + delta) }
+        : s)
+      tx.set(ref, { songs: next, updatedAt: new Date().toISOString() }, { merge: true })
+    })
+    return true
+  } catch (e) {
+    console.warn('[sync] adjustPlaylistLike failed:', e?.message)
+    return false
+  }
+}
+
 // Listen to friends/social data for a user
 export function listenUserSocial(uid, callback) {
   try {
@@ -286,9 +336,13 @@ function mergeById(local, remote, idField = 'id') {
 }
 
 // ── Master sync: pull all Firestore data → localStorage on login ──────────────
-export async function syncOnLogin(uid) {
+// opts.light : resync de focus d'onglet — saute les scans de collections
+// entières (users, events, pending_validations) qui coûtent cher en lectures
+// Firestore et bloquent le thread principal. Le full sync ne tourne qu'au login.
+export async function syncOnLogin(uid, opts = {}) {
+  const light = !!opts.light
   if (!uid) return
-  console.log('[sync] Full sync starting for', uid)
+  console.log(`[sync] ${light ? 'Light' : 'Full'} sync starting for`, uid)
 
   try {
     // ── 0. User profile (metadata only — never email/name) ──
@@ -320,6 +374,17 @@ export async function syncOnLogin(uid) {
     if (bookingsDoc?.items?.length) {
       const local = safeParseArray('lib_bookings')
       localStorage.setItem('lib_bookings', JSON.stringify(mergeById(local, bookingsDoc.items)))
+    }
+
+    // ── 2b. Events privés débloqués (codes d'accès) ──
+    // Le déblocage doit suivre l'utilisateur : débloqué/acheté sur PC, le billet
+    // doit rester accessible sur téléphone (le code d'accès est à usage unique,
+    // impossible de le re-saisir sur le second appareil).
+    const accessDoc = await loadDoc(`user_private_access/${uid}`)
+    if (accessDoc?.items?.length) {
+      const local = safeParseArray('lib_unlocked_events')
+      const merged = [...new Set([...local.map(String), ...accessDoc.items.map(String)])]
+      localStorage.setItem('lib_unlocked_events', JSON.stringify(merged))
     }
 
     // ── 3. Created events ──
@@ -412,11 +477,16 @@ export async function syncOnLogin(uid) {
     // (Push is handled by syncUserProfile() called explicitly at login/register/profile-update)
     // This prevents a race: if syncOnLogin(A) is still running when the user logs in as B,
     // a stale read of lib_user (now containing B's data) would overwrite users/A with B's name.
-    const usersSnap = await loadCollection('users')
-    // Firestore est source de vérité — on écrase lib_users entièrement
-    // pour ne jamais afficher d'anciens comptes supprimés ou comptes démo
-    const normalizedUsers = usersSnap.map(u => ({ ...u, id: u.id || u.uid || u._docId }))
-    localStorage.setItem('lib_users', JSON.stringify(normalizedUsers))
+    // ⚠ Scan de la collection ENTIÈRE : réservé au full sync (login). En light
+    // (focus d'onglet), ce scan coûtait des milliers de lectures + un JSON.parse
+    // bloquant sur mobile — à chaque changement d'onglet.
+    if (!light) {
+      const usersSnap = await loadCollection('users')
+      // Firestore est source de vérité — on écrase lib_users entièrement
+      // pour ne jamais afficher d'anciens comptes supprimés ou comptes démo
+      const normalizedUsers = usersSnap.map(u => ({ ...u, id: u.id || u.uid || u._docId }))
+      localStorage.setItem('lib_users', JSON.stringify(normalizedUsers))
+    }
 
     // ── 10-bis. Service orders (only this user's orders as buyer or seller) ──
     const [buyerOrders, sellerOrders] = await Promise.all([
@@ -453,14 +523,20 @@ export async function syncOnLogin(uid) {
     if (reports.length) localStorage.setItem('lib_reports', JSON.stringify(reports))
 
     // ── 15. Public events (shared collection — all organizers) ──
-    const publicEvents = await loadCollection('events')
+    // Light sync : inutile, EventsPage/HomePage écoutent déjà la collection en
+    // temps réel via listenEvents (onSnapshot).
+    const publicEvents = light ? [] : await loadCollection('events')
     if (publicEvents.length) {
       const localEvents = safeParseArray('lib_created_events')
       localStorage.setItem('lib_created_events', JSON.stringify(mergeById(localEvents, publicEvents)))
     }
 
-    // ── 16. Pending validations + role requests (all users: admin needs them) ──
-    const pendingSnap = await loadCollection('pending_validations')
+    // ── 16. Pending validations + role requests — AGENTS uniquement ──
+    // Les règles Firestore rejetaient déjà cette lecture pour les non-agents
+    // (d'où le spam « Missing or insufficient permissions » en console) : on
+    // ne tente même plus la requête pour un client/organisateur.
+    const myRole = (() => { try { return JSON.parse(localStorage.getItem('lib_user') || '{}').role } catch { return null } })()
+    const pendingSnap = (!light && (myRole === 'agent' || myRole === 'admin')) ? await loadCollection('pending_validations') : []
     if (pendingSnap.length) {
       const validations = pendingSnap.filter(p => p.type !== 'role_request' && p.status === 'pending')
       const roleReqs = pendingSnap.filter(p => p.type === 'role_request' && p.status === 'pending')

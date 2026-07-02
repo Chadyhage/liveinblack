@@ -262,15 +262,21 @@ export default function ScannerPage() {
         setResult({ code: tc, status: 'invalid', sub: "Invitation annulée par l'organisateur" })
         return
       }
+      if (reg.error) {
+        // Registre injoignable : la signature du token NE SUFFIT PAS (la clé est
+        // dans le bundle public → falsifiable). Sans confirmation du registre,
+        // on n'affiche JAMAIS « valide » — le videur doit re-scanner avec du réseau.
+        setResult({ code: tc, status: 'offline', offline: true, sub: 'Registre injoignable — impossible de certifier ce billet. Re-scanne avec du réseau.' })
+        return
+      }
       setResult({
         code: tc,
         status: isUsed ? 'used' : 'valid',
         ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en, date: data.ed, price: `${data.tp}€` },
         preorders: data.po || [],
-        paidConfirmed: reg.found ? reg.paid : undefined,
-        freeTicket: reg.found ? reg.data?.source === 'free' : undefined,
-        isGuestlist: reg.found ? reg.data?.source === 'guestlist' : undefined,
-        offline: !!reg.error,
+        paidConfirmed: reg.paid,
+        freeTicket: reg.data?.source === 'free',
+        isGuestlist: reg.data?.source === 'guestlist',
       })
       return
     }

@@ -108,8 +108,12 @@ export async function addGuestlistEntry(event, guest, myId) {
   writeAll(all)
 
   // 3) Sync Firestore : la liste organisateur ET le registre anti-fraude tickets/.
-  import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`guestlists/${event.id}`, { items: list, updatedAt: bookedAt })
+  // mergeItemsById (transaction) et non syncDoc : deux membres du staff qui
+  // ajoutent des invités en même temps ne s'écrasent plus mutuellement.
+  import('./firestore-sync').then(({ mergeItemsById, syncDoc }) => {
+    mergeItemsById(`guestlists/${event.id}`, { upserts: [entry] }).then(merged => {
+      if (merged) { const a = readAll(); a[String(event.id)] = merged; writeAll(a) }
+    })
     syncDoc(`tickets/${code}`, {
       ticketCode: code,
       eventId: event.id,
@@ -148,8 +152,12 @@ export async function removeGuestlistEntry(eventId, entryId) {
   all[String(eventId)] = updated
   writeAll(all)
 
-  import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`guestlists/${eventId}`, { items: updated, updatedAt: new Date().toISOString() })
+  import('./firestore-sync').then(({ mergeItemsById, syncDoc }) => {
+    // Suppression transactionnelle : ne touche que CET invité, les ajouts
+    // concurrents des autres membres du staff sont préservés.
+    mergeItemsById(`guestlists/${eventId}`, { removeIds: [entryId] }).then(merged => {
+      if (merged) { const a = readAll(); a[String(eventId)] = merged; writeAll(a) }
+    })
     syncDoc(`tickets/${entry.ticketCode}`, { revoked: true, revokedAt: new Date().toISOString() })
   }).catch(() => {})
 

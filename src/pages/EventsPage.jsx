@@ -134,7 +134,16 @@ export default function EventsPage() {
   function unlockAndGo(eventId) {
     const unlocked = getUnlockedEvents()
     if (!unlocked.includes(String(eventId))) {
-      localStorage.setItem('lib_unlocked_events', JSON.stringify([...unlocked, String(eventId)]))
+      const next = [...unlocked, String(eventId)]
+      localStorage.setItem('lib_unlocked_events', JSON.stringify(next))
+      // Cross-device : sans cette persistance, l'event débloqué sur PC reste
+      // verrouillé sur téléphone alors que le code est déjà consommé → client
+      // bloqué à l'entrée le soir J. syncOnLogin recharge ce doc au login.
+      if (user?.uid) {
+        import('../utils/firestore-sync').then(({ syncDoc }) => {
+          syncDoc(`user_private_access/${user.uid}`, { items: next, updatedAt: Date.now() })
+        }).catch(() => {})
+      }
     }
     setCodeMsg({ type: 'success', text: 'Code valide — événement débloqué.' })
     setTimeout(() => {

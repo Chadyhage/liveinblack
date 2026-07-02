@@ -779,6 +779,8 @@ export default function EventDetailPage() {
             eventId: b.eventId,
             eventName: b.eventName,
             place: b.place,
+            // Prix payé figé (0 pour un billet gratuit) — les stats lisent ce champ
+            placePrice: b.placePrice != null ? Number(b.placePrice) : 0,
             userId: uid,
             paid: false,
             source: 'free',

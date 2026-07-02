@@ -77,6 +77,10 @@ service cloud.firestore {
     match /user_social/{uid} {
       allow read, write: if isOwner(uid) || isAgent();
     }
+    // Events privés débloqués par code d'accès — suit l'utilisateur cross-device
+    match /user_private_access/{uid} {
+      allow read, write: if isOwner(uid);
+    }
     // ── Conversations & messages ───────────────────────────────────────────────
     // Membre = présent dans participants (conv directe) ou participantIds (groupe).
     // Les requêtes clientes utilisent déjà array-contains sur ces champs,

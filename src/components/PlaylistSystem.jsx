@@ -146,21 +146,26 @@ export default function PlaylistSystem({ event, booked }) {
       unsubscribe = listenDoc(`event_playlists/${event.id}`, data => {
         if (!Array.isArray(data?.songs)) return
         const remoteSongs = [...data.songs].sort((a, b) => (b.likes || 0) - (a.likes || 0))
-        setSongsState(remoteSongs)
-        try { localStorage.setItem(songsKey, JSON.stringify(remoteSongs)) } catch {}
+        // myLike est un état PERSONNEL (jamais écrit dans le doc partagé) :
+        // on le réapplique depuis l'état local au moment du merge distant.
+        setSongsState(prev => {
+          const merged = remoteSongs.map(s => ({ ...s, myLike: prev.find(p => String(p.id) === String(s.id))?.myLike || false }))
+          try { localStorage.setItem(songsKey, JSON.stringify(merged)) } catch {}
+          return merged
+        })
       })
     }).catch(() => {})
     return () => { cancelled = true; unsubscribe() }
   }, [event?.id, songsKey])
 
+  // Mise à jour LOCALE uniquement (cache + affichage optimiste). Les écritures
+  // Firestore passent par des transactions ciblées (mergeItemsById pour un ajout,
+  // adjustPlaylistLike pour un like) : écrire le tableau complet depuis l'état
+  // local écrasait les ajouts/likes concurrents des autres participants.
   function setSongs(updater) {
     setSongsState((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater
       try { localStorage.setItem(songsKey, JSON.stringify(next)) } catch {}
-      // Sync playlist to Firestore so other devices (and the DJ screen) see it live
-      import('../utils/firestore-sync').then(({ syncDoc }) => {
-        syncDoc(`event_playlists/${event.id}`, { songs: next, updatedAt: new Date().toISOString() })
-      }).catch(() => {})
       return next
     })
   }
@@ -229,8 +234,13 @@ export default function PlaylistSystem({ event, booked }) {
       setTimeout(() => setMessage(''), 3000)
       return
     }
-    const newSong = { id: Date.now(), title: song.title, artist: song.artist, likes: 0, myLike: false, addedBy: 'Moi', previewUrl: song.previewUrl || null }
-    setSongs((prev) => [...prev, newSong])
+    const newSong = { id: Date.now(), title: song.title, artist: song.artist, likes: 0, addedBy: 'Moi', previewUrl: song.previewUrl || null }
+    setSongs((prev) => [...prev, { ...newSong, myLike: false }])
+    // Upsert transactionnel : n'ajoute QUE ce morceau côté serveur, sans écraser
+    // les ajouts concurrents des autres participants. (myLike reste local.)
+    import('../utils/firestore-sync').then(({ mergeItemsById }) => {
+      mergeItemsById(`event_playlists/${event.id}`, { field: 'songs', upserts: [newSong] })
+    }).catch(() => {})
     incrementSongsAdded()
     setSearch('')
     setSearchResults([])
@@ -248,12 +258,17 @@ export default function PlaylistSystem({ event, booked }) {
   function toggleLike(songId) {
     const song = songs.find((s) => s.id === songId)
     if (!song) return
+    // Optimiste en local, transactionnel côté serveur : le compteur est incrémenté
+    // sur l'état Firestore réel (pas l'état local), donc deux likes simultanés
+    // font bien +2 et l'écran DJ ne saute plus de position en position.
     if (song.myLike) {
       setLikesUsed((l) => l - 1)
-      setSongs((prev) => prev.map((s) => s.id === songId ? { ...s, likes: s.likes - 1, myLike: false } : s).sort((a, b) => b.likes - a.likes))
+      setSongs((prev) => prev.map((s) => s.id === songId ? { ...s, likes: Math.max(0, s.likes - 1), myLike: false } : s).sort((a, b) => b.likes - a.likes))
+      import('../utils/firestore-sync').then(({ adjustPlaylistLike }) => adjustPlaylistLike(event.id, songId, -1)).catch(() => {})
     } else if (likesUsed < MAX_LIKES_PER_USER) {
       setLikesUsed((l) => l + 1)
       setSongs((prev) => prev.map((s) => s.id === songId ? { ...s, likes: s.likes + 1, myLike: true } : s).sort((a, b) => b.likes - a.likes))
+      import('../utils/firestore-sync').then(({ adjustPlaylistLike }) => adjustPlaylistLike(event.id, songId, +1)).catch(() => {})
     } else {
       setMessage(`warn:Tu as utilisé tes ${MAX_LIKES_PER_USER} likes maximum.`)
       setTimeout(() => setMessage(''), 3000)

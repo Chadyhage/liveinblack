@@ -115,16 +115,23 @@ function usePersistedUser() {
     }
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Re-sync when tab regains focus — picks up changes made on other devices
+  // Re-sync when tab regains focus — picks up changes made on other devices.
+  // Throttlé (5 min) + mode « light » : l'ancien comportement relançait un
+  // full-sync (scan complet de la collection users + pending_validations +
+  // events) à CHAQUE focus d'onglet — quotas Firestore explosés en dev
+  // (hot-reload) et gel du thread principal sur mobile (JSON.parse massif).
   useEffect(() => {
     const uid = user?.uid
     if (!uid) return
+    let lastSync = 0
     const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        import('./utils/firestore-sync').then(({ syncOnLogin }) => {
-          syncOnLogin(uid).catch(() => {})
-        }).catch(() => {})
-      }
+      if (document.visibilityState !== 'visible') return
+      const now = Date.now()
+      if (now - lastSync < 5 * 60 * 1000) return // throttle 5 min
+      lastSync = now
+      import('./utils/firestore-sync').then(({ syncOnLogin }) => {
+        syncOnLogin(uid, { light: true }).catch(() => {})
+      }).catch(() => {})
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)

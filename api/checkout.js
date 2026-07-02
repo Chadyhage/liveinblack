@@ -218,6 +218,10 @@ export default async function handler(req, res) {
           qty: String(qty),
           userId: String(userId || ''),
           bookingId: String(bookingId),
+          // Prix unitaire de la place AU MOMENT de la vente (centimes) : le webhook
+          // le fige sur chaque billet (placePrice) pour que les stats/CA de
+          // l'organisateur ne changent pas rétroactivement si le tarif est modifié.
+          unitPriceCents: String(placeUnitCents),
           // Monétisation : le webhook utilise feeCents + sellerUid + connectMode
           feeCents: String(feeCents),
           sellerUid: String(sellerUid || ''),

@@ -226,6 +226,9 @@ export default function PaiementReussiPage() {
                 eventId: b.eventId,
                 eventName: b.eventName,
                 place: b.place,
+                // Prix payé figé au moment de la vente (les stats lisent ce champ
+                // en priorité — jamais recalculé depuis le tarif actuel)
+                placePrice: b.placePrice != null ? Number(b.placePrice) : 0,
                 userId: pending.userId,
                 paid: false,
                 source: 'client-postpay',

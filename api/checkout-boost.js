@@ -5,6 +5,7 @@
 // { eventId, eventName, position (1-3), days, priceEUR, region, userId, boostId }
 
 import Stripe from 'stripe'
+import { getDb } from '../lib/firebaseAdmin.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
@@ -34,6 +35,36 @@ export default async function handler(req, res) {
     const cents = Math.round(Number(priceEUR) * 100)
     if (cents <= 0) {
       return res.status(400).json({ error: 'Montant invalide' })
+    }
+
+    // ── Anti double-vente ────────────────────────────────────────────────────
+    // Un boost démarre immédiatement : si un boost ACTIF occupe déjà la même
+    // position dans la même région, les deux périodes se chevauchent forcément.
+    // Vendre quand même = deux organisateurs paient le même créneau, un seul
+    // est affiché (publicité mensongère / rupture contractuelle). On refuse
+    // AVANT le paiement — jamais de remboursement à gérer.
+    try {
+      const db = getDb()
+      const snap = await db.collection('boosts')
+        .where('region', '==', String(region || ''))
+        .where('position', '==', Number(position))
+        .get()
+      const now = Date.now()
+      const conflict = snap.docs
+        .map(d => d.data())
+        .find(b => { try { return new Date(b.expiresAt).getTime() > now } catch { return false } })
+      if (conflict) {
+        const until = new Date(conflict.expiresAt)
+        const untilStr = until.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+        return res.status(409).json({
+          error: `Le créneau Top ${position}${region ? ` (${region})` : ''} est déjà réservé jusqu'au ${untilStr}. Choisis une autre position ou réessaie après cette date.`,
+          conflictUntil: conflict.expiresAt,
+        })
+      }
+    } catch (dbErr) {
+      // Firestore indisponible : on ne bloque pas la vente (dégradé), le webhook
+      // journalisera un éventuel conflit résiduel.
+      console.warn('[/api/checkout-boost] collision check skipped:', dbErr.message)
     }
 
     const origin = req.headers.origin || `https://${req.headers.host}`

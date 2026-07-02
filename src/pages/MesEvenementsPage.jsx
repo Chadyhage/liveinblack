@@ -2689,6 +2689,9 @@ function OrganizerAnalytics({ events, tickets, loading }) {
   const COMMISSION = 0.10 // 10% plateforme → l'organisateur garde 90%
   const eventById = Object.fromEntries((events || []).map(e => [String(e.id), e]))
   const priceOf = (t) => {
+    // Prix payé figé sur le billet en priorité : le CA des ventes passées ne doit
+    // JAMAIS changer si l'organisateur modifie ses tarifs (cohérence comptable).
+    if (t.placePrice != null) return Number(t.placePrice) || 0
     const ev = eventById[String(t.eventId)]
     const place = ev?.places?.find(p => p.type === t.place)
     return Number(place?.price) || 0
