@@ -12,6 +12,7 @@
 import Stripe from 'stripe'
 import { getDb } from '../lib/firebaseAdmin.js'
 import { isStripeConnectCountry, resolveCountryISO } from '../lib/fees.js'
+import { requireAuthAsUid } from '../lib/verifyAuth.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
@@ -23,6 +24,10 @@ export default async function handler(req, res) {
   try {
     const { uid, returnPath = '/mon-dossier', country, phoneCode } = req.body || {}
     if (!uid) return res.status(400).json({ error: 'uid requis' })
+    // Strict : on ne lance un onboarding Stripe QUE pour soi-même (le token
+    // doit correspondre à l'uid demandé) — faille audit n°3.
+    const caller = await requireAuthAsUid(req, res, uid)
+    if (!caller) return
 
     const db = getDb()
     const uSnap = await db.collection('users').doc(String(uid)).get()

@@ -46,6 +46,11 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
+  // Auth requise : le destinataire est déjà protégé (relu du dossier), mais le
+  // DÉCLENCHEMENT ne doit pas être ouvert à des tiers (spam d'emails officiels).
+  const { requireAuth } = await import('../lib/verifyAuth.js')
+  const caller = await requireAuth(req, res)
+  if (!caller) return
   try {
     const { appId, type } = req.body || {}
     if (!appId || !type) return res.status(400).json({ error: 'appId et type requis' })

@@ -59,9 +59,10 @@ export async function addGuestlistEntry(event, guest, myId) {
   // au même titre qu'une réservation gratuite (sinon le remplissage serait faux
   // et l'event pourrait être survendu).
   try {
+    const { authHeaders } = await import('./apiAuth')
     const res = await fetch('/api/event-stock', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify({ eventId: event.id, placeType, qty: 1, action: 'reserve' }),
     })
     const data = await res.json().catch(() => ({}))
@@ -141,9 +142,10 @@ export async function removeGuestlistEntry(eventId, entryId) {
 
   // Libère la place réservée pour cet invité.
   try {
+    const { authHeaders } = await import('./apiAuth')
     await fetch('/api/event-stock', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify({ eventId, placeType: entry.place, qty: 1, action: 'release' }),
     })
   } catch {}

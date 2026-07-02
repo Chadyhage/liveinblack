@@ -99,7 +99,17 @@ export default function PaiementReussiPage() {
           const serverTickets = snap.data().tickets
           const adopted = []
           const adoptedBookings = []
-          for (const st of serverTickets) {
+          for (let n = 0; n < serverTickets.length; n++) {
+            const st = serverTickets[n]
+            // Réhydrater les précommandes PAR BILLET depuis le pending local —
+            // avant, la branche adoption les vidait ({} / []) et le QR régénéré
+            // perdait toutes les consos (le bar ne voyait plus rien).
+            const tOrder = (pending.perTicketOrders && pending.perTicketOrders[n]) || { items: {}, shows: {} }
+            const tSummary = (pending.activeMenu || [])
+              .filter(i => (tOrder.items[i.name] || 0) > 0)
+              .map(i => ({ ...i }))
+            const tPreorderTotal = (pending.activeMenu || [])
+              .reduce((sum, i) => sum + (tOrder.items[i.name] || 0) * i.price, 0)
             const booking = {
               id: st.id,
               ticketCode: st.ticketCode,
@@ -111,10 +121,10 @@ export default function PaiementReussiPage() {
               eventEndTime: pending.eventEndTime,
               place: pending.placeType,
               placePrice: pending.unitPriceEUR,
-              preorderItems: {},
-              preorderSummary: [],
-              preorderShowSelections: {},
-              totalPrice: pending.unitPriceEUR,
+              preorderItems: { ...tOrder.items },
+              preorderSummary: tSummary,
+              preorderShowSelections: { ...tOrder.shows },
+              totalPrice: pending.unitPriceEUR + tPreorderTotal,
               bookedAt: st.bookedAt || new Date().toISOString(),
               userId: pending.userId,
               userName: pending.userName || null,

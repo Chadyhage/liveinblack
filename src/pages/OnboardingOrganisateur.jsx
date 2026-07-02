@@ -315,12 +315,16 @@ export default function OnboardingOrganisateur() {
       const result = await submitApplication(app.id, f, candidateNote)
       setApp(result)
 
-      // Email d'accusé de réception (best-effort)
-      fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appId: app.id, type: 'application_received' }),
-      }).catch(() => {})
+      // Email d'accusé de réception (best-effort) — envoyé AVANT le signOut
+      // anonMode ci-dessous (l'endpoint exige un token Firebase valide).
+      try {
+        const { authHeaders } = await import('../utils/apiAuth')
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+          body: JSON.stringify({ appId: app.id, type: 'application_received' }),
+        })
+      } catch {}
 
       if (anonMode) {
         // Sign out immediately — no access until admin validates

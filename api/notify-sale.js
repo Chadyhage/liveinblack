@@ -9,6 +9,7 @@
 
 import { initializeApp, cert, getApps } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
+import { requireAuth } from '../lib/verifyAuth.js'
 
 function getDb() {
   if (!getApps().length) {
@@ -31,6 +32,11 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
+  // Auth requise : sans ça, n'importe qui pouvait spammer de fausses notifs de
+  // vente à n'importe quel organisateur (buyerId falsifiable) — faille audit n°3.
+  const caller = await requireAuth(req, res)
+  if (!caller) return
+
   try {
     const { eventId, qty = 1, place = '', buyerId = '' } = req.body || {}
     if (!eventId) return res.status(400).json({ error: 'eventId requis' })

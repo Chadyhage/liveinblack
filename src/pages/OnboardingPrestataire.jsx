@@ -432,11 +432,14 @@ export default function OnboardingPrestataire() {
       // Email d'accusé de réception (best-effort — le dossier vient d'être
       // synchronisé dans Firestore par submitApplication, donc /api/send-email
       // le retrouvera pour envoyer à l'email du dossier).
-      fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appId: app.id, type: 'application_received' }),
-      }).catch(() => {})
+      try {
+        const { authHeaders } = await import('../utils/apiAuth')
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+          body: JSON.stringify({ appId: app.id, type: 'application_received' }),
+        })
+      } catch {}
 
       // Sync display name to user profile (logged-in mode)
       if (user) {

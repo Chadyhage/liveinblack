@@ -689,9 +689,10 @@ export default function EventDetailPage() {
     // l'organisateur à écrire dans events/{id} — pas un acheteur quelconque.
     let stockReserved = false
     try {
+      const { authHeaders } = await import('../utils/apiAuth')
       const stockRes = await fetch('/api/event-stock', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ eventId: event.id, placeType: selectedPlace, qty: ticketQty, action: 'reserve' }),
       })
       const stockData = await stockRes.json().catch(() => ({}))
@@ -810,11 +811,11 @@ export default function EventDetailPage() {
       // payées sont notifiées par le webhook Stripe. Fire-and-forget.
       const organizerUid = event.organizerId || event.createdBy
       if (organizerUid && organizerUid !== uid) {
-        fetch('/api/notify-sale', {
+        import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/notify-sale', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
           body: JSON.stringify({ eventId: event.id, qty: ticketQty, place: selectedPlace, buyerId: uid }),
-        }).catch(() => {})
+        })).catch(() => {})
       }
       setAllBookedThisSession(prev => [...prev, {
         place: selectedPlace,
@@ -827,11 +828,11 @@ export default function EventDetailPage() {
       // La création des billets a échoué APRÈS le décrément de stock — on restocke
       // pour ne pas perdre des places disponibles pour rien.
       if (stockReserved) {
-        fetch('/api/event-stock', {
+        import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/event-stock', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
           body: JSON.stringify({ eventId: event.id, placeType: selectedPlace, qty: ticketQty, action: 'release' }),
-        }).catch(() => {})
+        })).catch(() => {})
       }
       setShowConfirmModal(false)
       return

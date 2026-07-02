@@ -5,6 +5,7 @@
 // après le redirect success de Stripe.
 
 import Stripe from 'stripe'
+import { requireAuth } from '../lib/verifyAuth.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
@@ -13,6 +14,11 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET')
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  // Auth requise : les métadonnées de session (email, nom du payeur…) ne sont
+  // pas publiques — avant, quiconque devinait un session_id pouvait les lire.
+  const caller = await requireAuth(req, res)
+  if (!caller) return
 
   const sessionId = req.query?.session_id || req.query?.sessionId
   if (!sessionId) {

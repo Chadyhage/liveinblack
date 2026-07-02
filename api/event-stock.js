@@ -17,6 +17,7 @@
 // renvoie une erreur.
 
 import { getDb } from '../lib/firebaseAdmin.js'
+import { requireAuth } from '../lib/verifyAuth.js'
 
 // Cap anti-abus : un seul appel ne peut jamais déplacer plus de 20 places.
 const MAX_QTY_PER_CALL = 20
@@ -26,6 +27,11 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  // Auth obligatoire (faille audit n°3) : sans ça, n'importe qui pouvait vider
+  // le stock d'un event (reserve en boucle) ou provoquer une survente (release).
+  const caller = await requireAuth(req, res)
+  if (!caller) return
 
   const { eventId, placeType, qty, action } = req.body || {}
   const q = Math.max(1, Math.min(MAX_QTY_PER_CALL, Math.floor(Number(qty)) || 1))

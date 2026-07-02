@@ -1,4 +1,7 @@
 // src/utils/stripe.js — Helper frontend pour Stripe Checkout
+// Tous les endpoints /api exigent désormais un ID token Firebase (audit n°3) :
+// authHeaders() le joint automatiquement (vide si non connecté → 401 propre).
+import { authHeaders } from './apiAuth'
 
 /**
  * Lance un Stripe Checkout pour une réservation d'événement.
@@ -22,7 +25,7 @@ export async function startStripeCheckout(params) {
   try {
     const res = await fetch('/api/checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify(params),
     })
 
@@ -52,7 +55,7 @@ export async function startStripeBoostCheckout(params) {
   try {
     const res = await fetch('/api/checkout-boost', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify(params),
     })
     if (!res.ok) {
@@ -75,7 +78,9 @@ export async function startStripeBoostCheckout(params) {
  */
 export async function verifyStripeSession(sessionId) {
   try {
-    const res = await fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`)
+    const res = await fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`, {
+      headers: { ...(await authHeaders()) },
+    })
     if (!res.ok) return null
     return await res.json()
   } catch {

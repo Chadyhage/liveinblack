@@ -15,6 +15,7 @@
 
 import Stripe from 'stripe'
 import { computeTicketFeeCents, isStripeConnectCountry } from '../lib/fees.js'
+import { requireAuth } from '../lib/verifyAuth.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
@@ -23,6 +24,11 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  // Acheter exige d'être connecté dans l'app → on exige le token Firebase ici
+  // aussi (sinon un tiers peut créer des sessions et décrémenter le stock).
+  const caller = await requireAuth(req, res)
+  if (!caller) return
 
   try {
     const {

@@ -146,6 +146,28 @@ async function finalizeBooking(db, session, meta) {
   const eventName = meta.eventName || ''
   const placeType = meta.placeType || ''
 
+  // ── PRÉCOMMANDES : source de vérité SERVEUR (faille B-préco de l'audit) ──
+  // Le récap conso affiché au bar venait du token signé côté client (clé
+  // publique → falsifiable : champagne gratuit). Ici on relit les line_items
+  // RÉELLEMENT PAYÉS de la session Stripe (suffixe « (précommande) » posé par
+  // /api/checkout) et on les fige dans le registre tickets/ + bookings/.
+  // Best-effort : un échec ici ne doit jamais bloquer l'émission des billets.
+  let preorders = []
+  try {
+    const li = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 })
+    preorders = (li.data || [])
+      .filter(l => / \(précommande\)$/.test(l.description || ''))
+      .map(l => ({
+        name: (l.description || '').replace(/ \(précommande\)$/, ''),
+        qty: Number(l.quantity) || 0,
+        priceEUR: (Number(l.price?.unit_amount) || (l.quantity ? Math.round((l.amount_total || 0) / l.quantity) : 0)) / 100,
+      }))
+      .filter(p => p.qty > 0)
+    if (preorders.length) console.log('[webhook] précommandes figées depuis Stripe:', JSON.stringify(preorders))
+  } catch (e) {
+    console.warn('[webhook] lecture line_items précommandes échouée:', e.message)
+  }
+
   // ── ANTI-DUPLICATION : si le client (page /paiement-reussi) a déjà créé ses
   // billets pour cette session Stripe, on ADOPTE ses codes : on les confirme
   // (paid:true) au lieu d'en minter d'autres. Sinon 1 achat = 2 jeux de billets.
@@ -183,6 +205,10 @@ async function finalizeBooking(db, session, meta) {
         confirmedAt: new Date().toISOString(),
         // Fige le prix payé si le billet client ne l'avait pas
         ...(t.placePrice == null ? { placePrice: unitPriceEUR } : {}),
+        // Précommandes certifiées (agrégat de la réservation — le scanner les
+        // lit ici en priorité, plus depuis le token falsifiable)
+        preorders,
+        bookingId,
       }, { merge: true })
     }
     await confirmBatch.commit()
@@ -220,6 +246,7 @@ async function finalizeBooking(db, session, meta) {
     qty,
     placeType,
     tickets,
+    preorders,
     paid: true,
     amountTotalCents: session.amount_total || 0,
     currency: session.currency || 'eur',
@@ -272,6 +299,10 @@ async function finalizeBooking(db, session, meta) {
         source: 'stripe-webhook',
         bookedAt: t.bookedAt,
         stripeSessionId: session.id,
+        // Précommandes certifiées depuis les line_items Stripe (agrégat de la
+        // réservation) — source de vérité du bar, cf. faille B-préco
+        preorders,
+        bookingId,
       })
     }
     await batch.commit()

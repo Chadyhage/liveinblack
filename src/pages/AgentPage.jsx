@@ -636,11 +636,11 @@ export default function AgentPage() {
       status === 'needs_changes' ? 'application_needs_changes' :
       status === 'rejected'      ? 'application_rejected'      : null
     if (emailType) {
-      fetch('/api/send-email', {
+      import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/send-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ appId, type: emailType }),
-      }).catch(() => {})
+      })).catch(() => {})
     }
 
     setAppNote('')

@@ -6,6 +6,7 @@
 
 import Stripe from 'stripe'
 import { getDb } from '../lib/firebaseAdmin.js'
+import { requireAuth } from '../lib/verifyAuth.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
@@ -14,6 +15,10 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  // Booster exige d'être connecté (organisateur) → token Firebase obligatoire.
+  const caller = await requireAuth(req, res)
+  if (!caller) return
 
   try {
     const {

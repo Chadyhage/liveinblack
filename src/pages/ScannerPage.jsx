@@ -269,11 +269,18 @@ export default function ScannerPage() {
         setResult({ code: tc, status: 'offline', offline: true, sub: 'Registre injoignable — impossible de certifier ce billet. Re-scanne avec du réseau.' })
         return
       }
+      // Précommandes : le REGISTRE (écrit par le webhook depuis les line_items
+      // Stripe) prime sur le token — le token est signé côté client avec une
+      // clé publique, donc falsifiable (champagne gratuit au bar sinon).
+      const regPo = Array.isArray(reg.data?.preorders)
+        ? reg.data.preorders.map(i => ({ n: i.name, e: i.emoji || '', q: Number(i.qty) || 0, p: Number(i.priceEUR) || 0 })).filter(i => i.q > 0)
+        : null
       setResult({
         code: tc,
         status: isUsed ? 'used' : 'valid',
         ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en, date: data.ed, price: `${data.tp}€` },
-        preorders: data.po || [],
+        preorders: regPo ?? (data.po || []),
+        preordersCertified: regPo != null,
         paidConfirmed: reg.paid,
         freeTicket: reg.data?.source === 'free',
         isGuestlist: reg.data?.source === 'guestlist',
@@ -307,7 +314,12 @@ export default function ScannerPage() {
         code: clean,
         status: isUsed ? 'used' : 'valid',
         ticket: { holder: reg.data.guestName || 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—', date: '', price: '' },
-        preorders: [],
+        // Précommandes certifiées par le webhook (registre) — avant, un scan
+        // par code brut affichait toujours « aucune conso » (preorders: [])
+        preorders: Array.isArray(reg.data?.preorders)
+          ? reg.data.preorders.map(i => ({ n: i.name, e: i.emoji || '', q: Number(i.qty) || 0, p: Number(i.priceEUR) || 0 })).filter(i => i.q > 0)
+          : [],
+        preordersCertified: Array.isArray(reg.data?.preorders),
         paidConfirmed: reg.paid,
         freeTicket: reg.data?.source === 'free',
         isGuestlist: reg.data?.source === 'guestlist',
@@ -359,9 +371,17 @@ export default function ScannerPage() {
   function reset() { setResult(null); setManualCode(''); setCameraError('') }
 
   // ── Service mode ──
-  function lookupOrder(rawValue) {
+  // Les consos affichées au bar viennent EN PRIORITÉ du registre tickets/
+  // (préco figées par le webhook depuis les line_items Stripe payés) — le
+  // token client (data.po) n'est plus qu'un fallback hors-ligne/legacy,
+  // sa signature étant falsifiable (clé publique dans le bundle).
+  async function lookupOrder(rawValue) {
     setCameraActive(false)
     const val = rawValue.trim()
+
+    const regItems = (reg) => Array.isArray(reg?.data?.preorders)
+      ? reg.data.preorders.map(i => ({ name: i.name, emoji: i.emoji || '', qty: Number(i.qty) || 0, price: Number(i.priceEUR) || 0 })).filter(i => i.qty > 0)
+      : null
 
     // URL token → extract code from token
     const tokenMatch = val.match(/\/ticket\/([A-Za-z0-9_-]+)/)
@@ -369,14 +389,29 @@ export default function ScannerPage() {
       const { valid, data } = verifyTicketToken(tokenMatch[1])
       if (!valid || !data) { setServiceOrder({ code: val, order: null }); return }
       const tc = data.tc
-      const items = (data.po || []).map(i => ({ name: i.n, emoji: i.e || '', qty: i.q, price: i.p })).filter(i => i.qty > 0)
-      setServiceOrder({ code: tc, order: { holder: 'Participant', place: data.pl, event: data.en, items } })
+      const reg = await lookupTicketRegistry(tc)
+      const certified = reg?.found ? regItems(reg) : null
+      const items = certified ?? (data.po || []).map(i => ({ name: i.n, emoji: i.e || '', qty: i.q, price: i.p })).filter(i => i.qty > 0)
+      setServiceOrder({ code: tc, order: { holder: 'Participant', place: data.pl, event: data.en, items, certified: certified != null } })
       return
     }
 
     const clean = val.toUpperCase()
 
-    // Real booking in localStorage
+    // Registre Firestore d'abord (cross-device, certifié)
+    try {
+      let reg = await lookupTicketRegistry(val)
+      if (!reg.found && !reg.error && clean !== val) reg = await lookupTicketRegistry(clean)
+      if (reg.found) {
+        const certified = regItems(reg)
+        if (certified) {
+          setServiceOrder({ code: clean, order: { holder: reg.data.guestName || 'Participant', place: reg.data.place || '—', event: reg.data.eventName || '—', items: certified, certified: true } })
+          return
+        }
+      }
+    } catch {}
+
+    // Real booking in localStorage (fallback legacy/hors-ligne)
     try {
       const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
       const booking = bookings.find(b => b.ticketCode === clean)

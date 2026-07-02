@@ -34,11 +34,11 @@ export default function PaiementAnnulePage() {
     // Restocker la place réservée avant la session Stripe (api/checkout.js décrémente
     // dès la création de la session — si l'acheteur annule, il faut rendre le stock).
     if (eventId && placeType && qty) {
-      fetch('/api/event-stock', {
+      import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/event-stock', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ eventId, placeType, qty, action: 'release' }),
-      }).catch(() => {})
+      })).catch(() => {})
     }
     // Nettoyer tous les pendings (au cas où — ils sont en localStorage)
     try {
