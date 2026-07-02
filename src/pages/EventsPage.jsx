@@ -493,7 +493,7 @@ function EventRow({ title, events, onOpen }) {
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>{events.length}</span>
       </h3>
       {/* Hauteur fixe + centrage vertical pour éviter les bugs de padding et le rognage des cartes et ombres au survol */}
-      <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', height: 260, marginTop: -30, marginBottom: -30, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
+      <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', height: 280, marginTop: -40, marginBottom: -40, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
         {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
       </div>
     </div>
@@ -521,7 +521,7 @@ function EventPoster({ event, onClick }) {
         scrollSnapAlign: 'start', flexShrink: 0, width: 148, aspectRatio: '3 / 4', padding: 0, border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left',
         position: 'relative', zIndex: expanded ? 6 : 1,
         transform: expanded ? 'scale(1.14)' : 'scale(1)',
-        transformOrigin: 'center bottom',
+        transformOrigin: 'center',
         transition: 'transform 0.35s cubic-bezier(0.22,0.9,0.3,1)',
       }}>
       <div style={{
