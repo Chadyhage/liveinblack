@@ -539,6 +539,7 @@ export default function MessagingPage() {
   const [showPollCreator, setShowPollCreator]     = useState(false)
   const [showStoryCreator, setShowStoryCreator]   = useState(false)
   const [showAttachMenu, setShowAttachMenu]       = useState(false)
+  const [showCamera, setShowCamera]               = useState(false) // capture webcam (desktop)
   const [showForwardPicker, setShowForwardPicker] = useState(false)
   const [songPickerModal, setSongPickerModal]     = useState(null)
   const [songInput, setSongInput]                 = useState({ title: '', artist: '' })
@@ -1473,7 +1474,7 @@ export default function MessagingPage() {
     // les messages reçus de cette personne sont filtrés à l'affichage.
     blockUser(myId, userId)
     const conv = conversations.find(c => c.type === 'direct' && c.participants?.includes(userId))
-    if (conv) sendMessage(conv.id, 'system', 'Système', 'system', `Tu as bloqué ${userName}. Tu ne recevras plus ses messages.`)
+    if (conv) sendMessage(conv.id, 'system', 'Système', 'system', `SYS::${JSON.stringify({ kind: 'block', by: myId, byName: myName, target: userId, targetName: userName })}`)
     setBlockedUsers(getBlockedUsers(myId))
     if (conv) { setConversations(getConversations(myId)); setMessages(getMessages(conv.id)) }
     showToast(`${userName} bloqué·e`)
@@ -1482,6 +1483,26 @@ export default function MessagingPage() {
     unblockUser(myId, userId)
     setBlockedUsers(getBlockedUsers(myId))
     showToast(`${userName} débloqué·e`)
+  }
+  // Texte d'un message système selon le spectateur : un blocage doit se lire
+  // « Tu as bloqué X » pour l'auteur, mais « X t'a bloqué » pour la personne bloquée.
+  function sysContent(content) {
+    if (typeof content === 'string' && content.startsWith('SYS::')) {
+      try {
+        const d = JSON.parse(content.slice(5))
+        if (d.kind === 'block') {
+          if (myId === d.by) return `Tu as bloqué ${d.targetName}. Tu ne recevras plus ses messages.`
+          if (myId === d.target) return `${d.byName} t'a bloqué. Tu ne peux plus lui envoyer de messages.`
+          return 'Un participant a été bloqué.'
+        }
+        if (d.kind === 'unblock') {
+          if (myId === d.by) return 'Tu as débloqué ce contact.'
+          if (myId === d.target) return `${d.byName} t'a débloqué. Vous pouvez de nouveau échanger.`
+          return ''
+        }
+      } catch { /* fallback texte brut */ }
+    }
+    return content
   }
   function handleReport(userId, userName) {
     if (!reportReason.trim()) return
@@ -1611,8 +1632,8 @@ export default function MessagingPage() {
 
         {isSystem ? (
           <div style={{ textAlign: 'center', padding: '4px 0' }}>
-            <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, background: 'rgba(255,255,255,0.04)', borderRadius: 20, padding: '3px 10px' }}>
-              {msg.content}
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: T.dim, background: 'rgba(255,255,255,0.04)', borderRadius: 20, padding: '4px 12px' }}>
+              {sysContent(msg.content)}
             </span>
           </div>
         ) : (
@@ -2600,7 +2621,7 @@ export default function MessagingPage() {
             {otherBlocked && (
               <div style={{ background: 'rgba(220,50,50,0.06)', borderTop: '1px solid rgba(220,50,50,0.18)', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,160,160,0.92)', lineHeight: 1.4 }}>Tu as bloqué ce contact — vous ne pouvez plus échanger.</span>
-                <button onClick={() => { unblockUser(myId, directOtherId); setBlockedUsers(getBlockedUsers(myId)); sendMessage(activeConvId, 'system', 'Système', 'system', 'Tu as débloqué ce contact.'); setMessages(getMessages(activeConvId)); showToast('Débloqué·e') }}
+                <button onClick={() => { unblockUser(myId, directOtherId); setBlockedUsers(getBlockedUsers(myId)); sendMessage(activeConvId, 'system', 'Système', 'system', `SYS::${JSON.stringify({ kind: 'unblock', by: myId, byName: myName, target: directOtherId })}`); setMessages(getMessages(activeConvId)); showToast('Débloqué·e') }}
                   className="lib-press" style={{ flexShrink: 0, padding: '9px 16px', borderRadius: 999, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.3)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Débloquer</button>
               </div>
             )}
@@ -2630,23 +2651,24 @@ export default function MessagingPage() {
             <div style={{ background: 'rgba(4,4,14,0.96)', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '8px 10px', display: 'flex', alignItems: 'flex-end', gap: 6 }}>
               {/* Attach button */}
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowAttachMenu(v => !v)}
-                  style={{ width: 36, height: 36, borderRadius: '50%', background: showAttachMenu ? 'rgba(78,232,200,0.15)' : 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.muted, fontSize: 16, flexShrink: 0 }}>
-                  +
+                <button onClick={() => setShowAttachMenu(v => !v)} aria-label="Ajouter"
+                  style={{ width: 38, height: 38, borderRadius: '50%', background: showAttachMenu ? 'rgba(78,232,200,0.18)' : 'rgba(255,255,255,0.05)', border: `1px solid ${showAttachMenu ? 'rgba(78,232,200,0.4)' : 'rgba(255,255,255,0.12)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={showAttachMenu ? '#4ee8c8' : 'rgba(255,255,255,0.6)'} strokeWidth="2.4" strokeLinecap="round" style={{ transform: showAttachMenu ? 'rotate(45deg)' : 'none', transition: 'transform 0.25s cubic-bezier(0.22,0.9,0.3,1)' }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
                 {showAttachMenu && (
-                  <div style={{ position: 'absolute', bottom: 44, left: 0, background: 'rgba(8,10,20,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: 4, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 160, zIndex: 20 }}>
+                  <div style={{ position: 'absolute', bottom: 48, left: 0, background: 'rgba(10,12,22,0.98)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 6, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 214, zIndex: 20, boxShadow: '0 16px 40px -8px rgba(0,0,0,0.7)' }}>
                     {[
-                      { label: 'Appareil photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>, action: () => { cameraInputRef.current?.click(); setShowAttachMenu(false) } },
+                      { label: 'Appareil photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>, action: () => { setShowAttachMenu(false); const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches; if (!coarse && navigator.mediaDevices?.getUserMedia) setShowCamera(true); else cameraInputRef.current?.click() } },
                       { label: 'Photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>, action: () => { photoInputRef.current?.click(); setShowAttachMenu(false) } },
                       { label: 'Sondage', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, action: () => { setShowPollCreator(true); setShowAttachMenu(false) } },
                       { label: 'Partager un événement', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/></svg>, action: () => { setShowEventPicker(true); setShowAttachMenu(false) } },
                     ].map(item => (
                       <button key={item.label} onClick={item.action}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, textAlign: 'left', borderRadius: 8 }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600, textAlign: 'left', borderRadius: 11, width: '100%', transition: 'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                        {item.icon}{item.label}
+                        <span style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
+                        {item.label}
                       </button>
                     ))}
                   </div>
@@ -2680,8 +2702,8 @@ export default function MessagingPage() {
                     onPointerDown={handleVoicePointerDown}
                     onPointerMove={handleVoicePointerMove}
                     onPointerUp={handleVoicePointerUp}
-                    style={{ width: 36, height: 36, borderRadius: '50%', background: isRecording ? 'rgba(224,90,170,0.25)' : 'rgba(255,255,255,0.06)', border: `1px solid ${isRecording ? 'rgba(224,90,170,0.45)' : 'rgba(255,255,255,0.10)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: isRecording ? T.pink : T.dim, transition: 'all 0.2s', touchAction: 'none' }}>
-                    <MicIcon color={isRecording ? T.pink : T.dim} size={17} />
+                    style={{ width: 38, height: 38, borderRadius: '50%', background: isRecording ? 'rgba(224,90,170,0.25)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isRecording ? 'rgba(224,90,170,0.5)' : 'rgba(255,255,255,0.12)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: isRecording ? T.pink : 'rgba(255,255,255,0.6)', transition: 'all 0.2s', touchAction: 'none', boxShadow: isRecording ? '0 0 16px rgba(224,90,170,0.4)' : 'none' }}>
+                    <MicIcon color={isRecording ? T.pink : 'rgba(255,255,255,0.6)'} size={17} />
                   </button>
                   {isRecording && !tapMode && !voiceLocked && (
                     <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.dim, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>↑ verrouiller</span>
@@ -2695,12 +2717,21 @@ export default function MessagingPage() {
 
               {/* Send button */}
               <button onClick={handleSend} disabled={!inputText.trim()}
-                style={{ width: 36, height: 36, borderRadius: '50%', background: inputText.trim() ? 'linear-gradient(135deg, rgba(132,68,255,0.9), rgba(255,77,166,0.85))' : 'rgba(255,255,255,0.06)', border: 'none', cursor: inputText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontSize: 16, transition: 'all 0.2s', boxShadow: inputText.trim() ? '0 4px 16px rgba(132,68,255,0.3)' : 'none' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                style={{ width: 38, height: 38, borderRadius: '50%', background: inputText.trim() ? 'linear-gradient(135deg, #8b5cf6, #e05aaa)' : 'rgba(255,255,255,0.05)', border: inputText.trim() ? 'none' : '1px solid rgba(255,255,255,0.12)', cursor: inputText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: inputText.trim() ? '#fff' : 'rgba(255,255,255,0.3)', transition: 'all 0.2s', boxShadow: inputText.trim() ? '0 6px 18px -4px rgba(139,92,246,0.6)' : 'none', transform: inputText.trim() ? 'scale(1)' : 'scale(0.96)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
             </>)}
           </>
+        )}
+
+        {/* ── Capture webcam (desktop) ── */}
+        {showCamera && (
+          <CameraCapture
+            onClose={() => setShowCamera(false)}
+            onCapture={(file, dataUrl) => { setShowCamera(false); setPhotoPreview({ dataUrl, file }) }}
+            onFallback={() => { setShowCamera(false); showToast('Caméra indisponible — choisis une photo'); cameraInputRef.current?.click() }}
+          />
         )}
 
         {/* ── Context menu ── */}
@@ -3313,6 +3344,65 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
             <p style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(230,120,120,0.75)', margin: '2px 0 0', textAlign: 'center' }}>Tu t'es retiré de cette sortie</p>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Capture webcam (desktop) ─────────────────────────────────────────────────
+// Ouvre un flux caméra via getUserMedia et permet de capturer une photo. Sur
+// ordinateur, l'input file `capture` était ignoré et ouvrait l'explorateur de
+// fichiers — ici on obtient une vraie prise de vue. En cas d'échec (pas de
+// caméra / permission refusée), on retombe sur le sélecteur de fichiers.
+function CameraCapture({ onClose, onCapture, onFallback }) {
+  const videoRef = useRef(null)
+  const streamRef = useRef(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+      .then(stream => {
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
+        streamRef.current = stream
+        if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}) }
+        setReady(true)
+      })
+      .catch(() => { if (!cancelled) onFallback?.() })
+    return () => { cancelled = true; streamRef.current?.getTracks().forEach(t => t.stop()) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function snap() {
+    const v = videoRef.current
+    if (!v || !v.videoWidth) return
+    const canvas = document.createElement('canvas')
+    canvas.width = v.videoWidth
+    canvas.height = v.videoHeight
+    canvas.getContext('2d').drawImage(v, 0, 0, canvas.width, canvas.height)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
+    canvas.toBlob(blob => {
+      const file = new File([blob || new Blob()], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' })
+      onCapture?.(file, dataUrl)
+    }, 'image/jpeg', 0.9)
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(0,0,0,0.94)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 17, color: '#fff' }}>Prendre une photo</span>
+          <button onClick={onClose} aria-label="Fermer" style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 18, cursor: 'pointer' }}>×</button>
+        </div>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '3 / 4', borderRadius: 18, overflow: 'hidden', background: '#0b0d14', border: '1px solid rgba(255,255,255,0.12)' }}>
+          <video ref={videoRef} playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} />
+          {!ready && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Activation de la caméra…</div>}
+        </div>
+        <button onClick={snap} disabled={!ready} className="lib-press"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: 14, borderRadius: 14, background: ready ? 'linear-gradient(135deg,#8b5cf6,#e05aaa)' : 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 15, cursor: ready ? 'pointer' : 'default' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Capturer
+        </button>
       </div>
     </div>
   )

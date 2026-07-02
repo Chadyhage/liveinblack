@@ -150,6 +150,21 @@ export function listenConvMessages(convId, callback) {
   } catch { return () => {} }
 }
 
+// Listen to the authoritative ticket registry for one event. The organizer
+// statistics page uses this stream so sales and check-ins update cross-device.
+export function listenTicketsForEvent(eventId, callback, onError = () => {}) {
+  try {
+    if (!eventId) return () => {}
+    const q = query(collection(db, 'tickets'), where('eventId', '==', String(eventId)))
+    return onSnapshot(q, snap => {
+      callback(snap.docs.map(d => ({ ...d.data(), ticketCode: d.data().ticketCode || d.id })))
+    }, onError)
+  } catch (error) {
+    onError(error)
+    return () => {}
+  }
+}
+
 // Listen to friends/social data for a user
 export function listenUserSocial(uid, callback) {
   try {

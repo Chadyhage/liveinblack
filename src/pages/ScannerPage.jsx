@@ -5,19 +5,10 @@ import { verifyTicketToken } from '../utils/ticket'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 
-// Mock tickets for demo fallback
-const MOCK_TICKETS = {
-  'LIB-001-A3X7KP': { holder: 'Jordan M.', type: 'VIP Gold',     event: 'NEON NIGHT Vol.3', price: '120€', date: '28 Juin 2025', used: false },
-  'LIB-001-B8QMZ2': { holder: 'Kira S.',   type: 'Entrée libre', event: 'NEON NIGHT Vol.3', price: '0€',   date: '28 Juin 2025', used: true  },
-  'LIB-002-CW4NRX': { holder: 'Moussa D.', type: 'Carré VIP',    event: 'AFRO KINGS',       price: '80€',  date: '5 Juil 2025',  used: false },
-  'LIB-003-Y9TP6L': { holder: 'Aminata K.',type: 'Standard',     event: 'ABIDJAN NUIT',     price: '15€',  date: '12 Juil 2025', used: false },
-}
+// Mock tickets — vidé : le scanner repose sur le registre Firestore tickets/{code}
+const MOCK_TICKETS = {}
 
-const MOCK_ORDERS = {
-  'LIB-001-A3X7KP': { holder: 'Jordan M.',  place: 'VIP Gold',  event: 'NEON NIGHT Vol.3', items: [{ name: 'Bouteille Champagne', emoji: '', qty: 1, price: 90 }, { name: 'Pack Cocktails x5', emoji: '', qty: 2, price: 55 }] },
-  'LIB-002-CW4NRX': { holder: 'Moussa D.', place: 'Carré VIP', event: 'AFRO KINGS',        items: [{ name: 'Chicha Premium', emoji: '', qty: 1, price: 40 }, { name: 'Pack Bières x6', emoji: '', qty: 1, price: 25 }] },
-  'LIB-003-Y9TP6L': { holder: 'Aminata K.',place: 'Standard',  event: 'ABIDJAN NUIT',      items: [] },
-}
+const MOCK_ORDERS = {}
 
 // ─── Design tokens ────────────────────────────────────────────────────────
 const CARD = {

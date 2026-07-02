@@ -6,9 +6,9 @@
 // de traduction id→libellé d'AgentPage/ProfilePage gardent les anciens ids pour
 // continuer à afficher proprement ces dossiers historiques.
 export const regions = [
-  { id: 'france', name: 'France', country: 'France', flag: '🇫🇷', lat: 46.2, lon: 2.2 },
-  { id: 'togo',   name: 'Togo',   country: 'Togo',   flag: '🇹🇬', lat: 6.1,  lon: 1.2 },
-  { id: 'benin',  name: 'Bénin',  country: 'Bénin',  flag: '🇧🇯', lat: 6.4,  lon: 2.4 },
+  { id: 'france', name: 'France', country: 'France', flag: '🇫🇷', code: 'FR', lat: 46.2, lon: 2.2 },
+  { id: 'togo',   name: 'Togo',   country: 'Togo',   flag: '🇹🇬', code: 'TG', lat: 6.1,  lon: 1.2 },
+  { id: 'benin',  name: 'Bénin',  country: 'Bénin',  flag: '🇧🇯', code: 'BJ', lat: 6.4,  lon: 2.4 },
 ]
 
 export function getRegionByName(name) {

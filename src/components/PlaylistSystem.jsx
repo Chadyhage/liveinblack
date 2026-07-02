@@ -134,6 +134,25 @@ export default function PlaylistSystem({ event, booked }) {
 
   const songsRemaining = Math.max(0, ticketCount - songsAdded)
 
+  // Le cache local donne un affichage instantané, puis Firestore devient la
+  // source partagée : sans ce listener, les morceaux ajoutés depuis un autre
+  // appareil (ou préparés pour une démo) n'apparaissaient jamais ici.
+  useEffect(() => {
+    if (!event?.id) return
+    let unsubscribe = () => {}
+    let cancelled = false
+    import('../utils/firestore-sync').then(({ listenDoc }) => {
+      if (cancelled) return
+      unsubscribe = listenDoc(`event_playlists/${event.id}`, data => {
+        if (!Array.isArray(data?.songs)) return
+        const remoteSongs = [...data.songs].sort((a, b) => (b.likes || 0) - (a.likes || 0))
+        setSongsState(remoteSongs)
+        try { localStorage.setItem(songsKey, JSON.stringify(remoteSongs)) } catch {}
+      })
+    }).catch(() => {})
+    return () => { cancelled = true; unsubscribe() }
+  }, [event?.id, songsKey])
+
   function setSongs(updater) {
     setSongsState((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater

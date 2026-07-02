@@ -1130,6 +1130,14 @@ export default function MesEvenementsPage() {
                       </div>
                     </button>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+                      {/* Statistiques détaillées */}
+                      <button
+                        onClick={() => navigate(`/mes-evenements/${ev.id}/statistiques`)}
+                        title="Statistiques"
+                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+                      </button>
                       {/* Reservations */}
                       <button
                         onClick={() => { setBookingsPanelEvent(ev); setShowBookingsPanel(true) }}
@@ -1257,7 +1265,7 @@ export default function MesEvenementsPage() {
                         </button>
                         {/* Bouton Statistiques */}
                         <button
-                          onClick={() => { setStatsPanelEvent(ev); setShowStatsPanel(true) }}
+                          onClick={() => navigate(`/mes-evenements/${ev.id}/statistiques`)}
                           title="Statistiques"
                           style={{ width: 36, height: 36, borderRadius: 6, background: 'linear-gradient(135deg, rgba(78,232,200,0.12), rgba(78,232,200,0.04))', border: '1px solid rgba(78,232,200,0.25)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2 }}
                         >

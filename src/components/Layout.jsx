@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SideMenu from './SideMenu'
@@ -595,9 +595,29 @@ function NotifBell({ open, unread, onClick, size = 34 }) {
 
 // ── Notification dropdown ─────────────────────────────────────────────────────
 function NotifDropdown({ notifications, onClose, uid, mobile }) {
-  const DM = "'DM Mono', monospace"
   const navigate = useNavigate()
-  const recent = notifications.slice(0, 6)
+  const [showAll, setShowAll] = useState(false)
+
+  // Regroupe les notifications identiques (même type + même titre) pour éviter
+  // une liste interminable : « Charbel s'est retiré… » ×12 → une seule ligne
+  // avec un compteur. On garde la plus récente comme représentante du groupe.
+  const grouped = useMemo(() => {
+    const map = new Map()
+    for (const n of notifications) {
+      const key = `${n.type}|${n.title}`
+      const g = map.get(key)
+      if (g) {
+        g.count += 1
+        if (!n.read) g.read = false
+        if (n.createdAt > g.createdAt) { g.createdAt = n.createdAt; g.body = n.body }
+      } else {
+        map.set(key, { ...n, count: 1 })
+      }
+    }
+    return [...map.values()].sort((a, b) => b.createdAt - a.createdAt)
+  }, [notifications])
+
+  const recent = showAll ? grouped : grouped.slice(0, 6)
 
   // Destination de clic selon le type de notification
   function routeFor(n) {
@@ -678,6 +698,11 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
                       <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: n.read ? 'rgba(255,255,255,0.55)' : 'rgba(228,228,231,1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {n.title}
                       </span>
+                      {n.count > 1 && (
+                        <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: accent, background: `${accent}22`, border: `1px solid ${accent}44`, borderRadius: 999, padding: '1px 7px', lineHeight: 1.5 }}>
+                          ×{n.count}
+                        </span>
+                      )}
                       {!n.read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: accent, flexShrink: 0 }} />}
                     </div>
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{timeAgo(n.createdAt)}</span>
@@ -694,11 +719,18 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
         )}
       </div>
 
-      {notifications.length > recent.length && (
-        <button onClick={() => { onClose?.(); navigate('/profil') }}
+      {!showAll && grouped.length > recent.length && (
+        <button onClick={() => setShowAll(true)}
           className="mt-2 flex w-full items-center justify-center rounded-xl border border-white/[0.02] bg-[#16161c] py-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 transition-all duration-200 hover:bg-[#1c1c24] hover:text-zinc-200 active:scale-[0.99]"
           style={{ fontFamily: 'Inter, sans-serif' }}>
-          +{notifications.length - recent.length} notifications de plus
+          Voir les {grouped.length - recent.length} autres
+        </button>
+      )}
+      {showAll && grouped.length > 6 && (
+        <button onClick={() => setShowAll(false)}
+          className="mt-2 flex w-full items-center justify-center rounded-xl border border-white/[0.02] bg-[#16161c] py-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 transition-all duration-200 hover:bg-[#1c1c24] hover:text-zinc-200 active:scale-[0.99]"
+          style={{ fontFamily: 'Inter, sans-serif' }}>
+          Réduire
         </button>
       )}
     </div>
@@ -711,5 +743,6 @@ function NotifGlyph({ type }) {
   if (type === 'message') return <svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
   if (type === 'new_order') return <svg {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
   if (type && type.startsWith('application_')) return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="16" y1="11" x2="22" y2="11" /></svg>
+  if (type === 'mention') return <svg {...p}><path d="m3 11 18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></svg>
   return <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
 }

@@ -237,6 +237,115 @@ function Toggle({ value, onChange }) {
   )
 }
 
+function ProviderInfo({ label, definition, formula, limitation }) {
+  return (
+    <details style={{ position: 'relative' }}>
+      <summary aria-label={`Définition de ${label}`} style={{ listStyle: 'none', width: 15, height: 15, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.35)', display: 'grid', placeItems: 'center', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: 8, color: 'rgba(255,255,255,0.55)' }}>i</summary>
+      <div style={{ position: 'absolute', zIndex: 20, top: 23, right: 0, width: 'min(280px, 76vw)', background: '#090b14', border: '1px solid rgba(78,232,200,0.28)', padding: 13, boxShadow: '0 18px 45px rgba(0,0,0,0.55)' }}>
+        <strong style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white' }}>{label}</strong>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, lineHeight: 1.55, color: 'rgba(255,255,255,0.68)', margin: '8px 0' }}>{definition}</p>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, lineHeight: 1.5, color: '#4ee8c8', margin: 0 }}>Calcul · {formula}</p>
+        {limitation && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, lineHeight: 1.5, color: '#c8a96e', margin: '7px 0 0' }}>{limitation}</p>}
+      </div>
+    </details>
+  )
+}
+
+function ProviderMetric({ label, value, helper, tone = '#4ee8c8', definition, formula, limitation }) {
+  return (
+    <div style={{ ...S.card, padding: 14, borderColor: `${tone}55`, minHeight: 112, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.52)', lineHeight: 1.5 }}>{label}</span>
+        <ProviderInfo label={label} definition={definition} formula={formula} limitation={limitation} />
+      </div>
+      <strong style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 34, fontWeight: 400, letterSpacing: '0.04em', color: tone, lineHeight: 1, marginTop: 12 }}>{value}</strong>
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.36)', marginTop: 6 }}>{helper}</span>
+    </div>
+  )
+}
+
+function ProviderRequestsView({ orders, uid, onRefresh, showToast }) {
+  const requests = orders.filter(order => order.status === 'pending')
+  if (!requests.length) {
+    return (
+      <div style={{ ...S.card, padding: 30, textAlign: 'center' }}>
+        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.75)', margin: 0 }}>Aucune demande à traiter</p>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, margin: '9px auto 0', maxWidth: 360 }}>Les demandes des organisateurs apparaîtront ici avant de devenir des commandes confirmées. Complète ton profil et publie au moins une offre pour gagner en visibilité.</p>
+      </div>
+    )
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      <Eyebrow>Demandes entrantes</Eyebrow>
+      {requests.map(order => (
+        <article key={order.id} style={{ ...S.card, padding: 16, borderColor: 'rgba(200,169,110,0.25)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+            <div>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.9)', margin: 0 }}>{order.buyerName || 'Organisateur'}</p>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.38)', margin: '5px 0 0' }}>{new Date(order.createdAt).toLocaleString('fr-FR')} · {order.items?.length || 0} offre{(order.items?.length || 0) > 1 ? 's' : ''}</p>
+            </div>
+            <strong style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 25, color: '#c8a96e', fontWeight: 400 }}>{Number(order.sellerReceives || 0).toFixed(2)} €</strong>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            <button onClick={() => { updateOrderStatus(order.id, 'confirmed'); onRefresh(); showToast('Demande acceptée') }} style={{ ...S.btnGold, flex: 1, padding: 10 }}>Accepter</button>
+            <button onClick={() => { updateOrderStatus(order.id, 'cancelled'); onRefresh(); showToast('Demande refusée') }} style={{ ...S.btnGhost, flex: 1, padding: 10 }}>Refuser</button>
+          </div>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+function ProviderStatsView({ orders, catalog }) {
+  const completed = orders.filter(order => order.status === 'done')
+  const confirmed = orders.filter(order => ['confirmed', 'ready'].includes(order.status))
+  const requests = orders.filter(order => order.status === 'pending')
+  const gross = completed.reduce((sum, order) => sum + Number(order.subtotal || 0), 0)
+  const net = completed.reduce((sum, order) => sum + Number(order.sellerReceives || 0), 0)
+  const conversionBase = orders.filter(order => order.status !== 'pending').length
+  const conversion = orders.length ? completed.length / orders.length * 100 : null
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (6 - index))
+    const end = date.getTime() + 86400000
+    const value = completed.filter(order => order.createdAt >= date.getTime() && order.createdAt < end).reduce((sum, order) => sum + Number(order.sellerReceives || 0), 0)
+    return { label: date.toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 2), value }
+  })
+  const max = Math.max(...days.map(day => day.value), 1)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+        <ProviderMetric label="Revenus nets" value={`${net.toFixed(0)} €`} helper="commandes terminées" definition="Montant estimé dû au prestataire après commission connue." formula="Somme(sellerReceives) des commandes terminées" limitation="À ne pas confondre avec le solde immédiatement disponible." />
+        <ProviderMetric label="Revenus bruts" value={`${gross.toFixed(0)} €`} helper="avant commission" tone="#c8a96e" definition="Somme payée par les organisateurs avant déductions." formula="Somme(subtotal) des commandes terminées" limitation="Ce n’est pas le montant reversé." />
+        <ProviderMetric label="Demandes à traiter" value={requests.length} helper="action requise" tone={requests.length ? '#e05aaa' : '#4ee8c8'} definition="Demandes qui attendent une décision du prestataire." formula="Nombre de demandes avec statut pending" limitation="À ne pas confondre avec les commandes confirmées." />
+        <ProviderMetric label="Commandes à venir" value={confirmed.length} helper="confirmées" definition="Prestations acceptées qui ne sont pas encore terminées." formula="Statuts confirmed + ready" limitation="Les devis et demandes ne sont pas inclus." />
+        <ProviderMetric label="Offres actives" value={catalog.filter(item => item.available).length} helper={`sur ${catalog.length} offre${catalog.length > 1 ? 's' : ''}`} tone="#c8a96e" definition="Offres visibles et disponibles dans la marketplace." formula="Nombre d’offres avec available = true" limitation="Une offre active peut rester indisponible à certaines dates." />
+        <ProviderMetric label="Conversion demande" value={conversion == null ? '—' : `${Math.round(conversion)} %`} helper={`${conversionBase} demande${conversionBase > 1 ? 's' : ''} traitée${conversionBase > 1 ? 's' : ''}`} definition="Part des demandes reçues qui deviennent des commandes terminées." formula="Commandes terminées ÷ demandes reçues × 100" limitation="Le suivi actuel ne distingue pas encore tous les devis intermédiaires." />
+      </div>
+      <div style={{ ...S.card, padding: 18 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}><Eyebrow>Revenus nets · 7 jours</Eyebrow><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e' }}>{days.reduce((sum, day) => sum + day.value, 0).toFixed(0)} €</span></div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, height: 130 }}>
+          {days.map(day => <div key={day.label} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: 7 }}><div title={`${day.value.toFixed(2)} €`} style={{ width: '100%', minHeight: 3, height: `${Math.max(3, day.value / max * 100)}%`, background: day.value ? 'linear-gradient(180deg,#4ee8c8,rgba(78,232,200,0.2))' : 'rgba(255,255,255,0.06)' }} /><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>{day.label}</span></div>)}
+        </div>
+      </div>
+      <div style={{ padding: 13, borderLeft: '2px solid #c8a96e', background: 'rgba(200,169,110,0.05)', fontFamily: "'DM Mono', monospace", fontSize: 10, lineHeight: 1.6, color: 'rgba(255,255,255,0.48)' }}>Les vues du profil, visiteurs uniques, avis et temps de réponse apparaîtront lorsque leur collecte serveur sera disponible. LIVE IN BLACK affiche « non disponible » au lieu de fabriquer des zéros.</div>
+    </div>
+  )
+}
+
+function ProviderDocumentsView({ user, navigate }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ ...S.card, padding: 20, borderColor: user?.status === 'active' ? 'rgba(78,232,200,0.28)' : 'rgba(200,169,110,0.28)' }}>
+        <Eyebrow>Confiance et vérification</Eyebrow>
+        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.9)', margin: 0 }}>{user?.status === 'active' ? 'Profil validé' : 'Vérification en cours'}</p>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, lineHeight: 1.7, color: 'rgba(255,255,255,0.45)', margin: '8px 0 16px' }}>Les documents sensibles restent dans ton dossier de candidature. Ils ne sont jamais affichés sur ton profil public ; seuls les badges de validation sont visibles.</p>
+        <button onClick={() => navigate('/mon-dossier')} style={S.btnGold}>Ouvrir mon dossier</button>
+      </div>
+      <div style={{ ...S.card, padding: 16 }}><p style={{ ...S.label, marginBottom: 8 }}>Badges publics</p><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><span style={{ padding: '5px 9px', border: '1px solid rgba(78,232,200,0.25)', color: '#4ee8c8', fontFamily: "'DM Mono', monospace", fontSize: 9 }}>IDENTITÉ {user?.status === 'active' ? 'VALIDÉE' : 'EN ATTENTE'}</span><span style={{ padding: '5px 9px', border: '1px solid rgba(200,169,110,0.25)', color: '#c8a96e', fontFamily: "'DM Mono', monospace", fontSize: 9 }}>PAIEMENT À CONFIGURER</span></div></div>
+    </div>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Main component
 // ══════════════════════════════════════════════════════════════════════════════
@@ -368,7 +477,7 @@ function PrestataireDashboard({ user, navigate }) {
     setNewItem({ name: '', price: '', category: '', unit: 'unité', description: '', available: true })
     setShowAddItem(false)
     setCatalog(getCatalog(uid))
-    showToast('Article ajouté')
+    showToast('Offre ajoutée')
   }
 
   function handleSaveEdit() {
@@ -485,7 +594,7 @@ function PrestataireDashboard({ user, navigate }) {
             </p>
             <p style={{ ...S.label, marginBottom: 0, marginTop: 4 }}>À traiter</p>
           </div>
-          {/* Articles actifs */}
+          {/* Offres actives */}
           <div style={{ ...S.card, padding: 14, textAlign: 'center' }}>
             <p style={{ fontFamily: "Inter, sans-serif", fontSize: 30, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
               {availableItems}
@@ -493,21 +602,24 @@ function PrestataireDashboard({ user, navigate }) {
                 <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.32)' }}> /{catalog.length}</span>
               )}
             </p>
-            <p style={{ ...S.label, marginBottom: 0, marginTop: 4 }}>Articles actifs</p>
+            <p style={{ ...S.label, marginBottom: 0, marginTop: 4 }}>Offres actives</p>
           </div>
         </div>
 
-        {/* Tabs (4 onglets — Aperçu en premier) */}
-        <div style={{ display: 'flex', gap: 4, background: 'rgba(6,8,16,0.6)', padding: 4, borderRadius: 8 }}>
+        {/* Navigation métier — scrollable sur mobile */}
+        <div style={{ display: 'flex', gap: 4, background: 'rgba(6,8,16,0.6)', padding: 4, borderRadius: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {[
             { key: 'apercu', label: 'Aperçu' },
-            { key: 'commandes', label: `Commandes${pendingOrders > 0 ? ' •' : ''}` },
+            { key: 'demandes', label: `Demandes${pendingOrders > 0 ? ` (${pendingOrders})` : ''}` },
+            { key: 'commandes', label: 'Commandes' },
             { key: 'catalogue', label: `Catalogue (${catalog.length})` },
+            { key: 'statistiques', label: 'Statistiques' },
             { key: 'profil', label: 'Profil' },
+            { key: 'documents', label: 'Documents' },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               style={{
-                flex: 1, padding: '8px 4px', borderRadius: 4, border: 'none', cursor: 'pointer',
+                flex: '0 0 auto', minWidth: 94, padding: '9px 10px', borderRadius: 4, border: 'none', cursor: 'pointer',
                 fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.1em',
                 transition: 'all 0.2s',
                 ...(tab === t.key
@@ -638,10 +750,10 @@ function PrestataireDashboard({ user, navigate }) {
                   Bienvenue sur ton espace prestataire.
                 </p>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: '10px 0 16px' }}>
-                  Première étape : ajoute tes premiers articles ou prestations au catalogue. Ils seront visibles par les organisateurs qui pourront te commander directement.
+                  Première étape : publie ta première offre au catalogue. Elle sera visible par les organisateurs, qui pourront t’envoyer une demande ou réserver.
                 </p>
                 <button onClick={() => setTab('catalogue')} style={{ ...S.btnGold, padding: '12px 22px' }}>
-                  + Créer mon catalogue
+                  + Créer ma première offre
                 </button>
               </div>
             )}
@@ -662,6 +774,18 @@ function PrestataireDashboard({ user, navigate }) {
               </div>
             </div>
           </div>
+        )}
+
+        {tab === 'demandes' && (
+          <ProviderRequestsView orders={orders} uid={uid} onRefresh={refreshData} showToast={showToast} />
+        )}
+
+        {tab === 'statistiques' && (
+          <ProviderStatsView orders={orders} catalog={catalog} />
+        )}
+
+        {tab === 'documents' && (
+          <ProviderDocumentsView user={user} navigate={navigate} />
         )}
 
         {/* ── PROFIL TAB ── */}
@@ -738,7 +862,7 @@ function PrestataireDashboard({ user, navigate }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', margin: 0 }}>
-                {catalog.length} article{catalog.length !== 1 ? 's' : ''}
+                {catalog.length} offre{catalog.length !== 1 ? 's' : ''}
               </p>
               <button onClick={() => setShowAddItem(true)}
                 style={{
@@ -753,8 +877,8 @@ function PrestataireDashboard({ user, navigate }) {
 
             {showAddItem && (
               <div style={{ ...S.card, padding: 16, borderColor: 'rgba(200,169,110,0.20)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Nouvel article</p>
-                <FocusInput placeholder="Nom du produit / service *" value={newItem.name} onChange={e => setNewItem(i => ({ ...i, name: e.target.value }))} />
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Nouvelle offre</p>
+                <FocusInput placeholder="Nom du service, pack, lieu ou matériel *" value={newItem.name} onChange={e => setNewItem(i => ({ ...i, name: e.target.value }))} />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <FocusInput type="number" placeholder="Prix (€) *" value={newItem.price} onChange={e => setNewItem(i => ({ ...i, price: e.target.value }))} />
                   <select style={{ ...S.inputBase }} value={newItem.unit} onChange={e => setNewItem(i => ({ ...i, unit: e.target.value }))}>
@@ -783,7 +907,7 @@ function PrestataireDashboard({ user, navigate }) {
                 </svg>
                 <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 300, color: 'rgba(255,255,255,0.42)', margin: 0 }}>Catalogue vide</p>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7, maxWidth: 240, textAlign: 'center', margin: 0 }}>
-                  Ajoute tes produits ou services pour qu'ils apparaissent sur ton profil public.
+                  Ajoute un service, un pack, un lieu ou du matériel pour apparaître sur ton profil public.
                 </p>
               </div>
             ) : (

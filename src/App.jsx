@@ -7,6 +7,7 @@ import EventDetailPage from './pages/EventDetailPage'
 import ProposerServicesPage from './pages/ProposerServicesPage'
 import JeSuisUneBoitePage from './pages/JeSuisUneBoitePage'
 import MesEvenementsPage from './pages/MesEvenementsPage'
+import EventStatsPage from './pages/EventStatsPage'
 import ProfilePage from './pages/ProfilePage'
 import MessagingPage from './pages/MessagingPage'
 import ScannerPage from './pages/ScannerPage'
@@ -331,6 +332,9 @@ export default function App() {
             {/* ── Role-protected: organisateur + agent only ── */}
             <Route path="/mes-evenements" element={
               <RequireOrganisateur user={user}><MesEvenementsPage /></RequireOrganisateur>
+            } />
+            <Route path="/mes-evenements/:id/statistiques" element={
+              <RequireOrganisateur user={user}><EventStatsPage /></RequireOrganisateur>
             } />
 
             {/* ── Services: prestataire / organisateur / agent only ── */}
