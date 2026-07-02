@@ -275,5 +275,33 @@ service cloud.firestore {
       allow read:  if isAgent();
       allow write: if isAgent();
     }
+
+    // ── Staff d'un événement (roster serveur/manager) — mini-POS soirée ───────
+    // Lecture : tout connecté (un serveur doit pouvoir lire son propre rôle).
+    // Écriture : seul le propriétaire de l'event (manager implicite) ou un agent
+    // gère le roster.
+    match /event_staff/{eventId} {
+      allow read:  if isSignedIn();
+      allow write: if isAgent() || isEventOwnerOf(eventId);
+    }
+
+    // ── Commandes en soirée (précommandes + sur place), 1 doc/event ──────────
+    // Doc unique event_orders/{eventId} avec un tableau `items`, mis à jour par
+    // transaction (mergeItemsById) — client ET staff écrivent (le client ajoute
+    // ses consos, le staff sert/encaisse). Modèle pragmatique (comme les
+    // messages) : write réservé aux connectés ; la logique métier + l'historique
+    // + l'annulation manager sont les garde-fous applicatifs.
+    match /event_orders/{eventId} {
+      allow read:  if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // ── Historique commun des actions (litiges) ──────────────────────────────
+    // Lecture réservée au manager de l'event (propriétaire) ou à un agent.
+    // Écriture (append) par tout acteur connecté qui journalise son action.
+    match /event_order_log/{eventId} {
+      allow read:  if isAgent() || isEventOwnerOf(eventId);
+      allow write: if isSignedIn();
+    }
   }
 }
