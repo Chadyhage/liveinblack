@@ -493,7 +493,12 @@ function EventRow({ title, events, onOpen }) {
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>{events.length}</span>
       </h3>
       {/* Hauteur fixe + centrage vertical pour éviter les bugs de padding et le rognage des cartes et ombres au survol */}
-      <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', height: 280, marginTop: -40, marginBottom: -40, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
+      {/* overflowX:auto force le navigateur à rogner aussi la verticale : on donne
+          une grande zone verticale invisible (height 340 + marges -70) pour que
+          l'ombre portée COMPLÈTE de la carte au survol (~54px) tienne dedans sans
+          être tranchée (sinon → ligne horizontale dure). Empreinte en page = 200px,
+          identique à avant, donc aucune ligne ne bouge. */}
+      <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', overflowY: 'hidden', height: 340, marginTop: -70, marginBottom: -70, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
         {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
       </div>
     </div>
