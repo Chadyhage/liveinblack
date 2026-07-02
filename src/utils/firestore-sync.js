@@ -335,6 +335,25 @@ function mergeById(local, remote, idField = 'id') {
   return [...remote, ...onlyLocal]
 }
 
+// Réconcilie la liste locale des events créés avec un instantané COMPLET de
+// Firestore (collection publique `events/`). Corrige le bug « un event supprimé
+// ne disparaît jamais du cache local » : avant, tout event local absent de
+// Firestore était conservé indéfiniment (traité comme « local-only »).
+//
+// Règle : on garde un event local absent de Firestore UNIQUEMENT s'il est
+// marqué `_pendingSync` (création locale pas encore synchronisée). Dès qu'un
+// event apparaît dans Firestore, sa version serveur (sans le flag) remplace la
+// version locale → s'il est supprimé ensuite, il n'a plus de flag et disparaît.
+// ⚠️ Ne pas utiliser avec un instantané PARTIEL (ex: user_events d'un seul orga).
+export function reconcileCreatedEvents(prevList, incoming) {
+  const inc = Array.isArray(incoming) ? incoming : []
+  const incomingIds = new Set(inc.map(e => String(e.id)))
+  const pendingLocal = (Array.isArray(prevList) ? prevList : []).filter(
+    e => e && e._pendingSync === true && !incomingIds.has(String(e.id))
+  )
+  return [...inc, ...pendingLocal]
+}
+
 // ── Master sync: pull all Firestore data → localStorage on login ──────────────
 // opts.light : resync de focus d'onglet — saute les scans de collections
 // entières (users, events, pending_validations) qui coûtent cher en lectures
@@ -528,7 +547,9 @@ export async function syncOnLogin(uid, opts = {}) {
     const publicEvents = light ? [] : await loadCollection('events')
     if (publicEvents.length) {
       const localEvents = safeParseArray('lib_created_events')
-      localStorage.setItem('lib_created_events', JSON.stringify(mergeById(localEvents, publicEvents)))
+      // reconcile (pas mergeById) : retire les events supprimés côté Firestore,
+      // garde uniquement les créations locales encore _pendingSync.
+      localStorage.setItem('lib_created_events', JSON.stringify(reconcileCreatedEvents(localEvents, publicEvents)))
     }
 
     // ── 16. Pending validations + role requests — AGENTS uniquement ──

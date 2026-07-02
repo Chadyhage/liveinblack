@@ -503,13 +503,14 @@ export default function HomePage() {
 
   useEffect(() => {
     let unsub = () => {}
-    import('../utils/firestore-sync').then(({ listenEvents }) => {
+    import('../utils/firestore-sync').then(({ listenEvents, reconcileCreatedEvents }) => {
       unsub = listenEvents(firestoreEvts => {
-        // Merge : Firestore + events locaux non encore syncés
+        // Réconciliation : Firestore + créations locales encore _pendingSync.
+        // Un event supprimé côté serveur disparaît (fini le fantôme au cache local).
         setCreatedEvents(prev => {
-          const incomingIds = new Set(firestoreEvts.map(e => String(e.id)))
-          const localOnly = prev.filter(e => !incomingIds.has(String(e.id)))
-          return [...firestoreEvts, ...localOnly]
+          const next = reconcileCreatedEvents(prev, firestoreEvts)
+          try { localStorage.setItem('lib_created_events', JSON.stringify(next)) } catch {}
+          return next
         })
       })
     }).catch(() => {})

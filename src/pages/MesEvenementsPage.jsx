@@ -605,7 +605,11 @@ export default function MesEvenementsPage() {
     if (editingEventId) {
       updated = createdEvents.map(ev => ev.id === editingEventId ? eventData : ev)
     } else {
-      updated = [...createdEvents, eventData]
+      // _pendingSync : marque cette création locale « pas encore confirmée par
+      // Firestore » → la réconciliation la garde tant qu'elle n'est pas remontée,
+      // MAIS ne ressuscite pas les events supprimés (eux n'ont pas ce flag).
+      // Flag LOCAL uniquement — non envoyé à Firestore (eventToSync = eventData).
+      updated = [...createdEvents, { ...eventData, _pendingSync: true }]
     }
     localStorage.setItem('lib_created_events', JSON.stringify(updated))
     setCreatedEvents(updated)

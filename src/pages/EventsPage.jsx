@@ -89,13 +89,14 @@ export default function EventsPage() {
   const unsubEventsRef = useRef(() => {})
 
   useEffect(() => {
-    import('../utils/firestore-sync').then(({ listenEvents }) => {
+    import('../utils/firestore-sync').then(({ listenEvents, reconcileCreatedEvents }) => {
       unsubEventsRef.current = listenEvents(firestoreEvts => {
-        // Merge robuste : Firestore + events locaux qui ne sont pas (encore) sync
+        // Réconciliation : Firestore + créations locales encore non synchronisées
+        // (_pendingSync). Un event supprimé côté serveur disparaît (plus de fantôme).
         setCreatedEventsState(prev => {
-          const incomingIds = new Set(firestoreEvts.map(e => String(e.id)))
-          const localOnly = prev.filter(e => !incomingIds.has(String(e.id)))
-          return [...firestoreEvts, ...localOnly]
+          const next = reconcileCreatedEvents(prev, firestoreEvts)
+          try { localStorage.setItem('lib_created_events', JSON.stringify(next)) } catch {}
+          return next
         })
       })
     }).catch(() => {})
@@ -491,8 +492,8 @@ function EventRow({ title, events, onOpen }) {
         {title}
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>{events.length}</span>
       </h3>
-      {/* paddingTop/Bottom : de l'air pour que l'agrandissement au survol ne soit pas rogné */}
-      <div className="hide-scrollbar" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingTop: 24, paddingBottom: 24, marginTop: -24, marginBottom: -14, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
+      {/* Hauteur fixe + centrage vertical pour éviter les bugs de padding et le rognage des cartes et ombres au survol */}
+      <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', height: 260, marginTop: -30, marginBottom: -30, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
         {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
       </div>
     </div>
@@ -517,14 +518,14 @@ function EventPoster({ event, onClick }) {
   return (
     <button onClick={onClick} onMouseEnter={handleEnter} onMouseLeave={handleLeave} className="lib-press"
       style={{
-        scrollSnapAlign: 'start', flexShrink: 0, width: 148, padding: 0, border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left',
+        scrollSnapAlign: 'start', flexShrink: 0, width: 148, aspectRatio: '3 / 4', padding: 0, border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left',
         position: 'relative', zIndex: expanded ? 6 : 1,
         transform: expanded ? 'scale(1.14)' : 'scale(1)',
         transformOrigin: 'center bottom',
         transition: 'transform 0.35s cubic-bezier(0.22,0.9,0.3,1)',
       }}>
       <div style={{
-        position: 'relative', width: '100%', aspectRatio: '3 / 4', borderRadius: 14, overflow: 'hidden', background: '#0b0d14',
+        position: 'relative', width: '100%', height: '100%', borderRadius: 14, overflow: 'hidden', background: '#0b0d14',
         border: expanded ? `1px solid ${accent}` : '1px solid rgba(255,255,255,0.08)',
         boxShadow: expanded ? `0 20px 44px -10px rgba(0,0,0,0.75), 0 0 24px -6px ${accent}55` : 'none',
         transition: 'border-color 0.35s ease, box-shadow 0.35s ease',
