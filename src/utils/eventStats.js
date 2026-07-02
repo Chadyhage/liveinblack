@@ -2,40 +2,46 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 export const EVENT_STATS_DEFINITIONS = {
   estimatedRevenue: {
-    label: 'CA billetterie estimé',
-    definition: 'Somme des prix publics des billets payés présents dans le registre.',
-    formula: 'Somme(prix du type de billet) pour les billets payés',
-    limitation: 'Estimation hors précommandes, remboursements, remises et frais Stripe.',
+    label: 'Recettes billetterie',
+    plain: 'Argent généré par les billets',
+    definition: 'Somme des prix payés pour tous les billets vendus (hors invitations gratuites).',
+    formula: 'Somme des prix des billets payants',
+    limitation: 'Estimation : ne déduit pas encore les remboursements, remises et frais Stripe. Les précommandes (boissons) sont comptées à part.',
   },
   assignedTickets: {
-    label: 'Billets attribués',
-    definition: 'Billets valides émis, payants ou gratuits, hors billets révoqués.',
-    formula: 'Billets payants actifs + billets gratuits actifs',
-    limitation: 'À ne pas confondre avec les billets payants.',
+    label: 'Billets émis',
+    plain: 'Billets en circulation (vendus + invitations)',
+    definition: 'Tous les billets valides existants : ceux payés par les clients ET les invitations gratuites. C’est le nombre de personnes attendues.',
+    formula: 'Billets payants + invitations gratuites',
+    limitation: 'Ce n’est pas le nombre d’entrées : un billet émis ne devient « présent » qu’une fois scanné à l’entrée.',
   },
   fillRate: {
     label: 'Taux de remplissage',
-    definition: 'Part de la capacité totale déjà attribuée.',
-    formula: 'Billets attribués ÷ capacité × 100',
-    limitation: 'Non calculable quand aucune capacité n’est définie.',
+    plain: 'Part de la salle déjà vendue',
+    definition: 'Quelle proportion de la capacité totale a déjà trouvé preneur. Répond à : « suis-je bientôt complet ? »',
+    formula: 'Billets émis ÷ capacité totale × 100',
+    limitation: 'À ne pas confondre avec le taux de présence (qui, lui, mesure les entrées réelles). Non calculable sans capacité définie.',
   },
   remaining: {
     label: 'Places restantes',
-    definition: 'Nombre de places qui peuvent encore être attribuées.',
-    formula: 'Capacité - billets attribués',
-    limitation: 'La disponibilité réelle par catégorie peut être plus restrictive.',
+    plain: 'Encore disponibles à la vente',
+    definition: 'Combien de billets tu peux encore vendre avant d’être complet.',
+    formula: 'Capacité totale − billets émis',
+    limitation: 'Le stock réel d’une catégorie précise (VIP, Carré…) peut s’épuiser avant le total.',
   },
   present: {
-    label: 'Participants présents',
-    definition: 'Billets uniques ayant un check-in valide.',
-    formula: 'Nombre unique de billets avec checkedInAt',
-    limitation: 'Les scans invalides et doublons ne sont pas comptés.',
+    label: 'Entrées confirmées',
+    plain: 'Personnes réellement entrées (scannées)',
+    definition: 'Nombre de billets uniques scannés et validés à l’entrée le soir de l’événement.',
+    formula: 'Billets distincts avec un check-in valide',
+    limitation: 'Les scans en double ou refusés ne sont pas comptés. Reste à 0 tant que le check-in n’a pas commencé.',
   },
   attendanceRate: {
     label: 'Taux de présence',
-    definition: 'Part des détenteurs de billets qui sont entrés.',
-    formula: 'Participants présents ÷ billets attribués × 100',
-    limitation: 'À ne pas confondre avec le taux de remplissage. Fiable après le check-in.',
+    plain: 'Part des billets qui sont venus',
+    definition: 'Parmi les gens qui ont un billet, combien se sont réellement présentés. Répond à : « combien d’absents ? »',
+    formula: 'Entrées confirmées ÷ billets émis × 100',
+    limitation: 'À ne pas confondre avec le taux de remplissage (qui mesure les ventes). Devient fiable pendant / après le check-in.',
   },
 }
 
@@ -117,6 +123,34 @@ function dayKey(value) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
+// Les précommandes existent sous DEUX formes selon la source du billet :
+//  A) billets payés via Stripe → le webhook écrit `preorders: [{name, qty, priceEUR, emoji?}]`
+//  B) réservations locales / gratuites → `preorderSummary: [{name, emoji, price}]`
+//     + `preorderItems: { [name]: quantité }`
+// On normalise vers { name, emoji, quantity, price } pour que le CA précommandes
+// remonte quelle que soit la source (sinon les vrais achats Stripe étaient ignorés).
+export function ticketPreorderLines(ticket) {
+  if (!ticket) return []
+  if (Array.isArray(ticket.preorders) && ticket.preorders.length) {
+    return ticket.preorders
+      .map(i => ({
+        name: i.name,
+        emoji: i.emoji || '',
+        quantity: Number(i.qty ?? i.quantity) || 0,
+        price: Number(i.priceEUR ?? i.price) || 0,
+      }))
+      .filter(i => i.name && i.quantity > 0)
+  }
+  return (ticket.preorderSummary || [])
+    .map(i => ({
+      name: i.name,
+      emoji: i.emoji || '',
+      quantity: Number(ticket.preorderItems?.[i.name] ?? i.quantity) || 0,
+      price: Number(i.price) || 0,
+    }))
+    .filter(i => i.name && i.quantity > 0)
+}
+
 export function computeEventStats(event, tickets, options = {}) {
   const now = options.now || new Date()
   const active = filterEventTickets(tickets, options.filters, now)
@@ -129,13 +163,12 @@ export function computeEventStats(event, tickets, options = {}) {
   const estimatedRevenue = paidTickets.reduce((sum, ticket) => sum + ticketPrice(event, ticket), 0)
   const preorderMap = new Map()
   active.forEach(ticket => {
-    for (const item of (ticket.preorderSummary || [])) {
-      const quantity = Number(ticket.preorderItems?.[item.name] || item.quantity || 0)
-      if (quantity <= 0) continue
-      const current = preorderMap.get(item.name) || { name: item.name, emoji: item.emoji || '', quantity: 0, revenue: 0 }
-      current.quantity += quantity
-      current.revenue += quantity * (Number(item.price) || 0)
-      preorderMap.set(item.name, current)
+    for (const line of ticketPreorderLines(ticket)) {
+      const current = preorderMap.get(line.name) || { name: line.name, emoji: line.emoji, quantity: 0, revenue: 0 }
+      current.quantity += line.quantity
+      current.revenue += line.quantity * line.price
+      if (!current.emoji && line.emoji) current.emoji = line.emoji
+      preorderMap.set(line.name, current)
     }
   })
   const preorderItems = [...preorderMap.values()].sort((a, b) => b.revenue - a.revenue)
@@ -207,17 +240,17 @@ export function buildEventInsights(stats) {
   if (stats.fillRate == null) {
     insights.push({ tone: 'gold', text: 'La capacité n’est pas définie : le taux de remplissage ne peut pas être calculé.' })
   } else {
-    insights.push({ tone: stats.fillRate >= 80 ? 'teal' : 'gold', text: `Selon les données disponibles, ${Math.round(stats.fillRate)} % de la capacité est attribuée.` })
+    insights.push({ tone: stats.fillRate >= 80 ? 'teal' : 'gold', text: `${Math.round(stats.fillRate)} % de la capacité est déjà vendue (taux de remplissage).` })
   }
 
   if (!stats.checkInReliable) {
     insights.push({ tone: 'pink', text: 'Le check-in n’a pas encore commencé. Le taux de présence n’est pas encore fiable.' })
   } else if (stats.attendanceRate != null) {
-    insights.push({ tone: stats.attendanceRate >= 75 ? 'teal' : 'gold', text: `${Math.round(stats.attendanceRate)} % des billets attribués ont été scannés.` })
+    insights.push({ tone: stats.attendanceRate >= 75 ? 'teal' : 'gold', text: `${Math.round(stats.attendanceRate)} % des billets émis ont été scannés à l’entrée.` })
   }
 
   if (stats.assignedTickets === 0) {
-    insights.push({ tone: 'muted', text: 'Aucun billet attribué pour cette période. Partage la page de l’événement pour lancer les ventes.' })
+    insights.push({ tone: 'muted', text: 'Aucun billet émis pour cette période. Partage la page de l’événement pour lancer les ventes.' })
   } else if (stats.byPlace[0]) {
     insights.push({ tone: 'teal', text: `${stats.byPlace[0].name} est la catégorie la plus demandée avec ${stats.byPlace[0].count} billet${stats.byPlace[0].count > 1 ? 's' : ''}.` })
   }

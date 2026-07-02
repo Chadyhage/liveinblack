@@ -38,6 +38,16 @@ function initialEvent(eventId) {
   } catch { return null }
 }
 
+// Icônes fines (stroke = currentColor) — une par métrique, pour lisibilité immédiate
+const I = {
+  revenue: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 7c0-1.66-3-3-6-3S6 5.34 6 7m12 0c0 1.66-3 3-6 3S6 8.66 6 7m12 0v10c0 1.66-3 3-6 3s-6-1.34-6-3V7m12 5c0 1.66-3 3-6 3s-6-1.34-6-3"/></svg>,
+  ticket: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V8Z"/><path d="M13 6v12" strokeDasharray="2 2"/></svg>,
+  gauge: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M12 3a9 9 0 0 0-9 9m9-9a9 9 0 0 1 9 9m-9-9v3m-6.36.64 2.12 2.12M3 12h3m12 0h3m-4.76-6.36-2.12 2.12"/></svg>,
+  seat: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 11V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5m-1 0a2 2 0 0 1 2 2v3H3v-3a2 2 0 0 1 2-2h14ZM6 19v2m12-2v2"/></svg>,
+  present: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 3 2 2 4-4"/></svg>,
+  attend: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m19 5-14 14M6.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm11 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></svg>,
+}
+
 function Info({ definition }) {
   return (
     <details className="event-stats-info">
@@ -52,16 +62,54 @@ function Info({ definition }) {
   )
 }
 
-function MetricCard({ definition, value, helper, tone = 'teal' }) {
+function MetricCard({ definition, value, helper, tone = 'teal', icon }) {
   return (
     <article className={`event-stats-metric tone-${tone}`}>
-      <div className="event-stats-metric-label">
-        <span>{definition.label}</span>
+      <div className="event-stats-metric-top">
+        {icon && <span className="event-stats-metric-icon">{icon}</span>}
         <Info definition={definition} />
       </div>
-      <strong>{value}</strong>
-      <p>{helper}</p>
+      <div className="event-stats-metric-body">
+        <span className="event-stats-metric-name">{definition.label}</span>
+        <strong>{value}</strong>
+        <p>{helper}</p>
+      </div>
     </article>
+  )
+}
+
+// Entonnoir de conversion : rend limpide la chaîne Capacité → Billets émis →
+// Entrées, et surtout la DIFFÉRENCE entre les deux taux (chacun avec son
+// dénominateur explicite). C'est la pièce anti-confusion de la page.
+function StatsFunnel({ stats }) {
+  const cap = stats.capacity || 0
+  const emitted = stats.assignedTickets || 0
+  const present = stats.present || 0
+  const pct = (n, d) => d > 0 ? Math.max(0, Math.min(100, Math.round(n / d * 100))) : null
+  const fill = cap ? pct(emitted, cap) : null
+  const attend = emitted ? pct(present, emitted) : null
+  const steps = [
+    { key: 'cap', label: 'Capacité totale', val: cap ? number(cap) : '—', sub: 'places dans la salle', bar: 100, tone: 'muted', note: null },
+    { key: 'emit', label: 'Billets émis', val: number(emitted), sub: 'vendus + invitations', bar: cap ? pct(emitted, cap) : (emitted ? 100 : 0), tone: 'teal', note: fill != null ? { rate: `${fill} %`, txt: 'de la capacité — taux de remplissage' } : null },
+    { key: 'pres', label: 'Entrées confirmées', val: number(present), sub: 'scannées à l’entrée', bar: cap ? pct(present, cap) : (present ? 100 : 0), tone: 'gold', note: attend != null ? { rate: `${attend} %`, txt: 'des billets émis — taux de présence' } : { rate: '—', txt: 'check-in pas encore commencé' } },
+  ]
+  return (
+    <div className="event-stats-funnel" role="img" aria-label={`Capacité ${cap}, billets émis ${emitted}, entrées ${present}`}>
+      {steps.map((s, i) => (
+        <div className={`funnel-step tone-${s.tone}`} key={s.key}>
+          <div className="funnel-head">
+            <span className="funnel-label">{s.label}</span>
+            <span className="funnel-val">{s.val}</span>
+          </div>
+          <div className="funnel-track"><span style={{ width: `${s.bar}%` }} /></div>
+          <div className="funnel-foot">
+            <span className="funnel-sub">{s.sub}</span>
+            {s.note && <span className="funnel-note"><b>{s.note.rate}</b> {s.note.txt}</span>}
+          </div>
+          {i < steps.length - 1 && <span className="funnel-arrow" aria-hidden>→</span>}
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -168,7 +216,7 @@ function TicketTable({ event, tickets, showBuyer = true }) {
               <td>{ticket.paid === true ? money(ticketPrice(event, ticket)) : 'Gratuit'}</td>
               {showBuyer && <td>{ticket.userId ? `••••${String(ticket.userId).slice(-4)}` : 'Non renseigné'}</td>}
               <td>{dateTime(ticket.bookedAt)}</td>
-              <td><span className={`event-stats-status ${ticket.checkedInAt ? 'checked' : ticket.paid === true ? 'paid' : 'free'}`}>{ticket.checkedInAt ? 'Présent' : ticket.paid === true ? 'Attribué' : 'Gratuit'}</span></td>
+              <td><span className={`event-stats-status ${ticket.checkedInAt ? 'checked' : ticket.paid === true ? 'paid' : 'free'}`}>{ticket.checkedInAt ? 'Présent' : ticket.paid === true ? 'Émis' : 'Invitation'}</span></td>
             </tr>
           ))}
         </tbody>
@@ -303,15 +351,25 @@ export default function EventStatsPage() {
 
         {error && <div className="event-stats-error">{error}</div>}
 
+        {activeTab === 'overview' && (
+          <section className="event-stats-flow">
+            <div className="event-stats-flow-head">
+              <h2>Parcours des billets</h2>
+              <p>De la salle à l’entrée : combien de places vendues, combien de personnes réellement venues.</p>
+            </div>
+            <StatsFunnel stats={stats} />
+          </section>
+        )}
+
         {(activeTab === 'overview' || activeTab === 'sales') && (
           <>
             <section className="event-stats-metrics">
-              <MetricCard definition={EVENT_STATS_DEFINITIONS.estimatedRevenue} value={money(stats.estimatedRevenue)} helper="Hors frais et remboursements" tone="teal" />
-              <MetricCard definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.paidTickets)} payants · ${number(stats.freeTickets)} gratuits`} tone="gold" />
-              <MetricCard definition={EVENT_STATS_DEFINITIONS.fillRate} value={percent(stats.fillRate)} helper={stats.capacity ? `sur ${number(stats.capacity)} places` : 'Capacité non définie'} tone="teal" />
-              <MetricCard definition={EVENT_STATS_DEFINITIONS.remaining} value={stats.remaining == null ? '—' : number(stats.remaining)} helper="selon la capacité actuelle" tone="gold" />
-              <MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="billets uniques scannés" tone="teal" />
-              <MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'sur billets attribués' : 'check-in non commencé'} tone={stats.checkInReliable ? 'teal' : 'pink'} />
+              <MetricCard icon={I.revenue} definition={EVENT_STATS_DEFINITIONS.estimatedRevenue} value={money(stats.estimatedRevenue)} helper="Hors frais, remises & remboursements" tone="teal" />
+              <MetricCard icon={I.ticket} definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.paidTickets)} payant${stats.paidTickets > 1 ? 's' : ''} · ${number(stats.freeTickets)} invitation${stats.freeTickets > 1 ? 's' : ''}`} tone="gold" />
+              <MetricCard icon={I.gauge} definition={EVENT_STATS_DEFINITIONS.fillRate} value={percent(stats.fillRate)} helper={stats.capacity ? `${number(stats.assignedTickets)} / ${number(stats.capacity)} places vendues` : 'Capacité non définie'} tone="teal" />
+              <MetricCard icon={I.seat} definition={EVENT_STATS_DEFINITIONS.remaining} value={stats.remaining == null ? '—' : number(stats.remaining)} helper={stats.capacity ? 'encore vendables' : 'capacité non définie'} tone="gold" />
+              <MetricCard icon={I.present} definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper={`${number(stats.present)} / ${number(stats.assignedTickets)} billets scannés`} tone="teal" />
+              <MetricCard icon={I.attend} definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? `${number(stats.present)} entrée${stats.present > 1 ? 's' : ''} sur ${number(stats.assignedTickets)} billets` : 'check-in pas commencé'} tone={stats.checkInReliable ? 'teal' : 'pink'} />
             </section>
 
             <section className="event-stats-overview-grid">
