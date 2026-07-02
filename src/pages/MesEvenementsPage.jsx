@@ -79,7 +79,7 @@ const S = {
     background: 'rgba(6,8,16,0.6)',
     border: '1px solid rgba(255,255,255,0.10)',
     borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
+    fontFamily: 'Inter, sans-serif',
     fontSize: 13,
     color: 'rgba(255,255,255,0.9)',
     padding: '10px 14px',
@@ -88,7 +88,7 @@ const S = {
     boxSizing: 'border-box',
   },
   label: {
-    fontFamily: "'DM Mono', monospace",
+    fontFamily: 'Inter, sans-serif',
     fontSize: 9,
     letterSpacing: '0.35em',
     textTransform: 'uppercase',
@@ -101,7 +101,7 @@ const S = {
     background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(78,232,200,0.12))',
     border: '1px solid rgba(255,255,255,0.28)',
     borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
+    fontFamily: 'Inter, sans-serif',
     fontSize: 11,
     letterSpacing: '0.25em',
     textTransform: 'uppercase',
@@ -114,7 +114,7 @@ const S = {
     background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
     border: '1px solid rgba(200,169,110,0.45)',
     borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
+    fontFamily: 'Inter, sans-serif',
     fontSize: 11,
     letterSpacing: '0.25em',
     textTransform: 'uppercase',
@@ -127,7 +127,7 @@ const S = {
     background: 'transparent',
     border: '1px solid rgba(255,255,255,0.18)',
     borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
+    fontFamily: 'Inter, sans-serif',
     fontSize: 11,
     letterSpacing: '0.25em',
     textTransform: 'uppercase',
@@ -140,7 +140,7 @@ const S = {
     background: 'rgba(220,50,50,0.10)',
     border: '1px solid rgba(220,50,50,0.35)',
     borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
+    fontFamily: 'Inter, sans-serif',
     fontSize: 11,
     letterSpacing: '0.25em',
     textTransform: 'uppercase',
@@ -153,7 +153,7 @@ const S = {
     background: 'rgba(78,232,200,0.10)',
     border: '1px solid rgba(78,232,200,0.35)',
     borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
+    fontFamily: 'Inter, sans-serif',
     fontSize: 11,
     letterSpacing: '0.25em',
     textTransform: 'uppercase',
@@ -169,7 +169,7 @@ function Eyebrow({ children, style = {} }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, ...style }}>
       <div style={{ width: 28, height: 1, background: '#4ee8c8', flexShrink: 0 }} />
       <span style={{
-        fontFamily: "'DM Mono', monospace",
+        fontFamily: 'Inter, sans-serif',
         fontSize: 9,
         letterSpacing: '0.4em',
         textTransform: 'uppercase',
@@ -215,7 +215,7 @@ function InputField({ label, value, onChange, placeholder, type = 'text', error,
         onFocus={() => !locked && setFocused(true)}
         onBlur={() => setFocused(false)}
       />
-      {error && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{error}</p>}
+      {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{error}</p>}
     </div>
   )
 }
@@ -777,22 +777,6 @@ export default function MesEvenementsPage() {
   // En cas d'event annulé, on verrouille TOUT (lecture seule)
   const isReadOnly = editingEventCancelled
 
-  // Rattache un événement orphelin (créé par un compte supprimé/changé) à ce compte
-  function claimOrphanEvent(id) {
-    const uid = user?.uid
-    if (!uid) return
-    const updated = createdEvents.map(ev =>
-      ev.id === id ? { ...ev, createdBy: uid, organizerId: uid } : ev
-    )
-    localStorage.setItem('lib_created_events', JSON.stringify(updated))
-    setCreatedEvents(updated)
-    import('../utils/firestore-sync').then(async ({ syncDoc }) => {
-      const { sanitizeEventsForSync } = await import('../utils/uploadImage')
-      syncDoc(`events/${id}`, updated.find(ev => ev.id === id))
-      syncDoc(`user_events/${uid}`, { items: await sanitizeEventsForSync(updated.filter(ev => ev.createdBy === uid || ev.organizerId === uid)) })
-    }).catch(() => {})
-  }
-
   function deleteEvent(id) {
     const sid = String(id)
     // Tombstone : marque l'event comme supprimé pour empêcher le "merge robuste"
@@ -914,14 +898,14 @@ export default function MesEvenementsPage() {
             }}>
               <IconHourglass size={32} color="#c8a96e" />
             </div>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 12 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 12 }}>
               Validation en cours
             </p>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24 }}>
               Ton compte organisateur est en attente de validation par l'équipe LIVEINBLACK. Tu pourras créer des événements dès que ton dossier sera approuvé.
             </p>
             <button onClick={() => navigate('/mon-dossier')}
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
               Voir mon dossier →
             </button>
           </div>
@@ -940,10 +924,10 @@ export default function MesEvenementsPage() {
           <p style={{ fontFamily: "Inter, sans-serif", fontSize: 24, fontWeight: 300, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
             Accès restreint
           </p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 20 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 20 }}>
             {getCreateEventBlockedReason(user)}
           </p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em', lineHeight: 1.6 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em', lineHeight: 1.6 }}>
             Pour créer des événements, tu dois avoir un compte organisateur validé.
           </p>
         </div>
@@ -962,7 +946,7 @@ export default function MesEvenementsPage() {
             <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, letterSpacing: '0.02em', lineHeight: 1.1 }}>
               Mes <span style={{ color: '#c8a96e' }}>Événements</span>
             </h2>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 6 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 6 }}>
               Crée et gère tes soirées
             </p>
           </div>
@@ -985,10 +969,10 @@ export default function MesEvenementsPage() {
                   <circle cx="12" cy="16" r="0.6" fill="rgba(220,100,100,0.95)"/>
                 </svg>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
                     {syncErrorBanner.title}
                   </p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
                     {syncErrorBanner.message}
                   </p>
                 </div>
@@ -1002,7 +986,7 @@ export default function MesEvenementsPage() {
                   onClick={syncErrorBanner.retry}
                   style={{
                     alignSelf: 'flex-start', marginLeft: 30,
-                    fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em',
+                    fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em',
                     textTransform: 'uppercase', color: '#c8a96e',
                     background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)',
                     borderRadius: 4, padding: '7px 14px', cursor: 'pointer',
@@ -1083,11 +1067,11 @@ export default function MesEvenementsPage() {
           {/* Analytics — ventes réelles (registre tickets/) */}
           {salesError ? (
             <div style={{ background: 'rgba(220,160,50,0.10)', border: '1px solid rgba(220,160,50,0.30)', borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,220,100,0.85)', margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,220,100,0.85)', margin: 0, lineHeight: 1.6 }}>
                 Impossible de charger tes statistiques de vente. Vérifie ta connexion.
               </p>
               <button onClick={() => setSalesRetry(n => n + 1)}
-                style={{ padding: '7px 14px', borderRadius: 4, cursor: 'pointer', background: 'rgba(220,160,50,0.14)', border: '1px solid rgba(220,160,50,0.40)', color: 'rgba(255,220,100,0.9)', fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.1em' }}>
+                style={{ padding: '7px 14px', borderRadius: 4, cursor: 'pointer', background: 'rgba(220,160,50,0.14)', border: '1px solid rgba(220,160,50,0.40)', color: 'rgba(255,220,100,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.1em' }}>
                 Réessayer
               </button>
             </div>
@@ -1109,11 +1093,6 @@ export default function MesEvenementsPage() {
                 ev.createdBy === uid ||
                 ev.organizerId === uid
               )
-              // Événements orphelins = créés par un autre compte (ancien compte supprimé)
-              const orphanEvents = createdEvents.filter(ev =>
-                ev.createdBy && ev.createdBy !== uid &&
-                (!ev.organizerId || ev.organizerId !== uid)
-              )
               // Les events ANNULÉS sortent de "en cours"/"passés" et vont dans leur
               // propre section (ils restent en base pour les détenteurs de billet).
               const upcomingEvents = myEvents.filter(ev => !isEventPast(ev) && !ev.cancelled)
@@ -1127,8 +1106,8 @@ export default function MesEvenementsPage() {
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
                   <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
                 </svg>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>Tu n'as pas encore d'événement créé.</p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 4 }}>Lance-toi !</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>Tu n'as pas encore d'événement créé.</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 4 }}>Lance-toi !</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1144,8 +1123,8 @@ export default function MesEvenementsPage() {
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: '#4ee8c8', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.18)', padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: '#4ee8c8', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.18)', padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
                           PUBLIE
                         </span>
                       </div>
@@ -1224,8 +1203,8 @@ export default function MesEvenementsPage() {
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.78)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(220,100,100,0.95)', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: 'rgba(220,100,100,0.95)', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
                             ANNULÉ
                           </span>
                         </div>
@@ -1233,13 +1212,13 @@ export default function MesEvenementsPage() {
                       <button
                         onClick={() => hideCancelledEvent(ev.id)}
                         title="Retirer de ma liste"
-                        style={{ flexShrink: 0, padding: '8px 12px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                        style={{ flexShrink: 0, padding: '8px 12px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer' }}>
                         Retirer de ma liste
                       </button>
                     </div>
                   ))}
                 </div>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, marginTop: 8 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, marginTop: 8 }}>
                   Les événements annulés restent accessibles aux personnes ayant déjà un billet (elles voient ton message d'annulation). « Retirer de ma liste » les enlève seulement de ton tableau de bord.
                 </p>
               </div>
@@ -1265,12 +1244,12 @@ export default function MesEvenementsPage() {
                           )}
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.75)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
                             <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: 3 }}>
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: 3 }}>
                                 TERMINÉ
                               </span>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', color: '#c8a96e' }}>
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: '#c8a96e' }}>
                                 {evBookings.length} billet{evBookings.length !== 1 ? 's' : ''} · {totalRevenue.toFixed(0)}€
                               </span>
                             </div>
@@ -1291,29 +1270,6 @@ export default function MesEvenementsPage() {
               </div>
             )}
 
-            {/* ── Événements orphelins (créés par un ancien compte) ── */}
-            {orphanEvents.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <Eyebrow style={{ marginBottom: 14 }}>Événements orphelins</Eyebrow>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, marginBottom: 12 }}>
-                  Ces événements ont été créés par un compte qui n'existe plus. Tu peux te les attribuer pour les gérer.
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {orphanEvents.map(ev => (
-                    <div key={ev.id} style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'center', gap: 12, opacity: 0.85 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.85)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
-                      </div>
-                      <button onClick={() => claimOrphanEvent(ev.id)}
-                        style={{ padding: '8px 14px', borderRadius: 4, cursor: 'pointer', background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)', color: '#c8a96e', fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0 }}>
-                        M'attribuer
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
                 </>
               )
             })()}
@@ -1331,7 +1287,7 @@ export default function MesEvenementsPage() {
                   <>
                     <div style={{ background: 'rgba(220,160,50,0.10)', border: '1px solid rgba(220,160,50,0.30)', borderRadius: 8, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                       <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,220,100,0.85)', lineHeight: 1.7, margin: 0 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,220,100,0.85)', lineHeight: 1.7, margin: 0 }}>
                         <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. C'est à toi de gérer les remboursements éventuels, dans le respect de la loi.
                       </p>
                     </div>
@@ -1353,12 +1309,12 @@ export default function MesEvenementsPage() {
                           lineHeight: 1.6,
                         }}
                       />
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', marginTop: 5, lineHeight: 1.6 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.30)', marginTop: 5, lineHeight: 1.6 }}>
                         Ce message s'affichera sur le billet de chaque acheteur, accompagné d'un bouton de contact support. ({cancellationMessageDraft.length}/500)
                       </p>
                     </div>
 
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: 0 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: 0 }}>
                       L'événement sera marqué <strong style={{ color: 'rgba(220,100,100,0.9)' }}>ANNULÉ</strong> et retiré du site, mais restera accessible aux personnes ayant un billet pour qu'elles voient ce message.
                     </p>
 
@@ -1370,7 +1326,7 @@ export default function MesEvenementsPage() {
                 ) : (
                   /* Cas : aucune réservation — suppression directe */
                   <>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>
                       Cette action est irréversible. L'événement sera retiré de la liste.
                     </p>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -1412,11 +1368,11 @@ export default function MesEvenementsPage() {
                   <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/>
                 </svg>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>Booste ton événement</p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>Booste ton événement</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>
                     Apparais dans le Top 3 régional et multiplie ta visibilité.
                   </p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#e05aaa', marginTop: 6, letterSpacing: '0.1em' }}>Voir les offres</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#e05aaa', marginTop: 6, letterSpacing: '0.1em' }}>Voir les offres</p>
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); clearTimeout(toastTimerRef.current); setShowBoostToast(false); navigate('/evenements') }}
@@ -1448,7 +1404,7 @@ export default function MesEvenementsPage() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                   <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Codes d'accès</p>
                 </div>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7 }}>
                   Génère des codes uniques pour{' '}
                   <span style={{ color: '#c8a96e' }}>{codesTargetEvent.name}</span>
                 </p>
@@ -1463,7 +1419,7 @@ export default function MesEvenementsPage() {
                       onChange={e => setCodesQty(e.target.value)}
                       placeholder="10"
                     />
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 4 }}>Max 100 codes par génération</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 4 }}>Max 100 codes par génération</p>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={() => setShowCodesModal(false)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
@@ -1473,17 +1429,17 @@ export default function MesEvenementsPage() {
               ) : (
                 <>
                   <div style={{ background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.18)', borderRadius: 4, padding: '10px 14px' }}>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#4ee8c8' }}>{generatedCodes.length} codes générés</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#4ee8c8' }}>{generatedCodes.length} codes générés</p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 240, overflowY: 'auto' }}>
                     {generatedCodes.map((c, i) => (
                       <div key={i} style={{ ...S.card, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: '#c8a96e', letterSpacing: '0.25em' }}>{c.code}</span>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>1 utilisation</span>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#c8a96e', letterSpacing: '0.25em' }}>{c.code}</span>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>1 utilisation</span>
                       </div>
                     ))}
                   </div>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7 }}>
                     Copie et envoie ces codes à tes invités. Chaque code ne peut être utilisé qu'une seule fois.
                   </p>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -1507,7 +1463,7 @@ export default function MesEvenementsPage() {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.5"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
                     <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Guestlist</p>
                   </div>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
                     Invitations pour <span style={{ color: '#4ee8c8' }}>{guestlistTargetEvent.name}</span>
                     {guestlistItems.length > 0 && (
                       <> · {guestlistItems.length} invité{guestlistItems.length > 1 ? 's' : ''} · {guestlistItems.filter(g => g.checkedInAt).length} arrivé{guestlistItems.filter(g => g.checkedInAt).length > 1 ? 's' : ''}</>
@@ -1544,7 +1500,7 @@ export default function MesEvenementsPage() {
                   </div>
                 </div>
                 <InputField label="Note (optionnel)" value={guestForm.note} onChange={e => setGuestForm(f => ({ ...f, note: e.target.value }))} placeholder="Ex : table 4, presse, artiste…" />
-                {guestlistError && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{guestlistError}</p>}
+                {guestlistError && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{guestlistError}</p>}
                 <button onClick={handleAddGuest} disabled={guestlistAdding || !guestForm.name.trim()} style={{ ...S.btnTeal, opacity: guestlistAdding || !guestForm.name.trim() ? 0.5 : 1, cursor: guestlistAdding || !guestForm.name.trim() ? 'not-allowed' : 'pointer' }}>
                   {guestlistAdding ? 'Ajout…' : '+ Ajouter à la guestlist'}
                 </button>
@@ -1552,9 +1508,9 @@ export default function MesEvenementsPage() {
 
               {/* Guest list */}
               {guestlistLoading ? (
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '12px 0' }}>Chargement…</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '12px 0' }}>Chargement…</p>
               ) : guestlistItems.length === 0 ? (
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', textAlign: 'center', padding: '12px 0', lineHeight: 1.6 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.28)', textAlign: 'center', padding: '12px 0', lineHeight: 1.6 }}>
                   Pas encore d'invité — ajoute le premier ci-dessus.
                 </p>
               ) : (
@@ -1567,25 +1523,25 @@ export default function MesEvenementsPage() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                           <div style={{ minWidth: 0 }}>
                             <p style={{ fontFamily: "Inter, sans-serif", fontSize: 15, color: 'rgba(255,255,255,0.92)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</p>
-                            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>
                               {g.place}{g.note ? ` · ${g.note}` : ''}
                             </p>
                           </div>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, color: g.checkedInAt ? '#22c55e' : 'rgba(255,255,255,0.32)' }}>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, color: g.checkedInAt ? '#22c55e' : 'rgba(255,255,255,0.32)' }}>
                             {g.checkedInAt ? '✓ Arrivé' : 'En attente'}
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                          <button onClick={() => copyGuestLink(g)} style={{ flex: 1, padding: '7px', borderRadius: 4, cursor: 'pointer', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.20)', color: '#4ee8c8', fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                          <button onClick={() => copyGuestLink(g)} style={{ flex: 1, padding: '7px', borderRadius: 4, cursor: 'pointer', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.20)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                             {copiedGuestId === g.id ? '✓ Copié' : 'Copier le lien'}
                           </button>
                           {waLink && (
-                            <a href={waLink} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: '7px', borderRadius: 4, textAlign: 'center', textDecoration: 'none', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e', fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                            <a href={waLink} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: '7px', borderRadius: 4, textAlign: 'center', textDecoration: 'none', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                               WhatsApp
                             </a>
                           )}
                           {!g.checkedInAt && (
-                            <button onClick={() => handleRemoveGuest(g.id)} title="Retirer" style={{ padding: '7px 10px', borderRadius: 4, cursor: 'pointer', background: 'rgba(220,50,50,0.06)', border: '1px solid rgba(220,50,50,0.16)', color: 'rgba(220,100,100,0.8)', fontFamily: "'DM Mono', monospace", fontSize: 9 }}>
+                            <button onClick={() => handleRemoveGuest(g.id)} title="Retirer" style={{ padding: '7px 10px', borderRadius: 4, cursor: 'pointer', background: 'rgba(220,50,50,0.06)', border: '1px solid rgba(220,50,50,0.16)', color: 'rgba(220,100,100,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 9 }}>
                               ✕
                             </button>
                           )}
@@ -1596,7 +1552,7 @@ export default function MesEvenementsPage() {
                 </div>
               )}
 
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6, margin: 0 }}>
                 Chaque invité reçoit un billet réel (gratuit) à ce lien — il le présente à l'entrée, le videur le scanne comme n'importe quel billet.
               </p>
             </div>
@@ -1613,9 +1569,9 @@ export default function MesEvenementsPage() {
       {showCropper && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', background: 'black' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <button onClick={() => setShowCropper(false)} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}>Annuler</button>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.1em' }}>Recadrer l'image</p>
-            <button onClick={applyCrop} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}>Valider</button>
+            <button onClick={() => setShowCropper(false)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}>Annuler</button>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.1em' }}>Recadrer l'image</p>
+            <button onClick={applyCrop} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}>Valider</button>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <Cropper
@@ -1629,7 +1585,7 @@ export default function MesEvenementsPage() {
             />
           </div>
           <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', textAlign: 'center', marginBottom: 8, letterSpacing: '0.1em' }}>Pinch / molette pour zoomer</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', textAlign: 'center', marginBottom: 8, letterSpacing: '0.1em' }}>Pinch / molette pour zoomer</p>
             <input
               type="range"
               min={1}
@@ -1657,7 +1613,7 @@ export default function MesEvenementsPage() {
             <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
               {editingEventId ? "Modifier l'événement" : 'Créer un événement'}
             </p>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
               Étape {createStep + 1}/{CREATION_STEPS.length} — {CREATION_STEPS[createStep]}
             </p>
           </div>
@@ -1683,10 +1639,10 @@ export default function MesEvenementsPage() {
               <path d="M8 11 V7 a4 4 0 0 1 8 0 V11"/>
             </svg>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', margin: 0, marginBottom: 4 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', margin: 0, marginBottom: 4 }}>
                 {editingBookingCount} billet{editingBookingCount > 1 ? 's' : ''} déjà vendu{editingBookingCount > 1 ? 's' : ''}
               </p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
                 Pour ne pas léser les acheteurs, certains champs sont verrouillés (date, heures, lieu, prix existants, type d'événement, âge minimum). Tu peux toujours modifier la description, l'affiche, les artistes et la date de clôture.
               </p>
             </div>
@@ -1707,10 +1663,10 @@ export default function MesEvenementsPage() {
               <circle cx="12" cy="16" r="0.6" fill="rgba(220,100,100,0.95)"/>
             </svg>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
                 Événement annulé
               </p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7 }}>
                 Cet événement a été annulé. Les modifications sont désactivées. Pour relancer un événement similaire, crée-en un nouveau depuis ton tableau de bord.
               </p>
             </div>
@@ -1744,14 +1700,14 @@ export default function MesEvenementsPage() {
                       <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
                       <polyline points="21 15 16 10 5 21"/>
                     </svg>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>Clique pour ajouter l'affiche</p>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em' }}>Format recommandé : 1200 × 630 px</p>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.18)' }}>JPG · PNG · WEBP — max 5 MB</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>Clique pour ajouter l'affiche</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em' }}>Format recommandé : 1200 × 630 px</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.18)' }}>JPG · PNG · WEBP — max 5 MB</p>
                   </div>
                 )}
               </div>
               <input ref={imageInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" style={{ display: 'none' }} onChange={handleImage} />
-              {errors.image && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
+              {errors.image && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
             </div>
 
             {/* Basic fields */}
@@ -1771,7 +1727,7 @@ export default function MesEvenementsPage() {
                   <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} locked={isLocked || isReadOnly} />
                   <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} locked={isLocked || isReadOnly} />
                 </div>
-                {errors.timeEnd && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
+                {errors.timeEnd && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
               </div>
 
               <div>
@@ -1790,8 +1746,8 @@ export default function MesEvenementsPage() {
               <div style={{ ...S.card, padding: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showArtistSection ? 12 : 0 }}>
                   <div>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.08em' }}>DJs / Artistes</p>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.08em' }}>DJs / Artistes</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
                   </div>
                   <Toggle value={showArtistSection} onChange={() => setShowArtistSection(v => !v)} />
                 </div>
@@ -1824,7 +1780,7 @@ export default function MesEvenementsPage() {
                     ))}
                     <button
                       onClick={() => setArtists(prev => [...prev, { name: '', role: 'DJ' }])}
-                      style={{ padding: '8px', fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 4, background: 'transparent', cursor: 'pointer', letterSpacing: '0.1em' }}
+                      style={{ padding: '8px', fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 4, background: 'transparent', cursor: 'pointer', letterSpacing: '0.1em' }}
                     >
                       + Ajouter un DJ / artiste
                     </button>
@@ -1870,16 +1826,16 @@ export default function MesEvenementsPage() {
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.42)'} strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                       )}
                     </div>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.90)', letterSpacing: '0.1em' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.90)', letterSpacing: '0.1em' }}>
                       {t === 'public' ? 'Public' : 'Privé'}
                     </p>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>
                       {t === 'public' ? 'Visible par tous' : 'Accès par code'}
                     </p>
                   </button>
                 ))}
               </div>
-              {errors.eventType && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.eventType}</p>}
+              {errors.eventType && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.eventType}</p>}
               {eventType === 'private' && (
                 <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <InputField
@@ -1887,9 +1843,9 @@ export default function MesEvenementsPage() {
                     placeholder="Ex: NEON2026"
                     value={form.privateCode}
                     onChange={e => setForm(f => ({ ...f, privateCode: e.target.value.toUpperCase() }))}
-                    style={{ fontFamily: "'DM Mono', monospace", letterSpacing: '0.25em', textTransform: 'uppercase' }}
+                    style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.25em', textTransform: 'uppercase' }}
                   />
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6 }}>
                     Tu pourras aussi générer des codes individuels depuis ton tableau de bord après publication.
                   </p>
                 </div>
@@ -1909,7 +1865,7 @@ export default function MesEvenementsPage() {
                       borderRadius: 4,
                       border: category === g ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.07)',
                       background: category === g ? 'rgba(200,169,110,0.08)' : 'transparent',
-                      fontFamily: "'DM Mono', monospace",
+                      fontFamily: 'Inter, sans-serif',
                       fontSize: 10,
                       letterSpacing: '0.1em',
                       color: category === g ? '#c8a96e' : 'rgba(255,255,255,0.5)',
@@ -1968,7 +1924,7 @@ export default function MesEvenementsPage() {
                       border: form.minAge === value ? '1px solid #4ee8c8' : '1px solid rgba(255,255,255,0.10)',
                       background: form.minAge === value ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.6)',
                       color: form.minAge === value ? '#4ee8c8' : 'rgba(255,255,255,0.4)',
-                      fontFamily: "'DM Mono', monospace",
+                      fontFamily: 'Inter, sans-serif',
                       fontSize: 11,
                       letterSpacing: '0.15em',
                       cursor: (isLocked || isReadOnly) ? 'not-allowed' : 'pointer',
@@ -2003,7 +1959,7 @@ export default function MesEvenementsPage() {
                   }}
                 />
                 <span style={{
-                  fontFamily: "'DM Mono', monospace",
+                  fontFamily: 'Inter, sans-serif',
                   fontSize: 10,
                   letterSpacing: '0.12em',
                   color: 'rgba(255,255,255,0.25)',
@@ -2022,7 +1978,7 @@ export default function MesEvenementsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Tes types de places</p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Configure chaque type de place que tu veux proposer.</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Configure chaque type de place que tu veux proposer.</p>
             </div>
 
             {places.map((place, i) => {
@@ -2038,9 +1994,9 @@ export default function MesEvenementsPage() {
               <div key={i} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, ...(placeHasSales ? { borderColor: 'rgba(200,169,110,0.25)' } : {}) }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e' }}>Place {i + 1}</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e' }}>Place {i + 1}</p>
                     {placeHasSales && (
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.30)', borderRadius: 3, padding: '1px 6px' }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.30)', borderRadius: 3, padding: '1px 6px' }}>
                         {placeSoldCount} vendu{placeSoldCount > 1 ? 's' : ''}
                       </span>
                     )}
@@ -2057,7 +2013,7 @@ export default function MesEvenementsPage() {
                         background: 'none', border: 'none',
                         cursor: placeDeleteLocked ? 'not-allowed' : 'pointer',
                         opacity: placeDeleteLocked ? 0.35 : 1,
-                        fontFamily: "'DM Mono', monospace", fontSize: 9,
+                        fontFamily: 'Inter, sans-serif', fontSize: 9,
                         color: 'rgba(220,100,100,0.9)', letterSpacing: '0.1em',
                       }}>Supprimer</button>
                   )}
@@ -2104,7 +2060,7 @@ export default function MesEvenementsPage() {
                       locked={isReadOnly}
                     />
                     {placeHasSales && (
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(200,169,110,0.7)', marginTop: 4, letterSpacing: '0.05em' }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(200,169,110,0.7)', marginTop: 4, letterSpacing: '0.05em' }}>
                         Min : {placeSoldCount} (déjà vendu{placeSoldCount > 1 ? 's' : ''})
                       </p>
                     )}
@@ -2120,7 +2076,7 @@ export default function MesEvenementsPage() {
                       locked={isReadOnly}
                     />
                     {place.groupType === 'group' && (
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(78,232,200,0.6)', letterSpacing: '0.08em', marginTop: 4 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(78,232,200,0.6)', letterSpacing: '0.08em', marginTop: 4 }}>
                         Fixé à 1 réservation par compte (groupe)
                       </p>
                     )}
@@ -2128,8 +2084,8 @@ export default function MesEvenementsPage() {
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.70)' }}>Place de groupe</p>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.70)' }}>Place de groupe</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
                   </div>
                   <Toggle
                     value={place.groupType === 'group'}
@@ -2147,7 +2103,7 @@ export default function MesEvenementsPage() {
                       <InputField label="Min personnes" type="number" placeholder="Ex: 8" value={place.groupMin || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMin: e.target.value } : p))} locked={placeHasSales || isReadOnly} />
                       <InputField label="Max personnes" type="number" placeholder="Ex: 12" value={place.groupMax || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMax: e.target.value } : p))} locked={placeHasSales || isReadOnly} />
                     </div>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Validé dès le min atteint · accepté jusqu'au max avec marge</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Validé dès le min atteint · accepté jusqu'au max avec marge</p>
                   </div>
                 )}
 
@@ -2204,7 +2160,7 @@ export default function MesEvenementsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Lieu & Infos pratiques</p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Indique où se déroulera ton événement.</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Indique où se déroulera ton événement.</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
@@ -2225,7 +2181,7 @@ export default function MesEvenementsPage() {
               {/* Sélecteur de région */}
               <div>
                 <label style={{ ...S.label, marginBottom: 4 }}>Région *</label>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em', marginBottom: 10 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em', marginBottom: 10 }}>
                   Dans quelle région se déroule l'événement ?
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -2253,7 +2209,7 @@ export default function MesEvenementsPage() {
                           border: selected ? '1px solid rgba(78,232,200,0.55)' : '1px solid rgba(255,255,255,0.10)',
                           background: selected ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.5)',
                           color: selected ? '#4ee8c8' : 'rgba(255,255,255,0.45)',
-                          fontFamily: "'DM Mono', monospace",
+                          fontFamily: 'Inter, sans-serif',
                           fontSize: 11,
                           cursor: (isLocked || isReadOnly) ? 'not-allowed' : 'pointer',
                           opacity: (isLocked || isReadOnly) && !selected ? 0.4 : 1,
@@ -2264,7 +2220,7 @@ export default function MesEvenementsPage() {
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                           width: 22, height: 16, borderRadius: 3,
                           background: selected ? 'rgba(78,232,200,0.18)' : 'rgba(255,255,255,0.08)',
-                          fontFamily: "'DM Mono', monospace",
+                          fontFamily: 'Inter, sans-serif',
                           fontSize: code.length > 2 ? 12 : 9,
                           fontWeight: 700,
                           color: selected ? '#4ee8c8' : 'rgba(255,255,255,0.5)',
@@ -2278,7 +2234,7 @@ export default function MesEvenementsPage() {
                     )
                   })}
                 </div>
-                {errors.region && <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
+                {errors.region && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
               </div>
             </div>
             <div style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.18)' }}>
@@ -2286,8 +2242,8 @@ export default function MesEvenementsPage() {
                 <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
               </svg>
               <div>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#c8a96e', letterSpacing: '0.05em' }}>Tu cherches une salle ou des prestataires ?</p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>DJs, artistes, sono, lumières — tout est disponible dans l'onglet Services.</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#c8a96e', letterSpacing: '0.05em' }}>Tu cherches une salle ou des prestataires ?</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>DJs, artistes, sono, lumières — tout est disponible dans l'onglet Services.</p>
               </div>
             </div>
             <button onClick={() => validateAndNext(2)} style={S.btnGold}>Suivant</button>
@@ -2301,14 +2257,14 @@ export default function MesEvenementsPage() {
             {/* QR Code — toujours actif, non modifiable */}
             <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(78,232,200,0.15)' }}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>QR Code billet</p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l'entrée — obligatoire</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>QR Code billet</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l'entrée — obligatoire</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#4ee8c8', letterSpacing: '0.15em' }}>INCLUS</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: '#4ee8c8', letterSpacing: '0.15em' }}>INCLUS</span>
               </div>
             </div>
             {[
@@ -2317,8 +2273,8 @@ export default function MesEvenementsPage() {
             ].map((opt) => (
               <div key={opt.key} style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>{opt.label}</p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>{opt.desc}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>{opt.label}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>{opt.desc}</p>
                 </div>
                 <Toggle value={options[opt.key]} onChange={() => setOptions(o => ({ ...o, [opt.key]: !o[opt.key] }))} />
               </div>
@@ -2327,7 +2283,7 @@ export default function MesEvenementsPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ borderTop: '1px solid rgba(200,169,110,0.15)', paddingTop: 16 }}>
                   <p style={{ ...S.label, color: '#c8a96e', marginBottom: 4 }}>Définir ta carte / menu</p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
                   {menuItems.map((item, i) => (
                     <MenuItemEditor
                       key={i}
@@ -2353,7 +2309,7 @@ export default function MesEvenementsPage() {
                 background: 'rgba(220,50,50,0.07)',
                 border: '1px solid rgba(220,50,50,0.25)',
                 borderRadius: 6,
-                fontFamily: "'DM Mono', monospace",
+                fontFamily: 'Inter, sans-serif',
                 fontSize: 10,
                 color: 'rgba(220,100,100,0.9)',
                 lineHeight: 1.7,
@@ -2363,7 +2319,7 @@ export default function MesEvenementsPage() {
             )}
             {/* ── Publication & clôture ── */}
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: 0 }}>Planification</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: 0 }}>Planification</p>
               <div>
                 <label style={S.label}>Date de publication <span style={{ color: 'rgba(255,255,255,0.20)' }}>(optionnel — vide = maintenant)</span></label>
                 <input
@@ -2372,7 +2328,7 @@ export default function MesEvenementsPage() {
                   onChange={e => setPublishAt(e.target.value)}
                   style={{ ...S.inputBase, colorScheme: 'dark' }}
                 />
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
                   L'événement apparaîtra sur le site à cette date/heure. Laisse vide pour publier immédiatement.
                 </p>
               </div>
@@ -2385,7 +2341,7 @@ export default function MesEvenementsPage() {
                   min={form.date || undefined}
                   style={{ ...S.inputBase, colorScheme: 'dark' }}
                 />
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
                   Laisse vide pour fermer automatiquement à la date de l'événement.
                 </p>
               </div>
@@ -2434,8 +2390,8 @@ export default function MesEvenementsPage() {
                 { label: 'QR Code billet', val: 'Activé — obligatoire' },
               ].map((r) => (
                 <div key={r.label} style={{ ...S.card, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', flexShrink: 0 }}>{r.label}</span>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', textAlign: 'right' }}>{r.val}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', flexShrink: 0 }}>{r.label}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', textAlign: 'right' }}>{r.val}</span>
                 </div>
               ))}
             </div>
@@ -2490,7 +2446,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
     <div style={{ ...S.card, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)' }}>Article {index + 1}</p>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)' }}>Article {index + 1}</p>
         {onRemove && (
           <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 2 }}>
             <IconClose size={12} color="rgba(220,100,100,0.9)" />
@@ -2523,7 +2479,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
         )}
         <button
           onClick={() => photoRef.current?.click()}
-          style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '6px 10px', background: 'transparent', cursor: 'pointer', letterSpacing: '0.05em', flexShrink: 0 }}
+          style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '6px 10px', background: 'transparent', cursor: 'pointer', letterSpacing: '0.05em', flexShrink: 0 }}
         >
           {item.imageUrl ? 'Changer photo' : 'Ajouter photo'}
         </button>
@@ -2563,7 +2519,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
 
       {/* Description toggle */}
       {!showDesc ? (
-        <button onClick={() => setShowDesc(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', textAlign: 'left', letterSpacing: '0.1em' }}>
+        <button onClick={() => setShowDesc(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)', textAlign: 'left', letterSpacing: '0.1em' }}>
           + Ajouter une description
         </button>
       ) : (
@@ -2584,8 +2540,8 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
       {/* Show toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <div>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>Option Show</p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>Option Show</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
         </div>
         <Toggle value={item.hasShow} onChange={() => u('hasShow', !item.hasShow)} />
       </div>
@@ -2593,7 +2549,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
       {/* Show options editor */}
       {item.hasShow && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Définis les shows disponibles pour cet article :</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Définis les shows disponibles pour cet article :</p>
           {(item.showOptions || []).map(opt => (
             <div key={opt.id} style={{ ...S.card, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2613,7 +2569,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
                 </button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Nécessite des infos client</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Nécessite des infos client</p>
                 <Toggle value={opt.requiresInfo} onChange={() => updateShowOption(opt.id, 'requiresInfo', !opt.requiresInfo)} />
               </div>
               {opt.requiresInfo && (
@@ -2629,7 +2585,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
               {/* Exclusion par place pour CE show spécifiquement */}
               {placeTypes.length > 1 && (
                 <div style={{ paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.22)', marginBottom: 6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.22)', marginBottom: 6 }}>
                     Masquer ce show pour certaines places :
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -2644,7 +2600,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
                             updateShowOption(opt.id, 'excludedPlaces', isExcl ? excl.filter(x => x !== pt) : [...excl, pt])
                           }}
                           style={{
-                            fontFamily: "'DM Mono', monospace",
+                            fontFamily: 'Inter, sans-serif',
                             fontSize: 9,
                             padding: '3px 10px',
                             borderRadius: 3,
@@ -2670,7 +2626,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
           ))}
           <button
             onClick={addShowOption}
-            style={{ padding: '7px', fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 4, background: 'transparent', cursor: 'pointer', letterSpacing: '0.1em' }}
+            style={{ padding: '7px', fontFamily: 'Inter, sans-serif', fontSize: 9, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 4, background: 'transparent', cursor: 'pointer', letterSpacing: '0.1em' }}
           >
             + Ajouter un show
           </button>
@@ -2680,7 +2636,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
       {/* Place exclusion */}
       {placeTypes.length > 1 && (
         <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginBottom: 8 }}>Exclure de certaines places :</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginBottom: 8 }}>Exclure de certaines places :</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {placeTypes.map(pt => {
               const isExcluded = (item.excludedPlaces || []).includes(pt)
@@ -2692,7 +2648,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
                     u('excludedPlaces', isExcluded ? excl.filter(x => x !== pt) : [...excl, pt])
                   }}
                   style={{
-                    fontFamily: "'DM Mono', monospace",
+                    fontFamily: 'Inter, sans-serif',
                     fontSize: 9,
                     padding: '3px 10px',
                     borderRadius: 3,
@@ -2960,7 +2916,7 @@ function BookingsPanel({ event, onClose }) {
                 <div key={b.id || idx} style={{ ...S.card, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.12em' }}>{b.ticketCode}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.12em' }}>{b.ticketCode}</p>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{b.place} · {b.placePrice} €</p>
                       {b.userName && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{b.userName}</p>}
                     </div>
