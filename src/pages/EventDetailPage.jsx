@@ -2180,18 +2180,18 @@ export default function EventDetailPage() {
           }}>
             <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,0.15)', borderRadius: 2, margin: '0 auto' }} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, paddingTop: 4 }}>
-              <WarnIcon size={28} color="rgba(200,169,110,0.8)" />
-              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: 'white', margin: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 10, paddingTop: 4 }}>
+              <WarnIcon size={30} color="rgba(200,169,110,0.9)" />
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 23, letterSpacing: '-0.5px', color: 'white', margin: 0 }}>
                 {grandTotal > 0 ? 'Procéder au paiement ?' : 'Confirmer la réservation ?'}
               </h3>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, letterSpacing: '0.03em' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.55, margin: 0 }}>
                 Une fois confirmée, tu ne pourras{' '}
-                <span style={{ color: 'white' }}>plus modifier</span>{' '}
+                <span style={{ color: '#fff', fontWeight: 600 }}>plus modifier</span>{' '}
                 ta réservation.
               </p>
               {event.preorder && preorderTotal === 0 && (
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.05em' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
                   Tu pars sans précommande — tu pourras commander sur place.
                 </p>
               )}
@@ -2199,16 +2199,16 @@ export default function EventDetailPage() {
 
             {/* Récap montant à payer */}
             {grandTotal > 0 && (
-              <div style={{ background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', borderRadius: 8, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', borderRadius: 14, padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                 <div>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', margin: 0, marginBottom: 4 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: '0 0 4px' }}>
                     Total à payer
                   </p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.32)', margin: 0 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
                     {ticketQty} {selectedPlace}{ticketQty > 1 ? 's' : ''}{preorderTotal > 0 ? ' + précommandes' : ''}
                   </p>
                 </div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 26, fontWeight: 300, color: '#4ee8c8', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-1px', color: '#4ee8c8', margin: 0, whiteSpace: 'nowrap' }}>
                   {grandTotal.toFixed(2)} €
                 </p>
               </div>
@@ -2216,34 +2216,43 @@ export default function EventDetailPage() {
 
             {/* Mention paiement sécurisé */}
             {grandTotal > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <IconLock size={11} color="rgba(255,255,255,0.32)" />
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.05em', lineHeight: 1.7 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                <IconLock size={12} color="rgba(255,255,255,0.4)" />
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
                   Paiement sécurisé via Stripe — tu seras redirigé.
                 </span>
               </div>
             )}
 
             {stripeError && (
-              <div style={{ background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', borderRadius: 6, padding: '10px 12px' }}>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,180,180,0.95)', margin: 0, lineHeight: 1.6 }}>
+              <div style={{ background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', borderRadius: 12, padding: '12px 14px' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,180,180,0.95)', margin: 0, lineHeight: 1.5 }}>
                   {stripeError}
                 </p>
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button
-                style={{ ...S.btnGold, opacity: stripeRedirecting ? 0.6 : 1, cursor: stripeRedirecting ? 'wait' : 'pointer' }}
                 disabled={stripeRedirecting}
                 onClick={() => { setStripeError(''); confirmBooking() }}
+                style={{
+                  padding: '16px', borderRadius: 14, border: 'none', width: '100%',
+                  fontFamily: 'Inter, sans-serif', fontSize: 15.5, fontWeight: 700, color: '#04040b',
+                  background: 'linear-gradient(135deg,#c8a96e,#e0c48a)', boxShadow: '0 8px 26px rgba(200,169,110,0.32)',
+                  opacity: stripeRedirecting ? 0.6 : 1, cursor: stripeRedirecting ? 'wait' : 'pointer',
+                }}
               >
                 {stripeRedirecting ? 'Redirection vers Stripe…' : grandTotal > 0 ? `Payer ${grandTotal.toFixed(2)} €` : 'Oui, confirmer'}
               </button>
               <button
                 onClick={() => { setShowConfirmModal(false); setStripeError('') }}
-                style={S.btnGhost}
                 disabled={stripeRedirecting}
+                style={{
+                  padding: '15px', borderRadius: 14, width: '100%', cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)',
+                  fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.7)',
+                }}
               >
                 Retour
               </button>

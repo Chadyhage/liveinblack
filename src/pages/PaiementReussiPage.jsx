@@ -6,24 +6,27 @@ import { generateTicketToken } from '../utils/ticket'
 import { useAuth } from '../context/AuthContext'
 import { IconMail } from '../components/icons'
 
-const FONTS = {
-  display: "Inter, sans-serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
-}
+const FONT = 'Inter, sans-serif'
+const FONTS = { display: FONT, mono: FONT }
 const COLORS = {
   teal: '#4ee8c8',
   pink: '#e05aaa',
   gold: '#c8a96e',
-  muted: 'rgba(255,255,255,0.42)',
+  violet: '#8b5cf6',
+  muted: 'rgba(255,255,255,0.55)',
   dim: 'rgba(255,255,255,0.22)',
 }
 const CARD = {
-  background: 'rgba(8,10,20,0.55)',
-  backdropFilter: 'blur(22px) saturate(1.6)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
+  background: 'linear-gradient(180deg, rgba(18,12,30,0.85), rgba(10,8,18,0.92))',
+  backdropFilter: 'blur(24px) saturate(1.5)',
+  WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
   border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 12,
+  borderRadius: 24,
+  boxShadow: '0 30px 90px rgba(0,0,0,0.55)',
 }
+// Boutons réutilisables (style vitrine)
+const btnPrimary = (c) => ({ padding: '15px 20px', borderRadius: 14, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, border: 'none', width: '100%', color: '#04040b', background: `linear-gradient(135deg, ${c}, ${c}cc)`, boxShadow: `0 8px 26px ${c}44` })
+const btnGhostS = { padding: '15px 20px', borderRadius: 14, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 600, width: '100%', color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)' }
 
 const PENDING_KEY = (id) => `lib_pending_booking_${id}`
 
@@ -41,10 +44,25 @@ export default function PaiementReussiPage() {
   const sessionId = params.get('session_id')
   const bookingId = params.get('booking_id')
 
-  const [state, setState] = useState('loading') // loading | success | error
+  const [state, setState] = useState('loading') // loading | success | pending | error
   const [tickets, setTickets] = useState([])
   const [errorMsg, setErrorMsg] = useState('')
   const [eventName, setEventName] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const SUPPORT_EMAIL = 'hagechady@liveinblack.com'
+  function copySupport() {
+    const done = () => { setCopied(true); setTimeout(() => setCopied(false), 2200) }
+    try {
+      if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(SUPPORT_EMAIL).then(done).catch(done) }
+      else {
+        const ta = document.createElement('textarea'); ta.value = SUPPORT_EMAIL
+        ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select()
+        try { document.execCommand('copy') } catch {}
+        document.body.removeChild(ta); done()
+      }
+    } catch { done() }
+  }
 
   useEffect(() => {
     if (!sessionId || !bookingId) {
@@ -55,16 +73,13 @@ export default function PaiementReussiPage() {
 
     let cancelled = false
     ;(async () => {
-      // 1) Vérifier que la session Stripe est bien payée
+      // 1) Vérifier la session Stripe côté serveur. Cet endpoint peut échouer
+      // (indispo, réseau, config) → on NE bloque PAS : le webhook Stripe fait
+      // autorité et a peut-être déjà émis les billets. On arrive de toute façon
+      // ici uniquement après un paiement Stripe réussi (l'annulation → /paiement-annule).
       const result = await verifyStripeSession(sessionId)
       if (cancelled) return
-      if (!result || !result.paid) {
-        setState('error')
-        setErrorMsg(result?.paymentStatus
-          ? `Paiement non confirmé (${result.paymentStatus}).`
-          : 'Impossible de vérifier le paiement. Si tu as été débité, contacte le support.')
-        return
-      }
+      const verified = !!(result && result.paid)
 
       // 2) Récupérer la réservation en attente
       let pending = null
@@ -73,18 +88,10 @@ export default function PaiementReussiPage() {
         pending = raw ? JSON.parse(raw) : null
       } catch {}
 
-      if (!pending) {
-        // Cas où la session est ouverte sur un autre device : on affiche succès générique
-        setState('success')
-        setEventName(result.metadata?.eventName || 'ton événement')
-        setTickets([])
-        return
-      }
-
-      // 2.5) ANTI-DUPLICATION : si le webhook Stripe a déjà finalisé cette
-      // réservation côté serveur (bookings/{bookingId}), on ADOPTE ses billets
-      // au lieu d'en générer d'autres — sinon 1 achat = 2 jeux de billets.
-      // Le webhook a aussi déjà attribué les points dans ce scénario.
+      // 2.5) SOURCE DE VÉRITÉ = webhook : si bookings/{bookingId} est payé avec
+      // billets, on ADOPTE ses billets — MÊME si la vérif client a échoué. Ça
+      // évite l'écran d'erreur alors que le billet a bien été émis, et évite les
+      // doublons (1 achat = 1 seul jeu de billets).
       try {
         const { db } = await import('../firebase')
         const { doc, getDoc } = await import('firebase/firestore')
@@ -95,7 +102,16 @@ export default function PaiementReussiPage() {
           if (cancelled) return
           snap = await getDoc(doc(db, 'bookings', bookingId))
         }
-        if (!cancelled && snap.exists() && snap.data().paid === true && (snap.data().tickets || []).length) {
+        // Billets serveur présents mais PAS de pending local (paiement ouvert sur
+        // un autre device) → succès générique à partir des billets serveur.
+        if (!cancelled && !pending && snap.exists() && snap.data().paid === true && (snap.data().tickets || []).length) {
+          const st = snap.data()
+          setEventName(st.eventName || result?.metadata?.eventName || '')
+          setTickets((st.tickets || []).map(t => ({ ticketCode: t.ticketCode, id: t.id, ticketToken: t.token || null })))
+          setState('success')
+          return
+        }
+        if (!cancelled && pending && snap.exists() && snap.data().paid === true && (snap.data().tickets || []).length) {
           const serverTickets = snap.data().tickets
           const adopted = []
           const adoptedBookings = []
@@ -168,6 +184,25 @@ export default function PaiementReussiPage() {
           return
         }
       } catch {} // pas de doc / pas de droits → flux normal ci-dessous
+
+      // 2.9) La vérif client a échoué ET le webhook n'a pas (encore) publié de
+      // billets adoptables. On NE génère RIEN sans confirmation de paiement, mais
+      // on n'affiche pas d'erreur anxiogène : on arrive ici après un paiement
+      // Stripe réussi → état « en cours de confirmation », les billets émis par le
+      // webhook apparaîtront dans « Mes billets ».
+      if (!verified) {
+        setState('pending')
+        setEventName(pending?.eventName || '')
+        return
+      }
+
+      // Payé confirmé mais pas de pending local (autre device) → succès générique
+      if (!pending) {
+        setState('success')
+        setEventName(result?.metadata?.eventName || 'ton événement')
+        setTickets([])
+        return
+      }
 
       // 3) Générer les billets définitifs (1 par billet acheté)
       const newTickets = []
@@ -281,123 +316,84 @@ export default function PaiementReussiPage() {
     return () => { cancelled = true }
   }, [sessionId, bookingId, user, setUser])
 
+  const successMsg = tickets.length > 0
+    ? `${tickets.length} billet${tickets.length > 1 ? 's' : ''} pour ${eventName ? '« ' + eventName + ' »' : 'ton événement'} ${tickets.length > 1 ? 'sont disponibles' : 'est disponible'} dans ton compte.`
+    : `Ton paiement pour ${eventName ? '« ' + eventName + ' »' : 'cet événement'} est confirmé. Tes billets sont disponibles dans ton compte.`
+
   return (
     <Layout hideNav>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       <div style={{
         minHeight: 'calc(100vh - 80px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 20px', fontFamily: FONTS.mono,
+        padding: '40px 20px', fontFamily: FONT,
       }}>
-        <div style={{ ...CARD, padding: 32, maxWidth: 460, width: '100%', textAlign: 'center' }}>
+        <div style={{ ...CARD, padding: '40px 32px', maxWidth: 460, width: '100%', textAlign: 'center' }}>
+
           {state === 'loading' && (
             <>
-              <div style={{
-                width: 64, height: 64, borderRadius: '50%', margin: '0 auto 24px',
-                border: `2px solid ${COLORS.dim}`, borderTopColor: COLORS.teal,
-                animation: 'spin 0.9s linear infinite',
-              }} />
-              <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 300, color: 'rgba(255,255,255,0.92)', margin: 0 }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: `3px solid rgba(255,255,255,0.1)`, borderTopColor: COLORS.teal, animation: 'spin 0.9s linear infinite' }} />
+              <h1 style={{ fontFamily: FONT, fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
                 Confirmation du paiement…
+              </h1>
+              <p style={{ fontSize: 14, color: COLORS.muted, marginTop: 12, lineHeight: 1.6 }}>
+                Ne ferme pas cette page, on prépare tes billets.
               </p>
-              <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 12, lineHeight: 1.7 }}>
-                Ne ferme pas cette page, on génère tes billets.
-              </p>
-              <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
             </>
           )}
 
           {state === 'success' && (
             <>
-              {/* Check icon */}
-              <div style={{
-                width: 80, height: 80, borderRadius: '50%', margin: '0 auto 24px',
-                background: 'rgba(78,232,200,0.10)', border: `2px solid ${COLORS.teal}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+              <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(78,232,200,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px -8px rgba(78,232,200,0.5)' }}>
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
-
-              <p style={{ fontFamily: FONTS.display, fontSize: 28, fontWeight: 300, color: COLORS.teal, margin: '0 0 8px' }}>
+              <h1 style={{ fontFamily: FONT, fontSize: 28, fontWeight: 800, letterSpacing: '-0.8px', color: '#fff', margin: '0 0 10px' }}>
                 Paiement confirmé
-              </p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', margin: 0, lineHeight: 1.7 }}>
-                {tickets.length > 0
-                  ? `${tickets.length} billet${tickets.length > 1 ? 's' : ''} pour ${eventName ? '« ' + eventName + ' »' : 'ton événement'} ${tickets.length > 1 ? 'sont disponibles' : 'est disponible'} dans ton compte.`
-                  : `Ton paiement pour ${eventName ? '« ' + eventName + ' »' : 'cet événement'} est confirmé. Tes billets sont disponibles dans ton compte.`}
-              </p>
+              </h1>
+              <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>{successMsg}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
+                <button onClick={() => navigate('/profil')} style={btnPrimary(COLORS.teal)}>Voir mes billets →</button>
+                <button onClick={() => navigate('/evenements')} style={btnGhostS}>Découvrir d'autres événements</button>
+              </div>
+            </>
+          )}
 
-              {/* Action buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
-                <button
-                  onClick={() => navigate('/profil')}
-                  style={{
-                    padding: '12px 18px', borderRadius: 4, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    background: 'rgba(78,232,200,0.10)', border: `1px solid ${COLORS.teal}`, color: COLORS.teal,
-                  }}
-                >
-                  Voir mes billets →
-                </button>
-                <button
-                  onClick={() => navigate('/evenements')}
-                  style={{
-                    padding: '12px 18px', borderRadius: 4, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)',
-                  }}
-                >
-                  Découvrir d'autres événements
-                </button>
+          {state === 'pending' && (
+            <>
+              <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(139,92,246,0.12)', border: `2px solid ${COLORS.violet}`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px -8px rgba(139,92,246,0.5)' }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.violet} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+              </div>
+              <h1 style={{ fontFamily: FONT, fontSize: 27, fontWeight: 800, letterSpacing: '-0.7px', color: '#fff', margin: '0 0 10px' }}>
+                Paiement bien reçu
+              </h1>
+              <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+                On finalise {eventName ? '« ' + eventName + ' »' : 'ta réservation'}. Tes billets arrivent dans <strong style={{ color: '#fff' }}>Mes billets</strong> d'ici quelques instants — inutile de repayer.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
+                <button onClick={() => navigate('/profil')} style={btnPrimary(COLORS.violet)}>Voir mes billets →</button>
+                <button onClick={() => window.location.reload()} style={btnGhostS}>Rafraîchir</button>
               </div>
             </>
           )}
 
           {state === 'error' && (
             <>
-              <div style={{
-                width: 80, height: 80, borderRadius: '50%', margin: '0 auto 24px',
-                background: 'rgba(224,90,170,0.08)', border: `2px solid rgba(224,90,170,0.45)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2}>
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round" />
-                  <circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} />
-                </svg>
+              <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: `2px solid rgba(224,90,170,0.5)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
               </div>
-              <p style={{ fontFamily: FONTS.display, fontSize: 26, fontWeight: 300, color: COLORS.pink, margin: '0 0 10px' }}>
-                Une erreur est survenue
-              </p>
-              <p style={{ fontSize: 12, color: COLORS.muted, margin: 0, lineHeight: 1.7 }}>
-                {errorMsg}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
-                <a
-                  href="mailto:hagechady@liveinblack.com?subject=Probl%C3%A8me%20de%20paiement"
-                  style={{
-                    padding: '12px 18px', borderRadius: 4,
-                    fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    background: 'rgba(200,169,110,0.10)', border: `1px solid ${COLORS.gold}`, color: COLORS.gold,
-                    textDecoration: 'none', textAlign: 'center',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  }}
-                >
-                  <IconMail size={13} color={COLORS.gold} />
-                  Contacter le support
-                </a>
-                <button
-                  onClick={() => navigate('/')}
-                  style={{
-                    padding: '12px 18px', borderRadius: 4, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)',
-                  }}
-                >
-                  Retour à l'accueil
+              <h1 style={{ fontFamily: FONT, fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>
+                Un souci est survenu
+              </h1>
+              <p style={{ fontSize: 14, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>{errorMsg}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
+                <button onClick={copySupport} style={{ ...btnPrimary(COLORS.gold), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+                  <IconMail size={16} color="#04040b" />
+                  {copied ? 'Adresse copiée ✓' : 'Copier l’email du support'}
                 </button>
+                <button onClick={() => navigate('/profil')} style={btnGhostS}>Voir mes billets</button>
+                <button onClick={() => navigate('/')} style={{ ...btnGhostS, border: 'none', background: 'none', color: 'rgba(255,255,255,0.4)' }}>Retour à l'accueil</button>
               </div>
+              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.35)', marginTop: 16 }}>{SUPPORT_EMAIL}</p>
             </>
           )}
         </div>
