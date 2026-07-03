@@ -10,20 +10,20 @@ import {
   hasDoc, getDocFiles, removeDocumentFile,
 } from '../utils/applications'
 
-const DM = "'DM Mono', monospace"
+const DM = "Inter, sans-serif"
 const CG = "Inter, sans-serif"
 const GOLD = '#c8a96e'
 
 const S = {
   page:    { position: 'relative', zIndex: 1, padding: '32px 18px 16px', maxWidth: 600, margin: '0 auto' },
   card:    { background: 'rgba(10,12,22,0.6)', backdropFilter: 'blur(24px) saturate(1.4)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '28px 26px', boxShadow: '0 24px 64px rgba(0,0,0,0.38)' },
-  label:   { fontFamily: DM, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.52)', display: 'block', marginBottom: 9, overflowWrap: 'break-word', wordBreak: 'break-word' },
-  input:   { width: '100%', background: 'rgba(6,8,16,0.85)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 10, fontFamily: DM, fontSize: 13, color: '#fff', padding: '13px 14px', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' },
-  select:  { width: '100%', background: 'rgba(6,8,16,0.85)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 10, fontFamily: DM, fontSize: 13, color: '#fff', padding: '13px 14px', outline: 'none', boxSizing: 'border-box', appearance: 'none' },
-  section: { fontFamily: DM, fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: 22, paddingBottom: 13, borderBottom: '1px solid rgba(255,255,255,0.08)', overflowWrap: 'break-word', wordBreak: 'break-word' },
-  btnGold: { width: '100%', padding: '15px', background: 'linear-gradient(135deg,rgba(200,169,110,0.26),rgba(200,169,110,0.08))', border: '1px solid rgba(200,169,110,0.5)', borderRadius: 9, fontFamily: DM, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, cursor: 'pointer' },
-  btnGhost:{ width: '100%', padding: '15px', background: 'transparent', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 9, fontFamily: DM, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' },
-  error:   { fontFamily: DM, fontSize: 10, color: '#e05aaa', letterSpacing: '0.04em', marginTop: 5 },
+  label:   { fontFamily: DM, fontSize: 13, fontWeight: 600, letterSpacing: '0.01em', color: 'rgba(255,255,255,0.62)', display: 'block', marginBottom: 8, overflowWrap: 'break-word', wordBreak: 'break-word' },
+  input:   { width: '100%', background: 'rgba(6,8,16,0.85)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 13, fontFamily: DM, fontSize: 15.5, color: '#fff', padding: '15px 16px', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' },
+  select:  { width: '100%', background: 'rgba(6,8,16,0.85)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 13, fontFamily: DM, fontSize: 15.5, color: '#fff', padding: '15px 16px', outline: 'none', boxSizing: 'border-box', appearance: 'none' },
+  section: { fontFamily: DM, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 22, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.08)', overflowWrap: 'break-word', wordBreak: 'break-word' },
+  btnGold: { width: '100%', padding: '17px', background: 'linear-gradient(135deg,rgba(200,169,110,0.26),rgba(200,169,110,0.08))', border: '1px solid rgba(200,169,110,0.5)', borderRadius: 14, fontFamily: DM, fontSize: 15, fontWeight: 700, letterSpacing: '0.01em', color: GOLD, cursor: 'pointer' },
+  btnGhost:{ width: '100%', padding: '17px', background: 'transparent', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 14, fontFamily: DM, fontSize: 15, fontWeight: 600, letterSpacing: '0.01em', color: 'rgba(255,255,255,0.55)', cursor: 'pointer' },
+  error:   { fontFamily: DM, fontSize: 12, color: '#e05aaa', letterSpacing: '0.01em', marginTop: 6 },
 }
 
 const COUNTRY_CODES = DIAL_CODES
@@ -919,14 +919,14 @@ function FileRow({ file, onRemove }) {
       <span style={{ fontSize: 14, flexShrink: 0 }}>{failed ? '⚠' : '📄'}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{
-          fontFamily: "'DM Mono', monospace", fontSize: 10,
+          fontFamily: "Inter, sans-serif", fontSize: 10,
           color: failed ? 'rgba(224,90,170,0.9)' : 'rgba(255,255,255,0.8)',
           display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {file.name}
         </span>
         <span style={{
-          fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: '0.04em',
+          fontFamily: "Inter, sans-serif", fontSize: 8, letterSpacing: '0.04em',
           color: failed ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.3)',
         }}>
           {failed
