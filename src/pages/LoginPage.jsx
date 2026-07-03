@@ -180,7 +180,24 @@ async function doEmailRegister(data) {
     cred = await createUserWithEmailAndPassword(auth, email, password)
   } catch (err) {
     if (err.code === 'auth/email-already-in-use') {
-      throw { code: 'auth/email-unverified-ghost' }
+      // Vérifier si le compte existant est vérifié ou non pour adapter le message
+      try {
+        const { signInWithEmailAndPassword } = await import('firebase/auth')
+        const existing = await signInWithEmailAndPassword(auth, email, password)
+        if (existing.user.emailVerified) {
+          await auth.signOut()
+          throw { code: 'auth/email-already-in-use' }
+        }
+        // Non vérifié → renvoyer l'email de vérification et afficher l'écran
+        const { sendEmailVerification } = await import('firebase/auth')
+        await sendEmailVerification(existing.user).catch(() => {})
+        await auth.signOut()
+        throw { code: 'auth/email-not-verified', _registeredEmail: email }
+      } catch (inner) {
+        if (inner.code === 'auth/email-already-in-use' || inner.code === 'auth/email-not-verified') throw inner
+        // Mot de passe différent ou autre erreur → l'email est pris
+        throw { code: 'auth/email-unverified-ghost' }
+      }
     }
     throw err
   }
@@ -216,8 +233,13 @@ async function doEmailRegister(data) {
 
   // Envoyer l'email de vérification (skip pour super admin)
   if (!isSuperAdmin) {
-    const { sendEmailVerification } = await import('firebase/auth')
-    await sendEmailVerification(cred.user)
+    try {
+      const { sendEmailVerification } = await import('firebase/auth')
+      await sendEmailVerification(cred.user)
+    } catch {
+      // L'envoi a échoué (rate limit, réseau…) mais le compte existe.
+      // L'utilisateur pourra cliquer "Renvoyer" sur l'écran de vérification.
+    }
   }
 
   const userObj = {
@@ -369,6 +391,7 @@ export default function LoginPage() {
   const [resetError, setResetError] = useState('')
   const [unverifiedEmail, setUnverifiedEmail] = useState('') // email not yet verified
   const [resendSent, setResendSent] = useState(false)
+  const [resendIsReset, setResendIsReset] = useState(false)
   const [pendingInfo, setPendingInfo] = useState(null) // { role } — account waiting validation
 
   const { setUser } = useAuth()
@@ -544,19 +567,23 @@ export default function LoginPage() {
       if (auth.currentUser && !auth.currentUser.emailVerified) {
         const { sendEmailVerification } = await import('firebase/auth')
         await sendEmailVerification(auth.currentUser)
+        await auth.signOut()
         setResendSent(true)
         return
       }
+      // Pas de currentUser (signOut après inscription/login bloqué)
+      // → on ne peut pas renvoyer sendEmailVerification sans mot de passe.
+      // Fallback : sendPasswordResetEmail qui permet de définir un nouveau
+      // mot de passe ET vérifie l'email en même temps.
       if (unverifiedEmail) {
-        const { fetchSignInMethodsForEmail } = await import('firebase/auth')
-        const methods = await fetchSignInMethodsForEmail(auth, unverifiedEmail)
-        if (methods.length > 0) {
-          const { sendPasswordResetEmail } = await import('firebase/auth')
-          await sendPasswordResetEmail(auth, unverifiedEmail)
-        }
+        const { sendPasswordResetEmail } = await import('firebase/auth')
+        await sendPasswordResetEmail(auth, unverifiedEmail)
         setResendSent(true)
+        setResendIsReset(true)
       }
-    } catch {}
+    } catch {
+      setError('Impossible d\'envoyer l\'email. Réessaie dans quelques minutes.')
+    }
   }
 
   // ── "Email not verified" screen ──
@@ -601,7 +628,11 @@ export default function LoginPage() {
             L'email peut arriver dans les spams / courriers indésirables.
           </p>
           {resendSent && (
-            <p style={S.successText}>Email envoyé, vérifie ta boîte (et les spams).</p>
+            <p style={S.successText}>
+              {resendIsReset
+                ? 'Un lien de réinitialisation a été envoyé. Il vérifiera aussi ton email.'
+                : 'Email envoyé, vérifie ta boîte (et les spams).'}
+            </p>
           )}
           <button onClick={handleResendVerification}
             style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', letterSpacing: '0.2em', color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
