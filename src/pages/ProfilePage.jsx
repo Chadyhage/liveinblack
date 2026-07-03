@@ -394,6 +394,7 @@ export default function ProfilePage() {
   const { user, setUser } = useAuth()
   const navigate = useNavigate()
   const [panel, setPanel] = useState(null) // null | 'settings' | 'billets' | 'service-orders' | 'support'
+  const [supportCopied, setSupportCopied] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
@@ -1306,24 +1307,33 @@ export default function ProfilePage() {
           }}>
             <EyebrowLabel text="Contacter le support" />
             <p style={{ ...S.bodyText, marginBottom: '14px' }}>
-              Tu n&apos;as pas trouvé de réponse ? Notre équipe te répond sous 24h.
+              Tu n&apos;as pas trouvé de réponse ? Écris-nous, on répond sous 24h.
             </p>
-            <a
-              href="mailto:hagechady@liveinblack.com"
+            {/* Copie fiable partout (le mailto échoue si aucune app mail n'est configurée) */}
+            <button
+              onClick={async () => {
+                const email = 'hagechady@liveinblack.com'
+                try { await navigator.clipboard.writeText(email) }
+                catch { try { const t = document.createElement('textarea'); t.value = email; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t) } catch {} }
+                setSupportCopied(true); setTimeout(() => setSupportCopied(false), 2200)
+              }}
               style={{
                 ...S.btnGold,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                textDecoration: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                border: 'none', cursor: 'pointer', width: '100%',
               }}
             >
-              Envoyer un message
-            </a>
-            <p style={{ ...S.label, textAlign: 'center', marginTop: '10px' }}>
+              {supportCopied ? '✓ Adresse copiée' : 'Copier l’adresse email'}
+            </button>
+            <p style={{ ...S.label, textAlign: 'center', marginTop: '10px', letterSpacing: '0.04em' }}>
               hagechady@liveinblack.com
             </p>
+            <a
+              href="mailto:hagechady@liveinblack.com?subject=Support%20LIVEINBLACK"
+              style={{ display: 'block', textAlign: 'center', marginTop: '8px', fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 600, color: 'rgba(78,232,200,0.85)', textDecoration: 'none' }}
+            >
+              ou ouvrir mon application mail →
+            </a>
           </div>
         </div>
       </Layout>
