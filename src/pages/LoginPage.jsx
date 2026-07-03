@@ -1258,5 +1258,7 @@ function getFirebaseError(code) {
     'auth/account-rejected': 'Ton compte a été refusé. Contacte le support.',
     'auth/email-not-verified': 'Email non vérifié. Consulte ta boîte mail.',
   }
-  return messages[code] || 'Une erreur est survenue. Réessaie.'
+  if (messages[code]) return messages[code]
+  if (code) return `Erreur : ${code.replace('auth/', '')}.`
+  return 'Une erreur est survenue. Réessaie.'
 }
