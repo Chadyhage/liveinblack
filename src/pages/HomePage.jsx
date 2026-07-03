@@ -14,7 +14,6 @@ import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 import { IconTent, IconMic } from '../components/icons'
 import PublicLanding from './PublicLanding'
-import AmbianceFab from '../components/AmbianceFab'
 
 function HostStatsWidget() {
   const [percent, setPercent] = useState(0)
@@ -745,17 +744,6 @@ export default function HomePage() {
                 </span>
               </div>
             </button>
-
-            {/* Mobile : « Mettre l'ambiance » sous le CTA (le bloc central est desktop) */}
-            <div className="md:hidden" style={{ marginTop: 28 }}>
-              <AmbianceFab inline vinylSize={104} />
-            </div>
-          </div>
-
-          {/* Colonne centrale : « Mettre l'ambiance » — vinyle + égaliseur, dans
-              l'espace libre du hero (desktop). Le son est le singleton musicEngine. */}
-          <div className="hidden md:flex" style={{ flex: '0 0 auto', alignItems: 'center', justifyContent: 'center', minWidth: 200 }}>
-            <AmbianceFab inline />
           </div>
 
           {/* Colonne droite : galerie vidéo (desktop) — flèches + aperçus latéraux */}
