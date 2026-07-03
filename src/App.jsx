@@ -58,6 +58,27 @@ function usePersistedUser() {
     setUserState(normalized)
   }
 
+  // Réconcilie la session locale avec l'autorité Firebase Auth (anti « session
+  // zombie »). Firebase restaure sa session persistée puis émet une 1re fois via
+  // onAuthStateChanged : s'il n'a PLUS d'utilisateur (compte supprimé/désactivé,
+  // token révoqué) alors qu'une session locale traîne, on la purge → l'app ne
+  // reste plus « connectée » en apparence pendant que toute action serveur échoue.
+  useEffect(() => {
+    let unsub = () => {}
+    import('./firebase').then(({ auth, USE_REAL_FIREBASE }) => {
+      if (!USE_REAL_FIREBASE || !auth) return
+      import('firebase/auth').then(({ onAuthStateChanged }) => {
+        unsub = onAuthStateChanged(auth, fbUser => {
+          if (fbUser) return // session Firebase valide → OK
+          let hasLocal = false
+          try { hasLocal = !!JSON.parse(localStorage.getItem('lib_user') || 'null') } catch {}
+          if (hasLocal) setUser(null) // session périmée → déconnexion réelle
+        })
+      }).catch(() => {})
+    }).catch(() => {})
+    return () => unsub()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Sync Firestore → localStorage on login
   useEffect(() => {
     const uid = user?.uid
