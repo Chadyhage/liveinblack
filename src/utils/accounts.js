@@ -373,7 +373,9 @@ export async function cancelRoleRequest(uid, role) {
  */
 export async function switchActiveRole(user, newRole) {
   const enabledRoles = getEnabledRoles(user)
-  if (!enabledRoles.includes(newRole) && newRole !== 'agent') return user
+  // On ne peut basculer QUE vers un rôle réellement débloqué. (Avant, l'exception
+  // `&& newRole !== 'agent'` laissait passer 'agent' → auto-promotion admin.)
+  if (!enabledRoles.includes(newRole)) return user
 
   const patch = { role: newRole, activeRole: newRole }
   updateAccount(user.uid, patch)

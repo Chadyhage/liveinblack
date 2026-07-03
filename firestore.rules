@@ -16,6 +16,13 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    // Super-admin « bootstrap » : seul moyen légitime de poser role:'agent'
+    // (les vrais agents sont ensuite créés par un agent existant). DOIT rester
+    // aligné avec VITE_SUPER_ADMIN_EMAILS côté front (src/pages/LoginPage.jsx).
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.email in ['hagechady4@gmail.com'];
+    }
+
     // Organisateur propriétaire de l'event (createdBy OU organizerId — les deux
     // champs sont toujours écrits ensemble à la création, voir events/{id}).
     function isEventOwnerOf(eventId) {
@@ -25,10 +32,19 @@ service cloud.firestore {
 
     // ── Users ──────────────────────────────────────────────────────────────────
     // Read: any signed-in user can see profiles (needed for messaging contacts sync)
-    // Write: only the owner can update their own profile, or an agent
+    // Write: le propriétaire édite son profil (nom, avatar, confidentialité, switch
+    // d'interface…) MAIS ne peut PAS s'auto-promouvoir : role/activeRole = 'agent'
+    // est réservé aux agents / super-admin. Ferme l'escalade de privilèges
+    // client → agent (isAgent() lit users/{uid}.role, champ que le propriétaire
+    // pouvait sinon écrire lui-même).
     match /users/{uid} {
-      allow read:  if isSignedIn();
-      allow write: if isOwner(uid) || isAgent();
+      allow read:   if isSignedIn();
+      allow create: if isSuperAdmin() || (isOwner(uid) && request.resource.data.role != 'agent');
+      allow update: if isAgent() || isSuperAdmin()
+        || (isOwner(uid)
+            && request.resource.data.role != 'agent'
+            && request.resource.data.activeRole != 'agent');
+      allow delete: if isAgent();
     }
 
     // ── Applications / candidatures ────────────────────────────────────────────
