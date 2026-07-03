@@ -2717,17 +2717,6 @@ function OrganizerAnalytics({ events, tickets, loading }) {
     return { event: e, sold: evTix.length, cap, rev, fill: cap > 0 ? Math.round(evTix.length / cap * 100) : 0 }
   }).filter(x => x.sold > 0).sort((a, b) => b.rev - a.rev).slice(0, 6)
 
-  // Ventes des 7 derniers jours (par jour)
-  const days = []
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today.getTime() - i * 86400000)
-    const next = d.getTime() + 86400000
-    const count = tickets.filter(t => { const ts = new Date(t.bookedAt).getTime(); return ts >= d.getTime() && ts < next }).length
-    days.push({ label: ['D', 'L', 'M', 'M', 'J', 'V', 'S'][d.getDay()], count })
-  }
-  const maxDay = Math.max(1, ...days.map(d => d.count))
-
   const card = { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12 }
   const inter = 'Inter, sans-serif'
 
@@ -2765,21 +2754,6 @@ function OrganizerAnalytics({ events, tickets, loading }) {
             <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Remplissage</p>
             <p style={{ fontFamily: inter, fontSize: 28, fontWeight: 600, color: '#fff', margin: 0, lineHeight: 1 }}>{fillPct}%</p>
             <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>{totalTickets}/{totalCap} places</p>
-          </div>
-        </div>
-
-        {/* Graphique 7 jours */}
-        <div style={{ ...card, padding: '14px 16px' }}>
-          <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 12px' }}>Ventes · 7 derniers jours</p>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 56 }}>
-            {days.map((d, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: '100%', height: 44, display: 'flex', alignItems: 'flex-end' }}>
-                  <div style={{ width: '100%', height: `${Math.round(d.count / maxDay * 100)}%`, minHeight: d.count > 0 ? 4 : 0, borderRadius: 3, background: 'linear-gradient(180deg, #4ee8c8, rgba(78,232,200,0.3))' }} />
-                </div>
-                <span style={{ fontFamily: inter, fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.4)' }}>{d.label}</span>
-              </div>
-            ))}
           </div>
         </div>
 
