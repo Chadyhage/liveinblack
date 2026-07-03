@@ -49,7 +49,7 @@ function HeadphonesIcon({ size = 18, color = '#c8a96e' }) {
 }
 
 // SVG search icon
-function SearchIcon({ size = 14, color = 'rgba(255,255,255,0.3)' }) {
+function SearchIcon({ size = 16, color = 'rgba(255,255,255,0.35)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
       <circle cx="11" cy="11" r="8"/>
@@ -58,33 +58,47 @@ function SearchIcon({ size = 14, color = 'rgba(255,255,255,0.3)' }) {
   )
 }
 
+const FONT = 'Inter, sans-serif'
+const C = { teal: '#4ee8c8', gold: '#c8a96e', violet: '#8b5cf6', pink: '#e05aaa' }
+
 const S = {
   card: {
-    background: 'rgba(8,10,20,0.55)',
-    backdropFilter: 'blur(22px) saturate(1.6)',
+    background: 'rgba(9,11,20,0.6)',
+    backdropFilter: 'blur(22px) saturate(1.5)',
     border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 12,
-    padding: '14px 16px',
+    borderRadius: 16,
+    padding: '16px 18px',
   },
   label: {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 9,
-    letterSpacing: '0.25em',
+    fontFamily: FONT,
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: '0.06em',
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.42)',
+    color: 'rgba(255,255,255,0.5)',
   },
   input: {
     background: 'rgba(6,8,16,0.6)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 13,
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 13,
+    fontFamily: FONT,
+    fontSize: 15,
     color: 'white',
-    padding: '10px 36px 10px 12px',
+    padding: '14px 40px 14px 14px',
     width: '100%',
     outline: 'none',
     boxSizing: 'border-box',
   },
+}
+
+// Puce statistique (billets/likes) en tête de la playlist
+function StatChip({ label, value, color }) {
+  return (
+    <div style={{ flex: 1, minWidth: 92, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '10px 14px' }}>
+      <p style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>{label}</p>
+      <p style={{ fontFamily: FONT, fontSize: 19, fontWeight: 800, letterSpacing: '-0.5px', color: color || '#fff', margin: '3px 0 0' }}>{value}</p>
+    </div>
+  )
 }
 
 export default function PlaylistSystem({ event, booked }) {
@@ -129,6 +143,7 @@ export default function PlaylistSystem({ event, booked }) {
   const [songsAdded, setSongsAddedState] = useState(loadSongsAdded)
   const [preview, setPreview] = useState(null)
   const [message, setMessage] = useState('')
+  const [tab, setTab] = useState('top') // top | mine | rules
   const audioRef = useRef(null)
   const debounceRef = useRef(null)
 
@@ -234,7 +249,8 @@ export default function PlaylistSystem({ event, booked }) {
       setTimeout(() => setMessage(''), 3000)
       return
     }
-    const newSong = { id: Date.now(), title: song.title, artist: song.artist, likes: 0, addedBy: 'Moi', previewUrl: song.previewUrl || null }
+    // userId stocké pour distinguer « Mes sons » et empêcher de liker son propre son (cross-device)
+    const newSong = { id: Date.now(), title: song.title, artist: song.artist, likes: 0, addedBy: 'Moi', userId, previewUrl: song.previewUrl || null }
     setSongs((prev) => [...prev, { ...newSong, myLike: false }])
     // Upsert transactionnel : n'ajoute QUE ce morceau côté serveur, sans écraser
     // les ajouts concurrents des autres participants. (myLike reste local.)
@@ -251,13 +267,19 @@ export default function PlaylistSystem({ event, booked }) {
     const remaining = Math.max(0, ticketCount - nextAdded)
     setMessage(remaining > 0
       ? `ok:"${song.title}" ajouté ! Il te reste ${remaining} son${remaining > 1 ? 's' : ''} à proposer.`
-      : `ok:"${song.title}" ajouté à la playlist !`)
+      : `ok:"${song.title}" est dans la playlist !`)
     setTimeout(() => setMessage(''), 4000)
   }
 
   function toggleLike(songId) {
     const song = songs.find((s) => s.id === songId)
     if (!song) return
+    // Règle : on ne peut pas liker son propre son
+    if (song.userId && song.userId === userId) {
+      setMessage('warn:Tu ne peux pas liker ton propre son.')
+      setTimeout(() => setMessage(''), 3000)
+      return
+    }
     // Optimiste en local, transactionnel côté serveur : le compteur est incrémenté
     // sur l'état Firestore réel (pas l'état local), donc deux likes simultanés
     // font bien +2 et l'écran DJ ne saute plus de position en position.
@@ -276,394 +298,280 @@ export default function PlaylistSystem({ event, booked }) {
   }
 
   const sortedSongs = [...songs].sort((a, b) => b.likes - a.likes)
+  const mySongs = songs.filter((s) => s.userId && s.userId === userId)
+  const likesLeft = Math.max(0, MAX_LIKES_PER_USER - likesUsed)
 
   const isWarn = message.startsWith('warn:')
   const isOk = message.startsWith('ok:')
   const msgText = isWarn ? message.slice(5) : isOk ? message.slice(3) : message
 
+  const djName = event.artists?.length ? event.artists.map(a => a.name).join(' · ') : (event.dj || 'Le DJ')
+
+  // Ligne de morceau réutilisée (Top playlist + Mes sons)
+  function SongRow({ song, rank }) {
+    const mine = song.userId && song.userId === userId
+    const top = rank === 1
+    const playing = preview?.title === song.title
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
+        border: top ? `1px solid ${C.gold}55` : '1px solid rgba(255,255,255,0.07)',
+        background: top ? `${C.gold}0d` : 'rgba(9,11,20,0.5)',
+      }}>
+        {rank != null && (
+          <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, width: 22, textAlign: 'center', flexShrink: 0, color: top ? C.gold : 'rgba(255,255,255,0.28)' }}>{rank}</span>
+        )}
+        {song.previewUrl ? (
+          <button onClick={() => togglePreview(song)} style={{
+            width: 30, height: 30, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', fontSize: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(255,255,255,0.05)', color: playing ? C.gold : 'rgba(255,255,255,0.55)',
+            border: playing ? `1px solid ${C.gold}80` : '1px solid rgba(255,255,255,0.12)',
+          }}>{playing ? '■' : '▶'}</button>
+        ) : <div style={{ width: 30, flexShrink: 0 }} />}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 15.5, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
+          <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {song.artist}
+            <span style={{ color: 'rgba(255,255,255,0.28)' }}> · {mine ? 'ajouté par toi' : 'un invité'}</span>
+            {playing && <span style={{ marginLeft: 8, color: C.gold }}>▶ en cours</span>}
+          </p>
+        </div>
+        <button onClick={() => toggleLike(song.id)} disabled={mine} title={mine ? 'Tu ne peux pas liker ton propre son' : undefined} style={{
+          display: 'flex', alignItems: 'center', gap: 6, padding: '8px 13px', borderRadius: 999, flexShrink: 0,
+          border: song.myLike ? `1px solid ${C.teal}66` : '1px solid rgba(255,255,255,0.12)',
+          background: song.myLike ? `${C.teal}14` : 'transparent',
+          cursor: mine ? 'not-allowed' : 'pointer', opacity: mine ? 0.4 : 1,
+        }}>
+          <HeartIcon filled={song.myLike} size={14} color={song.myLike ? C.teal : 'rgba(255,255,255,0.4)'} />
+          <span style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: song.myLike ? C.teal : 'rgba(255,255,255,0.55)' }}>{song.likes}</span>
+        </button>
+      </div>
+    )
+  }
+
+  // ── Locked (non-participant) ──
   if (!booked) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <LockIcon size={36} color="rgba(255,255,255,0.15)" />
-        <p style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 20, color: 'white', margin: 0 }}>
+      <div style={{ textAlign: 'center', padding: '48px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <div style={{ width: 68, height: 68, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <LockIcon size={30} color="rgba(255,255,255,0.3)" />
+        </div>
+        <p style={{ fontFamily: FONT, fontWeight: 800, fontSize: 21, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
           Playlist réservée aux participants
         </p>
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', letterSpacing: '0.1em', margin: 0 }}>
-          Réserve ta place pour accéder à la playlist interactive.
+        <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>
+          Réserve ta place pour proposer tes sons et voter pour la playlist de la soirée.
         </p>
       </div>
     )
   }
 
+  const TABS = [['top', 'Top playlist'], ['mine', 'Mes sons'], ['rules', 'Règles']]
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <style>{`
+        @keyframes lbBar1 { from { height: 5px } to { height: 18px } }
+        @keyframes lbBar2 { from { height: 14px } to { height: 6px } }
+        @keyframes lbBar3 { from { height: 8px } to { height: 16px } }
+      `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div>
-          <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <h3 style={{ fontFamily: FONT, fontWeight: 800, fontSize: 23, letterSpacing: '-0.6px', color: '#fff', margin: 0 }}>
             Playlist interactive
           </h3>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4 }}>
-            Likes restants :{' '}
-            <span style={{ color: '#c8a96e' }}>{MAX_LIKES_PER_USER - likesUsed}/{MAX_LIKES_PER_USER}</span>
-          </p>
+          {event.name && (
+            <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>
+          )}
         </div>
-        {/* Animated equalizer bars */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 20 }}>
-          {[8, 14, 6, 16, 10].map((h, i) => (
-            <div
-              key={i}
-              style={{
-                width: 3,
-                height: h,
-                background: '#c8a96e',
-                borderRadius: 2,
-                opacity: 0.7,
-                animation: `bar${(i % 3) + 1} 0.8s ease-in-out infinite alternate`,
-                animationDelay: `${i * 0.1}s`,
-              }}
-            />
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 22, flexShrink: 0 }}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} style={{ width: 3, height: 10, background: C.gold, borderRadius: 2, opacity: 0.75, animation: `lbBar${(i % 3) + 1} 0.7s ease-in-out ${i * 0.1}s infinite alternate` }} />
           ))}
         </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <StatChip label="Tes sons" value={`${songsAdded} / ${ticketCount}`} color={C.gold} />
+        <StatChip label="Likes dispo" value={`${likesLeft} / ${MAX_LIKES_PER_USER}`} color={C.teal} />
+        <StatChip label="Classement" value={sortedSongs.length} />
       </div>
 
       {/* Message */}
       {message && (
         <div style={{
-          padding: '10px 14px',
-          borderRadius: 8,
-          border: isWarn
-            ? '1px solid rgba(234,88,12,0.35)'
-            : '1px solid rgba(78,232,200,0.30)',
-          background: isWarn
-            ? 'rgba(234,88,12,0.08)'
-            : 'rgba(78,232,200,0.07)',
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 11,
-          letterSpacing: '0.05em',
-          color: isWarn ? '#fb923c' : '#4ee8c8',
-          textAlign: 'center',
+          padding: '11px 15px', borderRadius: 12,
+          border: isWarn ? '1px solid rgba(234,88,12,0.35)' : '1px solid rgba(78,232,200,0.30)',
+          background: isWarn ? 'rgba(234,88,12,0.08)' : 'rgba(78,232,200,0.07)',
+          fontFamily: FONT, fontSize: 13.5, fontWeight: 500,
+          color: isWarn ? '#fb923c' : C.teal, textAlign: 'center',
         }}>
           {msgText}
         </div>
       )}
 
-      {/* Add a song */}
-      {songsRemaining > 0 ? (
-        <div>
-          <p style={{ ...S.label, marginBottom: 8 }}>
-            Propose un son au DJ —{' '}
-            <span style={{ color: '#c8a96e' }}>
-              {songsRemaining} slot{songsRemaining > 1 ? 's' : ''} restant{songsRemaining > 1 ? 's' : ''}
-            </span>
-            {ticketCount > 1 && (
-              <span style={{ color: 'rgba(255,255,255,0.25)' }}> · {ticketCount} billets</span>
-            )}
-          </p>
-          <div style={{ position: 'relative' }}>
-            <input
-              style={S.input}
-              placeholder="Titre, artiste..."
-              value={search}
-              onChange={(e) => handleSearch(e.target.value)}
-              onFocus={e => (e.target.style.borderColor = '#4ee8c8')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.10)')}
-            />
-            <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
-              {isSearching
-                ? <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>…</span>
-                : <SearchIcon />
-              }
-            </span>
-          </div>
-
-          {searchResults.length > 0 && (
-            <div style={{
-              marginTop: 8,
-              border: '1px solid rgba(255,255,255,0.10)',
-              borderRadius: 8,
-              overflow: 'hidden',
-              background: 'rgba(6,8,16,0.90)',
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 6, padding: 5, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16 }}>
+        {TABS.map(([id, label]) => {
+          const active = tab === id
+          return (
+            <button key={id} onClick={() => setTab(id)} style={{
+              flex: 1, padding: '10px 8px', borderRadius: 12, border: 'none', cursor: 'pointer',
+              fontFamily: FONT, fontSize: 13.5, fontWeight: active ? 800 : 600, transition: 'all 0.2s',
+              color: active ? '#04040b' : 'rgba(255,255,255,0.55)',
+              background: active ? `linear-gradient(135deg, ${C.teal}, #7af0d8)` : 'transparent',
             }}>
-              {searchResults.map((r, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    borderBottom: idx < searchResults.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                      {r.artwork && (
-                        <img src={r.artwork} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
-                      )}
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <button
-                            onClick={() => togglePreview(r)}
-                            style={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: '50%',
-                              background: 'rgba(255,255,255,0.06)',
-                              border: preview?.title === r.title ? '1px solid rgba(200,169,110,0.50)' : '1px solid rgba(255,255,255,0.12)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontFamily: "'DM Mono', monospace",
-                              fontSize: 9,
-                              color: preview?.title === r.title ? '#c8a96e' : 'rgba(255,255,255,0.5)',
-                              cursor: 'pointer',
-                              flexShrink: 0,
-                            }}
-                          >
-                            {preview?.title === r.title ? '■' : '▶'}
-                          </button>
-                          <div style={{ minWidth: 0 }}>
-                            <p style={{
-                              fontFamily: "Inter, sans-serif",
-                              fontWeight: 400,
-                              fontSize: 15,
-                              color: 'white',
-                              margin: 0,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}>{r.title}</p>
-                            <p style={{
-                              fontFamily: "'DM Mono', monospace",
-                              fontSize: 9,
-                              color: 'rgba(255,255,255,0.42)',
-                              margin: 0,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}>{r.artist} · {r.duration}</p>
+              {label}{id === 'mine' && mySongs.length ? ` · ${mySongs.length}` : ''}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* ── TAB: TOP PLAYLIST ── */}
+      {tab === 'top' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {sortedSongs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <MusicNoteIcon size={30} color="rgba(255,255,255,0.12)" />
+              <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                La playlist est vide — propose le premier son dans « Mes sons ».
+              </p>
+            </div>
+          ) : sortedSongs.map((song, i) => <SongRow key={song.id} song={song} rank={i + 1} />)}
+        </div>
+      )}
+
+      {/* ── TAB: MES SONS ── */}
+      {tab === 'mine' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Ajouter un son */}
+          {songsRemaining > 0 ? (
+            <div>
+              <p style={{ ...S.label, marginBottom: 8, letterSpacing: '0.01em', textTransform: 'none', fontSize: 13.5, fontWeight: 600, color: 'rgba(255,255,255,0.62)' }}>
+                Propose un son au DJ — <span style={{ color: C.gold, fontWeight: 700 }}>{songsRemaining} slot{songsRemaining > 1 ? 's' : ''} restant{songsRemaining > 1 ? 's' : ''}</span>
+              </p>
+              <div style={{ position: 'relative' }}>
+                <input
+                  style={S.input}
+                  placeholder="Rechercher un titre, un artiste…"
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  onFocus={e => (e.target.style.borderColor = C.teal)}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
+                />
+                <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
+                  {isSearching ? <span style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>…</span> : <SearchIcon />}
+                </span>
+              </div>
+
+              {searchResults.length > 0 && (
+                <div style={{ marginTop: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, overflow: 'hidden', background: 'rgba(6,8,16,0.92)' }}>
+                  {searchResults.map((r, idx) => (
+                    <div key={idx} style={{ borderBottom: idx < searchResults.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, gap: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 11, flex: 1, minWidth: 0 }}>
+                          {r.artwork && <img src={r.artwork} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />}
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                              <button onClick={() => togglePreview(r)} style={{
+                                width: 26, height: 26, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', fontSize: 9,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: 'rgba(255,255,255,0.06)', color: preview?.title === r.title ? C.gold : 'rgba(255,255,255,0.5)',
+                                border: preview?.title === r.title ? `1px solid ${C.gold}80` : '1px solid rgba(255,255,255,0.12)',
+                              }}>{preview?.title === r.title ? '■' : '▶'}</button>
+                              <div style={{ minWidth: 0 }}>
+                                <p style={{ fontFamily: FONT, fontWeight: 600, fontSize: 15, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</p>
+                                <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.artist} · {r.duration}</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        {preview?.title === r.title && (
-                          <div style={{ marginTop: 8, paddingLeft: 32 }}>
-                            <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 1, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: '33%', background: '#c8a96e', borderRadius: 1 }} />
-                            </div>
-                            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 3 }}>
-                              Pré-écoute 30s · iTunes
-                            </p>
-                          </div>
-                        )}
+                        <button onClick={() => addSong(r)} style={{
+                          width: 34, height: 34, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', fontSize: 20, lineHeight: 1,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#04040b',
+                          background: `linear-gradient(135deg, ${C.gold}, #e0c48a)`, border: 'none',
+                        }}>+</button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => addSong(r)}
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                        border: '1px solid rgba(200,169,110,0.45)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 16,
-                        color: '#c8a96e',
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                    >
-                      +
-                    </button>
+                  ))}
+                </div>
+              )}
+
+              {search.length >= 2 && !isSearching && searchResults.length === 0 && (
+                <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 10, textAlign: 'center' }}>Aucun résultat pour « {search} »</p>
+              )}
+            </div>
+          ) : (
+            <div style={{ ...S.card, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.teal, margin: 0 }}>
+                {ticketCount <= 1 ? 'Ton son est dans la playlist' : `${songsAdded} / ${ticketCount} slots utilisés`}
+              </p>
+              <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                Tu as utilisé tous tes slots · 1 son par billet réservé
+              </p>
+            </div>
+          )}
+
+          {/* Liste de mes sons */}
+          <div>
+            <p style={{ ...S.label, marginBottom: 10 }}>Mes sons proposés ({mySongs.length})</p>
+            {mySongs.length === 0 ? (
+              <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.4)', margin: 0, textAlign: 'center', padding: '16px 0' }}>
+                Tu n'as pas encore proposé de son.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {mySongs.map((song) => {
+                  const rank = sortedSongs.findIndex((s) => s.id === song.id) + 1
+                  return <SongRow key={song.id} song={song} rank={rank} />
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: RÈGLES ── */}
+      {tab === 'rules' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={S.card}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                ['Sons autorisés', `${ticketCount} son${ticketCount > 1 ? 's' : ''} — 1 par billet réservé`],
+                ['Likes disponibles', `${MAX_LIKES_PER_USER} likes au total pour cet événement`],
+                ['Un like par son', 'Tu ne peux liker un son qu\'une seule fois'],
+                ['Pas ton propre son', 'Impossible de liker un son que tu as ajouté'],
+                ['Le classement est indicatif', 'Il aide le DJ, mais ne décide pas à sa place'],
+              ].map(([t, d]) => (
+                <div key={t} style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+                  <span style={{ marginTop: 3, flexShrink: 0, color: C.teal }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <div>
+                    <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>{t}</p>
+                    <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', lineHeight: 1.45 }}>{d}</p>
                   </div>
                 </div>
               ))}
             </div>
-          )}
+          </div>
 
-          {search.length >= 2 && !isSearching && searchResults.length === 0 && (
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 8, textAlign: 'center' }}>
-              Aucun résultat pour "{search}"
-            </p>
-          )}
-        </div>
-      ) : (
-        <div style={{
-          ...S.card,
-          textAlign: 'center',
-          display: 'flex', flexDirection: 'column', gap: 4,
-        }}>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#4ee8c8', letterSpacing: '0.1em', margin: 0 }}>
-            {songsAdded} son{songsAdded > 1 ? 's' : ''} ajouté{songsAdded > 1 ? 's' : ''} sur {ticketCount}
-          </p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', margin: 0, letterSpacing: '0.06em' }}>
-            Tu as utilisé tous tes slots · 1 son par billet réservé
-          </p>
+          {/* DJ garde le contrôle final */}
+          <div style={{ ...S.card, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.28)', background: 'rgba(200,169,110,0.05)' }}>
+            <div style={{ marginTop: 2, flexShrink: 0 }}><HeadphonesIcon size={20} color={C.gold} /></div>
+            <div>
+              <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>{djName} garde le choix final</p>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0', lineHeight: 1.5 }}>
+                Le DJ peut ignorer la playlist, y ajouter ses propres sons ou retirer un contenu inapproprié. La playlist reste une suggestion de la salle.
+              </p>
+            </div>
+          </div>
         </div>
       )}
-
-      {/* DJ notice */}
-      <div style={{
-        ...S.card,
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 12,
-      }}>
-        <div style={{ marginTop: 2, flexShrink: 0 }}>
-          <HeadphonesIcon size={18} color="#c8a96e" />
-        </div>
-        <div>
-          {event.artists?.length > 0 ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {event.artists.map((a, i) => (
-                <span key={i} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white' }}>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#c8a96e', marginRight: 4, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    {a.role}
-                  </span>
-                  {a.name}
-                  {i < event.artists.length - 1 && (
-                    <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6 }}>·</span>
-                  )}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white', margin: 0 }}>
-              {event.dj || 'DJ'}
-            </p>
-          )}
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 4, letterSpacing: '0.05em' }}>
-            Le DJ peut ignorer ou ajouter ses propres sons. La playlist est indicative.
-          </p>
-        </div>
-      </div>
-
-      {/* Songs list */}
-      <div>
-        <p style={{ ...S.label, marginBottom: 12 }}>
-          Classement ({sortedSongs.length} son{sortedSongs.length !== 1 ? 's' : ''})
-        </p>
-        {sortedSongs.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '28px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <MusicNoteIcon size={28} color="rgba(255,255,255,0.10)" />
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: 0, letterSpacing: '0.1em' }}>
-              La playlist est vide — sois le premier à proposer un son
-            </p>
-          </div>
-        )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {sortedSongs.map((song, i) => (
-            <div
-              key={song.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '12px 14px',
-                borderRadius: 10,
-                border: i === 0 ? '1px solid rgba(200,169,110,0.30)' : '1px solid rgba(255,255,255,0.07)',
-                background: i === 0 ? 'rgba(200,169,110,0.05)' : 'rgba(8,10,20,0.35)',
-                transition: 'border-color 0.2s',
-              }}
-            >
-              <span style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 10,
-                fontWeight: 700,
-                width: 18,
-                textAlign: 'center',
-                flexShrink: 0,
-                color: i === 0 ? '#c8a96e' : 'rgba(255,255,255,0.2)',
-              }}>
-                {i + 1}
-              </span>
-
-              {/* Preview play button for ranked songs */}
-              {song.previewUrl ? (
-                <button
-                  onClick={() => togglePreview(song)}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: preview?.title === song.title ? '1px solid rgba(200,169,110,0.50)' : '1px solid rgba(255,255,255,0.10)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: 8,
-                    color: preview?.title === song.title ? '#c8a96e' : 'rgba(255,255,255,0.4)',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
-                >
-                  {preview?.title === song.title ? '■' : '▶'}
-                </button>
-              ) : (
-                <div style={{ width: 24, flexShrink: 0 }} />
-              )}
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontWeight: i === 0 ? 400 : 300,
-                  fontSize: 16,
-                  color: i === 0 ? 'white' : 'rgba(255,255,255,0.75)',
-                  margin: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {song.title}
-                </p>
-                <p style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 9,
-                  color: 'rgba(255,255,255,0.35)',
-                  margin: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {song.artist}
-                  {preview?.title === song.title && (
-                    <span style={{ marginLeft: 8, color: '#c8a96e' }}>▶ en cours</span>
-                  )}
-                </p>
-              </div>
-
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
-                {song.addedBy}
-              </span>
-
-              <button
-                onClick={() => toggleLike(song.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '5px 10px',
-                  borderRadius: 4,
-                  border: song.myLike ? '1px solid rgba(78,232,200,0.40)' : '1px solid rgba(255,255,255,0.10)',
-                  background: song.myLike ? 'rgba(78,232,200,0.08)' : 'transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  flexShrink: 0,
-                }}
-              >
-                <HeartIcon filled={song.myLike} size={11} color={song.myLike ? '#4ee8c8' : 'rgba(255,255,255,0.3)'} />
-                <span style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 10,
-                  color: song.myLike ? '#4ee8c8' : 'rgba(255,255,255,0.3)',
-                }}>
-                  {song.likes}
-                </span>
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }
