@@ -215,14 +215,14 @@ export default function PublicLanding() {
       <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes. Et tu débloques tout ça :">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 14 }}>
           {[
-            ['Réserve tes billets', 'Paiement sécurisé, billet instantané.', '/img_house.jpg'],
-            ['Ton QR code partout', 'Tes billets toujours dans ta poche.', '/media1.jpg'],
-            ['Recommandations', 'Des soirées selon tes goûts et ta ville.', '/img_afro.webp'],
-            ['Favoris', 'Sauvegarde les événements qui te plaisent.', '/media2.jpg'],
-            ['Messagerie', 'Parle aux organisateurs et prestataires.', '/img_techno.avif'],
-            ['Tes commandes', 'Précommandes et consos suivies.', '/media3.jpg'],
-            ['Des points', 'Chaque achat te rapproche d\'avantages.', '/img_lofi.jpg'],
-            ['Événements privés', 'Accède aux soirées sur invitation.', '/img_nuit.jpg'],
+            ['Réserve tes billets', 'Paiement sécurisé, billet instantané.', '/avantages/01_reserve_tes_billets.png'],
+            ['Ton QR code partout', 'Tes billets toujours dans ta poche.', '/avantages/02_ton_qr_code_partout.png'],
+            ['Recommandations', 'Des soirées selon tes goûts et ta ville.', '/avantages/03_recommandations.png'],
+            ['Favoris', 'Sauvegarde les événements qui te plaisent.', '/avantages/04_favoris.png'],
+            ['Messagerie', 'Parle aux organisateurs et prestataires.', '/avantages/05_messagerie.png'],
+            ['Tes commandes', 'Précommandes et consos suivies.', '/avantages/06_tes_commandes.png'],
+            ['Des points', 'Chaque achat te rapproche d\'avantages.', '/avantages/07_des_points.png'],
+            ['Événements privés', 'Accède aux soirées sur invitation.', '/avantages/08_evenements_prives.png'],
           ].map(([t, d, img], i) => (
             <Reveal key={t} delay={i * 40}>
               <div className="lb-card" style={{ ...card, position: 'relative', overflow: 'hidden', minHeight: 158, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '14px 15px' }}>
@@ -290,9 +290,9 @@ export default function PublicLanding() {
       <Section eyebrow="Encore plus" title="Ce que ton compte débloque">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
           {[
-            { t: 'Des points à chaque achat', d: 'Cumule des points sur tes billets — bientôt échangeables contre réductions, accès prioritaire et offres exclusives.', img: '/media2.jpg' },
-            { t: 'Recommandations perso', d: 'Des soirées selon ta ville, tes styles musicaux préférés et ce que tu as déjà réservé.', img: '/img_afro.webp' },
-            { t: 'Événements privés', d: 'Certaines soirées sont sur invitation. Un code te donne accès.', img: '/img_nuit.jpg', cta: true },
+            { t: 'Des points à chaque achat', d: 'Cumule des points sur tes billets — bientôt échangeables contre réductions, accès prioritaire et offres exclusives.', img: '/avantages/07_des_points.png' },
+            { t: 'Recommandations perso', d: 'Des soirées selon ta ville, tes styles musicaux préférés et ce que tu as déjà réservé.', img: '/avantages/03_recommandations.png' },
+            { t: 'Événements privés', d: 'Certaines soirées sont sur invitation. Un code te donne accès.', img: '/avantages/08_evenements_prives.png', cta: true },
           ].map((c, i) => (
             <Reveal key={c.t} delay={i * 70}>
               <div className="lb-card" style={{ ...card, position: 'relative', overflow: 'hidden', minHeight: 200, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 20 }}>

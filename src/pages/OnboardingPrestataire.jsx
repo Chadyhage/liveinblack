@@ -67,12 +67,22 @@ const TYPES = [
 ]
 
 const STEPS = [
-  { label: 'Type',       icon: '🎯' },
-  { label: 'Profil',     icon: '👤' },
-  { label: 'Spécifique', icon: '⚙️' },
-  { label: 'Paiement',   icon: '💳' },
-  { label: 'Documents',  icon: '📎' },
+  { label: 'Type' },
+  { label: 'Profil' },
+  { label: 'Spécifique' },
+  { label: 'Paiement' },
+  { label: 'Documents' },
 ]
+
+// Icônes SVG (au lieu d'emojis) par type de prestataire — style ligne cohérent avec l'app
+function TypeIcon({ type, size = 22 }) {
+  const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  if (type === 'artiste')  return <svg {...p}><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+  if (type === 'salle')    return <svg {...p}><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/><path d="M9 11h.01M15 11h.01"/></svg>
+  if (type === 'materiel') return <svg {...p}><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><circle cx="12" cy="6" r="1"/></svg>
+  if (type === 'food')     return <svg {...p}><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M11 2v20M11 8c0-3 1.5-6 4-6s4 3 4 6-1.5 4-4 4"/></svg>
+  return null
+}
 
 const ANON_DRAFT_KEY = 'lib_anon_prest_draft_id'
 
@@ -507,19 +517,28 @@ export default function OnboardingPrestataire() {
 
   return (
     <Layout>
+      <style>{`.lib-onb-card{transition:transform .18s ease,border-color .2s ease,background .2s ease}.lib-onb-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.2)}`}</style>
       <div style={S.page}>
+        {/* Bouton retour — quitte l'étape courante (ou l'onboarding depuis l'étape 1) */}
+        <button type="button" onClick={() => step > 0 ? prev() : navigate('/accueil')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 18, padding: '9px 15px 9px 12px', borderRadius: 999, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', fontFamily: DM, fontSize: 13.5, fontWeight: 600, color: 'rgba(255,255,255,0.72)', transition: 'all .18s ease' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.28)'; e.currentTarget.style.color = '#fff' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.72)' }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Retour
+        </button>
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <span style={{ width: 28, height: 1, background: PURPLE, flexShrink: 0, display: 'block' }} />
-            <span style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: PURPLE }}>
+            <span style={{ width: 28, height: 2, borderRadius: 2, background: PURPLE, flexShrink: 0, display: 'block' }} />
+            <span style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: PURPLE }}>
               Demande d'espace
             </span>
           </div>
-          <h1 style={{ fontFamily: CG, fontWeight: 300, fontSize: 'clamp(1.8rem,8vw,2.8rem)', color: 'rgba(255,255,255,0.92)', margin: 0, lineHeight: 1.1 }}>
+          <h1 style={{ fontFamily: CG, fontWeight: 800, fontSize: 'clamp(2rem,8vw,3rem)', letterSpacing: '-1px', color: '#fff', margin: 0, lineHeight: 1.05 }}>
             Compte Prestataire
           </h1>
-          <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 8, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 10, lineHeight: 1.6 }}>
             Complète ton dossier. Tu peux sauvegarder et revenir plus tard.
           </p>
         </div>
@@ -565,27 +584,36 @@ export default function OnboardingPrestataire() {
 
         {/* ── STEP 0: Choix du type ── */}
         {step === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ fontFamily: DM, fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontFamily: DM, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>
               Quel type de prestataire es-tu ?
             </p>
-            {TYPES.map(t => (
-              <button key={t.key} onClick={() => update('prestataireType', t.key)} style={{
-                padding: '16px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
-                background: f.prestataireType === t.key ? t.color + '12' : 'rgba(8,10,20,0.55)',
-                border: f.prestataireType === t.key ? `1px solid ${t.color}55` : '1px solid rgba(255,255,255,0.08)',
-                display: 'flex', alignItems: 'center', gap: 14, transition: 'all 0.2s',
-              }}>
-                <span style={{ fontSize: 24, flexShrink: 0 }}>{t.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: DM, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: f.prestataireType === t.key ? t.color : 'rgba(255,255,255,0.7)', margin: '0 0 4px' }}>{t.label}</p>
-                  <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: 0, letterSpacing: '0.04em' }}>{t.desc}</p>
-                </div>
-                {f.prestataireType === t.key && (
-                  <span style={{ color: t.color, fontSize: 16, flexShrink: 0 }}>✓</span>
-                )}
-              </button>
-            ))}
+            {TYPES.map(t => {
+              const sel = f.prestataireType === t.key
+              return (
+                <button key={t.key} onClick={() => update('prestataireType', t.key)} className="lib-onb-card" style={{
+                  padding: '17px 18px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
+                  background: sel ? t.color + '14' : 'rgba(255,255,255,0.025)',
+                  border: sel ? `1px solid ${t.color}66` : '1px solid rgba(255,255,255,0.09)',
+                  display: 'flex', alignItems: 'center', gap: 15, transition: 'all 0.2s',
+                }}>
+                  <span style={{
+                    width: 46, height: 46, borderRadius: 13, flexShrink: 0,
+                    background: `${t.color}1a`, border: `1px solid ${t.color}3a`, color: t.color,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <TypeIcon type={t.key} />
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: DM, fontSize: 16, fontWeight: 700, letterSpacing: '-0.2px', color: '#fff', margin: '0 0 3px' }}>{t.label}</p>
+                    <p style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.4 }}>{t.desc}</p>
+                  </div>
+                  {sel
+                    ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
+                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>}
+                </button>
+              )
+            })}
             {errors.prestataireType && <p style={S.error}>{errors.prestataireType}</p>}
           </div>
         )}

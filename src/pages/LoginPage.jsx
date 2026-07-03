@@ -930,7 +930,7 @@ export default function LoginPage() {
                   borderRadius: '14px',
                 }}>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '6px' }}>
-                    {regRole === 'organisateur' ? '🎪 Espace Organisateur' : '🎤 Espace Prestataire'}
+                    {regRole === 'organisateur' ? 'Espace Organisateur' : 'Espace Prestataire'}
                   </p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.55 }}>
                     Ton compte débloque l'espace <span style={{ color: '#c8a96e', fontWeight: 600 }}>{ROLES[regRole]?.label}</span> après validation par l'équipe LIVEINBLACK (généralement moins de 24h). Ton interface client reste disponible — tu basculeras entre tes interfaces depuis le menu.

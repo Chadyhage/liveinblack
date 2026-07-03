@@ -386,18 +386,26 @@ export default function OnboardingOrganisateur() {
   return (
     <Layout>
       <div style={S.page}>
+        {/* Bouton retour — quitte l'étape courante (ou l'onboarding depuis l'étape 1) */}
+        <button type="button" onClick={() => step > 0 ? prev() : navigate('/accueil')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 18, padding: '9px 15px 9px 12px', borderRadius: 999, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', fontFamily: DM, fontSize: 13.5, fontWeight: 600, color: 'rgba(255,255,255,0.72)', transition: 'all .18s ease' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.28)'; e.currentTarget.style.color = '#fff' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.72)' }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Retour
+        </button>
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <span style={{ width: 28, height: 1, background: GOLD, flexShrink: 0, display: 'block' }} />
-            <span style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: GOLD }}>
+            <span style={{ width: 28, height: 2, borderRadius: 2, background: GOLD, flexShrink: 0, display: 'block' }} />
+            <span style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD }}>
               Demande d'espace
             </span>
           </div>
-          <h1 style={{ fontFamily: CG, fontWeight: 300, fontSize: 'clamp(1.8rem,8vw,2.8rem)', color: 'rgba(255,255,255,0.92)', margin: 0, lineHeight: 1.1 }}>
+          <h1 style={{ fontFamily: CG, fontWeight: 800, fontSize: 'clamp(2rem,8vw,3rem)', letterSpacing: '-1px', color: '#fff', margin: 0, lineHeight: 1.05 }}>
             Compte Organisateur
           </h1>
-          <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 8, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 10, lineHeight: 1.6 }}>
             Complète ton dossier. Tu peux sauvegarder et revenir plus tard.
           </p>
         </div>
