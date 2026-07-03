@@ -61,13 +61,12 @@ async function doEmailLogin(email, password, role = null) {
     // their account is verified by the admin validation process instead.
     // So skip the emailVerified check entirely for these roles (at any status).
     const isOrgOrPrest = profile.role === 'organisateur' || profile.role === 'prestataire'
-    // Email non vérifié ≠ blocage : la délivrabilité des emails Firebase par
-    // défaut est trop aléatoire pour conditionner l'accès. On laisse entrer
-    // et le profil garde emailVerified:false (rappel possible dans l'app).
-    void isOrgOrPrest
     if (!isSuperAdmin) {
-      // pending / draft → allow login, OnboardingGuard handles redirect to /mon-dossier or /inscription
       if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
+      if (!isOrgOrPrest && !cred.user.emailVerified) {
+        await auth.signOut()
+        throw { code: 'auth/email-not-verified' }
+      }
     }
     // Force agent role for super admin — override any corrupted data in Firestore
     if (isSuperAdmin) {
@@ -102,6 +101,10 @@ async function doEmailLogin(email, password, role = null) {
     }
     setDoc(doc(db, 'users', cred.user.uid), agentObj).catch(() => {})
     return agentObj
+  }
+  if (!cred.user.emailVerified) {
+    await auth.signOut()
+    throw { code: 'auth/email-not-verified' }
   }
   return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', activeRole: 'user', enabledRoles: ['user'], status: 'active', emailVerified: true }
 }
@@ -232,12 +235,9 @@ async function doEmailRegister(data) {
     return isSuperAdmin ? userObj : { ...userObj, _pendingOrgOnboarding: baseRole }
   }
 
-  // Clients : connexion immédiate après inscription. L'email de vérification
-  // est envoyé (ci-dessus) mais ne BLOQUE plus l'accès — la délivrabilité des
-  // emails Firebase par défaut est trop aléatoire (testé : jamais reçu), et
-  // bloquer l'inscription dessus tue la conversion. Les organisateurs et
-  // prestataires passent par la validation admin de toute façon.
-  return userObj
+  // Client : ne PAS connecter — obliger la vérification email d'abord
+  await auth.signOut()
+  throw { code: 'auth/email-not-verified', _registeredEmail: email }
 }
 
 // ─── Country dial codes (source partagée : src/data/dialCodes.js) ───────────
@@ -499,10 +499,8 @@ export default function LoginPage() {
         navigate('/accueil')
       }
     } catch (err) {
-      if (err.code === 'auth/email-unverified-ghost') {
-        // Un compte non vérifié existe déjà avec cet email — montrer l'écran de vérification
-        // avec option de renvoyer le mail plutôt qu'un message d'erreur confus
-        setUnverifiedEmail(regEmail)
+      if (err.code === 'auth/email-unverified-ghost' || err.code === 'auth/email-not-verified') {
+        setUnverifiedEmail(err._registeredEmail || regEmail)
       } else {
         setError(getFirebaseError(err.code))
       }
@@ -542,11 +540,13 @@ export default function LoginPage() {
         setResendSent(true)
         return
       }
-      // Si pas de currentUser (venu du flow login), utiliser sendPasswordResetEmail comme fallback
-      // pour que l'utilisateur puisse au moins récupérer l'accès
       if (unverifiedEmail) {
-        const { sendPasswordResetEmail } = await import('firebase/auth')
-        await sendPasswordResetEmail(auth, unverifiedEmail)
+        const { fetchSignInMethodsForEmail } = await import('firebase/auth')
+        const methods = await fetchSignInMethodsForEmail(auth, unverifiedEmail)
+        if (methods.length > 0) {
+          const { sendPasswordResetEmail } = await import('firebase/auth')
+          await sendPasswordResetEmail(auth, unverifiedEmail)
+        }
         setResendSent(true)
       }
     } catch {}
@@ -583,7 +583,7 @@ export default function LoginPage() {
             </p>
             {[
               '1. Ouvre ta boîte mail',
-              '2. Cherche un email de noreply@liveinblack.com',
+              '2. Cherche un email de LIVEINBLACK',
               '3. Clique sur le lien dans cet email',
               '4. Reviens ici et connecte-toi',
             ].map((step) => (
@@ -594,7 +594,7 @@ export default function LoginPage() {
             L'email peut arriver dans les spams / courriers indésirables.
           </p>
           {resendSent && (
-            <p style={S.successText}>Email renvoyé, vérifie ta boîte.</p>
+            <p style={S.successText}>Email envoyé, vérifie ta boîte (et les spams).</p>
           )}
           <button onClick={handleResendVerification}
             style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', letterSpacing: '0.2em', color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
