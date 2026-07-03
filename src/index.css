@@ -363,10 +363,12 @@
     .tonight-card-img { height: 180px; }
   }
 
-  /* ── Transition d'entrée des pages (changement d'onglet) ── */
+  /* ── Transition d'entrée des pages (changement d'onglet / de vue) ── */
   .lib-page { animation: lib-page-in 0.34s cubic-bezier(0.22,0.9,0.3,1) both; }
+  .lib-tab-content { animation: lib-tab-in 0.28s cubic-bezier(0.22,0.9,0.3,1) both; }
   @keyframes lib-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .lib-page { animation: none; } }
+  @keyframes lib-tab-in  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .lib-page, .lib-tab-content { animation: none; } }
 }
 
 /* ─── Animations ───────────────────────────────────────────────────────────── */

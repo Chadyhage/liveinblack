@@ -220,19 +220,20 @@ function InputField({ label, value, onChange, placeholder, type = 'text', error,
   )
 }
 
-function Toggle({ value, onChange }) {
+function Toggle({ value, onChange, disabled = false }) {
   return (
     <div
-      onClick={onChange}
+      onClick={disabled ? undefined : onChange}
       style={{
         width: 44,
         height: 24,
         borderRadius: 12,
         background: value ? '#4ee8c8' : 'rgba(255,255,255,0.08)',
         position: 'relative',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'background 0.2s',
         flexShrink: 0,
+        opacity: disabled ? 0.45 : 1,
       }}
     >
       <div style={{
@@ -773,6 +774,14 @@ export default function MesEvenementsPage() {
   // certains champs sont verrouillés (date, prix, lieu, etc.)
   const editingBookingCount = editingEventId ? getEventBookingCount(editingEventId) : 0
   const isLocked = editingBookingCount > 0
+  // Précommandes existantes → verrouiller le menu et le toggle précommande
+  const hasPreorders = (() => {
+    if (!editingEventId) return false
+    try {
+      const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+      return all.some(b => b.eventId === String(editingEventId) && b.preorderSummary?.length > 0)
+    } catch { return false }
+  })()
   const editingEventCancelled = (() => {
     if (!editingEventId) return false
     const ev = createdEvents.find(e => e.id === editingEventId)
@@ -1672,7 +1681,7 @@ export default function MesEvenementsPage() {
                 {editingBookingCount} billet{editingBookingCount > 1 ? 's' : ''} déjà vendu{editingBookingCount > 1 ? 's' : ''}
               </p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
-                Pour ne pas léser les acheteurs, certains champs sont verrouillés (date, heures, lieu, prix existants, type d'événement, âge minimum). Tu peux toujours modifier la description, l'affiche, les artistes et la date de clôture.
+                Pour ne pas léser les acheteurs, certains champs sont verrouillés (date, heures, lieu, prix existants, type d'événement, âge minimum, options, date de publication). Tu peux toujours modifier la description, l'affiche, les artistes et la date de clôture.
               </p>
             </div>
           </div>
@@ -1704,7 +1713,7 @@ export default function MesEvenementsPage() {
 
         {/* ── Step 0: Bases ── */}
         {createStep === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* Image upload */}
             <div>
@@ -2004,7 +2013,7 @@ export default function MesEvenementsPage() {
 
         {/* ── Step 1: Places & Prix ── */}
         {createStep === 1 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Tes types de places</p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Configure chaque type de place que tu veux proposer.</p>
@@ -2102,7 +2111,7 @@ export default function MesEvenementsPage() {
                       value={place.groupType === 'group' ? '1' : (place.maxPerAccount || '')}
                       onChange={e => place.groupType !== 'group' && setPlaces(places.map((p, j) => j === i ? { ...p, maxPerAccount: e.target.value } : p))}
                       style={place.groupType === 'group' ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
-                      locked={isReadOnly}
+                      locked={placeHasSales || isReadOnly}
                     />
                     {place.groupType === 'group' && (
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(78,232,200,0.6)', letterSpacing: '0.08em', marginTop: 4 }}>
@@ -2118,11 +2127,15 @@ export default function MesEvenementsPage() {
                   </div>
                   <Toggle
                     value={place.groupType === 'group'}
-                    onChange={() => setPlaces(places.map((p, j) =>
-                      j === i
-                        ? { ...p, groupType: p.groupType === 'group' ? 'solo' : 'group', maxPerAccount: p.groupType !== 'group' ? 1 : p.maxPerAccount }
-                        : p
-                    ))}
+                    onChange={() => {
+                      if (placeHasSales || isReadOnly) return
+                      setPlaces(places.map((p, j) =>
+                        j === i
+                          ? { ...p, groupType: p.groupType === 'group' ? 'solo' : 'group', maxPerAccount: p.groupType !== 'group' ? 1 : p.maxPerAccount }
+                          : p
+                      ))
+                    }}
+                    disabled={placeHasSales || isReadOnly}
                   />
                 </div>
                 {place.groupType === 'group' && (
@@ -2186,7 +2199,7 @@ export default function MesEvenementsPage() {
 
         {/* ── Step 2: Lieu & Infos pratiques ── */}
         {createStep === 2 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Lieu & Infos pratiques</p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Indique où se déroulera ton événement.</p>
@@ -2281,7 +2294,7 @@ export default function MesEvenementsPage() {
 
         {/* ── Step 3: Options avancées ── */}
         {createStep === 3 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Options avancées</p>
             {/* QR Code — toujours actif, non modifiable */}
             <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(78,232,200,0.15)' }}>
@@ -2299,20 +2312,33 @@ export default function MesEvenementsPage() {
             {[
               { key: 'playlist', label: 'Playlist interactive', desc: '1 son par ticket — vote par likes' },
               { key: 'preorder', label: 'Précommande de consommations', desc: "Clients commandent à l'avance" },
-            ].map((opt) => (
-              <div key={opt.key} style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+            ].map((opt) => {
+              const optLocked = isLocked || isReadOnly || (opt.key === 'preorder' && hasPreorders)
+              return (
+              <div key={opt.key} style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(optLocked ? { borderColor: 'rgba(200,169,110,0.18)' } : {}) }}>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>{opt.label}</p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>{opt.desc}</p>
+                  {optLocked && (
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(200,169,110,0.7)', marginTop: 4 }}>
+                      {opt.key === 'preorder' && hasPreorders ? 'Verrouillé — des précommandes existent' : 'Verrouillé — billets déjà vendus'}
+                    </p>
+                  )}
                 </div>
-                <Toggle value={options[opt.key]} onChange={() => setOptions(o => ({ ...o, [opt.key]: !o[opt.key] }))} />
+                <Toggle value={options[opt.key]} onChange={() => setOptions(o => ({ ...o, [opt.key]: !o[opt.key] }))} disabled={optLocked} />
               </div>
-            ))}
+            )})}
             {options.preorder && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, ...(hasPreorders ? { opacity: 0.6, pointerEvents: 'none' } : {}) }}>
                 <div style={{ borderTop: '1px solid rgba(200,169,110,0.15)', paddingTop: 16 }}>
                   <p style={{ ...S.label, color: '#c8a96e', marginBottom: 4 }}>Définir ta carte / menu</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
+                  {hasPreorders ? (
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(200,169,110,0.8)', marginBottom: 12 }}>
+                      Menu verrouillé — des clients ont déjà passé des précommandes.
+                    </p>
+                  ) : (
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
+                  )}
                   {menuItems.map((item, i) => (
                     <MenuItemEditor
                       key={i}
@@ -2354,11 +2380,12 @@ export default function MesEvenementsPage() {
                 <input
                   type="datetime-local"
                   value={publishAt}
-                  onChange={e => setPublishAt(e.target.value)}
-                  style={{ ...S.inputBase, colorScheme: 'dark' }}
+                  onChange={e => { if (!isLocked && !isReadOnly) setPublishAt(e.target.value) }}
+                  disabled={isLocked || isReadOnly}
+                  style={{ ...S.inputBase, colorScheme: 'dark', ...(isLocked || isReadOnly ? { opacity: 0.55, cursor: 'not-allowed' } : {}) }}
                 />
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
-                  L'événement apparaîtra sur le site à cette date/heure. Laisse vide pour publier immédiatement.
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: isLocked ? 'rgba(200,169,110,0.7)' : 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
+                  {isLocked ? 'Verrouillé — l\'événement est déjà publié.' : 'L\'événement apparaîtra sur le site à cette date/heure. Laisse vide pour publier immédiatement.'}
                 </p>
               </div>
               <div>
@@ -2394,7 +2421,7 @@ export default function MesEvenementsPage() {
 
         {/* ── Step 4: Récapitulatif & Publier ── */}
         {createStep === 4 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Récapitulatif & Publication</p>
 
             {imagePreview && (

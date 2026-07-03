@@ -760,7 +760,7 @@ export default function AgentPage() {
         </div>
       </div>
 
-      <div style={{ padding: '16px 16px 8px', maxWidth: 760, margin: '0 auto' }}>
+      <div key={tab} className="lib-tab-content" style={{ padding: '16px 16px 8px', maxWidth: 760, margin: '0 auto' }}>
 
         {/* ══════════════════════════════════════════════
             DASHBOARD

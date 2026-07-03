@@ -522,17 +522,9 @@ export default function EventDetailPage() {
   })()
 
   const isEventClosed = (() => {
-    // Cas 1 : closingDate explicite — on vérifie qu'il est cohérent
-    // (un closingDate avant le début de l'event qui n'a même pas eu lieu = config foireuse, on ignore)
     if (event.closingDate) {
-      const closeTs = new Date(event.closingDate).getTime()
-      // Si l'event est encore dans le futur ET que closingDate est dans le passé,
-      // c'est une mauvaise config (l'organisateur a probablement saisi par erreur).
-      // On considère que l'event est fermé seulement si l'event lui-même est passé.
-      if (eventEndTimestamp > now) return false  // event futur → on ignore closingDate pourri
-      return closeTs < now
+      return new Date(event.closingDate).getTime() < now
     }
-    // Cas 2 : pas de closingDate → fermer à la fin de l'event
     return eventEndTimestamp > 0 && eventEndTimestamp < now
   })()
   const bookingDisabled = isEventCancelled || isEventSoldOut || isEventClosed
@@ -1123,7 +1115,7 @@ export default function EventDetailPage() {
         </div>
 
         {/* ── Tab Content ───────────────────────────────────────────────────── */}
-        <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div key={activeTab} className="lib-tab-content" style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* ──────────────── RÉSERVATION ──────────────────────────────────── */}
           {activeTab === 'Réservation' && (

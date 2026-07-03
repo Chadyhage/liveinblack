@@ -631,6 +631,7 @@ function PrestataireDashboard({ user, navigate }) {
           ))}
         </div>
 
+        <div key={tab} className="lib-tab-content">
         {/* ── APERÇU TAB ── */}
         {tab === 'apercu' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1117,6 +1118,7 @@ function PrestataireDashboard({ user, navigate }) {
           {toast}
         </div>
       )}
+      </div>
     </Layout>
   )
 }

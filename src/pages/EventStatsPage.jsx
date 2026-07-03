@@ -13,7 +13,7 @@ import {
 import './EventStatsPage.css'
 
 const TABS = [
-  ['overview', 'Vue d’ensemble'],
+  ['overview', "Vue d'ensemble"],
   ['sales', 'Ventes'],
   ['participants', 'Participants'],
   ['checkin', 'Check-in'],
@@ -91,7 +91,7 @@ function StatsFunnel({ stats }) {
   const steps = [
     { key: 'cap', label: 'Capacité totale', val: cap ? number(cap) : '—', sub: 'places dans la salle', bar: 100, tone: 'muted', note: null },
     { key: 'emit', label: 'Billets émis', val: number(emitted), sub: 'vendus + invitations', bar: cap ? pct(emitted, cap) : (emitted ? 100 : 0), tone: 'teal', note: fill != null ? { rate: `${fill} %`, txt: 'de la capacité — taux de remplissage' } : null },
-    { key: 'pres', label: 'Entrées confirmées', val: number(present), sub: 'scannées à l’entrée', bar: cap ? pct(present, cap) : (present ? 100 : 0), tone: 'gold', note: attend != null ? { rate: `${attend} %`, txt: 'des billets émis — taux de présence' } : { rate: '—', txt: 'check-in pas encore commencé' } },
+    { key: 'pres', label: 'Entrées confirmées', val: number(present), sub: "scannées à l'entrée", bar: cap ? pct(present, cap) : (present ? 100 : 0), tone: 'gold', note: attend != null ? { rate: `${attend} %`, txt: 'des billets émis — taux de présence' } : { rate: '—', txt: 'check-in pas encore commencé' } },
   ]
   return (
     <div className="event-stats-funnel" role="img" aria-label={`Capacité ${cap}, billets émis ${emitted}, entrées ${present}`}>
@@ -318,8 +318,8 @@ export default function EventStatsPage() {
     URL.revokeObjectURL(url)
   }
 
-  if (access === 'checking') return <Layout hideNav><div className="event-stats-state">Vérification de l’événement…</div></Layout>
-  if (!event || access === 'denied') return <Layout hideNav><div className="event-stats-state"><strong>Statistiques indisponibles</strong><p>Cet événement n’existe pas dans ton espace ou tu n’es pas autorisé à consulter ses données.</p><button onClick={() => navigate('/mes-evenements')}>Retour à mes événements</button></div></Layout>
+  if (access === 'checking') return <Layout hideNav><div className="event-stats-state">Vérification de l'événement…</div></Layout>
+  if (!event || access === 'denied') return <Layout hideNav><div className="event-stats-state"><strong>Statistiques indisponibles</strong><p>Cet événement n'existe pas dans ton espace ou tu n'es pas autorisé à consulter ses données.</p><button onClick={() => navigate('/mes-evenements')}>Retour à mes événements</button></div></Layout>
 
   return (
     <Layout hideNav>
@@ -344,18 +344,19 @@ export default function EventStatsPage() {
         </nav>
 
         <section className="event-stats-filters" aria-label="Filtres statistiques">
-          <label>Période<select value={range} onChange={e => setRange(e.target.value)}><option value="all">Depuis l’ouverture</option><option value="30d">30 derniers jours</option><option value="7d">7 derniers jours</option></select></label>
+          <label>Période<select value={range} onChange={e => setRange(e.target.value)}><option value="all">Depuis l'ouverture</option><option value="30d">30 derniers jours</option><option value="7d">7 derniers jours</option></select></label>
           <label>Catégorie<select value={place} onChange={e => setPlace(e.target.value)}><option value="all">Toutes les catégories</option>{places.map(name => <option key={name} value={name}>{name}</option>)}</select></label>
           <p>{number(stats.assignedTickets)} résultat{stats.assignedTickets > 1 ? 's' : ''} · filtres appliqués à toute la page</p>
         </section>
 
         {error && <div className="event-stats-error">{error}</div>}
 
+        <div key={activeTab} className="lib-tab-content">
         {activeTab === 'overview' && (
           <section className="event-stats-flow">
             <div className="event-stats-flow-head">
               <h2>Parcours des billets</h2>
-              <p>De la salle à l’entrée : combien de places vendues, combien de personnes réellement venues.</p>
+              <p>De la salle à l'entrée : combien de places vendues, combien de personnes réellement venues.</p>
             </div>
             <StatsFunnel stats={stats} />
           </section>
@@ -389,19 +390,20 @@ export default function EventStatsPage() {
         {activeTab === 'sales' && (
           <section className="event-stats-lower-grid">
             <div style={{ display: 'grid', gap: 12 }}><article className="event-stats-panel"><h2>Performance des catégories</h2><PlaceBreakdown rows={stats.byPlace} total={stats.assignedTickets} /></article><article className="event-stats-panel event-stats-summary-list"><h2>Précommandes consommations</h2>{stats.preorderItems.length ? <dl>{stats.preorderItems.map(item => <div key={item.name}><dt>{item.emoji} {item.name} · ×{item.quantity}</dt><dd>{money(item.revenue)}</dd></div>)}</dl> : <EmptyState title="Aucune précommande" body="Les boissons et snacks commandés avec les billets apparaîtront ici." />}</article></div>
-            <article className="event-stats-panel event-stats-summary-list"><h2>Lecture des revenus</h2><dl><div><dt>Billetterie estimée</dt><dd>{money(stats.estimatedRevenue)}</dd></div><div><dt>Précommandes</dt><dd>{money(stats.preorderRevenue)}</dd></div><div><dt>Total estimé</dt><dd>{money(stats.totalEstimatedRevenue)}</dd></div><div><dt>Revenu moyen par billet payant</dt><dd>{money(stats.averageRevenuePerPaidTicket)}</dd></div><div><dt>Billets payants</dt><dd>{number(stats.paidTickets)}</dd></div><div><dt>Billets gratuits</dt><dd>{number(stats.freeTickets)}</dd></div></dl><p>Les remboursements, remises et frais Stripe ne sont pas déduits tant qu’ils ne sont pas exposés à l’organisateur.</p></article>
+            <article className="event-stats-panel event-stats-summary-list"><h2>Lecture des revenus</h2><dl><div><dt>Billetterie estimée</dt><dd>{money(stats.estimatedRevenue)}</dd></div><div><dt>Précommandes</dt><dd>{money(stats.preorderRevenue)}</dd></div><div><dt>Total estimé</dt><dd>{money(stats.totalEstimatedRevenue)}</dd></div><div><dt>Revenu moyen par billet payant</dt><dd>{money(stats.averageRevenuePerPaidTicket)}</dd></div><div><dt>Billets payants</dt><dd>{number(stats.paidTickets)}</dd></div><div><dt>Billets gratuits</dt><dd>{number(stats.freeTickets)}</dd></div></dl><p>Les remboursements, remises et frais Stripe ne sont pas déduits tant qu'ils ne sont pas exposés à l'organisateur.</p></article>
           </section>
         )}
 
         {activeTab === 'participants' && (
-          <section className="event-stats-section-stack"><div className="event-stats-metrics compact"><MetricCard definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.uniqueBuyers)} acheteur${stats.uniqueBuyers > 1 ? 's' : ''} identifié${stats.uniqueBuyers > 1 ? 's' : ''}`} /><MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="présents confirmés" /><MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'taux de présence' : 'en attente du check-in'} /></div><article className="event-stats-panel"><h2>Participants</h2><TicketTable event={event} tickets={stats.tickets} /></article><div className="event-stats-note">Les données démographiques ne sont pas collectées lors de l’achat. L’interface affiche « non disponible » plutôt qu’un faux 0 %.</div></section>
+          <section className="event-stats-section-stack"><div className="event-stats-metrics compact"><MetricCard definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.uniqueBuyers)} acheteur${stats.uniqueBuyers > 1 ? 's' : ''} identifié${stats.uniqueBuyers > 1 ? 's' : ''}`} /><MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="présents confirmés" /><MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'taux de présence' : 'en attente du check-in'} /></div><article className="event-stats-panel"><h2>Participants</h2><TicketTable event={event} tickets={stats.tickets} /></article><div className="event-stats-note">Les données démographiques ne sont pas collectées lors de l'achat. L'interface affiche « non disponible » plutôt qu'un faux 0 %.</div></section>
         )}
 
         {activeTab === 'checkin' && (
           <section className="event-stats-section-stack"><div className="event-stats-metrics compact"><MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="scans uniques valides" /><MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'sur billets attribués' : 'non fiable pour le moment'} /><MetricCard definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(Math.max(0, stats.assignedTickets - stats.present))} helper="billets non scannés" /></div><article className="event-stats-panel"><h2>Journal de présence</h2><TicketTable event={event} tickets={[...stats.tickets].sort((a, b) => Number(Boolean(b.checkedInAt)) - Number(Boolean(a.checkedInAt)))} showBuyer={false} /></article></section>
         )}
 
-        {activeTab === 'data' && <section className="event-stats-panel"><div className="event-stats-panel-heading"><div><h2>Données brutes</h2><p>Les identifiants acheteurs sont masqués à l’écran. L’export respecte les filtres actifs.</p></div><button onClick={exportCsv}>Exporter CSV</button></div><TicketTable event={event} tickets={stats.tickets} /></section>}
+        {activeTab === 'data' && <section className="event-stats-panel"><div className="event-stats-panel-heading"><div><h2>Données brutes</h2><p>Les identifiants acheteurs sont masqués à l'écran. L'export respecte les filtres actifs.</p></div><button onClick={exportCsv}>Exporter CSV</button></div><TicketTable event={event} tickets={stats.tickets} /></section>}
+        </div>
 
         {loading && <div className="event-stats-loading">Actualisation…</div>}
       </main>
