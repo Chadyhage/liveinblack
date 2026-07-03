@@ -282,6 +282,7 @@ function ScrollPhrase({ children, i = 0, color }) {
 const HERO_VIDEOS = [
   { src: '/discover.mp4', title: 'Vis chaque nuit.' },
   { src: '/discover3.mp4', title: 'Brûle la piste.' },
+  { src: '/discover4.mp4', title: 'Entre dans la nuit.' },
 ]
 
 // Marque LIB complète (étoile laser + œil + « LIB ») — pas juste l'étoile.
@@ -297,32 +298,28 @@ function LibMark({ size = 30 }) {
   )
 }
 
+// Galerie « coverflow » : les vidéos roulent en continu de l'arrière vers
+// l'avant. Transition fluide (transform + opacité) au clic ET auto-avance douce.
 function HeroVideoGallery() {
   const [idx, setIdx] = useState(0)
+  const [paused, setPaused] = useState(false)
   const n = HERO_VIDEOS.length
   const go = (d) => setIdx(i => (i + d + n) % n)
-  const prev = (idx - 1 + n) % n
-  const next = (idx + 1) % n
-  const cur = HERO_VIDEOS[idx]
 
-  const Peek = ({ i, side }) => (
-    <button onClick={() => setIdx(i)} aria-label="Vidéo suivante"
-      style={{
-        position: 'absolute', top: '50%', [side]: -2, transform: 'translateY(-50%)',
-        width: 64, height: '74%', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', padding: 0,
-        border: '1px solid rgba(255,255,255,0.1)', background: '#0b0d14', zIndex: 1,
-        boxShadow: '0 20px 40px -20px rgba(0,0,0,0.7)',
-      }}>
-      <video src={HERO_VIDEOS[i].src} muted playsInline preload="auto"
-        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, filter: 'blur(1px) saturate(0.85)' }} />
-      <div style={{ position: 'absolute', inset: 0, background: side === 'left' ? 'linear-gradient(90deg, transparent, rgba(4,4,11,0.7))' : 'linear-gradient(270deg, transparent, rgba(4,4,11,0.7))' }} />
-    </button>
-  )
+  // position relative de chaque vidéo par rapport au centre (…-1, 0, +1…)
+  const rel = (i) => { let r = ((i - idx) % n + n) % n; if (r > n / 2) r -= n; return r }
+
+  // Auto-avance continue (pause au survol) → « circule de façon continue »
+  useEffect(() => {
+    if (paused || n < 2) return
+    const t = setInterval(() => setIdx(i => (i + 1) % n), 4200)
+    return () => clearInterval(t)
+  }, [paused, n])
 
   const Arrow = ({ side, onClick }) => (
     <button onClick={onClick} aria-label={side === 'left' ? 'Précédent' : 'Suivant'} className="lib-press"
       style={{
-        position: 'absolute', top: '50%', [side]: -16, transform: 'translateY(-50%)', zIndex: 4,
+        position: 'absolute', top: '50%', [side]: 4, transform: 'translateY(-50%)', zIndex: 6,
         width: 38, height: 38, borderRadius: '50%', cursor: 'pointer',
         background: 'rgba(8,9,14,0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.15)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
@@ -334,34 +331,50 @@ function HeroVideoGallery() {
   )
 
   return (
-    <div style={{ position: 'relative', width: 380 }}>
-      <div style={{ position: 'absolute', inset: -30, background: 'radial-gradient(60% 55% at 50% 35%, rgba(78,232,200,0.16), transparent 70%)', filter: 'blur(20px)', pointerEvents: 'none' }} />
+    <div style={{ position: 'relative', width: 400, height: 388 }}
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <div style={{ position: 'absolute', inset: '-10px 0', background: 'radial-gradient(58% 52% at 50% 40%, rgba(78,232,200,0.16), transparent 70%)', filter: 'blur(22px)', pointerEvents: 'none' }} />
 
-      {/* Aperçus latéraux (vidéos qui suivent, en retrait) */}
-      {n > 1 && <Peek i={prev} side="left" />}
-      {n > 1 && <Peek i={next} side="right" />}
-
-      {/* Carte vidéo active (au centre) */}
-      <div style={{ position: 'relative', zIndex: 2, width: 300, margin: '0 auto' }}>
-        <div style={{ position: 'relative', borderRadius: 26, overflow: 'hidden', aspectRatio: '4 / 5', border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 40px 90px -24px rgba(0,0,0,0.78)' }}>
-          <video key={cur.src} src={cur.src} autoPlay loop muted playsInline
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,4,11,0.35) 0%, transparent 30%, rgba(4,4,11,0.88) 100%)' }} />
-          {/* logo LIB complet */}
-          <div style={{ position: 'absolute', top: 14, left: 14 }}><LibMark size={30} /></div>
-          {/* légende */}
-          <div style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4ee8c8', margin: '0 0 4px' }}>Live in black</p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0, lineHeight: 1.1 }}>{cur.title}</p>
+      {HERO_VIDEOS.map((v, i) => {
+        const r = rel(i)
+        const center = r === 0
+        const visible = Math.abs(r) <= 1
+        return (
+          <div key={v.src}
+            onClick={() => !center && setIdx(i)}
+            style={{
+              position: 'absolute', top: '50%', left: '50%', width: 288,
+              transform: `translate(-50%, -50%) translateX(${r * 128}px) scale(${center ? 1 : 0.74})`,
+              opacity: visible ? (center ? 1 : 0.5) : 0,
+              zIndex: center ? 4 : 1,
+              transition: 'transform 0.6s cubic-bezier(0.4,0,0.2,1), opacity 0.6s ease',
+              pointerEvents: visible ? 'auto' : 'none',
+              cursor: center ? 'default' : 'pointer',
+              filter: center ? 'none' : 'blur(1.5px) saturate(0.85) brightness(0.65)',
+            }}>
+            <div style={{ position: 'relative', borderRadius: 26, overflow: 'hidden', aspectRatio: '4 / 5', border: '1px solid rgba(255,255,255,0.14)', boxShadow: center ? '0 40px 90px -24px rgba(0,0,0,0.78)' : '0 20px 50px -24px rgba(0,0,0,0.7)' }}>
+              <video src={v.src} autoPlay loop muted playsInline preload="auto"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,4,11,0.35) 0%, transparent 30%, rgba(4,4,11,0.88) 100%)' }} />
+              {/* logo + légende : uniquement sur la carte centrale */}
+              {center && (
+                <>
+                  <div style={{ position: 'absolute', top: 14, left: 14 }}><LibMark size={30} /></div>
+                  <div style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4ee8c8', margin: '0 0 4px' }}>Live in black</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0, lineHeight: 1.1 }}>{v.title}</p>
+                  </div>
+                  <div style={{ position: 'absolute', top: 16, right: 14, display: 'flex', gap: 5 }}>
+                    {HERO_VIDEOS.map((_, j) => (
+                      <span key={j} style={{ width: j === idx ? 16 : 6, height: 6, borderRadius: 999, background: j === idx ? '#4ee8c8' : 'rgba(255,255,255,0.4)', transition: 'all 0.25s' }} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-          {/* points */}
-          <div style={{ position: 'absolute', top: 16, right: 14, display: 'flex', gap: 5 }}>
-            {HERO_VIDEOS.map((_, i) => (
-              <span key={i} style={{ width: i === idx ? 16 : 6, height: 6, borderRadius: 999, background: i === idx ? '#4ee8c8' : 'rgba(255,255,255,0.4)', transition: 'all 0.25s' }} />
-            ))}
-          </div>
-        </div>
-      </div>
+        )
+      })}
 
       {n > 1 && <Arrow side="left" onClick={() => go(-1)} />}
       {n > 1 && <Arrow side="right" onClick={() => go(1)} />}
@@ -402,8 +415,21 @@ function HeroGooeyText({ user, orgName, prestName }) {
     }
   }, [user?.name, user?.role, orgName, prestName])
 
+  // Taille adaptative : un nom long (ou nom de marque) doit tenir sur une ligne
+  // sans déborder de la colonne — on réduit la police selon le texte le plus long.
+  const longest = Math.max(...texts.map(t => (t || '').length))
+  const fontSize = longest >= 16 ? 'clamp(22px, 4vw, 38px)'
+    : longest >= 13 ? 'clamp(24px, 4.8vw, 44px)'
+    : longest >= 10 ? 'clamp(30px, 6.4vw, 54px)'
+    : longest >= 8 ? 'clamp(36px, 8.4vw, 68px)'
+    : 'clamp(42px, 11vw, 84px)'
+  const height = longest >= 16 ? 'clamp(28px, 4.6vw, 44px)'
+    : longest >= 13 ? 'clamp(30px, 5.4vw, 50px)'
+    : longest >= 10 ? 'clamp(36px, 7vw, 58px)'
+    : 'clamp(44px, 11.5vw, 84px)'
+
   return (
-    <div style={{ position: 'relative', height: 'clamp(46px, 11.5vw, 88px)', marginBottom: 0 }}>
+    <div style={{ position: 'relative', height, marginBottom: 0, maxWidth: '100%', overflow: 'visible' }}>
       <GooeyText
         texts={texts}
         textColors={colors}
@@ -412,10 +438,11 @@ function HeroGooeyText({ user, orgName, prestName }) {
         className="w-full h-full"
         textClassName="font-extrabold leading-none tracking-tight"
         textStyle={{
-          fontSize: 'clamp(42px, 11vw, 88px)',
+          fontSize,
           fontFamily: 'Inter, system-ui, sans-serif',
           letterSpacing: 'clamp(-1.5px, -0.04em, -3px)',
           lineHeight: 0.95,
+          whiteSpace: 'nowrap',
         }}
       />
     </div>
