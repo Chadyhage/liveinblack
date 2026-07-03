@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import AnimatedLogo from '../components/AnimatedLogo'
+import PublicNav from '../components/PublicNav'
 
 // ─── Page publique « Live in Black, c'est quoi ? » ───────────────────────────
 // Récit de la plateforme pour les visiteurs : la promesse, les 3 profils
@@ -12,7 +11,6 @@ const FONT = 'Inter, sans-serif'
 
 export default function PublicAbout() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const register = () => navigate('/connexion?mode=register')
 
   return (
@@ -28,24 +26,7 @@ export default function PublicAbout() {
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4) }
       `}</style>
 
-      {/* ══ NAVBAR ══ */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '9px 18px' }}>
-          <AnimatedLogo size={26} textScale={0.44} onClick={() => navigate('/accueil')} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button onClick={() => navigate('/evenements')} className="lb-navlink" style={navLink}>Événements</button>
-            <button onClick={() => navigate('/prestataires')} className="lb-navlink" style={navLink}>Prestataires</button>
-            {user ? (
-              <button onClick={() => navigate('/accueil')} style={{ ...navLink, color: C.teal }}>Mon espace</button>
-            ) : (
-              <>
-                <button onClick={() => navigate('/connexion')} style={navLink}>Connexion</button>
-                <button onClick={register} style={{ padding: '8px 15px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none', whiteSpace: 'nowrap' }}>Créer un compte</button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      <PublicNav />
 
       {/* ══ HERO ══ */}
       <section style={{ maxWidth: 820, margin: '0 auto', padding: '60px 22px 20px', textAlign: 'center' }}>
@@ -145,7 +126,6 @@ function Section({ eyebrow, title, children }) {
   )
 }
 
-const navLink = { background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.7)', padding: '8px 10px', whiteSpace: 'nowrap' }
 const card = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16 }
 const txt = { fontFamily: FONT, fontSize: 'clamp(15px,4vw,18px)', color: 'rgba(255,255,255,.7)', lineHeight: 1.7, textAlign: 'center', maxWidth: 640, margin: '0 auto' }
 const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none' }

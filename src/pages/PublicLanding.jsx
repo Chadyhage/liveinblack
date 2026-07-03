@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import AnimatedLogo from '../components/AnimatedLogo'
+import PublicNav from '../components/PublicNav'
+import { getAllProviderProfiles } from '../utils/services'
 import { play as playDisc, stop as stopDisc, subscribe as subMusic } from '../utils/musicEngine'
 
 // ─── Vitrine publique (utilisateur NON connecté) ─────────────────────────────
@@ -59,6 +60,21 @@ export default function PublicLanding() {
   const { openAuthModal } = useAuth()
   const events = useMemo(loadPublicEvents, [])
 
+  // Aperçu prestataires (annuaire cross-device) — mis en avant comme les events
+  const [providers, setProviders] = useState(() => getAllProviderProfiles().filter(p => p.name).slice(0, 4))
+  useEffect(() => {
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenProviders }) => {
+      unsub = listenProviders(remote => {
+        const byId = {}
+        for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
+        for (const p of remote) if (p.userId) byId[p.userId] = p
+        setProviders(Object.values(byId).filter(p => p.name).slice(0, 4))
+      })
+    }).catch(() => {})
+    return () => unsub()
+  }, [])
+
   const register = () => navigate('/connexion?mode=register')
   const login = (reason) => reason ? openAuthModal(reason) : navigate('/connexion')
   const gate = (reason) => openAuthModal(reason)
@@ -71,24 +87,8 @@ export default function PublicLanding() {
       background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.30), transparent 60%), radial-gradient(circle 820px at 96% 38%, rgba(78,232,200,.15), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.17), transparent 60%), radial-gradient(circle 1100px at 50% 45%, rgba(96,66,150,.13), transparent 70%), ${C.obsidian}`,
       backgroundAttachment: 'fixed',
     }}>
-      {/* ══ NAVBAR PUBLIQUE (vidéo d'ambiance + vrai logo) ══ */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 20, overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
-        <video autoPlay muted loop playsInline preload="auto" aria-hidden
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45, pointerEvents: 'none' }}>
-          <source src="/nav-ambience.mp4" type="video/mp4" />
-        </video>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(4,4,11,.85) 0%, rgba(4,4,11,.45) 45%, rgba(4,4,11,.86) 100%)', backdropFilter: 'blur(1.5px)' }} />
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '9px 18px' }}>
-          <AnimatedLogo size={26} textScale={0.44} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {[['Événements', () => navigate('/evenements')], ['Prestataires', () => navigate('/prestataires')], ['C\'est quoi ?', () => navigate('/c-est-quoi')]].map(([l, fn]) => (
-              <button key={l} onClick={fn} className="lb-navlink" style={navLink}>{l}</button>
-            ))}
-            <button onClick={() => login()} style={navLink}>Connexion</button>
-            <button onClick={register} style={{ padding: '8px 15px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none', whiteSpace: 'nowrap' }}>Créer un compte</button>
-          </div>
-        </div>
-      </nav>
+      {/* ══ NAVBAR PUBLIQUE unifiée (vidéo + onglet actif souligné) ══ */}
+      <PublicNav />
       <style>{`
         .lb-navlink{ display:none }
         @media(min-width:720px){ .lb-navlink{ display:inline-block } }
@@ -167,6 +167,45 @@ export default function PublicLanding() {
             </div>
             <div style={{ textAlign: 'center', marginTop: 22 }}>
               <button onClick={() => navigate('/evenements')} style={btnGhost}>Tout voir</button>
+            </div>
+          </>
+        )}
+      </Section>
+
+      {/* ══ PRESTATAIRES À LA UNE ══ */}
+      <Section eyebrow="L'annuaire" title="Les prestataires de la nuit" sub="DJ, salles, sono, boissons… Trouve le bon prestataire et contacte-le en un clic.">
+        {providers.length === 0 ? (
+          <div style={{ ...card, padding: 30, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
+            <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.65)', margin: 0 }}>Les premiers prestataires arrivent très vite.</p>
+            <button onClick={() => navigate('/prestataires')} style={{ ...btnGhost, marginTop: 16 }}>Voir l'annuaire</button>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 16 }}>
+              {providers.map((p, i) => {
+                const pc = PREST_CATS[p.prestataireType] || { color: C.gold, label: 'Prestataire', img: '/media2.jpg' }
+                return (
+                  <Reveal key={p.userId} delay={i * 60}>
+                    <div className="lb-card" style={{ ...card, overflow: 'hidden', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column' }} onClick={() => navigate('/prestataires')}>
+                      <div style={{ position: 'relative', height: 110, background: `url(${p.coverUrl || pc.img}) center/cover, ${C.obsidian}` }}>
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,9,14,.92), transparent 60%)' }} />
+                        <span style={{ position: 'absolute', top: 10, left: 10, fontFamily: FONT, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>{pc.label}</span>
+                        <div style={{ position: 'absolute', left: 12, bottom: -20, width: 46, height: 46, borderRadius: '50%', border: '2px solid #0b0d16', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 18, color: C.obsidian }}>
+                          {p.photoUrl ? <img src={p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (p.name?.[0]?.toUpperCase() || '?')}
+                        </div>
+                      </div>
+                      <div style={{ padding: '26px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, letterSpacing: '-.3px', color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
+                        {p.location && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '3px 0 0' }}>{p.location}</p>}
+                        <span style={{ marginTop: 'auto', paddingTop: 12, fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: C.teal }}>Voir le profil →</span>
+                      </div>
+                    </div>
+                  </Reveal>
+                )
+              })}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 22 }}>
+              <button onClick={() => navigate('/prestataires')} style={btnGhost}>Tous les prestataires</button>
             </div>
           </>
         )}
@@ -368,7 +407,12 @@ function DiscoTitle({ text, style }) {
 
 // ── Styles ──
 const accentSq = (c) => ({ display: 'block', width: 26, height: 26, borderRadius: 8, background: `linear-gradient(135deg, ${c}40, ${c}0d)`, border: `1px solid ${c}66` })
-const navLink = { background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.7)', padding: '8px 10px', whiteSpace: 'nowrap' }
+const PREST_CATS = {
+  prestation: { color: '#ff6b1a', label: 'Artiste & DJ', img: '/img_techno.avif' },
+  salle: { color: '#7b2fff', label: 'Salle & lieu', img: '/img_nuit.jpg' },
+  materiel: { color: '#00c9a7', label: 'Matériel & sono', img: '/media3.jpg' },
+  supermarche: { color: '#c8a96e', label: 'Boissons & conso', img: '/media1.jpg' },
+}
 const card = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16 }
 const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none' }
 const btnGhost = { padding: '13px 24px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.18)' }

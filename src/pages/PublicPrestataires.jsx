@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import AnimatedLogo from '../components/AnimatedLogo'
+import PublicNav from '../components/PublicNav'
 import { getAllProviderProfiles } from '../utils/services'
 
 // ─── Page publique PRESTATAIRES ──────────────────────────────────────────────
@@ -65,7 +65,6 @@ export default function PublicPrestataires() {
   }, [providers, query, activeCat])
 
   const register = () => navigate('/connexion?mode=register')
-  const login = () => navigate('/connexion')
   // Contact : connecté → messagerie ; sinon → gate de connexion
   const contact = (p) => {
     if (user) { navigate('/messagerie'); return }
@@ -91,25 +90,7 @@ export default function PublicPrestataires() {
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4); box-shadow:0 26px 60px -24px rgba(0,0,0,.85) }
       `}</style>
 
-      {/* ══ NAVBAR ══ */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '9px 18px' }}>
-          <AnimatedLogo size={26} textScale={0.44} onClick={() => navigate('/accueil')} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button onClick={() => navigate('/accueil')} className="lb-navlink" style={navLink}>Accueil</button>
-            <button onClick={() => navigate('/evenements')} className="lb-navlink" style={navLink}>Événements</button>
-            <button onClick={() => navigate('/c-est-quoi')} className="lb-navlink" style={navLink}>C'est quoi ?</button>
-            {user ? (
-              <button onClick={() => navigate('/proposer')} style={{ ...navLink, color: C.teal }}>Mon espace</button>
-            ) : (
-              <>
-                <button onClick={login} style={navLink}>Connexion</button>
-                <button onClick={register} style={{ padding: '8px 15px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none', whiteSpace: 'nowrap' }}>Créer un compte</button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      <PublicNav />
 
       {/* ══ HERO ══ */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 22px 8px', textAlign: 'center' }}>
@@ -153,7 +134,7 @@ export default function PublicPrestataires() {
             {filtered.map(p => {
               const c = catOf(p.prestataireType) || { color: C.gold, label: 'Prestataire', img: '/media2.jpg', icon: 'mic' }
               return (
-                <div key={p.userId} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div key={p.userId} className="lb-card" style={{ ...card, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
                   {/* Couverture */}
                   <div style={{ position: 'relative', height: 118, background: `url(${p.coverUrl || c.img}) center/cover, ${C.obsidian}` }}>
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,.95), rgba(6,8,14,.25))' }} />
@@ -174,7 +155,7 @@ export default function PublicPrestataires() {
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>{p.location}
                     </p>}
                     {p.description && <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.62)', margin: '10px 0 0', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.description}</p>}
-                    <button onClick={() => contact(p)} style={{ ...btnGold, width: '100%', marginTop: 16 }}>
+                    <button onClick={() => contact(p)} style={{ ...btnGold, width: '100%', marginTop: 'auto' }}>
                       {user ? 'Contacter' : 'Demander un devis'}
                     </button>
                   </div>
@@ -201,7 +182,6 @@ export default function PublicPrestataires() {
 }
 
 // ── Styles ──
-const navLink = { background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.7)', padding: '8px 10px', whiteSpace: 'nowrap' }
 const card = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16 }
 const btnGold = { padding: '11px 18px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.gold},#e0c48a)`, border: 'none' }
 const btnGhost = { padding: '11px 20px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.18)' }

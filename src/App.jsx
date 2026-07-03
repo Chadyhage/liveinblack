@@ -264,6 +264,20 @@ function OnboardingGuard({ user, children }) {
   return children
 }
 
+// Le lecteur de disque flottant est masqué sur les pages « vitrine » publiques
+// (landing, prestataires, à propos) : la landing a déjà son propre bouton
+// « Mettre l'ambiance », et le disque flottait par-dessus le contenu marketing.
+function MusicPlayerGate({ user }) {
+  const location = useLocation()
+  const path = location.pathname
+  const onPublicShowcase =
+    path.startsWith('/prestataires') ||
+    path.startsWith('/c-est-quoi') ||
+    (path.startsWith('/accueil') && !user) // /accueil non connecté = vitrine
+  if (onPublicShowcase) return null
+  return <MusicPlayer />
+}
+
 // Wrapper: /connexion — allow logged-in users when ?mode= is present (creating a 2nd account)
 function ConnexionRoute({ user }) {
   const location = useLocation()
@@ -316,8 +330,8 @@ export default function App() {
           {/* Cookie consent banner — appears on first visit */}
           <CookieConsent />
 
-          {/* Lecteur de disque flottant (musique procédurale, persiste entre les pages) */}
-          <MusicPlayer />
+          {/* Lecteur de disque flottant (masqué sur les pages vitrine publiques) */}
+          <MusicPlayerGate user={user} />
 
           {/* Splash d'intro animé (logo plein écran → se repositionne dans la navbar) */}
           <IntroOverlay />
