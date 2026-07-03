@@ -1,12 +1,27 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
+import PublicNav from '../components/PublicNav'
 import { events } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { getUserId, sendMessage } from '../utils/messaging'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/eventUrgency'
 import EmptyState from '../components/EmptyState'
 import { MessagingSearchBar } from '../components/MessagingActions'
+
+// Coquille publique (visiteur NON connecté) : même navbar que la vitrine
+// (PublicNav, vidéo + onglet actif) pour une transition cohérente depuis la
+// landing — au lieu de basculer sur la nav de l'app connectée (effet « bug »).
+function PublicShell({ children }) {
+  return (
+    <div style={{ minHeight: '100vh', color: '#fff' }}>
+      <PublicNav />
+      <div style={{ maxWidth: 1320, margin: '0 auto', width: '100%' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 function getCreatedEvents() {
   try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
@@ -60,7 +75,7 @@ const CATEGORIES = ['Tous', ...KNOWN_CATEGORIES, 'Autre']
 
 export default function EventsPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, openAuthModal } = useAuth()
   const myId = getUserId(user)
   const myName = user?.name || 'Moi'
   const [searchParams] = useSearchParams()
@@ -156,6 +171,13 @@ export default function EventsPage() {
   }
 
   async function handleCodeSubmit() {
+    // Sécurité : un code d'accès privé ne peut être utilisé que connecté
+    // (sinon usedBy = user_<timestamp> anonyme → contournement de l'invitation).
+    if (!user) {
+      setShowCodeModal(false)
+      openAuthModal('Connecte-toi pour débloquer une soirée privée avec ton code.')
+      return
+    }
     const code = codeInput.trim().toUpperCase()
     if (!code) return
 
@@ -215,8 +237,11 @@ export default function EventsPage() {
     setCodeMsg({ type: 'error', text: alreadyUsed ? 'Ce code a déjà été utilisé.' : 'Ce code est invalide ou expiré.' })
   }
 
+  // Visiteur non connecté → coquille vitrine (PublicNav) ; connecté → app Layout
+  const Shell = user ? Layout : PublicShell
+
   return (
-    <Layout>
+    <Shell>
       <div style={{ position: 'relative', zIndex: 1, background: 'transparent', padding: '12px 16px 32px' }}>
 
         {/* Share mode banner */}
@@ -262,7 +287,7 @@ export default function EventsPage() {
         {!shareConvId && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
             <button
-              onClick={() => setShowCodeModal(true)}
+              onClick={() => user ? setShowCodeModal(true) : openAuthModal('Connecte-toi pour débloquer une soirée privée avec ton code.')}
               className="lib-press"
               style={{
                 display: 'inline-flex',
@@ -480,7 +505,7 @@ export default function EventsPage() {
           </div>
         </div>
       )}
-    </Layout>
+    </Shell>
   )
 }
 
