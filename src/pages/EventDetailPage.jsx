@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import Layout from '../components/Layout'
 import { events } from '../data/events'
 import PlaylistSystem from '../components/PlaylistSystem'
+import PlaylistDJPanel from '../components/PlaylistDJPanel'
 import { useAuth } from '../context/AuthContext'
 import { generateTicketToken, checkScheduleConflict } from '../utils/ticket'
 import { getConversations, sendMessage, getUserId, formatTime, getInitials, saveGroupBooking, getGroupBookings, validateGroupBooking, payGroupBookingShare } from '../utils/messaging'
@@ -409,6 +410,7 @@ export default function EventDetailPage() {
     return t && TABS.includes(t) ? t : 'Réservation'
   })
   const [selectedPlace, setSelectedPlace] = useState(null)
+  const [djPlaylistView, setDjPlaylistView] = useState('dj') // organisateur/agent : 'dj' | 'participant'
   const [ticketQty, setTicketQty] = useState(1)
   const [bookingStep, setBookingStep] = useState('place') // 'place' | 'preorder' | 'confirmed'
   const [activePreorderTicket, setActivePreorderTicket] = useState(0)
@@ -1747,9 +1749,33 @@ export default function EventDetailPage() {
 
 
           {/* ──────────────── PLAYLIST ─────────────────────────────────────── */}
-          {activeTab === 'Playlist' && (
-            <PlaylistSystem event={event} booked={allBookedThisSession.length > 0} />
-          )}
+          {activeTab === 'Playlist' && (() => {
+            const ownerUid = event.organizerId || event.createdBy
+            const myUid = user?.uid || getUserId(user)
+            const canManage = (ownerUid && (ownerUid === myUid || ownerUid === getUserId(user))) || user?.role === 'agent'
+            if (!canManage) return <PlaylistSystem event={event} booked={allBookedThisSession.length > 0} />
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Bascule DJ / vue participant (organisateur & agent) */}
+                <div style={{ display: 'flex', gap: 6, padding: 5, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, alignSelf: 'flex-start' }}>
+                  {[['dj', 'Vue DJ'], ['participant', 'Vue participant']].map(([id, label]) => {
+                    const active = (djPlaylistView || 'dj') === id
+                    return (
+                      <button key={id} onClick={() => setDjPlaylistView(id)} style={{
+                        padding: '8px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                        fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: active ? 800 : 600,
+                        color: active ? '#04040b' : 'rgba(255,255,255,0.55)',
+                        background: active ? 'linear-gradient(135deg,#c8a96e,#e0c48a)' : 'transparent',
+                      }}>{label}</button>
+                    )
+                  })}
+                </div>
+                {(djPlaylistView || 'dj') === 'dj'
+                  ? <PlaylistDJPanel event={event} />
+                  : <PlaylistSystem event={event} booked />}
+              </div>
+            )
+          })()}
 
           {/* ──────────────── INFO ─────────────────────────────────────────── */}
           {activeTab === 'Info' && (

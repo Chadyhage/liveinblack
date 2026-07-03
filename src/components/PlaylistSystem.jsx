@@ -352,7 +352,11 @@ export default function PlaylistSystem({ event, booked }) {
           )}
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 15.5, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 15.5, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
+            {song.status === 'validated' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 9.5, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.teal, background: `${C.teal}1c`, border: `1px solid ${C.teal}55`, borderRadius: 999, padding: '2px 7px' }}>Validé</span>}
+            {song.status === 'played' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 9.5, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.violet, background: `${C.violet}1c`, border: `1px solid ${C.violet}55`, borderRadius: 999, padding: '2px 7px' }}>Joué</span>}
+          </div>
           <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {song.artist}
             <span style={{ color: 'rgba(255,255,255,0.28)' }}> · {mine ? 'ajouté par toi' : 'un invité'}</span>
