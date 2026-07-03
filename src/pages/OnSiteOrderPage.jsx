@@ -216,9 +216,11 @@ export default function OnSiteOrderPage() {
 function MyLine({ item }) {
   const isPre = item.source === ORDER_SOURCE.PREORDER
   const served = item.status === ONSITE_STATUS.SERVED || item.status === PREORDER_STATUS.SERVED
-  const statusLabel = isPre
-    ? (served ? 'Servie ✓' : 'Précommande · payée')
-    : (item.paid_at ? 'Payée ✓' : (ONSITE_STATUS_LABEL[item.status] || 'Envoyée'))
+  const statusLabel = served
+    ? `Servie ✓${item.served_by_name ? ' par ' + item.served_by_name : ''}`
+    : isPre ? 'Précommande · payée'
+    : item.paid_at ? 'Payée ✓'
+    : (ONSITE_STATUS_LABEL[item.status] || 'Envoyée')
   const statusColor = served ? '#22c55e' : isPre ? C.gold : (ONSITE_STATUS_COLOR[item.status] || C.teal)
   return (
     <div style={{ ...cardStyle, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 12, opacity: served ? 0.72 : 1 }}>

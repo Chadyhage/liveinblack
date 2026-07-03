@@ -206,7 +206,7 @@ export async function addOnsiteItem(eventId, { ticketId, menuItem, qty = 1, note
     cancelled_at: null, cancelled_by: null, cancellation_reason: null,
   }
   await commitItems(eventId, { upserts: [item] })
-  await logAction(eventId, { ...a, itemId: item.id, ticketId: item.ticketId, itemName: item.name, action: 'add', newValue: `${item.name} ×${item.quantity}`, note })
+  await logAction(eventId, { ...a, itemId: item.id, ticketId: item.ticketId, itemName: item.name, action: 'add', newValue: `${item.name} ×${item.quantity}`, amount: Math.round(item.unitPrice * item.quantity * 100) / 100, note })
   return item
 }
 
@@ -269,7 +269,7 @@ export async function removeOnsiteItem(eventId, itemId, actor) {
   if (cur.status === ONSITE_STATUS.SERVED || cur.paid_at) return { ok: false, error: 'Impossible : article servi/payé.' }
   const a = actorInfo(actor)
   await commitRemove(eventId, itemId, { requireUnserved: true, requireUnpaid: true })
-  await logAction(eventId, { ...a, itemId, ticketId: cur.ticketId, itemName: cur.name, action: 'remove', oldValue: `${cur.name} ×${cur.quantity}` })
+  await logAction(eventId, { ...a, itemId, ticketId: cur.ticketId, itemName: cur.name, action: 'remove', oldValue: `${cur.name} ×${cur.quantity}`, amount: -Math.round(cur.unitPrice * cur.quantity * 100) / 100 })
   return { ok: true }
 }
 
@@ -295,7 +295,7 @@ export async function markTicketPaid(eventId, ticketId, actor) {
     await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', patches: items.map(i => ({ id: i.id, set: stampSet, requireUnpaid: true })) })
   } catch {}
   const total = Math.round(items.reduce((s, i) => s + i.unitPrice * i.quantity, 0) * 100) / 100
-  await logAction(eventId, { ...a, itemId: null, ticketId: String(ticketId), action: 'pay', newValue: `Addition ${total}€ marquée payée (${items.length} article${items.length > 1 ? 's' : ''})` })
+  await logAction(eventId, { ...a, itemId: null, ticketId: String(ticketId), action: 'pay', newValue: `Addition réglée (${items.length} article${items.length > 1 ? 's' : ''})`, amount: total })
   return { ok: true, total }
 }
 

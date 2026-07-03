@@ -8,6 +8,7 @@ import { getUserId } from '../utils/messaging'
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
 import { getOrdersForBuyer, ORDER_STATUS_LABELS } from '../utils/services'
+import { generateTicketToken } from '../utils/ticket'
 import PlaylistSystem from '../components/PlaylistSystem'
 import { IconMail, IconIdBadge } from '../components/icons'
 import { events as staticEvents } from '../data/events'
@@ -1998,7 +1999,11 @@ function SingleTicketCard({ booking: b, index }) {
   const [showQr, setShowQr] = useState(false)
   const canvasRef = useRef(null)
   const navigate = useNavigate()
-  const qrUrl = b.token ? `${window.location.origin}/ticket/${b.token}` : ''
+  // QR TOUJOURS disponible : si le billet n'a pas de token (ex. billet émis par le
+  // webhook Stripe quand l'onglet de succès a été fermé), on le régénère à la volée
+  // depuis les données du billet — le token est déterministe. Plus de « billet sans QR ».
+  const token = b.token || (b.ticketCode ? generateTicketToken(b) : '')
+  const qrUrl = token ? `${window.location.origin}/ticket/${token}` : ''
 
   function downloadQr() {
     const canvas = document.getElementById(`qr-canvas-${b.id}`)

@@ -236,6 +236,7 @@ export default function ScannerPage() {
   const [posMsg, setPosMsg] = useState('')               // feedback d'action
   const [cancelFor, setCancelFor] = useState(null)       // item en cours d'annulation (manager)
   const [cancelReason, setCancelReason] = useState('')
+  const [closeConfirm, setCloseConfirm] = useState(null) // onglet en cours de clôture (confirmation)
   const [addPicker, setAddPicker] = useState(false)      // menu d'ajout serveur ouvert
   const [posScanning, setPosScanning] = useState(false)  // scanner affiché par-dessus les onglets
   const [showHistory, setShowHistory] = useState(false)  // historique complet (manager)
@@ -571,11 +572,23 @@ export default function ScannerPage() {
     setCancelFor(null); setCancelReason('')
   }
   function closeTab(code) {
+    setCloseConfirm(null)
     setOpenTickets(prev => {
       const next = prev.filter(t => t.code !== code)
       setActiveCode(cur => cur === code ? (next.length ? next[next.length - 1].code : null) : cur)
       return next
     })
+  }
+  // Fermeture protégée : on ne demande confirmation que s'il reste de l'argent à
+  // encaisser ou des articles à servir (sinon rien en jeu → fermeture directe).
+  function requestClose(code) {
+    const t = openTickets.find(x => x.code === code)
+    const eid = t?.eventId
+    const items = eid ? (ordersByEvent[eid] || []).filter(i => String(i.ticketId) === String(code) && i.status !== ONSITE_STATUS.CANCELLED) : []
+    const due = items.filter(i => i.source !== ORDER_SOURCE.PREORDER && !i.paid_at).reduce((s, i) => s + i.unitPrice * i.quantity, 0)
+    const unserved = items.filter(i => !(i.status === ONSITE_STATUS.SERVED || i.status === PREORDER_STATUS.SERVED)).length
+    if (due > 0 || unserved > 0) setCloseConfirm({ code, holder: t?.holder || '', due: Math.round(due * 100) / 100, unserved })
+    else closeTab(code)
   }
 
   function handleCameraError(msg) {
@@ -920,7 +933,7 @@ export default function ScannerPage() {
                           border: `1px solid ${on ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.1)'}` }}>
                         <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: on ? COLORS.teal : 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>{t.holder}</span>
                         {n > 0 && <span style={{ minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999, background: COLORS.gold, color: '#04040b', fontFamily: FONTS.mono, fontSize: 10, fontWeight: 800, display: 'grid', placeItems: 'center' }}>{n}</span>}
-                        <span onClick={e => { e.stopPropagation(); closeTab(t.code) }} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, lineHeight: 1, fontWeight: 700, padding: '0 3px' }}>×</span>
+                        <span onClick={e => { e.stopPropagation(); requestClose(t.code) }} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, lineHeight: 1, fontWeight: 700, padding: '0 3px' }}>×</span>
                       </div>
                     )
                   })}
@@ -1016,14 +1029,21 @@ export default function ScannerPage() {
                         <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '4px 0 0' }}>Ajouts, services, annulations et encaissements apparaîtront ici, avec l'auteur.</p>
                       </div>
                     )
+                    const totalPaid = Math.round(log.filter(e => e.action === 'pay').reduce((s, e) => s + (Number(e.amount) || 0), 0) * 100) / 100
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {totalPaid > 0 && (
+                          <div style={{ ...CARD, padding: '13px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderColor: 'rgba(34,197,94,0.28)' }}>
+                            <span style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total encaissé ce soir</span>
+                            <span style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 800, color: '#22c55e', letterSpacing: '-0.5px' }}>{totalPaid}€</span>
+                          </div>
+                        )}
                         {log.map(e => {
                           const f = fmt(e)
                           const d = new Date(e.ts)
                           const time = isNaN(d.getTime()) ? '' : d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
                           return (
-                            <div key={e.id} style={{ ...CARD, padding: '10px 12px', display: 'flex', gap: 10 }}>
+                            <div key={e.id} style={{ ...CARD, padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'center' }}>
                               <span style={{ width: 5, flexShrink: 0, borderRadius: 3, background: f.c, alignSelf: 'stretch' }} />
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <p style={{ fontFamily: FONTS.mono, fontSize: 12.5, color: '#fff', margin: 0, lineHeight: 1.4 }}>
@@ -1033,6 +1053,11 @@ export default function ScannerPage() {
                                   {time} · <span style={{ color: roleColor(e.actorRole) }}>{roleLabel(e.actorRole)}</span> · billet {holderOf(e.ticketId)}{e.action === 'cancel' && e.note ? ` · motif : ${e.note}` : ''}
                                 </p>
                               </div>
+                              {typeof e.amount === 'number' && e.amount !== 0 && (
+                                <span style={{ flexShrink: 0, fontFamily: FONTS.mono, fontSize: 13.5, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: e.action === 'pay' ? '#22c55e' : e.amount < 0 ? COLORS.pink : COLORS.gold }}>
+                                  {e.amount > 0 && e.action !== 'pay' ? '+' : ''}{e.amount}€
+                                </span>
+                              )}
                             </div>
                           )
                         })}
@@ -1068,7 +1093,7 @@ export default function ScannerPage() {
                           <span style={{ fontSize: 20, width: 24, textAlign: 'center' }}>{item.emoji || '🍸'}</span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, textDecoration: served ? 'line-through' : 'none' }}>{item.name} <span style={{ color: COLORS.muted, fontWeight: 500 }}>×{item.quantity}</span></p>
-                            <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: chip.c }}>{chip.t}{item.addedByRole === 'client' ? ' · par le client' : ''}</span>
+                            <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: chip.c }}>{chip.t}{served && item.served_by_name ? ` par ${item.served_by_name}` : ''}{!served && item.addedByRole === 'client' ? ' · par le client' : ''}</span>
                           </div>
                           <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: isPre ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : `${Math.round(item.unitPrice * item.quantity)}€`}</span>
                           {!served && (
@@ -1120,7 +1145,7 @@ export default function ScannerPage() {
                     )}
                   </div>
 
-                  <button onClick={() => closeTab(active.code)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Clôturer cet onglet</button>
+                  <button onClick={() => requestClose(active.code)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Clôturer cet onglet</button>
                 </>
               ) : null}
 
@@ -1139,6 +1164,28 @@ export default function ScannerPage() {
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={() => setCancelFor(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>Retour</button>
                       <button onClick={posDoCancel} disabled={!cancelReason.trim()} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: cancelReason.trim() ? 'pointer' : 'default', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.45)', color: COLORS.pink, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, opacity: cancelReason.trim() ? 1 : 0.4 }}>Annuler l'article</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirmation de clôture d'onglet (argent/service en jeu) */}
+              {closeConfirm && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} onClick={() => setCloseConfirm(null)}>
+                  <div onClick={e => e.stopPropagation()} style={{ ...CARD, padding: 20, width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 16, color: '#fff', margin: 0 }}>Clôturer l'onglet de {closeConfirm.holder} ?</p>
+                    {closeConfirm.due > 0 && (
+                      <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.35)' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: COLORS.gold, margin: 0 }}>⚠ Il reste {closeConfirm.due}€ à encaisser</p>
+                      </div>
+                    )}
+                    {closeConfirm.unserved > 0 && (
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>{closeConfirm.unserved} article{closeConfirm.unserved > 1 ? 's' : ''} pas encore servi{closeConfirm.unserved > 1 ? 's' : ''}.</p>
+                    )}
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11.5, color: COLORS.dim, margin: 0, lineHeight: 1.5 }}>Rien n'est perdu : la commande reste enregistrée. Re-scanne le billet pour rouvrir l'onglet avec tout son contenu.</p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setCloseConfirm(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700 }}>Garder ouvert</button>
+                      <button onClick={() => closeTab(closeConfirm.code)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>Clôturer</button>
                     </div>
                   </div>
                 </div>
