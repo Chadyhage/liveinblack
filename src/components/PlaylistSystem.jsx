@@ -250,7 +250,9 @@ export default function PlaylistSystem({ event, booked }) {
       return
     }
     // userId stocké pour distinguer « Mes sons » et empêcher de liker son propre son (cross-device)
-    const newSong = { id: Date.now(), title: song.title, artist: song.artist, likes: 0, addedBy: 'Moi', userId, previewUrl: song.previewUrl || null }
+    // cover : pochette iTunes (montée en 200px) ; previewUrl : extrait 30s « écouter »
+    const cover = song.artwork ? song.artwork.replace('60x60', '200x200').replace('100x100', '200x200') : null
+    const newSong = { id: Date.now(), title: song.title, artist: song.artist, likes: 0, addedBy: 'Moi', userId, previewUrl: song.previewUrl || null, cover }
     setSongs((prev) => [...prev, { ...newSong, myLike: false }])
     // Upsert transactionnel : n'ajoute QUE ce morceau côté serveur, sans écraser
     // les ajouts concurrents des autres participants. (myLike reste local.)
@@ -297,6 +299,22 @@ export default function PlaylistSystem({ event, booked }) {
     }
   }
 
+  // Supprimer un de SES sons (avant que le DJ ne l'ait joué) → libère un slot,
+  // ce qui permet aussi de « remplacer » (supprimer puis proposer un autre son).
+  function removeSong(song) {
+    if (!song || song.userId !== userId) return
+    setSongs((prev) => prev.filter((s) => s.id !== song.id))
+    import('../utils/firestore-sync').then(({ mergeItemsById }) => {
+      mergeItemsById(`event_playlists/${event.id}`, { field: 'songs', removeIds: [song.id] })
+    }).catch(() => {})
+    const next = Math.max(0, songsAdded - 1)
+    setSongsAddedState(next)
+    try { localStorage.setItem(addedKey, String(next)) } catch {}
+    if (preview?.title === song.title) { audioRef.current?.pause(); setPreview(null) }
+    setMessage(`ok:« ${song.title} » retiré — tu peux proposer un autre son.`)
+    setTimeout(() => setMessage(''), 3500)
+  }
+
   const sortedSongs = [...songs].sort((a, b) => b.likes - a.likes)
   const mySongs = songs.filter((s) => s.userId && s.userId === userId)
   const likesLeft = Math.max(0, MAX_LIKES_PER_USER - likesUsed)
@@ -308,27 +326,31 @@ export default function PlaylistSystem({ event, booked }) {
   const djName = event.artists?.length ? event.artists.map(a => a.name).join(' · ') : (event.dj || 'Le DJ')
 
   // Ligne de morceau réutilisée (Top playlist + Mes sons)
-  function SongRow({ song, rank }) {
+  function SongRow({ song, rank, canDelete }) {
     const mine = song.userId && song.userId === userId
     const top = rank === 1
     const playing = preview?.title === song.title
     return (
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
+        display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 14,
         border: top ? `1px solid ${C.gold}55` : '1px solid rgba(255,255,255,0.07)',
         background: top ? `${C.gold}0d` : 'rgba(9,11,20,0.5)',
       }}>
         {rank != null && (
-          <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, width: 22, textAlign: 'center', flexShrink: 0, color: top ? C.gold : 'rgba(255,255,255,0.28)' }}>{rank}</span>
+          <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: top ? C.gold : 'rgba(255,255,255,0.28)' }}>{rank}</span>
         )}
-        {song.previewUrl ? (
-          <button onClick={() => togglePreview(song)} style={{
-            width: 30, height: 30, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', fontSize: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(255,255,255,0.05)', color: playing ? C.gold : 'rgba(255,255,255,0.55)',
-            border: playing ? `1px solid ${C.gold}80` : '1px solid rgba(255,255,255,0.12)',
-          }}>{playing ? '■' : '▶'}</button>
-        ) : <div style={{ width: 30, flexShrink: 0 }} />}
+        {/* Pochette (cover) — clic = pré-écoute si dispo */}
+        <button onClick={() => song.previewUrl && togglePreview(song)} style={{
+          width: 42, height: 42, borderRadius: 9, flexShrink: 0, overflow: 'hidden', position: 'relative', padding: 0,
+          border: playing ? `1px solid ${C.gold}90` : '1px solid rgba(255,255,255,0.1)',
+          background: song.cover ? `url(${song.cover}) center/cover` : 'rgba(255,255,255,0.05)',
+          cursor: song.previewUrl ? 'pointer' : 'default',
+        }}>
+          {!song.cover && <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><MusicNoteIcon size={16} color="rgba(255,255,255,0.3)" /></span>}
+          {song.previewUrl && (
+            <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)', color: '#fff', fontSize: 11 }}>{playing ? '■' : '▶'}</span>
+          )}
+        </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 15.5, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
           <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -346,6 +368,15 @@ export default function PlaylistSystem({ event, booked }) {
           <HeartIcon filled={song.myLike} size={14} color={song.myLike ? C.teal : 'rgba(255,255,255,0.4)'} />
           <span style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: song.myLike ? C.teal : 'rgba(255,255,255,0.55)' }}>{song.likes}</span>
         </button>
+        {canDelete && mine && (
+          <button onClick={() => removeSong(song)} title="Supprimer mon son" style={{
+            width: 34, height: 34, borderRadius: 10, flexShrink: 0, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.3)', color: C.pink,
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /></svg>
+          </button>
+        )}
       </div>
     )
   }
@@ -377,15 +408,29 @@ export default function PlaylistSystem({ event, booked }) {
         @keyframes lbBar3 { from { height: 8px } to { height: 16px } }
       `}</style>
 
+      {/* Affiche de l'événement */}
+      {(event.imageUrl || event.image || event.cover) && (
+        <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', height: 120 }}>
+          <div style={{ position: 'absolute', inset: 0, background: `url(${event.imageUrl || event.image || event.cover}) center/cover` }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,0.95), rgba(6,8,14,0.35))' }} />
+          <div style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
+            {event.name && <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>}
+            {(event.dateDisplay || event.city || event.venue) && (
+              <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.75)', margin: '3px 0 0' }}>
+                {[event.dateDisplay, event.city || event.venue].filter(Boolean).join(' · ')}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
           <h3 style={{ fontFamily: FONT, fontWeight: 800, fontSize: 23, letterSpacing: '-0.6px', color: '#fff', margin: 0 }}>
             Playlist interactive
           </h3>
-          {event.name && (
-            <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>
-          )}
+          <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0' }}>Propose tes sons, vote pour la soirée</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 22, flexShrink: 0 }}>
           {[0, 1, 2, 3, 4].map((i) => (
@@ -527,7 +572,7 @@ export default function PlaylistSystem({ event, booked }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {mySongs.map((song) => {
                   const rank = sortedSongs.findIndex((s) => s.id === song.id) + 1
-                  return <SongRow key={song.id} song={song} rank={rank} />
+                  return <SongRow key={song.id} song={song} rank={rank} canDelete />
                 })}
               </div>
             )}
