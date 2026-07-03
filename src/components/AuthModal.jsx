@@ -4,12 +4,16 @@ import { useAuth } from '../context/AuthContext'
 import { getAllAccountsByEmail } from '../utils/accounts'
 import { USE_REAL_FIREBASE } from '../firebase'
 
-const dmMono = "'DM Mono', monospace"
-const cormorant = "Inter, sans-serif"
+const FONT = 'Inter, sans-serif'
 
 const ROLE_LABELS = { client: 'Client', user: 'Client', organisateur: 'Organisateur', prestataire: 'Prestataire', agent: 'Admin' }
 const ROLE_COLORS = { client: '#22c55e', user: '#22c55e', organisateur: '#3b82f6', prestataire: '#8b5cf6', agent: '#c8a96e' }
-const ROLE_ICONS  = { client: '🎫', user: '🎫', organisateur: '🎪', prestataire: '🎤', agent: '🔑' }
+
+// Retire les emojis d'un texte (les raisons d'ouverture du modal en contenaient)
+const stripEmoji = (s) => (s || '').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️]/gu, '').trim()
+
+const labelStyle = { fontFamily: FONT, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.55)', display: 'block', marginBottom: 8 }
+const inputStyle = { width: '100%', padding: '15px 16px', borderRadius: 13, boxSizing: 'border-box', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.92)', fontFamily: FONT, fontSize: 15.5, outline: 'none' }
 
 export default function AuthModal({ open, reason, onSuccess, onClose }) {
   const navigate = useNavigate()
@@ -141,143 +145,142 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
 
       {/* Card */}
       <div style={{
-        position: 'relative', width: '100%', maxWidth: 360,
-        background: 'rgba(8,10,22,0.96)',
+        position: 'relative', width: '100%', maxWidth: 420,
+        background: 'linear-gradient(180deg, rgba(18,10,32,0.96), rgba(10,8,20,0.98))',
+        backdropFilter: 'blur(28px) saturate(1.5)', WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
         border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 10, padding: '32px 28px',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+        borderRadius: 24, padding: '34px 30px',
+        boxShadow: '0 30px 90px rgba(0,0,0,0.65)',
       }}>
         {/* Close */}
-        <button onClick={close} style={{
-          position: 'absolute', top: 14, right: 14,
-          background: 'none', border: 'none', cursor: 'pointer',
-          color: 'rgba(255,255,255,0.3)', fontSize: 20, lineHeight: 1,
-        }}>×</button>
+        <button onClick={close} aria-label="Fermer" style={{
+          position: 'absolute', top: 16, right: 16, width: 34, height: 34, borderRadius: 10,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', cursor: 'pointer',
+          color: 'rgba(255,255,255,0.5)', transition: 'all .18s ease',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
 
         {/* Header */}
-        <p style={{ fontFamily: cormorant, fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', marginBottom: 6 }}>
+        <h2 style={{ fontFamily: FONT, fontSize: 25, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 8px' }}>
           Connexion requise
-        </p>
-        {reason && (
-          <p style={{ fontFamily: dmMono, fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>
-            {reason}
+        </h2>
+        {reason && stripEmoji(reason) && (
+          <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: '0 0 26px' }}>
+            {stripEmoji(reason)}
           </p>
         )}
 
         {/* ── Role picker (multi-account) ── */}
         {showRolePicker ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ fontFamily: dmMono, fontSize: 9, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-              PLUSIEURS ESPACES DÉTECTÉS — CHOISIS :
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', margin: '0 0 2px' }}>
+              Plusieurs espaces détectés — choisis&nbsp;:
             </p>
-            {roleChoices.map(r => (
-              <button key={r.uid} onClick={() => setSelectedUid(r.uid)} style={{
-                padding: '13px 16px', borderRadius: 6, textAlign: 'left', cursor: 'pointer',
-                background: 'rgba(255,255,255,0.03)',
-                border: `1px solid ${ROLE_COLORS[r.role] || 'rgba(255,255,255,0.12)'}44`,
-                display: 'flex', alignItems: 'center', gap: 12,
-              }}>
-                <span style={{ fontSize: 18 }}>{ROLE_ICONS[r.role] || '🎫'}</span>
-                <div>
-                  <p style={{ fontFamily: dmMono, fontSize: 11, color: ROLE_COLORS[r.role] || 'rgba(255,255,255,0.7)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
-                    {ROLE_LABELS[r.role] || r.role}
-                  </p>
-                  <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 3, marginBottom: 0 }}>
-                    {r.name}
-                  </p>
-                </div>
-              </button>
-            ))}
+            {roleChoices.map(r => {
+              const c = ROLE_COLORS[r.role] || '#8b5cf6'
+              return (
+                <button key={r.uid} onClick={() => setSelectedUid(r.uid)} style={{
+                  padding: '15px 16px', borderRadius: 14, textAlign: 'left', cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.025)', border: `1px solid ${c}55`,
+                  display: 'flex', alignItems: 'center', gap: 13,
+                }}>
+                  <span style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: c, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 16, color: '#04040b' }}>
+                    {(ROLE_LABELS[r.role] || '?')[0]}
+                  </span>
+                  <div>
+                    <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>
+                      {ROLE_LABELS[r.role] || r.role}
+                    </p>
+                    <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>
+                      {r.name}
+                    </p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         ) : (
           /* ── Login form ── */
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* Selected role badge */}
             {chosenAccount && (
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-                background: 'rgba(255,255,255,0.04)', borderRadius: 4, marginBottom: 2,
+                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                background: 'rgba(255,255,255,0.04)', borderRadius: 12,
               }}>
-                <span style={{ fontSize: 14 }}>{ROLE_ICONS[chosenAccount.role]}</span>
-                <span style={{ fontFamily: dmMono, fontSize: 10, color: `${ROLE_COLORS[chosenAccount.role]}cc`, letterSpacing: '0.08em' }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: ROLE_COLORS[chosenAccount.role] || '#8b5cf6', flexShrink: 0 }} />
+                <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#fff' }}>
                   {ROLE_LABELS[chosenAccount.role]}
                 </span>
                 <button type="button" onClick={() => setSelectedUid(null)} style={{
                   marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: dmMono,
+                  color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 600, fontFamily: FONT,
                 }}>
-                  changer
+                  Changer
                 </button>
               </div>
             )}
 
             <div>
-              <label style={{ fontFamily: dmMono, fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', display: 'block', marginBottom: 6 }}>
-                ADRESSE EMAIL
-              </label>
+              <label style={labelStyle}>Adresse email</label>
               <input
                 type="email" value={email} required autoFocus
                 placeholder="ton@email.com"
                 onChange={e => { setEmail(e.target.value); setRoleChoices(null); setSelectedUid(null) }}
-                style={{
-                  width: '100%', padding: '10px 12px', borderRadius: 4, boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-                  color: 'rgba(255,255,255,0.88)', fontFamily: dmMono, fontSize: 12, outline: 'none',
-                }}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label style={{ fontFamily: dmMono, fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', display: 'block', marginBottom: 6 }}>
-                MOT DE PASSE
-              </label>
+              <label style={labelStyle}>Mot de passe</label>
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPwd ? 'text' : 'password'} value={password} required
                   placeholder="Mot de passe"
                   onChange={e => setPassword(e.target.value)}
-                  style={{
-                    width: '100%', padding: '10px 44px 10px 12px', borderRadius: 4, boxSizing: 'border-box',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-                    color: 'rgba(255,255,255,0.88)', fontFamily: dmMono, fontSize: 12, outline: 'none',
-                  }}
+                  style={{ ...inputStyle, paddingRight: 60 }}
                 />
                 <button type="button" onClick={() => setShowPwd(v => !v)} style={{
-                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                  position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em',
+                  fontFamily: FONT, fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.4)',
                 }}>
-                  {showPwd ? 'CACHER' : 'VOIR'}
+                  {showPwd ? 'Cacher' : 'Voir'}
                 </button>
               </div>
             </div>
 
             {error && (
-              <p style={{ fontFamily: dmMono, fontSize: 10, color: 'rgba(220,100,100,0.9)', letterSpacing: '0.06em', margin: 0 }}>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: '#ff6b9d', lineHeight: 1.4, margin: 0 }}>
                 {error}
               </p>
             )}
 
             <button type="submit" disabled={loading} style={{
-              padding: '12px', borderRadius: 4,
-              border: '1px solid rgba(200,169,110,0.35)',
-              background: 'rgba(200,169,110,0.08)', color: '#c8a96e',
-              fontFamily: dmMono, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase',
+              padding: '16px', borderRadius: 14,
+              border: 'none',
+              background: 'linear-gradient(135deg,#c8a96e,#e0c48a)', color: '#04040b',
+              fontFamily: FONT, fontSize: 15, fontWeight: 700,
               cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1,
+              boxShadow: '0 8px 26px rgba(200,169,110,0.32)',
             }}>
               {loading ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>
         )}
 
-        <div style={{ margin: '20px 0', height: 1, background: 'rgba(255,255,255,0.06)' }} />
+        <div style={{ margin: '22px 0', height: 1, background: 'rgba(255,255,255,0.07)' }} />
 
-        <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textAlign: 'center' }}>
+        <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.45)', textAlign: 'center', margin: 0 }}>
           Pas encore de compte ?{' '}
           <button onClick={() => { close(); navigate('/connexion?mode=register') }} style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            fontFamily: dmMono, fontSize: 9, color: '#4ee8c8', letterSpacing: '0.08em', textDecoration: 'underline',
+            fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: '#4ee8c8',
           }}>
             Créer un compte
           </button>
