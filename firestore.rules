@@ -39,11 +39,21 @@ service cloud.firestore {
     // pouvait sinon écrire lui-même).
     match /users/{uid} {
       allow read:   if isSignedIn();
-      allow create: if isSuperAdmin() || (isOwner(uid) && request.resource.data.role != 'agent');
+      allow create: if isSuperAdmin() || (isOwner(uid) && request.resource.data.get('role', 'client') != 'agent');
+      // Le propriétaire édite son profil MAIS ne peut pas s'octroyer de privilèges :
+      //  - jamais role/activeRole = 'agent' (escalade admin) ;
+      //  - jamais s'auto-valider (status → 'active' réservé aux agents) ;
+      //  - jamais s'auto-accorder un rôle : role ne peut changer QUE vers un rôle
+      //    déjà présent dans enabledRoles (ou rester inchangé), et enabledRoles
+      //    lui-même n'est pas modifiable. (.get() tolère les vieux docs.)
       allow update: if isAgent() || isSuperAdmin()
         || (isOwner(uid)
-            && request.resource.data.role != 'agent'
-            && request.resource.data.activeRole != 'agent');
+            && request.resource.data.get('role', 'client') != 'agent'
+            && request.resource.data.get('activeRole', 'client') != 'agent'
+            && (request.resource.data.get('status', '') != 'active' || resource.data.get('status', '') == 'active')
+            && (request.resource.data.get('role', 'client') == resource.data.get('role', 'client')
+                || request.resource.data.get('role', 'client') in resource.data.get('enabledRoles', [request.resource.data.get('role', 'client')]))
+            && (!('enabledRoles' in resource.data) || request.resource.data.enabledRoles == resource.data.enabledRoles));
       allow delete: if isAgent();
     }
 

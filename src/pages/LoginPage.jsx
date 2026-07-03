@@ -87,9 +87,10 @@ async function doEmailLogin(email, password, role = null) {
     if (!profile.emailVerified && cred.user.emailVerified) {
       const { setDoc: setUserDoc } = await import('firebase/firestore')
       await setUserDoc(doc(db, 'users', cred.user.uid), { emailVerified: true }, { merge: true })
-      return { ...profile, emailVerified: true }
+      return { ...profile, emailVerified: true, uid: cred.user.uid }
     }
-    return profile
+    // uid d'auth = source de vérité (jamais l'éventuel champ uid divergent du doc)
+    return { ...profile, uid: cred.user.uid }
   }
   // No Firestore doc yet
   if (isSuperAdmin) {
@@ -921,11 +922,11 @@ export default function LoginPage() {
                   border: '1px solid rgba(200,169,110,0.25)',
                   borderRadius: '4px',
                 }}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>
                     {regRole === 'organisateur' ? '🎪 Espace Organisateur' : '🎤 Espace Prestataire'}
                   </p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                    Un compte <span style={{ color: '#c8a96e' }}>{ROLES[regRole]?.label}</span> dédié sera créé. Il sera activé après validation par l'équipe LIVEINBLACK (généralement moins de 24h). Tu pourras continuer à utiliser ton compte client séparément.
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                    Ton compte débloque l'espace <span style={{ color: '#c8a96e', fontWeight: 600 }}>{ROLES[regRole]?.label}</span> après validation par l'équipe LIVEINBLACK (généralement moins de 24h). Ton interface client reste disponible — tu basculeras entre tes interfaces depuis le menu.
                   </p>
                 </div>
               )}

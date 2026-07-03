@@ -741,10 +741,12 @@ export default function ProfilePage() {
       try { localStorage.setItem('lib_user', JSON.stringify(updated)) } catch {}
       if (user?.uid) import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`users/${user.uid}`, { privacy: next })).catch(() => {})
     }
+    // Note : « Infos personnelles » (showInfo) retiré — l'app n'expose l'email/tél
+    // d'aucun utilisateur aux autres, donc le réglage ne protégeait rien (faux réglage).
+    // À réintroduire (et câbler) le jour où un profil public exposera le contact.
     const PRIV_ROWS = [
       { key: 'showOnline', label: 'Statut en ligne', desc: 'Les autres voient quand tu es connecté·e.' },
       { key: 'showPhoto', label: 'Photo de profil', desc: 'Les autres voient ta photo (sinon : initiales).' },
-      { key: 'showInfo', label: 'Infos personnelles', desc: 'Email / téléphone visibles sur ton profil.' },
       { key: 'readReceipts', label: 'Confirmations de lecture', desc: 'Si désactivé, tu ne sais pas si on a lu tes messages — et personne ne sait si tu as lu les leurs.' },
     ]
     return (

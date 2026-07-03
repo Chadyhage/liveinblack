@@ -179,7 +179,7 @@ export async function rejectValidation(uid, reason = '') {
 export function getEnabledRoles(user) {
   if (!user) return []
   if (Array.isArray(user.enabledRoles) && user.enabledRoles.length > 0) {
-    return user.enabledRoles
+    return [...user.enabledRoles] // copie : jamais renvoyer la référence (évite les mutations en place)
   }
   // Backwards compat: derive from role field
   const base = ['client']
@@ -262,10 +262,16 @@ export async function approveRoleRequest(requestId) {
   if (!account) return null
 
   const enabledRoles = getEnabledRoles(account)
-  if (!enabledRoles.includes(req.requestedRole)) enabledRoles.push(req.requestedRole)
+  const nextRoles = enabledRoles.includes(req.requestedRole) ? enabledRoles : [...enabledRoles, req.requestedRole]
 
+  // Cohérence avec updateApplicationStatus (chemin « dossier ») : on bascule le
+  // compte sur le nouveau rôle et on l'active — sinon l'interface débloquée
+  // n'apparaissait pas active tant que l'utilisateur ne switchait pas à la main.
   const patch = {
-    enabledRoles,
+    enabledRoles: nextRoles,
+    role: req.requestedRole,
+    activeRole: req.requestedRole,
+    status: 'active',
     ...(req.requestedRole === 'organisateur'
       ? { orgStatus: 'active', orgValidatedAt: Date.now() }
       : { prestStatus: 'active', prestataireType: req.prestataireType, prestValidatedAt: Date.now() }

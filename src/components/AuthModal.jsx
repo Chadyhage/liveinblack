@@ -67,8 +67,9 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
         }
 
         const snap = await getDoc(doc(db, 'users', cred.user.uid))
+        // uid d'auth = source de vérité (jamais l'éventuel champ uid divergent du doc)
         const profile = snap.exists()
-          ? snap.data()
+          ? { ...snap.data(), uid: cred.user.uid }
           : { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', activeRole: 'user', enabledRoles: ['user'], status: 'active', emailVerified: true }
 
         if (profile.status === 'rejected') { setError('Ton compte a été refusé. Écris-nous à support@liveinblack.com.'); setLoading(false); return }
