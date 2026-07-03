@@ -4,6 +4,11 @@ import jsQR from 'jsqr'
 import { verifyTicketToken } from '../utils/ticket'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
+import {
+  listenOrders, getOrders, ensurePreordersMaterialized, addOnsiteItem, serveItem,
+  cancelItem, markTicketPaid, getStaffRole, canServe, canManage,
+  ORDER_SOURCE, ONSITE_STATUS, PREORDER_STATUS, ONSITE_STATUS_LABEL, ONSITE_STATUS_COLOR,
+} from '../utils/eventOrders'
 
 // Mock tickets — vidé : le scanner repose sur le registre Firestore tickets/{code}
 const MOCK_TICKETS = {}
@@ -14,13 +19,23 @@ const MOCK_ORDERS = {}
 // Récupère l'event réel côté Firestore pour vérifier qu'un billet scanné
 // concerne bien un événement en cours (et, pour un organisateur, LE SIEN).
 async function fetchEventForScan(eventId) {
+  if (!eventId) return null
   try {
     const { db, USE_REAL_FIREBASE } = await import('../firebase')
-    if (!USE_REAL_FIREBASE || !eventId) return null
-    const { doc, getDoc } = await import('firebase/firestore')
-    const snap = await getDoc(doc(db, 'events', String(eventId)))
-    return snap.exists() ? { id: String(eventId), ...snap.data() } : null
-  } catch { return null }
+    if (USE_REAL_FIREBASE) {
+      const { doc, getDoc } = await import('firebase/firestore')
+      const snap = await getDoc(doc(db, 'events', String(eventId)))
+      if (snap.exists()) return { id: String(eventId), ...snap.data() }
+    }
+  } catch {}
+  // Secours hors-ligne : cache local (events créés / cache public)
+  try {
+    for (const key of ['lib_created_events', 'lib_events_cache']) {
+      const found = JSON.parse(localStorage.getItem(key) || '[]').find(e => String(e.id) === String(eventId))
+      if (found) return found
+    }
+  } catch {}
+  return null
 }
 
 // L'événement est-il terminé ? (annulé, ou fin + 12h de tolérance dépassée).
@@ -206,19 +221,33 @@ export default function ScannerPage() {
     try { return new Set(JSON.parse(localStorage.getItem('lib_used_tickets') || '[]')) } catch { return new Set() }
   })
 
-  // Service mode
+  // Service mode — POS multi-billets (onglets persistants + temps réel Firestore)
+  // On scanne un billet UNE fois → il devient un onglet. Plus besoin de rescanner
+  // pour agir dessus. Les commandes (précos + sur place) viennent de listenOrders
+  // (event_orders/{eventId}) → l'état « servi/payé » est partagé cross-device.
   const [serviceCode, setServiceCode] = useState('')
-  const [serviceOrder, setServiceOrder] = useState(null)
-  // Persisté en localStorage : si le serveur quitte la commande puis re-scanne
-  // le même client, les articles déjà servis restent marqués (anti double-service).
-  const [servedItems, setServedItems] = useState(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem('lib_served_items') || '{}')
-      const out = {}
-      for (const k of Object.keys(raw)) out[k] = new Set(raw[k] || [])
-      return out
-    } catch { return {} }
-  })
+  const [openTickets, setOpenTickets] = useState([]) // [{ code, holder, place, eventId, eventName }]
+  const [activeCode, setActiveCode] = useState(null)
+  const [ordersByEvent, setOrdersByEvent] = useState({}) // { eventId: OrderItem[] }
+  const [roleByEvent, setRoleByEvent] = useState({})     // { eventId: 'manager'|'serveur'|'scan'|null }
+  const [menuByEvent, setMenuByEvent] = useState({})     // { eventId: [menuItem] }
+  const [scanReject, setScanReject] = useState(null)     // { title, sub } — billet refusé
+  const [posMsg, setPosMsg] = useState('')               // feedback d'action
+  const [cancelFor, setCancelFor] = useState(null)       // item en cours d'annulation (manager)
+  const [cancelReason, setCancelReason] = useState('')
+  const [addPicker, setAddPicker] = useState(false)      // menu d'ajout serveur ouvert
+  const [posScanning, setPosScanning] = useState(false)  // scanner affiché par-dessus les onglets
+
+  // Écoute temps réel des commandes pour chaque événement présent dans les onglets.
+  const openEventIds = [...new Set(openTickets.map(t => t.eventId).filter(Boolean))]
+  useEffect(() => {
+    const unsubs = openEventIds.map(eid =>
+      listenOrders(eid, items => setOrdersByEvent(prev => ({ ...prev, [eid]: items })))
+    )
+    return () => unsubs.forEach(u => u())
+  }, [openEventIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const flashPos = msg => { setPosMsg(msg); setTimeout(() => setPosMsg(''), 2400) }
 
   function markUsed(code) {
     // Re-read localStorage to catch validations from other scanners/devices
@@ -431,12 +460,12 @@ export default function ScannerPage() {
   // token client (data.po) n'est plus qu'un fallback hors-ligne/legacy,
   // sa signature étant falsifiable (clé publique dans le bundle).
   async function lookupOrder(rawValue) {
-    setCameraActive(false)
+    setCameraActive(false); setScanReject(null)
     const val = rawValue.trim()
     const clean = val.toUpperCase()
 
-    const regItems = (reg) => Array.isArray(reg?.data?.preorders)
-      ? reg.data.preorders.map(i => ({ name: i.name, emoji: i.emoji || '', qty: Number(i.qty) || 0, price: Number(i.priceEUR) || 0 })).filter(i => i.qty > 0)
+    const regPre = (reg) => Array.isArray(reg?.data?.preorders)
+      ? reg.data.preorders.map(i => ({ name: i.name, emoji: i.emoji || '', qty: Number(i.qty) || 0, priceEUR: Number(i.priceEUR) || 0 })).filter(i => i.qty > 0)
       : null
 
     // 1) Résoudre le code + le payload token (le cas échéant)
@@ -444,7 +473,7 @@ export default function ScannerPage() {
     let code = clean, tokenData = null
     if (tokenMatch) {
       const { valid, data } = verifyTicketToken(tokenMatch[1])
-      if (!valid || !data) { setServiceOrder({ code: val, order: null }); return }
+      if (!valid || !data) { setScanReject({ title: 'QR invalide', sub: "Ce QR code n'est pas reconnu." }); return }
       tokenData = data; code = data.tc
     }
 
@@ -452,68 +481,85 @@ export default function ScannerPage() {
     let reg = await lookupTicketRegistry(code)
     if (!reg.found && !reg.error && clean !== code) reg = await lookupTicketRegistry(clean)
 
-    // 3) VALIDATION MÉTIER — l'événement du billet doit être EN COURS et, pour
-    //    un organisateur, LE SIEN. Ferme la faille : on ne peut plus ouvrir /
-    //    servir les précommandes d'un billet d'un ANCIEN (ou autre) événement.
-    //    eventId vient du registre (autoritaire) en priorité, sinon du token.
-    const eventId = reg?.data?.eventId || tokenData?.ei || null
-    if (eventId) {
-      const ev = await fetchEventForScan(eventId)
-      if (ev) {
-        if (isEventOver(ev)) {
-          setServiceOrder({ code, order: null, rejected: { title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé — ses précommandes ne sont plus servables." } })
-          return
-        }
-        if (userRole === 'organisateur' && String(ev.organizerId || '') !== String(myId) && String(ev.createdBy || '') !== String(myId)) {
-          setServiceOrder({ code, order: null, rejected: { title: 'Pas ton événement', sub: "Ce billet appartient à un événement que tu n'organises pas." } })
-          return
-        }
+    // Booking local (secours hors-ligne : fournit eventId + méta si le registre
+    // est injoignable et qu'il n'y a pas de token).
+    let localBooking = null
+    try { localBooking = JSON.parse(localStorage.getItem('lib_bookings') || '[]').find(b => b.ticketCode === code || b.ticketCode === clean) || null } catch {}
+
+    // 3) VALIDATION MÉTIER — l'événement doit être EN COURS et, pour un
+    //    organisateur, LE SIEN. Ferme la faille « ancien événement ».
+    const eventId = reg?.data?.eventId || tokenData?.ei || localBooking?.eventId || null
+    if (!eventId) { setScanReject({ title: 'Événement introuvable', sub: "Impossible de rattacher ce billet à un événement." }); return }
+    const ev = await fetchEventForScan(eventId)
+    if (ev) {
+      if (isEventOver(ev)) { setScanReject({ title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé — commandes closes." }); return }
+      if (userRole === 'organisateur' && String(ev.organizerId || '') !== String(myId) && String(ev.createdBy || '') !== String(myId)) {
+        setScanReject({ title: 'Pas ton événement', sub: "Ce billet appartient à un événement que tu n'organises pas." }); return
       }
     }
 
-    // 4) Précommandes — registre certifié en priorité, sinon token, sinon local
+    // 4) Méta billet + précommandes (registre certifié > token > booking local)
+    let holder = 'Participant', place = '—', eventName = ev?.name || tokenData?.en || '—', preorders = []
     if (reg?.found) {
-      const certified = regItems(reg)
-      if (certified) {
-        setServiceOrder({ code, order: { holder: reg.data.guestName || 'Participant', place: reg.data.place || '—', event: reg.data.eventName || '—', items: certified, certified: true } })
-        return
-      }
-    }
-    if (tokenData) {
-      const items = (tokenData.po || []).map(i => ({ name: i.n, emoji: i.e || '', qty: i.q, price: i.p })).filter(i => i.qty > 0)
-      setServiceOrder({ code, order: { holder: 'Participant', place: tokenData.pl, event: tokenData.en, items } })
-      return
+      holder = reg.data.guestName || 'Participant'; place = reg.data.place || '—'; eventName = reg.data.eventName || eventName
+      preorders = regPre(reg) || []
+    } else if (tokenData) {
+      place = tokenData.pl || '—'
+      preorders = (tokenData.po || []).map(i => ({ name: i.n, emoji: i.e || '', qty: i.q, priceEUR: i.p })).filter(i => i.qty > 0)
+    } else if (localBooking) {
+      const b = localBooking
+      holder = b.userName || 'Participant'; place = b.place || '—'; eventName = b.eventName || eventName
+      preorders = (b.preorderSummary || []).map(i => ({ name: i.name, emoji: i.emoji || '', qty: (b.preorderItems || {})[i.name] || 0, priceEUR: i.price })).filter(i => i.qty > 0)
     }
 
-    // Fallback legacy/hors-ligne : booking localStorage
-    try {
-      const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-      const booking = bookings.find(b => b.ticketCode === clean)
-      if (booking) {
-        const items = (booking.preorderSummary || []).map(i => ({
-          name: i.name, emoji: i.emoji || '',
-          qty: (booking.preorderItems || {})[i.name] || 0, price: i.price
-        })).filter(i => i.qty > 0)
-        setServiceOrder({ code: clean, order: { holder: booking.userName || 'Participant', place: booking.place, event: booking.eventName, items } })
-        return
-      }
-    } catch {}
+    // 5) Rôle staff + menu de l'événement (pour l'ajout serveur de consos)
+    const role = getStaffRole(eventId, user, ev)
+    const localActor = { uid: myId, id: myId, name: user?.name || user?.displayName || 'Staff', _staffRole: role }
+    setRoleByEvent(prev => ({ ...prev, [eventId]: role }))
+    setMenuByEvent(prev => ({ ...prev, [eventId]: (ev?.menu || []).filter(m => m && m.name && m.available !== false) }))
 
-    // Mock fallback
-    const order = MOCK_ORDERS[clean]
-    setServiceOrder({ code: clean, order: order || null })
+    // 6) Matérialise les précommandes en lignes de commande (idempotent)
+    if (preorders.length) await ensurePreordersMaterialized(eventId, code, preorders, localActor)
+
+    // 7) Ouvre/active l'onglet — plus besoin de rescanner pour y revenir.
+    //    Lecture optimiste locale immédiate (le listener temps réel prend ensuite le relais).
+    setOrdersByEvent(prev => ({ ...prev, [eventId]: getOrders(eventId) }))
+    setOpenTickets(prev => prev.some(t => t.code === code) ? prev : [...prev, { code, holder, place, eventId, eventName }])
+    setActiveCode(code)
+    setServiceCode(''); setPosScanning(false)
   }
 
-  function toggleServed(code, itemName) {
-    setServedItems(prev => {
-      const set = new Set(prev[code] || [])
-      if (set.has(itemName)) set.delete(itemName); else set.add(itemName)
-      const next = { ...prev, [code]: set }
-      try {
-        const serial = {}
-        for (const k of Object.keys(next)) serial[k] = [...next[k]]
-        localStorage.setItem('lib_served_items', JSON.stringify(serial))
-      } catch {}
+  // ── Actions POS (mode service) — toutes passent par eventOrders (Firestore) ──
+  const posActor = (eventId) => ({ uid: myId, id: myId, name: user?.name || user?.displayName || 'Staff', _staffRole: roleByEvent[eventId] || null })
+  // Rafraîchit la lecture optimiste locale (le listener temps réel confirme ensuite)
+  const refreshOrders = (eventId) => setOrdersByEvent(prev => ({ ...prev, [eventId]: getOrders(eventId) }))
+
+  async function posServe(eventId, itemId) {
+    const r = await serveItem(eventId, itemId, posActor(eventId))
+    refreshOrders(eventId)
+    if (!r?.ok) flashPos(r?.error || 'Action impossible')
+  }
+  async function posAddItem(eventId, code, menuItem) {
+    await addOnsiteItem(eventId, { ticketId: code, menuItem, qty: 1 }, posActor(eventId), false)
+    refreshOrders(eventId)
+    flashPos(`${menuItem.name} ajouté à l'addition`)
+  }
+  async function posCollect(eventId, code) {
+    const r = await markTicketPaid(eventId, code, posActor(eventId))
+    refreshOrders(eventId)
+    flashPos(r?.ok ? `Addition encaissée · ${r.total}€` : (r?.error || 'Rien à encaisser'))
+  }
+  async function posDoCancel() {
+    if (!cancelFor) return
+    const r = await cancelItem(cancelFor.eventId, cancelFor.itemId, cancelReason, posActor(cancelFor.eventId))
+    refreshOrders(cancelFor.eventId)
+    if (!r?.ok) { flashPos(r?.error || 'Annulation impossible'); return }
+    setCancelFor(null); setCancelReason('')
+  }
+  function closeTab(code) {
+    setOpenTickets(prev => {
+      const next = prev.filter(t => t.code !== code)
+      setActiveCode(cur => cur === code ? (next.length ? next[next.length - 1].code : null) : cur)
       return next
     })
   }
@@ -533,8 +579,9 @@ export default function ScannerPage() {
     setScanMode(mode)
     setCameraActive(false)
     setResult(null); setManualCode('')
-    setServiceOrder(null); setServiceCode('')
+    setServiceCode(''); setScanReject(null); setAddPicker(false)
     setCameraError('')
+    // On NE vide PAS openTickets : les onglets serveur survivent au changement de mode.
   }
 
   const validatedCount = usedCodes.size
@@ -827,243 +874,206 @@ export default function ScannerPage() {
           </>
         )}
 
-        {/* ── SERVICE MODE ── */}
-        {scanMode === 'service' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{
-              ...CARD,
-              borderColor: 'rgba(200,169,110,0.22)',
-              padding: '12px 14px',
-            }}>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>
-                Mode serveur
-              </p>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>
-                Scanne le QR du client pour voir sa précommande et marquer les articles comme servis.
-              </p>
-            </div>
+        {/* ── SERVICE MODE — POS multi-billets (scan une fois → onglets) ── */}
+        {scanMode === 'service' && (() => {
+          const active = openTickets.find(t => t.code === activeCode) || null
+          const evId = active?.eventId || null
+          const allItems = evId ? (ordersByEvent[evId] || []) : []
+          const isServed = i => i.status === ONSITE_STATUS.SERVED || i.status === PREORDER_STATUS.SERVED
+          const activeItems = allItems
+            .filter(i => String(i.ticketId) === String(activeCode) && i.status !== ONSITE_STATUS.CANCELLED)
+            .sort((a, b) => (isServed(a) ? 1 : 0) - (isServed(b) ? 1 : 0))
+          const role = evId ? roleByEvent[evId] : null
+          const menu = (evId && menuByEvent[evId]) || []
+          const dueItems = activeItems.filter(i => i.source !== ORDER_SOURCE.PREORDER && !i.paid_at)
+          const dueTotal = Math.round(dueItems.reduce((s, i) => s + i.unitPrice * i.quantity, 0) * 100) / 100
+          const unservedCount = t => (ordersByEvent[t.eventId] || []).filter(i => String(i.ticketId) === String(t.code) && i.status !== ONSITE_STATUS.CANCELLED && !isServed(i)).length
+          const showScanner = openTickets.length === 0 || posScanning
 
-            {!serviceOrder && (
-              <>
-                {/* Camera viewport */}
-                <div style={{ position: 'relative', height: 220, overflow: 'hidden', ...CARD }}>
-                  {cameraActive ? (
-                    <CameraScanner active onScan={handleCameraResult} onError={handleCameraError} />
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, textAlign: 'center' }}>
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                      </svg>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim }}>Scanne le QR code du client</p>
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+              {/* Onglets billets — scan une fois, jongle sans rescanner */}
+              {openTickets.length > 0 && (
+                <div className="hide-scrollbar" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+                  {openTickets.map(t => {
+                    const on = t.code === activeCode && !showScanner
+                    const n = unservedCount(t)
+                    return (
+                      <div key={t.code} onClick={() => { setActiveCode(t.code); setPosScanning(false); setAddPicker(false) }}
+                        style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 8px 8px 13px', borderRadius: 999, cursor: 'pointer',
+                          background: on ? 'rgba(78,232,200,0.14)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${on ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.1)'}` }}>
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: on ? COLORS.teal : 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>{t.holder}</span>
+                        {n > 0 && <span style={{ minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999, background: COLORS.gold, color: '#04040b', fontFamily: FONTS.mono, fontSize: 10, fontWeight: 800, display: 'grid', placeItems: 'center' }}>{n}</span>}
+                        <span onClick={e => { e.stopPropagation(); closeTab(t.code) }} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, lineHeight: 1, fontWeight: 700, padding: '0 3px' }}>×</span>
+                      </div>
+                    )
+                  })}
+                  <button onClick={() => { setPosScanning(true); setAddPicker(false); setScanReject(null) }}
+                    style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', color: COLORS.muted }}>+ Scanner</button>
+                </div>
+              )}
+
+              {showScanner ? (
+                <>
+                  <div style={{ ...CARD, borderColor: 'rgba(200,169,110,0.22)', padding: '12px 14px' }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Mode serveur</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0, lineHeight: 1.55 }}>Scanne le billet d'un client : il s'ouvre en onglet. Sers ses consos, ajoute-en, encaisse — sans le rescanner.</p>
+                  </div>
+
+                  {scanReject && (
+                    <div style={{ ...CARD, borderColor: 'rgba(224,90,170,0.4)', background: 'rgba(224,90,170,0.07)', padding: 18, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 18, color: COLORS.pink, margin: 0 }}>{scanReject.title}</p>
+                      <p style={{ fontFamily: FONTS.display, fontSize: 13, color: COLORS.muted, margin: 0, lineHeight: 1.45, maxWidth: 280 }}>{scanReject.sub}</p>
                     </div>
                   )}
-                </div>
 
-                {cameraError && (
-                  <div style={{
-                    background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.30)',
-                    borderRadius: 8, padding: '12px 14px', textAlign: 'center',
-                  }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(220,100,100,0.9)', margin: '0 0 3px', fontWeight: 600 }}>Caméra inaccessible</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0 }}>{cameraError}</p>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => { setCameraError(''); setCameraActive(v => !v) }}
-                  style={{
-                    width: '100%', padding: '13px 0', borderRadius: 12, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-                    border: 'none', transition: 'all 0.2s',
-                    background: cameraActive
-                      ? 'rgba(255,255,255,0.06)'
-                      : 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
-                    color: cameraActive ? COLORS.muted : COLORS.teal,
-                    outline: cameraActive ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(78,232,200,0.35)',
-                  }}>
-                  {cameraActive ? 'Arrêter la caméra' : 'Scanner le QR client'}
-                </button>
-
-                {/* Manual entry */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                    Ou saisir le code
-                  </label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      style={{ ...inputStyle, flex: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }}
-                      placeholder="LIB-001-XXXXXX"
-                      value={serviceCode}
-                      onChange={(e) => setServiceCode(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === 'Enter' && serviceCode && lookupOrder(serviceCode)}
-                    />
-                    <button
-                      onClick={() => serviceCode && lookupOrder(serviceCode)}
-                      disabled={!serviceCode}
-                      style={{
-                        padding: '0 16px', borderRadius: 12, cursor: serviceCode ? 'pointer' : 'default',
-                        background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                        border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold,
-                        fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em',
-                        opacity: serviceCode ? 1 : 0.4, transition: 'opacity 0.2s',
-                      }}>
-                      Valider
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Order result */}
-            {serviceOrder && (() => {
-              // Rejet métier (événement terminé / pas le tien) — distinct du « code inconnu »
-              if (serviceOrder.rejected) {
-                return (
-                  <div style={{
-                    ...CARD, borderColor: 'rgba(200,169,110,0.40)',
-                    background: 'rgba(200,169,110,0.07)',
-                    padding: 24, textAlign: 'center',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-                  }}>
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.gold} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 20, letterSpacing: '-0.4px', color: COLORS.gold, margin: 0 }}>{serviceOrder.rejected.title}</p>
-                    <p style={{ fontFamily: FONTS.display, fontSize: 13, color: COLORS.muted, margin: 0, lineHeight: 1.5, maxWidth: 280 }}>{serviceOrder.rejected.sub}</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, letterSpacing: '0.06em' }}>{serviceOrder.code}</p>
-                    <button
-                      onClick={() => { setServiceOrder(null); setServiceCode('') }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONTS.display, fontSize: 12, fontWeight: 600, color: COLORS.muted, textDecoration: 'underline', marginTop: 4 }}>
-                      Scanner un autre billet
-                    </button>
-                  </div>
-                )
-              }
-              if (!serviceOrder.order) {
-                return (
-                  <div style={{
-                    borderRadius: 12, borderColor: 'rgba(224,90,170,0.40)',
-                    background: 'rgba(224,90,170,0.07)', backdropFilter: 'blur(22px)',
-                    padding: 24, textAlign: 'center',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-                    borderWidth: 1, borderStyle: 'solid',
-                  }}>
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: COLORS.pink, margin: 0 }}>Code inconnu</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: 0 }}>Aucune réservation trouvée pour ce code.</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, letterSpacing: '0.06em' }}>{serviceOrder.code}</p>
-                    <button
-                      onClick={() => { setServiceOrder(null); setServiceCode('') }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, textDecoration: 'underline', marginTop: 4 }}>
-                      Réessayer
-                    </button>
-                  </div>
-                )
-              }
-              const { order, code } = serviceOrder
-              const allServed = order.items.length > 0 && order.items.every(i => servedItems[code]?.has(i.name))
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div style={{
-                    ...CARD,
-                    borderColor: 'rgba(200,169,110,0.28)',
-                    padding: 16, display: 'flex', flexDirection: 'column', gap: 14,
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 18, color: '#fff', margin: 0 }}>{order.holder}</p>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '3px 0 0' }}>{order.place} · {order.event}</p>
-                      </div>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.gold, letterSpacing: '0.06em' }}>{code}</span>
-                    </div>
-
-                    {order.items.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>Aucune précommande</p>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '4px 0 0' }}>Ce client n'a rien précommandé</p>
-                      </div>
+                  <div style={{ position: 'relative', height: 220, overflow: 'hidden', ...CARD }}>
+                    {cameraActive ? (
+                      <CameraScanner active onScan={handleCameraResult} onError={handleCameraError} />
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Précommande</p>
-                        {order.items.map(item => {
-                          const served = servedItems[code]?.has(item.name)
-                          return (
-                            <div key={item.name} style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                              padding: '10px 12px', borderRadius: 8,
-                              border: served ? '1px solid rgba(78,232,200,0.25)' : '1px solid rgba(255,255,255,0.08)',
-                              background: served ? 'rgba(78,232,200,0.04)' : 'rgba(0,0,0,0.20)',
-                              opacity: served ? 0.6 : 1,
-                              transition: 'all 0.2s',
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div style={{
-                                  width: 30, height: 30, borderRadius: 6, flexShrink: 0,
-                                  background: 'rgba(255,255,255,0.05)',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.gold} strokeWidth={1.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                                  </svg>
-                                </div>
-                                <div>
-                                  <p style={{
-                                    fontFamily: FONTS.mono, fontSize: 12,
-                                    color: served ? COLORS.dim : '#fff', margin: 0,
-                                    textDecoration: served ? 'line-through' : 'none',
-                                  }}>{item.name}</p>
-                                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
-                                    ×{item.qty} · {item.price * item.qty}€
-                                  </p>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => toggleServed(code, item.name)}
-                                style={{
-                                  padding: '6px 10px', borderRadius: 12, cursor: 'pointer',
-                                  fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.04em',
-                                  textTransform: 'uppercase', transition: 'all 0.2s',
-                                  ...(served
-                                    ? { background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.30)', color: COLORS.teal }
-                                    : { background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold }
-                                  ),
-                                }}>
-                                {served ? 'Servi' : 'Marquer servi'}
-                              </button>
-                            </div>
-                          )
-                        })}
-                        {allServed && (
-                          <div style={{
-                            padding: '9px 12px', background: 'rgba(78,232,200,0.06)',
-                            border: '1px solid rgba(78,232,200,0.22)', borderRadius: 6, textAlign: 'center',
-                          }}>
-                            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, margin: 0, letterSpacing: '0.06em' }}>
-                              Toute la commande a été servie
-                            </p>
-                          </div>
-                        )}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, textAlign: 'center' }}>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim }}>Scanne le QR du client</p>
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => { setServiceOrder(null); setServiceCode('') }}
-                    style={{
-                      width: '100%', padding: '12px 0', borderRadius: 12, cursor: 'pointer',
-                      background: 'transparent', border: '1px solid rgba(255,255,255,0.10)',
-                      color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11,
-                      textTransform: 'uppercase', letterSpacing: '0.06em',
-                    }}>
-                    Client suivant
+
+                  {cameraError && (
+                    <div style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.30)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: 'rgba(220,100,100,0.9)', margin: '0 0 3px' }}>Caméra inaccessible</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>{cameraError}</p>
+                    </div>
+                  )}
+
+                  <button onClick={() => { setCameraError(''); setCameraActive(v => !v) }}
+                    style={{ width: '100%', padding: '13px 0', borderRadius: 12, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: 'none',
+                      background: cameraActive ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
+                      color: cameraActive ? COLORS.muted : COLORS.teal,
+                      outline: cameraActive ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(78,232,200,0.35)' }}>
+                    {cameraActive ? 'Arrêter la caméra' : 'Scanner le QR client'}
                   </button>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <label style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ou saisir le code</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input style={{ ...inputStyle, flex: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }} placeholder="LIB-001-XXXXXX" value={serviceCode} onChange={e => setServiceCode(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && serviceCode && lookupOrder(serviceCode)} />
+                      <button onClick={() => serviceCode && lookupOrder(serviceCode)} disabled={!serviceCode}
+                        style={{ padding: '0 16px', borderRadius: 12, cursor: serviceCode ? 'pointer' : 'default', background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, opacity: serviceCode ? 1 : 0.4 }}>Ouvrir</button>
+                    </div>
+                  </div>
+
+                  {openTickets.length > 0 && (
+                    <button onClick={() => setPosScanning(false)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>← Revenir aux billets ouverts</button>
+                  )}
+                </>
+              ) : active ? (
+                <>
+                  {/* En-tête billet actif */}
+                  <div style={{ ...CARD, padding: 15, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <p style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 18, color: '#fff', margin: 0 }}>{active.holder}</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: '3px 0 0' }}>{active.place} · {active.eventName}</p>
+                    </div>
+                    <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.gold }}>{active.code}</span>
+                  </div>
+
+                  {/* Lignes de commande (précos + sur place, temps réel) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {activeItems.length === 0 ? (
+                      <div style={{ ...CARD, padding: 20, textAlign: 'center' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.muted, margin: 0 }}>Aucune commande</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '4px 0 0' }}>Ajoute une conso, ou laisse le client commander depuis son billet.</p>
+                      </div>
+                    ) : activeItems.map(item => {
+                      const served = isServed(item)
+                      const isPre = item.source === ORDER_SOURCE.PREORDER
+                      const chip = served ? { t: 'Servi', c: '#22c55e' } : item.paid_at ? { t: 'Payé', c: COLORS.teal } : isPre ? { t: 'Précommande', c: COLORS.gold } : { t: ONSITE_STATUS_LABEL[item.status] || 'Envoyée', c: ONSITE_STATUS_COLOR[item.status] || COLORS.teal }
+                      return (
+                        <div key={item.id} style={{ ...CARD, padding: '11px 12px', display: 'flex', alignItems: 'center', gap: 11, opacity: served ? 0.72 : 1 }}>
+                          <span style={{ fontSize: 20, width: 24, textAlign: 'center' }}>{item.emoji || '🍸'}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, textDecoration: served ? 'line-through' : 'none' }}>{item.name} <span style={{ color: COLORS.muted, fontWeight: 500 }}>×{item.quantity}</span></p>
+                            <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: chip.c }}>{chip.t}{item.addedByRole === 'client' ? ' · par le client' : ''}</span>
+                          </div>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: isPre ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : `${Math.round(item.unitPrice * item.quantity)}€`}</span>
+                          {!served && (
+                            <button onClick={() => posServe(evId, item.id)} disabled={!canServe(role)}
+                              style={{ flexShrink: 0, padding: '7px 11px', borderRadius: 10, cursor: canServe(role) ? 'pointer' : 'default', fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, opacity: canServe(role) ? 1 : 0.4 }}>Servir</button>
+                          )}
+                          {canManage(role) && !served && !item.paid_at && (
+                            <button onClick={() => { setCancelFor({ eventId: evId, itemId: item.id, name: item.name }); setCancelReason('') }}
+                              style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 8, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(224,90,170,0.3)', color: COLORS.pink, fontSize: 14, lineHeight: 1 }}>×</button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Ajouter une conso (serveur) */}
+                  {canServe(role) && (addPicker ? (
+                    <div style={{ ...CARD, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Ajouter au billet</p>
+                        <button onClick={() => setAddPicker(false)} style={{ background: 'none', border: 'none', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Fermer</button>
+                      </div>
+                      {menu.length === 0 ? (
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, margin: 0 }}>Aucun menu défini pour cet événement.</p>
+                      ) : menu.map(m => (
+                        <div key={String(m.id || m.name)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                          <span style={{ fontSize: 18, width: 22, textAlign: 'center' }}>{m.emoji || '🍸'}</span>
+                          <span style={{ flex: 1, fontFamily: FONTS.mono, fontSize: 13, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: COLORS.gold }}>{Math.round(Number(m.price) || 0)}€</span>
+                          <button onClick={() => posAddItem(evId, active.code, m)} style={{ padding: '6px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal }}>+ Ajouter</button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <button onClick={() => setAddPicker(true)} style={{ width: '100%', padding: '12px 0', borderRadius: 12, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.2)', color: COLORS.muted }}>+ Ajouter une conso</button>
+                  ))}
+
+                  {/* Addition + encaissement */}
+                  <div style={{ ...CARD, padding: 15, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>À encaisser</p>
+                      <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 800, color: '#fff', margin: '2px 0 0', letterSpacing: '-0.5px' }}>{dueTotal}€</p>
+                    </div>
+                    {dueTotal > 0 ? (
+                      <button onClick={() => posCollect(evId, active.code)} disabled={!canServe(role)}
+                        style={{ padding: '12px 18px', borderRadius: 12, cursor: canServe(role) ? 'pointer' : 'default', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: '#04040b', background: 'linear-gradient(135deg, #c8a96e, #e0c690)', border: 'none', opacity: canServe(role) ? 1 : 0.4 }}>Encaisser</button>
+                    ) : (
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: '#22c55e' }}>Rien à encaisser ✓</span>
+                    )}
+                  </div>
+
+                  <button onClick={() => closeTab(active.code)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Clôturer cet onglet</button>
+                </>
+              ) : null}
+
+              {/* Toast feedback */}
+              {posMsg && (
+                <div style={{ position: 'fixed', left: '50%', bottom: 24, transform: 'translateX(-50%)', zIndex: 30, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 12.5, fontWeight: 600, padding: '9px 16px', borderRadius: 999, backdropFilter: 'blur(12px)' }}>{posMsg}</div>
+              )}
+
+              {/* Modal annulation (manager + motif obligatoire) */}
+              {cancelFor && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} onClick={() => setCancelFor(null)}>
+                  <div onClick={e => e.stopPropagation()} style={{ ...CARD, padding: 18, width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 16, color: '#fff', margin: 0 }}>Annuler « {cancelFor.name} »</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>Un motif est obligatoire (tracé dans l'historique).</p>
+                    <textarea value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="Motif de l'annulation…" rows={2} style={{ ...inputStyle, resize: 'none', letterSpacing: 'normal', textTransform: 'none' }} />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setCancelFor(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>Retour</button>
+                      <button onClick={posDoCancel} disabled={!cancelReason.trim()} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: cancelReason.trim() ? 'pointer' : 'default', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.45)', color: COLORS.pink, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, opacity: cancelReason.trim() ? 1 : 0.4 }}>Annuler l'article</button>
+                    </div>
+                  </div>
                 </div>
-              )
-            })()}
-          </div>
-        )}
+              )}
+            </div>
+          )
+        })()}
       </div>
 
       <style>{`

@@ -1997,6 +1997,7 @@ function EventTicketGroup({ group }) {
 function SingleTicketCard({ booking: b, index }) {
   const [showQr, setShowQr] = useState(false)
   const canvasRef = useRef(null)
+  const navigate = useNavigate()
   const qrUrl = b.token ? `${window.location.origin}/ticket/${b.token}` : ''
 
   function downloadQr() {
@@ -2084,6 +2085,25 @@ function SingleTicketCard({ booking: b, index }) {
           }}>
             {b.preorderSummary.map(i => i.name).join(', ')}
           </p>
+        </div>
+      )}
+
+      {/* Commander sur place — le client commande des consos pendant la soirée */}
+      {b.eventId && b.ticketCode && (
+        <div style={{ padding: '0 12px 12px' }}>
+          <button
+            onClick={() => navigate(`/commander/${b.eventId}/${b.ticketCode}`)}
+            className="lib-press"
+            style={{
+              width: '100%', padding: '11px 0', borderRadius: '10px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '.01em',
+              color: '#04040b', background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)',
+              border: 'none', boxShadow: '0 6px 18px -8px rgba(78,232,200,0.55)',
+            }}
+          >
+            🍹 Commander sur place
+          </button>
         </div>
       )}
 

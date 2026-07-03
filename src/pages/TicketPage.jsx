@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { verifyTicketToken } from '../utils/ticket'
 
@@ -12,7 +12,7 @@ const CARD = {
 
 const FONTS = {
   display: "Inter, sans-serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
+  mono: "Inter, sans-serif",
 }
 
 const COLORS = {
@@ -25,6 +25,7 @@ const COLORS = {
 
 export default function TicketPage() {
   const { token } = useParams()
+  const navigate = useNavigate()
   const { valid, data } = verifyTicketToken(token || '')
 
   const scannedAt = new Date().toLocaleString('fr-FR', {
@@ -124,6 +125,21 @@ export default function TicketPage() {
             Présente ce QR code à l'entrée
           </p>
         </div>
+
+        {/* Commander sur place — visible pendant la soirée */}
+        {data.ei && data.tc && (
+          <button
+            onClick={() => navigate(`/commander/${data.ei}/${data.tc}`)}
+            style={{
+              width: '100%', padding: '15px 0', borderRadius: 12, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+              fontFamily: FONTS.display, fontSize: 14, fontWeight: 700, letterSpacing: '.01em',
+              color: '#04040b', background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)',
+              border: 'none', boxShadow: '0 8px 24px -8px rgba(78,232,200,0.6)',
+            }}>
+            🍹 Commander sur place
+          </button>
+        )}
 
         {/* Event block */}
         <div style={{ ...CARD, padding: 20 }}>
