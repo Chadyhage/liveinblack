@@ -7,6 +7,7 @@ import { getUserId } from '../utils/messaging'
 import {
   listenOrders, getOrders, ensurePreordersMaterialized, addOnsiteItem, serveItem,
   cancelItem, markTicketPaid, getStaffRole, canServe, canManage,
+  listenOrderLog, getOrderLog,
   ORDER_SOURCE, ONSITE_STATUS, PREORDER_STATUS, ONSITE_STATUS_LABEL, ONSITE_STATUS_COLOR,
 } from '../utils/eventOrders'
 
@@ -237,6 +238,8 @@ export default function ScannerPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [addPicker, setAddPicker] = useState(false)      // menu d'ajout serveur ouvert
   const [posScanning, setPosScanning] = useState(false)  // scanner affiché par-dessus les onglets
+  const [showHistory, setShowHistory] = useState(false)  // historique complet (manager)
+  const [logByEvent, setLogByEvent] = useState({})       // { eventId: [LogEntry] }
 
   // Écoute temps réel des commandes pour chaque événement présent dans les onglets.
   const openEventIds = [...new Set(openTickets.map(t => t.eventId).filter(Boolean))]
@@ -248,6 +251,17 @@ export default function ScannerPage() {
   }, [openEventIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const flashPos = msg => { setPosMsg(msg); setTimeout(() => setPosMsg(''), 2400) }
+
+  // Historique complet de la soirée (journal d'audit) — manager uniquement.
+  useEffect(() => {
+    if (!showHistory) return
+    const t = openTickets.find(x => x.code === activeCode)
+    const eid = t?.eventId
+    if (!eid || !canManage(roleByEvent[eid])) return
+    setLogByEvent(prev => ({ ...prev, [eid]: getOrderLog(eid) })) // optimiste local
+    const unsub = listenOrderLog(eid, entries => setLogByEvent(prev => ({ ...prev, [eid]: entries })))
+    return () => unsub()
+  }, [showHistory, activeCode, roleByEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function markUsed(code) {
     // Re-read localStorage to catch validations from other scanners/devices
@@ -900,7 +914,7 @@ export default function ScannerPage() {
                     const on = t.code === activeCode && !showScanner
                     const n = unservedCount(t)
                     return (
-                      <div key={t.code} onClick={() => { setActiveCode(t.code); setPosScanning(false); setAddPicker(false) }}
+                      <div key={t.code} onClick={() => { setActiveCode(t.code); setPosScanning(false); setAddPicker(false); setShowHistory(false) }}
                         style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 8px 8px 13px', borderRadius: 999, cursor: 'pointer',
                           background: on ? 'rgba(78,232,200,0.14)' : 'rgba(255,255,255,0.04)',
                           border: `1px solid ${on ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.1)'}` }}>
@@ -910,8 +924,12 @@ export default function ScannerPage() {
                       </div>
                     )
                   })}
-                  <button onClick={() => { setPosScanning(true); setAddPicker(false); setScanReject(null) }}
+                  <button onClick={() => { setPosScanning(true); setShowHistory(false); setAddPicker(false); setScanReject(null) }}
                     style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', color: COLORS.muted }}>+ Scanner</button>
+                  {canManage(role) && (
+                    <button onClick={() => { setShowHistory(v => !v); setPosScanning(false) }}
+                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: showHistory ? 'rgba(200,169,110,0.16)' : 'rgba(255,255,255,0.05)', border: `1px solid ${showHistory ? 'rgba(200,169,110,0.5)' : 'rgba(255,255,255,0.12)'}`, color: showHistory ? COLORS.gold : COLORS.muted }}>Historique</button>
+                  )}
                 </div>
               )}
 
@@ -968,6 +986,60 @@ export default function ScannerPage() {
                   {openTickets.length > 0 && (
                     <button onClick={() => setPosScanning(false)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>← Revenir aux billets ouverts</button>
                   )}
+                </>
+              ) : showHistory ? (
+                <>
+                  <div style={{ ...CARD, padding: '12px 14px' }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Historique de la soirée</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: '3px 0 0' }}>{active?.eventName || '—'} · tout ce qui a été fait, par qui et quand</p>
+                  </div>
+                  {(() => {
+                    const log = (evId && logByEvent[evId]) || []
+                    const holderOf = tid => openTickets.find(t => t.code === tid)?.holder || (tid ? `#${String(tid).slice(-6)}` : '—')
+                    const roleLabel = r => ({ client: 'Client', serveur: 'Serveur', manager: 'Manager', preorder: 'Système', staff: 'Staff' }[r] || r || '—')
+                    const roleColor = r => r === 'client' ? '#8b5cf6' : r === 'manager' ? COLORS.gold : r === 'preorder' ? COLORS.muted : COLORS.teal
+                    const fmt = e => {
+                      switch (e.action) {
+                        case 'add': return { verb: 'a ajouté', detail: e.newValue, c: COLORS.teal }
+                        case 'serve': return { verb: 'a servi', detail: e.itemName || e.newValue, c: '#22c55e' }
+                        case 'cancel': return { verb: 'a annulé', detail: e.itemName || '', c: COLORS.pink }
+                        case 'remove': return { verb: 'a retiré', detail: e.oldValue, c: COLORS.gold }
+                        case 'pay': return { verb: 'a encaissé', detail: e.newValue, c: COLORS.gold }
+                        case 'edit': return { verb: 'a modifié', detail: `${e.itemName || ''} : ${e.oldValue} → ${e.newValue}`, c: COLORS.muted }
+                        case 'status': return { verb: 'a changé le statut', detail: `${e.itemName || ''} ${e.oldValue}→${e.newValue}`, c: COLORS.muted }
+                        default: return { verb: e.action, detail: e.newValue || '', c: COLORS.muted }
+                      }
+                    }
+                    if (!log.length) return (
+                      <div style={{ ...CARD, padding: 24, textAlign: 'center' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.muted, margin: 0 }}>Aucune action pour l'instant</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '4px 0 0' }}>Ajouts, services, annulations et encaissements apparaîtront ici, avec l'auteur.</p>
+                      </div>
+                    )
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {log.map(e => {
+                          const f = fmt(e)
+                          const d = new Date(e.ts)
+                          const time = isNaN(d.getTime()) ? '' : d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                          return (
+                            <div key={e.id} style={{ ...CARD, padding: '10px 12px', display: 'flex', gap: 10 }}>
+                              <span style={{ width: 5, flexShrink: 0, borderRadius: 3, background: f.c, alignSelf: 'stretch' }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontFamily: FONTS.mono, fontSize: 12.5, color: '#fff', margin: 0, lineHeight: 1.4 }}>
+                                  <b style={{ color: f.c }}>{e.actorName || 'Staff'}</b> <span style={{ color: COLORS.muted }}>{f.verb}</span> {f.detail}
+                                </p>
+                                <p style={{ fontFamily: FONTS.mono, fontSize: 10.5, color: COLORS.dim, margin: '3px 0 0' }}>
+                                  {time} · <span style={{ color: roleColor(e.actorRole) }}>{roleLabel(e.actorRole)}</span> · billet {holderOf(e.ticketId)}{e.action === 'cancel' && e.note ? ` · motif : ${e.note}` : ''}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
+                  <button onClick={() => setShowHistory(false)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>← Revenir au service</button>
                 </>
               ) : active ? (
                 <>
