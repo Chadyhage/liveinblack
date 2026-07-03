@@ -393,7 +393,7 @@ const S = {
 export default function ProfilePage() {
   const { user, setUser } = useAuth()
   const navigate = useNavigate()
-  const [panel, setPanel] = useState(null) // null | 'settings' | 'billets' | 'commandes' | 'service-orders' | 'support'
+  const [panel, setPanel] = useState(null) // null | 'settings' | 'billets' | 'service-orders' | 'support'
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
@@ -1138,84 +1138,6 @@ export default function ProfilePage() {
   }
 
 
-  // ── Mes commandes ─────────────────────────────────────────────────────────────
-  if (panel === 'commandes') {
-    const bookings = getBookings().filter(b => b.preorderSummary?.length > 0)
-    return (
-      <Layout>
-        <div style={S.page}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <BackButton />
-            <h2 style={S.sectionTitle}>Mes précommandes</h2>
-          </div>
-          {bookings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 0' }}>
-              <div style={S.emptyIcon}>
-                <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
-                  <path d="M3 4h2l2 8h8l2-5H7" stroke="rgba(255,255,255,0.2)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="9" cy="15" r="1" fill="rgba(255,255,255,0.2)"/>
-                  <circle cx="15" cy="15" r="1" fill="rgba(255,255,255,0.2)"/>
-                </svg>
-              </div>
-              <p style={S.emptyText}>Aucune précommande pour l&apos;instant</p>
-              <p style={S.emptySubText}>Tu peux précommander des consommations lors d&apos;une réservation.</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {bookings.map((b) => (
-                <div key={b.id} style={S.card}>
-                  <p style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 400,
-                    fontSize: '16px',
-                    color: 'rgba(255,255,255,0.88)',
-                  }}>{b.eventName}</p>
-                  <p style={{ ...S.label, marginTop: '4px', marginBottom: '12px' }}>{b.eventDate}</p>
-                  <hr style={S.divider} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '10px 0' }}>
-                    {b.preorderSummary.map(item => (
-                      <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{
-                          fontFamily: 'Inter, sans-serif',
-                          fontWeight: 400,
-                          fontSize: '14px',
-                          color: 'rgba(255,255,255,0.7)',
-                        }}>{item.name}</span>
-                        <span style={{
-                          fontFamily: 'Inter, sans-serif',
-                          fontSize: '11px',
-                          color: 'rgba(255,255,255,0.4)',
-                        }}>×{b.preorderItems[item.name]} · {item.price * b.preorderItems[item.name]}€</span>
-                      </div>
-                    ))}
-                  </div>
-                  <hr style={S.divider} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                    <span style={{ ...S.label }}>Total commande</span>
-                    <span style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontWeight: 300,
-                      fontSize: '20px',
-                      color: '#c8a96e',
-                    }}>
-                      {b.preorderSummary.reduce((s, i) => s + i.price * b.preorderItems[i.name], 0)}€
-                    </span>
-                  </div>
-                  <p style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '9px',
-                    color: 'rgba(255,255,255,0.18)',
-                    marginTop: '8px',
-                  }}>{b.ticketCode}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </Layout>
-    )
-  }
-
   // ── Commandes prestataires ────────────────────────────────────────────────────
   if (panel === 'service-orders') {
     const uid = getUserId(user)
@@ -1503,11 +1425,10 @@ export default function ProfilePage() {
         {/* Menu — items filtrés selon le rôle */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {[
-            // Clients uniquement : billets + précommandes (boissons/food commandées avec le billet)
+            // Clients uniquement : billets (le détail précommande est affiché
+            // directement sur chaque billet — pas de page séparée redondante).
             (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
               { label: 'Mes billets',       action: () => setPanel('billets')   },
-            (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
-              { label: 'Mes précommandes',  action: () => setPanel('commandes') },
             // « Commandes prestataires » : concept marketplace (organisateur↔prestataire).
             // On ne l'affiche que si l'utilisateur a RÉELLEMENT passé une telle commande —
             // sinon c'est une case vide déroutante pour un simple client.
@@ -2084,15 +2005,32 @@ function SingleTicketCard({ booking: b, index }) {
       </div>
 
       {b.preorderSummary?.length > 0 && (
-        <div style={{ padding: '0 12px 10px' }}>
+        <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
           <p style={{
             fontFamily: 'Inter, sans-serif',
             fontSize: '9px',
+            fontWeight: 700,
             letterSpacing: '0.15em',
+            textTransform: 'uppercase',
             color: 'rgba(200,169,110,0.55)',
-          }}>
-            {b.preorderSummary.map(i => i.name).join(', ')}
-          </p>
+            margin: '0 0 2px',
+          }}>Précommande</p>
+          {b.preorderSummary.map(item => (
+            <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: 'rgba(255,255,255,0.65)' }}>
+                {item.name} <span style={{ color: 'rgba(255,255,255,0.35)' }}>×{b.preorderItems?.[item.name] || 0}</span>
+              </span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 600, color: '#c8a96e' }}>
+                {item.price * (b.preorderItems?.[item.name] || 0)}€
+              </span>
+            </div>
+          ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3px', paddingTop: '7px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Total précommande</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 700, color: '#c8a96e' }}>
+              {b.preorderSummary.reduce((s, i) => s + i.price * (b.preorderItems?.[i.name] || 0), 0)}€
+            </span>
+          </div>
         </div>
       )}
 
