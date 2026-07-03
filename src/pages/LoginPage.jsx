@@ -173,21 +173,22 @@ async function doEmailRegister(data) {
   const { auth, db } = await import('../firebase')
   const { doc, setDoc, collection, query, where, getDocs } = await import('firebase/firestore')
 
-  // Block duplicate phone number in Firestore — only if the existing account's email is verified
-  if (phone) {
-    const normalizedPhone = phone.replace(/\D/g, '')
-    const phoneQuery = query(collection(db, 'users'), where('phoneNormalized', '==', normalizedPhone))
-    const phoneSnap = await getDocs(phoneQuery)
-    if (!phoneSnap.empty) {
-      const hasVerifiedAccount = phoneSnap.docs.some(d => d.data().emailVerified === true)
-      if (hasVerifiedAccount) throw { code: 'auth/phone-already-in-use' }
-      // Ghost accounts (unverified) — delete them from Firestore so phone is free
-      const { deleteDoc } = await import('firebase/firestore')
-      await Promise.all(phoneSnap.docs.map(d => deleteDoc(doc(db, 'users', d.id))))
+  // Créer le compte Auth en PREMIER — les requêtes Firestore (ghost cleanup,
+  // doublon téléphone) nécessitent isSignedIn() dans les rules.
+  let cred
+  try {
+    cred = await createUserWithEmailAndPassword(auth, email, password)
+  } catch (err) {
+    if (err.code === 'auth/email-already-in-use') {
+      throw { code: 'auth/email-unverified-ghost' }
     }
+    throw err
   }
+  if (name) await updateProfile(cred.user, { displayName: name })
 
-  // Check for ghost account with same email in Firestore (registered but never verified)
+  // Maintenant authentifié → on peut requêter Firestore en sécurité
+
+  // Nettoyer les ghost accounts Firestore (même email, jamais vérifié)
   const emailQuery = query(collection(db, 'users'), where('email', '==', email), where('emailVerified', '==', false))
   const emailGhostSnap = await getDocs(emailQuery)
   if (!emailGhostSnap.empty) {
@@ -195,19 +196,25 @@ async function doEmailRegister(data) {
     await Promise.all(emailGhostSnap.docs.map(d => deleteDoc(doc(db, 'users', d.id))))
   }
 
-  let cred
-  try {
-    cred = await createUserWithEmailAndPassword(auth, email, password)
-  } catch (err) {
-    if (err.code === 'auth/email-already-in-use') {
-      // Firebase Auth still holds an unverified account — user can recover via password reset
-      throw { code: 'auth/email-unverified-ghost' }
+  // Bloquer les doublons de téléphone (seulement si un compte vérifié existe)
+  if (phone) {
+    const normalizedPhone = phone.replace(/\D/g, '')
+    const phoneQuery = query(collection(db, 'users'), where('phoneNormalized', '==', normalizedPhone))
+    const phoneSnap = await getDocs(phoneQuery)
+    if (!phoneSnap.empty) {
+      const hasVerifiedAccount = phoneSnap.docs.some(d => d.data().emailVerified === true)
+      if (hasVerifiedAccount) {
+        await auth.signOut()
+        // Supprimer le compte Auth qu'on vient de créer pour ne pas laisser un orphelin
+        await cred.user.delete()
+        throw { code: 'auth/phone-already-in-use' }
+      }
+      const { deleteDoc } = await import('firebase/firestore')
+      await Promise.all(phoneSnap.docs.map(d => deleteDoc(doc(db, 'users', d.id))))
     }
-    throw err
   }
-  if (name) await updateProfile(cred.user, { displayName: name })
 
-  // Send email verification (skip for super admin)
+  // Envoyer l'email de vérification (skip pour super admin)
   if (!isSuperAdmin) {
     const { sendEmailVerification } = await import('firebase/auth')
     await sendEmailVerification(cred.user)
