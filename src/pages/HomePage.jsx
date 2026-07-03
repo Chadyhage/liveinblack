@@ -760,6 +760,7 @@ export default function HomePage() {
               <p className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, color: 'var(--teal)' }}>
                 <span style={{ width: 22, height: 2, borderRadius: 2, background: 'var(--teal)', boxShadow: '0 0 8px var(--teal)' }} />
                 À ne pas manquer
+                <span style={{ width: 22, height: 2, borderRadius: 2, background: 'var(--teal)', boxShadow: '0 0 8px var(--teal)' }} />
               </p>
               <button
                 onClick={() => setShowRegionSelector(true)}
