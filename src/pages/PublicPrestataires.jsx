@@ -139,7 +139,7 @@ export default function PublicPrestataires() {
               return (
                 <div key={p.userId} className="lb-card" style={{ ...card, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
                   {/* Couverture */}
-                  <div style={{ position: 'relative', height: 118, background: `url(${p.coverUrl || c.img}) center/cover, ${C.obsidian}` }}>
+                  <div style={{ position: 'relative', height: 118, background: p.coverUrl ? `url(${p.coverUrl}) center/cover, ${C.obsidian}` : `linear-gradient(135deg, ${c.color}44, ${c.color}12 55%, ${C.obsidian})` }}>
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,.95), rgba(6,8,14,.25))' }} />
                     <span style={{ position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${c.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
                       <CatIcon id={c.icon} color="#fff" size={12} /> {c.label}
@@ -159,7 +159,7 @@ export default function PublicPrestataires() {
                     </p>}
                     {p.description && <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.62)', margin: '10px 0 0', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.description}</p>}
                     <button onClick={() => contact(p)} style={{ ...btnGold, width: '100%', marginTop: 'auto' }}>
-                      {user ? 'Contacter' : 'Demander un devis'}
+                      Contacter
                     </button>
                   </div>
                 </div>
