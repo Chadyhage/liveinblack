@@ -13,6 +13,7 @@ import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/ev
 import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 import { IconTent, IconMic } from '../components/icons'
+import PublicLanding from './PublicLanding'
 
 function HostStatsWidget() {
   const [percent, setPercent] = useState(0)
@@ -607,6 +608,10 @@ export default function HomePage() {
 
   const RANK_LABEL = ['01', '02', '03']
   const RANK_COLOR = ['var(--gold)', '#b0b8c8', '#a0714f']
+
+  // Utilisateur NON connecté → vitrine publique premium (conversion).
+  // L'expérience connectée ci-dessous reste strictement inchangée.
+  if (!user) return <PublicLanding />
 
   return (
     <Layout>
