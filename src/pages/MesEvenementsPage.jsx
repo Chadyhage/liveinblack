@@ -2757,8 +2757,9 @@ function OrganizerAnalytics({ events, tickets, loading }) {
           </div>
         </div>
 
-        {/* Par événement */}
-        {perEvent.length > 0 && (
+        {/* Par événement — seulement à partir de 2 events (avec un seul, ce serait
+            une redite des KPI Revenus / Billets / Remplissage ci-dessus). */}
+        {perEvent.length > 1 && (
           <div style={{ ...card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>Par événement</p>
             {perEvent.map(({ event, sold, cap, rev, fill }) => (
