@@ -517,13 +517,14 @@ function EventRow({ title, events, onOpen }) {
         {title}
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>{events.length}</span>
       </h3>
-      {/* Hauteur fixe + centrage vertical pour éviter les bugs de padding et le rognage des cartes et ombres au survol */}
-      {/* overflowX:auto force le navigateur à rogner aussi la verticale : on donne
-          une grande zone verticale invisible (height 340 + marges -70) pour que
-          l'ombre portée COMPLÈTE de la carte au survol (~54px) tienne dedans sans
-          être tranchée (sinon → ligne horizontale dure). Empreinte en page = 200px,
-          identique à avant, donc aucune ligne ne bouge. */}
-      <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', overflowY: 'hidden', height: 340, marginTop: -70, marginBottom: -70, marginRight: -16, paddingRight: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
+      {/* overflowX:auto force le navigateur à rogner AUSSI hors de l'axe vertical
+          ET aux bords gauche/droit du padding-box. La carte survolée grandit de
+          ~14px en haut/bas et ~10px à gauche/droite (scale 1.14, origine centre) :
+          - vertical : zone invisible de 340px (marges -70) → large marge
+          - horizontal : paddingLeft/Right 16 + marges -16 → la 1re carte n'est
+            plus tranchée à gauche (c'était la « ligne invisible » au survol) ;
+            scrollPaddingLeft aligne les positions de snap sur ce padding. */}
+      <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', overflowY: 'hidden', height: 340, marginTop: -70, marginBottom: -70, marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16, scrollPaddingLeft: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
         {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
       </div>
     </div>
