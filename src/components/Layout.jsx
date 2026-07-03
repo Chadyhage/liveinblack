@@ -443,7 +443,7 @@ export default function Layout({ children, hideNav, chatMode }) {
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <main className={chatMode ? 'flex flex-col' : ''} style={chatMode ? { flex: 1 } : {}}>
-        <div style={{ maxWidth: chatMode ? undefined : 1320, margin: '0 auto', width: '100%' }}
+        <div key={chatMode ? undefined : location.pathname} style={{ maxWidth: chatMode ? undefined : 1320, margin: '0 auto', width: '100%' }}
           className={`${chatMode ? '' : 'lib-page '}${!hideNav && !chatMode ? 'pb-28 pt-20 md:pt-8 md:pb-16' : chatMode ? '' : 'pt-20 md:pt-8'}${chatMode ? ' flex-1 flex flex-col' : ''}`}>
           {children}
         </div>
