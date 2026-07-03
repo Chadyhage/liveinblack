@@ -47,16 +47,34 @@ function formatDate(ts) {
 
 // ─── Génération attestation de validation (ouverture dans un nouvel onglet → Ctrl+P pour PDF) ──
 function openValidationReceipt(app) {
+  const fd = app.formData || {}
+  const isOrg = app.type === 'organisateur'
   const approvedDate = new Date(app.approvedAt || Date.now()).toLocaleDateString('fr-FR', {
     day: '2-digit', month: 'long', year: 'numeric',
   })
-  const orgName    = app.formData?.nomCommercial || '—'
-  const emailPro   = app.formData?.emailPro || app.email || '—'
-  const tel        = [app.formData?.telephoneProCode, app.formData?.telephonePro].filter(Boolean).join(' ') || '—'
-  const ville      = app.formData?.ville || '—'
-  const typeEtab   = app.formData?.typeEtablissement || '—'
   const refId      = app.id || '—'
   const approvedBy = app.auditLog?.slice().reverse().find(e => e.action === 'approved')?.byName || 'LIVEINBLACK'
+
+  // ── Champs & libellés selon le rôle (organisateur ↔ prestataire) ──
+  const orgName = isOrg
+    ? (fd.nomCommercial || '—')
+    : (fd.nomScene?.trim() || fd.nomCommercial?.trim() || [fd.prenom, fd.nom].filter(Boolean).join(' ') || '—')
+  const emailPro = isOrg ? (fd.emailPro || app.email || '—') : (app.email || fd.emailPro || '—')
+  const tel = isOrg
+    ? ([fd.telephoneProCode, fd.telephonePro].filter(Boolean).join(' ') || '—')
+    : ([fd.telephoneCode, fd.telephone].filter(Boolean).join(' ') || '—')
+  const ville = fd.ville || '—'
+  const typeEtab = isOrg
+    ? (fd.typeEtablissement || 'Organisateur')
+    : ({ artiste: 'Artiste / Performeur', salle: 'Salle & Espace événementiel', materiel: 'Location de matériel', food: 'Restauration & Boissons' }[fd.prestataireType] || 'Prestataire')
+
+  const roleWord   = isOrg ? 'organisateur' : 'prestataire'
+  const subtitle   = isOrg ? "Dossier organisateur approuvé par l'équipe LIVEINBLACK" : "Dossier prestataire approuvé par l'équipe LIVEINBLACK"
+  const roleDesc   = isOrg
+    ? 'Est officiellement reconnu(e) comme <strong style="display:inline;font-size:inherit;font-family:inherit;font-weight:600">organisateur partenaire</strong> sur la plateforme LIVEINBLACK et est autorisé(e) à créer et publier des événements.'
+    : 'Est officiellement référencé(e) comme <strong style="display:inline;font-size:inherit;font-family:inherit;font-weight:600">prestataire partenaire</strong> sur la plateforme LIVEINBLACK et est autorisé(e) à proposer ses services aux organisateurs.'
+  const firstRowLabel = isOrg ? 'Organisation' : 'Nom / Nom de scène'
+  const typeRowLabel  = isOrg ? "Type d'établissement" : 'Type de prestataire'
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -243,23 +261,23 @@ function openValidationReceipt(app) {
   <div class="title-section">
     <div class="label">Document officiel</div>
     <h1>Attestation de validation</h1>
-    <div class="subtitle">Dossier organisateur approuvé par l&apos;équipe LIVEINBLACK</div>
+    <div class="subtitle">${subtitle}</div>
   </div>
 
   <div class="seal">
     <div class="seal-icon">✓</div>
     <div class="seal-text">
       <strong>${orgName}</strong>
-      Est officiellement reconnu(e) comme <strong style="display:inline;font-size:inherit;font-family:inherit;font-weight:600">organisateur partenaire</strong> sur la plateforme LIVEINBLACK et est autorisé(e) à créer et publier des événements.
+      ${roleDesc}
     </div>
   </div>
 
   <table>
-    <tr><td>Organisation</td><td>${orgName}</td></tr>
-    <tr><td>Email professionnel</td><td>${emailPro}</td></tr>
+    <tr><td>${firstRowLabel}</td><td>${orgName}</td></tr>
+    <tr><td>${typeRowLabel}</td><td>${typeEtab}</td></tr>
+    <tr><td>${isOrg ? 'Email professionnel' : 'Email'}</td><td>${emailPro}</td></tr>
     <tr><td>Téléphone</td><td>${tel}</td></tr>
     <tr><td>Ville</td><td>${ville}</td></tr>
-    <tr><td>Type d'établissement</td><td>${typeEtab}</td></tr>
     <tr><td>Date de validation</td><td>${approvedDate}</td></tr>
     <tr><td>Validé par</td><td>${approvedBy} — Équipe LIVEINBLACK</td></tr>
     <tr><td>Référence dossier</td><td>${refId}</td></tr>
@@ -268,9 +286,9 @@ function openValidationReceipt(app) {
   <div class="divider"></div>
 
   <p style="font-size:10px;color:#aaa;line-height:1.8;letter-spacing:0.03em">
-    Ce document atteste que l'organisation mentionnée ci-dessus a soumis un dossier complet, vérifié et approuvé par l'équipe LIVEINBLACK.
-    Cette attestation est valable jusqu'à révocation du statut d'organisateur.
-    En cas de doute sur l'authenticité de ce document, contacter <strong style="color:#888">support@liveinblack.com</strong>.
+    Ce document atteste que ${isOrg ? "l'organisation" : 'le prestataire'} mentionné${isOrg ? 'e' : ''} ci-dessus a soumis un dossier complet, vérifié et approuvé par l'équipe LIVEINBLACK.
+    Cette attestation est valable jusqu'à révocation du statut de ${roleWord}.
+    En cas de doute sur l'authenticité de ce document, contacter <strong style="color:#888">hagechady@liveinblack.com</strong>.
   </p>
 
   <div class="footer">
