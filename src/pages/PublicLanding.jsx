@@ -61,7 +61,15 @@ export default function PublicLanding() {
   const events = useMemo(loadPublicEvents, [])
 
   // Aperçu prestataires (annuaire cross-device) — mis en avant comme les events
-  const [providers, setProviders] = useState(() => getAllProviderProfiles().filter(p => p.name).slice(0, 4))
+  const [providers, setProviders] = useState(() => {
+    const valid = getAllProviderProfiles().filter(p => p.name && (p.photoUrl || p.description || p.location))
+    const byName = {}
+    for (const p of valid) {
+      const k = p.name.trim().toLowerCase()
+      if (!byName[k]) byName[k] = p
+    }
+    return Object.values(byName).slice(0, 4)
+  })
   useEffect(() => {
     let unsub = () => {}
     import('../utils/firestore-sync').then(({ listenProviders }) => {
@@ -69,7 +77,15 @@ export default function PublicLanding() {
         const byId = {}
         for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
         for (const p of remote) if (p.userId) byId[p.userId] = p
-        setProviders(Object.values(byId).filter(p => p.name).slice(0, 4))
+        const valid = Object.values(byId).filter(p => p.name && (p.photoUrl || p.description || p.location))
+        const byName = {}
+        for (const p of valid) {
+          const k = p.name.trim().toLowerCase()
+          const prev = byName[k]
+          if (!prev || [p.photoUrl, p.description, p.location, p.coverUrl].filter(Boolean).length >
+                       [prev.photoUrl, prev.description, prev.location, prev.coverUrl].filter(Boolean).length) byName[k] = p
+        }
+        setProviders(Object.values(byName).slice(0, 4))
       })
     }).catch(() => {})
     return () => unsub()

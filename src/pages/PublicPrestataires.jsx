@@ -55,7 +55,18 @@ export default function PublicPrestataires() {
     // Uniquement les profils réellement renseignés : un doc providers/ créé mais
     // laissé vide (aucune photo, description ni localisation) est un profil
     // fantôme (onboarding abandonné) → on ne l'affiche pas dans l'annuaire.
-    return Object.values(byId).filter(p => p.name && (p.photoUrl || p.description || p.location))
+    const valid = Object.values(byId).filter(p => p.name && (p.photoUrl || p.description || p.location))
+    // Dedup par nom : si deux docs Firestore portent le même nom, garder le plus complet
+    const byName = {}
+    for (const p of valid) {
+      const key = p.name.trim().toLowerCase()
+      const prev = byName[key]
+      if (!prev || [p.photoUrl, p.description, p.location, p.coverUrl].filter(Boolean).length >
+                   [prev.photoUrl, prev.description, prev.location, prev.coverUrl].filter(Boolean).length) {
+        byName[key] = p
+      }
+    }
+    return Object.values(byName)
   }, [remote])
 
   const filtered = useMemo(() => {
