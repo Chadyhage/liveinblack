@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import AnimatedLogo from '../components/AnimatedLogo'
+import { play as playDisc, stop as stopDisc, subscribe as subMusic } from '../utils/musicEngine'
 
 // ─── Vitrine publique (utilisateur NON connecté) ─────────────────────────────
 // Objectif : montrer la valeur de Live in Black et convertir vers la création de
@@ -69,17 +71,22 @@ export default function PublicLanding() {
       background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.30), transparent 60%), radial-gradient(circle 820px at 96% 38%, rgba(78,232,200,.15), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.17), transparent 60%), radial-gradient(circle 1100px at 50% 45%, rgba(96,66,150,.13), transparent 70%), ${C.obsidian}`,
       backgroundAttachment: 'fixed',
     }}>
-      {/* ══ NAVBAR PUBLIQUE ══ */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '12px 18px', background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(18px)', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 17, fontWeight: 300, letterSpacing: '.1em', color: '#fff', padding: 0 }}>
-          L<span style={{ color: C.pink }}>|</span>VE IN <span style={{ fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
-        </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {[['Événements', () => navigate('/evenements')], ['J\'ai un code', () => navigate('/evenements')]].map(([l, fn]) => (
-            <button key={l} onClick={fn} className="lb-navlink" style={navLink}>{l}</button>
-          ))}
-          <button onClick={() => login()} style={navLink}>Connexion</button>
-          <button onClick={register} style={{ padding: '8px 15px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none', whiteSpace: 'nowrap' }}>Créer un compte</button>
+      {/* ══ NAVBAR PUBLIQUE (vidéo d'ambiance + vrai logo) ══ */}
+      <nav style={{ position: 'sticky', top: 0, zIndex: 20, overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+        <video autoPlay muted loop playsInline preload="auto" aria-hidden
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45, pointerEvents: 'none' }}>
+          <source src="/nav-ambience.mp4" type="video/mp4" />
+        </video>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(4,4,11,.85) 0%, rgba(4,4,11,.45) 45%, rgba(4,4,11,.86) 100%)', backdropFilter: 'blur(1.5px)' }} />
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '9px 18px' }}>
+          <AnimatedLogo size={26} textScale={0.44} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {[['Événements', () => navigate('/evenements')], ['J\'ai un code', () => navigate('/evenements')]].map(([l, fn]) => (
+              <button key={l} onClick={fn} className="lb-navlink" style={navLink}>{l}</button>
+            ))}
+            <button onClick={() => login()} style={navLink}>Connexion</button>
+            <button onClick={register} style={{ padding: '8px 15px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none', whiteSpace: 'nowrap' }}>Créer un compte</button>
+          </div>
         </div>
       </nav>
       <style>{`
@@ -88,6 +95,11 @@ export default function PublicLanding() {
         @keyframes lbFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
         @keyframes lbGlow { 0%,100%{box-shadow:0 0 0 0 rgba(78,232,200,.0),0 14px 40px -12px rgba(78,232,200,.5)} 50%{box-shadow:0 0 24px -2px rgba(78,232,200,.35),0 14px 40px -12px rgba(78,232,200,.7)} }
         @keyframes lbGrad { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+        @keyframes lbSpin { to { transform:rotate(360deg) } }
+        @keyframes lbEq { 0%,100%{ transform:scaleY(.28) } 50%{ transform:scaleY(1) } }
+        @keyframes lbDance { 0%,100%{ transform:translateY(0) rotate(0) } 50%{ transform:translateY(-6px) rotate(-6deg) } }
+        .lb-letter{ display:inline-block; transition:color .12s ease, transform .12s ease; will-change:transform }
+        .lb-letter:hover{ animation:lbDance .5s ease-in-out; }
         .lb-cta-primary{ animation:lbGlow 3.4s ease-in-out infinite; transition:transform .18s ease }
         .lb-cta-primary:hover{ transform:translateY(-2px) }
         .lb-card{ transition:transform .25s cubic-bezier(.22,.9,.3,1), border-color .25s ease, box-shadow .25s ease }
@@ -115,6 +127,7 @@ export default function PublicLanding() {
           <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.35)', marginTop: 16 }}>
             Gratuit · Ton billet QR dans ta poche · Aucune app à installer
           </p>
+          <Ambiance />
         </div>
         <div style={{ position: 'absolute', bottom: 22, left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,.3)', fontSize: 22, animation: 'lbFloat 2.4s ease-in-out infinite' }}>↓</div>
       </section>
@@ -163,26 +176,26 @@ export default function PublicLanding() {
       <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes. Et tu débloques tout ça :">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 14 }}>
           {[
-            ['Réserve tes billets', 'Paiement sécurisé, billet instantané.'],
-            ['Ton QR code partout', 'Tes billets toujours dans ta poche.'],
-            ['Recommandations', 'Des soirées selon tes goûts et ta ville.'],
-            ['Favoris', 'Sauvegarde les événements qui te plaisent.'],
-            ['Messagerie', 'Parle aux organisateurs et prestataires.'],
-            ['Tes commandes', 'Précommandes et consos suivies.'],
-            ['Des points', 'Chaque achat te rapproche d\'avantages.'],
-            ['Événements privés', 'Accède aux soirées sur invitation.'],
-          ].map(([t, d], i) => {
-            const col = [C.teal, C.violet, C.gold, C.pink][i % 4]
-            return (
-              <Reveal key={t} delay={i * 40}>
-                <div className="lb-card" style={{ ...card, padding: '16px 15px', height: '100%' }}>
-                  <span style={{ display: 'block', width: 26, height: 26, borderRadius: 8, background: `linear-gradient(135deg, ${col}40, ${col}0d)`, border: `1px solid ${col}66` }} />
-                  <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: '#fff', margin: '11px 0 0' }}>{t}</p>
-                  <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', margin: '4px 0 0', lineHeight: 1.45 }}>{d}</p>
+            ['Réserve tes billets', 'Paiement sécurisé, billet instantané.', '/img_house.jpg'],
+            ['Ton QR code partout', 'Tes billets toujours dans ta poche.', '/media1.jpg'],
+            ['Recommandations', 'Des soirées selon tes goûts et ta ville.', '/img_afro.webp'],
+            ['Favoris', 'Sauvegarde les événements qui te plaisent.', '/media2.jpg'],
+            ['Messagerie', 'Parle aux organisateurs et prestataires.', '/img_techno.avif'],
+            ['Tes commandes', 'Précommandes et consos suivies.', '/media3.jpg'],
+            ['Des points', 'Chaque achat te rapproche d\'avantages.', '/img_lofi.jpg'],
+            ['Événements privés', 'Accède aux soirées sur invitation.', '/img_nuit.jpg'],
+          ].map(([t, d, img], i) => (
+            <Reveal key={t} delay={i * 40}>
+              <div className="lb-card" style={{ ...card, position: 'relative', overflow: 'hidden', minHeight: 158, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '14px 15px' }}>
+                <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.55 }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,.97), rgba(6,8,14,.55) 52%, rgba(6,8,14,.28))' }} />
+                <div style={{ position: 'relative' }}>
+                  <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: '#fff', margin: 0, textShadow: '0 2px 8px rgba(0,0,0,.6)' }}>{t}</p>
+                  <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.72)', margin: '4px 0 0', lineHeight: 1.4 }}>{d}</p>
                 </div>
-              </Reveal>
-            )
-          })}
+              </div>
+            </Reveal>
+          ))}
         </div>
         <div style={{ textAlign: 'center', marginTop: 26 }}>
           <button className="lb-cta-primary" onClick={register} style={btnPrimary}>Créer mon compte gratuitement</button>
@@ -237,28 +250,23 @@ export default function PublicLanding() {
       {/* ══ POINTS / PRIVÉ / RECO ══ */}
       <Section eyebrow="Encore plus" title="Ce que ton compte débloque">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
-          <Reveal>
-            <div style={{ ...card, padding: 22, height: '100%' }}>
-              <span style={accentSq(C.gold)} />
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '12px 0 0' }}>Des points à chaque achat</p>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: '6px 0 0', lineHeight: 1.5 }}>Cumule des points sur tes billets — bientôt échangeables contre réductions, accès prioritaire et offres exclusives.</p>
-            </div>
-          </Reveal>
-          <Reveal delay={70}>
-            <div style={{ ...card, padding: 22, height: '100%' }}>
-              <span style={accentSq(C.violet)} />
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '12px 0 0' }}>Recommandations perso</p>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: '6px 0 0', lineHeight: 1.5 }}>Des soirées selon ta ville, tes styles musicaux préférés et ce que tu as déjà réservé.</p>
-            </div>
-          </Reveal>
-          <Reveal delay={140}>
-            <div style={{ ...card, padding: 22, height: '100%', borderColor: 'rgba(78,232,200,.28)' }}>
-              <span style={accentSq(C.teal)} />
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '12px 0 0' }}>Événements privés</p>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: '6px 0 10px', lineHeight: 1.5 }}>Certaines soirées sont sur invitation. Un code te donne accès.</p>
-              <button onClick={() => navigate('/evenements')} style={{ ...btnGhost, padding: '9px 16px', fontSize: 12.5 }}>J'ai un code</button>
-            </div>
-          </Reveal>
+          {[
+            { t: 'Des points à chaque achat', d: 'Cumule des points sur tes billets — bientôt échangeables contre réductions, accès prioritaire et offres exclusives.', img: '/media2.jpg' },
+            { t: 'Recommandations perso', d: 'Des soirées selon ta ville, tes styles musicaux préférés et ce que tu as déjà réservé.', img: '/img_afro.webp' },
+            { t: 'Événements privés', d: 'Certaines soirées sont sur invitation. Un code te donne accès.', img: '/img_nuit.jpg', cta: true },
+          ].map((c, i) => (
+            <Reveal key={c.t} delay={i * 70}>
+              <div className="lb-card" style={{ ...card, position: 'relative', overflow: 'hidden', minHeight: 200, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 20 }}>
+                <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.img})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.5 }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,.98), rgba(6,8,14,.6) 55%, rgba(6,8,14,.3))' }} />
+                <div style={{ position: 'relative' }}>
+                  <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 800, color: '#fff', margin: 0, textShadow: '0 2px 8px rgba(0,0,0,.6)' }}>{c.t}</p>
+                  <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.72)', margin: '7px 0 0', lineHeight: 1.5 }}>{c.d}</p>
+                  {c.cta && <button onClick={() => navigate('/evenements')} style={{ ...btnGhost, padding: '9px 16px', fontSize: 12.5, marginTop: 12 }}>J'ai un code</button>}
+                </div>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </Section>
 
@@ -293,12 +301,68 @@ function Section({ eyebrow, title, sub, children }) {
       <Reveal>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           {eyebrow && <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: C.teal, margin: 0 }}>{eyebrow}</p>}
-          <h2 style={{ fontFamily: FONT, fontSize: 'clamp(24px,5.5vw,36px)', fontWeight: 800, letterSpacing: '-.8px', color: '#fff', margin: '8px 0 0' }}>{title}</h2>
+          <h2 style={{ fontFamily: FONT, fontSize: 'clamp(24px,5.5vw,36px)', fontWeight: 800, letterSpacing: '-.8px', color: '#fff', margin: '8px 0 0' }}><DiscoTitle text={title} /></h2>
           {sub && <p style={{ fontFamily: FONT, fontSize: 14.5, color: 'rgba(255,255,255,.5)', margin: '10px auto 0', maxWidth: 520, lineHeight: 1.5 }}>{sub}</p>}
         </div>
       </Reveal>
       {children}
     </section>
+  )
+}
+
+// ── Ambiance sonore : joue le 1er disque (House) + « ouvre » le vinyle + égaliseur ──
+function Ambiance() {
+  const [on, setOn] = useState(false)
+  useEffect(() => subMusic(st => setOn(!!st.playing)), [])
+  const toggle = () => { on ? stopDisc() : playDisc('house') }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginTop: 24 }}>
+      <div style={{ height: on ? 116 : 0, opacity: on ? 1 : 0, transform: on ? 'scale(1) translateY(0)' : 'scale(.45) translateY(18px)', transition: 'all .55s cubic-bezier(.22,.9,.3,1)', pointerEvents: 'none' }}>
+        <Vinyl playing={on} />
+      </div>
+      <button onClick={toggle} className={on ? '' : 'lb-cta-primary'} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 10, padding: '11px 22px', borderRadius: 999, cursor: 'pointer',
+        fontFamily: FONT, fontSize: 14, fontWeight: 700, transition: 'all .25s ease',
+        color: on ? C.pink : '#fff', background: on ? 'rgba(224,90,170,.12)' : 'rgba(255,255,255,.06)',
+        border: `1px solid ${on ? 'rgba(224,90,170,.5)' : 'rgba(255,255,255,.22)'}`,
+      }}>
+        {on ? <><Equalizer /> Ambiance en cours</> : <><span style={{ fontSize: 15 }}>♪</span> Mettre l'ambiance</>}
+      </button>
+    </div>
+  )
+}
+function Equalizer() {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 2.5, height: 15 }}>
+      {[0, 1, 2, 3, 4].map(i => <span key={i} style={{ width: 3, height: '100%', borderRadius: 2, background: 'currentColor', transformOrigin: 'bottom', animation: `lbEq ${0.7 + i * 0.11}s ease-in-out ${i * 0.08}s infinite` }} />)}
+    </span>
+  )
+}
+function Vinyl({ playing, size = 116 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ animation: playing ? 'lbSpin 3.4s linear infinite' : 'none', filter: 'drop-shadow(0 12px 34px rgba(224,90,170,.45))' }}>
+      <defs><radialGradient id="lbVinylLabel" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#e05aaa" /><stop offset="100%" stopColor="#8b5cf6" /></radialGradient></defs>
+      <circle cx="50" cy="50" r="48" fill="#08080f" stroke="rgba(255,255,255,.14)" strokeWidth="0.8" />
+      {[42, 36, 30, 24].map(r => <circle key={r} cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="0.6" />)}
+      <path d="M50 6 A44 44 0 0 1 94 50" fill="none" stroke="rgba(255,255,255,.16)" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="50" cy="50" r="15" fill="url(#lbVinylLabel)" />
+      <circle cx="50" cy="50" r="2.4" fill="#04040b" />
+    </svg>
+  )
+}
+
+// ── Titre « disco » : chaque lettre change de couleur (aléatoire) + danse au survol ──
+const DISCO = ['#4ee8c8', '#e05aaa', '#8b5cf6', '#c8a96e', '#7af0d8', '#ff6bd0']
+function DiscoTitle({ text, style }) {
+  return (
+    <span style={style}>
+      {String(text).split('').map((ch, i) => (
+        <span key={i} className="lb-letter"
+          onMouseEnter={e => { e.currentTarget.style.color = DISCO[Math.floor(Math.random() * DISCO.length)] }}
+          onMouseLeave={e => { e.currentTarget.style.color = '' }}
+        >{ch === ' ' ? ' ' : ch}</span>
+      ))}
+    </span>
   )
 }
 
