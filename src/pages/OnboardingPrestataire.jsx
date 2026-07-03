@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import Layout from '../components/Layout'
+import PublicShell from '../components/PublicShell'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { DIAL_CODES } from '../data/dialCodes'
@@ -486,10 +486,12 @@ export default function OnboardingPrestataire() {
   // ── Success screen (anonymous mode) ──────────────────────────────────────────
   if (successScreen) {
     return (
-      <Layout hideNav>
+      <PublicShell>
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
-            <div style={{ fontSize: 56, marginBottom: 24 }}>✅</div>
+            <div style={{ width: 68, height: 68, borderRadius: '50%', margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
             <h2 style={{ fontFamily: CG, fontWeight: 300, fontSize: '2rem', color: 'rgba(255,255,255,0.92)', margin: '0 0 16px' }}>
               Demande envoyée !
             </h2>
@@ -507,7 +509,7 @@ export default function OnboardingPrestataire() {
             </button>
           </div>
         </div>
-      </Layout>
+      </PublicShell>
     )
   }
 
@@ -516,7 +518,7 @@ export default function OnboardingPrestataire() {
   const requiredDocs = getRequiredDocs('prestataire', f.prestataireType)
 
   return (
-    <Layout>
+    <PublicShell>
       <style>{`.lib-onb-card{transition:transform .18s ease,border-color .2s ease,background .2s ease}.lib-onb-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.2)}`}</style>
       <div style={S.page}>
         {/* Bouton retour — quitte l'étape courante (ou l'onboarding depuis l'étape 1) */}
@@ -1146,7 +1148,7 @@ export default function OnboardingPrestataire() {
           {toast.msg}
         </div>
       )}
-    </Layout>
+    </PublicShell>
   )
 }
 

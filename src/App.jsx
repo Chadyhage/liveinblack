@@ -273,6 +273,8 @@ function MusicPlayerGate({ user }) {
   const onPublicShowcase =
     path.startsWith('/prestataires') ||
     path.startsWith('/c-est-quoi') ||
+    path.startsWith('/connexion') ||
+    path.startsWith('/inscription-') ||     // onboarding organisateur / prestataire (coquille vitrine)
     (path.startsWith('/accueil') && !user) // /accueil non connecté = vitrine
   if (onPublicShowcase) return null
   return <MusicPlayer />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import Layout from '../components/Layout'
+import PublicShell from '../components/PublicShell'
 import { useAuth } from '../context/AuthContext'
 import { DIAL_CODES } from '../data/dialCodes'
 import {
@@ -355,10 +355,12 @@ export default function OnboardingOrganisateur() {
   // ── Success screen (anonymous mode after submit) ──
   if (successScreen) {
     return (
-      <Layout hideNav>
+      <PublicShell>
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
-            <div style={{ fontSize: 56, marginBottom: 24 }}>✅</div>
+            <div style={{ width: 68, height: 68, borderRadius: '50%', margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
             <h2 style={{ fontFamily: CG, fontWeight: 300, fontSize: '2rem', color: 'rgba(255,255,255,0.92)', margin: '0 0 16px' }}>
               Demande envoyée !
             </h2>
@@ -376,7 +378,7 @@ export default function OnboardingOrganisateur() {
             </button>
           </div>
         </div>
-      </Layout>
+      </PublicShell>
     )
   }
 
@@ -384,7 +386,7 @@ export default function OnboardingOrganisateur() {
   const uploadedDocs = Object.keys(app.documents || {})
 
   return (
-    <Layout>
+    <PublicShell>
       <div style={S.page}>
         {/* Bouton retour — quitte l'étape courante (ou l'onboarding depuis l'étape 1) */}
         <button type="button" onClick={() => step > 0 ? prev() : navigate('/accueil')}
@@ -910,7 +912,7 @@ export default function OnboardingOrganisateur() {
           {toast.msg}
         </div>
       )}
-    </Layout>
+    </PublicShell>
   )
 }
 
