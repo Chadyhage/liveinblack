@@ -6,18 +6,19 @@
 
 import { useState, useEffect } from 'react'
 
-const DM = "'DM Mono', monospace"
+// Tout en Inter (cohérent avec le reste de l'app — plus de DM Mono).
+const DM = "Inter, sans-serif"
 const CG = "Inter, sans-serif"
 
 const card = {
   background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(18px)',
   border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: 18,
 }
-const label = { fontFamily: DM, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }
+const label = { fontFamily: DM, fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }
 const btn = (color) => ({
-  width: '100%', padding: '12px', marginTop: 12, borderRadius: 6, cursor: 'pointer',
-  fontFamily: DM, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase',
-  background: `${color}22`, border: `1px solid ${color}66`, color,
+  width: '100%', padding: '13px', marginTop: 14, borderRadius: 12, cursor: 'pointer',
+  fontFamily: DM, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em',
+  background: `${color}1f`, border: `1px solid ${color}66`, color,
 })
 
 function eur(cents, cur = 'eur') {
@@ -136,8 +137,8 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
       {/* Cas 1 : pays hors zone Stripe → reversement manuel */}
       {manual && (
         <>
-          <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, marginTop: 12 }}>
-            Ton pays est réglé par <strong style={{ color: '#c8a96e' }}>virement / mobile money</strong> (Wave, Orange Money…). Demande un reversement de ton solde quand tu veux.
+          <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65, marginTop: 12 }}>
+            Ton pays est réglé par <strong style={{ color: '#c8a96e', fontWeight: 600 }}>virement / mobile money</strong> (Wave, Orange Money…). Demande un reversement de ton solde quand tu veux.
           </p>
           {due
             ? <button disabled={busy} onClick={requestPayout} style={btn('#c8a96e')}>{busy ? '…' : 'Demander un reversement'}</button>
@@ -147,16 +148,16 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
 
       {/* Cas 2 : compte Connect actif → reversements automatiques */}
       {!manual && connected && (
-        <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, marginTop: 12 }}>
-          Tes ventes te sont reversées <strong style={{ color: '#4ee8c8' }}>automatiquement</strong> sur ton compte bancaire (sous 2–7 jours ouvrés), après commission LIVEINBLACK.
+        <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65, marginTop: 12 }}>
+          Tes ventes te sont reversées <strong style={{ color: '#4ee8c8', fontWeight: 600 }}>automatiquement</strong> sur ton compte bancaire (sous 2–7 jours ouvrés), après commission LIVEINBLACK.
         </p>
       )}
 
       {/* Cas 3 : pas encore connecté → bouton de connexion */}
       {!manual && !connected && (
         <>
-          <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, marginTop: 12 }}>
-            Connecte ton compte bancaire pour recevoir tes paiements automatiquement. Stripe gère la vérification d'identité et ton IBAN de façon sécurisée — nous ne le voyons jamais.
+          <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65, marginTop: 12 }}>
+            Reçois tes recettes directement sur ton compte bancaire. Les paiements sont gérés par <strong style={{ color: '#fff', fontWeight: 600 }}>Stripe</strong>, la solution de paiement utilisée par des millions d'entreprises. Tu seras redirigé vers Stripe pour ajouter ton compte en quelques minutes.
           </p>
           <button disabled={busy} onClick={connect} style={btn('#4ee8c8')}>{busy ? 'Ouverture…' : 'Connecter mon compte bancaire'}</button>
         </>
