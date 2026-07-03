@@ -1679,10 +1679,14 @@ export default function AgentPage() {
                   )}
                 </div>
               )
-              return list.map(app => {
+              const openApp = (app) => { setSelectedApp(app); setAppNote(''); setAppAdminNote(''); setActiveAction(null); setAdminNoteInput('') }
+              const typeLabel = (app) => app.type === 'organisateur' ? '🎪 Organisateur' : `🎤 Prestataire · ${app.formData?.prestataireType || ''}`
+              const scoreColor = (s) => s >= 80 ? COLORS.teal : s >= 50 ? COLORS.gold : COLORS.pink
+
+              const AppCard = (app) => {
                 const score = getCompleteness(app)
                 return (
-                  <button key={app.id} onClick={() => { setSelectedApp(app); setAppNote(''); setAppAdminNote(''); setActiveAction(null); setAdminNoteInput('') }}
+                  <button key={app.id} onClick={() => openApp(app)}
                     style={{
                       ...CARD, display: 'flex', flexDirection: 'column', gap: 8,
                       padding: 14, cursor: 'pointer', width: '100%', textAlign: 'left',
@@ -1703,11 +1707,11 @@ export default function AgentPage() {
                           {app.formData?.nomCommercial || app.name}
                         </p>
                         <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0' }}>
-                          {app.type === 'organisateur' ? '🎪 Organisateur' : `🎤 Prestataire · ${app.formData?.prestataireType || ''}`}
+                          {typeLabel(app)}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: score >= 80 ? COLORS.teal : score >= 50 ? COLORS.gold : COLORS.pink, fontWeight: 700 }}>{score}%</span>
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: scoreColor(score), fontWeight: 700 }}>{score}%</span>
                         <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0' }}>complétude</p>
                       </div>
                     </div>
@@ -1728,9 +1732,74 @@ export default function AgentPage() {
                     )}
                     {/* completeness bar */}
                     <div style={{ height: 2, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${score}%`, borderRadius: 99, background: score >= 80 ? COLORS.teal : score >= 50 ? COLORS.gold : COLORS.pink }} />
+                      <div style={{ height: '100%', width: `${score}%`, borderRadius: 99, background: scoreColor(score) }} />
                     </div>
                   </button>
+                )
+              }
+
+              // ── Regroupement par email : un même compte (orga + prestataire)
+              // forme UN bloc visuel, chaque dossier reste cliquable → détail.
+              const groups = []
+              const byEmail = new Map()
+              for (const app of list) {
+                const key = (app.email || app.id || '').toLowerCase()
+                if (byEmail.has(key)) byEmail.get(key).push(app)
+                else { const arr = [app]; byEmail.set(key, arr); groups.push({ email: app.email, apps: arr }) }
+              }
+
+              return groups.map(g => {
+                if (g.apps.length === 1) return AppCard(g.apps[0])
+                return (
+                  <div key={g.email} style={{ ...CARD, padding: 0, overflow: 'hidden', borderColor: sectionColor + '44' }}>
+                    {/* En-tête du groupe : le compte */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: sectionColor + '0d', borderBottom: `1px solid ${sectionColor}22` }}>
+                      <div style={{
+                        width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                        background: sectionColor + '18', border: `1px solid ${sectionColor}44`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: FONTS.display, fontSize: 13, fontWeight: 800, color: sectionColor,
+                      }}>
+                        {(g.email || '?')[0]?.toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: FONTS.display, fontSize: 13.5, fontWeight: 700, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.email}</p>
+                        <p style={{ fontFamily: FONTS.display, fontSize: 11, color: COLORS.dim, margin: '1px 0 0' }}>Même compte · plusieurs activités</p>
+                      </div>
+                      <span style={{ flexShrink: 0, fontFamily: FONTS.display, fontSize: 10.5, fontWeight: 800, color: sectionColor, background: sectionColor + '1a', border: `1px solid ${sectionColor}44`, borderRadius: 999, padding: '2px 9px' }}>
+                        {g.apps.length} dossiers
+                      </span>
+                    </div>
+                    {/* Un rang compact par dossier */}
+                    {g.apps.map((app, i) => {
+                      const score = getCompleteness(app)
+                      return (
+                        <button key={app.id} onClick={() => openApp(app)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+                            padding: '11px 14px', cursor: 'pointer', background: 'none', border: 'none',
+                            borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                          }}>
+                          <div style={{
+                            width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                            background: sectionColor + '14', border: `1px solid ${sectionColor}33`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontFamily: FONTS.display, fontSize: 12, fontWeight: 800, color: sectionColor,
+                          }}>
+                            {(app.formData?.nomCommercial || app.name)?.[0]?.toUpperCase() || '?'}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: FONTS.display, fontSize: 13.5, fontWeight: 600, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {app.formData?.nomCommercial || app.name}
+                            </p>
+                            <p style={{ fontFamily: FONTS.display, fontSize: 10.5, color: COLORS.dim, margin: '1px 0 0' }}>{typeLabel(app)}</p>
+                          </div>
+                          <span style={{ flexShrink: 0, fontFamily: FONTS.display, fontSize: 11, fontWeight: 700, color: scoreColor(score) }}>{score}%</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="9 18 15 12 9 6" /></svg>
+                        </button>
+                      )
+                    })}
+                  </div>
                 )
               })
             })()}
