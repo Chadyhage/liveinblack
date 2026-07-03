@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import EventsPage from './pages/EventsPage'
+import PublicPrestataires from './pages/PublicPrestataires'
 import EventDetailPage from './pages/EventDetailPage'
 import ProposerServicesPage from './pages/ProposerServicesPage'
 import JeSuisUneBoitePage from './pages/JeSuisUneBoitePage'
@@ -332,6 +333,7 @@ export default function App() {
             {/* ── Public routes — accessible without account ── */}
             <Route path="/accueil" element={<HomePage />} />
             <Route path="/evenements" element={<EventsPage />} />
+            <Route path="/prestataires" element={<PublicPrestataires />} />
             <Route path="/evenements/:id" element={<EventDetailPage />} />
             <Route path="/cgu" element={<CGUPage />} />
             <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
