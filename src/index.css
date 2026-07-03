@@ -368,7 +368,14 @@
   .lib-tab-content { animation: lib-tab-in 0.28s cubic-bezier(0.22,0.9,0.3,1) both; }
   @keyframes lib-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   @keyframes lib-tab-in  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .lib-page, .lib-tab-content { animation: none; } }
+
+  /* ── Transition globale entre routes (fade only) ──
+     Opacity seule : ne casse pas les enfants position:fixed / sticky
+     (bottom nav app, PublicNav sticky). Appliquée au niveau du routeur. ── */
+  .lib-route { animation: lib-route-in 0.3s ease both; }
+  @keyframes lib-route-in { from { opacity: 0; } to { opacity: 1; } }
+
+  @media (prefers-reduced-motion: reduce) { .lib-page, .lib-tab-content, .lib-route { animation: none; } }
 }
 
 /* ─── Animations ───────────────────────────────────────────────────────────── */

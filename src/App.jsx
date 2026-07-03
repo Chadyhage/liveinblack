@@ -280,6 +280,14 @@ function MusicPlayerGate({ user }) {
   return <MusicPlayer />
 }
 
+// Transition globale entre routes : re-monte le conteneur à chaque changement
+// de chemin (key=pathname) pour rejouer le fade-in. Opacity seule → ne casse
+// pas les enfants position:fixed / sticky (bottom nav, PublicNav).
+function RouteTransition({ children }) {
+  const location = useLocation()
+  return <div key={location.pathname} className="lib-route">{children}</div>
+}
+
 // Wrapper: /connexion — allow logged-in users when ?mode= is present (creating a 2nd account)
 function ConnexionRoute({ user }) {
   const location = useLocation()
@@ -339,6 +347,7 @@ export default function App() {
           <IntroOverlay />
 
           <OnboardingGuard user={user}>
+          <RouteTransition>
           <Routes>
             {/* ── Root: always go to accueil ── */}
             <Route path="/" element={<Navigate to="/accueil" replace />} />
@@ -414,6 +423,7 @@ export default function App() {
               <RequireRole user={user} role="agent"><AgentPage /></RequireRole>
             } />
           </Routes>
+          </RouteTransition>
           </OnboardingGuard>
           </div>{/* fin couche z-index:1 */}
         </div>
