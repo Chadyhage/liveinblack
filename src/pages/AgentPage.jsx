@@ -43,12 +43,15 @@ const CARD = {
   background: 'rgba(8,10,20,0.55)',
   backdropFilter: 'blur(22px) saturate(1.6)',
   border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 12,
+  borderRadius: 16,
 }
 
+// `mono` pointe désormais sur Inter : le token diffusait la typo mono
+// « pixélisée » sur toute l'interface (badges, nav, inputs, méta). On garde le
+// nom pour ne pas toucher 200 usages — seule la valeur change.
 const FONTS = {
   display: "Inter, sans-serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
+  mono: 'Inter, sans-serif',
 }
 
 const COLORS = {
@@ -188,6 +191,7 @@ export default function AgentPage() {
   const [sellerBalances, setSellerBalances]     = useState([])  // soldes vendeurs à reverser (ledger)
   const [payoutRequests, setPayoutRequests]     = useState([])  // demandes de virement en attente
   const [reports, setReports]                   = useState([])  // signalements d'utilisateurs
+  const [adminBoosts, setAdminBoosts]           = useState([])  // boosts vendus (webhook) — surveille aussi les conflits de créneau
 
   function loadReports() {
     try { return JSON.parse(localStorage.getItem('lib_reports') || '[]').filter(r => !r.handled) } catch { return [] }
@@ -277,12 +281,15 @@ export default function AgentPage() {
         setDeletionRequests(delReqs)
 
         // Reversements vendeurs : soldes dus + demandes de virement en attente
-        const [balances, payouts] = await Promise.all([
+        // + boosts vendus (surveillance des créneaux Top 3 et des conflits)
+        const [balances, payouts, boosts] = await Promise.all([
           loadCollection('seller_balances'),
           loadCollection('payout_requests'),
+          loadCollection('boosts'),
         ])
         setSellerBalances((balances || []).filter(b => Number(b.amountDueCents) > 0))
         setPayoutRequests((payouts || []).filter(p => p.status === 'pending'))
+        setAdminBoosts((boosts || []).sort((a, b) => new Date(b.purchasedAt || 0) - new Date(a.purchasedAt || 0)))
       } catch {}
     }
     fetchFromFirestore()
@@ -654,9 +661,9 @@ export default function AgentPage() {
     width: '100%', boxSizing: 'border-box',
     background: 'rgba(8,10,20,0.7)',
     border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 6, color: '#fff',
-    fontFamily: FONTS.mono, fontSize: 12,
-    padding: '9px 12px',
+    borderRadius: 10, color: '#fff',
+    fontFamily: FONTS.display, fontSize: 13.5,
+    padding: '10px 13px',
     outline: 'none',
   }
 
@@ -668,74 +675,92 @@ export default function AgentPage() {
         position: 'sticky', top: 0, zIndex: 40,
         background: 'rgba(4,4,14,0.92)', backdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
-        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+        padding: '12px 16px',
       }}>
-        <button
-          onClick={() => navigate('/accueil')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: COLORS.muted, fontSize: 20, lineHeight: 1 }}
-        >←</button>
-        <div style={{ flex: 1 }}>
-          <h1 style={{
-            fontFamily: FONTS.display, fontWeight: 300,
-            fontSize: 17, letterSpacing: '0.12em', color: '#fff', margin: 0,
-            textTransform: 'uppercase',
-          }}>
-            LIVE<span style={{ color: COLORS.gold }}>IN</span>BLACK
-            <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, marginLeft: 8, letterSpacing: '0.08em' }}>
-              Interface Agent
-            </span>
-          </h1>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
-            {user?.name} · {user?.email}
-          </p>
+        <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={() => navigate('/accueil')}
+            aria-label="Retour à l'accueil"
+            style={{
+              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 18, letterSpacing: '-0.3px', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 9 }}>
+              Administration
+              <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: COLORS.gold, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 999, padding: '2px 9px' }}>
+                Agent
+              </span>
+            </h1>
+            <p style={{ fontFamily: FONTS.display, fontSize: 12, color: COLORS.dim, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user?.name} · {user?.email}
+            </p>
+          </div>
+          {totalAllPending > 0 && (
+            <button
+              onClick={() => setTab('dossiers')}
+              style={{
+                fontFamily: FONTS.display, fontSize: 11, fontWeight: 800, flexShrink: 0,
+                background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.5)',
+                color: COLORS.gold, borderRadius: 999, padding: '7px 13px',
+                cursor: 'pointer', animation: 'pulse 2s infinite',
+              }}>
+              {totalAllPending} en attente
+            </button>
+          )}
         </div>
-        {totalAllPending > 0 && (
-          <button
-            onClick={() => setTab('dossiers')}
-            style={{
-              fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em',
-              background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.45)',
-              color: COLORS.gold, borderRadius: 4, padding: '5px 10px',
-              cursor: 'pointer', animation: 'pulse 2s infinite',
-            }}>
-            {totalAllPending} EN ATTENTE
-          </button>
-        )}
       </div>
 
-      {/* ── Nav tabs ── */}
-      <div style={{
-        display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)',
-        overflowX: 'auto',
-      }}>
-        {[
-          { key: 'dashboard',    label: 'Dashboard' },
-          { key: 'users',        label: 'Comptes' },
-          { key: 'events',       label: `Events${allEvents.length > 0 ? ` (${allEvents.length})` : ''}` },
-          { key: 'dossiers',     label: `Dossiers${totalAppsSubmitted > 0 ? ` (${totalAppsSubmitted})` : ''}` },
-          { key: 'reversements', label: `Reversements${payoutRequests.length > 0 ? ` (${payoutRequests.length})` : ''}` },
-          { key: 'suppressions', label: `Suppressions${deletionRequests.length > 0 ? ` (${deletionRequests.length})` : ''}` },
-          { key: 'reports',      label: `Signalements${reports.length > 0 ? ` (${reports.length})` : ''}` },
-        ].map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            style={{
-              flexShrink: 0, padding: '12px 20px',
-              fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.08em',
-              textTransform: 'uppercase', cursor: 'pointer',
-              background: 'none',
-              borderBottom: tab === t.key ? `2px solid ${COLORS.gold}` : '2px solid transparent',
-              borderTop: 'none', borderLeft: 'none', borderRight: 'none',
-              color: tab === t.key ? COLORS.gold : COLORS.dim,
-              transition: 'color 0.2s',
-            }}>
-            {t.label}
-          </button>
-        ))}
+      {/* ── Nav (segmented control, cohérent avec le reste de l'app) ── */}
+      <div style={{ padding: '12px 16px 0', maxWidth: 760, margin: '0 auto' }}>
+        <div className="hide-scrollbar" style={{
+          display: 'flex', gap: 6, padding: 4,
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12, overflowX: 'auto',
+        }}>
+          {[
+            { key: 'dashboard',    label: 'Dashboard' },
+            { key: 'users',        label: 'Comptes' },
+            { key: 'events',       label: 'Events',        count: allEvents.length },
+            { key: 'dossiers',     label: 'Dossiers',      count: totalAppsSubmitted, alert: totalAppsSubmitted > 0 },
+            { key: 'boosts',       label: 'Boosts',        count: adminBoosts.filter(b => new Date(b.expiresAt).getTime() > Date.now()).length, alert: adminBoosts.some(b => b.conflict && new Date(b.expiresAt).getTime() > Date.now()) },
+            { key: 'reversements', label: 'Reversements',  count: payoutRequests.length, alert: payoutRequests.length > 0 },
+            { key: 'suppressions', label: 'Suppressions',  count: deletionRequests.length, alert: deletionRequests.length > 0 },
+            { key: 'reports',      label: 'Signalements',  count: reports.length, alert: reports.length > 0 },
+          ].map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              style={{
+                flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 14px',
+                fontFamily: FONTS.display, fontSize: 12.5, fontWeight: 700, letterSpacing: '0.01em',
+                cursor: 'pointer',
+                background: tab === t.key ? 'linear-gradient(135deg, rgba(200,169,110,0.2), rgba(200,169,110,0.06))' : 'transparent',
+                border: tab === t.key ? '1px solid rgba(200,169,110,0.45)' : '1px solid transparent',
+                borderRadius: 9,
+                color: tab === t.key ? COLORS.gold : 'rgba(255,255,255,0.55)',
+                transition: 'all 0.2s',
+              }}>
+              {t.label}
+              {t.count > 0 && (
+                <span style={{
+                  fontFamily: FONTS.display, fontSize: 10, fontWeight: 800, lineHeight: 1.4,
+                  color: t.alert ? '#fff' : 'rgba(255,255,255,0.55)',
+                  background: t.alert ? 'rgba(224,90,170,0.85)' : 'rgba(255,255,255,0.08)',
+                  borderRadius: 999, padding: '1px 7px',
+                }}>{t.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div style={{ padding: '16px 16px 8px', maxWidth: 520, margin: '0 auto' }}>
+      <div style={{ padding: '16px 16px 8px', maxWidth: 760, margin: '0 auto' }}>
 
         {/* ══════════════════════════════════════════════
             DASHBOARD
@@ -1226,9 +1251,16 @@ export default function AgentPage() {
                               {statusLabel}
                             </span>
                           </div>
-                          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {ev.dateDisplay || ev.date} {ev.city ? `· ${ev.city}` : ''} · {ev.organizerName || ev.organizer || '—'}
                           </p>
+                          {/* Contexte d'annulation : quand + message de l'organisateur */}
+                          {ev.cancelled && (
+                            <p style={{ fontFamily: FONTS.display, fontSize: 11, color: 'rgba(255,140,140,0.85)', margin: '4px 0 0', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              Annulé{ev.cancelledAt ? ` le ${(() => { try { return new Date(ev.cancelledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) } catch { return '' } })()}` : ''}
+                              {ev.cancellationMessage ? ` — « ${ev.cancellationMessage} »` : ' — aucun message aux participants'}
+                            </p>
+                          )}
                         </div>
                         {/* Action */}
                         <button
@@ -2678,7 +2710,77 @@ export default function AgentPage() {
       )}
 
       {/* ══════════════════════════════════════════════
-          SUPPRESSIONS
+          BOOSTS — créneaux Top 3 vendus + conflits
+      ══════════════════════════════════════════════ */}
+      {tab === 'boosts' && (() => {
+        const now = Date.now()
+        const isActive = b => { try { return new Date(b.expiresAt).getTime() > now } catch { return false } }
+        const active = adminBoosts.filter(isActive)
+        const expired = adminBoosts.filter(b => !isActive(b))
+        const conflicts = active.filter(b => b.conflict)
+        const totalRevenue = adminBoosts.reduce((s, b) => s + (Number(b.price) || 0), 0)
+        const eventName = id => allEvents.find(e => String(e.id) === String(id))?.name || `Event ${id}`
+        const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) } catch { return '—' } }
+        const BoostCard = (b) => (
+          <div key={b.id} style={{ ...CARD, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, ...(b.conflict && isActive(b) ? { borderColor: 'rgba(220,50,50,0.5)', boxShadow: '0 0 18px rgba(220,50,50,0.12)' } : {}) }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: FONTS.display, fontSize: 11, fontWeight: 800, color: '#0b0d14', background: COLORS.gold, borderRadius: 999, padding: '2px 9px' }}>Top {b.position}</span>
+              <span style={{ fontFamily: FONTS.display, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.07)', borderRadius: 999, padding: '2px 9px' }}>{b.region || 'Toutes régions'}</span>
+              {b.conflict && isActive(b) && (
+                <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', color: '#fff', background: 'rgba(220,50,50,0.85)', borderRadius: 999, padding: '2px 9px' }}>⚠ CONFLIT DE CRÉNEAU</span>
+              )}
+              <span style={{ marginLeft: 'auto', fontFamily: FONTS.display, fontWeight: 800, fontSize: 15, color: COLORS.gold }}>{Number(b.price) || 0}€</span>
+            </div>
+            <p style={{ fontFamily: FONTS.display, fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>{eventName(b.eventId)}</p>
+            <p style={{ fontFamily: FONTS.display, fontSize: 11.5, color: COLORS.muted, margin: 0 }}>
+              Acheté le {fmtDate(b.purchasedAt)} · expire le {fmtDate(b.expiresAt)} · {b.days} jour{b.days > 1 ? 's' : ''}
+            </p>
+            {b.conflict && isActive(b) && (
+              <p style={{ fontFamily: FONTS.display, fontSize: 11.5, color: 'rgba(255,140,140,0.9)', margin: 0, lineHeight: 1.5 }}>
+                Deux organisateurs ont payé ce créneau (conflit avec {b.conflictWith || '?'}). Rembourser l'un des deux ou re-négocier la position — un seul boost est affiché publiquement.
+              </p>
+            )}
+          </div>
+        )
+        return (
+          <div style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* KPIs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {[
+                { label: 'Boosts actifs', value: active.length, color: COLORS.teal },
+                { label: 'Conflits à traiter', value: conflicts.length, color: conflicts.length > 0 ? '#dc3232' : COLORS.muted },
+                { label: 'Revenus boosts', value: `${totalRevenue}€`, color: COLORS.gold },
+              ].map(k => (
+                <div key={k.label} style={{ ...CARD, padding: 14, textAlign: 'center' }}>
+                  <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 800, color: k.color, margin: 0 }}>{k.value}</p>
+                  <p style={{ fontFamily: FONTS.display, fontSize: 11, color: COLORS.dim, margin: '3px 0 0' }}>{k.label}</p>
+                </div>
+              ))}
+            </div>
+            {conflicts.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontFamily: FONTS.display, fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#ff8c8c', margin: 0 }}>Conflits — action requise</p>
+                {conflicts.map(BoostCard)}
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: COLORS.muted, margin: 0 }}>Actifs ({active.length})</p>
+              {active.length === 0
+                ? <div style={{ ...CARD, padding: 26, textAlign: 'center' }}><p style={{ fontFamily: FONTS.display, fontSize: 14, color: COLORS.muted, margin: 0 }}>Aucun boost actif</p></div>
+                : active.filter(b => !b.conflict).map(BoostCard)}
+            </div>
+            {expired.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontFamily: FONTS.display, fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Expirés ({expired.length})</p>
+                {expired.slice(0, 10).map(b => <div key={b.id} style={{ opacity: 0.55 }}>{BoostCard(b)}</div>)}
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
+      {/* ══════════════════════════════════════════════
+          SIGNALEMENTS
       ══════════════════════════════════════════════ */}
       {tab === 'reports' && (
         <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
@@ -2977,15 +3079,15 @@ export default function AgentPage() {
 // ─── Sub-components ────────────────────────────────────────────────────────
 const FONTS_SUB = {
   display: "Inter, sans-serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
+  mono: 'Inter, sans-serif', // plus de mono « pixélisé » — Inter partout
 }
 
 function Section({ title, children }) {
   return (
     <div>
       <p style={{
-        fontFamily: FONTS_SUB.mono, fontSize: 9, color: 'rgba(255,255,255,0.25)',
-        textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10,
+        fontFamily: FONTS_SUB.display, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)',
+        textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10,
       }}>{title}</p>
       {children}
     </div>

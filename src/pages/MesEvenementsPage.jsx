@@ -819,15 +819,32 @@ export default function MesEvenementsPage() {
     setDeleteConfirm(null)
     setCancellationMessageDraft('')
     // Sync à Firestore — l'event reste dans la collection events/ pour que les billets
-    // existants puissent toujours afficher le message d'annulation cross-device
+    // existants puissent toujours afficher le message d'annulation cross-device.
+    // Écriture MINIMALE (merge des 3 champs seulement) : ré-écrire l'event entier
+    // avec son image pouvait échouer silencieusement (taille, règles) → l'annulation
+    // restait locale et l'admin ne voyait jamais l'event annulé.
     const cancelledEvent = updated.find(ev => ev.id === id)
     import('../utils/firestore-sync').then(async ({ syncDoc }) => {
-      const { sanitizeEventsForSync } = await import('../utils/uploadImage')
-      if (cancelledEvent) {
-        const [clean] = await sanitizeEventsForSync([cancelledEvent])
-        syncDoc(`events/${id}`, clean)
+      syncDoc(`events/${id}`, {
+        cancelled: true,
+        cancellationMessage: cancelledEvent?.cancellationMessage || message || '',
+        cancelledAt: cancelledEvent?.cancelledAt || new Date().toISOString(),
+        // Identité minimale (merge) : si le doc n'existait pas encore côté
+        // serveur, l'admin voit quand même QUI/QUOI a été annulé
+        ...(cancelledEvent ? {
+          id: String(cancelledEvent.id),
+          name: cancelledEvent.name || '',
+          city: cancelledEvent.city || '',
+          date: cancelledEvent.date || '',
+          dateDisplay: cancelledEvent.dateDisplay || '',
+          organizer: cancelledEvent.organizer || '',
+          createdBy: cancelledEvent.createdBy || user?.uid || '',
+        } : {}),
+      })
+      if (user?.uid) {
+        const { sanitizeEventsForSync } = await import('../utils/uploadImage')
+        syncDoc(`user_events/${user.uid}`, { items: await sanitizeEventsForSync(updated) })
       }
-      if (user?.uid) syncDoc(`user_events/${user.uid}`, { items: await sanitizeEventsForSync(updated) })
     }).catch(() => {})
   }
 
