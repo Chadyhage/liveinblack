@@ -108,11 +108,24 @@
   z-index: 0;
   pointer-events: none;
   filter: blur(58px) saturate(130%);
+  -webkit-filter: blur(58px) saturate(130%);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+@media (max-width: 767px) {
+  .nebula-bg {
+    filter: blur(38px) saturate(125%);
+    -webkit-filter: blur(38px) saturate(125%);
+  }
 }
 .nebula-blob {
   position: absolute;
   border-radius: 50%;
   mix-blend-mode: screen;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 .nb1 {
   width: 72vw; height: 72vw; left: -10vw; top: -14vh;
