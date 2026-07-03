@@ -252,67 +252,67 @@ const S = {
     backdropFilter: 'blur(28px) saturate(1.5)',
     WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
     border: '1px solid rgba(255,255,255,0.09)',
-    borderRadius: '20px',
+    borderRadius: '24px',
     boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
   },
   input: {
     background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: '10px',
+    borderRadius: '13px',
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '14px',
-    color: 'rgba(255,255,255,0.9)',
-    padding: '12px 14px',
+    fontSize: '15.5px',
+    color: 'rgba(255,255,255,0.92)',
+    padding: '15px 16px',
     width: '100%',
     outline: 'none',
     transition: 'border-color 0.2s, box-shadow 0.2s',
     boxSizing: 'border-box',
   },
   btnPrimary: {
-    padding: '14px 28px',
+    padding: '16px 28px',
     background: 'linear-gradient(135deg, rgba(132,68,255,0.96), rgba(255,77,166,0.92))',
     border: 'none',
-    borderRadius: '12px',
+    borderRadius: '14px',
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '14px',
-    fontWeight: 600,
+    fontSize: '15.5px',
+    fontWeight: 700,
     color: 'white',
     cursor: 'pointer',
     width: '100%',
-    boxShadow: '0 4px 24px rgba(132,68,255,0.35)',
+    boxShadow: '0 8px 28px rgba(132,68,255,0.38)',
     transition: 'opacity 0.2s',
   },
   btnGold: {
-    padding: '14px 28px',
+    padding: '16px 28px',
     background: 'linear-gradient(135deg, rgba(200,169,110,0.18), rgba(200,169,110,0.08))',
     border: '1px solid rgba(200,169,110,0.40)',
-    borderRadius: '12px',
+    borderRadius: '14px',
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '14px',
-    fontWeight: 600,
+    fontSize: '15.5px',
+    fontWeight: 700,
     color: '#c8a96e',
     cursor: 'pointer',
     width: '100%',
   },
   btnGhost: {
-    padding: '14px 28px',
+    padding: '16px 28px',
     background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '12px',
+    borderRadius: '14px',
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '14px',
-    fontWeight: 500,
-    color: 'rgba(255,255,255,0.45)',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.55)',
     cursor: 'pointer',
     width: '100%',
   },
   label: {
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '12px',
-    fontWeight: 500,
-    color: 'rgba(255,255,255,0.45)',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.55)',
     display: 'block',
-    marginBottom: '6px',
+    marginBottom: '8px',
   },
   errorText: {
     fontFamily: 'Inter, system-ui, sans-serif',
@@ -567,7 +567,7 @@ export default function LoginPage() {
           <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
             Vérifie ton email
           </h2>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
             Un lien de confirmation a été envoyé à{' '}
             <span style={{ color: 'white' }}>{unverifiedEmail}</span>.
           </p>
@@ -578,7 +578,7 @@ export default function LoginPage() {
             borderRadius: '4px',
             padding: '12px',
           }}>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: '8px' }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: '8px' }}>
               Comment ça marche
             </p>
             {[
@@ -587,17 +587,17 @@ export default function LoginPage() {
               '3. Clique sur le lien dans cet email',
               '4. Reviens ici et connecte-toi',
             ].map((step) => (
-              <p key={step} style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.8' }}>{step}</p>
+              <p key={step} style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.8' }}>{step}</p>
             ))}
           </div>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>
             L'email peut arriver dans les spams / courriers indésirables.
           </p>
           {resendSent && (
             <p style={S.successText}>Email renvoyé, vérifie ta boîte.</p>
           )}
           <button onClick={handleResendVerification}
-            style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
+            style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', letterSpacing: '0.2em', color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
             Renvoyer l'email
           </button>
           <button
@@ -636,12 +636,12 @@ export default function LoginPage() {
           </h2>
           {isRoleReq ? (
             <>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
                 Ta demande d'accès à l'espace{' '}
                 <span style={{ color: '#c8a96e' }}>{roleLabel}</span>{' '}
                 a été transmise à l'équipe LIVEINBLACK.
               </p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
                 Ton compte <span style={{ color: 'white' }}>Client</span> est actif et tu peux déjà utiliser l'app. Tu recevras une notification dès que ton espace sera validé.
               </p>
               <button
@@ -653,12 +653,12 @@ export default function LoginPage() {
             </>
           ) : (
             <>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
                 Ton compte{' '}
                 <span style={{ color: '#c8a96e' }}>{roleLabel}</span>{' '}
                 est en attente de validation par l'équipe LIVEINBLACK.
               </p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
                 Tu recevras une confirmation dès que ton compte sera activé. Cela prend généralement moins de 24h.
               </p>
               <button
@@ -669,7 +669,7 @@ export default function LoginPage() {
               </button>
               <button
                 onClick={() => { setPendingInfo(null); setMode('login') }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', textDecoration: 'underline' }}
               >
                 Retour à la connexion
               </button>
@@ -682,6 +682,10 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col items-center justify-center px-5 py-10">
+      <style>{`
+        .lib-role-card:hover{ transform:translateY(-2px); border-color:rgba(255,255,255,0.2) !important; background:rgba(255,255,255,0.05) !important }
+        .lib-role-card{ transition:transform .18s ease, border-color .2s ease, background .2s ease }
+      `}</style>
 
       {/* Glow blobs */}
       <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.15) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
@@ -698,11 +702,11 @@ export default function LoginPage() {
       </div>
 
       {/* Form card */}
-      <div className="relative z-10 w-full" style={{ maxWidth: 400 }}>
-        <div style={{ ...S.card, padding: '32px 28px' }}>
+      <div className="relative z-10 w-full" style={{ maxWidth: 448 }}>
+        <div style={{ ...S.card, padding: '38px 32px' }}>
 
           {/* ── Mode tabs ── */}
-          <div style={{ display: 'flex', gap: 6, padding: '4px', background: 'rgba(255,255,255,0.04)', borderRadius: '14px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div style={{ display: 'flex', gap: 6, padding: '5px', background: 'rgba(255,255,255,0.04)', borderRadius: '16px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.07)' }}>
             {[['login', 'Connexion'], ['register', "S'inscrire"]].map(([m, label]) => (
               <button key={m} onClick={() => {
                 setMode(m); setRegStep(1); setError('')
@@ -712,7 +716,7 @@ export default function LoginPage() {
                 setUnverifiedEmail(''); setResendSent(false); setPendingInfo(null)
                 setLoginAccounts(null); setLoginRole(null)
               }}
-                style={{ flex: 1, padding: '9px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: 600, border: 'none', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.2s',
+                style={{ flex: 1, padding: '12px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14.5px', fontWeight: 700, border: 'none', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s',
                   ...(mode === m ? { background: 'linear-gradient(135deg, rgba(132,68,255,0.85), rgba(255,77,166,0.75))', color: '#fff', boxShadow: '0 2px 12px rgba(132,68,255,0.3)' }
                   : { background: 'transparent', color: 'rgba(255,255,255,0.35)' }) }}>
                 {label}
@@ -741,7 +745,7 @@ export default function LoginPage() {
               {/* Multi-account role picker */}
               {loginAccounts && loginAccounts.length > 1 && !loginRole && (
                 <div>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: 8 }}>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: 8 }}>
                     Plusieurs comptes détectés — lequel ?
                   </p>
                   {loginAccounts.map(acc => (
@@ -754,14 +758,14 @@ export default function LoginPage() {
                       }}>
                       <span style={{
                         padding: '2px 8px', borderRadius: 3, fontSize: 9,
-                        fontFamily: "'DM Mono', monospace", letterSpacing: '0.15em', textTransform: 'uppercase',
+                        fontFamily: "Inter, sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase',
                         background: (ROLES[acc.role]?.color || '#fff') + '14',
                         border: `1px solid ${ROLES[acc.role]?.color || '#fff'}44`,
                         color: ROLES[acc.role]?.color || '#fff',
                       }}>
                         {ROLES[acc.role]?.label || acc.role}
                       </span>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
+                      <span style={{ fontFamily: "Inter, sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
                         {acc.name}
                       </span>
                     </button>
@@ -776,7 +780,7 @@ export default function LoginPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: -4 }}>
                       <span style={{
                         padding: '2px 8px', borderRadius: 3, fontSize: 9,
-                        fontFamily: "'DM Mono', monospace", letterSpacing: '0.15em', textTransform: 'uppercase',
+                        fontFamily: "Inter, sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase',
                         background: (ROLES[loginRole]?.color || '#fff') + '14',
                         border: `1px solid ${ROLES[loginRole]?.color || '#fff'}44`,
                         color: ROLES[loginRole]?.color || '#fff',
@@ -784,7 +788,7 @@ export default function LoginPage() {
                         {ROLES[loginRole]?.label || loginRole}
                       </span>
                       <button type="button" onClick={() => setLoginRole(null)}
-                        style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                        style={{ fontFamily: "Inter, sans-serif", fontSize: 9, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer' }}>
                         Changer
                       </button>
                     </div>
@@ -830,53 +834,55 @@ export default function LoginPage() {
               REGISTER — STEP 1: Choose role
           ══════════════════════════════════════════════════ */}
           {mode === 'register' && regStep === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', textAlign: 'center', marginBottom: '8px' }}>
-                Quel type de compte veux-tu créer ?
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', fontWeight: 600, letterSpacing: '0.01em', color: 'rgba(255,255,255,0.6)', textAlign: 'center', margin: '2px 0 6px' }}>
+                Quel type de compte veux-tu créer&nbsp;?
               </p>
               {[
-                { role: 'user',         title: 'Client',       desc: 'Découvre des événements et réserve tes places', badge: null },
-                { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements',           badge: 'Validation requise' },
-                { role: 'prestataire',  title: 'Prestataire',  desc: 'DJ, salle, matériel, traiteur...',              badge: 'Validation requise' },
-              ].map(({ role, title, desc, badge }) => (
+                { role: 'user',         title: 'Client',       desc: 'Découvre des événements et réserve tes places', badge: null,                 accent: '#4ee8c8' },
+                { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements',           badge: 'Validation requise', accent: '#8b5cf6' },
+                { role: 'prestataire',  title: 'Prestataire',  desc: 'DJ, salle, matériel, traiteur…',                badge: 'Validation requise', accent: '#c8a96e' },
+              ].map(({ role, title, desc, badge, accent }) => (
                 <button key={role} type="button"
+                  className="lib-role-card"
                   onClick={() => {
                     if (role === 'organisateur') { navigate('/inscription-organisateur'); return }
                     if (role === 'prestataire')  { navigate('/inscription-prestataire');  return }
                     setRegRole(role); setRegStep(2)
                   }}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: '14px',
-                    padding: '14px',
-                    background: regRole === role ? 'rgba(200,169,110,0.08)' : 'rgba(6,8,16,0.4)',
-                    border: `1px solid ${regRole === role ? 'rgba(200,169,110,0.45)' : 'rgba(255,255,255,0.08)'}`,
-                    borderRadius: '4px',
+                    display: 'flex', alignItems: 'center', gap: '15px',
+                    padding: '17px 18px',
+                    background: regRole === role ? `${accent}14` : 'rgba(255,255,255,0.025)',
+                    border: `1px solid ${regRole === role ? `${accent}66` : 'rgba(255,255,255,0.09)'}`,
+                    borderRadius: '16px',
                     textAlign: 'left',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
                 >
                   <div style={{
-                    width: '32px', height: '32px', borderRadius: '4px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    width: '46px', height: '46px', borderRadius: '13px',
+                    background: `${accent}1a`,
+                    border: `1px solid ${accent}3a`,
+                    color: accent,
                     flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <RoleIcon role={role} />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '2px' }}>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', margin: 0 }}>{title}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '3px', flexWrap: 'wrap' }}>
+                      <p style={{ fontFamily: "Inter, sans-serif", fontSize: '16px', fontWeight: 700, letterSpacing: '-0.2px', color: '#fff', margin: 0 }}>{title}</p>
                       {badge && (
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '7px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c8a96e', padding: '1px 5px', borderRadius: 3, border: '1px solid rgba(200,169,110,0.3)', background: 'rgba(200,169,110,0.06)' }}>
+                        <span style={{ fontFamily: "Inter, sans-serif", fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', padding: '3px 8px', borderRadius: 999, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.08)' }}>
                           {badge}
                         </span>
                       )}
                     </div>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{desc}</p>
+                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.4 }}>{desc}</p>
                   </div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" strokeLinecap="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
                     <path d="M9 18l6-6-6-6"/>
                   </svg>
                 </button>
@@ -888,27 +894,28 @@ export default function LoginPage() {
               REGISTER — STEP 2: Fill form
           ══════════════════════════════════════════════════ */}
           {mode === 'register' && regStep === 2 && (
-            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {/* Back + role badge */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                 <button type="button" onClick={() => { setRegStep(1); setError('') }}
                   style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.2em',
-                    textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)',
-                    background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                    fontFamily: "Inter, sans-serif", fontSize: '13px', fontWeight: 600,
+                    color: 'rgba(255,255,255,0.55)',
+                    background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
                   }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <path d="M15 18l-6-6 6-6"/>
                   </svg>
                   Retour
                 </button>
                 <span style={{
                   marginLeft: 'auto',
-                  fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.2em',
+                  fontFamily: "Inter, sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em',
                   textTransform: 'uppercase', color: '#c8a96e',
-                  padding: '3px 8px',
-                  border: '1px solid rgba(200,169,110,0.3)',
-                  borderRadius: '4px',
+                  padding: '5px 11px',
+                  border: '1px solid rgba(200,169,110,0.35)',
+                  borderRadius: '999px',
+                  background: 'rgba(200,169,110,0.08)',
                 }}>
                   {ROLES[regRole]?.label}
                 </span>
@@ -917,15 +924,15 @@ export default function LoginPage() {
               {/* Validation notice for org/prest */}
               {(regRole === 'organisateur' || regRole === 'prestataire') && (
                 <div style={{
-                  padding: '10px 14px',
+                  padding: '14px 16px',
                   background: 'rgba(200,169,110,0.06)',
                   border: '1px solid rgba(200,169,110,0.25)',
-                  borderRadius: '4px',
+                  borderRadius: '14px',
                 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '6px' }}>
                     {regRole === 'organisateur' ? '🎪 Espace Organisateur' : '🎤 Espace Prestataire'}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.55 }}>
                     Ton compte débloque l'espace <span style={{ color: '#c8a96e', fontWeight: 600 }}>{ROLES[regRole]?.label}</span> après validation par l'équipe LIVEINBLACK (généralement moins de 24h). Ton interface client reste disponible — tu basculeras entre tes interfaces depuis le menu.
                   </p>
                 </div>
@@ -938,8 +945,8 @@ export default function LoginPage() {
                   border: '1px solid rgba(200,169,110,0.25)',
                   borderRadius: '4px',
                 }}>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>Compte Agent</p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>Compte Agent</p>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
                     Ton compte sera soumis à validation. Tu recevras une confirmation sous 24h.
                   </p>
                 </div>
@@ -997,8 +1004,8 @@ export default function LoginPage() {
                               onMouseLeave={e => e.currentTarget.style.background = 'none'}
                             >
                               <span style={{ fontSize: '14px' }}>{c.flag}</span>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.6)', flex: 1 }}>{c.name}</span>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: regDialCode === c.dial ? '#c8a96e' : 'rgba(255,255,255,0.3)' }}>{c.dial}</span>
+                              <span style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.6)', flex: 1 }}>{c.name}</span>
+                              <span style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: regDialCode === c.dial ? '#c8a96e' : 'rgba(255,255,255,0.3)' }}>{c.dial}</span>
                             </button>
                           ))}
                         </div>
@@ -1028,7 +1035,7 @@ export default function LoginPage() {
                           textAlign: 'left',
                         }}>
                         <span style={{ fontSize: '14px' }}>{t.icon}</span>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: regPrestType === t.key ? '#c8a96e' : 'rgba(255,255,255,0.45)', lineHeight: 1.3 }}>{t.label}</span>
+                        <span style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: regPrestType === t.key ? '#c8a96e' : 'rgba(255,255,255,0.45)', lineHeight: 1.3 }}>{t.label}</span>
                       </button>
                     ))}
                   </div>
@@ -1065,14 +1072,14 @@ export default function LoginPage() {
                       }} />
                     ))}
                   </div>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', color: pwdStrength.color }}>{pwdStrength.label}</p>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.15em', color: pwdStrength.color }}>{pwdStrength.label}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
                     {[
                       { ok: regPwd.length >= 8, text: '8 car. min.' },
                       { ok: /[A-Z]/.test(regPwd), text: 'Majuscule' },
                       { ok: /[0-9]/.test(regPwd), text: 'Chiffre' },
                     ].map(r => (
-                      <span key={r.text} style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: r.ok ? '#4ee8c8' : 'rgba(255,255,255,0.2)' }}>
+                      <span key={r.text} style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', color: r.ok ? '#4ee8c8' : 'rgba(255,255,255,0.2)' }}>
                         {r.ok ? '✓' : '○'} {r.text}
                       </span>
                     ))}
@@ -1095,7 +1102,7 @@ export default function LoginPage() {
           )}
 
           {mode === 'register' && regStep === 1 && (
-            <p style={{ textAlign: 'center', fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.2)', marginTop: '16px', lineHeight: 1.6 }}>
+            <p style={{ textAlign: 'center', fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.2)', marginTop: '16px', lineHeight: 1.6 }}>
               En t'inscrivant tu acceptes nos{' '}
               <span style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/cgu')}>CGU</span>{' '}
               et notre{' '}
@@ -1109,9 +1116,9 @@ export default function LoginPage() {
           onClick={() => navigate('/accueil')}
           className="lib-press"
           style={{
-            width: '100%', marginTop: 14, padding: '13px', borderRadius: 12, cursor: 'pointer',
+            width: '100%', marginTop: 16, padding: '16px', borderRadius: 14, cursor: 'pointer',
             background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-            fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
+            fontFamily: 'Inter, sans-serif', fontSize: 14.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             transition: 'border-color 0.2s, color 0.2s',
           }}
@@ -1134,7 +1141,7 @@ export default function LoginPage() {
             </h3>
             {!resetSent ? (
               <form onSubmit={e => { e.preventDefault(); handleSendReset() }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
                   Entre ton adresse email et on t'envoie un lien de réinitialisation.
                 </p>
                 <div>
@@ -1158,8 +1165,8 @@ export default function LoginPage() {
                     <path d="M2 7l10 7 10-7"/>
                   </svg>
                 </div>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#4ee8c8' }}>Email envoyé</p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#4ee8c8' }}>Email envoyé</p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
                   Un lien a été envoyé à <span style={{ color: 'white' }}>{resetEmail}</span>.
                 </p>
                 <button onClick={() => setShowResetModal(false)} style={S.btnGold}>Fermer</button>
@@ -1200,27 +1207,20 @@ function FocusInput({ style = {}, ...props }) {
 }
 
 // ── Role icon SVG ─────────────────────────────────────────────────────────
-function RoleIcon({ role }) {
-  const color = 'rgba(255,255,255,0.45)'
+function RoleIcon({ role, size = 21 }) {
+  // stroke=currentColor → hérite de la couleur d'accent posée sur la pastille
+  const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' }
   if (role === 'user') return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-    </svg>
+    <svg {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
   )
   if (role === 'prestataire') return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-    </svg>
+    <svg {...p}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
   )
   if (role === 'organisateur') return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
+    <svg {...p}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
   )
   if (role === 'agent') return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-    </svg>
+    <svg {...p}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
   )
   return null
 }
