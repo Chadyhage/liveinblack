@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import SideMenu from './SideMenu'
 import AnimatedLogo from './AnimatedLogo'
 import AnimatedHamburger from './AnimatedHamburger'
+import AmbianceFab from './AmbianceFab'
 import { getUserId, getTotalUnreadCount, getLastRead, getConversationById, getUserById, getInitials, userShowsPhoto } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
 import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG, upsertMessageNotification } from '../utils/notifications'
@@ -441,6 +442,10 @@ export default function Layout({ children, hideNav, chatMode }) {
       )}
 
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Bouton flottant « Mettre l'ambiance » — présent sur toute l'app connectée
+          (masqué en chatMode pour ne pas couvrir la zone de saisie du chat). */}
+      {!chatMode && <AmbianceFab />}
 
       <main className={chatMode ? 'flex flex-col' : ''} style={chatMode ? { flex: 1 } : {}}>
         <div style={{ maxWidth: chatMode ? undefined : 1320, margin: '0 auto', width: '100%' }}
