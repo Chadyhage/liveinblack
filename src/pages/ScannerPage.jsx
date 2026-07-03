@@ -248,7 +248,14 @@ export default function ScannerPage() {
     const unsubs = openEventIds.map(eid =>
       listenOrders(eid, items => setOrdersByEvent(prev => ({ ...prev, [eid]: items })))
     )
-    return () => unsubs.forEach(u => u())
+    // Sync INTER-ONGLETS (même appareil) : un ajout client dans un autre onglet
+    // écrit localStorage → on relit tous les events ouverts. (Cross-device = Firestore.)
+    const onStorage = e => {
+      if (e && e.key !== 'lib_event_orders') return
+      openEventIds.forEach(eid => setOrdersByEvent(prev => ({ ...prev, [eid]: getOrders(eid) })))
+    }
+    window.addEventListener('storage', onStorage)
+    return () => { unsubs.forEach(u => u()); window.removeEventListener('storage', onStorage) }
   }, [openEventIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const flashPos = msg => { setPosMsg(msg); setTimeout(() => setPosMsg(''), 2400) }

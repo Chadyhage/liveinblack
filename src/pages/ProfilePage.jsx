@@ -1146,7 +1146,7 @@ export default function ProfilePage() {
         <div style={S.page}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <BackButton />
-            <h2 style={S.sectionTitle}>Mes commandes</h2>
+            <h2 style={S.sectionTitle}>Mes précommandes</h2>
           </div>
           {bookings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
@@ -1411,6 +1411,7 @@ export default function ProfilePage() {
   // ── Main Profile ──────────────────────────────────────────────────────────────
   const bookingsCount = getBookings().length
   const createdCount = (() => { try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]').length } catch { return 0 } })()
+  const serviceOrdersCount = (() => { try { return getOrdersForBuyer(getUserId(user)).length } catch { return 0 } })()
 
   return (
     <Layout>
@@ -1467,12 +1468,12 @@ export default function ProfilePage() {
         {/* Stats — filtrées selon le rôle */}
         {(() => {
           const isOrg = user?.role === 'organisateur'
+          // Client : pas de stat « Événements » (un client ne crée pas d'événements).
           const stats = isOrg
             ? [{ label: 'Événements', val: createdCount }]
             : [
-                { label: 'Tickets',     val: bookingsCount },
-                { label: 'Événements',  val: createdCount  },
-                { label: 'Points',      val: user?.points || 0 },
+                { label: 'Billets', val: bookingsCount },
+                { label: 'Points',  val: user?.points || 0 },
               ]
           return (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, 1fr)`, gap: '8px' }}>
@@ -1502,13 +1503,15 @@ export default function ProfilePage() {
         {/* Menu — items filtrés selon le rôle */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {[
-            // Clients uniquement : achats de billets et commandes événements
+            // Clients uniquement : billets + précommandes (boissons/food commandées avec le billet)
             (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
-              { label: 'Mes billets',               action: () => setPanel('billets')        },
+              { label: 'Mes billets',       action: () => setPanel('billets')   },
             (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
-              { label: 'Mes commandes événements',  action: () => setPanel('commandes')      },
-            // Prestataires + clients : commandes de services reçues/passées
-            (user?.role !== 'organisateur' && user?.role !== 'agent') &&
+              { label: 'Mes précommandes',  action: () => setPanel('commandes') },
+            // « Commandes prestataires » : concept marketplace (organisateur↔prestataire).
+            // On ne l'affiche que si l'utilisateur a RÉELLEMENT passé une telle commande —
+            // sinon c'est une case vide déroutante pour un simple client.
+            (user?.role !== 'organisateur' && user?.role !== 'agent' && serviceOrdersCount > 0) &&
               { label: 'Mes commandes prestataires', action: () => setPanel('service-orders') },
             { label: 'Paramètres du compte', action: () => setPanel('settings') },
             { label: 'Support / Aide',       action: () => setPanel('support')   },

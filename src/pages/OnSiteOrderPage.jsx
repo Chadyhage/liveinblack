@@ -63,7 +63,11 @@ export default function OnSiteOrderPage() {
     if (!eventId) return
     setItems(getOrders(eventId)) // reset immédiat sur le BON event (évite un flash des commandes de l'event précédent)
     const unsub = listenOrders(eventId, next => setItems(Array.isArray(next) ? next : []))
-    return () => unsub()
+    // Sync INTER-ONGLETS (même appareil) : quand le serveur/un autre onglet écrit,
+    // localStorage change → on relit. (Le cross-device passe, lui, par Firestore.)
+    const onStorage = e => { if (!e || e.key === 'lib_event_orders') setItems(getOrders(eventId)) }
+    window.addEventListener('storage', onStorage)
+    return () => { unsub(); window.removeEventListener('storage', onStorage) }
   }, [eventId])
 
   const flash = msg => { setToast(msg); setTimeout(() => setToast(''), 2200) }
@@ -91,8 +95,11 @@ export default function OnSiteOrderPage() {
     if (!user) { openAuthModal?.(); return }
     setBusy(String(menuItem.id || menuItem.name))
     const line = editableLine(menuItem)
-    if (line) await updateOnsiteItem(eventId, line.id, { quantity: line.quantity + 1 }, actor)
-    else { await addOnsiteItem(eventId, { ticketId: ticketCode, menuItem, qty: 1 }, actor, true); flash(`${menuItem.name} ajouté`) }
+    if (line) { await updateOnsiteItem(eventId, line.id, { quantity: line.quantity + 1 }, actor) }
+    else {
+      const res = await addOnsiteItem(eventId, { ticketId: ticketCode, menuItem, qty: 1 }, actor, true)
+      flash(res && res._synced === false ? `${menuItem.name} ajouté · ⚠ hors-ligne` : `${menuItem.name} ajouté`)
+    }
     refreshLocal(); setBusy('')
   }
   async function dec(menuItem) {

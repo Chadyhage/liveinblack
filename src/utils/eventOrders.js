@@ -137,11 +137,14 @@ async function commitItems(eventId, { upserts = [], removeIds = [] }) {
   for (const u of upserts) byId.set(String(u.id), u)
   for (const r of removeIds) byId.delete(String(r))
   writeLocalOrders(eventId, [...byId.values()])
-  // Vérité cross-device : transaction Firestore (anti-écrasement concurrent)
+  // Vérité cross-device : transaction Firestore (anti-écrasement concurrent).
+  // Renvoie true si l'écriture a bien atteint le serveur (→ le bar la verra), sinon
+  // false (hors-ligne / règles non déployées) pour que l'UI puisse prévenir.
   try {
     const { mergeItemsById } = await import('./firestore-sync')
-    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', upserts, removeIds })
-  } catch {}
+    const r = await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', upserts, removeIds })
+    return r !== null
+  } catch { return false }
 }
 
 // Patch de CHAMPS d'une ligne (garde serveur atomique). Optimiste en local, puis
@@ -205,9 +208,9 @@ export async function addOnsiteItem(eventId, { ticketId, menuItem, qty = 1, note
     served_at: null, served_by: null, paid_at: null, paid_by: null,
     cancelled_at: null, cancelled_by: null, cancellation_reason: null,
   }
-  await commitItems(eventId, { upserts: [item] })
+  const synced = await commitItems(eventId, { upserts: [item] })
   await logAction(eventId, { ...a, itemId: item.id, ticketId: item.ticketId, itemName: item.name, action: 'add', newValue: `${item.name} ×${item.quantity}`, amount: Math.round(item.unitPrice * item.quantity * 100) / 100, note })
-  return item
+  return { ...item, _synced: synced }
 }
 
 // ── Modifier une ligne (qty/note/options) — interdit si servie/payée ─────────
