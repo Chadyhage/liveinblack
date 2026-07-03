@@ -52,7 +52,10 @@ export default function PublicPrestataires() {
     const byId = {}
     for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
     for (const p of remote) if (p.userId) byId[p.userId] = p // Firestore prioritaire
-    return Object.values(byId).filter(p => p.name) // profils complétés uniquement
+    // Uniquement les profils réellement renseignés : un doc providers/ créé mais
+    // laissé vide (aucune photo, description ni localisation) est un profil
+    // fantôme (onboarding abandonné) → on ne l'affiche pas dans l'annuaire.
+    return Object.values(byId).filter(p => p.name && (p.photoUrl || p.description || p.location))
   }, [remote])
 
   const filtered = useMemo(() => {

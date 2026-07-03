@@ -1172,7 +1172,11 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
     const byId = {}
     for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
     for (const p of remoteProviders) if (p.userId) byId[p.userId] = p // Firestore gagne
-    return Object.values(byId)
+    // Écarte les profils fantômes (doc providers/ vide, onboarding abandonné) :
+    // sans photo, description, localisation NI catalogue → pas un vrai prestataire.
+    return Object.values(byId).filter(p =>
+      p.name && (p.photoUrl || p.description || p.location || catalogOf(p.userId).some(i => i.available))
+    )
   })()
 
   const cat = CATEGORIES.find(c => c.id === selected)
