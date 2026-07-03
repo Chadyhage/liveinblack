@@ -12,7 +12,19 @@ import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, onSn
 // Ici : transaction Firestore = lire l'état SERVEUR, y appliquer nos upserts/
 // suppressions, écrire — atomique, aucun ajout concurrent perdu.
 // Renvoie le tableau mergé (pour rafraîchir le cache local), ou null si échec.
-export async function mergeItemsById(path, { field = 'items', idKey = 'id', upserts = [], removeIds = [] } = {}) {
+// Options avancées (pour le POS commande, où l'objet ne doit PAS être écrasé
+// aveuglément par une version issue d'un cache local périmé) :
+//  - patches      : [{ id, set, requireUnserved, requireUnpaid }] → fusion de
+//                   CHAMPS sur l'item SERVEUR, uniquement si la garde tient
+//                   (empêche de ré-ouvrir une ligne servie/payée + préserve les
+//                   champs concurrents comme quantity édités ailleurs).
+//  - insertOnly   : [item] → insère seulement si l'id est ABSENT côté serveur
+//                   (matérialisation de préco non destructive).
+//  - guardedRemoveIds : [{ id, requireUnserved, requireUnpaid }] → suppression
+//                   seulement si la garde tient côté serveur.
+// La garde s'évalue contre l'état SERVEUR lu dans la transaction, jamais le cache.
+const _served = it => it && it.status === 'served' // même valeur pour préco et sur-place
+export async function mergeItemsById(path, { field = 'items', idKey = 'id', upserts = [], removeIds = [], patches = [], insertOnly = [], guardedRemoveIds = [] } = {}) {
   try {
     const [col, id] = path.split('/')
     const ref = doc(db, col, id)
@@ -23,7 +35,22 @@ export async function mergeItemsById(path, { field = 'items', idKey = 'id', upse
       const remote = (snap.exists() && Array.isArray(snap.data()[field])) ? snap.data()[field] : []
       const byId = new Map(remote.map(it => [String(it[idKey]), it]))
       for (const it of upserts) byId.set(String(it[idKey]), it)
+      for (const it of insertOnly) { const k = String(it[idKey]); if (!byId.has(k)) byId.set(k, it) }
+      for (const p of patches) {
+        const cur = byId.get(String(p.id))
+        if (!cur) continue
+        if (p.requireUnserved && _served(cur)) continue
+        if (p.requireUnpaid && cur.paid_at) continue
+        byId.set(String(p.id), { ...cur, ...p.set })
+      }
       for (const rid of removeSet) byId.delete(rid)
+      for (const g of guardedRemoveIds) {
+        const cur = byId.get(String(g.id))
+        if (!cur) continue
+        if (g.requireUnserved && _served(cur)) continue
+        if (g.requireUnpaid && cur.paid_at) continue
+        byId.delete(String(g.id))
+      }
       result = [...byId.values()]
       tx.set(ref, { [field]: result, updatedAt: new Date().toISOString() }, { merge: true })
     })

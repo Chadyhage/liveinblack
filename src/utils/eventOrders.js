@@ -144,6 +144,29 @@ async function commitItems(eventId, { upserts = [], removeIds = [] }) {
   } catch {}
 }
 
+// Patch de CHAMPS d'une ligne (garde serveur atomique). Optimiste en local, puis
+// la transaction ne l'applique côté serveur que si la garde tient (non servi/payé)
+// et en préservant les champs concurrents (ex. quantity édité ailleurs).
+async function commitPatch(eventId, itemId, set, guards = {}) {
+  const list = getOrders(eventId)
+  if (list.some(i => String(i.id) === String(itemId))) {
+    writeLocalOrders(eventId, list.map(i => String(i.id) === String(itemId) ? { ...i, ...set } : i))
+  }
+  try {
+    const { mergeItemsById } = await import('./firestore-sync')
+    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', patches: [{ id: itemId, set, ...guards }] })
+  } catch {}
+}
+
+// Suppression gardée (ne retire côté serveur que si non servi/payé).
+async function commitRemove(eventId, itemId, guards = {}) {
+  writeLocalOrders(eventId, getOrders(eventId).filter(i => String(i.id) !== String(itemId)))
+  try {
+    const { mergeItemsById } = await import('./firestore-sync')
+    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', guardedRemoveIds: [{ id: itemId, ...guards }] })
+  } catch {}
+}
+
 // Journal commun (historique) — append atomique + cache local optimiste.
 async function logAction(eventId, entry) {
   const full = { id: 'log_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), ts: now(), ...entry }
@@ -198,7 +221,7 @@ export async function updateOnsiteItem(eventId, itemId, patch, actor) {
   if (patch.note != null) clean.note = String(patch.note)
   if (patch.options !== undefined) clean.options = patch.options
   const next = { ...cur, ...clean }
-  await commitItems(eventId, { upserts: [next] })
+  await commitPatch(eventId, itemId, clean, { requireUnserved: true, requireUnpaid: true })
   await logAction(eventId, { ...a, itemId, ticketId: cur.ticketId, itemName: cur.name, action: 'edit', oldValue: `×${cur.quantity}${cur.note ? ' · ' + cur.note : ''}`, newValue: `×${next.quantity}${next.note ? ' · ' + next.note : ''}` })
   return { ok: true }
 }
@@ -209,8 +232,7 @@ export async function setOnsiteStatus(eventId, itemId, status, actor) {
   if (!cur) return { ok: false, error: 'Introuvable.' }
   if (cur.status === ONSITE_STATUS.SERVED) return { ok: false, error: 'Déjà servie.' }
   const a = actorInfo(actor)
-  const next = { ...cur, status }
-  await commitItems(eventId, { upserts: [next] })
+  await commitPatch(eventId, itemId, { status }, { requireUnserved: true })
   await logAction(eventId, { ...a, itemId, ticketId: cur.ticketId, itemName: cur.name, action: 'status', oldValue: cur.status, newValue: status })
   return { ok: true }
 }
@@ -221,8 +243,8 @@ export async function serveItem(eventId, itemId, actor) {
   if (!cur) return { ok: false, error: 'Introuvable.' }
   if (cur.status === ONSITE_STATUS.SERVED || cur.status === PREORDER_STATUS.SERVED) return { ok: false, error: 'Déjà servi.' }
   const a = actorInfo(actor)
-  const next = { ...cur, status: cur.source === ORDER_SOURCE.PREORDER ? PREORDER_STATUS.SERVED : ONSITE_STATUS.SERVED, served_at: now(), served_by: a.actorId, served_by_name: a.actorName }
-  await commitItems(eventId, { upserts: [next] })
+  const set = { status: cur.source === ORDER_SOURCE.PREORDER ? PREORDER_STATUS.SERVED : ONSITE_STATUS.SERVED, served_at: now(), served_by: a.actorId, served_by_name: a.actorName }
+  await commitPatch(eventId, itemId, set, { requireUnserved: true })
   await logAction(eventId, { ...a, itemId, ticketId: cur.ticketId, itemName: cur.name, action: 'serve', newValue: `${cur.name} ×${cur.quantity} servi` })
   return { ok: true }
 }
@@ -234,8 +256,8 @@ export async function cancelItem(eventId, itemId, reason, actor) {
   const cur = getOrders(eventId).find(i => String(i.id) === String(itemId))
   if (!cur) return { ok: false, error: 'Introuvable.' }
   const a = actorInfo(actor)
-  const next = { ...cur, status: ONSITE_STATUS.CANCELLED, cancelled_at: now(), cancelled_by: a.actorId, cancellation_reason: reason.trim() }
-  await commitItems(eventId, { upserts: [next] })
+  const set = { status: ONSITE_STATUS.CANCELLED, cancelled_at: now(), cancelled_by: a.actorId, cancellation_reason: reason.trim() }
+  await commitPatch(eventId, itemId, set, { requireUnpaid: true })
   await logAction(eventId, { ...a, itemId, ticketId: cur.ticketId, itemName: cur.name, action: 'cancel', oldValue: cur.status, newValue: 'cancelled', note: reason.trim() })
   return { ok: true }
 }
@@ -246,7 +268,7 @@ export async function removeOnsiteItem(eventId, itemId, actor) {
   if (!cur) return { ok: false, error: 'Introuvable.' }
   if (cur.status === ONSITE_STATUS.SERVED || cur.paid_at) return { ok: false, error: 'Impossible : article servi/payé.' }
   const a = actorInfo(actor)
-  await commitItems(eventId, { removeIds: [itemId] })
+  await commitRemove(eventId, itemId, { requireUnserved: true, requireUnpaid: true })
   await logAction(eventId, { ...a, itemId, ticketId: cur.ticketId, itemName: cur.name, action: 'remove', oldValue: `${cur.name} ×${cur.quantity}` })
   return { ok: true }
 }
@@ -265,8 +287,13 @@ export async function markTicketPaid(eventId, ticketId, actor) {
   const { items } = ticketAddition(eventId, ticketId)
   if (!items.length) return { ok: false, error: 'Rien à encaisser.' }
   const a = actorInfo(actor)
-  const stamped = items.map(i => ({ ...i, paid_at: now(), paid_by: a.actorId, paid_by_name: a.actorName }))
-  await commitItems(eventId, { upserts: stamped })
+  const stampSet = { paid_at: now(), paid_by: a.actorId, paid_by_name: a.actorName }
+  const ids = new Set(items.map(i => String(i.id)))
+  writeLocalOrders(eventId, getOrders(eventId).map(i => ids.has(String(i.id)) ? { ...i, ...stampSet } : i)) // optimiste
+  try {
+    const { mergeItemsById } = await import('./firestore-sync')
+    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', patches: items.map(i => ({ id: i.id, set: stampSet, requireUnpaid: true })) })
+  } catch {}
   const total = Math.round(items.reduce((s, i) => s + i.unitPrice * i.quantity, 0) * 100) / 100
   await logAction(eventId, { ...a, itemId: null, ticketId: String(ticketId), action: 'pay', newValue: `Addition ${total}€ marquée payée (${items.length} article${items.length > 1 ? 's' : ''})` })
   return { ok: true, total }
@@ -323,5 +350,15 @@ export async function ensurePreordersMaterialized(eventId, ticketId, preorders, 
       }
     })
     .filter(Boolean)
-  if (toAdd.length) await commitItems(eventId, { upserts: toAdd })
+  if (!toAdd.length) return
+  // Optimiste local : insertion seulement (ne pas écraser une ligne locale existante)
+  const local = getOrders(eventId)
+  const present = new Set(local.map(i => String(i.id)))
+  const fresh = toAdd.filter(i => !present.has(String(i.id)))
+  if (fresh.length) writeLocalOrders(eventId, [...local, ...fresh])
+  // Serveur : insertOnly → si la préco existe déjà (servie/annulée ailleurs), on n'y touche pas.
+  try {
+    const { mergeItemsById } = await import('./firestore-sync')
+    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', insertOnly: toAdd })
+  } catch {}
 }

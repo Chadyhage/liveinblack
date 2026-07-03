@@ -61,6 +61,7 @@ export default function OnSiteOrderPage() {
   // Écoute temps réel des commandes de l'événement
   useEffect(() => {
     if (!eventId) return
+    setItems(getOrders(eventId)) // reset immédiat sur le BON event (évite un flash des commandes de l'event précédent)
     const unsub = listenOrders(eventId, next => setItems(Array.isArray(next) ? next : []))
     return () => unsub()
   }, [eventId])
