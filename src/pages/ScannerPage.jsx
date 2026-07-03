@@ -52,7 +52,9 @@ const CARD = {
 
 const FONTS = {
   display: "Inter, sans-serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
+  // Plus de DM Mono : tout passe en Inter pour rester cohérent avec le reste de
+  // l'app (codes billets inclus, déjà affichés en Inter ailleurs).
+  mono: "Inter, sans-serif",
 }
 
 const COLORS = {
@@ -541,10 +543,10 @@ export default function ScannerPage() {
   const inputStyle = {
     width: '100%', boxSizing: 'border-box',
     background: 'rgba(8,10,20,0.70)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 6, color: '#fff',
-    fontFamily: FONTS.mono, fontSize: 12,
-    padding: '9px 12px', outline: 'none',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 12, color: '#fff',
+    fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600,
+    padding: '12px 14px', outline: 'none',
   }
 
   return (
@@ -566,37 +568,38 @@ export default function ScannerPage() {
             cursor: 'pointer', color: COLORS.muted, fontSize: 18, lineHeight: 1,
           }}>‹</button>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 17, color: '#fff', margin: 0, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Scanner LIVEINBLACK
+          <h1 style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 17, color: '#fff', margin: 0, letterSpacing: '-0.2px' }}>
+            Scanner
           </h1>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
-            {scanMode === 'entry' ? 'Interface videur' : 'Interface serveur'}
+          <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.muted, margin: '2px 0 0', letterSpacing: '.02em' }}>
+            {scanMode === 'entry' ? 'Contrôle d’entrée' : 'Service commandes'}
           </p>
         </div>
         <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.teal, boxShadow: `0 0 6px ${COLORS.teal}`, animation: 'pulse 2s infinite' }} />
       </div>
 
-      {/* Mode toggle */}
+      {/* Mode toggle — segmented control */}
       <div style={{
         display: 'flex', margin: '14px 16px 0',
-        background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 3, gap: 3,
+        background: 'rgba(8,10,20,0.6)', backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 999, padding: 4, gap: 4,
       }}>
-        {[['entry', 'Contrôle entrée'], ['service', 'Service commandes']].map(([m, label]) => (
-          <button key={m} onClick={() => switchMode(m)}
-            style={{
-              flex: 1, padding: '8px 0', borderRadius: 6, cursor: 'pointer',
-              fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
-              transition: 'all 0.2s',
-              background: scanMode === m
-                ? 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.08))'
-                : 'transparent',
-              border: scanMode === m ? '1px solid rgba(200,169,110,0.40)' : '1px solid transparent',
-              color: scanMode === m ? COLORS.gold : COLORS.dim,
-            }}>
-            {label}
-          </button>
-        ))}
+        {[['entry', 'Contrôle entrée', COLORS.teal, '78,232,200'], ['service', 'Service commandes', COLORS.gold, '200,169,110']].map(([m, label, accent, rgb]) => {
+          const on = scanMode === m
+          return (
+            <button key={m} onClick={() => switchMode(m)}
+              style={{
+                flex: 1, padding: '10px 0', borderRadius: 999, cursor: 'pointer',
+                fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '.01em',
+                transition: 'all 0.2s',
+                background: on ? `rgba(${rgb},0.14)` : 'transparent',
+                border: on ? `1px solid rgba(${rgb},0.5)` : '1px solid transparent',
+                color: on ? accent : COLORS.muted,
+              }}>
+              {label}
+            </button>
+          )
+        })}
       </div>
 
       <div style={{ flex: 1, padding: '16px 16px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -652,8 +655,8 @@ export default function ScannerPage() {
                 <button
                   onClick={() => { setCameraError(''); setCameraActive(v => !v) }}
                   style={{
-                    width: '100%', padding: '14px 0', borderRadius: 4, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+                    width: '100%', padding: '14px 0', borderRadius: 12, cursor: 'pointer',
+                    fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
                     transition: 'all 0.2s', border: 'none',
                     background: cameraActive
                       ? 'rgba(255,255,255,0.08)'
@@ -681,10 +684,10 @@ export default function ScannerPage() {
                       onClick={() => manualCode && processCode(manualCode)}
                       disabled={!manualCode}
                       style={{
-                        padding: '0 16px', borderRadius: 4, cursor: manualCode ? 'pointer' : 'default',
+                        padding: '0 16px', borderRadius: 12, cursor: manualCode ? 'pointer' : 'default',
                         background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
                         border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold,
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em',
+                        fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em',
                         opacity: manualCode ? 1 : 0.4, transition: 'opacity 0.2s',
                       }}>
                       Valider
@@ -786,17 +789,17 @@ export default function ScannerPage() {
                   <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
                     {isValid && (
                       <button onClick={validateEntry} style={{
-                        flex: 1, padding: '12px 0', borderRadius: 4, cursor: 'pointer',
+                        flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer',
                         background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
                         border: '1px solid rgba(78,232,200,0.35)', color: COLORS.teal,
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+                        fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
                         transition: 'all 0.2s',
                       }}>
                         Valider l'entrée
                       </button>
                     )}
                     <button onClick={reset} style={{
-                      width: isValid ? 44 : '100%', padding: '12px 0', borderRadius: 4, cursor: 'pointer',
+                      width: isValid ? 44 : '100%', padding: '12px 0', borderRadius: 12, cursor: 'pointer',
                       background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
                       color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
                       transition: 'all 0.2s',
@@ -870,8 +873,8 @@ export default function ScannerPage() {
                 <button
                   onClick={() => { setCameraError(''); setCameraActive(v => !v) }}
                   style={{
-                    width: '100%', padding: '13px 0', borderRadius: 4, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+                    width: '100%', padding: '13px 0', borderRadius: 12, cursor: 'pointer',
+                    fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
                     border: 'none', transition: 'all 0.2s',
                     background: cameraActive
                       ? 'rgba(255,255,255,0.06)'
@@ -899,10 +902,10 @@ export default function ScannerPage() {
                       onClick={() => serviceCode && lookupOrder(serviceCode)}
                       disabled={!serviceCode}
                       style={{
-                        padding: '0 16px', borderRadius: 4, cursor: serviceCode ? 'pointer' : 'default',
+                        padding: '0 16px', borderRadius: 12, cursor: serviceCode ? 'pointer' : 'default',
                         background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
                         border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold,
-                        fontFamily: FONTS.mono, fontSize: 11,
+                        fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em',
                         opacity: serviceCode ? 1 : 0.4, transition: 'opacity 0.2s',
                       }}>
                       Valider
@@ -1020,7 +1023,7 @@ export default function ScannerPage() {
                               <button
                                 onClick={() => toggleServed(code, item.name)}
                                 style={{
-                                  padding: '6px 10px', borderRadius: 4, cursor: 'pointer',
+                                  padding: '6px 10px', borderRadius: 12, cursor: 'pointer',
                                   fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.04em',
                                   textTransform: 'uppercase', transition: 'all 0.2s',
                                   ...(served
@@ -1049,7 +1052,7 @@ export default function ScannerPage() {
                   <button
                     onClick={() => { setServiceOrder(null); setServiceCode('') }}
                     style={{
-                      width: '100%', padding: '12px 0', borderRadius: 4, cursor: 'pointer',
+                      width: '100%', padding: '12px 0', borderRadius: 12, cursor: 'pointer',
                       background: 'transparent', border: '1px solid rgba(255,255,255,0.10)',
                       color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11,
                       textTransform: 'uppercase', letterSpacing: '0.06em',
