@@ -696,9 +696,9 @@ export default function HomePage() {
       <div style={{ paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))' }}>
 
         {/* ── Hero ── */}
-        <div style={{ padding: 'clamp(22px, 5vw, 44px) 0 40px', display: 'flex', alignItems: 'center', gap: 48 }}>
+        <div style={{ padding: 'clamp(22px, 5vw, 44px) 0 40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(40px, 7vw, 120px)' }}>
           {/* Colonne gauche : titre + accroche + bouton vidéo */}
-          <div style={{ flex: '1 1 0', minWidth: 0 }}>
+          <div style={{ flex: '0 1 520px', minWidth: 0 }}>
             <HeroGooeyText user={user} orgName={orgName} prestName={prestName} />
             <div style={{ marginTop: 12, maxWidth: 460 }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, letterSpacing: '-0.5px', fontSize: 'clamp(21px, 6vw, 34px)', lineHeight: 1.18, color: '#fff', margin: 0 }}>
