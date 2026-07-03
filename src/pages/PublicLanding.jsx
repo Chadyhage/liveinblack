@@ -81,7 +81,7 @@ export default function PublicLanding() {
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '9px 18px' }}>
           <AnimatedLogo size={26} textScale={0.44} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {[['Événements', () => navigate('/evenements')], ['Prestataires', () => navigate('/prestataires')], ['J\'ai un code', () => navigate('/evenements')]].map(([l, fn]) => (
+            {[['Événements', () => navigate('/evenements')], ['Prestataires', () => navigate('/prestataires')], ['C\'est quoi ?', () => navigate('/c-est-quoi')]].map(([l, fn]) => (
               <button key={l} onClick={fn} className="lb-navlink" style={navLink}>{l}</button>
             ))}
             <button onClick={() => login()} style={navLink}>Connexion</button>

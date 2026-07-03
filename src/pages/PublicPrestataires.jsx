@@ -98,6 +98,7 @@ export default function PublicPrestataires() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <button onClick={() => navigate('/accueil')} className="lb-navlink" style={navLink}>Accueil</button>
             <button onClick={() => navigate('/evenements')} className="lb-navlink" style={navLink}>Événements</button>
+            <button onClick={() => navigate('/c-est-quoi')} className="lb-navlink" style={navLink}>C'est quoi ?</button>
             {user ? (
               <button onClick={() => navigate('/proposer')} style={{ ...navLink, color: C.teal }}>Mon espace</button>
             ) : (

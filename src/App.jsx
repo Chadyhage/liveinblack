@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import EventsPage from './pages/EventsPage'
 import PublicPrestataires from './pages/PublicPrestataires'
+import PublicAbout from './pages/PublicAbout'
 import EventDetailPage from './pages/EventDetailPage'
 import ProposerServicesPage from './pages/ProposerServicesPage'
 import JeSuisUneBoitePage from './pages/JeSuisUneBoitePage'
@@ -334,6 +335,7 @@ export default function App() {
             <Route path="/accueil" element={<HomePage />} />
             <Route path="/evenements" element={<EventsPage />} />
             <Route path="/prestataires" element={<PublicPrestataires />} />
+            <Route path="/c-est-quoi" element={<PublicAbout />} />
             <Route path="/evenements/:id" element={<EventDetailPage />} />
             <Route path="/cgu" element={<CGUPage />} />
             <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
