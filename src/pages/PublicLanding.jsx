@@ -62,7 +62,13 @@ export default function PublicLanding() {
   const gate = (reason) => openAuthModal(reason)
 
   return (
-    <div style={{ background: C.obsidian, color: '#fff', overflowX: 'hidden', minHeight: '100vh' }}>
+    <div style={{
+      color: '#fff', overflowX: 'hidden', minHeight: '100vh',
+      // Ambiance colorée (violet/teal/pink) fixée au scroll — évite le noir plat,
+      // visible dans tout le viewport (haut-gauche, milieu-droite, bas).
+      background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.30), transparent 60%), radial-gradient(circle 820px at 96% 38%, rgba(78,232,200,.15), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.17), transparent 60%), radial-gradient(circle 1100px at 50% 45%, rgba(96,66,150,.13), transparent 70%), ${C.obsidian}`,
+      backgroundAttachment: 'fixed',
+    }}>
       {/* ══ NAVBAR PUBLIQUE ══ */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '12px 18px', background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(18px)', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 17, fontWeight: 300, letterSpacing: '.1em', color: '#fff', padding: 0 }}>
@@ -157,23 +163,26 @@ export default function PublicLanding() {
       <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes. Et tu débloques tout ça :">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 14 }}>
           {[
-            ['🎟️', 'Réserve tes billets', 'Paiement sécurisé, billet instantané.'],
-            ['📱', 'Ton QR code partout', 'Tes billets toujours dans ta poche.'],
-            ['✨', 'Recommandations', 'Des soirées selon tes goûts et ta ville.'],
-            ['❤️', 'Favoris', 'Sauvegarde les événements qui te plaisent.'],
-            ['💬', 'Messagerie', 'Parle aux organisateurs et prestataires.'],
-            ['🧾', 'Tes commandes', 'Précommandes et consos suivies.'],
-            ['🏆', 'Des points', 'Chaque achat te rapproche d\'avantages.'],
-            ['🔑', 'Événements privés', 'Accède aux soirées sur invitation.'],
-          ].map(([ic, t, d], i) => (
-            <Reveal key={t} delay={i * 40}>
-              <div className="lb-card" style={{ ...card, padding: '16px 15px', height: '100%' }}>
-                <div style={{ fontSize: 24 }}>{ic}</div>
-                <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: '#fff', margin: '10px 0 0' }}>{t}</p>
-                <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', margin: '4px 0 0', lineHeight: 1.45 }}>{d}</p>
-              </div>
-            </Reveal>
-          ))}
+            ['Réserve tes billets', 'Paiement sécurisé, billet instantané.'],
+            ['Ton QR code partout', 'Tes billets toujours dans ta poche.'],
+            ['Recommandations', 'Des soirées selon tes goûts et ta ville.'],
+            ['Favoris', 'Sauvegarde les événements qui te plaisent.'],
+            ['Messagerie', 'Parle aux organisateurs et prestataires.'],
+            ['Tes commandes', 'Précommandes et consos suivies.'],
+            ['Des points', 'Chaque achat te rapproche d\'avantages.'],
+            ['Événements privés', 'Accède aux soirées sur invitation.'],
+          ].map(([t, d], i) => {
+            const col = [C.teal, C.violet, C.gold, C.pink][i % 4]
+            return (
+              <Reveal key={t} delay={i * 40}>
+                <div className="lb-card" style={{ ...card, padding: '16px 15px', height: '100%' }}>
+                  <span style={{ display: 'block', width: 26, height: 26, borderRadius: 8, background: `linear-gradient(135deg, ${col}40, ${col}0d)`, border: `1px solid ${col}66` }} />
+                  <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: '#fff', margin: '11px 0 0' }}>{t}</p>
+                  <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', margin: '4px 0 0', lineHeight: 1.45 }}>{d}</p>
+                </div>
+              </Reveal>
+            )
+          })}
         </div>
         <div style={{ textAlign: 'center', marginTop: 26 }}>
           <button className="lb-cta-primary" onClick={register} style={btnPrimary}>Créer mon compte gratuitement</button>
@@ -203,20 +212,20 @@ export default function PublicLanding() {
       <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
           <Reveal>
-            <div className="lb-card" style={{ ...card, padding: 24, height: '100%', borderColor: 'rgba(139,92,246,.28)', background: `linear-gradient(160deg, rgba(139,92,246,.1), rgba(9,11,20,.6))` }}>
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: C.violet, margin: 0 }}>🎪 Organisateur</p>
+            <div className="lb-card" style={{ ...card, padding: 24, height: '100%', display: 'flex', flexDirection: 'column', borderColor: 'rgba(139,92,246,.28)', background: `linear-gradient(160deg, rgba(139,92,246,.1), rgba(9,11,20,.6))` }}>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: C.violet, margin: 0 }}>Organisateur</p>
               <h3 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: '#fff', margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
-              <ul style={featList}>
+              <ul style={{ ...featList, flex: 1 }}>
                 {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map(f => <li key={f} style={featItem}><span style={{ color: C.violet }}>◆</span> {f}</li>)}
               </ul>
               <button onClick={() => navigate('/connexion?mode=register')} style={{ ...btnSolid(C.violet), marginTop: 16, width: '100%' }}>Créer un espace organisateur</button>
             </div>
           </Reveal>
           <Reveal delay={80}>
-            <div className="lb-card" style={{ ...card, padding: 24, height: '100%', borderColor: 'rgba(200,169,110,.28)', background: `linear-gradient(160deg, rgba(200,169,110,.1), rgba(9,11,20,.6))` }}>
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>🎤 Prestataire</p>
+            <div className="lb-card" style={{ ...card, padding: 24, height: '100%', display: 'flex', flexDirection: 'column', borderColor: 'rgba(200,169,110,.28)', background: `linear-gradient(160deg, rgba(200,169,110,.1), rgba(9,11,20,.6))` }}>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>Prestataire</p>
               <h3 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: '#fff', margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
-              <ul style={featList}>
+              <ul style={{ ...featList, flex: 1 }}>
                 {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map(f => <li key={f} style={featItem}><span style={{ color: C.gold }}>◆</span> {f}</li>)}
               </ul>
               <button onClick={() => navigate('/connexion?mode=register')} style={{ ...btnSolid(C.gold), marginTop: 16, width: '100%' }}>Devenir prestataire</button>
@@ -230,22 +239,22 @@ export default function PublicLanding() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
           <Reveal>
             <div style={{ ...card, padding: 22, height: '100%' }}>
-              <div style={{ fontSize: 26 }}>🏆</div>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '10px 0 0' }}>Des points à chaque achat</p>
+              <span style={accentSq(C.gold)} />
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '12px 0 0' }}>Des points à chaque achat</p>
               <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: '6px 0 0', lineHeight: 1.5 }}>Cumule des points sur tes billets — bientôt échangeables contre réductions, accès prioritaire et offres exclusives.</p>
             </div>
           </Reveal>
           <Reveal delay={70}>
             <div style={{ ...card, padding: 22, height: '100%' }}>
-              <div style={{ fontSize: 26 }}>✨</div>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '10px 0 0' }}>Recommandations perso</p>
+              <span style={accentSq(C.violet)} />
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '12px 0 0' }}>Recommandations perso</p>
               <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: '6px 0 0', lineHeight: 1.5 }}>Des soirées selon ta ville, tes styles musicaux préférés et ce que tu as déjà réservé.</p>
             </div>
           </Reveal>
           <Reveal delay={140}>
             <div style={{ ...card, padding: 22, height: '100%', borderColor: 'rgba(78,232,200,.28)' }}>
-              <div style={{ fontSize: 26 }}>🔑</div>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '10px 0 0' }}>Événements privés</p>
+              <span style={accentSq(C.teal)} />
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: '#fff', margin: '12px 0 0' }}>Événements privés</p>
               <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: '6px 0 10px', lineHeight: 1.5 }}>Certaines soirées sont sur invitation. Un code te donne accès.</p>
               <button onClick={() => navigate('/evenements')} style={{ ...btnGhost, padding: '9px 16px', fontSize: 12.5 }}>J'ai un code</button>
             </div>
@@ -294,6 +303,7 @@ function Section({ eyebrow, title, sub, children }) {
 }
 
 // ── Styles ──
+const accentSq = (c) => ({ display: 'block', width: 26, height: 26, borderRadius: 8, background: `linear-gradient(135deg, ${c}40, ${c}0d)`, border: `1px solid ${c}66` })
 const navLink = { background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.7)', padding: '8px 10px', whiteSpace: 'nowrap' }
 const card = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16 }
 const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none' }
