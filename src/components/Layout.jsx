@@ -6,7 +6,7 @@ import AnimatedLogo from './AnimatedLogo'
 import AnimatedHamburger from './AnimatedHamburger'
 import { getUserId, getTotalUnreadCount, getLastRead, getConversationById, getUserById, getInitials, userShowsPhoto } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
-import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG, upsertMessageNotification } from '../utils/notifications'
+import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG, upsertMessageNotification, createNotification } from '../utils/notifications'
 import { playNotifSound } from '../utils/notifSound'
 import { IconBell } from './icons'
 
@@ -20,6 +20,7 @@ function NavIcon({ id, active, activeColor = 'var(--violet)' }) {
   if (id === '/messagerie') return <svg {...props}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
   if (id === '/mes-evenements') return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
   if (id === '/proposer') return <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+  if (id === '/mes-soirees') return <svg {...props}><path d="M22 10V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4a2 2 0 0 1 0 4v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 1 0-4z"/><path d="M9 5v14" strokeDasharray="2 3"/></svg>
   return null
 }
 
@@ -69,8 +70,17 @@ export default function Layout({ children, hideNav, chatMode }) {
   const isAgent    = activeRole === 'agent'
   const [pendingCount, setPendingCount] = useState(() => isAgent ? getTotalPendingCount() : 0)
 
-  const navItems = getNavItems(activeRole)
   const uid = getUserId(user)
+  // Affectations staff (mini-POS) : un membre invité (souvent « client ») doit voir
+  // une entrée « Mes soirées » et pouvoir accéder au scanner. Alimenté par le
+  // listener staff_assignments plus bas ; init depuis le cache pour un rendu immédiat.
+  const [staffEvents, setStaffEvents] = useState(() => {
+    try { return uid ? Object.values(JSON.parse(localStorage.getItem(`lib_my_staff_${uid}`) || '{}')).filter(Boolean) : [] } catch { return [] }
+  })
+  const baseNavItems = getNavItems(activeRole)
+  const navItems = (uid && staffEvents.length > 0 && !baseNavItems.some(i => i.path === '/mes-soirees'))
+    ? [...baseNavItems, { path: '/mes-soirees', icon: '🎫', label: 'Mes soirées' }]
+    : baseNavItems
   const [unreadMsgCount, setUnreadMsgCount] = useState(0)
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
@@ -168,6 +178,56 @@ export default function Layout({ children, hideNav, chatMode }) {
         if (prevNotifCountRef.current != null && c > prevNotifCountRef.current) playNotifSound()
         prevNotifCountRef.current = c
         setUnreadNotifCount(c)
+      })
+    }).catch(() => {})
+    return () => { try { unsub() } catch {} }
+  }, [uid])
+
+  // Écouteur des affectations staff (staff_assignments where uid==moi) : maintient
+  // le cache lib_my_staff (lu par la garde du scanner + la nav), pilote l'entrée
+  // « Mes soirées », et génère la notification d'invitation CÔTÉ MEMBRE (l'organisateur
+  // n'a pas le droit d'écrire dans le doc notifications de l'invité — règles Firestore).
+  useEffect(() => {
+    if (!uid) { setStaffEvents([]); return }
+    // Réinitialise depuis le cache DU nouvel uid dès qu'il change (évite qu'un compte
+    // hérite transitoirement des « Mes soirées » du précédent avant la réponse du listener).
+    try { setStaffEvents(Object.values(JSON.parse(localStorage.getItem(`lib_my_staff_${uid}`) || '{}')).filter(Boolean)) } catch { setStaffEvents([]) }
+    let unsub = () => {}
+    import('../utils/eventOrders').then(({ listenMyStaffAssignments }) => {
+      unsub = listenMyStaffAssignments(uid, (list) => {
+        setStaffEvents(list)
+        try {
+          const seenKey = `lib_my_staff_seen_${uid}`
+          const seen = JSON.parse(localStorage.getItem(seenKey) || '{}')
+          const nowKeys = {}
+          // Présence seule (true) : un changement de rôle ne re-notifie pas (anti-spam) ;
+          // le rôle appliqué reste correct partout (staffEvents/scanner sont réactifs).
+          list.forEach(a => { nowKeys[String(a.eventId)] = true })
+          const RECENT_MS = 48 * 60 * 60 * 1000 // ne notifier que les affectations récentes
+          // Dédup CROSS-DEVICE : getNotifications(uid) est synchronisé via le doc
+          // notifications/{uid} (listener plus haut), donc on ne redéclenche pas une
+          // invitation déjà reçue sur un autre appareil (le cache `seen` est par-appareil).
+          const existing = getNotifications(uid)
+          const alreadyInvited = (k) => existing.some(n => n.type === 'staff_invited' && String(n.data?.eventId) === String(k))
+          // Nouvelles affectations → notif d'invitation (self-write autorisé)
+          list.forEach(a => {
+            const k = String(a.eventId)
+            if (seen[k] || alreadyInvited(k)) return
+            const addedAtMs = a.addedAt ? new Date(a.addedAt).getTime() : 0
+            if (addedAtMs && Date.now() - addedAtMs < RECENT_MS) {
+              const body = a.role === 'scan'
+                ? `Tu contrôles les entrées de « ${a.eventName || 'un événement'} ». Va dans « Mes soirées » pour accéder au scan.`
+                : `Tu es serveur pour « ${a.eventName || 'un événement'} ». Va dans « Mes soirées » pour prendre les commandes.`
+              createNotification(uid, 'staff_invited', 'Tu fais partie de l\'équipe 🎉', body, { eventId: k, role: a.role })
+            }
+          })
+          // Affectations disparues → notif de retrait (dédup identique)
+          const alreadyRemoved = (k) => existing.some(n => n.type === 'staff_removed' && String(n.data?.eventId) === String(k))
+          Object.keys(seen).forEach(k => {
+            if (!nowKeys[k] && !alreadyRemoved(k)) createNotification(uid, 'staff_removed', 'Équipe de la soirée', 'Tu ne fais plus partie de l\'équipe d\'une soirée.', { eventId: k })
+          })
+          localStorage.setItem(seenKey, JSON.stringify(nowKeys))
+        } catch {}
       })
     }).catch(() => {})
     return () => { try { unsub() } catch {} }
@@ -623,7 +683,7 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
   function routeFor(n) {
     if (n.type === 'message') return '/messagerie'
     if (n.type === 'new_order') return '/mes-evenements'
-    if (n.type === 'staff_invited') return '/scanner'
+    if (n.type === 'staff_invited' || n.type === 'staff_removed') return '/mes-soirees'
     if (n.type?.startsWith('application_')) return '/mon-dossier'
     return null
   }

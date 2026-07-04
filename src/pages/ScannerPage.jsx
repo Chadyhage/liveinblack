@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import jsQR from 'jsqr'
 import { verifyTicketToken } from '../utils/ticket'
 import { useAuth } from '../context/AuthContext'
@@ -7,7 +7,7 @@ import { getUserId } from '../utils/messaging'
 import {
   listenOrders, getOrders, ensurePreordersMaterialized, addOnsiteItem, serveItem,
   cancelItem, markTicketPaid, getStaffRole, canServe, canManage,
-  listenOrderLog, getOrderLog,
+  listenOrderLog, getOrderLog, getMyStaffEvents, listenEventStaff, listenMyStaffAssignments,
   ORDER_SOURCE, ONSITE_STATUS, PREORDER_STATUS, ONSITE_STATUS_LABEL, ONSITE_STATUS_COLOR,
 } from '../utils/eventOrders'
 
@@ -192,24 +192,52 @@ function CameraScanner({ active, onScan, onError }) {
 }
 
 // ── Main page ───────────────────────────────────────────────────────
+// Wrapper de GARDE isolé : il n'a qu'un jeu de hooks FIXE (useAuth/useState/useEffect)
+// et décide entre l'écran « accès refusé » et <ScannerInner/>. Les ~40 hooks de
+// ScannerInner ne montent QUE si l'accès est accordé → si le rôle/statut change en
+// cours de session (snapshot users/{uid} → setUser), ScannerInner monte/démonte en
+// bloc et l'ordre des hooks n'est jamais violé (fix crash « rendered more hooks »).
 export default function ScannerPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const myId = getUserId(user)
 
-  // Guard: agent/organisateur only
+  // isStaff RÉACTIF : ScannerPage n'est pas rendu sous Layout, donc le listener staff
+  // de Layout ne tourne pas ici. Sans listener LOCAL, un deep-link / appareil neuf
+  // (cache lib_my_staff froid) bloquerait à tort un membre légitime, définitivement
+  // (car figé). On monte donc un listener propre qui débloque dès résolution.
+  const [isStaffMember, setIsStaffMember] = useState(() => getMyStaffEvents(myId).length > 0)
+  useEffect(() => {
+    if (!myId) return
+    const unsub = listenMyStaffAssignments(myId, list => setIsStaffMember(list.length > 0))
+    return () => unsub()
+  }, [myId])
+
+  // Guard: agent, organisateur, OU membre staff d'au moins un événement.
   const userRole = user?.role || user?.activeRole
-  if (user && userRole !== 'agent' && userRole !== 'organisateur') {
+  if (user && userRole !== 'agent' && userRole !== 'organisateur' && !isStaffMember) {
     return (
       <div style={{ minHeight: '100dvh', background: '#04040b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
         <span style={{ fontSize: 40 }}>🚫</span>
-        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, textAlign: 'center' }}>Cette page est réservée aux agents et aux organisateurs.</p>
+        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, textAlign: 'center' }}>Cette page est réservée aux agents, organisateurs et à l'équipe d'un événement.</p>
         <button onClick={() => navigate('/')} style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, background: 'none', border: '1px solid rgba(78,232,200,0.3)', borderRadius: 6, padding: '8px 20px', cursor: 'pointer' }}>Retour</button>
       </div>
     )
   }
+  return <ScannerInner />
+}
 
-  const [scanMode, setScanMode] = useState('entry') // 'entry' | 'service'
+function ScannerInner() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { user } = useAuth()
+  const myId = getUserId(user)
+
+  // Mode initial : deep-link depuis « Mes soirées » (state.mode) — un serveur arrive
+  // en mode service (POS bar), un contrôle entrée en mode entrée.
+  const [scanMode, setScanMode] = useState(location.state?.mode === 'service' ? 'service' : 'entry') // 'entry' | 'service'
+  // Événements résolus au scan (id → doc), pour recalculer le rôle en direct.
+  const eventsByIdRef = useRef({})
 
   // Camera state (shared)
   const [cameraActive, setCameraActive] = useState(false)
@@ -257,6 +285,19 @@ export default function ScannerPage() {
     window.addEventListener('storage', onStorage)
     return () => { unsubs.forEach(u => u()); window.removeEventListener('storage', onStorage) }
   }, [openEventIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Rôle staff RÉACTIF au roster : sans ça, un serveur retiré en pleine soirée
+  // gardait ses droits (rôle figé au scan). On réabonne event_staff/{eid} et on
+  // recalcule roleByEvent en direct → révocation immédiate des boutons Servir/Encaisser.
+  useEffect(() => {
+    if (!openEventIds.length) return
+    const unsubs = openEventIds.map(eid =>
+      listenEventStaff(eid, () => {
+        setRoleByEvent(prev => ({ ...prev, [eid]: getStaffRole(eid, user, eventsByIdRef.current[eid]) }))
+      })
+    )
+    return () => unsubs.forEach(u => { try { u() } catch {} })
+  }, [openEventIds.join(','), user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const flashPos = msg => { setPosMsg(msg); setTimeout(() => setPosMsg(''), 2400) }
 
@@ -537,6 +578,7 @@ export default function ScannerPage() {
     // 5) Rôle staff + menu de l'événement (pour l'ajout serveur de consos)
     const role = getStaffRole(eventId, user, ev)
     const localActor = { uid: myId, id: myId, name: user?.name || user?.displayName || 'Staff', _staffRole: role }
+    eventsByIdRef.current[eventId] = ev // mémorise l'event pour le recalcul live du rôle
     setRoleByEvent(prev => ({ ...prev, [eventId]: role }))
     setMenuByEvent(prev => ({ ...prev, [eventId]: (ev?.menu || []).filter(m => m && m.name && m.available !== false) }))
 

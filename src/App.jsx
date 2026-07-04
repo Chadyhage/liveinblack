@@ -16,6 +16,7 @@ import ScannerPage from './pages/ScannerPage'
 import CGUPage from './pages/CGUPage'
 import TicketPage from './pages/TicketPage'
 import OnSiteOrderPage from './pages/OnSiteOrderPage'
+import MesSoireesPage from './pages/MesSoireesPage'
 import AgentPage from './pages/AgentPage'
 import OnboardingOrganisateur from './pages/OnboardingOrganisateur'
 import OnboardingPrestataire from './pages/OnboardingPrestataire'
@@ -382,6 +383,9 @@ export default function App() {
             } />
             <Route path="/scanner" element={
               <RequireAuth user={user} to="/scanner"><ScannerPage /></RequireAuth>
+            } />
+            <Route path="/mes-soirees" element={
+              <RequireAuth user={user} to="/mes-soirees"><MesSoireesPage /></RequireAuth>
             } />
             <Route path="/commander/:eventId/:ticketCode" element={
               <RequireAuth user={user} to="/profil"><OnSiteOrderPage /></RequireAuth>

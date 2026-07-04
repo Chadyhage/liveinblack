@@ -311,6 +311,31 @@ service cloud.firestore {
       allow write: if isAgent() || isEventOwnerOf(eventId);
     }
 
+    // ── Index inversé des affectations staff (1 doc = 1 event × 1 membre) ──────
+    // staff_assignments/{eventId__uid} = { eventId, uid, role, eventName, addedBy, addedAt }.
+    // Requêtable par uid (where uid==me) → le membre liste « ses soirées » et
+    // débloque l'accès scanner. Écriture réservée au propriétaire de l'event (ou
+    // agent) : un membre ne peut PAS s'auto-affecter. Lecture : sa propre affectation,
+    // le propriétaire de l'event, ou un agent.
+    match /staff_assignments/{id} {
+      allow read:   if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isEventOwnerOf(resource.data.eventId) ||
+        isAgent()
+      );
+      // create/update : propriétaire de l'event (ou agent) UNIQUEMENT, et l'affectation
+      // doit correspondre à un VRAI membre du roster event_staff — sinon un propriétaire
+      // pourrait forger staff_assignments/{sonEvent__uidArbitraire} pour spammer un tiers
+      // (notif « tu fais partie de l'équipe ») et lui débloquer l'accès scanner.
+      allow create, update: if isAgent() || (
+        isEventOwnerOf(request.resource.data.eventId) &&
+        id == request.resource.data.eventId + '__' + request.resource.data.uid &&
+        request.resource.data.role in ['scan', 'serveur', 'manager'] &&
+        request.resource.data.uid in get(/databases/$(database)/documents/event_staff/$(request.resource.data.eventId)).data.roster
+      );
+      allow delete: if isAgent() || isEventOwnerOf(resource.data.eventId);
+    }
+
     // ── Commandes en soirée (précommandes + sur place), 1 doc/event ──────────
     // Doc unique event_orders/{eventId} avec un tableau `items`, mis à jour par
     // transaction (mergeItemsById) — client ET staff écrivent (le client ajoute

@@ -69,8 +69,17 @@ export const canScan   = (role) => (ROLE_RANK[role] || 0) >= 1
 export const canServe  = (role) => (ROLE_RANK[role] || 0) >= 2
 export const canManage = (role) => role === 'manager'
 
+// Index inversé « pour quels events suis-je staff ? » — le roster event_staff est
+// indexé PAR event (non requêtable par user). staff_assignments/{eventId__uid} est
+// une collection plate requêtable par uid → débloque l'accès scanner + la page
+// « Mes soirées » du membre invité. Écrit en même temps que le roster.
+const assignmentId = (eventId, staffUid) => `${eventId}__${staffUid}`
+
 // Ajout/retrait de staff — réservé au manager (contrôlé côté appelant + ici).
-export function addEventStaff(eventId, staffUid, role, name, byUser) {
+// Awaitable : le roster ET l'index inversé doivent atteindre le serveur, sinon on
+// remonte une erreur (sans quoi le membre serait dans le roster mais absent de
+// l'index → jamais de « Mes soirées »/accès scanner, silencieusement).
+export async function addEventStaff(eventId, staffUid, role, name, byUser, eventName = '') {
   // byUser._staffRole est résolu par l'UI via getStaffRole(eventId, user, event).
   if (!canManage(byUser?._staffRole)) return { ok: false, error: 'Réservé au manager de l\'événement.' }
   if (!staffUid || !STAFF_ROLES[Object.keys(STAFF_ROLES).find(k => STAFF_ROLES[k] === role)]) {
@@ -82,8 +91,23 @@ export function addEventStaff(eventId, staffUid, role, name, byUser) {
     const roster = { ...(all[key]?.roster || {}) }
     roster[staffUid] = { role, name: name || staffUid, addedBy: byUser.uid || byUser.id, addedAt: now() }
     all[key] = { roster }
-    localStorage.setItem('lib_event_staff', JSON.stringify(all))
-    import('./firestore-sync').then(({ syncDoc }) => syncDoc(`event_staff/${key}`, { roster })).catch(() => {})
+    localStorage.setItem('lib_event_staff', JSON.stringify(all)) // optimiste local
+    const { syncDocAwaitable } = await import('./firestore-sync')
+    // SÉQUENTIEL et dans cet ordre : le roster D'ABORD, car la règle Firestore de
+    // staff_assignments croise get(event_staff).roster pour interdire l'affectation
+    // d'un uid arbitraire. L'index ne peut donc être écrit qu'une fois le membre
+    // réellement présent dans le roster côté serveur.
+    const r1 = await syncDocAwaitable(`event_staff/${key}`, { roster })
+    const r2 = r1?.ok
+      ? await syncDocAwaitable(`staff_assignments/${assignmentId(key, staffUid)}`, {
+          eventId: key, uid: staffUid, role, eventName: eventName || '',
+          addedBy: byUser.uid || byUser.id, addedAt: now(),
+        })
+      : { ok: false }
+    if (!r1?.ok || !r2?.ok) {
+      // Le listener event_staff réconciliera le cache local depuis le serveur.
+      return { ok: false, error: 'Ajout non confirmé côté serveur (hors-ligne ou droits). Réessaie.' }
+    }
     return { ok: true }
   } catch (e) { return { ok: false, error: e.message } }
 }
@@ -97,9 +121,94 @@ export function removeEventStaff(eventId, staffUid, byUser) {
     delete roster[staffUid]
     all[key] = { roster }
     localStorage.setItem('lib_event_staff', JSON.stringify(all))
-    import('./firestore-sync').then(({ syncDoc }) => syncDoc(`event_staff/${key}`, { roster })).catch(() => {})
+    // IMPORTANT : syncDoc = setDoc(merge:true) FUSIONNE les clés d'une map → il ne
+    // supprime JAMAIS une clé du roster côté Firestore (le membre ressuscitait via le
+    // listener). On supprime donc précisément la clé imbriquée avec deleteField().
+    import('../firebase').then(({ db }) =>
+      import('firebase/firestore').then(({ doc, updateDoc, deleteField }) =>
+        updateDoc(doc(db, 'event_staff', key), { [`roster.${staffUid}`]: deleteField() }).catch(() => {})
+      )
+    ).catch(() => {})
+    import('./firestore-sync').then(({ syncDelete }) => syncDelete(`staff_assignments/${assignmentId(key, staffUid)}`)).catch(() => {})
     return { ok: true }
   } catch (e) { return { ok: false, error: e.message } }
+}
+
+// ── Index inversé côté MEMBRE : « mes affectations staff » ────────────────────
+// Cache local PAR UID (lib_my_staff_{uid}) = { [eventId]: assignment }. Le suffixe uid
+// évite qu'un compte hérite des affectations d'un autre sur un appareil partagé
+// (fuite d'accès scanner/nav au changement de compte).
+function readMyStaff(uid) {
+  if (!uid) return {}
+  try { return JSON.parse(localStorage.getItem(`lib_my_staff_${uid}`) || '{}') } catch { return {} }
+}
+export function getMyStaffEvents(uid) { return Object.values(readMyStaff(uid)).filter(Boolean) }
+
+// Listener temps réel des affectations de l'utilisateur (requête where uid==me).
+// Met à jour le cache local (lu par la garde scanner + la nav) et renvoie la liste.
+export function listenMyStaffAssignments(uid, cb) {
+  if (!uid) { cb?.([]); return () => {} }
+  let unsub = () => {}
+  import('../firebase').then(({ db }) =>
+    import('firebase/firestore').then(({ collection, query, where, onSnapshot }) => {
+      const q = query(collection(db, 'staff_assignments'), where('uid', '==', uid))
+      unsub = onSnapshot(q, snap => {
+        const list = snap.docs.map(d => d.data()).filter(a => a && a.eventId)
+        const map = {}
+        list.forEach(a => { map[String(a.eventId)] = a })
+        try { localStorage.setItem(`lib_my_staff_${uid}`, JSON.stringify(map)) } catch {}
+        cb?.(list)
+      }, (err) => { try { console.warn('[staff_assignments] listen échoué', err?.code || err) } catch {} })
+    })
+  ).catch(() => {})
+  return () => unsub()
+}
+
+// ── Retrait sûr d'un serveur qui a des commandes en cours ─────────────────────
+// Une ligne est « en cours » (active) si son auteur/serveur = staffUid, qu'elle
+// n'est ni servie/annulée ni payée. Retirer un serveur ne les casse pas (uid figés)
+// mais les laisse sans acteur habilité → on les réattribue avant de retirer.
+function isTerminalLine(i) {
+  return i.status === ONSITE_STATUS.SERVED || i.status === PREORDER_STATUS.SERVED
+    || i.status === ONSITE_STATUS.CANCELLED || !!i.paid_at
+}
+export function getActiveOrdersForStaff(eventId, staffUid) {
+  const sid = String(staffUid)
+  return getOrders(eventId).filter(i =>
+    (String(i.addedBy) === sid || String(i.served_by) === sid) && !isTerminalLine(i)
+  )
+}
+
+// Réattribue les commandes actives du serveur retiré vers `toActor` (le manager en
+// pratique), PUIS le retire du roster. La garde requireUnserved/requireUnpaid côté
+// transaction empêche de réattribuer une ligne devenue servie/payée entre-temps.
+export async function reassignAndRemoveStaff(eventId, staffUid, toActor, byUser) {
+  if (!canManage(byUser?._staffRole)) return { ok: false, error: 'Réservé au manager.' }
+  const active = getActiveOrdersForStaff(eventId, staffUid)
+  const a = actorInfo(byUser)
+  const toId = toActor?.uid || toActor?.id || a.actorId
+  const toName = toActor?.name || a.actorName
+  const toRole = toActor?._staffRole || 'manager'
+  let reassigned = 0
+  let serverReachFailed = false
+  for (const item of active) {
+    // Une ligne active a toujours addedBy === staffUid (served_by n'est posé qu'au
+    // service, qui la rend terminale → exclue de getActiveOrdersForStaff). On ne
+    // réattribue donc que addedBy.
+    const set = { addedBy: toId, addedByName: toName, addedByRole: toRole }
+    const reached = await commitPatch(eventId, item.id, set, { requireUnserved: true, requireUnpaid: true })
+    if (!reached) { serverReachFailed = true; continue } // hors-ligne → écriture NON confirmée
+    await logAction(eventId, { ...a, itemId: item.id, ticketId: item.ticketId, itemName: item.name, action: 'reassign', oldValue: item.addedByName || 'serveur retiré', newValue: toName })
+    reassigned++
+  }
+  // Si une réattribution n'a pas atteint le serveur, NE PAS retirer le staff : sinon
+  // il serait hors roster mais ses commandes resteraient à son nom côté serveur
+  // (orphelines). On abandonne proprement et on demande de réessayer en ligne.
+  if (serverReachFailed) {
+    return { ok: false, error: 'Réattribution incomplète (hors-ligne ?) — le serveur n\'a pas été retiré. Réessaie une fois en ligne.' }
+  }
+  const res = removeEventStaff(eventId, staffUid, byUser)
+  return res.ok ? { ok: true, reassigned } : res
 }
 
 export function listenEventStaff(eventId, cb) {
@@ -157,8 +266,9 @@ async function commitPatch(eventId, itemId, set, guards = {}) {
   }
   try {
     const { mergeItemsById } = await import('./firestore-sync')
-    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', patches: [{ id: itemId, set, ...guards }] })
-  } catch {}
+    const r = await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', patches: [{ id: itemId, set, ...guards }] })
+    return r !== null // true = la transaction a atteint le serveur (sinon hors-ligne / règles)
+  } catch { return false }
 }
 
 // Suppression gardée (ne retire côté serveur que si non servi/payé).
