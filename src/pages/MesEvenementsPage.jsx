@@ -5,6 +5,7 @@ import Layout from '../components/Layout'
 import PayoutPanel from '../components/PayoutPanel'
 import { useAuth } from '../context/AuthContext'
 import BoostModal from '../components/BoostModal'
+import EventStaffModal from '../components/EventStaffModal'
 import { IconHourglass } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
@@ -335,6 +336,9 @@ export default function MesEvenementsPage() {
   const [guestlistError, setGuestlistError] = useState('')
   const [guestlistAdding, setGuestlistAdding] = useState(false)
   const [copiedGuestId, setCopiedGuestId] = useState(null)
+
+  // Staff / équipe state
+  const [staffTargetEvent, setStaffTargetEvent] = useState(null)
 
   const [createdEvents, setCreatedEvents] = useState([])
   const [showStatsPanel, setShowStatsPanel] = useState(false)
@@ -1192,6 +1196,14 @@ export default function MesEvenementsPage() {
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
                       </button>
+                      {/* Équipe / staff */}
+                      <button
+                        onClick={() => setStaffTargetEvent(ev)}
+                        title="Équipe de la soirée"
+                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      </button>
                       {/* Private codes */}
                       {ev.isPrivate && (
                         <button
@@ -1595,6 +1607,11 @@ export default function MesEvenementsPage() {
               </p>
             </div>
           </div>
+        )}
+
+        {/* Modal Équipe / staff de la soirée */}
+        {staffTargetEvent && (
+          <EventStaffModal event={staffTargetEvent} user={user} onClose={() => setStaffTargetEvent(null)} />
         )}
       </Layout>
     )
