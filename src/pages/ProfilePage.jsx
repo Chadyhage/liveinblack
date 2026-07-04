@@ -178,8 +178,11 @@ function getAllEvents() {
   } catch { return staticEvents }
 }
 
-function getBookings() {
-  try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]') } catch { return [] }
+function getBookings(userId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+    return userId ? all.filter(b => b.userId === userId) : []
+  } catch { return [] }
 }
 const FAQ = [
   { q: "Comment réserver un billet ?", a: "Va sur l'onglet Événements, sélectionne la soirée de ton choix et clique sur Réservation. Choisis ton type de place et confirme." },
@@ -1094,7 +1097,7 @@ export default function ProfilePage() {
 
   // ── Mes billets ─────────────────────────────────────────────────────────────
   if (panel === 'billets') {
-    const bookings = getBookings()
+    const bookings = getBookings(getUserId(user))
     // Group by event
     const grouped = bookings.reduce((acc, b) => {
       const key = String(b.eventId)
@@ -1354,7 +1357,6 @@ export default function ProfilePage() {
   }
 
   // ── Main Profile ──────────────────────────────────────────────────────────────
-  const bookingsCount = getBookings().length
   const createdCount = (() => { try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]').length } catch { return 0 } })()
   const serviceOrdersCount = (() => { try { return getOrdersForBuyer(getUserId(user)).length } catch { return 0 } })()
 
@@ -1410,27 +1412,13 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Stats — filtrées selon le rôle */}
-        {(() => {
-          const isOrg = user?.role === 'organisateur'
-          // Client : pas de stat « Événements » (un client ne crée pas d'événements).
-          const stats = isOrg
-            ? [{ label: 'Événements', val: createdCount }]
-            : [
-                { label: 'Billets', val: bookingsCount },
-                { label: 'Points',  val: user?.points || 0 },
-              ]
-          return (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, 1fr)`, gap: '8px' }}>
-              {stats.map((s) => (
-                <div key={s.label} style={{ ...S.card, textAlign: 'center', padding: '14px 8px' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: '28px', color: 'rgba(255,255,255,0.9)', lineHeight: 1 }}>{s.val}</p>
-                  <p style={{ ...S.label, marginTop: '6px' }}>{s.label}</p>
-                </div>
-              ))}
-            </div>
-          )
-        })()}
+        {/* Stats — organisateur uniquement (nombre d'événements créés) */}
+        {user?.role === 'organisateur' && (
+          <div style={{ ...S.card, textAlign: 'center', padding: '14px 8px' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: '28px', color: 'rgba(255,255,255,0.9)', lineHeight: 1 }}>{createdCount}</p>
+            <p style={{ ...S.label, marginTop: '6px' }}>Événements</p>
+          </div>
+        )}
 
         {/* Points info — clients uniquement */}
         {user?.role !== 'organisateur' && (
