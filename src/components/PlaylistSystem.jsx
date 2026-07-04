@@ -101,6 +101,25 @@ function StatChip({ label, value, color }) {
   )
 }
 
+// SVG ticket icon
+function TicketIcon({ size = 32, color = 'rgba(255,255,255,0.2)' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} xmlns="http://www.w3.org/2000/svg">
+      <path d="M22 10V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-9 7.5h-2v-2h2v2zm0-4.5h-2v-2h2v2zm0-4.5h-2v-2h2v2z"/>
+    </svg>
+  )
+}
+
+// SVG scan/QR icon
+function ScanIcon({ size = 32, color = 'rgba(255,255,255,0.2)' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+      <line x1="7" y1="12" x2="17" y2="12"/>
+    </svg>
+  )
+}
+
 export default function PlaylistSystem({ event, booked }) {
   const { user } = useAuth()
   const userId = getUserId(user)
@@ -134,6 +153,42 @@ export default function PlaylistSystem({ event, booked }) {
   }
 
   const ticketCount = loadTicketCount()
+
+  // Vérifie si au moins un billet de l'utilisateur a été scanné (checkedInAt)
+  const [isCheckedIn, setIsCheckedIn] = useState(false)
+  const [checkInLoading, setCheckInLoading] = useState(true)
+
+  useEffect(() => {
+    if (!booked || !event?.id || !userId) { setCheckInLoading(false); return }
+    let cancelled = false
+    try {
+      const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+      const myTicketCodes = bookings
+        .filter(b => String(b.eventId) === String(event.id) && b.userId === userId && b.ticketCode)
+        .map(b => b.ticketCode)
+      if (myTicketCodes.length === 0) { setCheckInLoading(false); return }
+
+      const unsubs = []
+      let foundCheckedIn = false
+      let loaded = 0
+      import('../utils/firestore-sync').then(({ listenDoc }) => {
+        if (cancelled) return
+        myTicketCodes.forEach(code => {
+          const unsub = listenDoc(`tickets/${code}`, data => {
+            loaded++
+            if (data?.checkedInAt && !foundCheckedIn) {
+              foundCheckedIn = true
+              if (!cancelled) setIsCheckedIn(true)
+            }
+            if (loaded >= myTicketCodes.length && !cancelled) setCheckInLoading(false)
+          })
+          unsubs.push(unsub)
+        })
+      }).catch(() => { if (!cancelled) setCheckInLoading(false) })
+
+      return () => { cancelled = true; unsubs.forEach(u => u()) }
+    } catch { setCheckInLoading(false) }
+  }, [booked, event?.id, userId])
 
   const [songs, setSongsState] = useState(loadSongs)
   const [search, setSearch] = useState('')
@@ -497,8 +552,72 @@ export default function PlaylistSystem({ event, booked }) {
       {/* ── TAB: MES SONS ── */}
       {tab === 'mine' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Ajouter un son */}
-          {songsRemaining > 0 ? (
+          {/* Conditions non remplies : pas de billet ou billet non scanné */}
+          {!isCheckedIn && (
+            <div style={{ ...S.card, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, padding: '28px 20px', textAlign: 'center' }}>
+              <p style={{ fontFamily: FONT, fontWeight: 800, fontSize: 19, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
+                Conditions pour proposer un son
+              </p>
+              <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 320, lineHeight: 1.55 }}>
+                Pour proposer tes sons au DJ, tu dois remplir ces deux conditions :
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', maxWidth: 340 }}>
+                {/* Condition 1 : avoir un billet */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14,
+                  border: ticketCount > 0 ? `1px solid ${C.teal}44` : '1px solid rgba(255,255,255,0.10)',
+                  background: ticketCount > 0 ? `${C.teal}0a` : 'rgba(255,255,255,0.03)',
+                }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: ticketCount > 0 ? `${C.teal}18` : 'rgba(255,255,255,0.05)',
+                  }}>
+                    {ticketCount > 0
+                      ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.teal} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      : <TicketIcon size={24} color="rgba(255,255,255,0.25)" />}
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: ticketCount > 0 ? C.teal : '#fff', margin: 0 }}>
+                      {ticketCount > 0 ? 'Billet réservé' : 'Réserver un billet'}
+                    </p>
+                    <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>
+                      {ticketCount > 0 ? `${ticketCount} billet${ticketCount > 1 ? 's' : ''} pour cet événement` : 'Tu dois avoir un billet pour cet événement'}
+                    </p>
+                  </div>
+                </div>
+                {/* Condition 2 : billet scanné */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14,
+                  border: '1px solid rgba(255,255,255,0.10)',
+                  background: 'rgba(255,255,255,0.03)',
+                }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(255,255,255,0.05)',
+                  }}>
+                    <ScanIcon size={24} color="rgba(255,255,255,0.25)" />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>
+                      Scanner ton billet
+                    </p>
+                    <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>
+                      {checkInLoading ? 'Vérification…' : 'Présente ton billet QR à l\'entrée de la soirée'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.32)', margin: 0, lineHeight: 1.5 }}>
+                Une fois sur place et ton billet scanné, tu pourras proposer 1 son par billet au DJ.
+              </p>
+            </div>
+          )}
+
+          {/* Ajouter un son — seulement si checkedIn */}
+          {/* Ajouter un son — seulement si checkedIn */}
+          {isCheckedIn && (songsRemaining > 0 ? (
             <div>
               <p style={{ ...S.label, marginBottom: 8, letterSpacing: '0.01em', textTransform: 'none', fontSize: 13.5, fontWeight: 600, color: 'rgba(255,255,255,0.62)' }}>
                 Propose un son au DJ — <span style={{ color: C.gold, fontWeight: 700 }}>{songsRemaining} slot{songsRemaining > 1 ? 's' : ''} restant{songsRemaining > 1 ? 's' : ''}</span>
@@ -563,10 +682,10 @@ export default function PlaylistSystem({ event, booked }) {
                 Tu as utilisé tous tes slots · 1 son par billet réservé
               </p>
             </div>
-          )}
+          ))}
 
-          {/* Liste de mes sons */}
-          <div>
+          {/* Liste de mes sons (visible même sans check-in, pour voir ce qu'on a déjà proposé) */}
+          {isCheckedIn && <div>
             <p style={{ ...S.label, marginBottom: 10 }}>Mes sons proposés ({mySongs.length})</p>
             {mySongs.length === 0 ? (
               <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.4)', margin: 0, textAlign: 'center', padding: '16px 0' }}>
@@ -580,7 +699,7 @@ export default function PlaylistSystem({ event, booked }) {
                 })}
               </div>
             )}
-          </div>
+          </div>}
         </div>
       )}
 
@@ -590,6 +709,7 @@ export default function PlaylistSystem({ event, booked }) {
           <div style={S.card}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
+                ['Billet scanné requis', "Tu dois être sur place et ton billet scanné pour proposer un son"],
                 ['Sons autorisés', `${ticketCount} son${ticketCount > 1 ? 's' : ''} — 1 par billet réservé`],
                 ['Likes disponibles', `${MAX_LIKES_PER_USER} likes au total pour cet événement`],
                 ['Un like par son', 'Tu ne peux liker un son qu\'une seule fois'],

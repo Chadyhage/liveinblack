@@ -1745,7 +1745,8 @@ export default function EventDetailPage() {
             const ownerUid = event.organizerId || event.createdBy
             const myUid = user?.uid || getUserId(user)
             const canManage = (ownerUid && (ownerUid === myUid || ownerUid === getUserId(user))) || user?.role === 'agent'
-            if (!canManage) return <PlaylistSystem event={event} booked={allBookedThisSession.length > 0} />
+            const hasBooking = allBookedThisSession.length > 0 || (() => { try { const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]'); return all.some(b => String(b.eventId) === String(event.id) && b.userId === (user?.uid || getUserId(user))) } catch { return false } })()
+            if (!canManage) return <PlaylistSystem event={event} booked={hasBooking} />
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {/* Bascule DJ / vue participant (organisateur & agent) */}

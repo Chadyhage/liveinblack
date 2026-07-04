@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import Layout from '../components/Layout'
@@ -1875,8 +1876,8 @@ function EventTicketGroup({ group }) {
     </div>
 
     {/* ── Playlist modal (bottom sheet) ── */}
-    {showPlaylist && event && (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+    {showPlaylist && event && createPortal(
+      <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
         <div
           style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)' }}
           onClick={() => setShowPlaylist(false)}
@@ -1924,7 +1925,8 @@ function EventTicketGroup({ group }) {
             <PlaylistSystem event={event} booked={true} />
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     )}
     </>
   )
