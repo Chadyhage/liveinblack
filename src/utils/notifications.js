@@ -123,4 +123,6 @@ export const NOTIF_CONFIG = {
   new_order:                  { icon: '🛒', color: '#4ee8c8', label: 'Nouvelle commande' },
   message:                    { icon: '💬', color: '#8b5cf6', label: 'Nouveau message'   },
   mention:                    { icon: '📣', color: '#4ee8c8', label: 'Mention'           },
+  staff_invited:              { icon: '🎫', color: '#c8a96e', label: 'Équipe soirée'     },
+  staff_removed:              { icon: '👋', color: '#e05aaa', label: 'Équipe soirée'     },
 }

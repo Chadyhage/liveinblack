@@ -623,6 +623,7 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
   function routeFor(n) {
     if (n.type === 'message') return '/messagerie'
     if (n.type === 'new_order') return '/mes-evenements'
+    if (n.type === 'staff_invited') return '/scanner'
     if (n.type?.startsWith('application_')) return '/mon-dossier'
     return null
   }
@@ -811,5 +812,6 @@ function NotifGlyph({ type }) {
   if (type === 'new_order') return <svg {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
   if (type && type.startsWith('application_')) return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="16" y1="11" x2="22" y2="11" /></svg>
   if (type === 'mention') return <svg {...p}><path d="m3 11 18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></svg>
+  if (type === 'staff_invited' || type === 'staff_removed') return <svg {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
   return <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
 }

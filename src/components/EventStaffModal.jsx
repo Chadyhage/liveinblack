@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { getStaffRole, addEventStaff, removeEventStaff, listenEventStaff, STAFF_ROLES } from '../utils/eventOrders'
 import { searchUsers, getUserId } from '../utils/messaging'
+import { createNotification } from '../utils/notifications'
 
 // ── Gestion de l'équipe d'un événement (mini-POS soirée) ─────────────────────
 // Le manager (organisateur propriétaire ou agent) invite des membres et leur
@@ -124,7 +125,13 @@ export default function EventStaffModal({ event, user, onClose }) {
     setBusy(false)
     if (!res.ok) { notify(res.error || 'Impossible d\'ajouter ce membre.', true); return }
     const roleLabel = INVITE_ROLES.find(r => r.value === role)?.label || role
-    notify(`${u.name || 'Membre'} ajouté comme ${roleLabel.toLowerCase()}.`)
+    // Prévient la personne ajoutée (notif in-app cross-device) — sans ça elle
+    // ne saurait pas qu'elle fait partie de l'équipe.
+    const body = role === STAFF_ROLES.SCAN
+      ? `Tu contrôles les entrées de « ${event.name} ». Le soir J, ouvre le Scanner pour vérifier les billets.`
+      : `Tu es serveur pour « ${event.name} ». Le soir J, ouvre le Scanner → mode Service pour prendre les commandes.`
+    createNotification(id, 'staff_invited', `Tu fais partie de l'équipe 🎉`, body, { eventId: String(event.id), role })
+    notify(`${u.name || 'Membre'} ajouté comme ${roleLabel.toLowerCase()} · notifié.`)
     setQuery('')
     setRemoteResults([])
   }
@@ -132,6 +139,7 @@ export default function EventStaffModal({ event, user, onClose }) {
   function remove(uid, name) {
     const res = removeEventStaff(event.id, uid, byUser)
     if (!res.ok) { notify(res.error || 'Retrait impossible.', true); return }
+    createNotification(uid, 'staff_removed', 'Équipe de la soirée', `Tu ne fais plus partie de l'équipe de « ${event.name} ».`, { eventId: String(event.id) })
     notify(`${name || 'Membre'} retiré de l'équipe.`)
   }
 
