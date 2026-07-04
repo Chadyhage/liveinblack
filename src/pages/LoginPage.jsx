@@ -729,6 +729,25 @@ export default function LoginPage() {
       <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.15) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
       <div style={{ position: 'fixed', bottom: '-5%', right: '-5%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,77,166,0.10) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
+      {/* Continuer sans compte — accès invité, discret en haut à droite */}
+      <button
+        onClick={() => navigate('/accueil')}
+        className="lib-press"
+        style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 20,
+          padding: '9px 14px', borderRadius: 10, cursor: 'pointer',
+          background: 'rgba(6,8,16,0.5)', border: '1px solid rgba(255,255,255,0.12)',
+          fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
+          display: 'flex', alignItems: 'center', gap: 6,
+          transition: 'border-color 0.2s, color 0.2s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(78,232,200,0.4)'; e.currentTarget.style.color = '#fff' }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
+      >
+        Continuer sans compte
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+
       {/* Logo — vrai logo de marque (étoile + L|VE IN BLACK) */}
       <div className="relative z-10 mb-8 text-center">
         <div style={{ display: 'inline-flex', justifyContent: 'center', marginBottom: 10 }}>
@@ -1148,24 +1167,6 @@ export default function LoginPage() {
             </p>
           )}
         </div>
-
-        {/* Continuer sans compte — accès invité à l'accueil */}
-        <button
-          onClick={() => navigate('/accueil')}
-          className="lib-press"
-          style={{
-            width: '100%', marginTop: 16, padding: '16px', borderRadius: 14, cursor: 'pointer',
-            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-            fontFamily: 'Inter, sans-serif', fontSize: 14.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            transition: 'border-color 0.2s, color 0.2s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(78,232,200,0.4)'; e.currentTarget.style.color = '#fff' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
-        >
-          Continuer sans compte
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </button>
       </div>
 
       {/* ── Reset password modal ── */}
