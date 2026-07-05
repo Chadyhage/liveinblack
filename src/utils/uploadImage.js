@@ -17,6 +17,26 @@ export async function uploadProviderPhoto(uid, dataUrl) {
   return await getDownloadURL(snap.ref)
 }
 
+// Média d'une offre prestataire (photo ou courte vidéo) → Storage.
+// Le fichier reste séparé du document Firestore afin de ne jamais approcher la
+// limite de 1 Mo du catalogue synchronisé entre les appareils.
+export async function uploadProviderMedia(uid, file) {
+  if (!uid || !file) throw new Error('Média manquant')
+  const isImage = file.type?.startsWith('image/')
+  const isVideo = file.type?.startsWith('video/')
+  if (!isImage && !isVideo) throw new Error('Format non pris en charge')
+
+  const { storage } = await import('../firebase')
+  const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+  const safeName = (file.name || 'media').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80)
+  const path = `provider-media/${uid}/${Date.now()}_${safeName}`
+  const snap = await uploadBytes(ref(storage, path), file, { contentType: file.type })
+  return {
+    mediaUrl: await getDownloadURL(snap.ref),
+    mediaType: isVideo ? 'video' : 'image',
+  }
+}
+
 // Photo d'un TYPE DE PLACE (ex. le Carré VIP) → Storage events/{uid}/{eventId}/...
 // Même logique que l'affiche : on ne stocke que l'URL dans Firestore (jamais du
 // base64, sinon on dépasse la limite 1 Mo du doc events/{id}). `suffix` évite

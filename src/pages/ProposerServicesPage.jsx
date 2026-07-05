@@ -71,6 +71,39 @@ function Field({ label, helper, children }) {
   )
 }
 
+function getOfferMedia(item) {
+  if (Array.isArray(item?.media)) return item.media.filter(media => media?.url)
+  return item?.mediaUrl ? [{ url: item.mediaUrl, type: item.mediaType || 'image' }] : []
+}
+
+function OfferMediaField({ media, uploading, onSelect, onRemove }) {
+  const inputRef = useRef(null)
+  return (
+    <div>
+      <span style={{ display: 'block', fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>Photo ou vidéo</span>
+      {media.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8, marginBottom: 8 }}>
+          {media.map((entry, index) => (
+            <div key={`${entry.url}-${index}`} style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#05060b' }}>
+              {entry.type === 'video'
+                ? <video src={entry.url} controls preload="metadata" style={{ display: 'block', width: '100%', aspectRatio: '16 / 10', objectFit: 'cover' }} />
+                : <img src={entry.url} alt={`Aperçu ${index + 1}`} style={{ display: 'block', width: '100%', aspectRatio: '16 / 10', objectFit: 'cover' }} />}
+              <button type="button" aria-label={`Supprimer le média ${index + 1}`} onClick={() => onRemove(index)} disabled={uploading} style={{ position: 'absolute', top: 7, right: 7, width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', cursor: 'pointer', fontSize: 18 }}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {media.length < 4 && (
+        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} style={{ width: '100%', minHeight: 104, borderRadius: 13, border: '1px dashed rgba(255,255,255,.18)', background: 'rgba(255,255,255,.025)', color: uploading ? C.gold : 'rgba(255,255,255,.55)', cursor: uploading ? 'wait' : 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700 }}>
+          {uploading ? 'Envoi du média…' : `+ Ajouter une photo ou une vidéo${media.length ? ` (${media.length}/4)` : ''}`}
+        </button>
+      )}
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" hidden onChange={event => { onSelect(event.target.files?.[0]); event.target.value = '' }} />
+      <span style={{ display: 'block', fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,.35)', lineHeight: 1.5, marginTop: 6 }}>JPG, PNG ou WEBP jusqu’à 8 Mo · MP4, WEBM ou MOV jusqu’à 35 Mo.</span>
+    </div>
+  )
+}
+
 function EmptyCatalog({ onAdd }) {
   return (
     <div style={{ ...card, padding: '42px 22px', textAlign: 'center' }}>
@@ -104,8 +137,9 @@ export default function ProposerServicesPage() {
   }))
   const [showItemForm, setShowItemForm] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
-  const [newItem, setNewItem] = useState({ name: '', price: '', unit: '', category: '', description: '', available: true })
+  const [newItem, setNewItem] = useState({ name: '', price: '', unit: '', category: '', description: '', available: true, media: [] })
   const [uploading, setUploading] = useState(null)
+  const [mediaUploading, setMediaUploading] = useState(false)
   const [toast, setToast] = useState('')
   const avatarInputRef = useRef(null)
   const coverInputRef = useRef(null)
@@ -203,8 +237,39 @@ export default function ProposerServicesPage() {
   }
 
   function resetItemForm() {
-    setNewItem({ name: '', price: '', unit: '', category: '', description: '', available: true })
+    setNewItem({ name: '', price: '', unit: '', category: '', description: '', available: true, media: [] })
     setShowItemForm(false)
+  }
+
+  async function handleOfferMedia(file, update) {
+    if (!file) return
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+    const maxSize = isVideo ? 35 * 1024 * 1024 : 8 * 1024 * 1024
+    if (!isImage && !isVideo) {
+      notify('Utilise une photo JPG, PNG, WEBP ou une vidéo MP4, WEBM, MOV.')
+      return
+    }
+    if (file.size > maxSize) {
+      notify(isVideo ? 'La vidéo doit faire moins de 35 Mo.' : 'La photo doit faire moins de 8 Mo.')
+      return
+    }
+    setMediaUploading(true)
+    try {
+      const { uploadProviderMedia } = await import('../utils/uploadImage')
+      const media = await uploadProviderMedia(uid, file)
+      update(current => ({
+        ...current,
+        media: [...getOfferMedia(current), { url: media.mediaUrl, type: media.mediaType }].slice(0, 4),
+        mediaUrl: undefined,
+        mediaType: undefined,
+      }))
+      notify('Média ajouté à l’offre.')
+    } catch {
+      notify('Le média n’a pas pu être envoyé. Réessaie.')
+    } finally {
+      setMediaUploading(false)
+    }
   }
 
   function handleAddItem() {
@@ -258,6 +323,8 @@ export default function ProposerServicesPage() {
         @media(max-width:720px){
           .provider-profile-grid,.provider-fields-two{grid-template-columns:1fr}
           .provider-workspace{padding-top:16px}
+          .provider-catalog-item{flex-wrap:wrap}
+          .provider-catalog-actions{width:100%;justify-content:flex-start!important}
         }
       `}</style>
       <main className="provider-workspace">
@@ -363,9 +430,15 @@ export default function ProposerServicesPage() {
                   <Field label="Description">
                     <textarea style={{ ...input, minHeight: 96, resize: 'vertical' }} value={newItem.description} onChange={event => setNewItem(current => ({ ...current, description: event.target.value }))} placeholder="Ce qui est inclus, durée, conditions principales…" />
                   </Field>
+                  <OfferMediaField
+                    media={getOfferMedia(newItem)}
+                    uploading={mediaUploading}
+                    onSelect={file => handleOfferMedia(file, setNewItem)}
+                    onRemove={index => setNewItem(current => ({ ...current, media: getOfferMedia(current).filter((_, mediaIndex) => mediaIndex !== index) }))}
+                  />
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button onClick={handleAddItem} style={primaryButton}>Publier dans le catalogue</button>
-                    <button onClick={resetItemForm} style={secondaryButton}>Annuler</button>
+                    <button onClick={handleAddItem} disabled={mediaUploading} style={{ ...primaryButton, opacity: mediaUploading ? .6 : 1 }}>Publier dans le catalogue</button>
+                    <button onClick={resetItemForm} disabled={mediaUploading} style={secondaryButton}>Annuler</button>
                   </div>
                 </div>
               </div>
@@ -385,14 +458,25 @@ export default function ProposerServicesPage() {
                         </select>
                       </div>
                       <textarea style={{ ...input, minHeight: 86, resize: 'vertical' }} value={editingItem.description || ''} onChange={event => setEditingItem(current => ({ ...current, description: event.target.value }))} />
+                      <OfferMediaField
+                        media={getOfferMedia(editingItem)}
+                        uploading={mediaUploading}
+                        onSelect={file => handleOfferMedia(file, setEditingItem)}
+                        onRemove={index => setEditingItem(current => ({ ...current, media: getOfferMedia(current).filter((_, mediaIndex) => mediaIndex !== index), mediaUrl: undefined, mediaType: undefined }))}
+                      />
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={saveEditedItem} style={primaryButton}>Enregistrer</button>
-                        <button onClick={() => setEditingItem(null)} style={secondaryButton}>Annuler</button>
+                        <button onClick={saveEditedItem} disabled={mediaUploading} style={{ ...primaryButton, opacity: mediaUploading ? .6 : 1 }}>Enregistrer</button>
+                        <button onClick={() => setEditingItem(null)} disabled={mediaUploading} style={secondaryButton}>Annuler</button>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <article key={item.id} style={{ ...card, padding: 16, display: 'flex', alignItems: 'center', gap: 14, opacity: item.available === false ? .58 : 1 }}>
+                  <article key={item.id} className="provider-catalog-item" style={{ ...card, padding: 16, display: 'flex', alignItems: 'center', gap: 14, opacity: item.available === false ? .58 : 1 }}>
+                    {getOfferMedia(item)[0] && (
+                      getOfferMedia(item)[0].type === 'video'
+                        ? <video src={getOfferMedia(item)[0].url} preload="metadata" muted playsInline style={{ width: 96, height: 74, borderRadius: 10, objectFit: 'cover', background: '#05060b', flexShrink: 0 }} />
+                        : <img src={getOfferMedia(item)[0].url} alt="" style={{ width: 96, height: 74, borderRadius: 10, objectFit: 'cover', background: '#05060b', flexShrink: 0 }} />
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <h3 style={{ fontFamily: FONT, fontSize: 17, margin: 0 }}>{item.name}</h3>
@@ -401,7 +485,7 @@ export default function ProposerServicesPage() {
                       <p style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 800, color: C.gold, margin: '6px 0 0' }}>{Number(item.price) > 0 ? `${Number(item.price).toLocaleString('fr-FR')} €${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}</p>
                       {item.description && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.46)', lineHeight: 1.5, margin: '6px 0 0' }}>{item.description}</p>}
                     </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <div className="provider-catalog-actions" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                       <button onClick={() => toggleItem(item)} style={secondaryButton}>{item.available === false ? 'Publier' : 'Masquer'}</button>
                       <button onClick={() => setEditingItem({ ...item })} style={secondaryButton}>Modifier</button>
                       <button onClick={() => removeItem(item)} style={{ ...secondaryButton, color: '#ff8aaa', borderColor: 'rgba(224,90,170,.28)' }}>Supprimer</button>

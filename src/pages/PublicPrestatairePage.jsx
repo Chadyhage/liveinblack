@@ -23,6 +23,11 @@ function externalUrl(value) {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`
 }
 
+function getOfferMedia(item) {
+  if (Array.isArray(item?.media)) return item.media.filter(media => media?.url)
+  return item?.mediaUrl ? [{ url: item.mediaUrl, type: item.mediaType || 'image' }] : []
+}
+
 function PageChrome({ user, children }) {
   return user ? <Layout>{children}</Layout> : children
 }
@@ -181,14 +186,25 @@ export default function PublicPrestatairePage() {
               ) : (
                 <div className="provider-catalog-grid">
                   {visibleCatalog.map(item => (
-                    <article key={item.id} style={{ padding: 18, borderRadius: 16, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.09)' }}>
-                      {item.category && <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.12em', color: category.color, margin: '0 0 8px' }}>{item.category}</p>}
-                      <h3 style={{ fontFamily: FONT, fontSize: 18, margin: 0 }}>{item.name}</h3>
-                      {item.description && <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', lineHeight: 1.6, margin: '9px 0 0' }}>{item.description}</p>}
-                      <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: C.gold, margin: '16px 0 0' }}>
-                        {Number(item.price) > 0 ? `${Number(item.price).toLocaleString('fr-FR')} €${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
-                      </p>
-                      {Number(item.price) > 0 && <p style={{ fontFamily: FONT, fontSize: 10, color: 'rgba(255,255,255,.35)', margin: '4px 0 0' }}>Tarif indicatif</p>}
+                    <article key={item.id} style={{ overflow: 'hidden', borderRadius: 16, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.09)' }}>
+                      {getOfferMedia(item).length > 0 && (
+                        <div aria-label={`Médias de ${item.name}`} style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'thin', background: '#05060b' }}>
+                          {getOfferMedia(item).map((media, index) => (
+                            media.type === 'video'
+                              ? <video key={`${media.url}-${index}`} src={media.url} controls playsInline preload="metadata" style={{ display: 'block', flex: '0 0 100%', width: '100%', aspectRatio: '16 / 10', objectFit: 'cover', scrollSnapAlign: 'start' }} />
+                              : <img key={`${media.url}-${index}`} src={media.url} alt={`${item.name} — ${index + 1}`} loading="lazy" style={{ display: 'block', flex: '0 0 100%', width: '100%', aspectRatio: '16 / 10', objectFit: 'cover', scrollSnapAlign: 'start' }} />
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ padding: 18 }}>
+                        {item.category && <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.12em', color: category.color, margin: '0 0 8px' }}>{item.category}</p>}
+                        <h3 style={{ fontFamily: FONT, fontSize: 18, margin: 0 }}>{item.name}</h3>
+                        {item.description && <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', lineHeight: 1.6, margin: '9px 0 0' }}>{item.description}</p>}
+                        <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: C.gold, margin: '16px 0 0' }}>
+                          {Number(item.price) > 0 ? `${Number(item.price).toLocaleString('fr-FR')} €${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
+                        </p>
+                        {Number(item.price) > 0 && <p style={{ fontFamily: FONT, fontSize: 10, color: 'rgba(255,255,255,.35)', margin: '4px 0 0' }}>Tarif indicatif</p>}
+                      </div>
                     </article>
                   ))}
                 </div>

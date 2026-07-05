@@ -21,6 +21,15 @@ service firebase.storage {
                    && request.resource.size < 5 * 1024 * 1024;
     }
 
+    // Photos et vidéos des offres prestataires — lecture publique pour que le
+    // catalogue soit visible sans compte, écriture réservée au propriétaire.
+    match /provider-media/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && request.resource.size < 36 * 1024 * 1024
+                   && request.resource.contentType.matches('(image|video)/.*');
+    }
+
     // Documents de candidature — seul le propriétaire écrit sous son préfixe.
     // Empêche l'injection de faux documents dans le dossier d'autrui.
     // ⚠ KYC (pièces d'identité, RIB…) : lecture STRICTEMENT limitée au

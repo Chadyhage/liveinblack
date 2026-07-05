@@ -18,6 +18,17 @@ const FONT = 'Inter, sans-serif'
 const CATS = PROVIDER_CATEGORIES
 const catOf = getProviderCategory
 
+function firstOfferImage(offers) {
+  for (const offer of offers) {
+    const media = Array.isArray(offer.media)
+      ? offer.media
+      : offer.mediaUrl ? [{ url: offer.mediaUrl, type: offer.mediaType || 'image' }] : []
+    const image = media.find(entry => entry?.url && entry.type !== 'video')
+    if (image) return image.url
+  }
+  return null
+}
+
 function CatIcon({ id, color = '#fff', size = 18 }) {
   const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' }
   if (id === 'mic') return <svg {...p}><rect x="9" y="2" width="6" height="11" rx="3" /><path d="M19 10a7 7 0 0 1-14 0" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
@@ -147,11 +158,13 @@ export default function PublicPrestataires() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px,1fr))', gap: 16 }}>
             {filtered.map(p => {
               const c = catOf(p.prestataireType)
-              const offerCount = (catalogs[p.userId] || []).filter(item => item.available !== false).length
+              const visibleOffers = (catalogs[p.userId] || []).filter(item => item.available !== false)
+              const offerCount = visibleOffers.length
+              const coverImage = p.coverUrl || firstOfferImage(visibleOffers)
               return (
                 <div key={p.userId} className="lb-card" style={{ ...card, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
                   {/* Couverture */}
-                  <div style={{ position: 'relative', height: 118, background: p.coverUrl ? `url(${p.coverUrl}) center/cover, ${C.obsidian}` : `linear-gradient(135deg, ${c.color}44, ${c.color}12 55%, ${C.obsidian})` }}>
+                  <div style={{ position: 'relative', height: 118, background: coverImage ? `url(${coverImage}) center/cover, ${C.obsidian}` : `linear-gradient(135deg, ${c.color}44, ${c.color}12 55%, ${C.obsidian})` }}>
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,.95), rgba(6,8,14,.25))' }} />
                     <span style={{ position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${c.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
                       <CatIcon id={c.icon} color="#fff" size={12} /> {c.label}
