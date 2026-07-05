@@ -142,7 +142,7 @@ export default function PublicOrganizerPage() {
     catch { setReportState('error') }
   }
 
-  if (!profile || profile.status !== 'public') return <div style={{minHeight:'100vh',background:C.obsidian,color:'#fff'}}>{!user && <PublicNav/>}<div style={{maxWidth:640,margin:'0 auto',padding:'100px 24px',textAlign:'center'}}><h1 style={{fontFamily:DISPLAY,fontSize:46}}>Cette page organisateur n’est pas disponible.</h1><p style={{color:'rgba(255,255,255,.5)'}}>{loading ? 'Chargement…' : 'Elle est peut-être en brouillon, masquée ou suspendue.'}</p><button className="btn-gold" onClick={() => navigate('/organisateurs')}>Voir les organisateurs</button></div></div>
+  if (!profile || profile.status !== 'public') return <div style={{minHeight:'100vh',background:C.obsidian,color:'#fff'}}>{!user && <PublicNav/>}<div style={{maxWidth:640,margin:'0 auto',padding:'100px 24px',textAlign:'center'}}><h1 style={{fontFamily:DISPLAY,fontSize:46}}>Cette page organisateur n’est pas disponible.</h1><p style={{color:'rgba(255,255,255,.5)'}}>{loading ? 'Chargement…' : 'Elle est peut-être privée, masquée ou suspendue.'}</p><button className="btn-gold" onClick={() => navigate('/organisateurs')}>Voir les organisateurs</button></div></div>
 
   const page = <div className="organizer-public">
     <style>{`
