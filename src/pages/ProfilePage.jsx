@@ -10,7 +10,7 @@ import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
 import { generateTicketToken } from '../utils/ticket'
 import PlaylistSystem from '../components/PlaylistSystem'
-import PreferencesEditor from '../components/PreferencesEditor'
+import { PreferencesModal, summarizePreferences } from '../components/PreferencesEditor'
 import { IconMail, IconIdBadge } from '../components/icons'
 import { events as staticEvents } from '../data/events'
 
@@ -455,6 +455,8 @@ export default function ProfilePage() {
 
   // Support state
   const [openFaq, setOpenFaq] = useState(null)
+  // Modal « Régler mes goûts » (recommandations)
+  const [prefsModalOpen, setPrefsModalOpen] = useState(false)
 
   // Nom de l'organisation (organisateurs uniquement)
   const [orgName, setOrgName] = useState(null)
@@ -1164,13 +1166,32 @@ export default function ProfilePage() {
             </div>
 
             {/* ── Mes goûts (recommandations personnalisées) ── */}
-            <div style={S.card}>
-              <EyebrowLabel text="Mes goûts — recommandations" />
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55, margin: '0 0 18px' }}>
-                Optionnel. Sert uniquement à te proposer les bonnes soirées sur l’accueil (« Nos recommandations pour vous »). Jamais partagé avec les organisateurs.
-              </p>
-              <PreferencesEditor user={user} setUser={setUser} />
-            </div>
+            {(() => {
+              const summary = summarizePreferences(user?.preferences)
+              return (
+                <div style={S.card}>
+                  <EyebrowLabel text="Mes goûts — recommandations" />
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55, margin: '0 0 16px' }}>
+                    Optionnel. Sert uniquement à te proposer les bonnes soirées sur l’accueil (« Nos recommandations pour toi »). Jamais partagé avec les organisateurs.
+                  </p>
+                  {summary.length > 0 ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 16 }}>
+                      {summary.slice(0, 10).map((t, i) => (
+                        <span key={i} style={{ padding: '6px 11px', borderRadius: 999, background: 'rgba(132,68,255,0.12)', border: '1px solid rgba(132,68,255,0.3)', color: '#c9b0ff', fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 700 }}>{t}</span>
+                      ))}
+                      {summary.length > 10 && <span style={{ padding: '6px 11px', fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,0.4)' }}>+{summary.length - 10}</span>}
+                    </div>
+                  ) : (
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.35)', margin: '0 0 16px' }}>Tu n’as pas encore renseigné tes goûts.</p>
+                  )}
+                  <button onClick={() => setPrefsModalOpen(true)} style={{ ...S.btnGold, background: 'linear-gradient(135deg, #8444ff, #a56bff)', color: '#fff' }}>
+                    {summary.length > 0 ? 'Modifier mes goûts' : 'Renseigner mes goûts'}
+                  </button>
+                </div>
+              )
+            })()}
+
+            <PreferencesModal open={prefsModalOpen} onClose={() => setPrefsModalOpen(false)} user={user} setUser={setUser} />
 
             {/* ── Confidentialité ── */}
             <div style={S.card}>

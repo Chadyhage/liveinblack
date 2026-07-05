@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   AMBIANCES,
@@ -9,42 +9,19 @@ import {
   GROUP_PREFS,
   MUSIC_STYLES,
 } from '../utils/recommendations'
+import { ARTIST_SUGGESTIONS, CITY_SUGGESTIONS } from '../data/tasteOptions'
 
-// ─── Éditeur de goûts client ──────────────────────────────────────────────────
-// Utilisé à deux endroits : carte « Mes goûts » des Paramètres + modal
-// d'onboarding post-inscription (PreferencesModal ci-dessous). Tout est
-// OPTIONNEL : on enregistre ce qui est rempli, rien n'est bloquant.
-// Sauvegarde = même pattern que les toggles de confidentialité :
-// setUser + lib_user + syncDoc users/{uid} { preferences } (fire-and-forget).
+// ─── Éditeur de goûts client — WIZARD étape par étape ─────────────────────────
+// Onboarding post-inscription + « Régler mes goûts » depuis les Paramètres.
+// Tout est OPTIONNEL (chaque étape peut être passée). Sauvegarde progressive :
+// à chaque avancement on persiste (setUser + lib_user + syncDoc), donc quitter
+// en cours conserve ce qui est déjà rempli.
 
 const FONT = 'Inter, system-ui, sans-serif'
 const TEAL = '#4ee8c8'
 const VIOLET = '#8444ff'
 
-const groupLabel = {
-  fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
-  textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 8px',
-}
-const chipRow = { display: 'flex', flexWrap: 'wrap', gap: 7 }
-const inputStyle = {
-  width: '100%', boxSizing: 'border-box', padding: '11px 13px', borderRadius: 10,
-  border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.045)',
-  color: '#fff', outline: 'none', fontFamily: FONT, fontSize: 13,
-}
-
-function Chip({ active, color = TEAL, onClick, children }) {
-  return (
-    <button type="button" onClick={onClick} style={{
-      padding: '8px 13px', borderRadius: 999, cursor: 'pointer',
-      border: `1px solid ${active ? color : 'rgba(255,255,255,0.14)'}`,
-      background: active ? `${color}1f` : 'rgba(255,255,255,0.04)',
-      color: active ? color : 'rgba(255,255,255,0.65)',
-      fontFamily: FONT, fontSize: 12, fontWeight: 700, transition: 'all .15s',
-    }}>
-      {children}
-    </button>
-  )
-}
+const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
 export function savePreferences(user, setUser, preferences) {
   const uid = user?.uid || user?.id
@@ -57,132 +34,276 @@ export function savePreferences(user, setUser, preferences) {
   return clean
 }
 
-export default function PreferencesEditor({ user, setUser, onSaved, saveLabel = 'Enregistrer mes goûts' }) {
-  const [prefs, setPrefs] = useState(() => ({ ...EMPTY_PREFERENCES, ...(user?.preferences || {}) }))
-  const [artistsText, setArtistsText] = useState(() => (user?.preferences?.artists || []).join(', '))
-  const [citiesText, setCitiesText] = useState(() => (user?.preferences?.cities || []).join(', '))
-  const [saved, setSaved] = useState(false)
+// Résumé lisible des goûts (chips affichés dans la carte Paramètres)
+export function summarizePreferences(prefs) {
+  if (!prefs) return []
+  const label = (arr, id) => arr.find(o => o.id === id)?.label || id
+  const out = []
+  for (const id of (prefs.musicStyles || [])) out.push(label(MUSIC_STYLES, id))
+  for (const a of (prefs.artists || [])) out.push(a)
+  for (const id of (prefs.eventTypes || [])) out.push(label(EVENT_TYPES, id))
+  for (const c of (prefs.cities || [])) out.push(c)
+  if (prefs.budget) out.push(label(BUDGETS, prefs.budget))
+  for (const id of (prefs.ambiances || [])) out.push(label(AMBIANCES, id))
+  return out
+}
 
-  // Hydratation tardive : si les préférences arrivent APRÈS le montage (sync
-  // Firestore au login), on ré-hydrate le formulaire — sauf si l'utilisateur a
-  // déjà commencé à le modifier (jamais écraser une édition en cours).
-  const touchedRef = useRef(false)
-  useEffect(() => {
-    if (touchedRef.current || !user?.preferences) return
-    setPrefs({ ...EMPTY_PREFERENCES, ...user.preferences })
-    setArtistsText((user.preferences.artists || []).join(', '))
-    setCitiesText((user.preferences.cities || []).join(', '))
-  }, [user?.preferences]) // eslint-disable-line react-hooks/exhaustive-deps
+// ── Chip de sélection ─────────────────────────────────────────────────────────
+function Chip({ active, color = TEAL, onClick, children }) {
+  return (
+    <button type="button" onClick={onClick} style={{
+      padding: '11px 16px', borderRadius: 999, cursor: 'pointer',
+      border: `1px solid ${active ? color : 'rgba(255,255,255,0.14)'}`,
+      background: active ? `${color}1f` : 'rgba(255,255,255,0.04)',
+      color: active ? color : 'rgba(255,255,255,0.7)',
+      fontFamily: FONT, fontSize: 13.5, fontWeight: 700, transition: 'all .15s',
+    }}>
+      {children}
+    </button>
+  )
+}
 
-  const toggleIn = (key, id) => { touchedRef.current = true; setPrefs(p => ({
-    ...p,
-    [key]: (p[key] || []).includes(id) ? p[key].filter(x => x !== id) : [...(p[key] || []), id],
-  })) }
-  const setSingle = (key, id) => { touchedRef.current = true; setPrefs(p => ({ ...p, [key]: p[key] === id ? '' : id })) }
-  const parseList = text => text.split(',').map(s => s.trim()).filter(Boolean).slice(0, 12)
-  const setList = (key, text) => { touchedRef.current = true; setPrefs(p => ({ ...p, [key]: parseList(text) })) }
+// ── Recherche + sélection (artistes, villes) ──────────────────────────────────
+function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder, color = TEAL, max = 15 }) {
+  const [query, setQuery] = useState('')
+  const [focused, setFocused] = useState(false)
 
-  function handleSave() {
-    savePreferences(user, setUser, prefs)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
-    onSaved?.(prefs)
+  const matches = useMemo(() => {
+    const q = norm(query)
+    if (!q) return []
+    const selectedNorm = new Set(value.map(norm))
+    return suggestions
+      .filter(s => norm(s).includes(q) && !selectedNorm.has(norm(s)))
+      .slice(0, 8)
+  }, [query, suggestions, value])
+
+  // Proposer « Ajouter «query» » si aucune correspondance EXACTE (suggestion ou déjà choisi)
+  const exact = query.trim() && [...suggestions, ...value].some(s => norm(s) === norm(query))
+  const canAddCustom = query.trim().length >= 2 && !exact && value.length < max
+
+  const add = name => {
+    const clean = String(name).trim()
+    if (!clean || value.length >= max) return
+    if (!value.some(v => norm(v) === norm(clean))) onChange([...value, clean])
+    setQuery('')
   }
+  const remove = name => onChange(value.filter(v => v !== name))
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <p style={groupLabel}>Styles musicaux préférés</p>
-        <div style={chipRow}>
-          {MUSIC_STYLES.map(s => <Chip key={s.id} active={prefs.musicStyles.includes(s.id)} onClick={() => toggleIn('musicStyles', s.id)}>{s.label}</Chip>)}
+    <div>
+      {/* Sélection courante */}
+      {value.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 12 }}>
+          {value.map(v => (
+            <span key={v} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7, padding: '7px 8px 7px 13px',
+              borderRadius: 999, background: `${color}1f`, border: `1px solid ${color}66`,
+              color, fontFamily: FONT, fontSize: 13, fontWeight: 700,
+            }}>
+              {v}
+              <button type="button" onClick={() => remove(v)} aria-label={`Retirer ${v}`} style={{
+                width: 18, height: 18, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: 'rgba(0,0,0,0.25)', color, fontSize: 12, lineHeight: 1, display: 'grid', placeItems: 'center',
+              }}>×</button>
+            </span>
+          ))}
         </div>
-      </div>
+      )}
 
-      <div>
-        <p style={groupLabel}>Artistes / DJs préférés</p>
-        <input
-          style={inputStyle}
-          value={artistsText}
-          onChange={e => { setArtistsText(e.target.value); setList('artists', e.target.value) }}
-          placeholder="Burna Boy, DJ Arafat, Aya Nakamura… (sépare par des virgules)"
-        />
-      </div>
-
-      <div>
-        <p style={groupLabel}>Types de soirées</p>
-        <div style={chipRow}>
-          {EVENT_TYPES.map(t => <Chip key={t.id} active={prefs.eventTypes.includes(t.id)} onClick={() => toggleIn('eventTypes', t.id)}>{t.label}</Chip>)}
+      {/* Barre de recherche */}
+      <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setTimeout(() => setFocused(false), 150)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (matches[0]) add(matches[0]); else if (canAddCustom) add(query) } }}
+            placeholder={placeholder}
+            disabled={value.length >= max}
+            style={{
+              width: '100%', boxSizing: 'border-box', padding: '13px 14px 13px 40px', borderRadius: 12,
+              border: `1px solid ${focused ? color : 'rgba(255,255,255,0.14)'}`, background: 'rgba(255,255,255,0.045)',
+              color: '#fff', outline: 'none', fontFamily: FONT, fontSize: 14, transition: 'border-color .15s',
+            }}
+          />
         </div>
-      </div>
 
-      <div>
-        <p style={groupLabel}>Villes où tu sors</p>
-        <input
-          style={inputStyle}
-          value={citiesText}
-          onChange={e => { setCitiesText(e.target.value); setList('cities', e.target.value) }}
-          placeholder="Lomé, Paris, Cotonou… (sépare par des virgules)"
-        />
+        {/* Résultats */}
+        {focused && (matches.length > 0 || canAddCustom) && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 5,
+            maxHeight: 240, overflowY: 'auto', borderRadius: 12, padding: 6,
+            background: 'rgba(12,13,22,0.99)', border: '1px solid rgba(255,255,255,0.14)',
+            boxShadow: '0 18px 50px rgba(0,0,0,0.6)',
+          }}>
+            {matches.map(s => (
+              <button key={s} type="button" onMouseDown={e => { e.preventDefault(); add(s) }} style={{
+                width: '100%', textAlign: 'left', padding: '11px 12px', borderRadius: 8, border: 'none',
+                background: 'none', color: '#fff', cursor: 'pointer', fontFamily: FONT, fontSize: 14,
+              }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                {s}
+              </button>
+            ))}
+            {canAddCustom && (
+              <button type="button" onMouseDown={e => { e.preventDefault(); add(query) }} style={{
+                width: '100%', textAlign: 'left', padding: '11px 12px', borderRadius: 8, border: 'none',
+                background: 'none', color, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700,
+              }} onMouseEnter={e => e.currentTarget.style.background = `${color}14`} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                + Ajouter « {query.trim()} »
+              </button>
+            )}
+          </div>
+        )}
       </div>
-
-      <div>
-        <p style={groupLabel}>Budget moyen par sortie</p>
-        <div style={chipRow}>
-          {BUDGETS.map(b => <Chip key={b.id} color={VIOLET} active={prefs.budget === b.id} onClick={() => setSingle('budget', b.id)}>{b.label}</Chip>)}
-        </div>
-      </div>
-
-      <div>
-        <p style={groupLabel}>Ambiance recherchée</p>
-        <div style={chipRow}>
-          {AMBIANCES.map(a => <Chip key={a.id} active={prefs.ambiances.includes(a.id)} onClick={() => toggleIn('ambiances', a.id)}>{a.label}</Chip>)}
-        </div>
-      </div>
-
-      <div>
-        <p style={groupLabel}>Tu sors…</p>
-        <div style={chipRow}>
-          {FREQUENCIES.map(f => <Chip key={f.id} color={VIOLET} active={prefs.frequency === f.id} onClick={() => setSingle('frequency', f.id)}>{f.label}</Chip>)}
-        </div>
-      </div>
-
-      <div>
-        <p style={groupLabel}>Plutôt…</p>
-        <div style={chipRow}>
-          {GROUP_PREFS.map(g => <Chip key={g.id} color={VIOLET} active={prefs.groupPref === g.id} onClick={() => setSingle('groupPref', g.id)}>{g.label}</Chip>)}
-        </div>
-      </div>
-
-      <button type="button" onClick={handleSave} style={{
-        padding: '14px 24px', borderRadius: 999, border: 'none', cursor: 'pointer',
-        background: saved ? 'rgba(78,232,200,0.15)' : `linear-gradient(135deg, ${VIOLET}, #a56bff)`,
-        color: saved ? TEAL : '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 800,
-        boxShadow: saved ? 'none' : '0 8px 24px -8px rgba(132,68,255,0.55)',
-        transition: 'all .2s',
-      }}>
-        {saved ? 'Goûts enregistrés ✓' : saveLabel}
-      </button>
+      <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '8px 0 0' }}>
+        Tape un nom puis choisis-le. Pas dans la liste ? « Ajouter » le crée. {value.length}/{max}
+      </p>
     </div>
   )
 }
 
-// ─── Modal d'onboarding (bannière accueil → « Personnalise ton expérience ») ──
+// ── Définition des étapes ─────────────────────────────────────────────────────
+const STEPS = [
+  { key: 'musicStyles', type: 'multi', options: MUSIC_STYLES, color: TEAL, title: 'Tes styles musicaux', subtitle: 'Choisis tout ce qui te fait vibrer.' },
+  { key: 'artists', type: 'search', suggestions: ARTIST_SUGGESTIONS, color: TEAL, title: 'Tes artistes & DJs', subtitle: 'Recherche tes artistes préférés et ajoute-les.' },
+  { key: 'eventTypes', type: 'multi', options: EVENT_TYPES, color: VIOLET, title: 'Tes types de soirées', subtitle: 'Où aimes-tu sortir ?' },
+  { key: 'cities', type: 'search', suggestions: CITY_SUGGESTIONS, color: VIOLET, title: 'Tes villes de sortie', subtitle: 'Recherche les villes où tu fais la fête.' },
+  { key: 'budget', type: 'single', options: BUDGETS, color: VIOLET, title: 'Ton budget par sortie', subtitle: 'En moyenne, tu mets combien ?' },
+  { key: 'ambiances', type: 'multi', options: AMBIANCES, color: TEAL, title: 'Ton ambiance idéale', subtitle: 'Sélectionne les ambiances que tu recherches.' },
+  { key: 'frequency', type: 'single', options: FREQUENCIES, color: VIOLET, title: 'Tu sors…', subtitle: 'À quelle fréquence ?' },
+  { key: 'groupPref', type: 'single', options: GROUP_PREFS, color: VIOLET, title: 'Tu sors plutôt…', subtitle: 'Avec qui préfères-tu faire la fête ?' },
+]
+
+export default function PreferencesWizard({ user, setUser, onDone, doneLabel = 'Terminer' }) {
+  const [prefs, setPrefs] = useState(() => ({ ...EMPTY_PREFERENCES, ...(user?.preferences || {}) }))
+  const [step, setStep] = useState(0)
+  const touchedRef = useRef(false)
+
+  // Hydratation tardive (prefs arrivant après montage, sync cross-device) —
+  // seulement si l'utilisateur n'a pas déjà commencé à éditer.
+  useEffect(() => {
+    if (touchedRef.current || !user?.preferences) return
+    setPrefs({ ...EMPTY_PREFERENCES, ...user.preferences })
+  }, [user?.preferences]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const current = STEPS[step]
+  const isLast = step === STEPS.length - 1
+  const progress = Math.round(((step + 1) / STEPS.length) * 100)
+
+  const persist = next => { touchedRef.current = true; setPrefs(next); savePreferences(user, setUser, next) }
+
+  const toggleMulti = id => {
+    touchedRef.current = true
+    // Mise à jour fonctionnelle basée sur p (état À JOUR) — pas sur une copie
+    // figée : deux clics rapprochés ne s'écrasent plus.
+    setPrefs(p => { const list = p[current.key] || []; return { ...p, [current.key]: list.includes(id) ? list.filter(x => x !== id) : [...list, id] } })
+  }
+  const setSearch = arr => { touchedRef.current = true; setPrefs(p => ({ ...p, [current.key]: arr })) }
+
+  const goNext = () => { savePreferences(user, setUser, prefs); if (isLast) onDone?.(prefs); else setStep(s => s + 1) }
+  const goBack = () => setStep(s => Math.max(0, s - 1))
+  // Choix unique → enregistre + avance automatiquement (spawn de l'étape suivante)
+  const pickSingle = id => {
+    const next = { ...prefs, [current.key]: prefs[current.key] === id ? '' : id }
+    persist(next)
+    if (next[current.key]) setTimeout(() => { if (isLast) onDone?.(next); else setStep(s => s + 1) }, 260)
+  }
+
+  const val = prefs[current.key]
+  const hasValue = current.type === 'single' ? !!val : (val || []).length > 0
+
+  return (
+    <div>
+      {/* Barre de progression */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+          <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: current.color }}>
+            Étape {step + 1} / {STEPS.length}
+          </span>
+          <span style={{ fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,0.4)' }}>{progress}%</span>
+        </div>
+        <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: `linear-gradient(90deg, ${VIOLET}, ${TEAL})`, transition: 'width .35s cubic-bezier(.4,0,.2,1)' }} />
+        </div>
+      </div>
+
+      {/* Question — key force le remontage (petite animation d'entrée) */}
+      <div key={current.key} style={{ animation: 'lib-step-in .3s ease' }}>
+        <style>{`@keyframes lib-step-in { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }`}</style>
+        <h3 style={{ fontFamily: FONT, fontSize: 21, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 4px' }}>{current.title}</h3>
+        <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '0 0 20px', lineHeight: 1.5 }}>{current.subtitle}</p>
+
+        <div style={{ minHeight: 120 }}>
+          {current.type === 'multi' && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
+              {current.options.map(o => <Chip key={o.id} color={current.color} active={(val || []).includes(o.id)} onClick={() => toggleMulti(o.id)}>{o.label}</Chip>)}
+            </div>
+          )}
+          {current.type === 'single' && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
+              {current.options.map(o => <Chip key={o.id} color={current.color} active={val === o.id} onClick={() => pickSingle(o.id)}>{o.label}</Chip>)}
+            </div>
+          )}
+          {current.type === 'search' && (
+            <SearchMultiSelect value={val || []} onChange={setSearch} suggestions={current.suggestions} color={current.color}
+              placeholder={current.key === 'artists' ? 'Ex : Burna Boy, Ninho, DJ Arafat…' : 'Ex : Lomé, Paris, Abidjan…'} />
+          )}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 26 }}>
+        {step > 0 && (
+          <button type="button" onClick={goBack} aria-label="Précédent" style={{
+            width: 46, height: 46, borderRadius: 12, flexShrink: 0, cursor: 'pointer',
+            border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: 18,
+          }}>‹</button>
+        )}
+        <button type="button" onClick={goNext} style={{
+          flex: 1, padding: '15px 24px', borderRadius: 12, border: 'none', cursor: 'pointer',
+          background: `linear-gradient(135deg, ${VIOLET}, #a56bff)`, color: '#fff',
+          fontFamily: FONT, fontSize: 14, fontWeight: 800, boxShadow: '0 8px 24px -8px rgba(132,68,255,0.55)',
+        }}>
+          {isLast ? doneLabel : (hasValue ? 'Continuer' : 'Passer cette étape')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Modal (onboarding accueil + « Régler mes goûts ») ────────────────────────
 export function PreferencesModal({ open, onClose, user, setUser }) {
+  const [done, setDone] = useState(false)
+  useEffect(() => { if (open) setDone(false) }, [open])
   if (!open) return null
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)' }} onClick={onClose} />
       <div style={{
-        position: 'relative', width: '100%', maxWidth: 560, maxHeight: '86vh', overflowY: 'auto',
-        background: 'rgba(8,9,18,0.98)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '22px 20px 20px',
+        position: 'relative', width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto',
+        background: 'rgba(8,9,18,0.98)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 22, padding: '22px 22px 22px',
       }}>
-        <button onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 12, right: 14, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}>×</button>
-        <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: VIOLET, margin: '0 0 6px' }}>Personnalisation</p>
-        <h2 style={{ fontFamily: FONT, fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 4px' }}>Dis-nous ce que tu aimes</h2>
-        <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 20px' }}>
-          Tout est optionnel et modifiable à tout moment dans tes Paramètres. On s’en sert uniquement pour te recommander les bonnes soirées.
-        </p>
-        <PreferencesEditor user={user} setUser={setUser} saveLabel="C’est parti !" onSaved={() => setTimeout(onClose, 650)} />
+        <button onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1, zIndex: 2 }}>×</button>
+        {done ? (
+          <div style={{ textAlign: 'center', padding: '30px 10px 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'grid', placeItems: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: TEAL, fontSize: 30 }}>✓</div>
+            <h2 style={{ fontFamily: FONT, fontSize: 23, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>C’est noté !</h2>
+            <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>
+              Tes recommandations sont prêtes. Retrouve-les sur l’accueil, section « Nos recommandations pour toi ».
+            </p>
+            <button onClick={onClose} style={{ padding: '13px 28px', borderRadius: 999, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${VIOLET}, #a56bff)`, color: '#fff', fontFamily: FONT, fontSize: 13.5, fontWeight: 800 }}>
+              Voir mes recommandations
+            </button>
+          </div>
+        ) : (
+          <>
+            <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: VIOLET, margin: '0 0 6px' }}>Personnalisation</p>
+            <h2 style={{ fontFamily: FONT, fontSize: 23, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 18px' }}>Dis-nous ce que tu aimes</h2>
+            <PreferencesWizard user={user} setUser={setUser} onDone={() => setDone(true)} />
+          </>
+        )}
       </div>
     </div>,
     document.body,

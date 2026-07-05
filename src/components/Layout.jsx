@@ -19,6 +19,7 @@ function NavIcon({ id, active, activeColor = 'var(--violet)' }) {
   if (id === '/evenements') return <svg {...props}><rect x="3" y="7" width="18" height="13" rx="1.5"/><path d="M8 7V5m8 2V5"/><path d="M7 13h2m2 0h2m2 0h2"/></svg>
   if (id === '/messagerie') return <svg {...props}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
   if (id === '/mes-evenements') return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  if (id === '/ma-page-organisateur') return <svg {...props}><circle cx="12" cy="8" r="3"/><path d="M5 20c0-4 3-7 7-7s7 3 7 7"/><path d="M17 4h4v4"/><path d="m16 9 5-5"/></svg>
   if (id === '/proposer') return <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
   if (id === '/prestataires') return <svg {...props}><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><circle cx="18" cy="9" r="2"/><path d="M17 15a5 5 0 0 1 4 4"/></svg>
   if (id === '/organisateurs') return <svg {...props}><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><path d="M17 8h4m-2-2v4"/></svg>
@@ -47,6 +48,7 @@ function getNavItems(role) {
     { path: '/messagerie',     icon: '💬', label: 'Messages' },
     { path: '/mes-evenements', icon: '✦',  label: 'Mes Events' },
     { path: '/prestataires',   icon: '◈',  label: 'Prestataires' },
+    { path: '/ma-page-organisateur', icon: '◎', label: 'Ma Page' },
   ]
   // Prestataire — their space + browse
   if (role === 'prestataire') return [
