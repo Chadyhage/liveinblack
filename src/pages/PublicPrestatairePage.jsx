@@ -66,7 +66,11 @@ export default function PublicPrestatairePage() {
 
   const visibleCatalog = useMemo(() => catalog.filter(item => item.available !== false), [catalog])
   const category = getProviderCategory(profile?.prestataireType)
-  const isOwnPage = !!user && getUserId(user) === decodedId
+  // isSelf = même compte (peu importe l'interface active) → jamais de bouton
+  // « Envoyer un message » vers soi-même. canManage = interface prestataire
+  // active → seul cas où « Gérer ma page » s'affiche.
+  const isSelf = !!user && getUserId(user) === decodedId
+  const canManage = isSelf && user?.role === 'prestataire'
 
   function startConversation(account = user) {
     const myId = getUserId(account)
@@ -76,10 +80,11 @@ export default function PublicPrestatairePage() {
   }
 
   function handleContact() {
-    if (isOwnPage) {
+    if (canManage) {
       navigate('/proposer')
       return
     }
+    if (isSelf) return
     if (!user) {
       openAuthModal(`Connecte-toi pour écrire à ${profile?.name || 'ce prestataire'}.`, loggedInUser => startConversation(loggedInUser))
       return
@@ -153,7 +158,7 @@ export default function PublicPrestatairePage() {
             </div>
             <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: category.color, margin: '8px 0 0' }}>{category.singular}</p>
           </div>
-          <button onClick={handleContact} style={primaryButton}><Icon name="message" /> {isOwnPage ? 'Gérer ma page' : 'Envoyer un message'}</button>
+          {(canManage || !isSelf) && <button onClick={handleContact} style={primaryButton}><Icon name="message" /> {canManage ? 'Gérer ma page' : 'Envoyer un message'}</button>}
         </div>
 
         <div className="provider-main-grid">
@@ -215,8 +220,8 @@ export default function PublicPrestatairePage() {
           <aside className="provider-sticky-contact" style={{ ...sectionStyle, borderColor: `${category.color}44` }}>
             <h2 style={{ ...sectionTitle, fontSize: 21 }}>Un projet à lui proposer ?</h2>
             <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', lineHeight: 1.6, margin: '0 0 18px' }}>Échangez directement dans la messagerie LIVE IN BLACK pour discuter de la date, du tarif et des conditions.</p>
-            <button onClick={handleContact} style={{ ...primaryButton, width: '100%', justifyContent: 'center' }}><Icon name="message" /> {isOwnPage ? 'Gérer ma page' : 'Envoyer un message'}</button>
-            {!isOwnPage && <p style={{ fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,.32)', lineHeight: 1.5, margin: '14px 0 0' }}>LIVE IN BLACK facilite la mise en relation. La réservation et le règlement sont convenus directement avec le prestataire.</p>}
+            {(canManage || !isSelf) && <button onClick={handleContact} style={{ ...primaryButton, width: '100%', justifyContent: 'center' }}><Icon name="message" /> {canManage ? 'Gérer ma page' : 'Envoyer un message'}</button>}
+            {!isSelf && <p style={{ fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,.32)', lineHeight: 1.5, margin: '14px 0 0' }}>LIVE IN BLACK facilite la mise en relation. La réservation et le règlement sont convenus directement avec le prestataire.</p>}
           </aside>
         </div>
       </main>

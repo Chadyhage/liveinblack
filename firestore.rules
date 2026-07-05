@@ -264,15 +264,17 @@ service cloud.firestore {
     }
 
     // ── Profils prestataires ──────────────────────────────────────────────────
-    // Allow signed-in users to read (for service marketplace discovery)
+    // Lecture PUBLIQUE : la vitrine /prestataires et les pages prestataires sont
+    // accessibles sans compte (le doc ne contient que des infos publiées par le
+    // prestataire lui-même : nom de page, description, numéro pro, photos).
     match /providers/{uid} {
-      allow read:  if isSignedIn();
+      allow read:  if true;
       allow write: if isOwner(uid) || isAgent();
     }
 
-    // ── Catalogues (read public pour marketplace) ─────────────────────────────
+    // ── Catalogues (lecture publique pour la vitrine) ─────────────────────────
     match /catalogs/{uid} {
-      allow read:  if isSignedIn();
+      allow read:  if true;
       allow write: if isOwner(uid) || isAgent();
     }
 

@@ -507,8 +507,21 @@ export async function syncOnLogin(uid, opts = {}) {
     }
 
     // ── 8. Catalog ──
+    // Garde anti-écrasement (même logique que le listener de ProposerServicesPage) :
+    // un doc distant périmé ou vide ne doit pas effacer un catalogue local plus récent.
     const catalog = await loadDoc(`catalogs/${uid}`)
-    if (catalog?.items) localStorage.setItem(`lib_catalog_${uid}`, JSON.stringify(catalog.items))
+    if (catalog?.items) {
+      const localItems = safeParseArray(`lib_catalog_${uid}`)
+      const localCatalogTs = localStorage.getItem(`lib_catalog_ts_${uid}`) || ''
+      const remoteCatalogTs = catalog.updatedAt || ''
+      const remoteIsStale = (remoteCatalogTs && localCatalogTs)
+        ? remoteCatalogTs < localCatalogTs
+        : (catalog.items.length === 0 && localItems.length > 0)
+      if (!remoteIsStale) {
+        localStorage.setItem(`lib_catalog_${uid}`, JSON.stringify(catalog.items))
+        if (remoteCatalogTs) localStorage.setItem(`lib_catalog_ts_${uid}`, remoteCatalogTs)
+      }
+    }
 
     // ── 9. Provider profile ──
     const provider = await loadDoc(`providers/${uid}`)
@@ -671,7 +684,7 @@ export async function pushLocalToFirestore(uid) {
     // Catalog
     const catalogKey = `lib_catalog_${uid}`
     const catalog = safeParseArray(catalogKey)
-    if (catalog.length) syncDoc(`catalogs/${uid}`, { items: catalog })
+    if (catalog.length) syncDoc(`catalogs/${uid}`, { items: catalog, updatedAt: localStorage.getItem(`lib_catalog_ts_${uid}`) || new Date().toISOString() })
 
     // Provider profile
     const providers = safeParseArray('lib_provider_profiles')

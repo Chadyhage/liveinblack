@@ -5,6 +5,7 @@
 // et la messagerie : aucun nouveau paiement de prestation n'est créé ici.
 
 const CATALOG_KEY = uid => `lib_catalog_${uid}`
+const CATALOG_TS_KEY = uid => `lib_catalog_ts_${uid}`
 const ORDERS_KEY = 'lib_service_orders'
 const COMMISSION_RATE = 0.10 // 10% pour LIVEINBLACK
 
@@ -16,11 +17,29 @@ export function getCatalog(userId) {
 
 export function saveCatalog(userId, items) {
   if (!userId) return
-  localStorage.setItem(CATALOG_KEY(userId), JSON.stringify(items))
+  // Round-trip JSON : retire les champs undefined que Firestore rejette (une
+  // seule valeur undefined ferait échouer la sync du catalogue ENTIER).
+  const clean = JSON.parse(JSON.stringify(items))
+  const updatedAt = new Date().toISOString()
+  localStorage.setItem(CATALOG_KEY(userId), JSON.stringify(clean))
+  localStorage.setItem(CATALOG_TS_KEY(userId), updatedAt)
   // Sync to Firestore so the catalog is visible cross-device
   import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`catalogs/${userId}`, { items, updatedAt: new Date().toISOString() })
+    syncDoc(`catalogs/${userId}`, { items: clean, updatedAt })
   }).catch(() => {})
+}
+
+// Horodatage de la dernière écriture LOCALE du catalogue — sert de garde
+// anti-écrasement : un snapshot distant plus vieux ne doit pas effacer le local.
+export function getCatalogUpdatedAt(userId) {
+  return localStorage.getItem(CATALOG_TS_KEY(userId)) || ''
+}
+
+// Adopte un catalogue reçu du serveur (listener/login) sans re-déclencher de sync.
+export function adoptRemoteCatalog(userId, items, updatedAt) {
+  if (!userId) return
+  localStorage.setItem(CATALOG_KEY(userId), JSON.stringify(items || []))
+  if (updatedAt) localStorage.setItem(CATALOG_TS_KEY(userId), updatedAt)
 }
 
 export function addCatalogItem(userId, item) {

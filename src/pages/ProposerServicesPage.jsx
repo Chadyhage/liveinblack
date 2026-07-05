@@ -5,9 +5,12 @@ import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import {
   addCatalogItem,
+  adoptRemoteCatalog,
   deleteCatalogItem,
   getCatalog,
+  getCatalogUpdatedAt,
   getProviderProfile,
+  saveCatalog,
   saveProviderProfile,
   updateCatalogItem,
   CATALOG_CATEGORIES,
@@ -164,7 +167,20 @@ export default function ProposerServicesPage() {
       })
       unlistenCatalog = listenDoc(`catalogs/${uid}`, data => {
         if (!data?.items) return
-        localStorage.setItem(`lib_catalog_${uid}`, JSON.stringify(data.items))
+        const local = getCatalog(uid)
+        const localTs = getCatalogUpdatedAt(uid)
+        const remoteTs = data.updatedAt || ''
+        // Garde anti-écrasement : un snapshot distant plus VIEUX que notre
+        // dernière écriture (ou vide sans horodatage comparable) ne doit pas
+        // effacer le travail local — on re-pousse le local pour réparer le serveur.
+        const remoteIsStale = (remoteTs && localTs)
+          ? remoteTs < localTs
+          : (data.items.length === 0 && local.length > 0)
+        if (remoteIsStale) {
+          saveCatalog(uid, local)
+          return
+        }
+        adoptRemoteCatalog(uid, data.items, remoteTs)
         setCatalog(data.items)
       })
     }).catch(() => {})
@@ -258,12 +274,13 @@ export default function ProposerServicesPage() {
     try {
       const { uploadProviderMedia } = await import('../utils/uploadImage')
       const media = await uploadProviderMedia(uid, file)
-      update(current => ({
-        ...current,
-        media: [...getOfferMedia(current), { url: media.mediaUrl, type: media.mediaType }].slice(0, 4),
-        mediaUrl: undefined,
-        mediaType: undefined,
-      }))
+      update(current => {
+        // Migration des anciens champs mediaUrl/mediaType vers media[] par
+        // RETRAIT des clés (jamais `undefined` : Firestore rejette la valeur
+        // et ferait échouer la sync du catalogue entier).
+        const { mediaUrl, mediaType, ...rest } = current
+        return { ...rest, media: [...getOfferMedia(current), { url: media.mediaUrl, type: media.mediaType }].slice(0, 4) }
+      })
       notify('Média ajouté à l’offre.')
     } catch {
       notify('Le média n’a pas pu être envoyé. Réessaie.')
@@ -462,7 +479,7 @@ export default function ProposerServicesPage() {
                         media={getOfferMedia(editingItem)}
                         uploading={mediaUploading}
                         onSelect={file => handleOfferMedia(file, setEditingItem)}
-                        onRemove={index => setEditingItem(current => ({ ...current, media: getOfferMedia(current).filter((_, mediaIndex) => mediaIndex !== index), mediaUrl: undefined, mediaType: undefined }))}
+                        onRemove={index => setEditingItem(current => { const { mediaUrl, mediaType, ...rest } = current; return { ...rest, media: getOfferMedia(current).filter((_, mediaIndex) => mediaIndex !== index) } })}
                       />
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button onClick={saveEditedItem} disabled={mediaUploading} style={{ ...primaryButton, opacity: mediaUploading ? .6 : 1 }}>Enregistrer</button>
