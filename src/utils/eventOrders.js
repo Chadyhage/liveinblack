@@ -112,26 +112,30 @@ export async function addEventStaff(eventId, staffUid, role, name, byUser, event
   } catch (e) { return { ok: false, error: e.message } }
 }
 
-export function removeEventStaff(eventId, staffUid, byUser) {
+export async function removeEventStaff(eventId, staffUid, byUser) {
   if (!canManage(byUser?._staffRole)) return { ok: false, error: 'Réservé au manager.' }
   try {
-    const all = readStaff()
     const key = String(eventId)
-    const roster = { ...(all[key]?.roster || {}) }
-    delete roster[staffUid]
-    all[key] = { roster }
-    localStorage.setItem('lib_event_staff', JSON.stringify(all))
     // IMPORTANT : syncDoc = setDoc(merge:true) FUSIONNE les clés d'une map → il ne
-    // supprime JAMAIS une clé du roster côté Firestore (le membre ressuscitait via le
-    // listener). On supprime donc précisément la clé imbriquée avec deleteField().
-    import('../firebase').then(({ db }) =>
-      import('firebase/firestore').then(({ doc, updateDoc, deleteField }) =>
-        updateDoc(doc(db, 'event_staff', key), { [`roster.${staffUid}`]: deleteField() }).catch(() => {})
-      )
-    ).catch(() => {})
+    // supprime JAMAIS une clé du roster côté Firestore. On supprime précisément la clé
+    // imbriquée avec deleteField(), et on AWAITE l'écriture : si elle échoue (droits /
+    // hors-ligne), on le remonte pour que l'UI ne fasse pas croire à un retrait réussi.
+    const { db } = await import('../firebase')
+    const { doc, updateDoc, deleteField } = await import('firebase/firestore')
+    await updateDoc(doc(db, 'event_staff', key), { [`roster.${staffUid}`]: deleteField() })
+    // Cache local seulement APRÈS confirmation serveur.
+    try {
+      const all = readStaff()
+      const roster = { ...(all[key]?.roster || {}) }
+      delete roster[staffUid]
+      all[key] = { roster }
+      localStorage.setItem('lib_event_staff', JSON.stringify(all))
+    } catch {}
     import('./firestore-sync').then(({ syncDelete }) => syncDelete(`staff_assignments/${assignmentId(key, staffUid)}`)).catch(() => {})
     return { ok: true }
-  } catch (e) { return { ok: false, error: e.message } }
+  } catch (e) {
+    return { ok: false, error: e?.code === 'permission-denied' ? 'Droits insuffisants pour retirer ce membre.' : 'Retrait non confirmé (réseau ?). Réessaie.' }
+  }
 }
 
 // ── Index inversé côté MEMBRE : « mes affectations staff » ────────────────────
@@ -207,7 +211,7 @@ export async function reassignAndRemoveStaff(eventId, staffUid, toActor, byUser)
   if (serverReachFailed) {
     return { ok: false, error: 'Réattribution incomplète (hors-ligne ?) — le serveur n\'a pas été retiré. Réessaie une fois en ligne.' }
   }
-  const res = removeEventStaff(eventId, staffUid, byUser)
+  const res = await removeEventStaff(eventId, staffUid, byUser)
   return res.ok ? { ok: true, reassigned } : res
 }
 

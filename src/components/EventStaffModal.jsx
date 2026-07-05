@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { getStaffRole, addEventStaff, removeEventStaff, listenEventStaff, STAFF_ROLES, getActiveOrdersForStaff, reassignAndRemoveStaff } from '../utils/eventOrders'
 import { searchUsers, getUserId } from '../utils/messaging'
@@ -65,9 +65,21 @@ export default function EventStaffModal({ event, user, onClose }) {
   const isManager = myRole === 'manager'
   const byUser = useMemo(() => ({ ...user, uid: myUid, _staffRole: myRole }), [user, myUid, myRole])
 
-  // Roster temps réel (cross-device)
+  // Membres dont le retrait est en cours (anti-résurrection) : Firestore peut
+  // réémettre un snapshot avec l'ancien état pendant la propagation du deleteField
+  // (optimistic-apply/rollback) → sans garde, le membre « réapparaît » 2 s.
+  const pendingRemovals = useRef(new Set())
+
+  // Roster temps réel (cross-device), filtré des retraits en cours.
   useEffect(() => {
-    const unsub = listenEventStaff(event.id, setRoster)
+    const unsub = listenEventStaff(event.id, incoming => {
+      const filtered = { ...incoming }
+      for (const uid of pendingRemovals.current) {
+        if (uid in filtered) delete filtered[uid]        // encore présent → on masque
+        else pendingRemovals.current.delete(uid)          // absent → retrait confirmé
+      }
+      setRoster(filtered)
+    })
     return () => unsub()
   }, [event.id])
 
@@ -133,30 +145,35 @@ export default function EventStaffModal({ event, user, onClose }) {
     setRemoteResults([])
   }
 
+  // Tout retrait passe par une CONFIRMATION. Le dialogue s'adapte : s'il a des
+  // commandes en cours → réattribution au manager ; sinon → simple confirmation.
   function remove(uid, name) {
-    // Garde : si le membre a des commandes EN COURS (prises/non servies/non payées),
-    // on ne le retire pas sec — ça laisserait ces additions sans acteur habilité.
-    // On demande confirmation pour réattribuer ses commandes au manager puis retirer.
     const active = getActiveOrdersForStaff(event.id, uid)
-    if (active.length > 0) {
-      setConfirmRemove({ uid, name, count: active.length })
-      return
-    }
-    const res = removeEventStaff(event.id, uid, byUser)
-    if (!res.ok) { notify(res.error || 'Retrait impossible.', true); return }
-    notify(`${name || 'Membre'} retiré de l'équipe.`)
+    setConfirmRemove({ uid, name, count: active.length })
   }
 
-  async function doReassignRemove() {
+  async function doConfirmRemove() {
     if (!confirmRemove || busy) return
+    const { uid, name, count } = confirmRemove
     setBusy(true)
-    // Réattribue au manager courant (toi) puis retire.
-    const res = await reassignAndRemoveStaff(event.id, confirmRemove.uid, byUser, byUser)
+    // Optimiste : on masque le membre TOUT DE SUITE et on garde l'anti-résurrection
+    // le temps que le deleteField se propage (fin du flicker « disparaît/réapparaît »).
+    pendingRemovals.current.add(uid)
+    setRoster(r => { const n = { ...r }; delete n[uid]; return n })
+    const res = count > 0
+      ? await reassignAndRemoveStaff(event.id, uid, byUser, byUser) // réattribue puis retire
+      : await removeEventStaff(event.id, uid, byUser)
     setBusy(false)
-    const removed = confirmRemove
     setConfirmRemove(null)
-    if (!res.ok) { notify(res.error || 'Retrait impossible.', true); return }
-    notify(`${removed.name} retiré · ${res.reassigned} commande${res.reassigned > 1 ? 's' : ''} réattribuée${res.reassigned > 1 ? 's' : ''} à toi.`)
+    if (!res.ok) {
+      // Échec serveur → on lève la garde : le listener réaffichera le membre (rollback).
+      pendingRemovals.current.delete(uid)
+      notify(res.error || 'Retrait impossible.', true)
+      return
+    }
+    notify(count > 0
+      ? `${name} retiré · ${res.reassigned} commande${res.reassigned > 1 ? 's' : ''} réattribuée${res.reassigned > 1 ? 's' : ''} à toi.`
+      : `${name || 'Membre'} retiré de l'équipe.`)
   }
 
   const rosterEntries = Object.entries(roster)
@@ -316,26 +333,34 @@ export default function EventStaffModal({ event, user, onClose }) {
         )}
       </div>
 
-      {/* Confirmation : retrait d'un membre qui a des commandes en cours */}
+      {/* Confirmation de retrait — texte adaptatif selon les commandes en cours */}
       {confirmRemove && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => !busy && setConfirmRemove(null)}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
           <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 360, background: 'rgba(12,14,24,0.98)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 22 }}>⚠️</span>
-              <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>Commandes en cours</p>
+              <span style={{ fontSize: 22 }}>{confirmRemove.count > 0 ? '⚠️' : '👋'}</span>
+              <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>
+                {confirmRemove.count > 0 ? 'Commandes en cours' : 'Retirer de l\'équipe ?'}
+              </p>
             </div>
             <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
-              <strong style={{ color: '#fff' }}>{confirmRemove.name}</strong> a <strong style={{ color: C.gold }}>{confirmRemove.count} commande{confirmRemove.count > 1 ? 's' : ''} en cours</strong> non servie{confirmRemove.count > 1 ? 's' : ''} ou non encaissée{confirmRemove.count > 1 ? 's' : ''}.
-              {isEventStarted(event) && <span style={{ color: 'rgba(255,255,255,0.45)' }}> La soirée a commencé.</span>}
-              {' '}Le retirer maintenant laisserait ces additions sans serveur. Veux-tu <strong style={{ color: C.teal }}>te les réattribuer</strong> puis le retirer ?
+              {confirmRemove.count > 0 ? (
+                <>
+                  <strong style={{ color: '#fff' }}>{confirmRemove.name}</strong> a <strong style={{ color: C.gold }}>{confirmRemove.count} commande{confirmRemove.count > 1 ? 's' : ''} en cours</strong> non servie{confirmRemove.count > 1 ? 's' : ''} ou non encaissée{confirmRemove.count > 1 ? 's' : ''}.
+                  {isEventStarted(event) && <span style={{ color: 'rgba(255,255,255,0.45)' }}> La soirée a commencé.</span>}
+                  {' '}Le retirer laisserait ces additions sans serveur. Veux-tu <strong style={{ color: C.teal }}>te les réattribuer</strong> puis le retirer ?
+                </>
+              ) : (
+                <><strong style={{ color: '#fff' }}>{confirmRemove.name}</strong> n'aura plus accès au scanner de cette soirée. Tu pourras le réinviter à tout moment.</>
+              )}
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
               <button onClick={() => setConfirmRemove(null)} disabled={busy} style={{ flex: 1, padding: '11px', borderRadius: 11, cursor: busy ? 'default' : 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)', fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}>
                 Annuler
               </button>
-              <button onClick={doReassignRemove} disabled={busy} style={{ flex: 1.4, padding: '11px', borderRadius: 11, cursor: busy ? 'default' : 'pointer', background: `linear-gradient(135deg, ${C.teal}, #7af0d8)`, border: 'none', color: '#04040b', fontFamily: FONT, fontSize: 13.5, fontWeight: 800, opacity: busy ? 0.6 : 1 }}>
-                {busy ? 'Réattribution…' : 'Réattribuer + retirer'}
+              <button onClick={doConfirmRemove} disabled={busy} style={{ flex: 1.4, padding: '11px', borderRadius: 11, cursor: busy ? 'default' : 'pointer', background: confirmRemove.count > 0 ? `linear-gradient(135deg, ${C.teal}, #7af0d8)` : 'rgba(224,90,170,0.15)', border: confirmRemove.count > 0 ? 'none' : '1px solid rgba(224,90,170,0.45)', color: confirmRemove.count > 0 ? '#04040b' : C.pink, fontFamily: FONT, fontSize: 13.5, fontWeight: 800, opacity: busy ? 0.6 : 1 }}>
+                {busy ? '…' : confirmRemove.count > 0 ? 'Réattribuer + retirer' : 'Retirer'}
               </button>
             </div>
           </div>
