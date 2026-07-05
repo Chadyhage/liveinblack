@@ -305,6 +305,43 @@ function EventCard({ content }) {
   )
 }
 
+// ─── Catalog item card (offre prestataire partagée) ────────────────────────────
+// Pendant de EventCard : rendu d'un message type 'catalog_item'. Clic → page
+// publique du prestataire (pas de page détail par offre).
+function CatalogItemCard({ content }) {
+  const navigate = useNavigate()
+  let it
+  try { it = typeof content === 'string' ? JSON.parse(content) : content } catch { return <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.gold }}>🏷 Offre prestataire</span> }
+  const clickable = it.providerId != null && it.providerId !== ''
+  const go = (e) => { e.stopPropagation(); if (clickable) navigate(`/prestataires/${encodeURIComponent(it.providerId)}`) }
+  const priceLabel = it.price != null && Number(it.price) > 0
+    ? `${Number(it.price).toLocaleString('fr-FR')}€${it.unit ? ` / ${it.unit}` : ''}`
+    : 'Sur demande'
+  return (
+    <div onClick={go} style={{ width: 252, borderRadius: 12, overflow: 'hidden', cursor: clickable ? 'pointer' : 'default', background: 'rgba(4,4,14,0.55)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 8px 28px rgba(0,0,0,0.30)' }}>
+      <div style={{ position: 'relative' }}>
+        {it.image
+          ? <img src={it.image} alt={it.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
+          : <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg, rgba(200,169,110,0.20), rgba(78,232,200,0.10))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 12 22l-9-9V4a1 1 0 0 1 1-1h9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+            </div>}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,14,0.65), transparent 55%)' }} />
+        <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: T.dmMono, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#fff', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 7px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.15)' }}>Offre{it.providerName ? ` · ${it.providerName}` : ''}</span>
+        <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.08em', color: T.gold, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 8px', borderRadius: 4, border: '1px solid rgba(200,169,110,0.35)' }}>{priceLabel}</span>
+      </div>
+      <div style={{ padding: '11px 13px 13px' }}>
+        <p style={{ fontFamily: T.cormorant, fontWeight: 500, fontSize: 16, color: '#fff', margin: '0 0 3px', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name || 'Offre'}</p>
+        {it.category && <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 11px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{it.category}</p>}
+        {clickable && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 7, background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.32)' }}>
+            <span style={{ fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: T.gold }}>Voir le prestataire →</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Event poll card (validate/decline group event) ────────────────────────────
 function EventPollCard({ msg, myId, convId, onVote }) {
   let poll
@@ -1757,6 +1794,8 @@ export default function MessagingPage() {
                   <GroupBookingCard bookingId={msg.content} myId={myId} myName={myName} conv={activeConv} onValidate={handleValidateBooking} onPay={handlePayBooking} onSong={bId => { setSongPickerModal(bId); setSongInput({ title: '', artist: '' }) }} onNudge={(names) => { sendMessage(activeConvId, myId, myName, 'text', `⏳ ${names} — on vous attend pour la sortie, validez/payez votre part 👀`); setMessages(getMessages(activeConvId)); showToast('Relance envoyée') }} onWithdraw={(bId) => { withdrawFromGroupBooking(bId, myId); setGroupBookings(getGroupBookings()); sendMessage(activeConvId, myId, myName, 'text', `${myName} s'est retiré de la sortie — les parts ont été ré-équilibrées.`); setMessages(getMessages(activeConvId)); showToast('Tu t\'es retiré du groupe') }} groupBookings={groupBookings} />
                 ) : msg.type === 'event' ? (
                   <EventCard content={msg.content} />
+                ) : msg.type === 'catalog_item' ? (
+                  <CatalogItemCard content={msg.content} />
                 ) : (
                   <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.muted }}>{msg.content}</span>
                 )}

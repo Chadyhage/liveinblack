@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { getCatalog, getAllProviderProfiles } from '../utils/services'
 import { createDirectConversation, getUserId } from '../utils/messaging'
 import { getProviderCategory } from '../utils/providerCategories'
+import ShareToChatModal from '../components/ShareToChatModal'
 
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e' }
@@ -40,6 +41,7 @@ export default function PublicPrestatairePage() {
   const [profile, setProfile] = useState(() => getAllProviderProfiles().find(item => item.userId === decodedId) || null)
   const [catalog, setCatalog] = useState(() => getCatalog(decodedId))
   const [loading, setLoading] = useState(true)
+  const [shareItem, setShareItem] = useState(null) // offre en cours de partage
 
   useEffect(() => {
     let unlistenProviders = () => {}
@@ -77,6 +79,16 @@ export default function PublicPrestatairePage() {
     if (!myId || !profile?.userId) return
     const conv = createDirectConversation(myId, account?.name || 'Membre LIVE IN BLACK', profile.userId, profile.name || 'Prestataire')
     navigate('/messagerie', { state: { conversationId: conv.id } })
+  }
+
+  // Partage d'une offre dans une conversation. Déconnecté → auth modal, puis
+  // ouverture du partage une fois connecté.
+  function handleShare(item) {
+    if (!user) {
+      openAuthModal('Connecte-toi pour partager cette offre dans tes conversations.', () => setShareItem(item))
+      return
+    }
+    setShareItem(item)
   }
 
   function handleContact() {
@@ -209,6 +221,10 @@ export default function PublicPrestatairePage() {
                           {Number(item.price) > 0 ? `${Number(item.price).toLocaleString('fr-FR')} €${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
                         </p>
                         {Number(item.price) > 0 && <p style={{ fontFamily: FONT, fontSize: 10, color: 'rgba(255,255,255,.35)', margin: '4px 0 0' }}>Tarif indicatif</p>}
+                        <button onClick={() => handleShare(item)} style={shareButton}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                          Partager cette offre
+                        </button>
                       </div>
                     </article>
                   ))}
@@ -226,6 +242,23 @@ export default function PublicPrestatairePage() {
         </div>
       </main>
       </div>
+      <ShareToChatModal
+        open={!!shareItem}
+        onClose={() => setShareItem(null)}
+        user={user}
+        title="Partager cette offre"
+        messageType="catalog_item"
+        payload={shareItem ? {
+          providerId: profile.userId,
+          providerName: profile.name || 'Prestataire',
+          itemId: shareItem.id,
+          name: shareItem.name,
+          price: shareItem.price ?? null,
+          unit: shareItem.unit || '',
+          category: shareItem.category || '',
+          image: (Array.isArray(shareItem.media) ? shareItem.media.find(m => m?.url && m.type !== 'video')?.url : shareItem.mediaUrl) || null,
+        } : {}}
+      />
     </PageChrome>
   )
 }
@@ -236,3 +269,4 @@ const detailLine = { display: 'flex', alignItems: 'center', gap: 8, fontFamily: 
 const primaryButton = { display: 'inline-flex', alignItems: 'center', gap: 9, minHeight: 46, padding: '12px 18px', borderRadius: 13, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${C.gold},#e0c48a)`, color: C.obsidian, fontFamily: FONT, fontSize: 13.5, fontWeight: 800 }
 const secondaryButton = { minHeight: 44, padding: '11px 17px', borderRadius: 12, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.05)', color: '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer' }
 const linkButton = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 40, padding: 0, border: 0, background: 'none', color: 'rgba(255,255,255,.58)', fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer' }
+const shareButton = { display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 14, padding: '9px 14px', borderRadius: 10, border: '1px solid rgba(78,232,200,.28)', background: 'rgba(78,232,200,.08)', color: '#4ee8c8', fontFamily: FONT, fontSize: 12, fontWeight: 700, cursor: 'pointer' }
