@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
@@ -29,12 +29,31 @@ export default function OrganizerPublicStudio() {
   const [uploading, setUploading] = useState('')
   const [message, setMessage] = useState(null)
 
+  // Hydratation UNIQUE depuis Firestore : après le premier snapshot, un écho
+  // distant (ex. +1 vue posté par un visiteur) ne doit JAMAIS écraser les
+  // modifications non enregistrées du formulaire (logo/bannière/galerie qui
+  // « disparaissaient » en cours d'édition). On ne rafraîchit que les compteurs.
+  const hydratedRef = useRef(false)
   useEffect(() => {
     if (!uid) return
+    hydratedRef.current = false
     let stopProfile = () => {}
     let stopEvents = () => {}
     import('../utils/firestore-sync').then(({ listenOrganizerProfile, listenUserEvents }) => {
-      stopProfile = listenOrganizerProfile(uid, remote => { if (remote) setProfile(remote) })
+      stopProfile = listenOrganizerProfile(uid, remote => {
+        if (!remote) return
+        if (!hydratedRef.current) {
+          hydratedRef.current = true
+          setProfile(remote)
+        } else {
+          setProfile(current => ({
+            ...current,
+            followersCount: remote.followersCount ?? current.followersCount,
+            viewsCount: remote.viewsCount ?? current.viewsCount,
+            eventClicksCount: remote.eventClicksCount ?? current.eventClicksCount,
+          }))
+        }
+      })
       stopEvents = listenUserEvents(uid, setEvents)
     }).catch(() => {})
     return () => { stopProfile(); stopEvents() }
@@ -50,9 +69,17 @@ export default function OrganizerPublicStudio() {
     setMessage(null); setUploading(kind)
     try {
       const uploaded = await uploadOrganizerMedia(uid, file, kind)
-      if (kind === 'avatar') update({ avatarUrl:uploaded.url })
-      else if (kind === 'banner') update({ bannerUrl:uploaded.url })
-      else update({ media:[...activeMedia, { id:`org-media-${Date.now()}`, ...uploaded, title:'', description:'', eventId:'', visibility:'public', displayOrder:activeMedia.length, createdAt:Date.now(), updatedAt:Date.now() }] })
+      let next
+      if (kind === 'avatar') next = { ...profile, avatarUrl: uploaded.url }
+      else if (kind === 'banner') next = { ...profile, bannerUrl: uploaded.url }
+      else next = { ...profile, media: [...activeMedia, { id:`org-media-${Date.now()}`, ...uploaded, title:'', description:'', eventId:'', visibility:'public', displayOrder:activeMedia.length, createdAt:Date.now(), updatedAt:Date.now() }] }
+      setProfile(next)
+      // Persistance IMMÉDIATE : un média uploadé ne doit pas se perdre si on
+      // quitte la page sans cliquer « Enregistrer ».
+      const saved = await saveOrganizerProfile(next)
+      setProfile(saved)
+      hydratedRef.current = true
+      setMessage({ type:'success', text: kind === 'gallery' ? 'Média ajouté et enregistré sur ta page.' : 'Image enregistrée sur ta page.' })
     } catch (e) { setMessage({type:'error',text:e.message}) }
     setUploading('')
   }
@@ -70,6 +97,12 @@ export default function OrganizerPublicStudio() {
   }
 
   function updateMedia(id, patch) { update({media:activeMedia.map(item=>item.id===id?{...item,...patch,updatedAt:Date.now()}:item)}) }
+  async function removeMedia(id) {
+    const next = { ...profile, media: activeMedia.filter(m => m.id !== id) }
+    setProfile(next)
+    // Même logique que l'upload : suppression persistée immédiatement
+    try { const saved = await saveOrganizerProfile(next); setProfile(saved); hydratedRef.current = true } catch (e) { setMessage({ type:'error', text:e.message }) }
+  }
   function moveMedia(index, direction) {
     const next=[...activeMedia]; const target=index+direction
     if(target<0||target>=next.length)return
@@ -99,7 +132,7 @@ export default function OrganizerPublicStudio() {
       </section>
       <aside className="os-panel os-preview"><h2>Aperçu de ma page</h2><div style={{border:'1px solid rgba(255,255,255,.1)'}}><div className="os-preview-banner" style={profile.bannerUrl?{backgroundImage:`url(${profile.bannerUrl})`}:undefined}/><div className="os-preview-body"><div className="os-preview-avatar">{profile.avatarUrl?<img src={profile.avatarUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:profile.publicName?.[0]||'O'}</div><h3 style={{font:`34px ${DISPLAY}`,margin:'10px 0 0'}}>{profile.publicName||'Ton nom public'}</h3><p style={{font:`9px ${UI}`,color:C.gold}}>{[profile.city,profile.country].filter(Boolean).join(' · ')||'Ville · Pays'}</p><p style={{fontSize:12,color:'rgba(255,255,255,.55)',lineHeight:1.6}}>{profile.shortDescription||'Ta description courte apparaîtra ici.'}</p></div></div><div style={{marginTop:16}}><p style={{font:`9px ${UI}`,color:'rgba(255,255,255,.5)'}}>STATUT DE LA PAGE</p>{['draft','public'].map(status=><label key={status} style={{display:'flex',alignItems:'center',gap:9,padding:'9px 0',font:`10px ${UI}`,textTransform:'uppercase'}}><input type="radio" checked={profile.status===status} onChange={()=>update({status,isPublic:status==='public'})}/>{status==='public'?'Publique':'Brouillon'}</label>)}</div><button className="os-save" onClick={save} disabled={saving}>{saving?'Enregistrement…':'Enregistrer'}</button></aside>
       <section className="os-panel os-media-panel"><div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center',flexWrap:'wrap'}}><div><h2 style={{marginBottom:4}}>Galerie photos & vidéos</h2><p style={{margin:0,color:'rgba(255,255,255,.42)',fontSize:12}}>Images 10 Mo max. Vidéos 50 Mo max. Maximum conseillé : 12 médias.</p></div><label className="os-upload-btn">{uploading==='gallery'?'Envoi…':'Ajouter un média'}<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={e=>upload('gallery',e.target.files?.[0])}/></label></div>
-        <div className="os-media-list" style={{marginTop:16}}>{activeMedia.length===0?<div style={{color:'rgba(255,255,255,.45)',fontSize:12}}>Tu n’as encore ajouté aucun média.</div>:activeMedia.map((item,index)=><article className="os-media-item" key={item.id}><div className="os-media-thumb">{item.type==='video'?<video src={item.url} muted/>:<img src={item.url} alt=""/>}</div><input style={{...input,marginTop:8}} placeholder="Titre facultatif" value={item.title||''} onChange={e=>updateMedia(item.id,{title:e.target.value})}/><select style={{...input,marginTop:7}} value={item.eventId||''} onChange={e=>updateMedia(item.id,{eventId:e.target.value})}><option value="">Aucun événement lié</option>{events.map(event=><option key={event.id} value={event.id}>{event.name}</option>)}</select><label style={{display:'flex',gap:7,alignItems:'center',fontSize:11,color:'rgba(255,255,255,.55)',marginTop:8}}><input type="checkbox" checked={item.visibility!=='hidden'} onChange={e=>updateMedia(item.id,{visibility:e.target.checked?'public':'hidden'})}/> Visible publiquement</label><div className="os-media-actions"><button onClick={()=>moveMedia(index,-1)} disabled={index===0}>←</button><button onClick={()=>moveMedia(index,1)} disabled={index===activeMedia.length-1}>→</button><button onClick={()=>update({media:activeMedia.filter(m=>m.id!==item.id)})} style={{color:C.pink}}>Supprimer</button></div></article>)}</div>
+        <div className="os-media-list" style={{marginTop:16}}>{activeMedia.length===0?<div style={{color:'rgba(255,255,255,.45)',fontSize:12}}>Tu n’as encore ajouté aucun média.</div>:activeMedia.map((item,index)=><article className="os-media-item" key={item.id}><div className="os-media-thumb">{item.type==='video'?<video src={item.url} muted/>:<img src={item.url} alt=""/>}</div><input style={{...input,marginTop:8}} placeholder="Titre facultatif" value={item.title||''} onChange={e=>updateMedia(item.id,{title:e.target.value})}/><select style={{...input,marginTop:7}} value={item.eventId||''} onChange={e=>updateMedia(item.id,{eventId:e.target.value})}><option value="">Aucun événement lié</option>{events.map(event=><option key={event.id} value={event.id}>{event.name}</option>)}</select><label style={{display:'flex',gap:7,alignItems:'center',fontSize:11,color:'rgba(255,255,255,.55)',marginTop:8}}><input type="checkbox" checked={item.visibility!=='hidden'} onChange={e=>updateMedia(item.id,{visibility:e.target.checked?'public':'hidden'})}/> Visible publiquement</label><div className="os-media-actions"><button onClick={()=>moveMedia(index,-1)} disabled={index===0}>←</button><button onClick={()=>moveMedia(index,1)} disabled={index===activeMedia.length-1}>→</button><button onClick={()=>removeMedia(item.id)} style={{color:C.pink}}>Supprimer</button></div></article>)}</div>
       </section>
     </div>
   </div></Layout>

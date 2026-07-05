@@ -629,6 +629,12 @@ export default function ProfilePage() {
       const providerDoc = (await loadDoc(`providers/${uid}`)) || getProviderProfile(uid)
       if (providerDoc?.userId) saveProviderProfile({ ...providerDoc, phone, updatedAt: Date.now() })
     }
+    // Miroir page organisateur : organizer_profiles est lisible SANS compte
+    // (users/{uid} ne l'est pas) → c'est ce doc que la page publique affiche.
+    try {
+      const orgDoc = await loadDoc(`organizer_profiles/${uid}`)
+      if (orgDoc) syncDoc(`organizer_profiles/${uid}`, { proPhone: phone })
+    } catch {}
   }
 
   // ── Interface prestataire → providers/{uid} (nom de page) + numéro pro ──────

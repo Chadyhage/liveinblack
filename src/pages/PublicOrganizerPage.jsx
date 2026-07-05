@@ -5,6 +5,7 @@ import PublicNav from '../components/PublicNav'
 import OrganizerFollowButton from '../components/OrganizerFollowButton'
 import { useAuth } from '../context/AuthContext'
 import { cacheOrganizerProfiles, getOrganizerProfile, reportOrganizer } from '../utils/organizers'
+import { createDirectConversation, getUserId } from '../utils/messaging'
 
 const C = { obsidian:'#04040b', teal:'#4ee8c8', gold:'#c8a96e', pink:'#e05aaa' }
 const DISPLAY = 'Bebas Neue, Impact, sans-serif'
@@ -106,6 +107,25 @@ export default function PublicOrganizerPage() {
     navigate(`/evenements/${event.id}`)
   }
 
+  // ── Contacter l'organisateur : conversation directe dans la messagerie ──
+  // (même modèle que la page prestataire : la mise en relation passe par l'appli)
+  const organizerUid = profile?.userId || profile?.id
+  const isSelf = !!uid && uid === organizerUid
+  function startConversation(account = user) {
+    const myId = getUserId(account) || account?.uid
+    if (!myId || !organizerUid || myId === organizerUid) return
+    const conv = createDirectConversation(myId, account?.name || 'Membre LIVE IN BLACK', organizerUid, profile.publicName || 'Organisateur')
+    navigate('/messagerie', { state: { conversationId: conv.id } })
+  }
+  function handleContact() {
+    if (isSelf) return
+    if (!user) {
+      openAuthModal(`Connecte-toi pour écrire à ${profile?.publicName || 'cet organisateur'}.`, loggedInUser => startConversation(loggedInUser))
+      return
+    }
+    startConversation(user)
+  }
+
   async function share() {
     const payload = { title:`${profile.publicName} — Live in Black`, text:profile.shortDescription || '', url:window.location.href }
     try {
@@ -146,16 +166,17 @@ export default function PublicOrganizerPage() {
         <div className="op-identity">
           <div className="op-avatar">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : profile.publicName?.[0]}</div>
           <div><div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}><h1 className="op-name">{profile.publicName}</h1>{profile.isVerified && <span style={{color:C.teal,font: '10px DM Mono'}}>● Organisateur vérifié</span>}</div><p className="op-meta">{[profile.city,profile.country].filter(Boolean).join(' · ') || 'Live in Black'}</p></div>
-          <div className="op-hero-actions"><OrganizerFollowButton organizer={profile}/><button className="op-secondary" onClick={share}>{copied ? 'Lien copié' : 'Partager'}</button></div>
+          <div className="op-hero-actions">{!isSelf && <button className="op-secondary" style={{background:C.teal,border:'1px solid transparent',color:C.obsidian,fontWeight:700}} onClick={handleContact}>Envoyer un message</button>}<OrganizerFollowButton organizer={profile}/><button className="op-secondary" onClick={share}>{copied ? 'Lien copié' : 'Partager'}</button></div>
         </div>
       </section>
       <section className="op-summary"><div><p>{profile.longDescription || profile.shortDescription || 'Découvre les prochains événements et l’univers de cet organisateur.'}</p><div className="op-tags">{[...(profile.eventTypes||[]),...(profile.vibes||[])].slice(0,10).map(tag=><span className="op-tag" key={tag}>{tag}</span>)}</div>{Object.entries(profile.socialLinks||{}).filter(([,url])=>url).length>0&&<div style={{display:'flex',gap:13,marginTop:18}}>{Object.entries(profile.socialLinks||{}).filter(([,url])=>url).map(([network,url])=><a key={network} href={externalUrl(url)} target="_blank" rel="noreferrer" style={{color:'rgba(255,255,255,.55)',font:`9px ${UI}`,textTransform:'uppercase',letterSpacing:'.09em'}}>{network}</a>)}</div>}</div><div className="op-kpis"><div><b>{compact(profile.followersCount)}</b><span>Abonnés</span></div><div><b>{Math.max(profile.totalEventsCount||0,ownEvents.length)}</b><span>Événements</span></div></div></section>
       <section className="op-section"><h2>Événements à venir</h2>{upcoming.length ? <div className="op-event-list">{upcoming.map(event=><EventCard key={event.id} event={event} onOpen={openEvent}/>)}</div> : <div className="op-empty">Aucun événement à venir pour le moment.</div>}</section>
       <section className="op-section"><h2>Événements passés</h2>{past.length ? <div className="op-event-list">{past.slice(0,6).map(event=><EventCard key={event.id} event={event} past onOpen={openEvent}/>)}</div> : <div className="op-empty">Cet organisateur n’a pas encore d’événement passé.</div>}</section>
       <section className="op-section"><h2>Photos & vidéos</h2>{media.length ? <div className="op-media">{media.map(item=><button key={item.id} onClick={()=>setMediaOpen(item)} aria-label={`Ouvrir ${item.title||'le média'}`}>{item.type==='video'?<video src={item.url} muted preload="metadata"/>:<img src={item.url} alt={item.title||''}/>} {item.type==='video'&&<span style={{position:'absolute',inset:'auto 12px 12px auto',width:34,height:34,borderRadius:'50%',display:'grid',placeItems:'center',background:'rgba(4,4,11,.75)',color:'#fff'}}>▶</span>}</button>)}</div> : <div className="op-empty">Cet organisateur n’a pas encore publié de médias.</div>}</section>
-      <section className="op-about"><div><h2>À propos</h2><p>{profile.shortDescription || profile.longDescription || 'Page publique organisateur Live in Black.'}</p></div><div><p>Profil créé le {formatDate(profile.createdAt)}<br/>{[profile.city,profile.country].filter(Boolean).join(', ') || 'Localisation non renseignée'}<br/>{profile.publicContactEnabled && profile.publicContact ? profile.publicContact : ''}</p><button className="op-report" onClick={()=>uid?setReportOpen(true):openAuthModal('Connecte-toi pour signaler cette page organisateur.')}>Signaler cette page</button></div></section>
+      <section className="op-about"><div><h2>À propos</h2><p>{profile.shortDescription || profile.longDescription || 'Page publique organisateur Live in Black.'}</p></div><div><p>Profil créé le {formatDate(profile.createdAt)}<br/>{[profile.city,profile.country].filter(Boolean).join(', ') || 'Localisation non renseignée'}</p>{/* Numéro PRO (partagé au niveau du compte) = contact business public. Clic = appel. */}{profile.proPhone && <a href={`tel:${String(profile.proPhone).replace(/[^\d+]/g,'')}`} style={{display:'inline-flex',alignItems:'center',gap:8,margin:'10px 0 14px',color:C.gold,font:`11px ${UI}`,letterSpacing:'.06em',textDecoration:'none'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>{profile.proPhone}</a>}<br/><button className="op-report" onClick={()=>uid?setReportOpen(true):openAuthModal('Connecte-toi pour signaler cette page organisateur.')}>Signaler cette page</button></div></section>
     </main>
-    {mediaOpen && <div className="op-modal" onClick={()=>setMediaOpen(null)}><button onClick={()=>setMediaOpen(null)} style={{position:'fixed',right:20,top:20,background:'none',border:0,color:'#fff',fontSize:32}}>×</button>{mediaOpen.type==='video'?<video src={mediaOpen.url} controls autoPlay style={{maxWidth:'92vw',maxHeight:'86vh'}}/>:<img src={mediaOpen.url} alt={mediaOpen.title||''} style={{maxWidth:'92vw',maxHeight:'86vh',objectFit:'contain'}}/>}</div>}
+    {/* stopPropagation sur le média : cliquer la vidéo (play/pause…) ne doit pas fermer l'overlay — seul un clic sur le fond ou la croix ferme */}
+    {mediaOpen && <div className="op-modal" onClick={()=>setMediaOpen(null)}><button onClick={()=>setMediaOpen(null)} aria-label="Fermer" style={{position:'fixed',right:20,top:20,background:'none',border:0,color:'#fff',fontSize:32,cursor:'pointer',zIndex:2}}>×</button>{mediaOpen.type==='video'?<video src={mediaOpen.url} controls autoPlay onClick={e=>e.stopPropagation()} style={{maxWidth:'92vw',maxHeight:'86vh'}}/>:<img src={mediaOpen.url} alt={mediaOpen.title||''} onClick={e=>e.stopPropagation()} style={{maxWidth:'92vw',maxHeight:'86vh',objectFit:'contain'}}/>}</div>}
     {reportOpen && <div className="op-modal"><form className="op-modal-card" onSubmit={submitReport}><h2 style={{font: '34px Bebas Neue',margin:'0 0 16px'}}>Signaler cette page</h2>{reportState==='sent'?<p style={{color:C.teal}}>Merci, le signalement a été transmis.</p>:<><select className="input-dark" value={reportReason} onChange={e=>setReportReason(e.target.value)}><option value="faux_organisateur">Faux organisateur</option><option value="contenu_trompeur">Contenu trompeur</option><option value="contenu_inapproprie">Contenu inapproprié</option><option value="arnaque">Suspicion d’arnaque</option><option value="usurpation">Usurpation d’identité</option><option value="autre">Autre</option></select><textarea className="input-dark" value={reportText} onChange={e=>setReportText(e.target.value)} placeholder="Précisions facultatives" rows={4} style={{marginTop:10}}/><div style={{display:'flex',gap:9,marginTop:14}}><button type="button" className="btn-outline" onClick={()=>setReportOpen(false)}>Annuler</button><button className="btn-gold" disabled={reportState==='sending'}>{reportState==='sending'?'Envoi…':'Envoyer'}</button></div>{reportState==='error'&&<p style={{color:C.pink}}>Impossible d’envoyer le signalement.</p>}</>}</form></div>}
   </div>
   return user ? <Layout>{page}</Layout> : page
