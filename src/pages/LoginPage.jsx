@@ -543,17 +543,36 @@ export default function LoginPage() {
      Apple Developer payant, Google n'a jamais été activé côté Firebase). */
 
   // ── Real password reset ──
+  // 1) On tente l'envoi BRANDÉ via /api/send-password-reset (Resend, domaine vérifié
+  //    → n'atterrit pas en spam, contrairement au mail Firebase par défaut).
+  // 2) Fallback : si l'endpoint est indisponible (dev local sans /api), on retombe
+  //    sur sendPasswordResetEmail côté client.
+  // Anti-énumération : on affiche TOUJOURS le même message générique (on ne révèle
+  // jamais si l'email correspond à un compte). Seul un email mal formé est signalé.
   async function handleSendReset() {
-    if (!resetEmail.trim()) { setResetError('Entre ton adresse email.'); return }
+    const email = resetEmail.trim()
+    if (!email) { setResetError('Entre ton adresse email.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setResetError('Adresse email invalide.'); return }
     setResetLoading(true)
     setResetError('')
     try {
-      const { sendPasswordResetEmail } = await import('firebase/auth')
-      const { auth } = await import('../firebase')
-      await sendPasswordResetEmail(auth, resetEmail)
+      const r = await fetch('/api/send-password-reset', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (r.ok) { setResetSent(true); return }
+      // 503 = email non configuré / 404 = pas d'API (dev) → fallback Firebase.
+      throw new Error('api-unavailable')
+    } catch {
+      try {
+        const { sendPasswordResetEmail } = await import('firebase/auth')
+        const { auth } = await import('../firebase')
+        await sendPasswordResetEmail(auth, email)
+      } catch (err) {
+        // user-not-found / autre : on NE révèle rien → succès générique quand même.
+        if (err?.code === 'auth/invalid-email') { setResetError('Adresse email invalide.'); setResetLoading(false); return }
+      }
       setResetSent(true)
-    } catch (err) {
-      setResetError(getFirebaseError(err.code))
     } finally {
       setResetLoading(false)
     }
@@ -1181,7 +1200,7 @@ export default function LoginPage() {
             {!resetSent ? (
               <form onSubmit={e => { e.preventDefault(); handleSendReset() }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
-                  Entre ton adresse email et on t'envoie un lien de réinitialisation.
+                  Entre ton adresse email. Si elle est associée à un compte, tu recevras un lien de réinitialisation.
                 </p>
                 <div>
                   <label style={S.label}>Email</label>
@@ -1204,9 +1223,9 @@ export default function LoginPage() {
                     <path d="M2 7l10 7 10-7"/>
                   </svg>
                 </div>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#4ee8c8' }}>Email envoyé</p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#4ee8c8' }}>Vérifie tes emails</p>
                 <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
-                  Un lien a été envoyé à <span style={{ color: 'white' }}>{resetEmail}</span>.
+                  Si <span style={{ color: 'white' }}>{resetEmail}</span> est associée à un compte, un lien de réinitialisation vient d'être envoyé. Pense à vérifier tes spams.
                 </p>
                 <button onClick={() => setShowResetModal(false)} style={S.btnGold}>Fermer</button>
               </div>
