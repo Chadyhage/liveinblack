@@ -388,7 +388,9 @@ export default function OnboardingPrestataire() {
       try {
         const { USE_REAL_FIREBASE } = await import('../firebase')
         let uid
-        const name = getDisplayName(f) || `${f.prenom} ${f.nom}`.trim()
+        // Nom du COMPTE (identité perso) = prénom + nom. Le nom de scène / commercial
+        // reste l'identité PRO (providers/{uid}), il n'écrase pas le nom du compte.
+        const name = `${f.prenom} ${f.nom}`.trim() || getDisplayName(f) || 'Prestataire'
         const phone = f.telephone || ''
 
         if (USE_REAL_FIREBASE) {
@@ -508,11 +510,15 @@ export default function OnboardingPrestataire() {
         })
       } catch {}
 
-      // Sync display name to user profile (logged-in mode)
+      // On NE touche PAS au nom global du compte : le nom de scène / commercial est
+      // l'identité PRO du prestataire → il vit uniquement dans providers/{uid} (créé à
+      // l'approbation). Écraser users/{uid}.name transformait « Raïssa Hage » (identité
+      // perso, ex. bonjour {name} côté client) en « Riri star ». On ne synchronise que
+      // le type de prestation.
       if (user) {
         try {
           const { syncDoc } = await import('../utils/firestore-sync')
-          syncDoc(`users/${user.uid}`, { name: getDisplayName(f), prestataireType: f.prestataireType })
+          syncDoc(`users/${user.uid}`, { prestataireType: f.prestataireType })
         } catch {}
       }
 

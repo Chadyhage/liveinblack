@@ -12,7 +12,9 @@ export const DEMO_USERS = [
 
 // ─── Username helpers ─────────────────────────────────────────────────────────
 function generateUsername(name) {
-  return (name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '.').replace(/\.+/g, '.').replace(/^\.|\.$/, '')
+  return (name || 'user')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // enlève les accents : ï→i, é→e, ç→c…
+    .toLowerCase().replace(/[^a-z0-9]/g, '.').replace(/\.+/g, '.').replace(/^\.|\.$/, '')
 }
 
 function ensureUniqueUsername(base, existingUsers) {
