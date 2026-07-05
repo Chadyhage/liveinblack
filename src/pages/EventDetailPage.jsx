@@ -390,6 +390,7 @@ export default function EventDetailPage() {
   // Event en state — initialement cherché localement, puis fetché Firestore si absent
   const [event, setEvent] = useState(() => getAllLocalEvents().find((e) => String(e.id) === String(id)) || null)
   const [eventLoading, setEventLoading] = useState(() => !getAllLocalEvents().find((e) => String(e.id) === String(id)))
+  const [organizerProfile, setOrganizerProfile] = useState(null)
 
   useEffect(() => {
     if (event) return // déjà trouvé en local
@@ -401,6 +402,18 @@ export default function EventDetailPage() {
     })
     return () => { cancelled = true }
   }, [id, event])
+
+  useEffect(() => {
+    const ownerUid = event?.organizerId || event?.createdBy
+    if (!ownerUid) { setOrganizerProfile(null); return }
+    let stop = () => {}
+    import('../utils/firestore-sync').then(({ listenOrganizerProfiles }) => {
+      stop = listenOrganizerProfiles(items => {
+        setOrganizerProfile(items.find(profile => profile.id === ownerUid || profile.userId === ownerUid) || null)
+      })
+    }).catch(() => {})
+    return () => stop()
+  }, [event?.organizerId, event?.createdBy])
 
   const hasPlaylist = !!event?.playlist
   const TABS = ['Réservation', ...(hasPlaylist ? ['Playlist'] : []), 'Info']
@@ -1846,17 +1859,20 @@ export default function EventDetailPage() {
                     color: '#c8a96e',
                     flexShrink: 0,
                   }}>
-                    {event.organizer?.[0]}
+                    {organizerProfile?.avatarUrl
+                      ? <img src={organizerProfile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                      : (organizerProfile?.publicName || event.organizerName || event.organizer || 'O')[0]}
                   </div>
-                  <div style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 18, color: 'white', margin: 0 }}>
-                      {event.organizer}
+                      {organizerProfile?.publicName || event.organizerName || event.organizer || 'Organisateur'}
                     </p>
-                    <p style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                    {organizerProfile?.isVerified && <p style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
                       Organisateur vérifié
-                    </p>
+                    </p>}
                   </div>
+                  {organizerProfile && <button onClick={() => navigate(`/organisateurs/${organizerProfile.slug}`)} style={{ flexShrink: 0, padding: '9px 11px', borderRadius: 4, border: '1px solid rgba(78,232,200,.35)', background: 'rgba(78,232,200,.07)', color: '#4ee8c8', fontFamily: 'DM Mono, monospace', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Voir la page</button>}
                 </div>
               </div>
               <div>

@@ -1065,6 +1065,25 @@ export default function MesEvenementsPage() {
               </div>
             </button>
 
+            <button onClick={() => navigate('/ma-page-organisateur')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+              <div style={{
+                position: 'relative', overflow: 'hidden', borderRadius: 12,
+                border: '1px solid rgba(78,232,200,0.28)',
+                background: 'linear-gradient(135deg, rgba(78,232,200,0.07) 0%, transparent 60%)',
+                padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14,
+              }}>
+                <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.30)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3"/><path d="M5 20c0-4 3-7 7-7s7 3 7 7"/><path d="M18 4h3v3"/></svg>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#4ee8c8', marginBottom: 4 }}>Audience</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: 0 }}>Ma page publique</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Active ta page pour apparaître chez les clients</p>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(78,232,200,0.5)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </button>
+
             {/* Scanner — bouton pleine largeur séparé, accent teal (outil d'entrée) */}
             <button onClick={() => navigate('/scanner')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
               <div style={{

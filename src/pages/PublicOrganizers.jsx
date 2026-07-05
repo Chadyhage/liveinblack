@@ -121,7 +121,7 @@ export default function PublicOrganizers() {
           </select>
         </div>
 
-        {filtered.length === 0 ? <div className="org-empty">Aucun organisateur ne correspond à ta recherche.</div> : (
+        {filtered.length === 0 ? <div className="org-empty">{profiles.length === 0 ? 'Aucune page organisateur publique n’est encore activée.' : 'Aucun organisateur ne correspond à ta recherche.'}</div> : (
           <div className="org-grid">
             {filtered.map(profile => {
               const ownEvents = eventData.byOrganizer[profile.id] || []
@@ -159,4 +159,3 @@ export default function PublicOrganizers() {
 
   return user ? <Layout>{content}</Layout> : content
 }
-

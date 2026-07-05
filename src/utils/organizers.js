@@ -116,6 +116,12 @@ export async function saveOrganizerProfile(profile) {
     status: ORGANIZER_STATUSES.includes(profile.status) ? profile.status : 'draft',
     isPublic: profile.status === 'public',
     followersCount: Math.max(0, Number(profile.followersCount) || 0),
+    // Compteurs TOUJOURS présents et numériques : les règles Firestore comparent
+    // `viewsCount == resource.viewsCount + 1` — si le champ manque sur le doc,
+    // l'évaluation ÉCHOUE et tout le tracking vues/clics est refusé en silence.
+    viewsCount: Math.max(0, Number(profile.viewsCount) || 0),
+    eventClicksCount: Math.max(0, Number(profile.eventClicksCount) || 0),
+    mediaViewsCount: Math.max(0, Number(profile.mediaViewsCount) || 0),
     updatedAt: Date.now(),
   }
   const next = [...profiles.filter(p => p.id !== id), normalized]
