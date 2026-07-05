@@ -926,7 +926,9 @@ export default function MessagingPage() {
   // Téléphone de l'interlocuteur (conv directe) — fetché à la demande depuis Firestore
   // (users/{uid} + providers/{uid}, lisibles par tout connecté). Confidentialité :
   //  · numéro PERSO (users.phone) affiché SEULEMENT si l'autre l'a autorisé (privacy.showPhone) ;
-  //  · numéro PRO (providers.phone, prestataire) = contact business → affiché s'il existe.
+  //  · numéro PRO = users.proPhone (UN numéro par compte, partagé organisateur/
+  //    prestataire) → contact business, affiché s'il existe. Fallback historique :
+  //    providers.phone (anciens comptes pas encore migrés).
   const directOtherId = activeConv?.type === 'direct' ? activeConv.participants?.find(id => id !== myId) : null
   const [contactPhones, setContactPhones] = useState(null) // { perso, pro } | null
   useEffect(() => {
@@ -935,8 +937,17 @@ export default function MessagingPage() {
     setContactPhones(null)
     Promise.all([import('../firebase'), import('firebase/firestore')]).then(async ([{ db }, { doc, getDoc }]) => {
       let perso = null, pro = null
-      try { const s = await getDoc(doc(db, 'users', String(directOtherId))); if (s.exists()) { const d = s.data(); if (d.privacy?.showPhone === true && d.phone) perso = d.phone } } catch {}
-      try { const s = await getDoc(doc(db, 'providers', String(directOtherId))); if (s.exists() && s.data().phone) pro = s.data().phone } catch {}
+      try {
+        const s = await getDoc(doc(db, 'users', String(directOtherId)))
+        if (s.exists()) {
+          const d = s.data()
+          if (d.privacy?.showPhone === true && d.phone) perso = d.phone
+          if (d.proPhone) pro = d.proPhone
+        }
+      } catch {}
+      if (!pro) {
+        try { const s = await getDoc(doc(db, 'providers', String(directOtherId))); if (s.exists() && s.data().phone) pro = s.data().phone } catch {}
+      }
       if (!cancelled) setContactPhones({ perso, pro })
     }).catch(() => { if (!cancelled) setContactPhones({ perso: null, pro: null }) })
     return () => { cancelled = true }

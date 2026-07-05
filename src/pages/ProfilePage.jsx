@@ -425,7 +425,12 @@ export default function ProfilePage() {
   const [phoneMsg, setPhoneMsg] = useState(null)
   const [savingPhone, setSavingPhone] = useState(false)
 
-  // Settings — interface prestataire (nom de page + numéro pro → providers/{uid})
+  // Settings — NUMÉRO PRO : un seul par compte (users/{uid}.proPhone), PARTAGÉ
+  // par les interfaces organisateur et prestataire. Miroir vers providers/{uid}.phone
+  // (page publique prestataire) à chaque sauvegarde.
+  const [proPhoneForm, setProPhoneForm] = useState(user?.proPhone || '')
+
+  // Settings — interface prestataire (nom de page → providers/{uid})
   const [providerForm, setProviderForm] = useState(null) // null = pas encore chargé
   const [providerMsg, setProviderMsg] = useState(null)
   const [savingProvider, setSavingProvider] = useState(false)
@@ -474,18 +479,33 @@ export default function ProfilePage() {
     if (panel !== 'settings' || !user?.uid) return
     setPhoneForm(user?.phone || '')
     const uid = user.uid
+    // Numéro pro partagé : users.proPhone d'abord ; sinon héritage de l'ancien
+    // emplacement providers.phone (migration douce des comptes existants).
+    setProPhoneForm(user?.proPhone || '')
+    import('../utils/firestore-sync')
+      .then(({ loadDoc }) => loadDoc(`users/${uid}`))
+      .then(remoteUser => {
+        if (remoteUser?.proPhone) setProPhoneForm(remoteUser.proPhone)
+      }).catch(() => {})
+    if (user.role === 'prestataire' || user.role === 'organisateur') {
+      import('../utils/firestore-sync')
+        .then(({ loadDoc }) => loadDoc(`providers/${uid}`))
+        .then(remote => {
+          if (remote?.phone) setProPhoneForm(current => current || remote.phone)
+        }).catch(() => {})
+    }
     if (user.role === 'prestataire') {
       import('../utils/services').then(({ getProviderProfile }) => {
         const local = getProviderProfile(uid)
-        if (local) setProviderForm(f => f || { name: local.name || '', phone: local.phone || '' })
+        if (local) setProviderForm(f => f || { name: local.name || '' })
       }).catch(() => {})
       import('../utils/firestore-sync')
         .then(({ loadDoc }) => loadDoc(`providers/${uid}`))
         .then(remote => {
-          if (remote) setProviderForm({ name: remote.name || '', phone: remote.phone || '' })
-          else setProviderForm(f => f || { name: user?.name || '', phone: '' })
+          if (remote) setProviderForm({ name: remote.name || '' })
+          else setProviderForm(f => f || { name: user?.name || '' })
         })
-        .catch(() => setProviderForm(f => f || { name: user?.name || '', phone: '' }))
+        .catch(() => setProviderForm(f => f || { name: user?.name || '' }))
     }
     if (user.role === 'organisateur') {
       import('../utils/organizers').then(({ getOrganizerProfile }) => {
@@ -592,11 +612,30 @@ export default function ProfilePage() {
     }
   }
 
-  // ── Interface prestataire → providers/{uid} (nom de page + numéro pro) ──────
+  // ── Numéro pro partagé → users/{uid}.proPhone (source de vérité) ────────────
+  // + miroir providers/{uid}.phone si l'interface prestataire existe, pour que
+  // la page publique prestataire et les anciennes lectures restent justes.
+  async function persistProPhone(uid, phone, { mirrorProvider = true } = {}) {
+    const updatedUser = { ...user, proPhone: phone }
+    setUser(updatedUser)
+    try { localStorage.setItem('lib_user', JSON.stringify(updatedUser)) } catch {}
+    updateAccount(uid, { proPhone: phone })
+    const [{ saveProviderProfile, getProviderProfile }, { syncDoc, loadDoc }] = await Promise.all([
+      import('../utils/services'),
+      import('../utils/firestore-sync'),
+    ])
+    syncDoc(`users/${uid}`, { proPhone: phone })
+    if (mirrorProvider) {
+      const providerDoc = (await loadDoc(`providers/${uid}`)) || getProviderProfile(uid)
+      if (providerDoc?.userId) saveProviderProfile({ ...providerDoc, phone, updatedAt: Date.now() })
+    }
+  }
+
+  // ── Interface prestataire → providers/{uid} (nom de page) + numéro pro ──────
   async function saveProviderSettings() {
     if (!providerForm) return
     const name = (providerForm.name || '').trim()
-    const phone = (providerForm.phone || '').trim()
+    const phone = proPhoneForm.trim()
     if (!name) { setProviderMsg({ type: 'error', text: 'Le nom de ta page est obligatoire.' }); return }
     if (phone && !PHONE_RX.test(phone)) { setProviderMsg({ type: 'error', text: 'Numéro invalide — chiffres, +, espaces (6 à 20 caractères).' }); return }
     setSavingProvider(true)
@@ -618,6 +657,8 @@ export default function ProfilePage() {
         phone, // '' = numéro retiré (jamais undefined : le champ resterait en base)
         updatedAt: Date.now(),
       })
+      // Le miroir providers vient d'être écrit ci-dessus — on ne pousse que users.proPhone
+      await persistProPhone(uid, phone, { mirrorProvider: false })
       setProviderMsg({ type: 'success', text: 'Infos prestataire enregistrées' })
       setTimeout(() => setProviderMsg(null), 3000)
     } catch {
@@ -627,11 +668,13 @@ export default function ProfilePage() {
     }
   }
 
-  // ── Interface organisateur → organizer_profiles/{uid}.publicName ────────────
+  // ── Interface organisateur → organizer_profiles/{uid}.publicName + numéro pro ──
   async function saveOrgSettings() {
     if (!orgForm) return
     const publicName = (orgForm.publicName || '').trim()
+    const phone = proPhoneForm.trim()
     if (!publicName) { setOrgMsg({ type: 'error', text: 'Le nom public est obligatoire.' }); return }
+    if (phone && !PHONE_RX.test(phone)) { setOrgMsg({ type: 'error', text: 'Numéro pro invalide — chiffres, +, espaces (6 à 20 caractères).' }); return }
     setSavingOrg(true)
     setOrgMsg(null)
     try {
@@ -642,7 +685,9 @@ export default function ProfilePage() {
       ])
       const base = (await loadDoc(`organizer_profiles/${uid}`)) || getOrganizerProfile(uid) || createOrganizerProfileSeed(user)
       await saveOrganizerProfile({ ...base, publicName })
-      setOrgMsg({ type: 'success', text: 'Nom public enregistré' })
+      // Numéro pro = partagé au niveau du compte (+ miroir prestataire si existant)
+      await persistProPhone(uid, phone)
+      setOrgMsg({ type: 'success', text: 'Infos organisateur enregistrées' })
       setTimeout(() => setOrgMsg(null), 3000)
     } catch (e) {
       setOrgMsg({ type: 'error', text: e?.message || 'Enregistrement impossible, réessaie.' })
@@ -1016,10 +1061,10 @@ export default function ProfilePage() {
                         label="Numéro professionnel (public)"
                         type="tel"
                         placeholder="+33 6 12 34 56 78"
-                        value={providerForm.phone}
-                        onChange={e => setProviderForm(f => ({ ...f, phone: e.target.value }))}
+                        value={proPhoneForm}
+                        onChange={e => setProPhoneForm(e.target.value)}
                       />
-                      <p style={hintStyle}>Visible par TOUT le monde : sur ta page publique (clic = appel) et dans les conversations. Laisse vide pour ne pas afficher de numéro pro.</p>
+                      <p style={hintStyle}>Visible par TOUT le monde : sur ta page publique (clic = appel) et dans les conversations. Un seul numéro pro par compte — partagé avec ton interface organisateur. Laisse vide pour ne pas l’afficher.</p>
                     </div>
                     {msgBox(providerMsg)}
                     <button
@@ -1054,6 +1099,16 @@ export default function ProfilePage() {
                       />
                       <p style={hintStyle}>Affiché sur ta page organisateur, dans l’annuaire et comme organisateur de tes événements. Ton nom de compte ({user?.name}) n’est pas modifié.</p>
                     </div>
+                    <div>
+                      <FocusInput
+                        label="Numéro professionnel (public)"
+                        type="tel"
+                        placeholder="+33 6 12 34 56 78"
+                        value={proPhoneForm}
+                        onChange={e => setProPhoneForm(e.target.value)}
+                      />
+                      <p style={hintStyle}>Un seul numéro pro par compte — partagé avec ton interface prestataire : saisi ici, il est déjà valable là-bas (et inversement). Visible dans les conversations. Laisse vide pour ne pas l’afficher.</p>
+                    </div>
                     {msgBox(orgMsg)}
                     <button
                       onClick={saveOrgSettings}
@@ -1080,7 +1135,7 @@ export default function ProfilePage() {
                   ...(user?.role === 'prestataire' ? [{ what: (providerForm?.name || '').trim() || 'Nom de ta page', tag: 'Page prestataire', where: 'Annuaire prestataires, ta page publique, premiers contacts depuis ta page.' }] : []),
                   ...(user?.role === 'organisateur' ? [{ what: (orgForm?.publicName || '').trim() || orgName || 'Nom public', tag: 'Page organisateur', where: 'Annuaire organisateurs, ta page publique, tes événements.' }] : []),
                   { what: phoneForm.trim() || 'Aucun numéro perso', tag: 'Tél. perso', where: pv.showPhone ? 'Visible dans les conversations (réglage Confidentialité activé).' : 'Masqué — active « Numéro de téléphone » dans Confidentialité pour l’afficher.' },
-                  ...(user?.role === 'prestataire' ? [{ what: (providerForm?.phone || '').trim() || 'Aucun numéro pro', tag: 'Tél. pro', where: (providerForm?.phone || '').trim() ? 'Public : ta page prestataire + conversations.' : 'Rien n’est affiché tant que tu ne renseignes pas de numéro pro.' }] : []),
+                  ...(user?.role === 'prestataire' || user?.role === 'organisateur' ? [{ what: proPhoneForm.trim() || 'Aucun numéro pro', tag: 'Tél. pro', where: proPhoneForm.trim() ? 'Public : conversations + page prestataire. Un seul numéro, partagé par tes interfaces organisateur et prestataire.' : 'Rien n’est affiché tant que tu ne renseignes pas de numéro pro.' }] : []),
                 ].map((row, i) => (
                   <div key={i} style={{ padding: '10px 0', borderTop: i ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>

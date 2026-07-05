@@ -531,6 +531,21 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
         }
       } catch {} // le rôle reste prioritaire ; le studio recréera le brouillon si besoin
     }
+
+    // ── Numéro pro : UN par compte (users.proPhone), partagé organisateur/
+    // prestataire. Seedé depuis le dossier à l'approbation, SANS écraser un
+    // numéro déjà défini par l'utilisateur dans ses Paramètres.
+    try {
+      const fd = app.formData || {}
+      const dossierPhone = (app.type === 'organisateur'
+        ? [fd.telephoneProCode, fd.telephonePro].filter(Boolean).join(' ')
+        : [fd.telephoneCode, fd.telephone].filter(Boolean).join(' ')).trim()
+      if (dossierPhone) {
+        const { loadDoc, syncDoc } = await import('./firestore-sync')
+        const u = await loadDoc(`users/${app.uid}`)
+        if (!u?.proPhone) syncDoc(`users/${app.uid}`, { proPhone: dossierPhone })
+      }
+    } catch {} // non-bloquant
   }
 
   // Sync Firestore application (important mais secondaire — le rôle est déjà
