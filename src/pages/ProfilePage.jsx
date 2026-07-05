@@ -10,6 +10,7 @@ import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
 import { generateTicketToken } from '../utils/ticket'
 import PlaylistSystem from '../components/PlaylistSystem'
+import PreferencesEditor from '../components/PreferencesEditor'
 import { IconMail, IconIdBadge } from '../components/icons'
 import { events as staticEvents } from '../data/events'
 
@@ -935,6 +936,8 @@ export default function ProfilePage() {
       readReceipts: user?.privacy?.readReceipts !== false,
       // Numéro perso : OPT-IN (désactivé par défaut) — donnée sensible.
       showPhone: user?.privacy?.showPhone === true,
+      // Personnalisation des recommandations : ACTIVE par défaut, désactivable.
+      personalization: user?.privacy?.personalization !== false,
     }
     const togglePriv = (key) => {
       const next = { ...(user?.privacy || {}), [key]: !pv[key] }
@@ -942,6 +945,11 @@ export default function ProfilePage() {
       setUser(updated)
       try { localStorage.setItem('lib_user', JSON.stringify(updated)) } catch {}
       if (user?.uid) import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`users/${user.uid}`, { privacy: next })).catch(() => {})
+      // Désactivation de la personnalisation → PURGE du journal local de
+      // consultation (promesse vie privée : la donnée s'arrête ET s'efface).
+      if (key === 'personalization' && pv.personalization && user?.uid) {
+        import('../utils/recommendations').then(({ clearBehavior }) => clearBehavior(user.uid)).catch(() => {})
+      }
     }
     // Note : « Infos personnelles » (showInfo) retiré — l'app n'expose l'email/tél
     // d'aucun utilisateur aux autres, donc le réglage ne protégeait rien (faux réglage).
@@ -951,6 +959,7 @@ export default function ProfilePage() {
       { key: 'showPhoto', label: 'Photo de profil', desc: 'Les autres voient ta photo (sinon : initiales).' },
       { key: 'showPhone', label: 'Numéro de téléphone', desc: 'Autorise les autres à voir ton numéro PERSO dans les conversations (désactivé par défaut). Le numéro pro d’un prestataire est public quoi qu’il arrive.' },
       { key: 'readReceipts', label: 'Confirmations de lecture', desc: 'Si désactivé, tu ne sais pas si on a lu tes messages — et personne ne sait si tu as lu les leurs.' },
+      { key: 'personalization', label: 'Recommandations personnalisées', desc: 'Utilise tes goûts et ton activité (réservations, organisateurs suivis) pour te proposer des soirées. Rien n’est partagé avec les organisateurs. Désactive pour un accueil neutre.' },
     ]
     const ROLE_LABELS = { client: 'Client', organisateur: 'Organisateur', prestataire: 'Prestataire', agent: 'Agent' }
     const roleLabel = ROLE_LABELS[user?.role] || 'Client'
@@ -1152,6 +1161,15 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* ── Mes goûts (recommandations personnalisées) ── */}
+            <div style={S.card}>
+              <EyebrowLabel text="Mes goûts — recommandations" />
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55, margin: '0 0 18px' }}>
+                Optionnel. Sert uniquement à te proposer les bonnes soirées sur l’accueil (« Nos recommandations pour vous »). Jamais partagé avec les organisateurs.
+              </p>
+              <PreferencesEditor user={user} setUser={setUser} />
             </div>
 
             {/* ── Confidentialité ── */}

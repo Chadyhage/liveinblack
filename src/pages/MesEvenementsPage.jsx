@@ -10,6 +10,7 @@ import { IconHourglass } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
 import { regions } from '../data/regions'
+import { MUSIC_STYLES, EVENT_TYPES, AMBIANCES } from '../utils/recommendations'
 import { getGuestlist, loadGuestlistRemote, addGuestlistEntry, removeGuestlistEntry } from '../utils/guestlist'
 
 function generateCode(len = 8) {
@@ -289,6 +290,11 @@ export default function MesEvenementsPage() {
   const [eventType, setEventType] = useState(null)
   const [category, setCategory] = useState(null)
   const [customGenre, setCustomGenre] = useState('')
+  // Tags de ciblage (recommandations) — référentiels PARTAGÉS avec le profil
+  // client (utils/recommendations) : c'est ce qui rend le matching fiable.
+  const [partyType, setPartyType] = useState('')      // id EVENT_TYPES (unique)
+  const [musicStyles, setMusicStyles] = useState([])  // ids MUSIC_STYLES (multi)
+  const [ambiances, setAmbiances] = useState([])      // ids AMBIANCES (multi)
   const [errors, setErrors] = useState({})
 
   // Image crop state
@@ -557,6 +563,22 @@ export default function MesEvenementsPage() {
       }))
     }
 
+    // ── FIX survente : à l'ÉDITION, ne jamais remettre available = total.
+    // `available` est un compteur vivant décrémenté côté serveur (webhook Stripe,
+    // réservations gratuites) : on lit le doc SERVEUR (source de vérité) pour
+    // préserver le nombre de billets déjà vendus par type de place.
+    let soldByType = {}
+    if (editingEventId) {
+      try {
+        const { loadDoc } = await import('../utils/firestore-sync')
+        const serverEv = await loadDoc(`events/${editingEventId}`)
+        const source = serverEv || createdEvents.find(ev => ev.id === editingEventId)
+        for (const pl of (source?.places || [])) {
+          soldByType[pl.type] = Math.max(0, (Number(pl.total) || 0) - (Number(pl.available) || 0))
+        }
+      } catch {}
+    }
+
     const eventData = {
       id: eventId,
       name: form.name,
@@ -572,13 +594,23 @@ export default function MesEvenementsPage() {
       color: '#c8a96e',
       accentColor: '#e8d49e',
       category: category === 'Autre' ? (customGenre.trim() || 'Autre') : (category || 'Autre'),
-      tags: [],
+      // Tags de ciblage (ids stables pour le score de recommandation)…
+      eventType: partyType || '',
+      musicStyles,
+      ambiances,
+      // …et tags lisibles pour l'affichage sur les cartes/fiches (compat champ historique)
+      tags: [
+        partyType && EVENT_TYPES.find(t => t.id === partyType)?.label,
+        ...musicStyles.map(id => MUSIC_STYLES.find(s => s.id === id)?.label),
+        ...ambiances.map(id => AMBIANCES.find(a => a.id === id)?.label),
+      ].filter(Boolean).slice(0, 6),
       organizer: user?.name || 'Organisateur',
       description: form.description,
       places: places.map((p, i) => ({
         type: p.type || 'Entrée',
         price: Number(p.price) || 0,
-        available: Number(p.qty) || 50,
+        // Édition : total - (déjà vendus) ; création : tout est disponible
+        available: Math.max(0, (Number(p.qty) || 50) - (soldByType[p.type || 'Entrée'] || 0)),
         total: Number(p.qty) || 50,
         icon: '',
         maxPerAccount: Number(p.maxPerAccount) || 0,
@@ -717,6 +749,9 @@ export default function MesEvenementsPage() {
     setEventType(null)
     setCategory(null)
     setCustomGenre('')
+    setPartyType('')
+    setMusicStyles([])
+    setAmbiances([])
     setErrors({})
     setPlaces([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
     setVenue({ name: '', address: '', city: '', country: '' })
@@ -744,7 +779,9 @@ export default function MesEvenementsPage() {
     setArtists(loadedArtists)
     setShowArtistSection(loadedArtists.length > 0)
     setImagePreview(ev.imageUrl || null)
-    setEventType('public')
+    // FIX : c'était setEventType('public') en dur → éditer un événement PRIVÉ le
+    // republiait en PUBLIC (isPrivate recalculé depuis eventType à la sauvegarde).
+    setEventType(ev.isPrivate ? 'private' : 'public')
     const PRESET_GENRES = ['Afrobeat', 'Rap', 'Électronique', 'R&B', 'Reggaeton', 'Dancehall', 'House', 'Autre']
     const evCat = ev.category || null
     if (evCat && !PRESET_GENRES.includes(evCat)) {
@@ -754,6 +791,11 @@ export default function MesEvenementsPage() {
       setCategory(evCat)
       setCustomGenre('')
     }
+    // Tags de ciblage : préremplir depuis l'event (sinon une ré-édition les effacerait,
+    // eventData étant reconstruit intégralement à chaque publication)
+    setPartyType(ev.eventType || '')
+    setMusicStyles(Array.isArray(ev.musicStyles) ? ev.musicStyles : [])
+    setAmbiances(Array.isArray(ev.ambiances) ? ev.ambiances : [])
     setErrors({})
     const venueParts = (ev.location || '').split(', ')
     setVenue({
@@ -1985,6 +2027,70 @@ export default function MesEvenementsPage() {
               )}
             </div>
 
+            {/* ── Ciblage & recommandations (optionnel) ──────────────────────
+                Ces tags alimentent « Nos recommandations pour vous » sur
+                l'accueil : plus ils sont précis, plus l'événement est proposé
+                aux bons profils. Ids partagés avec le profil client. */}
+            <div>
+              <label style={{ ...S.label, marginBottom: 4 }}>Ciblage & recommandations</label>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, margin: '0 0 12px' }}>
+                Optionnel mais recommandé : ta soirée sera proposée en priorité aux clients dont les goûts correspondent.
+              </p>
+
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 7px' }}>Type de soirée</p>
+              <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
+                {EVENT_TYPES.map(t => (
+                  <button key={t.id} type="button" onClick={() => setPartyType(cur => cur === t.id ? '' : t.id)}
+                    style={{
+                      padding: '8px 12px', borderRadius: 999, cursor: 'pointer',
+                      border: partyType === t.id ? '1px solid #8444ff' : '1px solid rgba(255,255,255,0.10)',
+                      background: partyType === t.id ? 'rgba(132,68,255,0.14)' : 'transparent',
+                      color: partyType === t.id ? '#c9b0ff' : 'rgba(255,255,255,0.5)',
+                      fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700,
+                    }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 7px' }}>Styles musicaux joués</p>
+              <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
+                {MUSIC_STYLES.map(s => (
+                  <button key={s.id} type="button" onClick={() => setMusicStyles(cur => cur.includes(s.id) ? cur.filter(x => x !== s.id) : [...cur, s.id])}
+                    style={{
+                      padding: '8px 12px', borderRadius: 999, cursor: 'pointer',
+                      border: musicStyles.includes(s.id) ? '1px solid rgba(78,232,200,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                      background: musicStyles.includes(s.id) ? 'rgba(78,232,200,0.10)' : 'transparent',
+                      color: musicStyles.includes(s.id) ? '#4ee8c8' : 'rgba(255,255,255,0.5)',
+                      fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700,
+                    }}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 7px' }}>Ambiance (3 max)</p>
+              <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+                {AMBIANCES.map(a => {
+                  const active = ambiances.includes(a.id)
+                  const full = !active && ambiances.length >= 3
+                  return (
+                    <button key={a.id} type="button" disabled={full}
+                      onClick={() => setAmbiances(cur => active ? cur.filter(x => x !== a.id) : [...cur, a.id])}
+                      style={{
+                        padding: '8px 12px', borderRadius: 999, cursor: full ? 'not-allowed' : 'pointer', opacity: full ? 0.35 : 1,
+                        border: active ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                        background: active ? 'rgba(200,169,110,0.10)' : 'transparent',
+                        color: active ? '#c8a96e' : 'rgba(255,255,255,0.5)',
+                        fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700,
+                      }}>
+                      {a.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Âge légal */}
             <div>
               <label style={{ ...S.label, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -2486,6 +2592,11 @@ export default function MesEvenementsPage() {
                 { label: 'DJ / Artiste', val: artists.filter(a => a.name?.trim()).map(a => a.name.trim()).join(', ') || user?.name || '—' },
                 { label: 'Visibilité', val: eventType === 'private' ? 'Privé (codes requis)' : 'Public' },
                 { label: 'Genre musical', val: category === 'Autre' ? (customGenre.trim() || 'Autre') : (category || 'Autre') },
+                { label: 'Ciblage', val: [
+                  partyType && EVENT_TYPES.find(t => t.id === partyType)?.label,
+                  ...musicStyles.map(id => MUSIC_STYLES.find(s => s.id === id)?.label),
+                  ...ambiances.map(id => AMBIANCES.find(a => a.id === id)?.label),
+                ].filter(Boolean).join(', ') || 'Aucun tag (recommandations limitées)' },
                 { label: 'Types de places', val: `${places.length} type(s)` },
                 { label: 'Lieu', val: venue.name ? `${venue.name}, ${venue.city}` : venue.city ? venue.city : '—' },
                 { label: 'Région', val: (() => { const r = regions.find(x => x.name === form.region); return r ? `${r.flag} ${r.name}` : form.region || '—' })() },

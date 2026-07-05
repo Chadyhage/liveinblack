@@ -202,6 +202,14 @@ function usePersistedUser() {
               const updated = normalizeUser({ ...current, ...remote })
               localStorage.setItem('lib_user', JSON.stringify(updated))
               setUserState(updated)
+            } else if (remote.preferences
+                && (remote.preferences.updatedAt || 0) > (current.preferences?.updatedAt || 0)) {
+              // Goûts (recommandations) réglés sur un AUTRE appareil : merge de ce
+              // seul champ (jamais ...remote entier — protection email/name) pour
+              // que « Nos recommandations » se mette à jour sans re-login.
+              const updated = { ...current, preferences: remote.preferences }
+              localStorage.setItem('lib_user', JSON.stringify(updated))
+              setUserState(updated)
             }
           },
           () => {} // ignorer les erreurs silencieusement

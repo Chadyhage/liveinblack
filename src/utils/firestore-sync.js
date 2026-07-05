@@ -483,6 +483,13 @@ export async function syncOnLogin(uid, opts = {}) {
           if (userProfile.avatar != null) safeMeta.avatar = userProfile.avatar
           if (userProfile.username) safeMeta.username = userProfile.username
           if (userProfile.nameChangedAt != null) safeMeta.nameChangedAt = userProfile.nameChangedAt
+          // Préférences de goûts (recommandations) : rapatriées SEULEMENT si plus
+          // récentes que le local (updatedAt) — sinon un sync en vol écraserait
+          // des goûts fraîchement enregistrés sur cet appareil.
+          if (userProfile.preferences
+              && (userProfile.preferences.updatedAt || 0) >= (current.preferences?.updatedAt || 0)) {
+            safeMeta.preferences = userProfile.preferences
+          }
           const merged = { ...current, ...safeMeta }
           localStorage.setItem('lib_user', JSON.stringify(merged))
         }

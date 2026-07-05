@@ -14,6 +14,8 @@ import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 import { IconTent, IconMic } from '../components/icons'
 import PublicLanding from './PublicLanding'
+import { getRecommendations, hasPreferences, personalizationEnabled } from '../utils/recommendations'
+import { PreferencesModal } from '../components/PreferencesEditor'
 
 function HostStatsWidget() {
   const [percent, setPercent] = useState(0)
@@ -451,7 +453,7 @@ function HeroGooeyText({ user, orgName, prestName }) {
 
 export default function HomePage() {
   const navigate  = useNavigate()
-  const { user }  = useAuth()
+  const { user, setUser } = useAuth()
 
   // Pour les organisateurs : récupérer le nom commercial de leur dossier
   const [orgName, setOrgName] = useState(null)
@@ -549,6 +551,17 @@ export default function HomePage() {
   // s'affiche pour TOUS les visiteurs, pas seulement l'acheteur. lib_boosts local
   // ne contient que les boosts du user courant.
   const [globalBoosts, setGlobalBoosts] = useState([])
+
+  // ── Recommandations : modal d'édition des goûts + bannière d'onboarding ──
+  const [prefsOpen, setPrefsOpen] = useState(false)
+  const [tasteBannerDismissed, setTasteBannerDismissed] = useState(() => {
+    try { return localStorage.getItem(`lib_taste_banner_dismissed_${user?.uid || ''}`) === '1' } catch { return false }
+  })
+  // Resynchroniser au changement de compte (login/logout sans remount de la page) :
+  // sinon l'état « bannière écartée » d'un compte fuit vers le suivant.
+  useEffect(() => {
+    try { setTasteBannerDismissed(localStorage.getItem(`lib_taste_banner_dismissed_${user?.uid || ''}`) === '1') } catch { setTasteBannerDismissed(false) }
+  }, [user?.uid])
   useEffect(() => {
     let unsub = () => {}
     import('../utils/firestore-sync').then(({ listenBoosts }) => {
@@ -631,6 +644,34 @@ export default function HomePage() {
   const handleRegionSelect = (region) => {
     setSelectedRegion(region)
     localStorage.setItem('lib_region', region ? JSON.stringify({ id: region.id }) : 'null')
+  }
+
+  // ── « Nos recommandations pour vous » ──────────────────────────────────────
+  // Candidats = events de la région, visibles, HORS Top 3 (pas de doublon).
+  // Score simple préférences déclarées + activité (voir utils/recommendations).
+  const topThreeIds = new Set(topThree.map(e => String(e.id)))
+  const recoCandidates = regionEvents.filter(e =>
+    isEventVisible(e) && !isEventClosed(e) && !topThreeIds.has(String(e.id))
+  )
+  const recommendations = user ? getRecommendations({
+    user,
+    events: recoCandidates,
+    allEvents, // liste complète (passés inclus) pour résoudre les réservations
+    boostedIds: new Set(activeBoosts.map(b => String(b.eventId))),
+    max: 6,
+  }) : []
+
+  // Bannière « personnalise ton expérience » : connecté, personnalisation active,
+  // formulaire jamais REMPLI (updatedAt : même un enregistrement partiel — juste
+  // la fréquence par ex. — compte comme fait), pas déjà écartée sur cet appareil.
+  const showTasteBanner = !!user
+    && personalizationEnabled(user)
+    && !hasPreferences(user?.preferences)
+    && !user?.preferences?.updatedAt
+    && !tasteBannerDismissed
+  const dismissTasteBanner = () => {
+    setTasteBannerDismissed(true)
+    try { localStorage.setItem(`lib_taste_banner_dismissed_${user?.uid || ''}`, '1') } catch {}
   }
 
   const RANK_LABEL = ['01', '02', '03']
@@ -778,6 +819,41 @@ export default function HomePage() {
             <HeroVideoGallery />
           </div>
         </div>
+
+        {/* ── Bannière onboarding goûts (optionnelle, non bloquante) ── */}
+        {showTasteBanner && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+            margin: '0 0 40px', padding: '16px 20px', borderRadius: 20,
+            background: 'linear-gradient(135deg, rgba(132,68,255,0.14), rgba(78,232,200,0.06))',
+            border: '1px solid rgba(132,68,255,0.35)',
+          }}>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.2px' }}>
+                Des soirées choisies pour toi ✨
+              </p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.55)', margin: '4px 0 0', lineHeight: 1.5 }}>
+                Dis-nous tes styles, ton budget et ton ambiance — on te recommande les événements qui te ressemblent. 30 secondes, modifiable à tout moment.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button onClick={() => setPrefsOpen(true)} style={{
+                padding: '11px 20px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg, #8444ff, #a56bff)', color: '#fff',
+                fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 800,
+                boxShadow: '0 8px 24px -8px rgba(132,68,255,0.55)',
+              }}>
+                Personnaliser
+              </button>
+              <button onClick={dismissTasteBanner} aria-label="Plus tard" style={{
+                width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 16,
+              }}>
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Top 3 Events ── */}
         <RevealSection delay={60}>
@@ -1017,6 +1093,97 @@ export default function HomePage() {
             </RevealSection>
           </div>
         </RevealSection>
+
+        {/* ── Nos recommandations pour vous ── */}
+        {recommendations.length > 0 && (
+          <RevealSection delay={80}>
+            <div style={{ marginBottom: 56 }}>
+              <style>{`
+                .reco-card { transition: transform .25s ease, box-shadow .25s ease; }
+                .reco-card:hover { transform: translateY(-3px); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+              `}</style>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
+                <div>
+                  <p className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, color: '#c9b0ff' }}>
+                    <span style={{ width: 22, height: 2, borderRadius: 2, background: '#8444ff', boxShadow: '0 0 8px #8444ff' }} />
+                    Rien que pour toi
+                  </p>
+                  <h2 style={{
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSize: 'clamp(26px, 6vw, 42px)',
+                    fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.05,
+                    color: '#fff', margin: 0,
+                  }}>
+                    Nos recommandations <span style={{ color: '#c9b0ff' }}>pour toi</span>
+                  </h2>
+                </div>
+                <button onClick={() => setPrefsOpen(true)} style={{
+                  padding: '9px 15px', borderRadius: 999, cursor: 'pointer',
+                  border: '1px solid rgba(132,68,255,0.4)', background: 'rgba(132,68,255,0.08)',
+                  color: '#c9b0ff', fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 700,
+                }}>
+                  Régler mes goûts
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: 18 }}>
+                {recommendations.map(({ event, reason }) => {
+                  const minPrice = event.places?.length > 0 ? Math.min(...event.places.map(p => p.price)) : null
+                  return (
+                    <button
+                      key={event.id}
+                      onClick={() => navigate(`/evenements/${event.id}`)}
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <div className="reco-card" style={{
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255,255,255,0.09)',
+                        borderRadius: 24, overflow: 'hidden',
+                      }}>
+                        <div style={{ position: 'relative', height: 168 }}>
+                          {event.imageUrl
+                            ? <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            : <div style={{ width: '100%', height: '100%', background: `radial-gradient(circle at 30% 20%, ${event.color || '#8444ff'}44, transparent 60%), linear-gradient(135deg, rgba(132,68,255,0.25), rgba(78,232,200,0.08))` }} />}
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,6,10,0.8), transparent 60%)' }} />
+                          {/* Raison de la recommandation — discrète, jamais intrusive */}
+                          {reason && (
+                            <span style={{
+                              position: 'absolute', top: 10, left: 10, maxWidth: 'calc(100% - 20px)',
+                              fontFamily: 'Inter, sans-serif', fontSize: 10.5, fontWeight: 700,
+                              color: '#e5d8ff', background: 'rgba(24,10,50,0.72)', backdropFilter: 'blur(8px)',
+                              padding: '5px 10px', borderRadius: 999, border: '1px solid rgba(132,68,255,0.45)',
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                              ✨ {reason}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ padding: '16px 18px 18px' }}>
+                          <p style={{
+                            fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 700, letterSpacing: '-0.4px',
+                            color: '#fff', margin: '0 0 5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            {event.name}
+                          </p>
+                          <p style={{
+                            fontFamily: 'Inter, sans-serif', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.06em',
+                            color: 'rgba(255,255,255,0.38)', margin: 0,
+                          }}>
+                            {[event.dateDisplay, event.city].filter(Boolean).join(' · ')}
+                          </p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: 'var(--violet-end)', margin: '10px 0 0' }}>
+                            {minPrice != null ? (minPrice <= 0 ? 'Gratuit' : `Dès ${minPrice.toLocaleString('fr-FR')} €`) : (event.price ? `Dès ${event.price} €` : 'Gratuit')}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </RevealSection>
+        )}
 
         {/* ── Comment ça marche — visitors only ── */}
         {!user && (
@@ -1318,6 +1485,9 @@ export default function HomePage() {
         onSelect={handleRegionSelect}
         currentRegion={selectedRegion?.name}
       />
+
+      {/* Édition des goûts (onboarding + « Régler mes goûts ») */}
+      <PreferencesModal open={prefsOpen} onClose={() => setPrefsOpen(false)} user={user} setUser={setUser} />
     </Layout>
   )
 }

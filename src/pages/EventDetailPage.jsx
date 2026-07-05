@@ -403,6 +403,13 @@ export default function EventDetailPage() {
     return () => { cancelled = true }
   }, [id, event])
 
+  // « Événement consulté » → journal LOCAL des recommandations (jamais envoyé
+  // au serveur ; no-op si la personnalisation est désactivée dans Confidentialité).
+  useEffect(() => {
+    if (!event?.id || !user?.uid) return
+    import('../utils/recommendations').then(({ recordEventView }) => recordEventView(user, event)).catch(() => {})
+  }, [event?.id, user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     const ownerUid = event?.organizerId || event?.createdBy
     if (!ownerUid) { setOrganizerProfile(null); return }
