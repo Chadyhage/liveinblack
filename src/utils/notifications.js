@@ -125,4 +125,8 @@ export const NOTIF_CONFIG = {
   mention:                    { icon: '📣', color: '#4ee8c8', label: 'Mention'           },
   staff_invited:              { icon: '🎫', color: '#c8a96e', label: 'Équipe soirée'     },
   staff_removed:              { icon: '👋', color: '#e05aaa', label: 'Équipe soirée'     },
+  organizer_new_event:        { icon: '✦', color: '#4ee8c8', label: 'Organisateur suivi' },
+  organizer_new_media:        { icon: '▣', color: '#e05aaa', label: 'Nouveau média' },
+  organizer_event_update:     { icon: '!', color: '#c8a96e', label: 'Mise à jour événement' },
+  organizer_almost_full:      { icon: '↑', color: '#e05aaa', label: 'Bientôt complet' },
 }

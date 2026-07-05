@@ -86,6 +86,14 @@ export default function EventsPage() {
   const [codeInput, setCodeInput] = useState('')
   const [codeMsg, setCodeMsg] = useState(null)
   const [sharedEventId, setSharedEventId] = useState(null)
+  const codePromptedRef = useRef(false)
+
+  useEffect(() => {
+    if (searchParams.get('code') !== '1' || codePromptedRef.current) return
+    codePromptedRef.current = true
+    if (user) setShowCodeModal(true)
+    else openAuthModal('Connecte-toi pour débloquer une soirée privée avec ton code.')
+  }, [searchParams, user, openAuthModal])
 
   function handleShareEvent(event) {
     if (!shareConvId || !myId) return

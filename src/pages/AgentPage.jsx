@@ -693,6 +693,11 @@ export default function AgentPage() {
               {user?.name} · {user?.email}
             </p>
           </div>
+          <button onClick={() => navigate('/agent/organisateurs')} style={{
+            fontFamily: FONTS.display, fontSize: 11, fontWeight: 800, flexShrink: 0,
+            background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.35)',
+            color: COLORS.teal, borderRadius: 999, padding: '7px 12px', cursor: 'pointer',
+          }}>Organisateurs</button>
           {totalAllPending > 0 && (
             <button
               onClick={() => setTab('dossiers')}

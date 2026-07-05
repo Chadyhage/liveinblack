@@ -250,6 +250,47 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
+    // ── Pages publiques organisateurs ───────────────────────────────────────
+    // Les requêtes publiques doivent filtrer status == 'public'. Un brouillon,
+    // une page masquée ou suspendue reste lisible uniquement par son propriétaire
+    // et l'admin. Le public ne reçoit jamais de liste nominative d'abonnés.
+    match /organizer_profiles/{uid} {
+      allow read: if resource.data.status == 'public' || isOwner(uid) || isAgent();
+      allow create: if isOwner(uid) || isAgent();
+      allow update: if isOwner(uid) || isAgent() || (
+        isSignedIn() && resource.data.status == 'public' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'followersCount', 'viewsCount', 'eventClicksCount', '_syncedAt'
+        ]) &&
+        request.resource.data.followersCount >= 0 &&
+        (
+          request.resource.data.followersCount == resource.data.followersCount + 1 ||
+          request.resource.data.followersCount == resource.data.followersCount - 1 ||
+          request.resource.data.viewsCount == resource.data.viewsCount + 1 ||
+          request.resource.data.eventClicksCount == resource.data.eventClicksCount + 1
+        )
+      );
+      allow delete: if isOwner(uid) || isAgent();
+    }
+
+    // Un document par client. Le propriétaire gère ses choix ; l'organisateur
+    // suivi ne peut ni lire ni requêter l'identité de ses abonnés.
+    match /organizer_follows/{uid} {
+      allow read, write: if isOwner(uid) || isAgent();
+    }
+
+    match /organizer_slugs/{slug} {
+      allow read: if true;
+      allow create: if isAgent() || (isSignedIn() && request.resource.data.organizerId == request.auth.uid);
+      allow update, delete: if isAgent() || (isSignedIn() && resource.data.organizerId == request.auth.uid);
+    }
+
+    match /organizer_reports/{id} {
+      allow read: if isAgent();
+      allow create: if isSignedIn() && request.resource.data.reporterUserId == request.auth.uid;
+      allow update, delete: if isAgent();
+    }
+
     // ── Demandes de suppression de compte ─────────────────────────────────────
     match /deletion_requests/{id} {
       allow read:  if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);

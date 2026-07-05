@@ -603,6 +603,11 @@ export default function MesEvenementsPage() {
       privateCode: eventType === 'private' ? form.privateCode.trim() : null,
       menu: options.preorder ? menuItems.filter(i => i.name.trim() && i.price) : null,
       publishAt: publishAt || null,
+      // Utilisé par les abonnements organisateur pour notifier uniquement les
+      // événements réellement publiés après l'abonnement (anti-doublon).
+      publishedAt: editingEventId
+        ? (createdEvents.find(ev => ev.id === editingEventId)?.publishedAt || Date.now())
+        : Date.now(),
       closingDate: closingDate || null,
       cancelled: false,
     }
@@ -623,11 +628,18 @@ export default function MesEvenementsPage() {
     // CRITIQUE : on AWAIT le sync de events/{id} car c'est ce qui rend l'event public.
     // Si ça échoue, le user doit le savoir (toast d'erreur) sinon il pense que l'event
     // est publié alors qu'en réalité il est seulement dans son localStorage.
+    // organizerName = le nom PUBLIC de la page organisateur (pas le nom perso du
+    // compte) : c'est ce que voient les clients sur la fiche événement.
+    let organizerPublicName = ''
+    try {
+      const { getOrganizerProfile } = await import('../utils/organizers')
+      organizerPublicName = getOrganizerProfile(fbUid)?.publicName || ''
+    } catch {}
     const eventToSync = {
       ...eventData,
       createdBy: fbUid,
       organizerId: fbUid,
-      organizerName: user?.name || 'Organisateur',
+      organizerName: organizerPublicName || user?.name || 'Organisateur',
     }
     try {
       const { syncDocAwaitable, syncDoc } = await import('../utils/firestore-sync')

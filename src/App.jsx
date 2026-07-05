@@ -5,6 +5,12 @@ import HomePage from './pages/HomePage'
 import EventsPage from './pages/EventsPage'
 import PublicPrestataires from './pages/PublicPrestataires'
 import PublicPrestatairePage from './pages/PublicPrestatairePage'
+import PublicOrganizers from './pages/PublicOrganizers'
+import PublicOrganizerPage from './pages/PublicOrganizerPage'
+import OrganizerPublicStudio from './pages/OrganizerPublicStudio'
+import FollowedOrganizersPage from './pages/FollowedOrganizersPage'
+import OrganizerAdminPage from './pages/OrganizerAdminPage'
+import GlobalSearchPage from './pages/GlobalSearchPage'
 import PublicAbout from './pages/PublicAbout'
 import EventDetailPage from './pages/EventDetailPage'
 import ProposerServicesPage from './pages/ProposerServicesPage'
@@ -257,7 +263,7 @@ function OnboardingGuard({ user, children }) {
   // pending = dossier submitted, awaiting admin validation
   // Allow public browsing (accueil, evenements) but block app-specific pages
   if (isDedicated && user?.status === 'pending') {
-    const publicPaths = ['/accueil', '/evenements', '/ticket', '/cgu']
+    const publicPaths = ['/accueil', '/evenements', '/organisateurs', '/prestataires', '/c-est-quoi', '/ticket', '/cgu']
     if (!publicPaths.some(p => location.pathname.startsWith(p))) {
       return <Navigate to="/mon-dossier" replace />
     }
@@ -274,12 +280,26 @@ function MusicPlayerGate({ user }) {
   const path = location.pathname
   const onPublicShowcase =
     path.startsWith('/prestataires') ||
+    path.startsWith('/organisateurs') ||
     path.startsWith('/c-est-quoi') ||
     path.startsWith('/connexion') ||
     path.startsWith('/inscription-') ||     // onboarding organisateur / prestataire (coquille vitrine)
     (path.startsWith('/accueil') && !user) // /accueil non connecté = vitrine
   if (onPublicShowcase) return null
   return <MusicPlayer />
+}
+
+function OrganizerNotificationBridge({ user }) {
+  useEffect(() => {
+    const uid = user?.uid || user?.id
+    if (!uid) return
+    let stop = () => {}
+    import('./utils/organizers').then(({ startOrganizerNotificationBridge }) => {
+      stop = startOrganizerNotificationBridge(uid)
+    }).catch(() => {})
+    return () => stop()
+  }, [user?.uid, user?.id])
+  return null
 }
 
 // Transition globale entre routes : re-monte le conteneur à chaque changement
@@ -344,6 +364,7 @@ export default function App() {
 
           {/* Lecteur de disque flottant (masqué sur les pages vitrine publiques) */}
           <MusicPlayerGate user={user} />
+          <OrganizerNotificationBridge user={user} />
 
           {/* Splash d'intro animé (logo plein écran → se repositionne dans la navbar) */}
           <IntroOverlay />
@@ -363,6 +384,9 @@ export default function App() {
             <Route path="/evenements" element={<EventsPage />} />
             <Route path="/prestataires" element={<PublicPrestataires />} />
             <Route path="/prestataires/:providerId" element={<PublicPrestatairePage />} />
+            <Route path="/organisateurs" element={<PublicOrganizers />} />
+            <Route path="/organisateurs/:slug" element={<PublicOrganizerPage />} />
+            <Route path="/recherche" element={<GlobalSearchPage />} />
             <Route path="/c-est-quoi" element={<PublicAbout />} />
             <Route path="/evenements/:id" element={<EventDetailPage />} />
             <Route path="/cgu" element={<CGUPage />} />
@@ -377,6 +401,9 @@ export default function App() {
             {/* ── Protected: require any logged-in account ── */}
             <Route path="/profil" element={
               <RequireAuth user={user} to="/profil"><ProfilePage /></RequireAuth>
+            } />
+            <Route path="/profil/organisateurs-suivis" element={
+              <RequireAuth user={user} to="/profil/organisateurs-suivis"><FollowedOrganizersPage /></RequireAuth>
             } />
             {/* /portefeuille retiré — redirige vers /profil pour les anciens liens */}
             <Route path="/portefeuille" element={<Navigate to="/profil" replace />} />
@@ -403,6 +430,9 @@ export default function App() {
             <Route path="/mes-evenements/:id/statistiques" element={
               <RequireOrganisateur user={user}><EventStatsPage /></RequireOrganisateur>
             } />
+            <Route path="/ma-page-organisateur" element={
+              <RequireRole user={user} role="organisateur"><OrganizerPublicStudio /></RequireRole>
+            } />
 
             {/* ── Studio de la page publique du prestataire ── */}
             <Route path="/proposer" element={
@@ -427,6 +457,9 @@ export default function App() {
             {/* ── Admin only ── */}
             <Route path="/agent" element={
               <RequireRole user={user} role="agent"><AgentPage /></RequireRole>
+            } />
+            <Route path="/agent/organisateurs" element={
+              <RequireRole user={user} role="agent"><OrganizerAdminPage /></RequireRole>
             } />
           </Routes>
           </RouteTransition>

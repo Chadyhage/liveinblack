@@ -74,6 +74,55 @@ export function listenEvents(callback) {
   } catch { return () => {} }
 }
 
+// Pages publiques organisateurs. La requête porte explicitement sur `public`
+// pour rester compatible avec les règles : brouillons/masqués/suspendus ne sont
+// jamais téléchargés par un visiteur.
+export function listenOrganizerProfiles(callback) {
+  try {
+    const q = query(collection(db, 'organizer_profiles'), where('status', '==', 'public'))
+    return onSnapshot(q, snap => {
+      callback(snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id, userId: d.data().userId || d.id })))
+    }, () => {})
+  } catch { return () => {} }
+}
+
+export function listenAllOrganizerProfiles(callback) {
+  try {
+    return onSnapshot(collection(db, 'organizer_profiles'), snap => {
+      callback(snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id, userId: d.data().userId || d.id })))
+    }, () => {})
+  } catch { return () => {} }
+}
+
+// Version propriétaire/admin, utilisée par le studio et la modération.
+export function listenOrganizerProfile(uid, callback) {
+  try {
+    if (!uid) return () => {}
+    return onSnapshot(doc(db, 'organizer_profiles', uid), snap => {
+      callback(snap.exists() ? { ...snap.data(), id: snap.data().id || snap.id, userId: snap.data().userId || snap.id } : null)
+    }, () => {})
+  } catch { return () => {} }
+}
+
+// Les abonnements sont un document privé par utilisateur : un organisateur ne
+// peut pas interroger la liste nominative de ses abonnés.
+export function listenOrganizerFollows(uid, callback) {
+  try {
+    if (!uid) return () => {}
+    return onSnapshot(doc(db, 'organizer_follows', uid), snap => {
+      callback(snap.exists() ? (snap.data().items || []) : [])
+    }, () => {})
+  } catch { return () => {} }
+}
+
+export function listenOrganizerReports(callback) {
+  try {
+    return onSnapshot(collection(db, 'organizer_reports'), snap => {
+      callback(snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id })))
+    }, () => {})
+  } catch { return () => {} }
+}
+
 // Listen to an organizer's own created events (user_events/{uid})
 export function listenUserEvents(uid, callback) {
   try {
@@ -302,6 +351,33 @@ export async function syncDocAwaitable(path, data) {
     return { ok: true }
   } catch (e) {
     console.error('[sync] AWAIT write FAILED:', path, e.code, e.message)
+    return { ok: false, error: e.message || String(e), code: e.code }
+  }
+}
+
+// Réservation atomique d'un slug organisateur + sauvegarde du profil. Deux
+// utilisateurs qui choisissent le même slug au même instant ne peuvent pas
+// tous les deux réussir.
+export async function saveOrganizerProfileWithSlug(profile) {
+  try {
+    const profileRef = doc(db, 'organizer_profiles', profile.id)
+    const slugRef = doc(db, 'organizer_slugs', profile.slug)
+    await runTransaction(db, async tx => {
+      const [profileSnap, slugSnap] = await Promise.all([tx.get(profileRef), tx.get(slugRef)])
+      if (slugSnap.exists() && slugSnap.data().organizerId !== profile.id) {
+        throw new Error('Ce slug est déjà utilisé.')
+      }
+      const oldSlug = profileSnap.exists() ? profileSnap.data().slug : null
+      if (oldSlug && oldSlug !== profile.slug) {
+        const oldRef = doc(db, 'organizer_slugs', oldSlug)
+        const oldSnap = await tx.get(oldRef)
+        if (oldSnap.exists() && oldSnap.data().organizerId === profile.id) tx.delete(oldRef)
+      }
+      tx.set(slugRef, { organizerId: profile.id, updatedAt: Date.now() })
+      tx.set(profileRef, { ...profile, _syncedAt: Date.now() }, { merge: true })
+    })
+    return { ok: true }
+  } catch (e) {
     return { ok: false, error: e.message || String(e), code: e.code }
   }
 }

@@ -30,6 +30,14 @@ service firebase.storage {
                    && request.resource.contentType.matches('(image|video)/.*');
     }
 
+    // Logo, bannière et galerie des pages publiques organisateurs.
+    match /organizer-media/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && request.resource.size < 51 * 1024 * 1024
+                   && request.resource.contentType.matches('(image|video)/.*');
+    }
+
     // Documents de candidature — seul le propriétaire écrit sous son préfixe.
     // Empêche l'injection de faux documents dans le dossier d'autrui.
     // ⚠ KYC (pièces d'identité, RIB…) : lecture STRICTEMENT limitée au

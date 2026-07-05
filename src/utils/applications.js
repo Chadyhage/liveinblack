@@ -517,6 +517,20 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
         }
       } catch {} // non-bloquant : le rôle est déjà accordé
     }
+
+    // Organisateur : préparer une page publique en BROUILLON. Elle n'apparaît
+    // jamais dans l'annuaire avant activation explicite par l'organisateur.
+    if (app.type === 'organisateur') {
+      try {
+        const { getOrganizerProfile, createOrganizerProfileSeed, saveOrganizerProfile } = await import('./organizers')
+        if (!getOrganizerProfile(app.uid)) {
+          const fd = app.formData || {}
+          const displayName = fd.nomCommercial || fd.nomOrganisation || [fd.prenom, fd.nom].filter(Boolean).join(' ') || 'Organisateur'
+          const seed = createOrganizerProfileSeed({ uid: app.uid, name: displayName }, fd, true)
+          await saveOrganizerProfile(seed)
+        }
+      } catch {} // le rôle reste prioritaire ; le studio recréera le brouillon si besoin
+    }
   }
 
   // Sync Firestore application (important mais secondaire — le rôle est déjà

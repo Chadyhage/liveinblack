@@ -37,6 +37,24 @@ export async function uploadProviderMedia(uid, file) {
   }
 }
 
+// Visuels de la page publique organisateur (logo, bannière, galerie).
+export async function uploadOrganizerMedia(uid, file, kind = 'gallery') {
+  if (!uid || !file) throw new Error('Média manquant')
+  const isImage = file.type?.startsWith('image/')
+  const isVideo = file.type?.startsWith('video/')
+  if (!isImage && !isVideo) throw new Error('Utilise une image JPG/PNG/WEBP ou une vidéo MP4/WEBM/MOV.')
+  if (kind !== 'gallery' && !isImage) throw new Error('Le logo et la bannière doivent être des images.')
+  const maxBytes = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024
+  if (file.size > maxBytes) throw new Error(isVideo ? 'La vidéo dépasse 50 Mo.' : 'L’image dépasse 10 Mo.')
+
+  const { storage } = await import('../firebase')
+  const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+  const safeName = (file.name || 'media').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80)
+  const path = `organizer-media/${uid}/${kind}_${Date.now()}_${safeName}`
+  const snap = await uploadBytes(ref(storage, path), file, { contentType: file.type })
+  return { url: await getDownloadURL(snap.ref), type: isVideo ? 'video' : 'image' }
+}
+
 // Photo d'un TYPE DE PLACE (ex. le Carré VIP) → Storage events/{uid}/{eventId}/...
 // Même logique que l'affiche : on ne stocke que l'URL dans Firestore (jamais du
 // base64, sinon on dépasse la limite 1 Mo du doc events/{id}). `suffix` évite

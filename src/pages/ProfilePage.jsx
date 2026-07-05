@@ -420,6 +420,21 @@ export default function ProfilePage() {
   const [settingsMsg, setSettingsMsg] = useState(null)
   const [saving, setSaving] = useState(false)
 
+  // Settings — téléphone perso (compte, privé/opt-in)
+  const [phoneForm, setPhoneForm] = useState(user?.phone || '')
+  const [phoneMsg, setPhoneMsg] = useState(null)
+  const [savingPhone, setSavingPhone] = useState(false)
+
+  // Settings — interface prestataire (nom de page + numéro pro → providers/{uid})
+  const [providerForm, setProviderForm] = useState(null) // null = pas encore chargé
+  const [providerMsg, setProviderMsg] = useState(null)
+  const [savingProvider, setSavingProvider] = useState(false)
+
+  // Settings — interface organisateur (nom public → organizer_profiles/{uid})
+  const [orgForm, setOrgForm] = useState(null) // null = pas encore chargé
+  const [orgMsg, setOrgMsg] = useState(null)
+  const [savingOrg, setSavingOrg] = useState(false)
+
   // Settings — changement d'e-mail (flux avec vérification)
   const [emailForm, setEmailForm] = useState({ newEmail: '', password: '' })
   const [emailMsg, setEmailMsg] = useState(null)
@@ -452,6 +467,40 @@ export default function ProfilePage() {
       if (app.status === 'approved') setCredentialApp(app)
     }).catch(() => {})
   }, [user?.uid, user?.role])
+
+  // ── Charge les infos de l'interface active à l'ouverture des Paramètres ──
+  // Local d'abord (instantané), puis Firestore (source de vérité cross-device).
+  useEffect(() => {
+    if (panel !== 'settings' || !user?.uid) return
+    setPhoneForm(user?.phone || '')
+    const uid = user.uid
+    if (user.role === 'prestataire') {
+      import('../utils/services').then(({ getProviderProfile }) => {
+        const local = getProviderProfile(uid)
+        if (local) setProviderForm(f => f || { name: local.name || '', phone: local.phone || '' })
+      }).catch(() => {})
+      import('../utils/firestore-sync')
+        .then(({ loadDoc }) => loadDoc(`providers/${uid}`))
+        .then(remote => {
+          if (remote) setProviderForm({ name: remote.name || '', phone: remote.phone || '' })
+          else setProviderForm(f => f || { name: user?.name || '', phone: '' })
+        })
+        .catch(() => setProviderForm(f => f || { name: user?.name || '', phone: '' }))
+    }
+    if (user.role === 'organisateur') {
+      import('../utils/organizers').then(({ getOrganizerProfile }) => {
+        const local = getOrganizerProfile(uid)
+        if (local) setOrgForm(f => f || { publicName: local.publicName || '' })
+      }).catch(() => {})
+      import('../utils/firestore-sync')
+        .then(({ loadDoc }) => loadDoc(`organizer_profiles/${uid}`))
+        .then(remote => {
+          if (remote) setOrgForm({ publicName: remote.publicName || '' })
+          else setOrgForm(f => f || { publicName: '' })
+        })
+        .catch(() => setOrgForm(f => f || { publicName: '' }))
+    }
+  }, [panel, user?.uid, user?.role]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Name change cooldown (1 fois toutes les 2 semaines) ──
   const NAME_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000 // 14 jours
@@ -513,6 +562,92 @@ export default function ProfilePage() {
       setSettingsMsg({ type: 'error', text: getProfileError(err.code) })
     } finally {
       setSaving(false)
+    }
+  }
+
+  // ── Téléphone perso → users/{uid}.phone (privé, opt-in via Confidentialité) ──
+  const PHONE_RX = /^[+0-9][0-9 ().\-]{5,19}$/
+  async function savePhonePerso() {
+    const phone = phoneForm.trim()
+    if (phone && !PHONE_RX.test(phone)) {
+      setPhoneMsg({ type: 'error', text: 'Numéro invalide — chiffres, +, espaces (6 à 20 caractères).' })
+      return
+    }
+    setSavingPhone(true)
+    setPhoneMsg(null)
+    try {
+      const uid = getUserId(user)
+      // phone: '' (jamais undefined) pour bien EFFACER le champ côté Firestore
+      const updatedUser = { ...user, phone }
+      setUser(updatedUser)
+      try { localStorage.setItem('lib_user', JSON.stringify(updatedUser)) } catch {}
+      updateAccount(uid, { phone })
+      import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`users/${uid}`, { phone })).catch(() => {})
+      setPhoneMsg({ type: 'success', text: phone ? 'Numéro perso enregistré' : 'Numéro perso retiré' })
+      setTimeout(() => setPhoneMsg(null), 3000)
+    } catch {
+      setPhoneMsg({ type: 'error', text: 'Enregistrement impossible, réessaie.' })
+    } finally {
+      setSavingPhone(false)
+    }
+  }
+
+  // ── Interface prestataire → providers/{uid} (nom de page + numéro pro) ──────
+  async function saveProviderSettings() {
+    if (!providerForm) return
+    const name = (providerForm.name || '').trim()
+    const phone = (providerForm.phone || '').trim()
+    if (!name) { setProviderMsg({ type: 'error', text: 'Le nom de ta page est obligatoire.' }); return }
+    if (phone && !PHONE_RX.test(phone)) { setProviderMsg({ type: 'error', text: 'Numéro invalide — chiffres, +, espaces (6 à 20 caractères).' }); return }
+    setSavingProvider(true)
+    setProviderMsg(null)
+    try {
+      const uid = getUserId(user)
+      const [{ saveProviderProfile, getProviderProfile }, { loadDoc }] = await Promise.all([
+        import('../utils/services'),
+        import('../utils/firestore-sync'),
+      ])
+      // Base = doc DISTANT en priorité : ne pas écraser photos/description
+      // éditées sur un autre appareil avec un cache local périmé.
+      const base = (await loadDoc(`providers/${uid}`)) || getProviderProfile(uid) || {}
+      saveProviderProfile({
+        ...base,
+        userId: uid,
+        prestataireType: base.prestataireType || user?.prestataireType,
+        name,
+        phone, // '' = numéro retiré (jamais undefined : le champ resterait en base)
+        updatedAt: Date.now(),
+      })
+      setProviderMsg({ type: 'success', text: 'Infos prestataire enregistrées' })
+      setTimeout(() => setProviderMsg(null), 3000)
+    } catch {
+      setProviderMsg({ type: 'error', text: 'Enregistrement impossible, réessaie.' })
+    } finally {
+      setSavingProvider(false)
+    }
+  }
+
+  // ── Interface organisateur → organizer_profiles/{uid}.publicName ────────────
+  async function saveOrgSettings() {
+    if (!orgForm) return
+    const publicName = (orgForm.publicName || '').trim()
+    if (!publicName) { setOrgMsg({ type: 'error', text: 'Le nom public est obligatoire.' }); return }
+    setSavingOrg(true)
+    setOrgMsg(null)
+    try {
+      const uid = getUserId(user)
+      const [{ getOrganizerProfile, saveOrganizerProfile, createOrganizerProfileSeed }, { loadDoc }] = await Promise.all([
+        import('../utils/organizers'),
+        import('../utils/firestore-sync'),
+      ])
+      const base = (await loadDoc(`organizer_profiles/${uid}`)) || getOrganizerProfile(uid) || createOrganizerProfileSeed(user)
+      await saveOrganizerProfile({ ...base, publicName })
+      setOrgMsg({ type: 'success', text: 'Nom public enregistré' })
+      setTimeout(() => setOrgMsg(null), 3000)
+    } catch (e) {
+      setOrgMsg({ type: 'error', text: e?.message || 'Enregistrement impossible, réessaie.' })
+    } finally {
+      setSavingOrg(false)
     }
   }
 
@@ -692,7 +827,7 @@ export default function ProfilePage() {
         // Delete all linked Firestore documents (fire-and-forget for non-critical ones)
         const { db } = await import('../firebase')
         const { doc, deleteDoc } = await import('firebase/firestore')
-        const linkedCollections = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social', 'user_boosts', 'catalogs', 'providers']
+        const linkedCollections = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social', 'user_boosts', 'catalogs', 'providers', 'organizer_profiles', 'organizer_follows']
         await Promise.allSettled(
           linkedCollections.map(coll => deleteDoc(doc(db, coll, uid)))
         )
@@ -763,9 +898,21 @@ export default function ProfilePage() {
     const PRIV_ROWS = [
       { key: 'showOnline', label: 'Statut en ligne', desc: 'Les autres voient quand tu es connecté·e.' },
       { key: 'showPhoto', label: 'Photo de profil', desc: 'Les autres voient ta photo (sinon : initiales).' },
-      { key: 'showPhone', label: 'Numéro de téléphone', desc: 'Autorise les autres à voir ton numéro perso sur ton profil (désactivé par défaut).' },
+      { key: 'showPhone', label: 'Numéro de téléphone', desc: 'Autorise les autres à voir ton numéro PERSO dans les conversations (désactivé par défaut). Le numéro pro d’un prestataire est public quoi qu’il arrive.' },
       { key: 'readReceipts', label: 'Confirmations de lecture', desc: 'Si désactivé, tu ne sais pas si on a lu tes messages — et personne ne sait si tu as lu les leurs.' },
     ]
+    const ROLE_LABELS = { client: 'Client', organisateur: 'Organisateur', prestataire: 'Prestataire', agent: 'Agent' }
+    const roleLabel = ROLE_LABELS[user?.role] || 'Client'
+    const hintStyle = { fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.38)', margin: '6px 0 0', lineHeight: 1.5 }
+    const msgBox = msg => msg && (
+      <div style={{
+        padding: '10px 14px', borderRadius: 4,
+        fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.05em', lineHeight: 1.5,
+        ...(msg.type === 'success'
+          ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
+          : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
+      }}>{msg.text}</div>
+    )
     return (
       <>
       <Layout>
@@ -776,6 +923,17 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            {/* ── Interface active : périmètre des réglages ── */}
+            <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.22)' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6 }}>
+                Interface active : <strong style={{ color: '#c8a96e' }}>{roleLabel}</strong>.
+                {user?.role === 'prestataire' ? ' Tu peux modifier ici ton compte ET les infos publiques de ton interface prestataire.'
+                  : user?.role === 'organisateur' ? ' Tu peux modifier ici ton compte ET les infos publiques de ton interface organisateur.'
+                  : ' Tu modifies ici les infos de ton compte.'}
+                {(user?.enabledRoles || []).length > 1 && ' Pour gérer une autre interface, change d’interface dans le menu puis reviens ici.'}
+              </p>
+            </div>
 
             {/* ── Nom ── */}
             <div style={S.card}>
@@ -811,6 +969,127 @@ export default function ProfilePage() {
                 >
                   {saving ? 'Enregistrement...' : 'Enregistrer le nom'}
                 </button>
+
+                <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
+
+                {/* ── Téléphone perso (compte) ── */}
+                <div>
+                  <FocusInput
+                    label="Téléphone perso"
+                    type="tel"
+                    placeholder="+33 6 12 34 56 78"
+                    value={phoneForm}
+                    onChange={e => setPhoneForm(e.target.value)}
+                  />
+                  <p style={hintStyle}>Privé par défaut : visible dans les conversations uniquement si tu actives « Numéro de téléphone » dans Confidentialité. Laisse vide pour le retirer.</p>
+                </div>
+                {msgBox(phoneMsg)}
+                <button
+                  onClick={savePhonePerso}
+                  disabled={savingPhone || phoneForm.trim() === (user?.phone || '')}
+                  style={{ ...S.btnGold, opacity: (savingPhone || phoneForm.trim() === (user?.phone || '')) ? 0.45 : 1, cursor: (savingPhone || phoneForm.trim() === (user?.phone || '')) ? 'not-allowed' : 'pointer' }}
+                >
+                  {savingPhone ? 'Enregistrement...' : 'Enregistrer le téléphone'}
+                </button>
+              </div>
+            </div>
+
+            {/* ── Interface Prestataire (visible uniquement sur cette interface) ── */}
+            {user?.role === 'prestataire' && (
+              <div style={S.card}>
+                <EyebrowLabel text="Interface Prestataire — infos publiques" />
+                {providerForm === null ? (
+                  <p style={{ ...S.bodyText, margin: 0 }}>Chargement de ta page…</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                      <FocusInput
+                        label="Nom de ta page (public)"
+                        placeholder="Nom commercial ou nom de scène"
+                        value={providerForm.name}
+                        onChange={e => setProviderForm(f => ({ ...f, name: e.target.value }))}
+                      />
+                      <p style={hintStyle}>Affiché dans l’annuaire prestataires, sur ta page publique et quand on te contacte depuis ta page. Ton nom de compte ({user?.name}) n’est pas modifié.</p>
+                    </div>
+                    <div>
+                      <FocusInput
+                        label="Numéro professionnel (public)"
+                        type="tel"
+                        placeholder="+33 6 12 34 56 78"
+                        value={providerForm.phone}
+                        onChange={e => setProviderForm(f => ({ ...f, phone: e.target.value }))}
+                      />
+                      <p style={hintStyle}>Visible par TOUT le monde : sur ta page publique (clic = appel) et dans les conversations. Laisse vide pour ne pas afficher de numéro pro.</p>
+                    </div>
+                    {msgBox(providerMsg)}
+                    <button
+                      onClick={saveProviderSettings}
+                      disabled={savingProvider}
+                      style={{ ...S.btnGold, opacity: savingProvider ? 0.45 : 1, cursor: savingProvider ? 'not-allowed' : 'pointer' }}
+                    >
+                      {savingProvider ? 'Enregistrement...' : 'Enregistrer les infos prestataire'}
+                    </button>
+                    <button onClick={() => navigate('/proposer')} style={{ ...S.btnGhost, width: '100%' }}>
+                      Gérer ma page complète — photos, présentation, catalogue
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Interface Organisateur (visible uniquement sur cette interface) ── */}
+            {user?.role === 'organisateur' && (
+              <div style={S.card}>
+                <EyebrowLabel text="Interface Organisateur — infos publiques" />
+                {orgForm === null ? (
+                  <p style={{ ...S.bodyText, margin: 0 }}>Chargement de ta page…</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                      <FocusInput
+                        label="Nom public de l’organisation"
+                        placeholder="Nom de ton organisation"
+                        value={orgForm.publicName}
+                        onChange={e => setOrgForm(f => ({ ...f, publicName: e.target.value }))}
+                      />
+                      <p style={hintStyle}>Affiché sur ta page organisateur, dans l’annuaire et comme organisateur de tes événements. Ton nom de compte ({user?.name}) n’est pas modifié.</p>
+                    </div>
+                    {msgBox(orgMsg)}
+                    <button
+                      onClick={saveOrgSettings}
+                      disabled={savingOrg}
+                      style={{ ...S.btnGold, opacity: savingOrg ? 0.45 : 1, cursor: savingOrg ? 'not-allowed' : 'pointer' }}
+                    >
+                      {savingOrg ? 'Enregistrement...' : 'Enregistrer le nom public'}
+                    </button>
+                    <button onClick={() => navigate('/ma-page-organisateur')} style={{ ...S.btnGhost, width: '100%' }}>
+                      Gérer ma page organisateur — photos, description, médias
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Qui voit quoi ? ── */}
+            <div style={S.card}>
+              <EyebrowLabel text="Qui voit quoi ?" />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {[
+                  { what: user?.name || 'Ton nom', tag: 'Nom du compte', where: 'Conversations, demandes d’amis, guestlists, équipes de soirée, billets.' },
+                  ...(user?.username ? [{ what: `@${user.username}`, tag: 'Pseudo', where: 'Recherche d’amis et profil dans la messagerie.' }] : []),
+                  ...(user?.role === 'prestataire' ? [{ what: (providerForm?.name || '').trim() || 'Nom de ta page', tag: 'Page prestataire', where: 'Annuaire prestataires, ta page publique, premiers contacts depuis ta page.' }] : []),
+                  ...(user?.role === 'organisateur' ? [{ what: (orgForm?.publicName || '').trim() || orgName || 'Nom public', tag: 'Page organisateur', where: 'Annuaire organisateurs, ta page publique, tes événements.' }] : []),
+                  { what: phoneForm.trim() || 'Aucun numéro perso', tag: 'Tél. perso', where: pv.showPhone ? 'Visible dans les conversations (réglage Confidentialité activé).' : 'Masqué — active « Numéro de téléphone » dans Confidentialité pour l’afficher.' },
+                  ...(user?.role === 'prestataire' ? [{ what: (providerForm?.phone || '').trim() || 'Aucun numéro pro', tag: 'Tél. pro', where: (providerForm?.phone || '').trim() ? 'Public : ta page prestataire + conversations.' : 'Rien n’est affiché tant que tu ne renseignes pas de numéro pro.' }] : []),
+                ].map((row, i) => (
+                  <div key={i} style={{ padding: '10px 0', borderTop: i ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600, color: '#fff' }}>{row.what}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c8a96e', background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.25)', padding: '2px 7px', borderRadius: 999 }}>{row.tag}</span>
+                    </div>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,0.45)', margin: '4px 0 0', lineHeight: 1.5 }}>{row.where}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1344,6 +1623,9 @@ export default function ProfilePage() {
             // directement sur chaque billet — pas de page séparée redondante).
             (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
               { label: 'Mes billets',       action: () => setPanel('billets')   },
+            { label: 'Organisateurs suivis', action: () => navigate('/profil/organisateurs-suivis') },
+            user?.role === 'organisateur' &&
+              { label: 'Ma page publique', action: () => navigate('/ma-page-organisateur'), gold: true },
             { label: 'Paramètres du compte', action: () => setPanel('settings') },
             { label: 'Support / Aide',       action: () => setPanel('support')   },
             // Carte d'accréditation — organisateurs et prestataires approuvés uniquement
