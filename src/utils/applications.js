@@ -483,6 +483,16 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
     if (app.type === 'prestataire') {
       try {
         const { getProviderProfile, saveProviderProfile } = await import('./services')
+        // Reporte le statut d'abonnement (payé à l'inscription, avant le dossier) sur
+        // le profil annuaire : sans ce seed, un prestataire abonné + validé resterait
+        // invisible (le gate annuaire exige subscriptionActive). Le webhook maintient
+        // ensuite ce champ à jour (renouvellement / résiliation).
+        let subActive = false
+        try {
+          const { loadDoc } = await import('./firestore-sync')
+          const u = await loadDoc(`users/${app.uid}`)
+          subActive = !!u?.prestataireSubActive
+        } catch {}
         const existing = getProviderProfile(app.uid)
         if (!existing) {
           const fd = app.formData || {}
@@ -498,11 +508,12 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
             photoUrl: fd.photoUrl || null,
             tags: [],
             verified: true,        // validé par l'admin → badge ✓
+            subscriptionActive: subActive,
             createdAt: now,
           }
           saveProviderProfile(profile) // sync providers/{uid}
-        } else if (!existing.verified) {
-          saveProviderProfile({ ...existing, verified: true })
+        } else if (!existing.verified || existing.subscriptionActive !== subActive) {
+          saveProviderProfile({ ...existing, verified: true, subscriptionActive: subActive })
         }
       } catch {} // non-bloquant : le rôle est déjà accordé
     }

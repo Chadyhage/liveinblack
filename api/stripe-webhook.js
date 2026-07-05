@@ -92,6 +92,21 @@ export default async function handler(req, res) {
     return res.status(200).json({ received: true })
   }
 
+  // ── Abonnement prestataire (Stripe Billing) : création / renouvellement /
+  // résiliation / échec de paiement → statut mis à jour (SOURCE DE VÉRITÉ serveur). ──
+  if (event.type === 'customer.subscription.created'
+   || event.type === 'customer.subscription.updated'
+   || event.type === 'customer.subscription.deleted') {
+    try {
+      const db = getDb()
+      await finalizePrestataireSub(db, event.data.object, event.type === 'customer.subscription.deleted')
+    } catch (err) {
+      console.error('[webhook] subscription event error:', err)
+      return res.status(500).json({ error: err.message || 'Internal error' })
+    }
+    return res.status(200).json({ received: true })
+  }
+
   // On ne traite que les sessions complétées
   if (event.type !== 'checkout.session.completed') {
     return res.status(200).json({ received: true, ignored: event.type })
@@ -107,7 +122,11 @@ export default async function handler(req, res) {
 
   try {
     const db = getDb()
-    if (meta.intent === 'boost') {
+    if (meta.type === 'prestataire_subscription' || session.mode === 'subscription') {
+      // Activation immédiate au retour du checkout ; les events customer.subscription.*
+      // affineront ensuite le statut/la période.
+      await activatePrestataireSubFromSession(db, session, meta)
+    } else if (meta.intent === 'boost') {
       await finalizeBoost(db, session, meta)
     } else if (meta.bookingId) {
       await finalizeBooking(db, session, meta)
@@ -120,6 +139,52 @@ export default async function handler(req, res) {
     // Renvoyer 500 pour que Stripe ré-essaie (jusqu'à 3 jours de retries)
     return res.status(500).json({ error: err.message || 'Internal error' })
   }
+}
+
+// ── Abonnement prestataire ────────────────────────────────────────────────────
+// Écrit le statut sur users/{uid} (source de vérité, toujours présent → gate
+// onboarding + dashboard) et le MIROIR sur providers/{uid} UNIQUEMENT si le profil
+// existe déjà (ne pas créer de profil fantôme pour un abonné pas encore validé).
+async function writeSubStatus(db, uid, { active, status, periodEndIso, subId, customerId }) {
+  if (!uid) return
+  await db.collection('users').doc(String(uid)).set({
+    prestataireSubActive: active,
+    prestataireSubStatus: status,
+    prestataireSubEnd: periodEndIso || null,
+    stripeSubscriptionId: subId || null,
+    stripeCustomerId: customerId || null,
+    _syncedAt: Date.now(),
+  }, { merge: true })
+  const provRef = db.collection('providers').doc(String(uid))
+  const prov = await provRef.get()
+  if (prov.exists) {
+    await provRef.set({ subscriptionActive: active, subscriptionStatus: status, _syncedAt: Date.now() }, { merge: true })
+  }
+}
+
+// Events customer.subscription.created/updated/deleted → statut fin.
+async function finalizePrestataireSub(db, sub, deleted = false) {
+  const uid = sub?.metadata?.uid
+  if (!uid) { console.warn('[webhook] subscription sans uid metadata', sub?.id); return }
+  const status = deleted ? 'canceled' : (sub.status || 'active')
+  const active = !deleted && (status === 'active' || status === 'trialing')
+  await writeSubStatus(db, uid, {
+    active, status,
+    periodEndIso: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+    subId: sub.id || null,
+    customerId: (typeof sub.customer === 'string' ? sub.customer : sub.customer?.id) || null,
+  })
+}
+
+// checkout.session.completed (mode subscription) → activation immédiate au retour.
+async function activatePrestataireSubFromSession(db, session, meta) {
+  const uid = meta.uid || session.client_reference_id
+  if (!uid) { console.warn('[webhook] sub session sans uid', session.id); return }
+  await writeSubStatus(db, uid, {
+    active: true, status: 'active', periodEndIso: null,
+    subId: (typeof session.subscription === 'string' ? session.subscription : session.subscription?.id) || null,
+    customerId: (typeof session.customer === 'string' ? session.customer : session.customer?.id) || null,
+  })
 }
 
 // ── Booking ──────────────────────────────────────────────────────────────────

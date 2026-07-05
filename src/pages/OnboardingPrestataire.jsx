@@ -230,6 +230,12 @@ export default function OnboardingPrestataire() {
   const [regPasswordConfirm, setRegPasswordConfirm] = useState('')
   const [showPwd, setShowPwd] = useState(false)
 
+  // ── Abonnement prestataire (9,99 €/mois) — péage AVANT le dossier ─────────────
+  const [subActive, setSubActive] = useState(false)      // abonnement actif (source = webhook)
+  const [awaitingSub, setAwaitingSub] = useState(false)  // écran de paiement affiché
+  const [subRedirecting, setSubRedirecting] = useState(false)
+  const [subError, setSubError] = useState('')
+
   const anonMode = !user
 
   const [f, setF] = useState({
@@ -290,6 +296,49 @@ export default function OnboardingPrestataire() {
       }
     }
   }, [user])
+
+  // Statut d'abonnement en temps réel (users/{uid}.prestataireSubActive, écrit par
+  // le webhook Stripe = source de vérité). Dispo une fois le compte créé.
+  useEffect(() => {
+    const uid = user?.uid
+    if (!uid) return
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenDoc }) => {
+      unsub = listenDoc(`users/${uid}`, data => setSubActive(!!data?.prestataireSubActive))
+    }).catch(() => {})
+    return () => { try { unsub() } catch {} }
+  }, [user?.uid])
+
+  // Retour de Stripe (?sub=success) : une fois l'abonnement actif, on reprend au
+  // dossier (étape 2 = Spécifique ; type + profil + paiement déjà faits).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('sub') === 'success' && user?.uid && subActive) {
+      setAwaitingSub(false)
+      setStep(s => (s < 2 ? 2 : s))
+      navigate('/inscription-prestataire', { replace: true })
+    }
+  }, [location.search, user?.uid, subActive]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Lance le paiement de l'abonnement (Stripe Checkout, mode subscription).
+  async function handleSubscribe() {
+    setSubError('')
+    setSubRedirecting(true)
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const r = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({}),
+      })
+      const data = await r.json().catch(() => ({}))
+      if (r.ok && data.url) { window.location.href = data.url; return }
+      throw new Error(data.error || 'checkout')
+    } catch {
+      setSubRedirecting(false)
+      setSubError("Impossible de lancer le paiement pour le moment. Réessaie dans un instant.")
+    }
+  }
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type })
@@ -374,6 +423,14 @@ export default function OnboardingPrestataire() {
         return
       }
       setCreatingAccount(false)
+    }
+
+    // PÉAGE ABONNEMENT : après l'étape 1 (compte créé), on ne passe au dossier
+    // qu'avec un abonnement 9,99 €/mois actif. Sinon → écran de paiement.
+    if (step === 1 && !subActive) {
+      setAwaitingSub(true)
+      window.scrollTo(0, 0)
+      return
     }
 
     setStep(s => Math.min(s + 1, STEPS.length - 1))
@@ -513,6 +570,55 @@ export default function OnboardingPrestataire() {
     )
   }
 
+  // ── Péage abonnement : compte créé, en attente du paiement de l'abonnement ──
+  if (awaitingSub && !subActive) {
+    return (
+      <PublicShell>
+        <div style={S.page}>
+          <div style={{ ...S.card, textAlign: 'center' }}>
+            <div style={{ width: 60, height: 60, borderRadius: '50%', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(200,169,110,0.12)', border: `1px solid ${GOLD}55` }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <p style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>Étape 2 sur 3 · Abonnement</p>
+            <h2 style={{ fontFamily: CG, fontWeight: 800, fontSize: '1.9rem', color: '#fff', margin: '10px 0 6px', letterSpacing: '-0.5px' }}>Active ton abonnement</h2>
+            <p style={{ fontFamily: DM, fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>
+              Ton compte est créé. Pour être présent sur LIVEINBLACK, il te faut l'abonnement prestataire.
+            </p>
+
+            <div style={{ background: 'rgba(6,8,16,0.6)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '20px', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
+                <span style={{ fontFamily: CG, fontWeight: 800, fontSize: 38, color: '#fff', letterSpacing: '-1px' }}>9,99 €</span>
+                <span style={{ fontFamily: DM, fontSize: 15, color: 'rgba(255,255,255,0.5)' }}>/ mois</span>
+              </div>
+              <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>Sans engagement · résiliable à tout moment</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 18, textAlign: 'left' }}>
+                {['Profil visible dans l\'annuaire prestataires', 'Contacté directement par les organisateurs', 'Aucune commission sur tes prestations — tu factures en direct'].map(t => (
+                  <div key={t} style={{ display: 'flex', gap: 9, alignItems: 'flex-start' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.45 }}>{t}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              Après le paiement, tu rempliras ton dossier (docs, activité). Notre équipe le valide, puis ton profil est en ligne.
+            </p>
+
+            {subError && <p style={{ ...S.error, textAlign: 'center', marginBottom: 12 }}>{subError}</p>}
+
+            <button onClick={handleSubscribe} disabled={subRedirecting} style={{ ...S.btnGold, opacity: subRedirecting ? 0.6 : 1, cursor: subRedirecting ? 'default' : 'pointer' }}>
+              {subRedirecting ? 'Redirection vers le paiement…' : 'S\'abonner · 9,99 €/mois'}
+            </button>
+            <button onClick={() => setAwaitingSub(false)} style={{ ...S.btnGhost, marginTop: 10 }}>
+              Revenir en arrière
+            </button>
+          </div>
+        </div>
+      </PublicShell>
+    )
+  }
+
   const selectedType = TYPES.find(t => t.key === f.prestataireType)
   const typeColor = selectedType?.color || PURPLE
   const requiredDocs = getRequiredDocs('prestataire', f.prestataireType)
@@ -544,6 +650,18 @@ export default function OnboardingPrestataire() {
             Complète ton dossier. Tu peux sauvegarder et revenir plus tard.
           </p>
         </div>
+
+        {/* Rappel tarif + parcours — visible AVANT le paiement (étapes 0-1) */}
+        {step <= 1 && !subActive && (
+          <div style={{ marginBottom: 24, padding: '14px 16px', background: 'rgba(200,169,110,0.06)', border: `1px solid ${GOLD}33`, borderRadius: 12 }}>
+            <p style={{ fontFamily: DM, fontSize: 13.5, color: '#fff', margin: 0, fontWeight: 600 }}>
+              Abonnement <span style={{ color: GOLD }}>9,99 €/mois</span> pour être sur LIVEINBLACK
+            </p>
+            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '5px 0 0', lineHeight: 1.55 }}>
+              1. Crée ton compte · 2. <span style={{ color: 'rgba(255,255,255,0.72)' }}>Paie l'abonnement</span> · 3. Remplis ton dossier · 4. On valide → tu es en ligne. Aucune commission sur tes prestations.
+            </p>
+          </div>
+        )}
 
         {/* Progress bar */}
         <div style={{ marginBottom: 32 }}>

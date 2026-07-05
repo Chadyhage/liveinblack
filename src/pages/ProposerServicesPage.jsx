@@ -389,6 +389,28 @@ function PrestataireDashboard({ user, navigate }) {
   const [toast, setToast] = useState(null)
   const photoInputRef = useRef(null)
 
+  // Statut d'abonnement (users/{uid}.prestataireSubActive, écrit par le webhook).
+  const [subActive, setSubActive] = useState(null) // null = chargement
+  const [subRedirecting, setSubRedirecting] = useState(false)
+  useEffect(() => {
+    if (!user?.uid) return
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenDoc }) => {
+      unsub = listenDoc(`users/${user.uid}`, data => setSubActive(!!data?.prestataireSubActive))
+    }).catch(() => {})
+    return () => { try { unsub() } catch {} }
+  }, [user?.uid])
+  async function handleManageSub() {
+    setSubRedirecting(true)
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const r = await fetch('/api/create-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await authHeaders()) }, body: JSON.stringify({}) })
+      const d = await r.json().catch(() => ({}))
+      if (r.ok && d.url) { window.location.href = d.url; return }
+      throw new Error()
+    } catch { setSubRedirecting(false); setToast({ msg: 'Paiement indisponible pour le moment.', type: 'error' }); setTimeout(() => setToast(null), 3000) }
+  }
+
   const [profileFormMode, setProfileFormMode] = useState(!profile)
   const [photoUploading, setPhotoUploading] = useState(false)
   const providerPhotoRef = useRef(null)
@@ -635,6 +657,27 @@ function PrestataireDashboard({ user, navigate }) {
         {/* ── APERÇU TAB ── */}
         {tab === 'apercu' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Statut de l'abonnement prestataire (9,99 €/mois) */}
+            {subActive !== null && (
+              <div style={{ ...S.card, padding: 16, display: 'flex', alignItems: 'center', gap: 14, borderColor: subActive ? 'rgba(78,232,200,0.28)' : 'rgba(224,90,170,0.32)' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: subActive ? 'rgba(78,232,200,0.1)' : 'rgba(224,90,170,0.1)' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={subActive ? '#4ee8c8' : '#e05aaa'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: '#fff', margin: 0 }}>
+                    {subActive ? 'Abonnement actif' : 'Abonnement inactif'}
+                  </p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>
+                    {subActive ? 'Ton profil est visible dans l\'annuaire · 9,99 €/mois' : 'Réactive ton abonnement pour rester visible dans l\'annuaire.'}
+                  </p>
+                </div>
+                {!subActive && (
+                  <button onClick={handleManageSub} disabled={subRedirecting} style={{ flexShrink: 0, padding: '10px 16px', borderRadius: 10, border: 'none', cursor: subRedirecting ? 'default' : 'pointer', background: 'linear-gradient(135deg,#c8a96e,#e0c48a)', color: '#04040b', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, opacity: subRedirecting ? 0.6 : 1 }}>
+                    {subRedirecting ? '…' : 'Réactiver'}
+                  </button>
+                )}
+              </div>
+            )}
             {/* Reversements — connecter son compte / solde / demander un virement */}
             <PayoutPanel uid={uid} returnPath={typeof window !== 'undefined' ? window.location.pathname : '/'} />
             {/* Mini graphique 7 derniers jours */}
@@ -1176,8 +1219,12 @@ function PublicServicesView({ user, uid, navigate, agentMode }) {
     for (const p of remoteProviders) if (p.userId) byId[p.userId] = p // Firestore gagne
     // Écarte les profils fantômes (doc providers/ vide, onboarding abandonné) :
     // sans photo, description, localisation NI catalogue → pas un vrai prestataire.
+    // GATE ABONNEMENT : le public ne voit que les prestataires à abonnement ACTIF
+    // (subscriptionActive). Les agents voient tout (gestion). Un abonnement expiré
+    // ou résilié → le profil sort de l'annuaire jusqu'au renouvellement.
     return Object.values(byId).filter(p =>
       p.name && (p.photoUrl || p.description || p.location || catalogOf(p.userId).some(i => i.available))
+      && (agentMode || p.subscriptionActive === true)
     )
   })()
 
