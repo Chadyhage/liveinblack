@@ -85,7 +85,7 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
         setLoading(false)
         setUser(profile)
         close()
-        onSuccess?.()
+        onSuccess?.(profile)
 
       } else {
         // ── Local / demo path ──────────────────────────────────
@@ -120,7 +120,7 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
         setLoading(false)
         setUser(account)
         close()
-        onSuccess?.()
+        onSuccess?.(account)
       }
     } catch {
       setError('Une erreur est survenue. Réessaie.')

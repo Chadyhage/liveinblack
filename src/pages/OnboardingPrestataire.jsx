@@ -70,7 +70,7 @@ const STEPS = [
   { label: 'Type' },
   { label: 'Profil' },
   { label: 'Spécifique' },
-  { label: 'Paiement' },
+  { label: 'Fonctionnement' },
   { label: 'Documents' },
 ]
 
@@ -1071,38 +1071,37 @@ export default function OnboardingPrestataire() {
           </div>
         )}
 
-        {/* ── STEP 3: Paiement ── */}
+        {/* ── STEP 3: Fonctionnement de la mise en relation ── */}
         {step === 3 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <p style={S.section}>Tes revenus</p>
+            <p style={S.section}>Comment ça fonctionne</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ fontFamily: CG, fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
-                Comment tu seras payé
+                Une vitrine, un catalogue, une messagerie
               </p>
               <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.8, margin: 0 }}>
-                LIVEINBLACK collecte les paiements et te reverse ta part directement sur ton compte bancaire.
-                Les reversements sont gérés de façon entièrement automatique.
+                LIVE IN BLACK te rend visible auprès des clients et des organisateurs. Ils consultent ta page puis te contactent directement dans la messagerie.
               </p>
             </div>
 
             {[
               {
                 num: '01',
-                title: 'Dossier approuvé',
-                desc: 'Notre équipe valide ton dossier (sous 48h). Tu reçois une notification par email.',
+                title: 'Ta page est publiée',
+                desc: 'Après validation, ton profil apparaît dans l’annuaire des prestataires.',
                 color: GOLD,
               },
               {
                 num: '02',
-                title: 'Connexion Stripe',
-                desc: 'Tu reçois un lien pour connecter ton compte bancaire via Stripe — la référence mondiale du paiement en ligne.',
+                title: 'Ton catalogue est consulté',
+                desc: 'Tu présentes librement tes services, tes formules et des tarifs indicatifs.',
                 color: '#4ee8c8',
               },
               {
                 num: '03',
-                title: 'Reversements automatiques',
-                desc: 'À chaque commande acceptée, ta part (après commission LIVEINBLACK) est automatiquement virée sur ton compte dans les 2–7 jours ouvrés.',
+                title: 'Vous échangez directement',
+                desc: 'Le client t’écrit dans la messagerie. Vous convenez ensemble de la date, du contrat, du tarif et du règlement.',
                 color: PURPLE,
               },
             ].map(s => (
@@ -1119,7 +1118,7 @@ export default function OnboardingPrestataire() {
 
             <div style={{ padding: '10px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
               <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.55)', letterSpacing: '0.06em', margin: 0, lineHeight: 1.7 }}>
-                🔒 Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK et ne sont pas demandées ici — tu les renseigneras chez Stripe (certifié PCI-DSS niveau 1) après approbation.
+                LIVE IN BLACK ne collecte pas le paiement de tes prestations et ne prélève aucune commission dessus. La facturation et le règlement restent entre toi et ton client.
               </p>
             </div>
           </div>

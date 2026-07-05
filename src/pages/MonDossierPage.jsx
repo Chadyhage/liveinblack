@@ -993,7 +993,7 @@ export default function MonDossierPage() {
             </div>
 
             {/* Stripe Connect status */}
-            {app.stripe && (
+            {app.type === 'organisateur' && app.stripe && (
               <div style={{ ...CARD, padding: 16 }}>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
                   Paiements (Stripe Connect)

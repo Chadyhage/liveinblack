@@ -20,6 +20,7 @@ function NavIcon({ id, active, activeColor = 'var(--violet)' }) {
   if (id === '/messagerie') return <svg {...props}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
   if (id === '/mes-evenements') return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
   if (id === '/proposer') return <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+  if (id === '/prestataires') return <svg {...props}><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><circle cx="18" cy="9" r="2"/><path d="M17 15a5 5 0 0 1 4 4"/></svg>
   if (id === '/mes-soirees') return <svg {...props}><path d="M22 10V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4a2 2 0 0 1 0 4v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 1 0-4z"/><path d="M9 5v14" strokeDasharray="2 3"/></svg>
   return null
 }
@@ -36,7 +37,7 @@ function getNavItems(role) {
     { path: '/accueil',        icon: '⬜', label: 'Accueil' },
     { path: '/evenements',     icon: '🎟', label: 'Événements' },
     { path: '/messagerie',     icon: '💬', label: 'Messages' },
-    { path: '/proposer',       icon: '◈',  label: 'Services' },
+    { path: '/prestataires',   icon: '◈',  label: 'Prestataires' },
   ]
   // Organisateur — event creation + hiring prestataires
   if (role === 'organisateur') return [
@@ -44,7 +45,7 @@ function getNavItems(role) {
     { path: '/evenements',     icon: '🎟', label: 'Événements' },
     { path: '/messagerie',     icon: '💬', label: 'Messages' },
     { path: '/mes-evenements', icon: '✦',  label: 'Mes Events' },
-    { path: '/proposer',       icon: '◈',  label: 'Services' },
+    { path: '/prestataires',   icon: '◈',  label: 'Prestataires' },
   ]
   // Prestataire — their space + browse
   if (role === 'prestataire') return [
@@ -57,6 +58,7 @@ function getNavItems(role) {
   return [
     { path: '/accueil',    icon: '⬜', label: 'Accueil' },
     { path: '/evenements', icon: '🎟', label: 'Événements' },
+    { path: '/prestataires', icon: '◈', label: 'Prestataires' },
     { path: '/messagerie', icon: '💬', label: 'Messages' },
   ]
 }

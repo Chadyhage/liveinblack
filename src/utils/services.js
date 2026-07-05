@@ -1,6 +1,8 @@
 // ─── Prestataire Catalog ─────────────────────────────────────────────────────
-// Gère le catalogue produits/services des prestataires
-// et le système de commande avec commission
+// Gère le catalogue public des prestataires.
+// Les anciennes fonctions de commande restent lisibles pour compatibilité avec
+// les données historiques, mais le produit actuel repose sur la mise en relation
+// et la messagerie : aucun nouveau paiement de prestation n'est créé ici.
 
 const CATALOG_KEY = uid => `lib_catalog_${uid}`
 const ORDERS_KEY = 'lib_service_orders'
@@ -133,7 +135,9 @@ export const CATALOG_CATEGORIES = {
   ],
   salle: ['Location salle', 'Offre formule', 'Service traiteur', 'Autre'],
   prestation: ['Prestation 1h', 'Prestation 2h', 'Soirée complète', 'Package', 'Autre'],
+  artiste: ['DJ set', 'Concert / live', 'Animation', 'Performance', 'Package', 'Autre'],
   materiel: ['Sono', 'Lumières', 'Scène / Structure', 'Mobilier', 'Autre'],
+  food: ['Traiteur', 'Boissons', 'Bar / cocktails', 'Food truck', 'Pâtisserie', 'Autre'],
 }
 
 export const ORDER_STATUS_LABELS = {

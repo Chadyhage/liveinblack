@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import EventsPage from './pages/EventsPage'
 import PublicPrestataires from './pages/PublicPrestataires'
+import PublicPrestatairePage from './pages/PublicPrestatairePage'
 import PublicAbout from './pages/PublicAbout'
 import EventDetailPage from './pages/EventDetailPage'
 import ProposerServicesPage from './pages/ProposerServicesPage'
@@ -297,11 +298,11 @@ function ConnexionRoute({ user }) {
   return <LoginPage />
 }
 
-// Wrapper: Services — prestataire, organisateur, agent uniquement (pas client)
+// Wrapper: l'espace /proposer est désormais le studio personnel du prestataire.
+// Tous les autres rôles consultent l'annuaire public /prestataires.
 function RequireServiceAccess({ user, children }) {
   if (!user) return <Navigate to={`/connexion?next=${encodeURIComponent('/proposer')}`} replace />
-  const r = user.role
-  if (!r || r === 'client' || r === 'user') return <Navigate to="/accueil" replace />
+  if (user.role !== 'prestataire') return <Navigate to="/prestataires" replace />
   return children
 }
 
@@ -361,6 +362,7 @@ export default function App() {
             <Route path="/accueil" element={<HomePage />} />
             <Route path="/evenements" element={<EventsPage />} />
             <Route path="/prestataires" element={<PublicPrestataires />} />
+            <Route path="/prestataires/:providerId" element={<PublicPrestatairePage />} />
             <Route path="/c-est-quoi" element={<PublicAbout />} />
             <Route path="/evenements/:id" element={<EventDetailPage />} />
             <Route path="/cgu" element={<CGUPage />} />
@@ -402,7 +404,7 @@ export default function App() {
               <RequireOrganisateur user={user}><EventStatsPage /></RequireOrganisateur>
             } />
 
-            {/* ── Services: prestataire / organisateur / agent only ── */}
+            {/* ── Studio de la page publique du prestataire ── */}
             <Route path="/proposer" element={
               <RequireServiceAccess user={user}><ProposerServicesPage /></RequireServiceAccess>
             } />

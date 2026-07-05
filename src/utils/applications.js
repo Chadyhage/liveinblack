@@ -21,7 +21,7 @@ export const APPLICATION_STATUSES = {
 
 export const DOCUMENT_LABELS = {
   identity:          { label: 'Pièce d\'identité',                                   required: true  },
-  rib:               { label: 'RIB (Relevé d\'identité bancaire)',                   required: true  },
+  rib:               { label: 'RIB (Relevé d\'identité bancaire)',                   required: false },
   business_doc:      { label: 'Document officiel d\'entreprise (Kbis, extrait INSEE, statuts…)', required: true  },
   alcohol_license:   { label: 'Licence / Justificatif de débit de boissons',         required: false },
   activity_proof:    { label: 'Justificatif d\'activité',                            required: false },
@@ -37,16 +37,16 @@ export function getRequiredDocs(type, prestataireType = null) {
   }
   if (type === 'prestataire') {
     // Artiste (DJ, danseur, musicien…) — souvent sans SIRET, statut billing variable
-    if (prestataireType === 'artiste')  return ['identity', 'rib', 'billing_proof']
+    if (prestataireType === 'artiste')  return ['identity', 'billing_proof']
     // Salle (lieu, club, rooftop…) — ERP, licence exploitation obligatoire
-    if (prestataireType === 'salle')    return ['identity', 'rib', 'business_doc', 'exploitation_proof', 'insurance']
+    if (prestataireType === 'salle')    return ['identity', 'business_doc', 'exploitation_proof', 'insurance']
     // Matériel (sono, lumière, scène…) — société de location
-    if (prestataireType === 'materiel') return ['identity', 'rib', 'business_doc', 'insurance']
+    if (prestataireType === 'materiel') return ['identity', 'business_doc', 'insurance']
     // Food (traiteur, bar, food truck…) — entreprise, RC Pro, +alcool conditionnel
-    if (prestataireType === 'food')     return ['identity', 'rib', 'business_doc', 'insurance']
-    return ['identity', 'rib']
+    if (prestataireType === 'food')     return ['identity', 'business_doc', 'insurance']
+    return ['identity']
   }
-  return ['identity', 'rib']
+  return ['identity']
 }
 
 // ─── CRUD local ───────────────────────────────────────────────────────────────

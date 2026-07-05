@@ -1,26 +1,22 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Layout from '../components/Layout'
 import PublicNav from '../components/PublicNav'
 import { getAllProviderProfiles } from '../utils/services'
+import { PROVIDER_CATEGORIES, getProviderCategory, normalizeProviderType } from '../utils/providerCategories'
 
 // ─── Page publique PRESTATAIRES ──────────────────────────────────────────────
 // Annuaire ouvert aux visiteurs non connectés : ils explorent librement les
-// prestataires (DJ, salles, matériel, fournisseurs). « Demander un devis » ou
-// « Contacter » ouvre le gate de connexion (ou la messagerie si déjà connecté).
+// prestataires (DJ, salles, matériel, fournisseurs), puis ouvrent leur page
+// détaillée. La prise de contact se fait ensuite dans la messagerie.
 // Style aligné sur la vitrine (PublicLanding).
 
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa', violet: '#8b5cf6' }
 const FONT = 'Inter, sans-serif'
 
-// Catégories de prestataires (miroir de ProposerServicesPage, version publique)
-const CATS = [
-  { id: 'prestation', label: 'Artistes & DJ', color: '#ff6b1a', icon: 'mic', img: '/img_techno.avif' },
-  { id: 'salle', label: 'Salles & lieux', color: '#7b2fff', icon: 'building', img: '/img_nuit.jpg' },
-  { id: 'materiel', label: 'Matériel & sono', color: '#00c9a7', icon: 'speaker', img: '/media3.jpg' },
-  { id: 'supermarche', label: 'Boissons & conso', color: '#c8a96e', icon: 'cart', img: '/media1.jpg' },
-]
-const catOf = id => CATS.find(c => c.id === id)
+const CATS = PROVIDER_CATEGORIES
+const catOf = getProviderCategory
 
 function CatIcon({ id, color = '#fff', size = 18 }) {
   const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -33,19 +29,22 @@ function CatIcon({ id, color = '#fff', size = 18 }) {
 
 export default function PublicPrestataires() {
   const navigate = useNavigate()
-  const { user, openAuthModal } = useAuth()
+  const { user } = useAuth()
 
   const [query, setQuery] = useState('')
   const [activeCat, setActiveCat] = useState(null)
   const [remote, setRemote] = useState([])
+  const [catalogs, setCatalogs] = useState({})
 
   // Annuaire cross-device : collection partagée providers/ (Firestore) + local.
   useEffect(() => {
     let unsub = () => {}
-    import('../utils/firestore-sync').then(({ listenProviders }) => {
+    let unlistenCatalogs = () => {}
+    import('../utils/firestore-sync').then(({ listenProviders, listenCatalogs }) => {
       unsub = listenProviders(setRemote)
+      unlistenCatalogs = listenCatalogs(setCatalogs)
     }).catch(() => {})
-    return () => unsub()
+    return () => { unsub(); unlistenCatalogs() }
   }, [])
 
   const providers = useMemo(() => {
@@ -55,7 +54,10 @@ export default function PublicPrestataires() {
     // Uniquement les profils réellement renseignés : un doc providers/ créé mais
     // laissé vide (aucune photo, description ni localisation) est un profil
     // fantôme (onboarding abandonné) → on ne l'affiche pas dans l'annuaire.
-    const valid = Object.values(byId).filter(p => p.name && (p.photoUrl || p.description || p.location))
+    const valid = Object.values(byId).filter(p => p.name && (
+      p.photoUrl || p.description || p.location ||
+      (catalogs[p.userId] || []).some(item => item.available !== false)
+    ))
     // Dedup par nom : si deux docs Firestore portent le même nom, garder le plus complet
     const byName = {}
     for (const p of valid) {
@@ -67,31 +69,29 @@ export default function PublicPrestataires() {
       }
     }
     return Object.values(byName)
-  }, [remote])
+  }, [remote, catalogs])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return providers.filter(p => {
-      if (activeCat && p.prestataireType !== activeCat) return false
+      if (activeCat && normalizeProviderType(p.prestataireType) !== activeCat) return false
       if (!q) return true
       return [p.name, p.description, p.location].filter(Boolean).join(' ').toLowerCase().includes(q)
     })
   }, [providers, query, activeCat])
 
   const register = () => navigate('/connexion?mode=register')
-  // Contact : connecté → messagerie ; sinon → gate de connexion
-  const contact = (p) => {
-    if (user) { navigate('/messagerie'); return }
-    openAuthModal(`Crée ton compte pour contacter « ${p.name} » et demander un devis.`)
-  }
 
   const counts = useMemo(() => {
     const m = {}
-    for (const p of providers) m[p.prestataireType] = (m[p.prestataireType] || 0) + 1
+    for (const p of providers) {
+      const type = normalizeProviderType(p.prestataireType)
+      m[type] = (m[type] || 0) + 1
+    }
     return m
   }, [providers])
 
-  return (
+  const page = (
     <div style={{
       color: '#fff', overflowX: 'hidden', minHeight: '100vh',
       background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.28), transparent 60%), radial-gradient(circle 820px at 96% 30%, rgba(200,169,110,.14), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.15), transparent 60%), ${C.obsidian}`,
@@ -104,7 +104,7 @@ export default function PublicPrestataires() {
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4); box-shadow:0 26px 60px -24px rgba(0,0,0,.85) }
       `}</style>
 
-      <PublicNav />
+      {!user && <PublicNav />}
 
       {/* ══ HERO ══ */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 22px 8px', textAlign: 'center' }}>
@@ -146,7 +146,8 @@ export default function PublicPrestataires() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px,1fr))', gap: 16 }}>
             {filtered.map(p => {
-              const c = catOf(p.prestataireType) || { color: C.gold, label: 'Prestataire', img: '/media2.jpg', icon: 'mic' }
+              const c = catOf(p.prestataireType)
+              const offerCount = (catalogs[p.userId] || []).filter(item => item.available !== false).length
               return (
                 <div key={p.userId} className="lb-card" style={{ ...card, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
                   {/* Couverture */}
@@ -169,8 +170,9 @@ export default function PublicPrestataires() {
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>{p.location}
                     </p>}
                     {p.description && <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.62)', margin: '10px 0 0', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.description}</p>}
-                    <button onClick={() => contact(p)} style={{ ...btnGold, width: '100%', marginTop: 'auto' }}>
-                      Contacter
+                    {offerCount > 0 && <p style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,.42)', margin: '12px 0 0' }}>{offerCount} offre{offerCount > 1 ? 's' : ''} au catalogue</p>}
+                    <button onClick={() => navigate(`/prestataires/${encodeURIComponent(p.userId)}`)} style={{ ...btnGold, width: '100%', marginTop: 'auto' }}>
+                      Voir la page
                     </button>
                   </div>
                 </div>
@@ -180,19 +182,22 @@ export default function PublicPrestataires() {
         )}
       </section>
 
-      {/* ══ CTA prestataire ══ */}
-      <section style={{ padding: '10px 22px 70px' }}>
-        <div style={{ maxWidth: 820, margin: '0 auto', padding: '38px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid rgba(200,169,110,.22)', background: `radial-gradient(ellipse at 50% 0%, rgba(200,169,110,.16), transparent 60%), linear-gradient(160deg, rgba(24,20,12,.7), rgba(6,8,15,.7))`, backdropFilter: 'blur(16px)' }}>
-          <h2 style={{ fontFamily: FONT, fontSize: 'clamp(24px,6vw,36px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>Tu es prestataire ?</h2>
-          <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 460, lineHeight: 1.5 }}>Crée ta vitrine, sois visible des organisateurs et reçois des demandes de devis.</p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 24 }}>
-            <button onClick={register} style={btnGold}>Devenir prestataire</button>
-            <button onClick={() => navigate('/accueil')} style={btnGhost}>Retour à l'accueil</button>
+      {user?.role !== 'prestataire' && (
+        <section style={{ padding: '10px 22px 70px' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', padding: '38px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid rgba(200,169,110,.22)', background: `radial-gradient(ellipse at 50% 0%, rgba(200,169,110,.16), transparent 60%), linear-gradient(160deg, rgba(24,20,12,.7), rgba(6,8,15,.7))`, backdropFilter: 'blur(16px)' }}>
+            <h2 style={{ fontFamily: FONT, fontSize: 'clamp(24px,6vw,36px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>Tu es prestataire ?</h2>
+            <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 460, lineHeight: 1.5 }}>Crée ta vitrine, présente ton catalogue et échange directement avec les organisateurs.</p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 24 }}>
+              <button onClick={register} style={btnGold}>Devenir prestataire</button>
+              <button onClick={() => navigate('/accueil')} style={btnGhost}>Retour à l'accueil</button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   )
+
+  return user ? <Layout>{page}</Layout> : page
 }
 
 // ── Styles ──

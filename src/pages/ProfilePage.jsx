@@ -8,7 +8,6 @@ import { getUserId } from '../utils/messaging'
 // Wallet retiré : les paiements passent désormais par Stripe
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
-import { getOrdersForBuyer, ORDER_STATUS_LABELS } from '../utils/services'
 import { generateTicketToken } from '../utils/ticket'
 import PlaylistSystem from '../components/PlaylistSystem'
 import { IconMail, IconIdBadge } from '../components/icons'
@@ -408,7 +407,7 @@ const S = {
 export default function ProfilePage() {
   const { user, setUser } = useAuth()
   const navigate = useNavigate()
-  const [panel, setPanel] = useState(null) // null | 'settings' | 'billets' | 'service-orders' | 'support'
+  const [panel, setPanel] = useState(null) // null | 'settings' | 'billets' | 'support'
   const [supportCopied, setSupportCopied] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -748,6 +747,8 @@ export default function ProfilePage() {
       showPhoto: user?.privacy?.showPhoto !== false,
       showInfo: user?.privacy?.showInfo !== false,
       readReceipts: user?.privacy?.readReceipts !== false,
+      // Numéro perso : OPT-IN (désactivé par défaut) — donnée sensible.
+      showPhone: user?.privacy?.showPhone === true,
     }
     const togglePriv = (key) => {
       const next = { ...(user?.privacy || {}), [key]: !pv[key] }
@@ -762,6 +763,7 @@ export default function ProfilePage() {
     const PRIV_ROWS = [
       { key: 'showOnline', label: 'Statut en ligne', desc: 'Les autres voient quand tu es connecté·e.' },
       { key: 'showPhoto', label: 'Photo de profil', desc: 'Les autres voient ta photo (sinon : initiales).' },
+      { key: 'showPhone', label: 'Numéro de téléphone', desc: 'Autorise les autres à voir ton numéro perso sur ton profil (désactivé par défaut).' },
       { key: 'readReceipts', label: 'Confirmations de lecture', desc: 'Si désactivé, tu ne sais pas si on a lu tes messages — et personne ne sait si tu as lu les leurs.' },
     ]
     return (
@@ -1156,104 +1158,6 @@ export default function ProfilePage() {
   }
 
 
-  // ── Commandes prestataires ────────────────────────────────────────────────────
-  if (panel === 'service-orders') {
-    const uid = getUserId(user)
-    const serviceOrders = getOrdersForBuyer(uid)
-    return (
-      <Layout>
-        <div style={S.page}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <BackButton />
-            <h2 style={S.sectionTitle}>Commandes prestataires</h2>
-          </div>
-          {serviceOrders.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 0' }}>
-              <div style={S.emptyIcon}>
-                <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
-                  <rect x="3" y="3" width="14" height="14" rx="1.5" stroke="rgba(255,255,255,0.2)" strokeWidth="1"/>
-                  <path d="M7 10h6M7 7h4" stroke="rgba(255,255,255,0.2)" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <p style={S.emptyText}>Aucune commande pour l&apos;instant</p>
-              <button
-                onClick={() => navigate('/proposer')}
-                style={{ ...S.btnGold, width: 'auto', marginTop: '16px', display: 'inline-block' }}
-              >
-                Parcourir les prestataires
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {serviceOrders.map(order => {
-                const st = ORDER_STATUS_LABELS[order.status] || { label: order.status, color: '#6b7280' }
-                return (
-                  <div key={order.id} style={S.card}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                      <div>
-                        <p style={{
-                          fontFamily: 'Inter, sans-serif',
-                          fontWeight: 400,
-                          fontSize: '16px',
-                          color: 'rgba(255,255,255,0.88)',
-                        }}>{order.sellerName}</p>
-                        <p style={{ ...S.label, marginTop: '4px' }}>
-                          {new Date(order.createdAt).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                      <span style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontSize: '9px',
-                        letterSpacing: '0.2em',
-                        textTransform: 'uppercase',
-                        padding: '4px 10px',
-                        borderRadius: '4px',
-                        border: `1px solid ${st.color}44`,
-                        background: `${st.color}11`,
-                        color: st.color,
-                        flexShrink: 0,
-                      }}>
-                        {st.label}
-                      </span>
-                    </div>
-                    <hr style={S.divider} />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '10px 0' }}>
-                      {order.items.map((it, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{
-                            fontFamily: 'Inter, sans-serif',
-                            fontWeight: 400,
-                            fontSize: '14px',
-                            color: 'rgba(255,255,255,0.65)',
-                          }}>{it.name} × {it.qty}</span>
-                          <span style={{
-                            fontFamily: 'Inter, sans-serif',
-                            fontSize: '12px',
-                            color: 'rgba(255,255,255,0.55)',
-                          }}>{(it.price * it.qty).toFixed(2)}€</span>
-                        </div>
-                      ))}
-                    </div>
-                    <hr style={S.divider} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                      <span style={S.label}>Total payé</span>
-                      <span style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontWeight: 300,
-                        fontSize: '20px',
-                        color: '#c8a96e',
-                      }}>{order.subtotal.toFixed(2)}€</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </Layout>
-    )
-  }
-
   // ── Support ───────────────────────────────────────────────────────────────────
   if (panel === 'support') {
     return (
@@ -1359,7 +1263,6 @@ export default function ProfilePage() {
 
   // ── Main Profile ──────────────────────────────────────────────────────────────
   const createdCount = (() => { try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]').length } catch { return 0 } })()
-  const serviceOrdersCount = (() => { try { return getOrdersForBuyer(getUserId(user)).length } catch { return 0 } })()
 
   return (
     <Layout>
@@ -1441,11 +1344,6 @@ export default function ProfilePage() {
             // directement sur chaque billet — pas de page séparée redondante).
             (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
               { label: 'Mes billets',       action: () => setPanel('billets')   },
-            // « Commandes prestataires » : concept marketplace (organisateur↔prestataire).
-            // On ne l'affiche que si l'utilisateur a RÉELLEMENT passé une telle commande —
-            // sinon c'est une case vide déroutante pour un simple client.
-            (user?.role !== 'organisateur' && user?.role !== 'agent' && serviceOrdersCount > 0) &&
-              { label: 'Mes commandes prestataires', action: () => setPanel('service-orders') },
             { label: 'Paramètres du compte', action: () => setPanel('settings') },
             { label: 'Support / Aide',       action: () => setPanel('support')   },
             // Carte d'accréditation — organisateurs et prestataires approuvés uniquement

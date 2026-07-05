@@ -335,15 +335,11 @@ export default function AgentPage() {
   const totalAllPending   = totalAppsSubmitted + totalRoleReqs
 
   // ── Métriques business (revenus plateforme, billets, GMV) ──────────────────
-  const PLATFORM_COMMISSION_RATE = 0.10 // 10% commission LIVEINBLACK
   const allBookings = (() => {
     try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]') } catch { return [] }
   })()
   const allBoosts = (() => {
     try { return JSON.parse(localStorage.getItem('lib_boosts') || '[]') } catch { return [] }
-  })()
-  const allOrders = (() => {
-    try { return JSON.parse(localStorage.getItem('lib_service_orders') || '[]') } catch { return [] }
   })()
   // Activité 30 derniers jours
   const thirtyDaysAgo = Date.now() - 30 * 24 * 3600 * 1000
@@ -351,21 +347,19 @@ export default function AgentPage() {
     const ts = new Date(b.bookedAt || 0).getTime()
     return ts > thirtyDaysAgo
   })
-  const recentOrders = allOrders.filter(o => (o.createdAt || 0) > thirtyDaysAgo && o.status === 'done')
   // GMV (Gross Merchandise Value) — somme totale transactions
   const gmvTickets = allBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0)
-  const gmvOrders = allOrders.filter(o => o.status === 'done').reduce((sum, o) => sum + (Number(o.subtotal) || 0), 0)
   const gmvBoosts = allBoosts.reduce((sum, b) => sum + (Number(b.price) || 0), 0)
-  const totalGMV = gmvTickets + gmvOrders + gmvBoosts
+  const totalGMV = gmvTickets + gmvBoosts
   // Revenus plateforme RÉELS (encaissés) :
   // - frais de service billets = 5%+0,49€/billet plafonné 2,50€ (computeTicketFeeCents), sur le prix de la place
   // - boosts = 100% plateforme
-  // La commission services (10%) n'est PAS encore encaissée (paiement services hors plateforme) → "potentiel", hors total.
+  // Les prestations sont réglées directement entre les utilisateurs et ne font
+  // donc partie ni du GMV ni des revenus de la plateforme.
   const ticketFeeRevenue = allBookings.reduce(
     (sum, b) => sum + computeTicketFeeCents(Math.round((Number(b.placePrice) || 0) * 100), 1) / 100,
     0
   )
-  const serviceCommissionPotential = gmvOrders * PLATFORM_COMMISSION_RATE
   const platformRevenue = ticketFeeRevenue + gmvBoosts // boost = 100% pour la plateforme
   // Activité événementielle
   const totalTicketsSold = allBookings.length
@@ -793,12 +787,6 @@ export default function AgentPage() {
                     <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Frais billets</p>
                     <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
                       {ticketFeeRevenue.toFixed(2)} €
-                    </p>
-                  </div>
-                  <div>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Services (potentiel)</p>
-                    <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
-                      {(gmvOrders * PLATFORM_COMMISSION_RATE).toFixed(2)} €
                     </p>
                   </div>
                   <div>

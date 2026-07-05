@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Layout from '../components/Layout'
 import EmptyState from '../components/EmptyState'
@@ -505,6 +505,7 @@ function ImageBubble({ msg, myId, setPhotoViewer }) {
 export default function MessagingPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const myId   = getUserId(user)
   const myName     = user?.name || 'Moi'
   const myUsername = user?.username || getUserById(myId)?.username || null
@@ -897,13 +898,23 @@ export default function MessagingPage() {
     }
   }
 
+  // Une page prestataire peut créer une conversation puis demander à la
+  // messagerie de l'ouvrir immédiatement, sans obliger l'utilisateur à la
+  // retrouver manuellement dans la liste.
+  useEffect(() => {
+    const requestedConversationId = location.state?.conversationId
+    if (!requestedConversationId || !myId) return
+    openConv(requestedConversationId)
+    navigate('/messagerie', { replace: true, state: null })
+  }, [location.state?.conversationId, myId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Conversation display helper ──
   function getConvDisplay(conv) {
     if (!conv) return { name: '?', user: null, isGroup: false }
     if (conv.type === 'direct') {
       const otherId = conv.participants?.find(id => id !== myId)
       const other   = getUserById(otherId) || allUsers.find(u => u.id === otherId)
-      return { name: other?.name || 'Utilisateur', user: other, isGroup: false, otherId }
+      return { name: other?.name || conv.names?.[otherId] || 'Utilisateur', user: other, isGroup: false, otherId }
     }
     return { name: conv.name, user: null, isGroup: true, memberCount: conv.members?.length || 0 }
   }
@@ -911,6 +922,25 @@ export default function MessagingPage() {
   const activeConv  = conversations.find(c => c.id === activeConvId) || getConversationById(activeConvId)
   const amAdmin     = activeConv?.type === 'group' && activeConv?.members?.find(m => m.userId === myId)?.role === 'admin'
   const pinnedMsg   = activeConv?.pinnedMessageId ? messages.find(m => m.id === activeConv.pinnedMessageId) : null
+
+  // Téléphone de l'interlocuteur (conv directe) — fetché à la demande depuis Firestore
+  // (users/{uid} + providers/{uid}, lisibles par tout connecté). Confidentialité :
+  //  · numéro PERSO (users.phone) affiché SEULEMENT si l'autre l'a autorisé (privacy.showPhone) ;
+  //  · numéro PRO (providers.phone, prestataire) = contact business → affiché s'il existe.
+  const directOtherId = activeConv?.type === 'direct' ? activeConv.participants?.find(id => id !== myId) : null
+  const [contactPhones, setContactPhones] = useState(null) // { perso, pro } | null
+  useEffect(() => {
+    if (!directOtherId) { setContactPhones(null); return }
+    let cancelled = false
+    setContactPhones(null)
+    Promise.all([import('../firebase'), import('firebase/firestore')]).then(async ([{ db }, { doc, getDoc }]) => {
+      let perso = null, pro = null
+      try { const s = await getDoc(doc(db, 'users', String(directOtherId))); if (s.exists()) { const d = s.data(); if (d.privacy?.showPhone === true && d.phone) perso = d.phone } } catch {}
+      try { const s = await getDoc(doc(db, 'providers', String(directOtherId))); if (s.exists() && s.data().phone) pro = s.data().phone } catch {}
+      if (!cancelled) setContactPhones({ perso, pro })
+    }).catch(() => { if (!cancelled) setContactPhones({ perso: null, pro: null }) })
+    return () => { cancelled = true }
+  }, [directOtherId])
 
   // ── Send text ──
   function handleSend() {
@@ -2475,6 +2505,22 @@ export default function MessagingPage() {
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: isOnline(otherId) ? '#22c55e' : 'rgba(255,255,255,0.25)', margin: 0 }}>
                       {isOnline(otherId) ? '● En ligne' : '○ Hors ligne'}
                     </p>
+
+                    {/* Numéros — Pro (business) toujours visible s'il existe ; Perso seulement si autorisé */}
+                    {contactPhones && (contactPhones.pro || contactPhones.perso) && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, width: '100%', maxWidth: 280 }}>
+                        {[['Pro', contactPhones.pro, '#c8a96e'], ['Perso', contactPhones.perso, '#4ee8c8']].filter(([, n]) => n).map(([label, number, color]) => (
+                          <a key={label} href={`tel:${String(number).replace(/[^\d+]/g, '')}`}
+                            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, textDecoration: 'none', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                              <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color }}>{label}</span>
+                              <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#fff' }}>{number}</span>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions */}
