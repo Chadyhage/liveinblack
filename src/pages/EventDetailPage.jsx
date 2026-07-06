@@ -659,6 +659,7 @@ export default function EventDetailPage() {
         qty: ticketQty,
         unitPriceEUR: placePrice,
         currency: evCur, // XOF (FedaPay) ou EUR (Stripe) — réhydraté à /paiement-reussi
+        isTable: isGroupPlace, // table entière → le webhook émet tous les sièges
         preorderItems,
         perTicketOrders, // détail par billet — utilisé pour réhydrater à /paiement-reussi
         activeMenu,
@@ -680,6 +681,7 @@ export default function EventDetailPage() {
         qty: ticketQty,
         unitPriceEUR: placePrice,
         currency: evCur,
+        isTable: isGroupPlace,
         preorderItems,
         userId: uid,
         userEmail: user?.email,
@@ -1370,16 +1372,22 @@ export default function EventDetailPage() {
                       ) : isGroupPlace ? (
                         <button
                           style={{
-                            ...S.btnGroupCTA,
-                            opacity: (user && !userCanBook) ? 0.4 : 1,
-                            cursor: (user && !userCanBook) ? 'not-allowed' : 'pointer',
-                            pointerEvents: (user && !userCanBook) ? 'none' : 'auto',
+                            ...S.btnCheckout,
+                            opacity: (user && !userCanBook) || bookingDisabled ? 0.4 : 1,
+                            cursor: (user && !userCanBook) || bookingDisabled ? 'not-allowed' : 'pointer',
+                            pointerEvents: (user && !userCanBook) || bookingDisabled ? 'none' : 'auto',
                           }}
-                          disabled={user && !userCanBook}
-                          onClick={() => requireUserThenDo(() => { setGroupSendConvId(null); setShowGroupSendModal(true) })}
+                          disabled={(user && !userCanBook) || bookingDisabled}
+                          onClick={() => !bookingDisabled && requireUserThenDo(() => tryProceed(() => setShowConfirmModal(true)))}
                         >
-                          <GroupIcon size={16} color="#04140f" />
-                          Proposer au groupe
+                          {isEventCancelled || isEventSoldOut || isEventClosed ? (
+                            isEventCancelled ? 'Événement annulé' : isEventSoldOut ? 'Complet' : 'Réservations closes'
+                          ) : (
+                            <>
+                              <GroupIcon size={16} color="#1a1206" />
+                              {placePrice > 0 ? `Réserver la table · ${fmtMoney(placePrice, evCur)}` : 'Réserver la table'}
+                            </>
+                          )}
                         </button>
                       ) : (
                         <button
@@ -1717,17 +1725,12 @@ export default function EventDetailPage() {
 
                   {isGroupPlace ? (
                     <button
-                      style={{
-                        ...S.btnGroupCTA,
-                        opacity: !userCanBook ? 0.4 : 1,
-                        cursor: !userCanBook ? 'not-allowed' : 'pointer',
-                        pointerEvents: !userCanBook ? 'none' : 'auto',
-                      }}
+                      style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                       disabled={!userCanBook}
-                      onClick={() => { setGroupSendConvId(null); setShowGroupSendModal(true) }}
+                      onClick={() => setShowConfirmModal(true)}
                     >
-                      <GroupIcon size={16} color="#04140f" />
-                      Proposer au groupe
+                      <GroupIcon size={16} color="#1a1206" />
+                      {`Réserver la table — ${fmtMoney(grandTotal, evCur)}`}
                     </button>
                   ) : (
                     <>

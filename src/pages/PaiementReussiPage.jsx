@@ -130,6 +130,18 @@ export default function PaiementReussiPage() {
         pending = raw ? JSON.parse(raw) : null
       } catch {}
 
+      // 2.0) TABLE ENTIÈRE : le webhook émet TOUS les sièges (prix par siège juste,
+      // tableId/hostUid pour l'attribution). Le client ne touche à rien — les
+      // sièges arrivent dans « Mes billets » via la sync user_bookings. On évite
+      // ainsi toute pré-génération ou adoption qui casserait le compte de sièges.
+      if (pending?.isTable || result?.metadata?.isTable === '1') {
+        try { localStorage.removeItem(PENDING_KEY(bookingId)) } catch {}
+        setEventName(pending?.eventName || result?.metadata?.eventName || '')
+        setTickets([])
+        setState(verified ? 'success' : 'pending')
+        return
+      }
+
       // 2.5) SOURCE DE VÉRITÉ = webhook : si bookings/{bookingId} est payé avec
       // billets, on ADOPTE ses billets — MÊME si la vérif client a échoué. Ça
       // évite l'écran d'erreur alors que le billet a bien été émis, et évite les

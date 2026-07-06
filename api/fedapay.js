@@ -77,6 +77,7 @@ async function checkout(req, res, body) {
       eventId, eventName, placeType, qty = 1,
       preorderItems = [], userEmail, userName,
       bookingId, groupBookingId, isGroupShare,
+      isTable, // achat d'une TABLE entière (place de groupe) — modèle « hôte »
     } = body
     // Identité du payeur = TOUJOURS le token vérifié (jamais le body) : le
     // webhook s'en sert pour user_bookings, les points ET payments[uid] des
@@ -103,6 +104,11 @@ async function checkout(req, res, body) {
     const sellerUid = ev.organizerId || ev.createdBy || ''
     const places = ev.places || []
     const place = places.find(p => p.type === placeType) || null
+
+    // Mutuellement exclusifs : une part de groupe n'est pas une table entière.
+    if (isTable && isGroupShare) {
+      return res.status(400).json({ error: 'Requête invalide (table et part de groupe simultanées).' })
+    }
 
     let unitPrice = 0 // FCFA entiers
     if (isGroupShare) {
@@ -145,10 +151,20 @@ async function checkout(req, res, body) {
         return res.status(400).json({ error: 'Part de groupe invalide' })
       }
       unitPrice = share
+    } else if (isTable) {
+      // ── Table entière : achat de TOUTE une place de groupe au prix plein.
+      // La place doit vraiment être une place de groupe (validé serveur).
+      if (!place) return res.status(404).json({ error: 'Table introuvable sur cet événement' })
+      if (String(place.groupType) !== 'group' || (Number(place.groupMax) || 0) < 2) {
+        return res.status(400).json({ error: "Cette place n'est pas une table de groupe." })
+      }
+      unitPrice = Math.round(Number(place.price) || 0) // prix PLEIN de la table
     } else {
       if (!place) return res.status(404).json({ error: 'Type de place introuvable sur cet événement' })
       unitPrice = Math.round(Number(place.price) || 0)
     }
+    // Nombre de sièges de la table (0 si ce n'est pas un achat de table).
+    const tableSeats = isTable ? Math.min(50, Math.max(2, Number(place.groupMax) || 2)) : 0
 
     // ── Précommandes (consos) : montants entiers bornés. Comme sur le tunnel
     // Stripe v1 les prix consos viennent du client ; le montant réellement payé
@@ -163,11 +179,15 @@ async function checkout(req, res, body) {
     const preorderTotal = preorders.reduce((s, p) => s + p.price * p.qty, 0)
 
     // ── Frais de service LIVEINBLACK (payé par l'acheteur, calcul SERVEUR) ──
-    const feeAmount = isGroupShare
-      ? computeTicketFeeXOF(unitPrice, 1)
-      : computeTicketFeeXOF(unitPrice, nQty)
+    // Table : frais PAR SIÈGE (prix table ÷ sièges × nombre de sièges).
+    const feeAmount = isTable
+      ? computeTicketFeeXOF(Math.round(unitPrice / tableSeats), tableSeats)
+      : isGroupShare
+        ? computeTicketFeeXOF(unitPrice, 1)
+        : computeTicketFeeXOF(unitPrice, nQty)
 
-    const amountTotal = (isGroupShare ? unitPrice : unitPrice * nQty) + preorderTotal + feeAmount
+    // La table se paie une fois au prix plein (unitPrice) ; part de groupe = 1 part.
+    const amountTotal = ((isGroupShare || isTable) ? unitPrice : unitPrice * nQty) + preorderTotal + feeAmount
     if (amountTotal <= 0) {
       return res.status(400).json({ error: 'Aucun montant à payer (place gratuite ?)' })
     }
@@ -184,7 +204,7 @@ async function checkout(req, res, body) {
         const idx = places.findIndex(p => p.type === placeType)
         if (idx === -1) return false
         const available = Number(places[idx].available) || 0
-        const q = isGroupShare ? 1 : nQty
+        const q = (isGroupShare || isTable) ? 1 : nQty
         if (available < q) {
           const err = new Error('insufficient_stock')
           err.code = 'insufficient_stock'
@@ -216,7 +236,7 @@ async function checkout(req, res, body) {
           if (idx === -1) return
           const total = Number(places[idx].total) || 0
           const available = Number(places[idx].available) || 0
-          const q = isGroupShare ? 1 : nQty
+          const q = (isGroupShare || isTable) ? 1 : nQty
           const nextAvailable = Math.max(0, Math.min(total || Infinity, available + q))
           const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
           tx.update(eventRef, { places: nextPlaces })
@@ -264,7 +284,7 @@ async function checkout(req, res, body) {
         eventId: String(eventId),
         eventName: String(eventName).slice(0, 200),
         placeType: String(placeType),
-        qty: isGroupShare ? 1 : nQty,
+        qty: (isGroupShare || isTable) ? 1 : nQty,
         unitPrice,
         preorders,
         feeAmount,
@@ -276,6 +296,8 @@ async function checkout(req, res, body) {
         connectMode: 'ledger',
         ...(groupBookingId ? { groupBookingId: String(groupBookingId) } : {}),
         ...(isGroupShare ? { isGroupShare: true } : {}),
+        // Table entière : le webhook émet `tableSeats` sièges détenus par l'hôte.
+        ...(isTable ? { isTable: true, tableSeats } : {}),
         status: 'pending',
         stockDecremented,
         createdAt: FieldValue.serverTimestamp(),
@@ -488,6 +510,15 @@ async function finalizeFedapayBooking(db, entity) {
   const unitPrice = Math.round(Number(meta.unitPrice) || 0)
   const preorders = Array.isArray(meta.preorders) ? meta.preorders : []
 
+  // ── Table entière (modèle « hôte ») : on émet `tableSeats` billets (sièges)
+  // tous détenus par l'hôte, prêts à être attribués via /api/tickets. Chaque
+  // siège vaut prix_table ÷ sièges (les stats de l'organisateur restent justes).
+  const isTable = meta.isTable === true && Number(meta.tableSeats) > 1
+  const tableSeats = isTable ? Math.min(50, Math.max(2, Number(meta.tableSeats) || 2)) : 0
+  const seatCount = isTable ? tableSeats : qty
+  const perSeatPrice = isTable ? Math.round(unitPrice / tableSeats) : unitPrice
+  const tableId = isTable ? bookingId : null
+
   // ── Paiement APRÈS restock : FedaPay autorise de réessayer une transaction
   // canceled/declined. Si le stock de cette résa a déjà été rendu (annulation
   // puis nouveau paiement réussi), on le re-décrémente — sinon survente.
@@ -569,18 +600,22 @@ async function finalizeFedapayBooking(db, entity) {
       eventId,
       eventName,
       place: t.place || placeType,
-      placePrice: t.placePrice != null ? Number(t.placePrice) : unitPrice,
+      placePrice: t.placePrice != null ? Number(t.placePrice) : perSeatPrice,
       currency: 'XOF',
       bookedAt: t.bookedAt || new Date().toISOString(),
       paid: true,
       paymentMethod: 'fedapay',
       fedapayTxnId: txnId,
-      userId,
+      // Le titulaire courant du siège est celui déjà en base (peut avoir été
+      // attribué entre deux tentatives) ; à défaut, l'hôte.
+      userId: t.userId || userId,
+      // Champs table préservés au retry.
+      ...(t.tableId ? { tableId: t.tableId, seatIndex: t.seatIndex, hostUid: t.hostUid, tableSeats: t.tableSeats } : {}),
     }))
     console.log('[fedapay-webhook] retry — billets déjà mintés réutilisés:', tickets.map(t => t.ticketCode))
   } else {
     tickets = []
-    for (let i = 0; i < qty; i++) {
+    for (let i = 0; i < seatCount; i++) {
       const code = generateTicketCode()
       const ticketCode = `LIB-${String(eventId).padStart(3, '0')}-${code}`
       tickets.push({
@@ -589,13 +624,15 @@ async function finalizeFedapayBooking(db, entity) {
         eventId,
         eventName,
         place: placeType,
-        placePrice: unitPrice,
+        placePrice: perSeatPrice,
         currency: 'XOF',
         bookedAt: new Date().toISOString(),
         paid: true,
         paymentMethod: 'fedapay',
         fedapayTxnId: txnId,
-        userId,
+        userId, // l'hôte détient tous les sièges au départ
+        // Sièges de table : liés par tableId, attribuables via /api/tickets.
+        ...(isTable ? { tableId, seatIndex: i, hostUid: userId, tableSeats } : {}),
         // Pas de token QR signé ici — même modèle que Stripe : la validation au
         // scan passe par le registre tickets/{code}, « Mes billets » régénère le QR.
       })
@@ -615,15 +652,19 @@ async function finalizeFedapayBooking(db, entity) {
         eventId,
         eventName,
         place: placeType,
-        placePrice: unitPrice,
+        placePrice: t.placePrice != null ? Number(t.placePrice) : perSeatPrice,
         currency: 'XOF',
-        userId,
+        userId: t.userId || userId,
         paid: true,
         source: 'fedapay-webhook',
         bookedAt: t.bookedAt,
         fedapayTxnId: txnId,
-        preorders,
+        // Précommandes uniquement sur le 1er siège d'une table (elles appartiennent
+        // à l'hôte, pas dupliquées sur chaque siège).
+        preorders: (!isTable || t.seatIndex === 0) ? preorders : [],
         bookingId,
+        // Champs table pour l'attribution + l'affichage « Ma table ».
+        ...(t.tableId ? { tableId: t.tableId, seatIndex: t.seatIndex, hostUid: t.hostUid, tableSeats: t.tableSeats } : {}),
       })
     }
     await batch.commit()

@@ -10,6 +10,7 @@ import { fmtMoney } from '../utils/money'
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
 import { generateTicketToken } from '../utils/ticket'
+import { isEventEnded } from '../utils/event-time'
 import PlaylistSystem from '../components/PlaylistSystem'
 import { PreferencesModal, summarizePreferences } from '../components/PreferencesEditor'
 import { IconMail, IconIdBadge } from '../components/icons'
@@ -1493,16 +1494,60 @@ export default function ProfilePage() {
     const groups = Object.values(grouped).map(g => {
       const ev = evById[String(g.eventId)]
       const cancelled = !ev || !!ev?.cancelled
+      const firstTicket = g.tickets[0] || {}
+      const timing = {
+        date: ev?.date || firstTicket.eventDateISO,
+        time: ev?.time || firstTicket.eventStartTime,
+        endTime: ev?.endTime || firstTicket.eventEndTime,
+        closingDate: ev?.closingDate,
+      }
+      const past = !cancelled && isEventEnded(timing)
       const ts = ev?.date ? new Date(ev.date + 'T00:00:00').getTime() : 0
-      return { ...g, _cancelled: cancelled, _ts: ts }
+      return { ...g, _cancelled: cancelled, _past: past, _ts: ts }
     }).sort((a, b) => {
-      if (a._cancelled !== b._cancelled) return a._cancelled ? 1 : -1
-      return a._cancelled ? (b._ts - a._ts) : (a._ts - b._ts)
+      const rank = item => item._cancelled ? 2 : item._past ? 1 : 0
+      const rankDiff = rank(a) - rank(b)
+      if (rankDiff) return rankDiff
+      return rank(a) === 0 ? (a._ts - b._ts) : (b._ts - a._ts)
     })
 
     return (
       <Layout>
-        <div style={S.page}>
+        <div className="ticket-wallet-page" style={S.page}>
+          <style>{`
+            .ticket-wallet-page{max-width:1180px!important}
+            .ticket-wallet-list{display:flex;flex-direction:column;gap:18px}
+            .ticket-event-group{background:rgba(8,9,17,.78);border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;box-shadow:0 22px 60px rgba(0,0,0,.22)}
+            .ticket-event-head{min-height:112px;position:relative;padding:20px 22px!important;background:linear-gradient(105deg,rgba(18,14,30,.94),rgba(8,9,17,.82));display:flex;align-items:center}
+            .ticket-event-thumb{width:76px!important;height:76px!important;border-radius:14px!important}
+            .ticket-event-actions{border-top:1px solid rgba(255,255,255,.07);display:flex;background:rgba(0,0,0,.12)}
+            .ticket-playlist-action{min-width:250px;min-height:62px;padding:0 20px;border:0;border-left:1px solid rgba(255,255,255,.08);background:linear-gradient(135deg,rgba(200,169,110,.12),rgba(132,68,255,.08));color:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;transition:background .2s ease,border-color .2s ease}
+            .ticket-playlist-action:hover{background:linear-gradient(135deg,rgba(200,169,110,.2),rgba(132,68,255,.13));border-color:rgba(200,169,110,.32)}
+            .ticket-playlist-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;color:#d9bd82;background:rgba(200,169,110,.1);border:1px solid rgba(200,169,110,.28)}
+            .ticket-playlist-copy{flex:1;min-width:0}.ticket-playlist-copy strong{display:block;font:700 12px Inter,sans-serif;color:#fff}.ticket-playlist-copy small{display:block;font:500 9px Inter,sans-serif;color:rgba(255,255,255,.42);margin-top:3px}.ticket-playlist-chevron{color:#c8a96e;font-size:18px}
+            .ticket-stack{padding:18px!important;gap:16px!important;background:radial-gradient(circle at 20% 0%,rgba(78,232,200,.055),transparent 42%)}
+            .digital-ticket{position:relative;border:1px solid rgba(255,255,255,.13);border-radius:20px;background:linear-gradient(145deg,#141322,#090a12 68%);overflow:hidden;box-shadow:0 20px 55px rgba(0,0,0,.35)}
+            .digital-ticket:before,.digital-ticket:after{content:'';position:absolute;z-index:3;width:24px;height:24px;border-radius:50%;background:#080912;top:calc(62% - 12px)}
+            .digital-ticket:before{left:-13px}.digital-ticket:after{right:-13px}
+            .ticket-pass-top{display:grid;grid-template-columns:minmax(0,1fr) 184px;min-height:210px}
+            .ticket-pass-main{position:relative;padding:28px 30px;overflow:hidden;background:radial-gradient(circle at 0% 0%,rgba(132,68,255,.24),transparent 48%),linear-gradient(120deg,rgba(224,90,170,.11),transparent 60%)}
+            .ticket-pass-main:after{content:'LIVE IN BLACK';position:absolute;right:-32px;bottom:-15px;font:800 66px Inter,sans-serif;letter-spacing:-.06em;color:rgba(255,255,255,.025);white-space:nowrap}
+            .ticket-brand{font:800 10px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#4ee8c8}
+            .ticket-event-name{max-width:570px;font:800 clamp(24px,3vw,38px)/1.05 Inter,sans-serif;letter-spacing:-.045em;color:#fff;margin:18px 0 24px}
+            .ticket-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;position:relative;z-index:1}
+            .ticket-meta-grid span{display:block;font:700 8px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.34);margin-bottom:5px}.ticket-meta-grid strong{font:700 13px Inter,sans-serif;color:rgba(255,255,255,.88);word-break:break-word}
+            .ticket-stub{position:relative;border-left:1px dashed rgba(255,255,255,.22);padding:22px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.025)}
+            .ticket-stub:before,.ticket-stub:after{content:'';position:absolute;left:-10px;width:20px;height:20px;border-radius:50%;background:#080912}.ticket-stub:before{top:-10px}.ticket-stub:after{bottom:-10px}
+            .ticket-qr{padding:9px;background:#fff;border-radius:12px;line-height:0;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+            .ticket-code{font:600 9px Inter,sans-serif;letter-spacing:.08em;color:rgba(255,255,255,.48);margin-top:12px;text-align:center;word-break:break-all}
+            .ticket-pass-bottom{border-top:1px dashed rgba(255,255,255,.15);padding:15px 22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+            .ticket-pass-action{min-height:42px;padding:0 16px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);font:700 11px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+            .ticket-pass-action.primary{margin-left:auto;background:#4ee8c8;border-color:#4ee8c8;color:#04040b}
+            .ticket-preorders{padding:16px 22px;border-top:1px solid rgba(255,255,255,.07);display:grid;gap:8px}.ticket-preorders-title{font:800 9px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#c8a96e}.ticket-preorder-row{display:flex;justify-content:space-between;gap:16px;font:500 12px Inter,sans-serif;color:rgba(255,255,255,.65)}
+            .ticket-expanded-qr{padding:22px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;gap:13px;background:rgba(0,0,0,.2)}
+            .digital-ticket.is-inactive{border-color:rgba(255,255,255,.08);box-shadow:none}.digital-ticket.is-inactive .ticket-pass-main{filter:saturate(.35);opacity:.72}.ticket-inactive-stub{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}.ticket-inactive-stub svg{color:rgba(255,255,255,.34)}.ticket-inactive-stub strong{font:800 12px Inter,sans-serif;color:rgba(255,255,255,.7)}.ticket-inactive-stub small{font:600 9px Inter,sans-serif;color:rgba(255,255,255,.34);text-transform:uppercase;letter-spacing:.1em}.ticket-pass-expired{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font:700 11px Inter,sans-serif;color:rgba(255,255,255,.45)}
+            @media(max-width:700px){.ticket-wallet-page{padding-left:12px!important;padding-right:12px!important}.ticket-event-head{min-height:92px;padding:14px!important}.ticket-event-thumb{width:58px!important;height:58px!important}.ticket-event-actions{flex-wrap:wrap}.ticket-playlist-action{width:100%;min-width:0;border-left:0;border-top:1px solid rgba(255,255,255,.07);padding:0 16px}.ticket-pass-top{grid-template-columns:1fr}.ticket-pass-main{padding:24px 22px}.ticket-stub{border-left:0;border-top:1px dashed rgba(255,255,255,.2);padding:20px}.ticket-stub:before,.ticket-stub:after{top:-10px;bottom:auto}.ticket-stub:before{left:-10px}.ticket-stub:after{left:auto;right:-10px}.ticket-meta-grid{grid-template-columns:1fr 1fr}.ticket-event-name{font-size:28px}.ticket-pass-action{flex:1}.ticket-pass-action.primary{margin-left:0;flex-basis:100%}}
+          `}</style>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <BackButton />
             <h2 style={S.sectionTitle}>Mes billets</h2>
@@ -1524,7 +1569,7 @@ export default function ProfilePage() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="ticket-wallet-list">
               {groups.map((g) => (
                 <EventTicketGroup key={g.eventId} group={g} />
               ))}
@@ -1922,18 +1967,133 @@ function FocusInput({ label, value, onChange, type = 'text', placeholder, hasErr
   )
 }
 
+// Patch local d'un billet dans lib_bookings (reflète l'attribution sans refresh).
+function patchLocalBooking(ticketCode, fields) {
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+    localStorage.setItem('lib_bookings', JSON.stringify(
+      all.map(b => b.ticketCode === ticketCode ? { ...b, ...fields } : b)
+    ))
+  } catch {}
+}
+
+// Panneau « Ma table » — visible seulement pour l'HÔTE d'une table. Liste les
+// sièges et permet d'attribuer/reprendre chaque place (via /api/tickets).
+function TableHostPanel({ tickets, inactive }) {
+  const { user } = useAuth()
+  const myId = getUserId(user)
+  const seats = (tickets || [])
+    .filter(t => t.tableId && String(t.hostUid) === String(myId))
+    .sort((a, b) => (a.seatIndex || 0) - (b.seatIndex || 0))
+  const [ov, setOv] = useState({})            // ticketCode -> { assignedTo, assignedName } (optimiste)
+  const [openAssign, setOpenAssign] = useState(null)
+  const [email, setEmail] = useState('')
+  const [busy, setBusy] = useState('')
+  const [msg, setMsg] = useState('')
+  if (!seats.length) return null
+  const totalSeats = seats[0].tableSeats || seats.length
+  const holderOf = (t) => (t.ticketCode in ov) ? ov[t.ticketCode] : { assignedTo: t.assignedTo || null, assignedName: t.assignedName || null }
+  const assignedCount = seats.filter(t => holderOf(t).assignedTo).length
+
+  async function call(action, ticketCode, extra) {
+    setBusy(ticketCode); setMsg('')
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const res = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ action, ticketCode, ...extra }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setMsg(data.error || 'Erreur — réessaie.'); setBusy(''); return }
+      const patch = action === 'assign'
+        ? { assignedTo: data.holder, assignedName: data.holderName || 'Invité' }
+        : { assignedTo: null, assignedName: null }
+      setOv(s => ({ ...s, [ticketCode]: patch }))
+      patchLocalBooking(ticketCode, patch)
+      setOpenAssign(null); setEmail(''); setMsg(action === 'assign' ? 'Place attribuée ✓' : 'Place reprise ✓')
+    } catch { setMsg('Erreur réseau — réessaie.') }
+    setBusy('')
+  }
+
+  return (
+    <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.07)', background: 'rgba(200,169,110,0.04)' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+        <p style={{ margin: 0, font: '800 11px Inter,sans-serif', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c8a96e' }}>Ma table · {totalSeats} places</p>
+        <span style={{ font: '600 10px Inter,sans-serif', color: 'rgba(255,255,255,0.4)' }}>{assignedCount}/{totalSeats} attribuées</span>
+      </div>
+      {!inactive && (
+        <p style={{ margin: '0 0 12px', font: '500 11px Inter,sans-serif', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+          Attribue chaque place à un ami (par email de son compte) : le billet arrive dans son compte avec son propre QR. Tu peux la reprendre tant qu'il n'est pas entré.
+        </p>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {seats.map((t, i) => {
+          const h = holderOf(t)
+          const assigned = !!h.assignedTo
+          const isBusy = busy === t.ticketCode
+          return (
+            <div key={t.ticketCode} style={{ background: 'rgba(6,8,16,0.55)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, font: '700 12px Inter,sans-serif', color: '#fff' }}>Place {i + 1}</p>
+                  <p style={{ margin: '2px 0 0', font: '500 11px Inter,sans-serif', color: assigned ? '#4ee8c8' : 'rgba(255,255,255,0.45)' }}>
+                    {assigned ? `Attribuée à ${h.assignedName || 'un invité'}` : 'Libre — à toi'}
+                  </p>
+                </div>
+                {!inactive && (assigned ? (
+                  <button disabled={isBusy} onClick={() => call('revoke', t.ticketCode)}
+                    style={{ flexShrink: 0, padding: '7px 13px', borderRadius: 999, cursor: 'pointer', font: '700 11px Inter,sans-serif', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', color: '#e05aaa' }}>
+                    {isBusy ? '…' : 'Reprendre'}
+                  </button>
+                ) : (
+                  <button disabled={isBusy} onClick={() => { setOpenAssign(openAssign === t.ticketCode ? null : t.ticketCode); setEmail(''); setMsg('') }}
+                    style={{ flexShrink: 0, padding: '7px 13px', borderRadius: 999, cursor: 'pointer', font: '700 11px Inter,sans-serif', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: '#4ee8c8' }}>
+                    Attribuer
+                  </button>
+                ))}
+              </div>
+              {openAssign === t.ticketCode && !assigned && (
+                <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                  <input value={email} onChange={e => setEmail(e.target.value)} placeholder="email de l'ami" type="email"
+                    style={{ flex: 1, background: 'rgba(6,8,16,0.8)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 8, color: '#fff', font: '500 12px Inter,sans-serif', padding: '8px 10px' }} />
+                  <button disabled={isBusy || !email.trim()} onClick={() => call('assign', t.ticketCode, { toEmail: email.trim() })}
+                    style={{ padding: '8px 14px', borderRadius: 8, cursor: email.trim() ? 'pointer' : 'default', font: '700 12px Inter,sans-serif', background: '#4ee8c8', border: 'none', color: '#04040b', opacity: email.trim() ? 1 : 0.4 }}>
+                    {isBusy ? '…' : 'Donner'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {msg && <p style={{ margin: '10px 0 0', font: '600 11px Inter,sans-serif', color: 'rgba(78,232,200,0.9)' }}>{msg}</p>}
+    </div>
+  )
+}
+
 function EventTicketGroup({ group }) {
   const navigate = useNavigate()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const [showPlaylist, setShowPlaylist] = useState(false)
 
   // Récupère l'objet événement complet pour savoir s'il a une playlist et son statut
   const event = getAllEvents().find(e => String(e.id) === String(group.eventId))
-  const hasPlaylist = !!event?.playlist
   const isCancelled = !!event?.cancelled
   const isDeleted = !event   // l'event n'existe plus du tout
   const cancellationMessage = event?.cancellationMessage || ''
   const cancelled = isCancelled || isDeleted
+  const firstTicket = group.tickets[0] || {}
+  const timing = {
+    date: event?.date || firstTicket.eventDateISO,
+    time: event?.time || firstTicket.eventStartTime,
+    endTime: event?.endTime || firstTicket.eventEndTime,
+    closingDate: event?.closingDate,
+  }
+  const isPast = !cancelled && isEventEnded(timing)
+  const ticketInactive = cancelled || isPast
+  const inactiveLabel = cancelled ? 'Billet annulé' : 'Billet expiré'
+  const hasPlaylist = !!event?.playlist && !ticketInactive
   // Bannière d'annulation masquable : une fois lue, l'utilisateur la ferme et
   // elle ne réapparaît plus (mémorisée par event). Le billet, lui, reste classé en bas.
   const DKEY = 'lib_dismissed_cancel'
@@ -1960,7 +2120,7 @@ function EventTicketGroup({ group }) {
 
   return (
     <>
-    <div style={{
+    <div className="ticket-event-group" style={{
       background: 'rgba(8,10,20,0.55)',
       backdropFilter: 'blur(22px) saturate(1.6)',
       WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
@@ -1970,6 +2130,7 @@ function EventTicketGroup({ group }) {
     }}>
       {/* Event header */}
       <div
+        className="ticket-event-head"
         style={{ padding: '14px 16px', cursor: 'pointer' }}
         onClick={() => navigate(`/evenements/${group.eventId}`)}
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
@@ -1978,7 +2139,7 @@ function EventTicketGroup({ group }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
             {/* Vignette de l'événement : image si dispo, sinon pastille pro */}
-            <div style={{ width: 48, height: 48, borderRadius: 12, overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(140deg, rgba(78,232,200,0.18), rgba(11,13,20,0.6))', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: showCancellationBanner ? 'grayscale(0.7)' : 'none' }}>
+            <div className="ticket-event-thumb" style={{ width: 48, height: 48, borderRadius: 12, overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(140deg, rgba(78,232,200,0.18), rgba(11,13,20,0.6))', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: showCancellationBanner || isPast ? 'grayscale(0.75)' : 'none', opacity: isPast ? .65 : 1 }}>
               {event?.imageUrl
                 ? <img src={event.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/><line x1="12" y1="5" x2="12" y2="19" strokeDasharray="2 3"/></svg>}
@@ -1989,7 +2150,7 @@ function EventTicketGroup({ group }) {
                 fontWeight: 700,
                 fontSize: '16px',
                 letterSpacing: '-0.2px',
-                color: showCancellationBanner ? 'rgba(255,140,140,0.85)' : '#fff',
+                color: showCancellationBanner ? 'rgba(255,140,140,0.85)' : isPast ? 'rgba(255,255,255,.58)' : '#fff',
                 textDecoration: showCancellationBanner ? 'line-through' : 'none',
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>{group.eventName}</p>
@@ -2004,6 +2165,11 @@ function EventTicketGroup({ group }) {
                 {showCancellationBanner && (
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#ff8a8a', background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.35)', borderRadius: 999, padding: '2px 8px' }}>
                     Annulé
+                  </span>
+                )}
+                {isPast && (
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.48)', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 999, padding: '2px 8px' }}>
+                    Terminé
                   </span>
                 )}
               </div>
@@ -2081,8 +2247,21 @@ function EventTicketGroup({ group }) {
         </div>
       )}
 
+      {isPast && (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,.07)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.018)' }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <div>
+            <p style={{ margin: 0, font: '700 11px Inter,sans-serif', color: 'rgba(255,255,255,.62)' }}>Événement terminé</p>
+            <p style={{ margin: '3px 0 0', font: '500 10px Inter,sans-serif', color: 'rgba(255,255,255,.34)' }}>Billet conservé dans ton historique · QR et commandes désactivés</p>
+          </div>
+        </div>
+      )}
+
+      {/* Ma table — attribution des places (hôte uniquement) */}
+      <TableHostPanel tickets={group.tickets} inactive={ticketInactive} />
+
       {/* Actions row */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex' }}>
+      <div className="ticket-event-actions">
         {/* Expand / collapse tickets */}
         <button
           onClick={() => setExpanded(v => !v)}
@@ -2118,37 +2297,20 @@ function EventTicketGroup({ group }) {
         {/* Playlist button — only if event has playlist */}
         {hasPlaylist && (
           <button
+            className="ticket-playlist-action"
             onClick={() => setShowPlaylist(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 16px',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,169,110,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            {/* music note icon */}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="#c8a96e"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-            <span style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '9px',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: '#c8a96e',
-            }}>Playlist</span>
+            <span className="ticket-playlist-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span>
+            <span className="ticket-playlist-copy"><strong>Playlist interactive</strong><small>Propose et vote pour les morceaux</small></span>
+            <span className="ticket-playlist-chevron">›</span>
           </button>
         )}
       </div>
 
       {expanded && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="ticket-stack" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {group.tickets.map((b, i) => (
-            <SingleTicketCard key={b.id} booking={b} index={i} />
+            <PremiumTicketCard key={b.id} booking={b} index={i} inactive={ticketInactive} inactiveLabel={inactiveLabel} />
           ))}
         </div>
       )}
@@ -2209,6 +2371,218 @@ function EventTicketGroup({ group }) {
     )}
     </>
   )
+}
+
+function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel = 'Billet expiré' }) {
+  const [showLargeQr, setShowLargeQr] = useState(false)
+  const [downloadStatus, setDownloadStatus] = useState('idle')
+  const navigate = useNavigate()
+  const token = inactive ? '' : (b.token || (b.ticketCode ? generateTicketToken(b) : ''))
+  const qrUrl = token ? `${window.location.origin}/ticket/${token}` : ''
+  const preorderTotal = (b.preorderSummary || []).reduce((sum, item) => sum + item.price * (b.preorderItems?.[item.name] || 0), 0)
+  const downloadId = `premium-qr-${b.id}`
+
+  async function downloadTicket() {
+    if (downloadStatus === 'loading') return
+    setDownloadStatus('loading')
+
+    try {
+      // Laisse React finir le rendu du QR masqué avant de le copier.
+      await new Promise(resolve => requestAnimationFrame(resolve))
+      const qrCanvas = document.getElementById(downloadId)
+      if (!(qrCanvas instanceof HTMLCanvasElement) || !qrCanvas.width || !qrCanvas.height) {
+        throw new Error('Le QR code du billet n’est pas prêt')
+      }
+
+      // Le dessin conserve les coordonnées haute définition, mais limite la
+      // mémoire réellement utilisée afin d’éviter un gel sur mobile.
+      const canvas = document.createElement('canvas')
+      canvas.width = 1200
+      canvas.height = 540
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('La génération d’image n’est pas disponible')
+      ctx.scale(.75, .75)
+
+      const x = 60, y = 60, width = 1480, height = 600, stubWidth = 360
+      const dividerX = x + width - stubWidth
+
+      ctx.fillStyle = '#04040b'
+      ctx.fillRect(0, 0, 1600, 720)
+
+      ctx.save()
+      roundedCanvasPath(ctx, x, y, width, height, 34)
+      ctx.clip()
+      const base = ctx.createLinearGradient(x, y, x + width, y + height)
+      base.addColorStop(0, '#1d1636')
+      base.addColorStop(.48, '#0c0d18')
+      base.addColorStop(1, '#080910')
+      ctx.fillStyle = base
+      ctx.fillRect(x, y, width, height)
+      const glow = ctx.createRadialGradient(x + 150, y + 80, 0, x + 150, y + 80, 540)
+      glow.addColorStop(0, 'rgba(132,68,255,.42)')
+      glow.addColorStop(1, 'rgba(132,68,255,0)')
+      ctx.fillStyle = glow
+      ctx.fillRect(x, y, width - stubWidth, height)
+      ctx.fillStyle = 'rgba(255,255,255,.025)'
+      ctx.fillRect(dividerX, y, stubWidth, height)
+      ctx.restore()
+
+      ctx.strokeStyle = 'rgba(255,255,255,.18)'
+      ctx.lineWidth = 2
+      roundedCanvasPath(ctx, x, y, width, height, 34)
+      ctx.stroke()
+
+      ctx.save()
+      ctx.setLineDash([12, 13])
+      ctx.strokeStyle = 'rgba(255,255,255,.3)'
+      ctx.lineWidth = 2
+      ctx.beginPath(); ctx.moveTo(dividerX, y + 26); ctx.lineTo(dividerX, y + height - 26); ctx.stroke()
+      ctx.restore()
+      ctx.fillStyle = '#04040b'
+      ctx.beginPath(); ctx.arc(dividerX, y, 18, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(dividerX, y + height, 18, 0, Math.PI * 2); ctx.fill()
+
+      ctx.fillStyle = '#4ee8c8'
+      ctx.font = '800 19px Inter, Arial, sans-serif'
+      ctx.fillText('LIVE IN BLACK · BILLET OFFICIEL', x + 56, y + 72)
+
+      const eventName = b.eventName || 'Événement Live in Black'
+      ctx.fillStyle = '#ffffff'
+      const titleSize = fitCanvasFont(ctx, eventName, 900, 58, 34, 800)
+      ctx.font = `800 ${titleSize}px Inter, Arial, sans-serif`
+      ctx.fillText(eventName, x + 56, y + 190)
+
+      drawTicketMeta(ctx, 'PLACE', b.place || 'Standard', x + 56, y + 330)
+      drawTicketMeta(ctx, 'DATE', b.eventDate || 'À confirmer', x + 390, y + 330)
+      drawTicketMeta(ctx, 'BILLET', String(index + 1).padStart(2, '0'), x + 770, y + 330)
+
+      ctx.fillStyle = 'rgba(255,255,255,.18)'
+      ctx.font = '800 78px Inter, Arial, sans-serif'
+      ctx.fillText('LIVE IN BLACK', x + 52, y + height - 55)
+
+      const qrSize = 238
+      const qrX = dividerX + (stubWidth - qrSize) / 2
+      const qrY = y + 108
+      ctx.fillStyle = '#ffffff'
+      roundedCanvasPath(ctx, qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 20)
+      ctx.fill()
+      ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize)
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '700 17px Inter, Arial, sans-serif'
+      ctx.fillText(b.place || 'Standard', dividerX + stubWidth / 2, y + 420)
+      ctx.fillStyle = 'rgba(255,255,255,.5)'
+      ctx.font = '600 14px Inter, Arial, sans-serif'
+      drawCanvasCode(ctx, String(b.ticketCode || ''), dividerX + stubWidth / 2, y + 458, 300)
+      ctx.fillStyle = '#c8a96e'
+      ctx.font = '700 12px Inter, Arial, sans-serif'
+      ctx.fillText('PRÉSENTE CE CODE À L’ENTRÉE', dividerX + stubWidth / 2, y + 520)
+      ctx.textAlign = 'left'
+
+      const blob = await canvasToPngBlob(canvas)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `billet-liveinblack-${b.ticketCode || b.id}.png`
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 10000)
+      setDownloadStatus('success')
+      setTimeout(() => setDownloadStatus('idle'), 1800)
+    } catch (error) {
+      console.error('Téléchargement du billet impossible :', error)
+      setDownloadStatus('error')
+    }
+  }
+
+  return <article className={`digital-ticket${inactive ? ' is-inactive' : ''}`}>
+    <div className="ticket-pass-top">
+      <div className="ticket-pass-main">
+        <span className="ticket-brand">Live in Black · Billet officiel</span>
+        <h3 className="ticket-event-name">{b.eventName || 'Événement Live in Black'}</h3>
+        <div className="ticket-meta-grid">
+          <div><span>Place</span><strong>{b.place || 'Standard'}</strong></div>
+          <div><span>Date</span><strong>{b.eventDate || 'À confirmer'}</strong></div>
+          <div><span>Billet</span><strong>{String(index + 1).padStart(2, '0')}</strong></div>
+        </div>
+      </div>
+      <div className="ticket-stub">
+        {inactive ? <div className="ticket-inactive-stub"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/><path d="m5 19 14-14"/></svg><strong>{inactiveLabel}</strong><small>QR désactivé</small></div> : qrUrl ? <button aria-label="Agrandir le QR code" onClick={() => setShowLargeQr(v => !v)} className="ticket-qr" style={{border:0,cursor:'pointer'}}><QRCodeSVG value={qrUrl} size={116} level="H"/></button> : <div style={{font:'11px Inter',color:'rgba(255,255,255,.4)'}}>QR indisponible</div>}
+        <span className="ticket-code">{b.ticketCode}</span>
+        {qrUrl && <div style={{display:'none'}}><QRCodeCanvas id={downloadId} value={qrUrl} size={500} level="H"/></div>}
+      </div>
+    </div>
+
+    {b.preorderSummary?.length > 0 && <div className="ticket-preorders">
+      <span className="ticket-preorders-title">Consommations incluses</span>
+      {b.preorderSummary.map(item => <div className="ticket-preorder-row" key={item.name}><span>{item.name} · ×{b.preorderItems?.[item.name] || 0}</span><strong>{fmtMoney(item.price * (b.preorderItems?.[item.name] || 0), b.currency)}</strong></div>)}
+      <div className="ticket-preorder-row" style={{paddingTop:8,borderTop:'1px solid rgba(255,255,255,.07)'}}><span>Total précommande</span><strong style={{color:'#c8a96e'}}>{fmtMoney(preorderTotal,b.currency)}</strong></div>
+    </div>}
+
+    <div className="ticket-pass-bottom">
+      {inactive ? <div className="ticket-pass-expired"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{inactiveLabel} · aucune action disponible</div> : <>
+        {qrUrl && <button className="ticket-pass-action" onClick={() => setShowLargeQr(v => !v)}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h4v4h-7z"/></svg>{showLargeQr?'Réduire le QR':'Afficher le QR'}</button>}
+        {qrUrl && <button className="ticket-pass-action" onClick={downloadTicket} disabled={downloadStatus === 'loading'} aria-busy={downloadStatus === 'loading'}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>{downloadStatus === 'loading' ? 'Préparation…' : downloadStatus === 'success' ? 'Billet téléchargé' : 'Télécharger le billet'}</button>}
+        {b.eventId && b.ticketCode && <button className="ticket-pass-action primary" onClick={() => navigate(`/commander/${b.eventId}/${b.ticketCode}`)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 9h16l-1 11H5L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>Commander sur place</button>}
+      </>}
+    </div>
+
+    {downloadStatus === 'error' && <p role="alert" style={{margin:'0 20px 16px',font:'600 12px Inter,sans-serif',color:'#ff8585'}}>Le téléchargement n’a pas pu démarrer. Réessaie dans quelques secondes.</p>}
+
+    {showLargeQr && qrUrl && <div className="ticket-expanded-qr"><div className="ticket-qr"><QRCodeSVG value={qrUrl} size={210} level="H"/></div><span style={{font:'600 9px Inter,sans-serif',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(255,255,255,.35)'}}>Présente ce code à l’entrée · usage unique</span></div>}
+  </article>
+}
+
+function canvasToPngBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    if (typeof canvas.toBlob !== 'function') {
+      reject(new Error('Export PNG non pris en charge'))
+      return
+    }
+    canvas.toBlob(blob => {
+      if (blob) resolve(blob)
+      else reject(new Error('Le navigateur n’a pas pu créer le billet'))
+    }, 'image/png')
+  })
+}
+
+function roundedCanvasPath(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2)
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.arcTo(x + width, y, x + width, y + height, r)
+  ctx.arcTo(x + width, y + height, x, y + height, r)
+  ctx.arcTo(x, y + height, x, y, r)
+  ctx.arcTo(x, y, x + width, y, r)
+  ctx.closePath()
+}
+
+function fitCanvasFont(ctx, text, maxWidth, maxSize, minSize, weight = 700) {
+  let size = maxSize
+  while (size > minSize) {
+    ctx.font = `${weight} ${size}px Inter, Arial, sans-serif`
+    if (ctx.measureText(text).width <= maxWidth) break
+    size -= 2
+  }
+  return size
+}
+
+function drawTicketMeta(ctx, label, value, x, y) {
+  ctx.fillStyle = 'rgba(255,255,255,.42)'
+  ctx.font = '700 14px Inter, Arial, sans-serif'
+  ctx.fillText(label, x, y)
+  ctx.fillStyle = '#ffffff'
+  const size = fitCanvasFont(ctx, String(value), 300, 23, 16, 700)
+  ctx.font = `700 ${size}px Inter, Arial, sans-serif`
+  ctx.fillText(String(value), x, y + 40)
+}
+
+function drawCanvasCode(ctx, code, x, y, maxWidth) {
+  let display = code
+  while (display.length > 8 && ctx.measureText(display).width > maxWidth) display = `${display.slice(0, -5)}…${code.slice(-4)}`
+  ctx.fillText(display, x, y)
 }
 
 function SingleTicketCard({ booking: b, index }) {
@@ -2340,7 +2714,7 @@ function SingleTicketCard({ booking: b, index }) {
               border: 'none', boxShadow: '0 6px 18px -8px rgba(78,232,200,0.55)',
             }}
           >
-            🍹 Commander sur place
+            Commander sur place
           </button>
         </div>
       )}

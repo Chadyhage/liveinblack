@@ -47,6 +47,7 @@ export default async function handler(req, res) {
       bookingId,
       groupBookingId,
       isGroupShare,
+      isTable, // achat d'une TABLE entière (place de groupe) — modèle « hôte »
     } = req.body || {}
 
     if (!eventId || !eventName || !placeType || !bookingId) {
@@ -70,6 +71,12 @@ export default async function handler(req, res) {
     // des prix saisis en euros même avec region=Togo — ils restent sur Stripe.
     if (evData && String(evData.currency || '').toUpperCase() === 'XOF') {
       return res.status(400).json({ error: 'Cet événement se paie en FCFA (mobile money). Recharge la page pour utiliser le bon tunnel de paiement.' })
+    }
+
+    // Mutuellement exclusifs : une part de groupe N'EST PAS une table entière.
+    // (Empêche un combo forgé qui paierait une part et recevrait tous les sièges.)
+    if (isTable && isGroupShare) {
+      return res.status(400).json({ error: 'Requête invalide (table et part de groupe simultanées).' })
     }
 
     // ── Part de groupe : validation serveur STRICTE ──
@@ -112,8 +119,24 @@ export default async function handler(req, res) {
       }
       groupShareCents = shareCents
     }
-    // Quantité bornée (aligné sur /api/event-stock) ; une part de groupe = 1 place.
-    const nQty = isGroupShare ? 1 : Math.max(1, Math.min(20, Math.floor(Number(qty)) || 1))
+
+    // ── Table entière (modèle « hôte ») : un acheteur réserve TOUTE une place de
+    // groupe (carré/table) au prix plein et recevra groupMax billets à attribuer
+    // à ses invités. La place doit réellement être une place de groupe (validé
+    // serveur — le client ne peut pas transformer une place solo en table).
+    let tableSeats = 0
+    if (isTable) {
+      const tPlace = (evData?.places || []).find(p => p.type === placeType) || null
+      if (!tPlace) return res.status(404).json({ error: 'Table introuvable sur cet événement' })
+      if (String(tPlace.groupType) !== 'group' || (Number(tPlace.groupMax) || 0) < 2) {
+        return res.status(400).json({ error: "Cette place n'est pas une table de groupe." })
+      }
+      tableSeats = Math.min(50, Math.max(2, Number(tPlace.groupMax) || 2))
+    }
+
+    // Quantité bornée (aligné sur /api/event-stock). Une part de groupe OU une
+    // table entière = 1 unité de stock (la table compte pour 1, pas groupMax).
+    const nQty = (isGroupShare || isTable) ? 1 : Math.max(1, Math.min(20, Math.floor(Number(qty)) || 1))
 
     // ── Décrément atomique du stock AVANT de créer la session Stripe ──────────
     // C'est le seul point fiable pour empêcher la survente sur le tunnel payant :
@@ -204,7 +227,7 @@ export default async function handler(req, res) {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: `${eventName} — ${placeType}`,
+            name: isTable ? `${eventName} — ${placeType} (table ${tableSeats} pers.)` : `${eventName} — ${placeType}`,
             ...(eventImage && eventImage.startsWith('http') ? { images: [eventImage] } : {}),
           },
           unit_amount: placeUnitCents,
@@ -236,8 +259,11 @@ export default async function handler(req, res) {
     }
 
     // ── Frais de service LIVEINBLACK (payé par l'acheteur) ──
-    // Calculé côté SERVEUR (jamais reçu du client). Sur le prix unitaire du billet.
-    const feeCents = computeTicketFeeCents(placeUnitCents, nQty)
+    // Calculé côté SERVEUR (jamais reçu du client). Pour une table, les frais sont
+    // PAR SIÈGE (décision fondateur) : prix table ÷ sièges, × nombre de sièges.
+    const feeCents = isTable
+      ? computeTicketFeeCents(Math.round(placeUnitCents / tableSeats), tableSeats)
+      : computeTicketFeeCents(placeUnitCents, nQty)
     if (feeCents > 0) {
       line_items.push({
         price_data: {
@@ -319,6 +345,9 @@ export default async function handler(req, res) {
           // le client ferme l'onglet avant de revenir sur /paiement-reussi
           ...(groupBookingId ? { groupBookingId: String(groupBookingId) } : {}),
           ...(isGroupShare ? { isGroupShare: '1' } : {}),
+          // Table entière : le webhook émet `tableSeats` billets (sièges) tous
+          // détenus par l'hôte, à attribuer ensuite via /api/tickets.
+          ...(isTable ? { tableSeats: String(tableSeats), isTable: '1' } : {}),
         },
         // Stripe collecte aussi le nom complet du payeur
         billing_address_collection: 'auto',

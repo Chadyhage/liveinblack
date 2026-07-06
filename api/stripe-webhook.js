@@ -214,6 +214,15 @@ async function finalizeBooking(db, session, meta) {
   const eventName = meta.eventName || ''
   const placeType = meta.placeType || ''
 
+  // ── Table entière (modèle « hôte ») : émet `tableSeats` billets (sièges) tous
+  // détenus par l'hôte, à attribuer via /api/tickets. Chaque siège vaut
+  // prix_table ÷ sièges pour que les stats organisateur restent justes.
+  const isTable = meta.isTable === '1' && Number(meta.tableSeats) > 1
+  const tableSeats = isTable ? Math.min(50, Math.max(2, Number(meta.tableSeats) || 2)) : 0
+  const seatCount = isTable ? tableSeats : qty
+  const perSeatEUR = isTable ? Math.round((unitPriceEUR / tableSeats) * 100) / 100 : unitPriceEUR
+  const tableId = isTable ? bookingId : null
+
   // ── PRÉCOMMANDES : source de vérité SERVEUR (faille B-préco de l'audit) ──
   // Le récap conso affiché au bar venait du token signé côté client (clé
   // publique → falsifiable : champagne gratuit). Ici on relit les line_items
@@ -282,9 +291,10 @@ async function finalizeBooking(db, session, meta) {
     await confirmBatch.commit()
     console.log('[webhook] billets client adoptés et confirmés:', tickets.map(t => t.ticketCode))
   } else {
-    // Client jamais revenu (onglet fermé) — on mint les billets nous-mêmes
+    // Client jamais revenu (onglet fermé) — on mint les billets nous-mêmes.
+    // Pour une table : `seatCount` sièges, tous détenus par l'hôte au départ.
     tickets = []
-    for (let i = 0; i < qty; i++) {
+    for (let i = 0; i < seatCount; i++) {
       const code = generateTicketCode()
       const ticketCode = `LIB-${String(eventId).padStart(3, '0')}-${code}`
       tickets.push({
@@ -293,12 +303,14 @@ async function finalizeBooking(db, session, meta) {
         eventId,
         eventName,
         place: placeType,
-        placePrice: unitPriceEUR,
+        placePrice: perSeatEUR,
         bookedAt: new Date().toISOString(),
         paid: true,
         paymentMethod: 'stripe',
         stripeSessionId: session.id,
         userId,
+        // Sièges de table : liés par tableId, attribuables via /api/tickets.
+        ...(isTable ? { tableId, seatIndex: i, hostUid: userId, tableSeats } : {}),
         // Note : pas de `token` signé ici — la page /paiement-reussi génère le token côté
         // client à partir de la signature actuelle. La vraie validation au scan passe par
         // ce registre tickets/{code}, pas par le token.
@@ -361,16 +373,19 @@ async function finalizeBooking(db, session, meta) {
         eventId,
         eventName,
         place: placeType,
-        placePrice: unitPriceEUR,
-        userId,
+        placePrice: t.placePrice != null ? Number(t.placePrice) : perSeatEUR,
+        userId: t.userId || userId,
         paid: true,
         source: 'stripe-webhook',
         bookedAt: t.bookedAt,
         stripeSessionId: session.id,
         // Précommandes certifiées depuis les line_items Stripe (agrégat de la
-        // réservation) — source de vérité du bar, cf. faille B-préco
-        preorders,
+        // réservation) — source de vérité du bar, cf. faille B-préco. Sur une
+        // table, elles n'appartiennent qu'au 1er siège (l'hôte).
+        preorders: (!isTable || t.seatIndex === 0) ? preorders : [],
         bookingId,
+        // Champs table pour l'attribution + l'affichage « Ma table ».
+        ...(t.tableId ? { tableId: t.tableId, seatIndex: t.seatIndex, hostUid: t.hostUid, tableSeats: t.tableSeats } : {}),
       })
     }
     await batch.commit()

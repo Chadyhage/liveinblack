@@ -46,6 +46,7 @@ export async function startFedapayCheckout(params) {
         bookingId: params.bookingId,
         ...(params.groupBookingId ? { groupBookingId: params.groupBookingId } : {}),
         ...(params.isGroupShare ? { isGroupShare: true } : {}),
+        ...(params.isTable ? { isTable: true } : {}),
       }),
     })
     if (!res.ok) {
