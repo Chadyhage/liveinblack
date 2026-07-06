@@ -285,10 +285,73 @@ export function getNewContacts() {
 }
 
 // ─── Conversations ────────────────────────────────────────────────────────────
+export function getHiddenConversationIds(myId) {
+  if (!myId) return []
+  try { return JSON.parse(localStorage.getItem('lib_hidden_conversations') || '{}')[myId] || [] } catch { return [] }
+}
+
+export function isConversationHidden(myId, convId) {
+  return getHiddenConversationIds(myId).includes(String(convId))
+}
+
+export function filterVisibleConversations(conversations, myId, hiddenIds = []) {
+  const hidden = new Set((hiddenIds || []).map(String))
+  return (conversations || []).filter(c => {
+    if (!c || hidden.has(String(c.id))) return false
+    return c.type === 'direct'
+      ? c.participants?.includes(myId)
+      : c.members?.some(m => m.userId === myId)
+  })
+}
+
+// Masquage personnel : ne supprime JAMAIS le document conversation partagé.
+// L'autre participant conserve donc son historique. Le choix est synchronisé
+// dans user_social/{uid} pour rester valable sur tous les appareils.
+export function hideConversationForUser(myId, convId) {
+  if (!myId || !convId) return []
+  try {
+    const id = String(convId)
+    const all = JSON.parse(localStorage.getItem('lib_hidden_conversations') || '{}')
+    all[myId] = [...new Set([...(all[myId] || []).map(String), id])]
+    localStorage.setItem('lib_hidden_conversations', JSON.stringify(all))
+
+    // Nettoie les préférences devenues inutiles pour ce compte uniquement.
+    const starred = JSON.parse(localStorage.getItem('lib_starred') || '{}')
+    starred[myId] = (starred[myId] || []).filter(key => !String(key).startsWith(`${id}:`))
+    localStorage.setItem('lib_starred', JSON.stringify(starred))
+    const muted = JSON.parse(localStorage.getItem('lib_muted_convs') || '{}')
+    muted[myId] = (muted[myId] || []).filter(value => String(value) !== id)
+    localStorage.setItem('lib_muted_convs', JSON.stringify(muted))
+
+    import('./firestore-sync').then(({ syncDoc }) => syncDoc(`user_social/${myId}`, {
+      hiddenConversations: all[myId],
+      starred: starred[myId],
+      mutedConvs: muted[myId],
+    })).catch(() => {})
+    return all[myId]
+  } catch { return [] }
+}
+
+export function unhideConversationForUser(myId, convId) {
+  if (!myId || !convId) return []
+  try {
+    const all = JSON.parse(localStorage.getItem('lib_hidden_conversations') || '{}')
+    all[myId] = (all[myId] || []).filter(id => String(id) !== String(convId))
+    localStorage.setItem('lib_hidden_conversations', JSON.stringify(all))
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`user_social/${myId}`, { hiddenConversations: all[myId] })
+    }).catch(() => {})
+    return all[myId]
+  } catch { return [] }
+}
+
 export function getConversations(myId) {
   try {
-    return JSON.parse(localStorage.getItem('lib_conversations') || '[]')
-      .filter(c => c.type === 'direct' ? c.participants.includes(myId) : c.members?.some(m => m.userId === myId))
+    return filterVisibleConversations(
+      JSON.parse(localStorage.getItem('lib_conversations') || '[]'),
+      myId,
+      getHiddenConversationIds(myId),
+    )
       .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
   } catch { return [] }
 }
@@ -309,8 +372,15 @@ export function saveConversation(conv) {
 }
 
 export function createDirectConversation(myId, myName, otherId, otherName) {
-  const existing = getConversations(myId).find(c => c.type === 'direct' && c.participants.includes(otherId))
-  if (existing) return existing
+  let existing = null
+  try {
+    existing = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
+      .find(c => c.type === 'direct' && c.participants?.includes(myId) && c.participants?.includes(otherId))
+  } catch {}
+  if (existing) {
+    unhideConversationForUser(myId, existing.id)
+    return existing
+  }
   const conv = {
     id: 'conv_' + Date.now(),
     type: 'direct',

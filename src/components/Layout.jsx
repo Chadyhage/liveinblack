@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import SideMenu from './SideMenu'
 import AnimatedLogo from './AnimatedLogo'
 import AnimatedHamburger from './AnimatedHamburger'
-import { getUserId, getTotalUnreadCount, getLastRead, getConversationById, getUserById, getInitials, userShowsPhoto } from '../utils/messaging'
+import { getUserId, getTotalUnreadCount, getLastRead, getConversationById, getUserById, getInitials, userShowsPhoto, isConversationHidden } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
 import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG, upsertMessageNotification, createNotification } from '../utils/notifications'
 import { playNotifSound } from '../utils/notifSound'
@@ -269,6 +269,7 @@ export default function Layout({ children, hideNav, chatMode }) {
         setUnreadMsgCount(getTotalUnreadCount(uid))
 
         convs.forEach(c => {
+          if (isConversationHidden(uid, c.id)) return
           const prev = lastSeen[c.id]
           const isNewer = !prev || c.updatedAt > prev
           if (isNewer) lastSeen[c.id] = c.updatedAt
@@ -334,17 +335,29 @@ export default function Layout({ children, hideNav, chatMode }) {
   }
 
   const avatarLetter = user?.name?.[0]?.toUpperCase() || '?'
+  const denseDesktopNav = navItems.length >= 7
 
   return (
     <div className="min-h-screen">
+      <style>{`
+        .desktop-nav-shell{width:100%;box-sizing:border-box}
+        .desktop-main-nav{min-width:0;overflow:hidden}
+        .desktop-nav-button{flex:0 1 auto;min-width:0}
+        .desktop-nav-label{overflow:hidden;text-overflow:ellipsis}
+        @media(max-width:1180px){
+          .desktop-nav-label{display:none}
+          .desktop-nav-button{flex:0 0 auto!important;padding:8px!important}
+          .desktop-main-nav{gap:5px!important}
+        }
+      `}</style>
 
       {/* ── DESKTOP: Top Floating Pill Navbar ── */}
       {!chatMode && (
         <div className="hidden md:block" style={{ position: 'sticky', top: 0, zIndex: 40, padding: '16px 24px 0', pointerEvents: 'none' }}>
-          <div style={{
-            maxWidth: 1320, margin: '0 auto', pointerEvents: 'all',
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '10px 16px',
+          <div className="desktop-nav-shell" style={{
+            maxWidth: denseDesktopNav ? 1540 : 1320, margin: '0 auto', pointerEvents: 'all',
+            display: 'flex', alignItems: 'center', gap: denseDesktopNav ? 7 : 12,
+            padding: denseDesktopNav ? '9px 12px' : '10px 16px',
             background: 'linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04))',
             backdropFilter: 'blur(24px) saturate(1.6)',
             WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
@@ -353,19 +366,20 @@ export default function Layout({ children, hideNav, chatMode }) {
             boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06) inset',
           }}>
             {/* Logo */}
-            <div style={{ flexShrink: 0, marginRight: 8 }}>
-              <span data-navlogo><AnimatedLogo size={40} textScale={0.45} onClick={() => navigate('/accueil')} /></span>
+            <div style={{ flexShrink: 0, marginRight: denseDesktopNav ? 2 : 8 }}>
+              <span data-navlogo><AnimatedLogo size={denseDesktopNav ? 36 : 40} textScale={denseDesktopNav ? 0.39 : 0.45} onClick={() => navigate('/accueil')} /></span>
             </div>
 
             {/* Nav pills — centered */}
-            <nav style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <nav className="desktop-main-nav" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: denseDesktopNav ? 1 : 4 }}>
               {navItems.map((item) => {
                 const active = location.pathname === item.path
                 const isMsgItem = item.path === '/messagerie'
                 return (
                   <button key={item.path} onClick={() => navigate(item.path)}
-                    className={`group relative flex items-center gap-1.5 rounded-xl border transition-all duration-300 ${active ? 'border-fuchsia-500/35 bg-fuchsia-500/[0.1] shadow-[0_0_22px_rgba(217,70,239,0.2)]' : 'border-transparent hover:bg-white/[0.05]'}`}
-                    style={{ padding: '7px 12px', cursor: 'pointer' }}>
+                    title={item.label}
+                    className={`desktop-nav-button group relative flex items-center gap-1.5 rounded-xl border transition-all duration-300 ${active ? 'border-fuchsia-500/35 bg-fuchsia-500/[0.1] shadow-[0_0_22px_rgba(217,70,239,0.2)]' : 'border-transparent hover:bg-white/[0.05]'}`}
+                    style={{ padding: denseDesktopNav ? '7px 8px' : '7px 12px', cursor: 'pointer' }}>
                     {/* Équerres émeraude (apparaissent au survol, fixes si actif) */}
                     <span className={`pointer-events-none absolute top-1.5 left-2 h-2 w-2 rounded-tl-sm border-t-2 border-l-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
                     <span className={`pointer-events-none absolute bottom-1.5 right-2 h-2 w-2 rounded-br-sm border-b-2 border-r-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
@@ -377,8 +391,8 @@ export default function Layout({ children, hideNav, chatMode }) {
                         </span>
                       )}
                     </div>
-                    <span className={`uppercase transition-colors duration-300 ${active ? 'text-fuchsia-400' : 'text-white/45 group-hover:text-white'}`}
-                      style={{ fontFamily: "'Syne', sans-serif", fontSize: 12.5, fontWeight: active ? 800 : 600, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+                    <span className={`desktop-nav-label uppercase transition-colors duration-300 ${active ? 'text-fuchsia-400' : 'text-white/45 group-hover:text-white'}`}
+                      style={{ fontFamily: "'Syne', sans-serif", fontSize: denseDesktopNav ? 10.5 : 12.5, fontWeight: active ? 800 : 600, letterSpacing: denseDesktopNav ? '0' : '0.02em', whiteSpace: 'nowrap' }}>
                       {item.label}
                     </span>
                     {/* Trait laser (pousse depuis le centre au survol, large si actif) */}

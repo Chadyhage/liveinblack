@@ -94,6 +94,19 @@ export function markAllRead(uid) {
   } catch {}
 }
 
+export function removeConversationNotifications(uid, convId) {
+  if (!uid || !convId) return
+  try {
+    const items = getNotifications(uid).filter(notification =>
+      !(notification.type === 'message' && String(notification.data?.convId) === String(convId))
+    )
+    localStorage.setItem(KEY(uid), JSON.stringify(items))
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`notifications/${uid}`, { items, updatedAt: Date.now() })
+    }).catch(() => {})
+  } catch {}
+}
+
 // Charge les notifications Firestore (cross-device)
 export async function syncNotificationsFromFirestore(uid) {
   if (!uid) return

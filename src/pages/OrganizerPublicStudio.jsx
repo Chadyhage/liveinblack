@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Cropper from 'react-easy-crop'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -12,6 +13,7 @@ import {
 import { uploadOrganizerMedia } from '../utils/uploadImage'
 import { regions } from '../data/regions'
 import { getRegionName, normalizeRegionId } from '../utils/locations'
+import getCroppedImg from '../utils/cropImage'
 
 const C = { obsidian:'#04040b', teal:'#4ee8c8', gold:'#c8a96e', pink:'#e05aaa' }
 const DISPLAY = 'Bebas Neue, Impact, sans-serif'
@@ -30,6 +32,10 @@ export default function OrganizerPublicStudio() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState('')
   const [message, setMessage] = useState(null)
+  const [cropEditor, setCropEditor] = useState(null)
+  const [crop, setCrop] = useState({ x:0, y:0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
 
   // Hydratation UNIQUE depuis Firestore : après le premier snapshot, un écho
   // distant (ex. +1 vue posté par un visiteur) ne doit JAMAIS écraser les
@@ -65,6 +71,35 @@ export default function OrganizerPublicStudio() {
   const publicUrl = `${window.location.origin}/organisateurs/${slugCheck.slug || profile.slug || ''}`
   const activeMedia = profile.media || []
   const update = patch => setProfile(current => ({ ...current, ...patch }))
+
+  function chooseImage(kind, file) {
+    if (!file) return
+    if (!file.type?.startsWith('image/')) return setMessage({type:'error',text:'Choisis une image JPG, PNG ou WEBP.'})
+    if (file.size > 10 * 1024 * 1024) return setMessage({type:'error',text:'L’image dépasse 10 Mo.'})
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCrop({x:0,y:0}); setZoom(1); setCroppedAreaPixels(null)
+      setCropEditor({kind,src:reader.result,name:file.name || `${kind}.jpg`})
+    }
+    reader.onerror = () => setMessage({type:'error',text:'Impossible de lire cette image.'})
+    reader.readAsDataURL(file)
+  }
+
+  async function confirmCrop() {
+    if (!cropEditor || !croppedAreaPixels) return
+    try {
+      setUploading(cropEditor.kind)
+      const dataUrl = await getCroppedImg(cropEditor.src, croppedAreaPixels)
+      const blob = await (await fetch(dataUrl)).blob()
+      const file = new File([blob], cropEditor.name.replace(/\.[^.]+$/, '') + '.jpg', {type:'image/jpeg'})
+      const kind = cropEditor.kind
+      setCropEditor(null)
+      await upload(kind, file)
+    } catch (error) {
+      setUploading('')
+      setMessage({type:'error',text:error.message || 'Impossible de recadrer cette image.'})
+    }
+  }
 
   async function upload(kind, file) {
     if (!file) return
@@ -120,6 +155,7 @@ export default function OrganizerPublicStudio() {
       .os-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:16px}.os-panel{border:1px solid rgba(255,255,255,.1);background:rgba(8,10,18,.62);padding:20px}.os-panel h2{font:25px ${DISPLAY};letter-spacing:.03em;margin:0 0 18px}.os-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.os-upload-row{display:grid;grid-template-columns:130px 1fr;gap:14px;margin-bottom:18px}.os-avatar{width:100px;height:100px;border-radius:50%;overflow:hidden;background:#12151d;display:grid;place-items:center;font:38px ${DISPLAY};color:${C.teal}}.os-banner{height:130px;background:#10131d;overflow:hidden}.os-upload-btn{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:11px 16px;border:1px solid rgba(200,169,110,.55);border-radius:6px;background:rgba(200,169,110,.12);color:${C.gold};font:10px ${UI};font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:background .15s,border-color .15s}.os-upload-btn:hover{background:rgba(200,169,110,.22);border-color:${C.gold}}.os-upload-btn.primary{background:${C.gold};color:${C.obsidian};border-color:${C.gold}}.os-upload-btn.primary:hover{background:#e0c48a}.os-upload-btn.busy{opacity:.55;cursor:wait;pointer-events:none}.os-upload-btn input{display:none}
       .os-preview{position:sticky;top:80px}.os-preview-banner{height:160px;background:linear-gradient(135deg,#18122f,#071719);background-size:cover;background-position:center}.os-preview-body{padding:0 18px 20px}.os-preview-avatar{width:82px;height:82px;margin-top:-41px;position:relative;border-radius:50%;overflow:hidden;border:3px solid #0b0d14;background:#111;display:grid;place-items:center;font:34px ${DISPLAY};color:${C.teal}}.os-save{width:100%;padding:13px;background:${C.gold};border:0;color:${C.obsidian};font:9px ${UI};font-weight:700;letter-spacing:.13em;text-transform:uppercase;cursor:pointer;margin-top:14px}
       .os-media-panel{grid-column:1/-1}.os-media-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.os-media-item{border:1px solid rgba(255,255,255,.1);padding:9px;background:rgba(255,255,255,.02)}.os-media-thumb{height:125px;background:#111;overflow:hidden}.os-media-thumb img,.os-media-thumb video{width:100%;height:100%;object-fit:cover}.os-media-actions{display:flex;gap:5px;margin-top:7px}.os-media-actions button{flex:1;padding:6px;background:none;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.55);font-size:11px;cursor:pointer}.os-message{padding:11px 14px;margin-bottom:14px;font-size:12px;border:1px solid}.os-message.success{color:${C.teal};border-color:rgba(78,232,200,.35)}.os-message.error{color:${C.pink};border-color:rgba(224,90,170,.35)}
+      .os-crop-backdrop{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.84);backdrop-filter:blur(7px);display:grid;place-items:center;padding:18px}.os-crop-modal{width:min(720px,100%);overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#080912;box-shadow:0 30px 100px rgba(0,0,0,.75)}.os-crop-head{display:flex;justify-content:space-between;align-items:center;padding:17px 19px;border-bottom:1px solid rgba(255,255,255,.09)}.os-crop-head h2{font:24px ${DISPLAY};letter-spacing:.04em;margin:0}.os-crop-stage{position:relative;height:min(54vh,430px);background:#020207}.os-crop-foot{padding:16px 19px 19px}.os-crop-zoom{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;color:rgba(255,255,255,.55);font:8px ${UI};letter-spacing:.1em;text-transform:uppercase}.os-crop-zoom input{width:100%;accent-color:${C.teal}}.os-crop-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:9px;margin-top:16px}.os-crop-actions button{min-height:46px;border-radius:8px;font:700 9px ${UI};letter-spacing:.12em;text-transform:uppercase;cursor:pointer}.os-crop-cancel{border:1px solid rgba(255,255,255,.14);background:transparent;color:rgba(255,255,255,.65)}.os-crop-confirm{border:1px solid ${C.gold};background:${C.gold};color:${C.obsidian}}
       @media(max-width:900px){.os-layout{grid-template-columns:1fr}.os-preview{position:static}.os-media-panel{grid-column:auto}}
       @media(max-width:600px){.org-studio{padding:22px 13px 110px}.os-top{align-items:flex-start;flex-direction:column}.os-status{width:100%;box-sizing:border-box}.os-stats{grid-template-columns:1fr}.os-stat{border-right:0;border-bottom:1px solid rgba(255,255,255,.08)}.os-grid{grid-template-columns:1fr}.os-upload-row{grid-template-columns:1fr}.os-media-list{grid-template-columns:1fr}}
     `}</style>
@@ -129,7 +165,7 @@ export default function OrganizerPublicStudio() {
     <div style={{display:'flex',gap:8,alignItems:'center',padding:'12px 14px',border:'1px solid rgba(255,255,255,.1)',marginBottom:16,flexWrap:'wrap'}}><span style={{flex:1,minWidth:220,font:'9px DM Mono',color:'rgba(255,255,255,.55)',overflow:'hidden',textOverflow:'ellipsis'}}>{publicUrl}</span><button className="btn-outline" onClick={()=>navigator.clipboard?.writeText(publicUrl)}>Copier le lien</button>{profile.status==='public'&&<button className="btn-gold" onClick={()=>navigate(`/organisateurs/${slugCheck.slug}`)}>Voir ma page</button>}</div>
     <div className="os-layout">
       <section className="os-panel"><h2>Informations publiques</h2>
-        <div className="os-upload-row"><div><div className="os-avatar">{profile.avatarUrl?<img src={profile.avatarUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:profile.publicName?.[0]||'O'}</div><label className={`os-upload-btn${uploading==='avatar'?' busy':''}`}>{uploading==='avatar'?'Envoi…':'Changer le logo'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!uploading} onChange={e=>upload('avatar',e.target.files?.[0])}/></label></div><div><div className="os-banner">{profile.bannerUrl&&<img src={profile.bannerUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>}</div><label className={`os-upload-btn${uploading==='banner'?' busy':''}`}>{uploading==='banner'?'Envoi…':'Changer la bannière'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!uploading} onChange={e=>upload('banner',e.target.files?.[0])}/></label></div></div>
+        <div className="os-upload-row"><div><div className="os-avatar">{profile.avatarUrl?<img src={profile.avatarUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:profile.publicName?.[0]||'O'}</div><label className={`os-upload-btn${uploading==='avatar'?' busy':''}`}>{uploading==='avatar'?'Envoi…':'Changer le logo'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!uploading} onChange={e=>{chooseImage('avatar',e.target.files?.[0]);e.target.value=''}}/></label></div><div><div className="os-banner">{profile.bannerUrl&&<img src={profile.bannerUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>}</div><label className={`os-upload-btn${uploading==='banner'?' busy':''}`}>{uploading==='banner'?'Envoi…':'Changer la bannière'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!uploading} onChange={e=>{chooseImage('banner',e.target.files?.[0]);e.target.value=''}}/></label></div></div>
         <div className="os-grid"><Field label="Nom public"><input style={input} value={profile.publicName||''} onChange={e=>update({publicName:e.target.value})}/></Field><Field label="Slug public"><input style={{...input,borderColor:slugCheck.ok?'rgba(255,255,255,.12)':'rgba(224,90,170,.6)'}} value={profile.slug||''} onChange={e=>update({slug:e.target.value})}/>{!slugCheck.ok&&<small style={{color:C.pink}}>{slugCheck.error}</small>}</Field><Field label="Ville"><input style={input} value={profile.city||''} onChange={e=>update({city:e.target.value})}/></Field><Field label="Pays / région"><select style={input} value={normalizeRegionId(profile.regionId||profile.country)||'france'} onChange={e=>update({regionId:e.target.value,country:getRegionName(e.target.value)})}>{regions.map(region=><option key={region.id} value={region.id}>{region.flag} {region.name}</option>)}</select></Field><Field label="Description courte" wide><input style={input} maxLength={180} value={profile.shortDescription||''} onChange={e=>update({shortDescription:e.target.value})}/></Field><Field label="Description longue" wide><textarea style={input} rows={5} value={profile.longDescription||''} onChange={e=>update({longDescription:e.target.value})}/></Field><Field label="Types d’événements (séparés par des virgules)" wide><input style={input} value={(profile.eventTypes||[]).join(', ')} onChange={e=>update({eventTypes:e.target.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12)})}/></Field><Field label="Ambiance / tags" wide><input style={input} value={(profile.vibes||[]).join(', ')} onChange={e=>update({vibes:e.target.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,16)})}/></Field><Field label="Instagram"><input style={input} value={profile.socialLinks?.instagram||''} onChange={e=>update({socialLinks:{...(profile.socialLinks||{}),instagram:e.target.value}})}/></Field><Field label="TikTok"><input style={input} value={profile.socialLinks?.tiktok||''} onChange={e=>update({socialLinks:{...(profile.socialLinks||{}),tiktok:e.target.value}})}/></Field></div>
       </section>
       <aside className="os-panel os-preview"><h2>Aperçu de ma page</h2><div style={{border:'1px solid rgba(255,255,255,.1)'}}><div className="os-preview-banner" style={profile.bannerUrl?{backgroundImage:`url(${profile.bannerUrl})`}:undefined}/><div className="os-preview-body"><div className="os-preview-avatar">{profile.avatarUrl?<img src={profile.avatarUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:profile.publicName?.[0]||'O'}</div><h3 style={{font:`34px ${DISPLAY}`,margin:'10px 0 0'}}>{profile.publicName||'Ton nom public'}</h3><p style={{font:`9px ${UI}`,color:C.gold}}>{[profile.city,profile.country].filter(Boolean).join(' · ')||'Ville · Pays'}</p><p style={{fontSize:12,color:'rgba(255,255,255,.55)',lineHeight:1.6}}>{profile.shortDescription||'Ta description courte apparaîtra ici.'}</p></div></div><div style={{marginTop:16}}><p style={{font:`9px ${UI}`,color:'rgba(255,255,255,.5)'}}>STATUT DE LA PAGE</p>{/* Valeur interne 'draft' inchangée (règles Firestore) — seul le libellé devient « Privée » */}{['draft','public'].map(status=><label key={status} style={{display:'flex',alignItems:'center',gap:9,padding:'9px 0',font:`10px ${UI}`,textTransform:'uppercase'}}><input type="radio" checked={profile.status===status} onChange={()=>update({status,isPublic:status==='public'})}/>{status==='public'?'Publique — visible par tout le monde':'Privée — visible par toi seulement'}</label>)}</div><button className="os-save" onClick={save} disabled={saving}>{saving?'Enregistrement…':'Enregistrer'}</button></aside>
@@ -137,5 +173,12 @@ export default function OrganizerPublicStudio() {
         <div className="os-media-list" style={{marginTop:16}}>{activeMedia.length===0?<div style={{color:'rgba(255,255,255,.45)',fontSize:12}}>Tu n’as encore ajouté aucun média.</div>:activeMedia.map((item,index)=><article className="os-media-item" key={item.id}><div className="os-media-thumb">{item.type==='video'?<video src={item.url} muted/>:<img src={item.url} alt=""/>}</div><input style={{...input,marginTop:8}} placeholder="Titre facultatif" value={item.title||''} onChange={e=>updateMedia(item.id,{title:e.target.value})}/><select style={{...input,marginTop:7}} value={item.eventId||''} onChange={e=>updateMedia(item.id,{eventId:e.target.value})}><option value="">Aucun événement lié</option>{events.map(event=><option key={event.id} value={event.id}>{event.name}</option>)}</select><label style={{display:'flex',gap:7,alignItems:'center',fontSize:11,color:'rgba(255,255,255,.55)',marginTop:8}}><input type="checkbox" checked={item.visibility!=='hidden'} onChange={e=>updateMedia(item.id,{visibility:e.target.checked?'public':'hidden'})}/> Visible publiquement</label><div className="os-media-actions"><button onClick={()=>moveMedia(index,-1)} disabled={index===0}>←</button><button onClick={()=>moveMedia(index,1)} disabled={index===activeMedia.length-1}>→</button><button onClick={()=>removeMedia(item.id)} style={{color:C.pink}}>Supprimer</button></div></article>)}</div>
       </section>
     </div>
+    {cropEditor&&<div className="os-crop-backdrop" role="dialog" aria-modal="true" aria-label={`Recadrer ${cropEditor.kind==='avatar'?'le logo':'la bannière'}`}>
+      <div className="os-crop-modal">
+        <div className="os-crop-head"><div><h2>Recadrer {cropEditor.kind==='avatar'?'le logo':'la bannière'}</h2><p style={{font:`8px ${UI}`,color:'rgba(255,255,255,.42)',letterSpacing:'.1em',margin:'4px 0 0',textTransform:'uppercase'}}>Déplace l’image et ajuste le zoom</p></div><button onClick={()=>setCropEditor(null)} aria-label="Fermer" style={{width:34,height:34,borderRadius:'50%',border:'1px solid rgba(255,255,255,.12)',background:'rgba(255,255,255,.05)',color:'#fff',fontSize:19,cursor:'pointer'}}>×</button></div>
+        <div className="os-crop-stage"><Cropper image={cropEditor.src} crop={crop} zoom={zoom} aspect={cropEditor.kind==='avatar'?1:3} cropShape={cropEditor.kind==='avatar'?'round':'rect'} showGrid={cropEditor.kind!=='avatar'} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(_,pixels)=>setCroppedAreaPixels(pixels)}/></div>
+        <div className="os-crop-foot"><div className="os-crop-zoom"><span>–</span><input aria-label="Zoom" type="range" min="1" max="3" step="0.01" value={zoom} onChange={e=>setZoom(Number(e.target.value))}/><span>+</span></div><div className="os-crop-actions"><button className="os-crop-cancel" onClick={()=>setCropEditor(null)}>Annuler</button><button className="os-crop-confirm" onClick={confirmCrop}>Utiliser ce cadrage</button></div></div>
+      </div>
+    </div>}
   </div></Layout>
 }

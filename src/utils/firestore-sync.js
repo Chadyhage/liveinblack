@@ -550,9 +550,19 @@ export async function syncOnLogin(uid, opts = {}) {
       localStorage.setItem('lib_conversations', JSON.stringify(mergeById(local, allConvsSnap)))
     }
 
+    // Préférences sociales avant les messages : une conversation masquée par
+    // cet utilisateur ne doit pas être réhydratée inutilement sur cet appareil.
+    const social = await loadDoc(`user_social/${uid}`)
+    if (social?.hiddenConversations) {
+      const hidden = safeParseObj('lib_hidden_conversations')
+      hidden[uid] = social.hiddenConversations.map(String)
+      localStorage.setItem('lib_hidden_conversations', JSON.stringify(hidden))
+    }
+
     // ── 5. Messages for each conversation ──
     const allMessages = safeParseObj('lib_messages')
-    const convIds = allConvsSnap.map(c => c.id || c._docId)
+    const hiddenConversationIds = new Set((social?.hiddenConversations || []).map(String))
+    const convIds = allConvsSnap.map(c => c.id || c._docId).filter(id => !hiddenConversationIds.has(String(id)))
     for (const cid of convIds) {
       const msgDoc = await loadDoc(`conv_messages/${cid}`)
       if (msgDoc?.items?.length) {
@@ -563,7 +573,6 @@ export async function syncOnLogin(uid, opts = {}) {
     if (allConvsSnap.length) localStorage.setItem('lib_messages', JSON.stringify(allMessages))
 
     // ── 6. Friends + Blocked ──
-    const social = await loadDoc(`user_social/${uid}`)
     if (social) {
       if (social.friends) {
         const f = safeParseObj('lib_friends')
@@ -579,6 +588,11 @@ export async function syncOnLogin(uid, opts = {}) {
         const m = safeParseObj('lib_muted_convs')
         m[uid] = social.mutedConvs
         localStorage.setItem('lib_muted_convs', JSON.stringify(m))
+      }
+      if (social.starred) {
+        const starred = safeParseObj('lib_starred')
+        starred[uid] = social.starred
+        localStorage.setItem('lib_starred', JSON.stringify(starred))
       }
     }
 
@@ -754,10 +768,14 @@ export async function pushLocalToFirestore(uid) {
     const friends = safeParseObj('lib_friends')
     const blocked = safeParseObj('lib_blocked')
     const muted = safeParseObj('lib_muted_convs')
+    const hidden = safeParseObj('lib_hidden_conversations')
+    const starred = safeParseObj('lib_starred')
     syncDoc(`user_social/${uid}`, {
       friends: friends[uid] || [],
       blocked: blocked[uid] || [],
       mutedConvs: muted[uid] || [],
+      hiddenConversations: hidden[uid] || [],
+      starred: starred[uid] || [],
     })
 
     // Friend requests (sent by me)
