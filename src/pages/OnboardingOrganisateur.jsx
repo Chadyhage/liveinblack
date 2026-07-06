@@ -153,6 +153,12 @@ export default function OnboardingOrganisateur() {
         setApp(existing)
         const fd = existing.formData || {}
         setF(prev => ({ ...prev, ...fd }))
+        // Compte Firebase déjà créé lors d'une session précédente (uid réel != id
+        // temporaire "anon-org-…") : restaurer la référence pour NE PAS retenter
+        // createUserWithEmailAndPassword au rechargement (sinon "email déjà associé").
+        if (existing.uid && !String(existing.uid).startsWith('anon-')) {
+          anonUidRef.current = existing.uid
+        }
       } else {
         const tempId = 'anon-org-' + Date.now()
         localStorage.setItem(ANON_DRAFT_KEY, tempId)
@@ -413,6 +419,20 @@ export default function OnboardingOrganisateur() {
           <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 10, lineHeight: 1.6 }}>
             Complète ton dossier. Tu peux sauvegarder et revenir plus tard.
           </p>
+          {anonMode && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Recommencer une nouvelle demande ? Le brouillon en cours sera effacé.')) {
+                  localStorage.removeItem(ANON_DRAFT_KEY)
+                  window.location.reload()
+                }
+              }}
+              style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: DM, fontSize: 10, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.35)', textDecoration: 'underline' }}
+            >
+              Recommencer une nouvelle demande
+            </button>
+          )}
         </div>
 
         {/* Progress bar — étapes numérotées (style pro, sans emoji) */}

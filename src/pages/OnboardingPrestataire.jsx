@@ -313,6 +313,12 @@ export default function OnboardingPrestataire() {
         const fd = existing.formData || {}
         setF(prev => hydrateProviderForm(prev, fd))
         if (fd.regEmail) setRegEmail(fd.regEmail)
+        // Compte Firebase déjà créé (uid réel != id temporaire "anon-prest-…") :
+        // restaurer la référence pour NE PAS retenter la création au rechargement
+        // (sinon "email déjà associé").
+        if (existing.uid && !String(existing.uid).startsWith('anon-')) {
+          anonUidRef.current = existing.uid
+        }
       } else {
         const tempId = 'anon-prest-' + Date.now()
         localStorage.setItem(ANON_DRAFT_KEY, tempId)
@@ -705,6 +711,20 @@ export default function OnboardingPrestataire() {
           <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 10, lineHeight: 1.6 }}>
             Crée ton compte, puis construis librement ton profil et ton catalogue.
           </p>
+          {anonMode && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Recommencer une nouvelle demande ? Le brouillon en cours sera effacé.')) {
+                  localStorage.removeItem(ANON_DRAFT_KEY)
+                  window.location.reload()
+                }
+              }}
+              style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: DM, fontSize: 10, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.35)', textDecoration: 'underline' }}
+            >
+              Recommencer une nouvelle demande
+            </button>
+          )}
         </div>
 
         {/* Rappel tarif + parcours — visible AVANT le paiement (étapes 0-1) */}
