@@ -40,6 +40,7 @@ export default async function handler(req, res) {
     const ticket = tSnap.data()
 
     if (!ticket.tableId) return res.status(400).json({ error: "Ce billet ne fait pas partie d'une table." })
+    if (ticket.paid !== true) return res.status(409).json({ error: 'Ce billet n\'est pas encore confirmé (paiement en attente).' })
     if (String(ticket.hostUid || '') !== host) {
       return res.status(403).json({ error: "Seul l'hôte de la table peut attribuer ou reprendre ce billet." })
     }
@@ -86,14 +87,24 @@ export default async function handler(req, res) {
     if (target === prevHolder) return res.status(200).json({ ok: true, skipped: 'already_holder' })
 
     const assignedAt = action === 'assign' ? new Date().toISOString() : null
-    const hostRef = db.collection('user_bookings').doc(host)
-    const targetRef = db.collection('user_bookings').doc(target)
-    const prevRef = db.collection('user_bookings').doc(prevHolder)
 
+    try {
     await db.runTransaction(async (tx) => {
-      // Lire les carnets distincts concernés.
-      const uids = [...new Set([host, target, prevHolder])]
-      const refByUid = { [host]: hostRef, [target]: targetRef, [prevHolder]: prevRef }
+      // LIRE LE REGISTRE DANS LA TRANSACTION : re-dérive le titulaire courant et
+      // re-valide. Comme on lit ET écrit tRef, Firestore sérialise deux
+      // attributions concurrentes du même siège (la 2e re-tente automatiquement)
+      // → pas de copie orpheline ni de siège dupliqué chez deux invités.
+      const freshSnap = await tx.get(tRef)
+      if (!freshSnap.exists) throw new Error('Billet disparu')
+      const fresh = freshSnap.data()
+      if (String(fresh.hostUid || '') !== host) { const e = new Error('not_host'); e.code = 'not_host'; throw e }
+      if (fresh.checkedInAt) { const e = new Error('checked_in'); e.code = 'checked_in'; throw e }
+      const curHolder = String(fresh.userId || host) // titulaire RÉEL au moment de la tx
+
+      // Carnets distincts réellement concernés (basés sur le titulaire frais).
+      const uids = [...new Set([host, target, curHolder])]
+      const refByUid = {}
+      uids.forEach(u => { refByUid[u] = db.collection('user_bookings').doc(u) })
       const snaps = await Promise.all(uids.map(u => tx.get(refByUid[u])))
       const itemsByUid = {}
       uids.forEach((u, i) => { itemsByUid[u] = (snaps[i].exists ? snaps[i].data().items : []) || [] })
@@ -113,9 +124,9 @@ export default async function handler(req, res) {
       delete hostSeatUpdated.token
       itemsByUid[host] = [...itemsByUid[host].filter(it => it.ticketCode !== ticketCode), hostSeatUpdated]
 
-      // 2) Ancien titulaire (si c'était un invité) : on lui retire sa copie.
-      if (prevHolder !== host) {
-        itemsByUid[prevHolder] = itemsByUid[prevHolder].filter(it => it.ticketCode !== ticketCode)
+      // 2) Titulaire courant réel (si c'était un invité) : on lui retire sa copie.
+      if (curHolder !== host) {
+        itemsByUid[curHolder] = itemsByUid[curHolder].filter(it => it.ticketCode !== ticketCode)
       }
 
       // 3) Nouveau titulaire invité : on lui dépose sa copie personnelle.
@@ -138,6 +149,11 @@ export default async function handler(req, res) {
         assignedAt,
       }, { merge: true })
     })
+    } catch (txErr) {
+      if (txErr.code === 'checked_in') return res.status(409).json({ error: "Ce billet a été scanné à l'entrée entre-temps — impossible de le déplacer." })
+      if (txErr.code === 'not_host') return res.status(403).json({ error: "Tu n'es plus l'hôte de cette table." })
+      throw txErr
+    }
 
     // ── Notification à l'invité (best-effort) ────────────────────────────────
     try {

@@ -514,6 +514,12 @@ export default function MesEvenementsPage() {
     if (currentStep === 1) {
       places.forEach((p, i) => {
         if (!p.type.trim()) errs[`place_${i}`] = 'Donne un nom à cette place'
+        // Une table/carré (place de groupe) se vend ENTIÈRE au prix plein et
+        // émet un billet par siège → elle doit avoir un tarif (> 0). Sinon le
+        // parcours d'achat gratuit ne créerait qu'un seul billet (table cassée).
+        if (p.groupType === 'group' && (Number(p.price) || 0) <= 0) {
+          errs[`place_${i}`] = 'Une table de groupe doit avoir un prix (supérieur à 0)'
+        }
       })
     }
     if (currentStep === 2) {

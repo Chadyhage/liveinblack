@@ -602,6 +602,16 @@ export default function EventDetailPage() {
     }
     setEventStartedError(false)
 
+    // ─── TABLE GRATUITE INTERDITE ────────────────────────────────────────
+    // Une table (place de groupe) se vend ENTIÈRE via le tunnel payant qui émet
+    // tous les sièges. Une table à 0 tomberait dans le flux « billet gratuit »
+    // qui ne créerait qu'UN billet normal (table cassée). On la bloque proprement.
+    if (isGroupPlace && grandTotal <= 0) {
+      setStripeError("Cette table n'a pas de tarif. Contacte l'organisateur — une table de groupe doit avoir un prix.")
+      setShowConfirmModal(true)
+      return
+    }
+
     // ─── ÉVÉNEMENT PAYANT — Stripe Checkout (EUR) ou FedaPay (FCFA) ───────
     if (grandTotal > 0) {
       // Construire un id de réservation persistant (rapproche pending ↔ session de paiement)

@@ -5,6 +5,7 @@ import { verifyTicketToken } from '../utils/ticket'
 import { fmtMoney, eventCurrency } from '../utils/money'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
+import { isEventEnded } from '../utils/event-time'
 import {
   listenOrders, getOrders, ensurePreordersMaterialized, addOnsiteItem, serveItem,
   cancelItem, markTicketPaid, getStaffRole, canServe, canManage,
@@ -38,25 +39,6 @@ async function fetchEventForScan(eventId) {
     }
   } catch {}
   return null
-}
-
-// L'événement est-il terminé ? (annulé, ou fin + 12h de tolérance dépassée).
-// On sert les consos PENDANT la soirée : au-delà, un billet passé ne l'ouvre plus.
-function isEventOver(ev) {
-  try {
-    if (!ev) return false
-    if (ev.cancelled) return true
-    const GRACE = 12 * 3600 * 1000
-    if (ev.closingDate) return new Date(ev.closingDate).getTime() + GRACE < Date.now()
-    if (!ev.date) return false
-    const endTime = ev.endTime || ev.time || '23:59'
-    const [h, m] = String(endTime).split(':').map(Number)
-    const d = new Date(ev.date + 'T00:00:00'); d.setHours(h, m, 0, 0)
-    const startTime = ev.time || '00:00'
-    const [sh, sm] = String(startTime).split(':').map(Number)
-    if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1) // croise minuit
-    return d.getTime() + GRACE < Date.now()
-  } catch { return false }
 }
 
 // ─── Design tokens ────────────────────────────────────────────────────────
@@ -407,9 +389,13 @@ function ScannerInner() {
       const regPo = Array.isArray(reg.data?.preorders)
         ? reg.data.preorders.map(i => ({ n: i.name, e: i.emoji || '', q: Number(i.qty) || 0, p: Number(i.priceEUR) || 0 })).filter(i => i.q > 0)
         : null
+      // Déjà entré ? On combine l'état local (cet appareil) ET le registre serveur
+      // (checkedInAt, cross-device) — sinon un billet scanné à la porte A passerait
+      // « valide » à la porte B (ou une copie de siège de table détenue par l'hôte).
+      const regUsed = !!reg.data?.checkedInAt
       setResult({
         code: tc,
-        status: isUsed ? 'used' : 'valid',
+        status: (isUsed || regUsed) ? 'used' : 'valid',
         ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en, date: data.ed, price: fmtMoney(data.tp, data.cur) },
         cur: data.cur || null,
         preorders: regPo ?? (data.po || []),
@@ -444,7 +430,9 @@ function ScannerInner() {
       }
       const guard = await eventScanGuard(reg.data?.eventId)
       if (guard) { setResult({ code: clean, status: 'wrong_event', sub: guard.sub, ticket: { holder: reg.data.guestName || 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—' } }); return }
-      const isUsed = currentUsed.has(clean)
+      // Déjà entré ? état local (cet appareil) OU registre serveur (checkedInAt,
+      // cross-device) — ferme la double-entrée entre deux portes/deux agents.
+      const isUsed = currentUsed.has(clean) || !!reg.data?.checkedInAt
       setResult({
         code: clean,
         status: isUsed ? 'used' : 'valid',
@@ -513,7 +501,7 @@ function ScannerInner() {
     if (!eventId) return null
     const ev = await fetchEventForScan(eventId)
     if (!ev) return null
-    if (isEventOver(ev)) return { title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé." }
+    if (isEventEnded(ev)) return { title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé." }
     if (userRole === 'organisateur' && String(ev.organizerId || '') !== String(myId) && String(ev.createdBy || '') !== String(myId)) {
       return { title: 'Pas ton événement', sub: "Ce billet appartient à un événement que tu n'organises pas." }
     }
@@ -558,7 +546,7 @@ function ScannerInner() {
     if (!eventId) { setScanReject({ title: 'Événement introuvable', sub: "Impossible de rattacher ce billet à un événement." }); return }
     const ev = await fetchEventForScan(eventId)
     if (ev) {
-      if (isEventOver(ev)) { setScanReject({ title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé — commandes closes." }); return }
+      if (isEventEnded(ev)) { setScanReject({ title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé — commandes closes." }); return }
       if (userRole === 'organisateur' && String(ev.organizerId || '') !== String(myId) && String(ev.createdBy || '') !== String(myId)) {
         setScanReject({ title: 'Pas ton événement', sub: "Ce billet appartient à un événement que tu n'organises pas." }); return
       }

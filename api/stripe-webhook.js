@@ -200,10 +200,27 @@ async function finalizeBooking(db, session, meta) {
   // tarif réécrirait rétroactivement le CA des ventes passées (risque fiscal).
   const unitPriceEUR = Math.max(0, Number(meta.unitPriceCents || 0)) / 100
 
-  // Idempotence : si on a déjà traité ce bookingId on ne refait rien
+  // ── CLAIM transactionnel anti-concurrence (miroir FedaPay) ──
+  // Stripe redélivre le même checkout.session.completed (at-least-once) et peut
+  // en envoyer deux quasi simultanément → sans verrou, deux runs émettraient
+  // 2× les sièges et créditeraient 2× le vendeur. Bail 90 s : un run concurrent
+  // < 90 s → 500 (Stripe retente) ; un run mort → le bail expire et le retry reprend.
   const ref = db.collection('bookings').doc(bookingId)
-  const existing = await ref.get()
-  if (existing.exists && existing.data().paid === true) {
+  const FULFILL_LOCK_MS = 90 * 1000
+  let claimed = false
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (snap.exists && snap.data().paid === true) { claimed = false; return }
+    const startedAt = snap.exists ? Number(snap.data().fulfillStartedAt || 0) : 0
+    if (startedAt && Date.now() - startedAt < FULFILL_LOCK_MS) {
+      const err = new Error('fulfillment déjà en cours (livraison webhook concurrente) — retry')
+      err.code = 'fulfillment_in_progress'
+      throw err
+    }
+    tx.set(ref, { fulfillStartedAt: Date.now() }, { merge: true })
+    claimed = true
+  })
+  if (!claimed) {
     console.log('[webhook] booking already finalized:', bookingId)
     return
   }
@@ -251,9 +268,11 @@ async function finalizeBooking(db, session, meta) {
   const existing_q = await db.collection('tickets')
     .where('stripeSessionId', '==', session.id)
     .get()
-  const clientTickets = existing_q.docs
-    .map(d => d.data())
-    .filter(t => t.source === 'client-postpay')
+  const priorTickets = existing_q.docs.map(d => d.data())
+  const clientTickets = priorTickets.filter(t => t.source === 'client-postpay')
+  // Retry après échec partiel : réutiliser les codes déjà mintés par un run
+  // précédent (mêmes objets) au lieu d'en créer de nouveaux → pas de doublons.
+  const mintedTickets = priorTickets.filter(t => t.source === 'stripe-webhook')
 
   let tickets
   let clientAlreadyFinalized = false
@@ -290,6 +309,24 @@ async function finalizeBooking(db, session, meta) {
     }
     await confirmBatch.commit()
     console.log('[webhook] billets client adoptés et confirmés:', tickets.map(t => t.ticketCode))
+  } else if (mintedTickets.length) {
+    // Retry : on réutilise les billets déjà émis (le titulaire courant d'un
+    // siège peut avoir changé entre deux tentatives → on garde t.userId).
+    tickets = mintedTickets.map(t => ({
+      id: t.ticketCode.split('-').pop(),
+      ticketCode: t.ticketCode,
+      eventId,
+      eventName,
+      place: t.place || placeType,
+      placePrice: t.placePrice != null ? Number(t.placePrice) : perSeatEUR,
+      bookedAt: t.bookedAt || new Date().toISOString(),
+      paid: true,
+      paymentMethod: 'stripe',
+      stripeSessionId: session.id,
+      userId: t.userId || userId,
+      ...(t.tableId ? { tableId: t.tableId, seatIndex: t.seatIndex, hostUid: t.hostUid, tableSeats: t.tableSeats } : {}),
+    }))
+    console.log('[webhook] retry — billets déjà mintés réutilisés:', tickets.map(t => t.ticketCode))
   } else {
     // Client jamais revenu (onglet fermé) — on mint les billets nous-mêmes.
     // Pour une table : `seatCount` sièges, tous détenus par l'hôte au départ.
@@ -318,6 +355,9 @@ async function finalizeBooking(db, session, meta) {
     }
   }
 
+  // Contenu du booking (SANS paid encore — le marqueur d'idempotence paid:true
+  // est posé EN DERNIER : toutes les étapes ci-dessous sont idempotentes, donc un
+  // échec partiel + retry les refait au lieu de les perdre).
   await ref.set({
     bookingId,
     eventId,
@@ -327,36 +367,13 @@ async function finalizeBooking(db, session, meta) {
     placeType,
     tickets,
     preorders,
-    paid: true,
     amountTotalCents: session.amount_total || 0,
     currency: session.currency || 'eur',
     customerEmail: session.customer_details?.email || null,
     customerName: session.customer_details?.name || null,
     stripeSessionId: session.id,
-    finalizedAt: FieldValue.serverTimestamp(),
     finalizedBy: 'webhook',
   }, { merge: true })
-
-  // ── Ledger de reversement vendeur ──
-  // Si le paiement n'a PAS été reversé automatiquement (vendeur sans Connect éligible,
-  // ex. Afrique), la plateforme a encaissé 100% → on enregistre la dette envers le
-  // vendeur (montant net = total - frais de service), à reverser manuellement.
-  // Idempotent : on est dans la garde anti-duplication (booking.paid déjà vérifié en tête),
-  // donc ce crédit ne s'exécute qu'UNE fois par booking.
-  const feeCents = Math.max(0, Number(meta.feeCents || 0))
-  const sellerUid = meta.sellerUid || ''
-  if (meta.connectMode === 'ledger' && sellerUid) {
-    const owedCents = Math.max(0, (session.amount_total || 0) - feeCents)
-    if (owedCents > 0) {
-      await db.collection('seller_balances').doc(String(sellerUid)).set({
-        sellerUid: String(sellerUid),
-        amountDueCents: FieldValue.increment(owedCents),
-        currency: session.currency || 'eur',
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true })
-      console.log('[webhook] ledger vendeur crédité:', sellerUid, '+', owedCents, 'centimes')
-    }
-  }
 
   // Les étapes suivantes ne concernent que le cas « client jamais revenu » :
   // si le client a déjà finalisé, il a déjà créé le registre (confirmé plus
@@ -392,25 +409,49 @@ async function finalizeBooking(db, session, meta) {
 
     // Mirror dans user_bookings/{userId}.items pour que syncOnLogin les pousse en local
     if (userId) {
-      // arrayUnion sur des objets : ne dédoublonne que sur égalité stricte.
-      // Comme on n'écrit qu'une fois (idempotence ci-dessus), pas de doublon possible.
+      // arrayUnion sur des objets identiques → dédoublonne au retry (mêmes codes
+      // réutilisés via mintedTickets), donc pas de doublon même sur ré-exécution.
       await db.collection('user_bookings').doc(userId).set({
         items: FieldValue.arrayUnion(...tickets),
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true })
-
-      // Points fidélité : 1 point par billet
-      await db.collection('users').doc(userId).set({
-        points: FieldValue.increment(qty),
-      }, { merge: true })
     }
   }
 
-  // ── Notification de vente à l'organisateur (engagement) ──
-  // On lit l'event pour trouver son organisateur, puis on ajoute une notif.
-  // Read-merge-write pour ne pas écraser les notifs existantes de l'orga.
+  // ── Crédit vendeur + points : EXACTEMENT UNE FOIS ──
+  // Les FieldValue.increment ne sont pas idempotents → flag `settled` posé dans la
+  // MÊME transaction : un retry après échec partiel ne peut ni doubler ni sauter.
+  const feeCents = Math.max(0, Number(meta.feeCents || 0))
+  const sellerUid = meta.sellerUid || ''
+  const owedCents = Math.max(0, (session.amount_total || 0) - feeCents)
+  let firstSettle = false
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (snap.exists && snap.data().settled === true) return
+    if (meta.connectMode === 'ledger' && sellerUid && owedCents > 0) {
+      tx.set(db.collection('seller_balances').doc(String(sellerUid)), {
+        sellerUid: String(sellerUid),
+        amountDueCents: FieldValue.increment(owedCents),
+        currency: session.currency || 'eur',
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+    }
+    // Points : 1/billet — sauf si le client a déjà finalisé (il se les est
+    // attribués lui-même via syncIncrement).
+    if (userId && !clientAlreadyFinalized) {
+      tx.set(db.collection('users').doc(userId), { points: FieldValue.increment(qty) }, { merge: true })
+    }
+    tx.set(ref, { settled: true }, { merge: true })
+    firstSettle = true
+  })
+  if (firstSettle && meta.connectMode === 'ledger' && sellerUid && owedCents > 0) {
+    console.log('[webhook] ledger vendeur crédité:', sellerUid, '+', owedCents, 'centimes')
+  }
+
+  // ── Notification de vente à l'organisateur (engagement) — seulement au premier
+  // settle : un retry ne renotifie pas.
   try {
-    if (eventId) {
+    if (eventId && firstSettle) {
       const evSnap = await db.collection('events').doc(String(eventId)).get()
       const organizerUid = evSnap.exists ? (evSnap.data().organizerId || evSnap.data().createdBy) : null
       if (organizerUid && organizerUid !== userId) {
@@ -423,16 +464,19 @@ async function finalizeBooking(db, session, meta) {
           read: false,
           createdAt: Date.now(),
         }
-        const ref = db.collection('notifications').doc(String(organizerUid))
-        const cur = await ref.get()
+        const notifRef = db.collection('notifications').doc(String(organizerUid))
+        const cur = await notifRef.get()
         const items = cur.exists ? (cur.data().items || []) : []
-        await ref.set({ items: [notif, ...items].slice(0, 50), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+        await notifRef.set({ items: [notif, ...items].slice(0, 50), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
         console.log('[webhook] organisateur notifié de la vente:', organizerUid)
       }
     }
   } catch (e) {
     console.warn('[webhook] échec notif organisateur:', e.message)
   }
+
+  // ── Marqueur final d'idempotence (posé EN DERNIER) ──
+  await ref.set({ paid: true, finalizedAt: FieldValue.serverTimestamp() }, { merge: true })
 
   console.log('[webhook] booking finalized:', bookingId, '— tickets:', tickets.length, clientAlreadyFinalized ? '(codes client adoptés)' : '(codes mintés)')
 }

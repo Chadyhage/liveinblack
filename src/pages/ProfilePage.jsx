@@ -2309,9 +2309,15 @@ function EventTicketGroup({ group }) {
 
       {expanded && (
         <div className="ticket-stack" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {group.tickets.map((b, i) => (
-            <PremiumTicketCard key={b.id} booking={b} index={i} inactive={ticketInactive} inactiveLabel={inactiveLabel} />
-          ))}
+          {group.tickets
+            // Un siège de table que l'hôte a ATTRIBUÉ à quelqu'un d'autre ne doit
+            // PAS afficher de QR scannable ici (sinon l'hôte pourrait entrer à la
+            // place de son invité). Il reste géré dans « Ma table » (attribuer /
+            // reprendre). Seuls les sièges que le titulaire détient vraiment ont un QR.
+            .filter(b => !(b.tableId && b.assignedTo && String(b.assignedTo) !== String(getUserId(user))))
+            .map((b, i) => (
+              <PremiumTicketCard key={b.id} booking={b} index={i} inactive={ticketInactive} inactiveLabel={inactiveLabel} />
+            ))}
         </div>
       )}
     </div>
