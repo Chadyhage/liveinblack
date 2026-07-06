@@ -7,7 +7,7 @@ import PlaylistSystem from '../components/PlaylistSystem'
 import PlaylistDJPanel from '../components/PlaylistDJPanel'
 import { useAuth } from '../context/AuthContext'
 import { generateTicketToken, checkScheduleConflict } from '../utils/ticket'
-import { getConversations, sendMessage, getUserId, formatTime, getInitials, saveGroupBooking, getGroupBookings, validateGroupBooking, payGroupBookingShare } from '../utils/messaging'
+import { getConversations, sendMessage, getUserId, formatTime, getInitials } from '../utils/messaging'
 import { startTicketCheckout } from '../utils/stripe'
 import { eventCurrency, fmtMoney } from '../utils/money'
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
@@ -297,26 +297,6 @@ const S = {
     cursor: 'pointer',
     boxShadow: '0 10px 26px -8px rgba(200,169,110,0.6), inset 0 1px 0 rgba(255,255,255,0.4)',
   },
-  // CTA « Proposer au groupe » — pendant teal du btnCheckout (même prestance,
-  // identité groupe conservée). Évite le DM Mono pâle qui passait inaperçu.
-  btnGroupCTA: {
-    width: '100%',
-    padding: '15px 22px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 9,
-    background: 'linear-gradient(135deg, #6ff5d8 0%, #4ee8c8 52%, #38c4a8 100%)',
-    border: 'none',
-    borderRadius: 11,
-    fontFamily: 'Inter, sans-serif',
-    fontWeight: 800,
-    fontSize: 15.5,
-    letterSpacing: '0.005em',
-    color: '#04140f',
-    cursor: 'pointer',
-    boxShadow: '0 10px 26px -8px rgba(78,232,200,0.55), inset 0 1px 0 rgba(255,255,255,0.4)',
-  },
 }
 
 // ── Carte du lieu — géocode l'adresse (Nominatim, gratuit) puis affiche une
@@ -450,8 +430,6 @@ export default function EventDetailPage() {
   const freeBookingLockRef = useRef(false)
   const [stripeRedirecting, setStripeRedirecting] = useState(false)
   const [stripeError, setStripeError] = useState('')
-  const [showGroupSendModal, setShowGroupSendModal] = useState(false)
-  const [groupSendConvId, setGroupSendConvId] = useState(null)
   const [insufficientFunds] = useState(false) // legacy — vérification gérée côté Stripe
   const [conflictBooking, setConflictBooking] = useState(null)
   const [showConflictModal, setShowConflictModal] = useState(false)
@@ -2322,211 +2300,6 @@ export default function EventDetailPage() {
           onCancel={() => setShowAgeModal(false)}
         />
       )}
-
-      {/* ── Group send modal ─────────────────────────────────────────────────── */}
-      {showGroupSendModal && (() => {
-        const myId = getUserId(user)
-        const myName = user?.name || 'Moi'
-        const groupMin = selectedPlaceObj?.groupMin || 2
-        const groupMax = selectedPlaceObj?.groupMax || 99
-        const groupConvs = getConversations(myId).filter(c => {
-          if (c.type !== 'group') return false
-          const mc = c.members?.length || 0
-          return mc >= groupMin && (groupMax <= 0 || mc <= groupMax)
-        })
-        const allGroupConvs = getConversations(myId).filter(c => c.type === 'group')
-        const preorderData = perTicketOrders[0] || { items: {}, shows: {} }
-        const preorderItems = Object.entries(preorderData.items || {}).filter(([, q]) => q > 0)
-        function sendGroupProposal() {
-          if (!groupSendConvId) return
-          const conv = groupConvs.find(c => c.id === groupSendConvId)
-          const bookingId = 'gb_' + Date.now()
-          saveGroupBooking({
-            id: bookingId,
-            eventId: event.id,
-            eventName: event.name,
-            eventDate: event.dateDisplay || event.date,
-            eventDateISO: event.date,
-            eventStartTime: event.time,
-            eventEndTime: event.endTime,
-            eventImage: event.imageUrl || null,
-            placeName: selectedPlace,
-            placePrice,
-            currency: evCur,
-            groupMin,
-            groupMax,
-            preorderData,
-            preorderTotal,
-            totalPrice: grandTotal,
-            convId: groupSendConvId,
-            // CRITIQUE : on passe les membres de la conversation pour que
-            // saveGroupBooking en dérive participantIds. Sans ça, participantIds
-            // restait vide → la règle Firestore isMemberOf refusait la création
-            // du doc (le proposeur n'est pas membre d'une liste vide) → la résa
-            // n'arrivait jamais en base et les autres membres voyaient
-            // « Réservation introuvable » sur leur appareil.
-            members: (conv?.members || []).map(m => ({ userId: m.userId, name: m.name })),
-            participantIds: (conv?.members || []).map(m => m.userId).filter(Boolean),
-            convMemberCount: conv?.members?.length || 2,
-            proposerId: myId,
-            proposerName: myName,
-            status: 'pending_validation',
-            validations: { [myId]: true },
-            payments: {},
-            songSelections: {},
-            withdrawnMembers: [],
-            createdAt: Date.now(),
-            deadline: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
-          })
-          sendMessage(groupSendConvId, myId, myName, 'group_booking', bookingId)
-          setShowGroupSendModal(false)
-          navigate('/messagerie')
-        }
-        return (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)' }} onClick={() => setShowGroupSendModal(false)} />
-            <div style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: 448,
-              background: 'rgba(4,5,12,0.97)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              borderRadius: '16px 16px 0 0',
-              padding: '20px 20px 36px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-            }}>
-              <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,0.15)', borderRadius: 2, margin: '0 auto' }} />
-
-              <div>
-                <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 22, color: 'white', margin: 0, letterSpacing: '-0.01em' }}>
-                  Proposer au groupe
-                </h3>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
-                  Choisis une conversation de groupe pour partager la réservation
-                </p>
-              </div>
-
-              {/* Summary */}
-              <div style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 12,
-                padding: '14px 16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 9,
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.55)' }}>Place</span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'white' }}>{selectedPlace}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.55)' }}>Groupe requis</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <GroupIcon size={13} color="#4ee8c8" />
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#4ee8c8' }}>
-                      {selectedPlaceObj?.groupMin || '?'}–{selectedPlaceObj?.groupMax || '?'} pers.
-                    </span>
-                  </div>
-                </div>
-                {preorderItems.length > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.55)' }}>Précommande</span>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#c8a96e' }}>
-                      {preorderItems.map(([n, q]) => `${q}× ${n}`).join(', ')}
-                    </span>
-                  </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, marginTop: 2 }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Total</span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: '#c8a96e', letterSpacing: '-0.02em' }}>{fmtMoney(grandTotal, evCur)}</span>
-                </div>
-              </div>
-
-              {/* Group size info */}
-              <div style={{ background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.20)', borderRadius: 10, padding: '10px 14px' }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(78,232,200,0.85)', margin: 0, lineHeight: 1.5 }}>
-                  Cette place requiert entre {groupMin} et {groupMax > 0 ? groupMax : '∞'} personnes.
-                  Seuls les groupes compatibles sont affichés.
-                </p>
-              </div>
-              {/* Group conversation list */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 192, overflowY: 'auto' }}>
-                {allGroupConvs.length === 0 ? (
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.30)', textAlign: 'center', padding: '20px 0' }}>
-                    Aucune conversation de groupe. Crée un groupe dans Messages.
-                  </p>
-                ) : groupConvs.length === 0 ? (
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.40)', textAlign: 'center', padding: '20px 0' }}>
-                    Aucun groupe compatible ({groupMin}–{groupMax > 0 ? groupMax : '∞'} membres requis).
-                  </p>
-                ) : groupConvs.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => setGroupSendConvId(c.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '12px 14px',
-                      borderRadius: 10,
-                      border: groupSendConvId === c.id ? '1px solid rgba(78,232,200,0.50)' : '1px solid rgba(255,255,255,0.08)',
-                      background: groupSendConvId === c.id ? 'rgba(78,232,200,0.08)' : 'transparent',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    <div style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: '50%',
-                      background: groupSendConvId === c.id ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.06)',
-                      border: groupSendConvId === c.id ? '1px solid rgba(78,232,200,0.35)' : '1px solid rgba(255,255,255,0.10)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: groupSendConvId === c.id ? '#4ee8c8' : '#c8a96e',
-                      flexShrink: 0,
-                    }}>
-                      {getInitials(c.name || '?')}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {c.name}
-                      </p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.40)', margin: 0 }}>
-                        {c.members?.length || 0} membres
-                      </p>
-                    </div>
-                    {groupSendConvId === c.id && (
-                      <CheckIcon size={16} color="#4ee8c8" />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                style={{
-                  ...S.btnGroupCTA,
-                  opacity: groupSendConvId ? 1 : 0.45,
-                  cursor: groupSendConvId ? 'pointer' : 'not-allowed',
-                  filter: groupSendConvId ? 'none' : 'grayscale(0.6)',
-                }}
-                onClick={sendGroupProposal}
-                disabled={!groupSendConvId}
-              >
-                Envoyer la proposition
-              </button>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* ── Show info modal ──────────────────────────────────────────────────── */}
       {showInfoModal && (

@@ -45,8 +45,6 @@ export default async function handler(req, res) {
       userId,
       userEmail,
       bookingId,
-      groupBookingId,
-      isGroupShare,
       isTable, // achat d'une TABLE entière (place de groupe) — modèle « hôte »
     } = req.body || {}
 
@@ -73,53 +71,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Cet événement se paie en FCFA (mobile money). Recharge la page pour utiliser le bon tunnel de paiement.' })
     }
 
-    // Mutuellement exclusifs : une part de groupe N'EST PAS une table entière.
-    // (Empêche un combo forgé qui paierait une part et recevrait tous les sièges.)
-    if (isTable && isGroupShare) {
-      return res.status(400).json({ error: 'Requête invalide (table et part de groupe simultanées).' })
-    }
-
-    // ── Part de groupe : validation serveur STRICTE ──
-    // Faille corrigée : isGroupShare venait du body et court-circuitait TOUTE
-    // vérification de prix (billet VIP payable 1 ct + frais). Désormais : doc
-    // group_bookings requis + appartenance + plancher = tarif réel de la place
-    // ÷ nombre max de partageurs (groupMax), dérivé de l'événement — jamais du
-    // total du doc de groupe (forgeable).
-    let groupShareCents = null
-    if (isGroupShare) {
-      if (!groupBookingId) return res.status(400).json({ error: 'groupBookingId requis pour une part de groupe' })
-      if (!db) return res.status(503).json({ error: 'Vérification de groupe indisponible — réessaie.' })
-      const gbSnap = await db.collection('group_bookings').doc(String(groupBookingId)).get()
-      if (!gbSnap.exists) return res.status(404).json({ error: 'Réservation de groupe introuvable' })
-      const gb = gbSnap.data()
-      if (String(gb.eventId) !== String(eventId)) {
-        return res.status(400).json({ error: 'Cette réservation de groupe concerne un autre événement.' })
-      }
-      const members = Array.isArray(gb.participantIds) ? gb.participantIds : []
-      if (!members.includes(caller.uid)) {
-        return res.status(403).json({ error: 'Tu ne fais pas partie de cette réservation de groupe.' })
-      }
-      const withdrawn = new Set(Array.isArray(gb.withdrawnMembers) ? gb.withdrawnMembers : [])
-      const activeCount = Math.max(1, members.filter(m => !withdrawn.has(m)).length)
-      const placesArr = evData?.places || []
-      const gbPlace = placesArr.find(p => p.type === placeType) || null
-      let floorCents
-      if (gbPlace) {
-        const Pc = Math.round(Number(gbPlace.price) * 100) || 0
-        const G = Math.max(1, Number(gbPlace.groupMax) || 1)
-        floorCents = Math.floor(Pc / G)
-      } else {
-        const paidCents = placesArr.map(p => Math.round(Number(p.price) * 100) || 0).filter(c => c > 0)
-        const minPaid = paidCents.length ? Math.min(...paidCents) : 0
-        floorCents = Math.floor(minPaid / activeCount)
-      }
-      const shareCents = Math.round(Number(unitPriceEUR) * 100)
-      if (shareCents <= 0 || shareCents < floorCents - 1) { // -1 ct : tolérance d'arrondi
-        return res.status(400).json({ error: 'Part de groupe invalide' })
-      }
-      groupShareCents = shareCents
-    }
-
     // ── Table entière (modèle « hôte ») : un acheteur réserve TOUTE une place de
     // groupe (carré/table) au prix plein et recevra groupMax billets à attribuer
     // à ses invités. La place doit réellement être une place de groupe (validé
@@ -134,9 +85,9 @@ export default async function handler(req, res) {
       tableSeats = Math.min(50, Math.max(2, Number(tPlace.groupMax) || 2))
     }
 
-    // Quantité bornée (aligné sur /api/event-stock). Une part de groupe OU une
-    // table entière = 1 unité de stock (la table compte pour 1, pas groupMax).
-    const nQty = (isGroupShare || isTable) ? 1 : Math.max(1, Math.min(20, Math.floor(Number(qty)) || 1))
+    // Quantité bornée (aligné sur /api/event-stock). Une table entière = 1 unité
+    // de stock (la table compte pour 1, pas groupMax).
+    const nQty = isTable ? 1 : Math.max(1, Math.min(20, Math.floor(Number(qty)) || 1))
 
     // ── Décrément atomique du stock AVANT de créer la session Stripe ──────────
     // C'est le seul point fiable pour empêcher la survente sur le tunnel payant :
@@ -212,8 +163,8 @@ export default async function handler(req, res) {
     // unitPriceEUR venait du client sans contrôle — un billet VIP payable 1 ct).
     // Fallback client uniquement si pas de doc/champ (events démo, legacy) ; les
     // parts de groupe ont été validées plus haut (plancher place + part égale).
-    let placeUnitCents = isGroupShare ? groupShareCents : Math.round(Number(unitPriceEUR) * 100)
-    if (!isGroupShare && serverUnitCents != null && serverUnitCents !== placeUnitCents) {
+    let placeUnitCents = Math.round(Number(unitPriceEUR) * 100)
+    if (serverUnitCents != null && serverUnitCents !== placeUnitCents) {
       console.warn('[/api/checkout] prix client ≠ serveur — serveur retenu:', placeUnitCents, '→', serverUnitCents)
       placeUnitCents = serverUnitCents
     }
@@ -341,10 +292,6 @@ export default async function handler(req, res) {
           feeCents: String(feeCents),
           sellerUid: String(sellerUid || ''),
           connectMode,
-          // Part de groupe : permet au webhook de marquer la part payée même si
-          // le client ferme l'onglet avant de revenir sur /paiement-reussi
-          ...(groupBookingId ? { groupBookingId: String(groupBookingId) } : {}),
-          ...(isGroupShare ? { isGroupShare: '1' } : {}),
           // Table entière : le webhook émet `tableSeats` billets (sièges) tous
           // détenus par l'hôte, à attribuer ensuite via /api/tickets.
           ...(isTable ? { tableSeats: String(tableSeats), isTable: '1' } : {}),

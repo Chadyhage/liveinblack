@@ -208,10 +208,6 @@ export default function PaiementReussiPage() {
             adopted.push({ ticketCode: st.ticketCode, ticketToken: token, id: st.id })
             adoptedBookings.push(booking)
           }
-          // Réservation de groupe : tagger le billet pour l'affichage « Mes billets »
-          if (pending.isGroupShare && pending.groupBookingId) {
-            adoptedBookings.forEach(b => { b.groupBookingId = pending.groupBookingId })
-          }
           const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
             .filter(b => (isFedapay ? b.fedapayTxnId !== fedapayTxnId : b.stripeSessionId !== sessionId)) // au cas où
           const all = [...prev, ...adoptedBookings]
@@ -221,15 +217,6 @@ export default function PaiementReussiPage() {
               const mine = all.filter(b => b.userId === pending.userId)
               if (mine.length) syncDoc(`user_bookings/${pending.userId}`, { items: mine })
             }).catch(() => {})
-          }
-          // CRITIQUE : marquer la part de groupe comme payée AUSSI dans la branche
-          // adoption — sinon, si le webhook finalise avant le retour client, la
-          // part resterait éternellement « non payée » alors que l'argent est pris.
-          if (pending.isGroupShare && pending.groupBookingId && pending.userId) {
-            try {
-              const { payGroupBookingShare } = await import('../utils/messaging')
-              payGroupBookingShare(pending.groupBookingId, pending.userId)
-            } catch {}
           }
           try { localStorage.removeItem(PENDING_KEY(bookingId)) } catch {}
           setEventName(pending.eventName || '')
@@ -304,10 +291,6 @@ export default function PaiementReussiPage() {
       // 4) Persister
       try {
         const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-        // Pour les réservations de groupe, on attache le groupBookingId au billet créé
-        if (pending.isGroupShare && pending.groupBookingId) {
-          newBookings.forEach(b => { b.groupBookingId = pending.groupBookingId })
-        }
         const allBookings = [...prev, ...newBookings]
         localStorage.setItem('lib_bookings', JSON.stringify(allBookings))
 
@@ -336,14 +319,6 @@ export default function PaiementReussiPage() {
               })
             }
           }).catch(() => {})
-        }
-
-        // Marquer la part de groupe comme payée dans le système de groupe
-        if (pending.isGroupShare && pending.groupBookingId && pending.userId) {
-          try {
-            const { payGroupBookingShare } = await import('../utils/messaging')
-            payGroupBookingShare(pending.groupBookingId, pending.userId)
-          } catch {}
         }
 
         // Points fidélité — incrément ATOMIQUE serveur (évite la perte de

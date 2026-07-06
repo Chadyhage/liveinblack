@@ -34,8 +34,8 @@ export async function startFedapayCheckout(params) {
         eventName: params.eventName,
         placeType: params.placeType,
         qty: params.qty,
-        // Le serveur relit le prix de la place dans Firestore — cette valeur
-        // ne sert que pour les parts de groupe (fraction du total).
+        // Le serveur relit le prix de la place dans Firestore (le client n'a pas
+        // le dernier mot sur le prix).
         unitPrice: Math.round(Number(params.unitPriceEUR) || 0),
         preorderItems: (params.preorderItems || []).map(it => ({
           name: it.name, qty: it.qty, price: Math.round(Number(it.priceEUR ?? it.price) || 0),
@@ -44,8 +44,6 @@ export async function startFedapayCheckout(params) {
         userEmail: params.userEmail,
         userName: params.userName,
         bookingId: params.bookingId,
-        ...(params.groupBookingId ? { groupBookingId: params.groupBookingId } : {}),
-        ...(params.isGroupShare ? { isGroupShare: true } : {}),
         ...(params.isTable ? { isTable: true } : {}),
       }),
     })

@@ -234,16 +234,6 @@ export function listenGroupConversations(uid, callback) {
   } catch { return () => {} }
 }
 
-// Listen to the group bookings a user participates in — temps réel des
-// validations/paiements pour que la carte de résa de groupe se mette à jour
-// sans rafraîchir la page quand un autre membre valide ou paie.
-export function listenGroupBookings(uid, callback) {
-  try {
-    const q = query(collection(db, 'group_bookings'), where('participantIds', 'array-contains', uid))
-    return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id }))), () => {})
-  } catch { return () => {} }
-}
-
 // Listen to a user's presence (lastSeen / isOnline) — for MessagingPage "En ligne" indicator
 export function listenUserPresence(userId, callback) {
   try {
@@ -662,14 +652,6 @@ export async function syncOnLogin(uid, opts = {}) {
     const allOrders = [...buyerOrders, ...sellerOrders].filter((o, i, arr) => arr.findIndex(x => (x.id || x._docId) === (o.id || o._docId)) === i)
     if (allOrders.length) localStorage.setItem('lib_service_orders', JSON.stringify(allOrders))
 
-    // ── 11. Group bookings ──
-    const gBookings = await loadCollection('group_bookings', [where('participantIds', 'array-contains', uid)])
-    if (gBookings.length) {
-      const obj = {}
-      gBookings.forEach(gb => { obj[gb.id || gb._docId] = gb })
-      localStorage.setItem('lib_group_bookings', JSON.stringify(obj))
-    }
-
     // ── 12. Boosts ──
     const boosts = await loadDoc(`user_boosts/${uid}`)
     if (boosts?.items) localStorage.setItem('lib_boosts', JSON.stringify(boosts.items))
@@ -805,10 +787,6 @@ export async function pushLocalToFirestore(uid) {
     // Service orders
     const orders = safeParseArray('lib_service_orders')
     for (const o of orders) { syncDoc(`service_orders/${o.id}`, o) }
-
-    // Group bookings
-    const gBookings = safeParseObj('lib_group_bookings')
-    for (const id of Object.keys(gBookings)) { syncDoc(`group_bookings/${id}`, gBookings[id]) }
 
     // Les reçus de boosts sont exclusivement écrits par le webhook Stripe.
 

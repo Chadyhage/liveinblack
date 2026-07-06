@@ -140,11 +140,6 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && (resource.data.toId == request.auth.uid || resource.data.fromId == request.auth.uid || isAgent());
     }
 
-    match /group_bookings/{id} {
-      allow read:   if isSignedIn() && (isMemberOf(resource.data) || isAgent());
-      allow create: if isSignedIn() && isMemberOf(request.resource.data);
-      allow update, delete: if isSignedIn() && (isMemberOf(resource.data) || isAgent());
-    }
 
     match /service_orders/{id} {
       allow read:   if isSignedIn() && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAgent());

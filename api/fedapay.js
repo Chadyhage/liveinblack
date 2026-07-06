@@ -76,7 +76,7 @@ async function checkout(req, res, body) {
     const {
       eventId, eventName, placeType, qty = 1,
       preorderItems = [], userEmail, userName,
-      bookingId, groupBookingId, isGroupShare,
+      bookingId,
       isTable, // achat d'une TABLE entière (place de groupe) — modèle « hôte »
     } = body
     // Identité du payeur = TOUJOURS le token vérifié (jamais le body) : le
@@ -105,53 +105,8 @@ async function checkout(req, res, body) {
     const places = ev.places || []
     const place = places.find(p => p.type === placeType) || null
 
-    // Mutuellement exclusifs : une part de groupe n'est pas une table entière.
-    if (isTable && isGroupShare) {
-      return res.status(400).json({ error: 'Requête invalide (table et part de groupe simultanées).' })
-    }
-
     let unitPrice = 0 // FCFA entiers
-    if (isGroupShare) {
-      // Part de résa de groupe : le montant est une PART du total, pas un tarif
-      // de place. Validation STRICTE — un doc group_bookings peut être forgé par
-      // n'importe quel utilisateur (règles Firestore), donc le plancher de prix
-      // vient de l'ÉVÉNEMENT, jamais du doc de groupe seul.
-      if (!groupBookingId) return res.status(400).json({ error: 'groupBookingId requis pour une part de groupe' })
-      const gbSnap = await db.collection('group_bookings').doc(String(groupBookingId)).get()
-      if (!gbSnap.exists) return res.status(404).json({ error: 'Réservation de groupe introuvable' })
-      const gb = gbSnap.data()
-      if (String(gb.eventId) !== String(eventId)) {
-        return res.status(400).json({ error: 'Cette réservation de groupe concerne un autre événement.' })
-      }
-      const members = Array.isArray(gb.participantIds) ? gb.participantIds : []
-      if (!members.includes(caller.uid)) {
-        return res.status(403).json({ error: 'Tu ne fais pas partie de cette réservation de groupe.' })
-      }
-      // ── Plancher par part = tarif réel de la place ÷ nombre MAX de partageurs
-      // (groupMax), dérivé de l'ÉVÉNEMENT (fiable). Ex. table à 60 000 FCFA
-      // partageable par 6 → part minimale légitime = 10 000. Descendre sous ce
-      // plancher est impossible même en gonflant le nombre de participants avec
-      // de faux comptes (le plancher ne dépend PAS du total du doc, forgeable).
-      const withdrawn = new Set(Array.isArray(gb.withdrawnMembers) ? gb.withdrawnMembers : [])
-      const activeCount = Math.max(1, members.filter(m => !withdrawn.has(m)).length)
-      let floor
-      if (place) {
-        const P = Math.round(Number(place.price) || 0)
-        const G = Math.max(1, Number(place.groupMax) || 1)
-        floor = Math.floor(P / G)
-      } else {
-        // Place absente (booking legacy) : plancher = billet payant le moins cher
-        // de l'event ÷ nombre de participants actifs.
-        const paidPrices = places.map(p => Math.round(Number(p.price) || 0)).filter(p => p > 0)
-        const minPaid = paidPrices.length ? Math.min(...paidPrices) : 0
-        floor = Math.floor(minPaid / activeCount)
-      }
-      const share = Math.round(Number(body.unitPrice) || 0)
-      if (share <= 0 || share < floor - 1) { // -1 : tolérance d'arrondi
-        return res.status(400).json({ error: 'Part de groupe invalide' })
-      }
-      unitPrice = share
-    } else if (isTable) {
+    if (isTable) {
       // ── Table entière : achat de TOUTE une place de groupe au prix plein.
       // La place doit vraiment être une place de groupe (validé serveur).
       if (!place) return res.status(404).json({ error: 'Table introuvable sur cet événement' })
@@ -182,12 +137,10 @@ async function checkout(req, res, body) {
     // Table : frais PAR SIÈGE (prix table ÷ sièges × nombre de sièges).
     const feeAmount = isTable
       ? computeTicketFeeXOF(Math.round(unitPrice / tableSeats), tableSeats)
-      : isGroupShare
-        ? computeTicketFeeXOF(unitPrice, 1)
-        : computeTicketFeeXOF(unitPrice, nQty)
+      : computeTicketFeeXOF(unitPrice, nQty)
 
-    // La table se paie une fois au prix plein (unitPrice) ; part de groupe = 1 part.
-    const amountTotal = ((isGroupShare || isTable) ? unitPrice : unitPrice * nQty) + preorderTotal + feeAmount
+    // La table se paie une fois au prix plein (unitPrice).
+    const amountTotal = (isTable ? unitPrice : unitPrice * nQty) + preorderTotal + feeAmount
     if (amountTotal <= 0) {
       return res.status(400).json({ error: 'Aucun montant à payer (place gratuite ?)' })
     }
@@ -204,7 +157,7 @@ async function checkout(req, res, body) {
         const idx = places.findIndex(p => p.type === placeType)
         if (idx === -1) return false
         const available = Number(places[idx].available) || 0
-        const q = (isGroupShare || isTable) ? 1 : nQty
+        const q = isTable ? 1 : nQty
         if (available < q) {
           const err = new Error('insufficient_stock')
           err.code = 'insufficient_stock'
@@ -236,7 +189,7 @@ async function checkout(req, res, body) {
           if (idx === -1) return
           const total = Number(places[idx].total) || 0
           const available = Number(places[idx].available) || 0
-          const q = (isGroupShare || isTable) ? 1 : nQty
+          const q = isTable ? 1 : nQty
           const nextAvailable = Math.max(0, Math.min(total || Infinity, available + q))
           const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
           tx.update(eventRef, { places: nextPlaces })
@@ -284,7 +237,7 @@ async function checkout(req, res, body) {
         eventId: String(eventId),
         eventName: String(eventName).slice(0, 200),
         placeType: String(placeType),
-        qty: (isGroupShare || isTable) ? 1 : nQty,
+        qty: isTable ? 1 : nQty,
         unitPrice,
         preorders,
         feeAmount,
@@ -294,8 +247,6 @@ async function checkout(req, res, body) {
         userEmail: userEmail ? String(userEmail) : null,
         sellerUid: String(sellerUid || ''),
         connectMode: 'ledger',
-        ...(groupBookingId ? { groupBookingId: String(groupBookingId) } : {}),
-        ...(isGroupShare ? { isGroupShare: true } : {}),
         // Table entière : le webhook émet `tableSeats` sièges détenus par l'hôte.
         ...(isTable ? { isTable: true, tableSeats } : {}),
         status: 'pending',
@@ -352,8 +303,7 @@ async function verify(req, res) {
         unitPrice: meta.unitPrice,
         feeAmount: meta.feeAmount,
         preorders: meta.preorders || [],
-        ...(meta.groupBookingId ? { groupBookingId: meta.groupBookingId } : {}),
-        ...(meta.isGroupShare ? { isGroupShare: '1' } : {}),
+        ...(meta.isTable ? { isTable: '1' } : {}),
       } : {},
     })
   } catch (err) {
@@ -707,18 +657,6 @@ async function finalizeFedapayBooking(db, entity) {
   })
   if (firstSettle && sellerUid && sellerUid !== userId && owed > 0) {
     console.log('[fedapay-webhook] ledger vendeur crédité:', sellerUid, '+', owed, 'FCFA')
-  }
-
-  // ── Part de réservation de groupe ──
-  if (meta.groupBookingId && userId) {
-    try {
-      await db.collection('group_bookings').doc(String(meta.groupBookingId)).set({
-        payments: { [userId]: true },
-      }, { merge: true })
-      console.log('[fedapay-webhook] part de groupe marquée payée:', meta.groupBookingId, '/', userId)
-    } catch (e) {
-      console.warn('[fedapay-webhook] échec maj group_booking:', e.message)
-    }
   }
 
   // ── Notification de vente à l'organisateur (in-app) — seulement au premier

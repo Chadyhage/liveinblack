@@ -16,7 +16,6 @@ import {
   getUnreadCount, voteOnPoll, pinMessage, unpinMessage,
   setTyping, getTypingUsers, setOnline, isOnline,
   seedDemoData, DEMO_USERS,
-  getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking, withdrawFromGroupBooking,
   blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory, deleteConversationCompletely,
   hideConversationForUser, getHiddenConversationIds, isConversationHidden,
   editMessage, isConvMuted, toggleMuteConv,
@@ -563,7 +562,6 @@ export default function MessagingPage() {
   const [friends, setFriends]               = useState([])
   const [requests, setRequests]             = useState([])
   const [newContacts, setNewContacts]       = useState(() => getNewContacts())
-  const [groupBookings, setGroupBookings]   = useState({})
 
   // ── Input ──
   const [inputText, setInputText]   = useState('')
@@ -581,8 +579,6 @@ export default function MessagingPage() {
   const [showAttachMenu, setShowAttachMenu]       = useState(false)
   const [showCamera, setShowCamera]               = useState(false) // capture webcam (desktop)
   const [showForwardPicker, setShowForwardPicker] = useState(false)
-  const [songPickerModal, setSongPickerModal]     = useState(null)
-  const [songInput, setSongInput]                 = useState({ title: '', artist: '' })
   const [confirmDialog, setConfirmDialog]         = useState(null)
   const [toast, setToast]                         = useState(null)
   const [photoViewer, setPhotoViewer]             = useState(null) // null | { src }
@@ -611,7 +607,6 @@ export default function MessagingPage() {
 
   // ── Group settings ──
   const [editGroupName, setEditGroupName]         = useState('')
-  const [editContribPcts, setEditContribPcts]     = useState(null) // { [userId]: pct } while editing
   const [showAddMember, setShowAddMember]         = useState(false)
   const [addMemberSearch, setAddMemberSearch]     = useState('')
 
@@ -733,7 +728,6 @@ export default function MessagingPage() {
     setConversations(getConversations(myId))
     setFriends(getFriends(myId))
     setRequests(getFriendRequests(myId))
-    setGroupBookings(getGroupBookings())
     if (activeConvId) setMessages(getMessages(activeConvId))
   }
 
@@ -755,7 +749,7 @@ export default function MessagingPage() {
     const unsubs = []
     import('../utils/firestore-sync').then(({
       listenFriendRequests, listenUserSocial,
-      listenDirectConversations, listenGroupConversations, listenGroupBookings, mergeById,
+      listenDirectConversations, listenGroupConversations, mergeById,
     }) => {
       const safeArr = key => { try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] } }
       const safeObj = key => { try { return JSON.parse(localStorage.getItem(key) || '{}') } catch { return {} } }
@@ -840,20 +834,6 @@ export default function MessagingPage() {
       unsubs.push(listenDirectConversations(myId, mergeConvs))
       // 4. Group conversations
       unsubs.push(listenGroupConversations(myId, mergeConvs))
-      // 5. Group bookings temps réel : dès qu'un membre valide/paie/se retire,
-      // la carte se met à jour chez tout le monde sans rafraîchir la page.
-      unsubs.push(listenGroupBookings(myId, remote => {
-        if (!remote?.length) return
-        const local = safeObj('lib_group_bookings')
-        let changed = false
-        remote.forEach(gb => {
-          if (gb.id && JSON.stringify(local[gb.id]) !== JSON.stringify(gb)) { local[gb.id] = gb; changed = true }
-        })
-        if (changed) {
-          localStorage.setItem('lib_group_bookings', JSON.stringify(local))
-          setGroupBookings({ ...local })
-        }
-      }))
     }).catch(() => {})
     return () => unsubs.forEach(u => u?.())
   }, [myId])
@@ -941,26 +921,6 @@ export default function MessagingPage() {
       markMessagesRead(convId, myId)
     }
     setLastRead(convId, myId)
-    setGroupBookings(getGroupBookings())
-    // Sync group bookings referenced in this conversation from Firestore
-    // so members on other devices can validate/pay without re-creating the booking
-    import('../utils/firestore-sync').then(({ loadCollection }) => {
-      loadCollection('group_bookings').then(firestoreBookings => {
-        if (!firestoreBookings.length) return
-        const local = getGroupBookings()
-        let changed = false
-        firestoreBookings.forEach(fb => {
-          if (fb.id && (!local[fb.id] || JSON.stringify(local[fb.id]) !== JSON.stringify(fb))) {
-            local[fb.id] = fb
-            changed = true
-          }
-        })
-        if (changed) {
-          localStorage.setItem('lib_group_bookings', JSON.stringify(local))
-          setGroupBookings({ ...local })
-        }
-      }).catch(() => {})
-    }).catch(() => {})
     const conv = getConversationById(convId)
     if (conv?.pinnedMessageId) {
       // will be rendered in pinned bar
@@ -1365,53 +1325,6 @@ export default function MessagingPage() {
     showToast('Événement partagé dans la conversation')
   }
 
-  // ── Send group booking proposal (réservation collective avec part par membre) ──
-  function handleSendGroupBooking(event) {
-    if (!activeConvId) return
-    const conv = activeConv
-    const members = conv?.members || []
-    const memberCount = Math.max(members.length, 1)
-    const evenPct = Math.floor(100 / memberCount)
-    const remainder = 100 - evenPct * memberCount
-    const bookingId = `grpbk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
-    // Assign contribution % evenly; first member gets any remainder
-    const membersWithPct = members.map((m, i) => ({
-      ...m,
-      contributionPct: evenPct + (i === 0 ? remainder : 0),
-    }))
-    const booking = {
-      id: bookingId,
-      eventId: event.id,
-      eventName: event.name,
-      eventDate: event.date,
-      eventDateISO: null,
-      eventStartTime: null,
-      eventEndTime: null,
-      placeName: event.placeName || '',
-      placePrice: event.price || 0,
-      currency: eventCurrency(event),
-      groupMin: memberCount,
-      groupMax: memberCount,
-      totalPrice: (event.price || 0) * memberCount,
-      members: membersWithPct,
-      validations: {},
-      payments: {},
-      songSelections: {},
-      withdrawnMembers: [],
-      createdBy: myId,
-      createdAt: new Date().toISOString(),
-      // Deadline pour compléter la résa de groupe (urgence). 72h par défaut.
-      deadline: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
-    }
-    saveGroupBooking(booking)
-    sendMessage(activeConvId, myId, myName, 'group_booking', bookingId)
-    setGroupBookings(getGroupBookings())
-    setMessages(getMessages(activeConvId))
-    setConversations(getConversations(myId))
-    setShowEventPicker(false)
-    showToast('Proposition de réservation envoyée')
-  }
-
   // ── Context menu actions ──
   function handleReact(emoji) {
     if (!contextMenu && !emojiPicker) return
@@ -1466,79 +1379,6 @@ export default function MessagingPage() {
     sendMessage(convId, myId, myName, forwardMsg.type, forwardMsg.content, extra)
     setForwardMsg(null); setShowForwardPicker(false)
     showToast(`Message transféré à ${fwdName}`)
-  }
-
-  // ── Group booking 2-step ──
-  function handleValidateBooking(bookingId) {
-    validateGroupBooking(bookingId, myId)
-    setGroupBookings(getGroupBookings())
-    setMessages(getMessages(activeConvId))
-    showToast('Tu as validé la proposition')
-  }
-
-  async function handlePayBooking(bookingId) {
-    const booking = getGroupBookings()[bookingId]
-    if (!booking) return
-    const conv = activeConv
-    // Part = partage égal entre membres ACTIFS (cohérent avec la carte et le
-    // ré-équilibrage au retrait). En FCFA : montants entiers (pas de centimes).
-    const withdrawnSet = new Set(booking.withdrawnMembers || [])
-    const activeCount = (conv?.members || []).filter(m => !withdrawnSet.has(m.userId)).length || Math.max(booking.groupMin || 1, 1)
-    const gbCur = String(booking.currency || 'EUR').toUpperCase()
-    const rawShare = booking.totalPrice / Math.max(activeCount, 1)
-    const myShare = gbCur === 'XOF' ? Math.round(rawShare) : Math.round(rawShare * 100) / 100
-
-    // Construire un pending booking — la page /paiement-reussi le finalisera
-    const arr = new Uint32Array(2)
-    crypto.getRandomValues(arr)
-    const pendingId = `${arr[0].toString(36)}${arr[1].toString(36)}`.slice(0, 16).toUpperCase()
-    const pending = {
-      bookingId: pendingId,
-      eventId: booking.eventId,
-      eventName: booking.eventName,
-      eventDate: booking.eventDate,
-      eventDateISO: booking.eventDateISO,
-      eventStartTime: booking.eventStartTime,
-      eventEndTime: booking.eventEndTime,
-      placeType: booking.placeName,
-      qty: 1,
-      unitPriceEUR: myShare,
-      currency: gbCur, // XOF → FedaPay, EUR → Stripe (réhydraté à /paiement-reussi)
-      preorderItems: [],
-      perTicketOrders: [{ items: {}, shows: {} }],
-      activeMenu: [],
-      userId: myId,
-      userName: myName,
-      userEmail: user?.email || null,
-      // Flag spécifique réservation de groupe — utilisé par /paiement-reussi
-      groupBookingId: bookingId,
-      isGroupShare: true,
-      createdAt: new Date().toISOString(),
-    }
-    try { localStorage.setItem(`lib_pending_booking_${pendingId}`, JSON.stringify(pending)) } catch {}
-
-    showToast('Redirection vers le paiement…')
-    const result = await startTicketCheckout({
-      eventId: booking.eventId,
-      eventName: `${booking.eventName} (part de groupe)`,
-      placeType: booking.placeName,
-      qty: 1,
-      unitPriceEUR: myShare,
-      currency: gbCur,
-      preorderItems: [],
-      userId: myId,
-      userEmail: user?.email,
-      userName: myName,
-      bookingId: pendingId,
-      // Propagés jusqu'au webhook : si le payeur ferme l'onglet avant le retour
-      // sur /paiement-reussi, le webhook marque quand même sa part payée.
-      groupBookingId: bookingId,
-      isGroupShare: true,
-    })
-    if (!result.ok) {
-      showToast(result.error || 'Erreur de paiement — réessaye dans un instant', 'error')
-      try { localStorage.removeItem(`lib_pending_booking_${pendingId}`) } catch {}
-    }
   }
 
   // ── New DM search ──
@@ -1702,13 +1542,9 @@ export default function MessagingPage() {
     if (activeConv.members?.some(m => m.userId === userId)) return
     const newMembers = [
       ...(activeConv.members || []),
-      { userId, name: u.name, role: 'member', contributionPct: Math.round(100 / ((activeConv.members?.length || 0) + 1)) }
+      { userId, name: u.name, role: 'member' },
     ]
-    // Rebalance contributions equally
-    const equalPct = Math.floor(100 / newMembers.length)
-    const remainder = 100 - equalPct * newMembers.length
-    const balanced = newMembers.map((m, i) => ({ ...m, contributionPct: equalPct + (i === 0 ? remainder : 0) }))
-    saveConversation({ ...activeConv, members: balanced, participantIds: balanced.map(m => m.userId) })
+    saveConversation({ ...activeConv, members: newMembers, participantIds: newMembers.map(m => m.userId) })
     sendMessage(activeConvId, myId, myName, 'system', `${myName} a ajouté ${u.name}`)
     refresh()
     setShowAddMember(false)
@@ -1850,7 +1686,9 @@ export default function MessagingPage() {
                 ) : msg.type === 'story' ? (
                   <StoryCard content={msg.content} />
                 ) : msg.type === 'group_booking' ? (
-                  <GroupBookingCard bookingId={msg.content} myId={myId} myName={myName} conv={activeConv} onValidate={handleValidateBooking} onPay={handlePayBooking} onSong={bId => { setSongPickerModal(bId); setSongInput({ title: '', artist: '' }) }} onNudge={(names) => { sendMessage(activeConvId, myId, myName, 'text', `⏳ ${names} — on vous attend pour la sortie, validez/payez votre part 👀`); setMessages(getMessages(activeConvId)); showToast('Relance envoyée') }} onWithdraw={(bId) => { withdrawFromGroupBooking(bId, myId); setGroupBookings(getGroupBookings()); sendMessage(activeConvId, myId, myName, 'text', `${myName} s'est retiré de la sortie — les parts ont été ré-équilibrées.`); setMessages(getMessages(activeConvId)); showToast('Tu t\'es retiré du groupe') }} groupBookings={groupBookings} />
+                  // Ancien flux « part par part » retiré — compat d'affichage des
+                  // anciens messages (remplacé par « Réserver la table »).
+                  <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.muted, fontStyle: 'italic' }}>👥 Réservation de groupe clôturée</span>
                 ) : msg.type === 'event' ? (
                   <EventCard content={msg.content} />
                 ) : msg.type === 'catalog_item' ? (
@@ -2244,15 +2082,7 @@ export default function MessagingPage() {
         </>)}
 
         {newGroupStep === 2 && (<>
-          {/* Group photo */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <div onClick={() => groupAvatarRef.current?.click()} style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {newGroupAvatar ? <img src={newGroupAvatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 30 }}>📷</span>}
-            </div>
-            <input ref={groupAvatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
-              const f = e.target.files?.[0]; if (!f) return
-              const r = new FileReader(); r.onload = ev => setNewGroupAvatar(ev.target.result); r.readAsDataURL(f)
-            }} />
             <p style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0 }}>{newGroupName}</p>
             <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim, margin: 0 }}>{newGroupMembers.length + 1} membres</p>
           </div>
@@ -2528,64 +2358,6 @@ export default function MessagingPage() {
                   </>)}
                 </div>
               ))}
-              {/* Contribution percentages — visible to all, editable by admin */}
-              <div style={{ marginTop: 20, marginBottom: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Parts de paiement</p>
-                  {amAdmin && (!editContribPcts ? (
-                    <button onClick={() => {
-                      const init = {}
-                      const members = activeConv?.members || []
-                      members.forEach(m => { init[m.userId] = m.contributionPct ?? Math.round(100 / Math.max(members.length, 1)) })
-                      setEditContribPcts(init)
-                    }} style={{ background: 'none', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>
-                      Modifier
-                    </button>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => setEditContribPcts(null)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.muted, fontFamily: T.dmMono, fontSize: 9 }}>Annuler</button>
-                      <button onClick={() => {
-                        const total = Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0)
-                        if (Math.abs(total - 100) > 1) { showToast(`Total: ${total}% — doit être 100%`, 'error'); return }
-                        const newMembers = (activeConv?.members || []).map(m => ({ ...m, contributionPct: Number(editContribPcts[m.userId]) || 0 }))
-                        saveConversation({ ...activeConv, members: newMembers })
-                        sendMessage(activeConvId, myId, myName, 'system', `${myName} a mis à jour les parts de paiement`)
-                        refresh(); setEditContribPcts(null)
-                      }} style={{ background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>Sauvegarder</button>
-                    </div>
-                  ))}
-                </div>
-                {amAdmin && editContribPcts ? (
-                  <>
-                    {(activeConv?.members || []).map(m => (
-                      <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                        <span style={{ flex: 1, fontFamily: T.dmMono, fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{m.name}{m.userId === myId ? ' (moi)' : ''}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <input type="number" min={0} max={100} value={editContribPcts[m.userId] ?? ''} onChange={e => setEditContribPcts(prev => ({ ...prev, [m.userId]: Number(e.target.value) }))}
-                            style={{ width: 52, background: 'rgba(6,8,16,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, color: '#fff', fontFamily: T.dmMono, fontSize: 11, padding: '4px 6px', textAlign: 'right' }} />
-                          <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted }}>%</span>
-                        </div>
-                      </div>
-                    ))}
-                    <p style={{ fontFamily: T.dmMono, fontSize: 9, color: (() => { const t = Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0); return Math.abs(t - 100) <= 1 ? T.teal : 'rgba(220,100,100,0.8)' })(), margin: '6px 0 0', textAlign: 'right' }}>
-                      Total : {Object.values(editContribPcts).reduce((s, v) => s + (Number(v) || 0), 0)}%
-                    </p>
-                  </>
-                ) : (
-                  (activeConv?.members || []).map(m => {
-                    const pct = m.contributionPct ?? Math.round(100 / Math.max((activeConv?.members?.length || 1), 1))
-                    const isMe = m.userId === myId
-                    return (
-                      <div key={m.userId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                        <span style={{ fontFamily: T.dmMono, fontSize: 10, color: isMe ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.5)' }}>
-                          {m.name}{isMe ? ' (moi)' : ''}
-                        </span>
-                        <span style={{ fontFamily: T.dmMono, fontSize: 10, color: isMe ? T.teal : T.gold, fontWeight: isMe ? 600 : 400 }}>{pct}%</span>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
 
               {/* Leave / delete */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 24 }}>
@@ -3016,7 +2788,7 @@ export default function MessagingPage() {
 
         {/* ── Event picker modal ── */}
         {showEventPicker && (
-          <EventPickerModal onSelectPoll={handleSendEventPoll} onSelectBooking={handleSendGroupBooking} onClose={() => setShowEventPicker(false)} />
+          <EventPickerModal onSelectPoll={handleSendEventPoll} onClose={() => setShowEventPicker(false)} />
         )}
 
         {/* ── Forward picker ── */}
@@ -3038,23 +2810,6 @@ export default function MessagingPage() {
                   )
                 })}
               </div>
-            </div>
-          </>
-        )}
-
-        {/* ── Song picker modal (group booking) ── */}
-        {songPickerModal && (
-          <>
-            <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setSongPickerModal(null)} />
-            <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: 'rgba(4,4,14,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '14px 14px 0 0', padding: '20px 20px 36px' }}>
-              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 99, margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 16px' }}>🎵 Ma sélection musicale</h3>
-              <input style={{ ...INPUT_S, marginBottom: 8 }} placeholder="Titre du morceau" value={songInput.title} onChange={e => setSongInput(s => ({ ...s, title: e.target.value }))} />
-              <input style={{ ...INPUT_S, marginBottom: 14 }} placeholder="Artiste" value={songInput.artist} onChange={e => setSongInput(s => ({ ...s, artist: e.target.value }))} />
-              <button onClick={() => { if (!songInput.title.trim()) return; addSongToGroupBooking(songPickerModal, myId, { title: songInput.title.trim(), artist: songInput.artist.trim() }); setGroupBookings(getGroupBookings()); setSongPickerModal(null); setSongInput({ title: '', artist: '' }) }}
-                style={{ width: '100%', padding: '12px', borderRadius: 6, cursor: 'pointer', background: 'linear-gradient(135deg, rgba(224,90,170,0.20), rgba(224,90,170,0.06))', border: '1px solid rgba(224,90,170,0.35)', color: T.pink, fontFamily: T.dmMono, fontSize: 10 }}>
-                Envoyer ma sélection
-              </button>
             </div>
           </>
         )}
@@ -3182,7 +2937,7 @@ export default function MessagingPage() {
 }
 
 // ─── Event Picker Modal ───────────────────────────────────────────────────────
-function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
+function EventPickerModal({ onSelectPoll, onClose }) {
   const [search, setSearch] = useState('')
   const dmMono = "'DM Mono', monospace"
   const cormorant = "Inter, sans-serif"
@@ -3244,15 +2999,11 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
                   <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{ev.date}{ev.price ? ` · ${fmtMoney(ev.price, eventCurrency(ev))}/pers.` : ''}</p>
                 </div>
               </div>
-              {/* Action buttons */}
+              {/* Action button */}
               <div style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <button onClick={() => onSelectPoll(ev)}
-                  style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', fontFamily: dmMono, fontSize: 10, color: 'rgba(78,232,200,0.85)', letterSpacing: '0.04em' }}>
-                  📢 Partager l'info
-                </button>
-                <button onClick={() => onSelectBooking(ev)}
-                  style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: dmMono, fontSize: 10, color: 'rgba(200,169,110,0.85)', letterSpacing: '0.04em' }}>
-                  🎟 Réserver en groupe
+                  style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: dmMono, fontSize: 10, color: 'rgba(78,232,200,0.85)', letterSpacing: '0.04em' }}>
+                  📢 Partager dans la conversation
                 </button>
               </div>
             </div>
@@ -3262,7 +3013,7 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
     </>
   )
 }
-
+// ─── @mentions helper ─────────────────────────────────────────────────────────
 // ─── Group Booking Card ────────────────────────────────────────────────────────
 // Rend un texte en surlignant les @mentions correspondant aux membres du groupe.
 function MentionText({ content, members }) {
@@ -3282,255 +3033,6 @@ function MentionText({ content, members }) {
   return <>{out}</>
 }
 
-function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, onSong, onNudge, onWithdraw, groupBookings }) {
-  // Self-healing cross-device : si la résa n'est pas encore en local (le membre
-  // a reçu le message mais pas encore le doc), on la récupère depuis Firestore
-  // et on la persiste, pour que la carte s'affiche et que valider/payer marchent.
-  const [fetched, setFetched] = useState(null)
-  const booking = groupBookings[bookingId] || fetched
-  useEffect(() => {
-    if (groupBookings[bookingId]) return
-    let cancelled = false
-    import('../utils/firestore-sync').then(({ loadDoc }) => loadDoc(`group_bookings/${bookingId}`)).then(doc => {
-      if (cancelled || !doc) return
-      try {
-        const all = JSON.parse(localStorage.getItem('lib_group_bookings') || '{}')
-        all[bookingId] = doc
-        localStorage.setItem('lib_group_bookings', JSON.stringify(all))
-      } catch {}
-      setFetched(doc)
-    }).catch(() => {})
-    return () => { cancelled = true }
-  }, [bookingId, groupBookings])
-  // Tick temps réel pour le compte à rebours (rafraîchit toutes les 30s)
-  const [nowTick, setNowTick] = useState(Date.now())
-  useEffect(() => {
-    if (!booking?.deadline) return
-    const id = setInterval(() => setNowTick(Date.now()), 30000)
-    return () => clearInterval(id)
-  }, [booking?.deadline])
-  if (!booking) return <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>Chargement de la réservation…</span>
-
-  const withdrawn  = new Set(booking.withdrawnMembers || [])
-  const allMembers = conv?.members || []
-  const members    = allMembers.filter(m => !withdrawn.has(m.userId)) // membres actifs
-  const total      = members.length
-  const validations = booking.validations || {}
-  const payments    = booking.payments   || {}
-  const validCount  = members.filter(m => validations[m.userId]).length
-  const payCount    = members.filter(m => payments[m.userId]).length
-  const hasValidated = validations[myId]
-  const hasPaid      = payments[myId]
-  const iAmWithdrawn = withdrawn.has(myId)
-  const allValidated = total > 0 && validCount >= total
-  const allPaid      = total > 0 && payCount >= total
-  // Part = partage ÉGAL entre les membres ACTIFS (hors retirés). Se ré-équilibre
-  // automatiquement quand quelqu'un se retire/rejoint, sans dépendre d'un
-  // contributionPct figé (qui divergeait entre conv.members et booking.members).
-  const gbCurrency   = String(booking.currency || 'EUR').toUpperCase()
-  const myShare      = gbCurrency === 'XOF'
-    ? Math.round(booking.totalPrice / Math.max(total, 1))
-    : Math.round((booking.totalPrice / Math.max(total, 1)) * 100) / 100
-
-  // Compte à rebours
-  const deadlineTs = booking.deadline ? new Date(booking.deadline).getTime() : null
-  const msLeft     = deadlineTs ? deadlineTs - nowTick : null
-  const expired    = msLeft != null && msLeft <= 0 && !allPaid
-  const countdown  = (() => {
-    if (msLeft == null || msLeft <= 0) return null
-    const h = Math.floor(msLeft / 3600000)
-    const d = Math.floor(h / 24)
-    if (d >= 1) return `${d}j ${h % 24}h`
-    if (h >= 1) return `${h}h ${Math.floor((msLeft % 3600000) / 60000)}min`
-    return `${Math.max(1, Math.floor(msLeft / 60000))}min`
-  })()
-  const urgent = msLeft != null && msLeft > 0 && msLeft < 12 * 3600000 // < 12h
-
-  // Statut par membre (qui a payé / validé / traîne / retiré) — visibilité
-  // critique pour savoir qui bloque le groupe. payé > validé > en attente.
-  const memberStatus = (m) => withdrawn.has(m.userId) ? 'withdrawn' : payments[m.userId] ? 'paid' : validations[m.userId] ? 'validated' : 'pending'
-  const STATUS_META = {
-    paid:      { label: 'Payé',       color: '#22c55e', dot: '#22c55e' },
-    validated: { label: 'Validé',     color: '#4ee8c8', dot: '#4ee8c8' },
-    pending:   { label: 'En attente', color: 'rgba(255,255,255,0.32)', dot: 'rgba(255,255,255,0.22)' },
-    withdrawn: { label: 'Retiré',     color: 'rgba(220,110,110,0.7)', dot: 'rgba(220,110,110,0.5)' },
-  }
-  // Membres en retard (à relancer) = membres actifs n'ayant pas payé (hors moi)
-  const laggards = members.filter(m => m.userId !== myId && memberStatus(m) !== 'paid')
-
-  const F = "'Inter', system-ui, sans-serif"
-  const accent = urgent ? '#e05aaa' : '#c8a96e'
-  return (
-    <div style={{
-      width: 300, maxWidth: '100%', borderRadius: 20, overflow: 'hidden',
-      background: '#0b0d16',
-      border: '1px solid rgba(255,255,255,0.07)',
-      boxShadow: '0 22px 55px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02) inset',
-    }}>
-      {/* ── HERO : affiche + nom en gros ── */}
-      <div style={{ position: 'relative', height: 138 }}>
-        {booking.eventImage
-          ? <img src={booking.eventImage} alt={booking.eventName} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #2a2440 0%, #11202a 55%, #1a1320 100%)' }} />
-        }
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0b0d16 4%, rgba(11,13,22,0.35) 50%, rgba(11,13,22,0.55) 100%)' }} />
-
-        {/* Eyebrow */}
-        <span style={{ position: 'absolute', top: 11, left: 12, fontFamily: F, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.92)', background: 'rgba(0,0,0,0.42)', backdropFilter: 'blur(8px)', padding: '4px 9px', borderRadius: 6 }}>
-          Sortie de groupe
-        </span>
-        {/* Countdown */}
-        {countdown && !allPaid && (
-          <span style={{ position: 'absolute', top: 11, right: 12, fontFamily: F, fontSize: 11, fontWeight: 800, letterSpacing: '0.02em', color: '#0b0d16', background: accent, padding: '4px 10px', borderRadius: 6, boxShadow: `0 4px 14px ${accent}66` }}>
-            {countdown}
-          </span>
-        )}
-        {/* Titre */}
-        <div style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
-          <p style={{ fontFamily: F, fontWeight: 800, fontSize: 23, lineHeight: 1.04, letterSpacing: '-0.01em', color: '#fff', margin: 0, textShadow: '0 2px 12px rgba(0,0,0,0.6)', textTransform: 'uppercase' }}>
-            {booking.eventName}
-          </p>
-          <p style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.62)', margin: '4px 0 0' }}>
-            {booking.placeName} · {booking.groupMin}–{booking.groupMax > 0 ? booking.groupMax : '∞'} pers.
-          </p>
-        </div>
-      </div>
-
-      {/* ── CORPS ── */}
-      <div style={{ padding: '14px 14px 15px' }}>
-
-        {/* Ta part — gros chiffre */}
-        {!iAmWithdrawn && (
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 13 }}>
-            <div>
-              <p style={{ fontFamily: F, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.38)', margin: '0 0 1px' }}>Ta part</p>
-              <p style={{ fontFamily: F, fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>{total} pers. · {Math.round(100 / Math.max(total, 1))}% chacun</p>
-            </div>
-            <span style={{ fontFamily: F, fontWeight: 800, fontSize: gbCurrency === 'XOF' ? 22 : 30, lineHeight: 1, letterSpacing: '-0.02em', color: hasPaid ? '#22c55e' : '#c8a96e' }}>{fmtMoney(myShare, gbCurrency)}</span>
-          </div>
-        )}
-        {expired && (
-          <div style={{ background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.28)', borderRadius: 10, padding: '8px 10px', marginBottom: 12, textAlign: 'center' }}>
-            <span style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(230,120,120,0.95)' }}>Délai dépassé — relance ou annule</span>
-          </div>
-        )}
-
-        {/* Étapes */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 13 }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-              <span style={{ fontFamily: F, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>1 · Validation</span>
-              <span style={{ fontFamily: F, fontSize: 11, fontWeight: 800, color: allValidated ? '#22c55e' : '#c8a96e' }}>{validCount}/{total}</span>
-            </div>
-            <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 99, width: `${total ? validCount / total * 100 : 0}%`, background: allValidated ? '#22c55e' : 'linear-gradient(90deg,#c8a96e,#e0c690)', boxShadow: allValidated ? 'none' : '0 0 10px rgba(200,169,110,0.5)', transition: 'width 0.5s' }} />
-            </div>
-          </div>
-          {allValidated && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                <span style={{ fontFamily: F, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>2 · Paiements</span>
-                <span style={{ fontFamily: F, fontSize: 11, fontWeight: 800, color: allPaid ? '#22c55e' : '#4ee8c8' }}>{payCount}/{total}</span>
-              </div>
-              <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 99, width: `${total ? payCount / total * 100 : 0}%`, background: allPaid ? '#22c55e' : 'linear-gradient(90deg,#4ee8c8,#7af0d8)', boxShadow: '0 0 10px rgba(78,232,200,0.5)', transition: 'width 0.5s' }} />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Célébration */}
-        {allPaid && (
-          <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))', border: '1px solid rgba(34,197,94,0.35)', borderRadius: 12, padding: '10px', marginBottom: 13, textAlign: 'center' }}>
-            <p style={{ fontFamily: F, fontSize: 12, fontWeight: 800, color: '#22c55e', margin: 0 }}>Groupe complet · tout le monde a payé</p>
-          </div>
-        )}
-
-        {/* Roster */}
-        <div style={{ marginBottom: 13 }}>
-          <p style={{ fontFamily: F, fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 8px' }}>Qui est prêt</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {allMembers.map(m => {
-              const st = memberStatus(m)
-              const meta = STATUS_META[st]
-              const isOut = st === 'withdrawn'
-              const initial = (m.name || m.userId || '?').charAt(0).toUpperCase()
-              return (
-                <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 9, opacity: isOut ? 0.45 : 1 }}>
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{initial}</div>
-                    <div style={{ position: 'absolute', right: -1, bottom: -1, width: 9, height: 9, borderRadius: '50%', background: meta.dot, border: '2px solid #0b0d16' }} />
-                  </div>
-                  <span style={{ flex: 1, fontFamily: F, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.82)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: isOut ? 'line-through' : 'none' }}>
-                    {m.userId === myId ? 'Toi' : (m.name || 'Membre')}
-                  </span>
-                  <span style={{ fontFamily: F, fontSize: 10, fontWeight: 700, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* CTA principal */}
-        {!hasValidated && (
-          <button onClick={() => onValidate(bookingId)}
-            style={{ width: '100%', padding: '13px', borderRadius: 12, cursor: 'pointer', border: 'none',
-              background: iAmWithdrawn ? 'linear-gradient(135deg,#4ee8c8,#39c9ab)' : 'linear-gradient(135deg,#d8b878,#c8a96e)',
-              color: '#0b0d16', fontFamily: F, fontSize: 12, fontWeight: 800, letterSpacing: '0.02em', marginBottom: 8,
-              boxShadow: iAmWithdrawn ? '0 8px 22px rgba(78,232,200,0.28)' : '0 8px 22px rgba(200,169,110,0.28)' }}>
-            {iAmWithdrawn ? 'Rejoindre le groupe' : 'Je valide la sortie'}
-          </button>
-        )}
-        {hasValidated && !hasPaid && allValidated && (
-          <button onClick={() => onPay(bookingId)}
-            style={{ width: '100%', padding: '13px', borderRadius: 12, cursor: 'pointer', border: 'none',
-              background: 'linear-gradient(135deg,#4ee8c8,#39c9ab)', color: '#0b0d16',
-              fontFamily: F, fontSize: 12, fontWeight: 800, letterSpacing: '0.02em', marginBottom: 8,
-              boxShadow: '0 8px 22px rgba(78,232,200,0.30)' }}>
-            Payer ma part · {fmtMoney(myShare, gbCurrency)}
-          </button>
-        )}
-        {hasValidated && !hasPaid && !allValidated && (
-          <div style={{ padding: '11px', background: 'rgba(200,169,110,0.07)', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 12, marginBottom: 8 }}>
-            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(200,169,110,0.85)', margin: 0, textAlign: 'center' }}>
-              En attente des validations · {validCount}/{total}
-            </p>
-          </div>
-        )}
-        {hasPaid && !allPaid && (
-          <div style={{ padding: '11px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.22)', borderRadius: 12, marginBottom: 8 }}>
-            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: '#22c55e', margin: 0, textAlign: 'center' }}>Tu as payé ta part · {fmtMoney(myShare, gbCurrency)}</p>
-          </div>
-        )}
-
-        {/* Actions secondaires */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {(hasValidated || hasPaid) && (
-            <button onClick={() => onSong(bookingId)}
-              style={{ width: '100%', padding: '10px', borderRadius: 10, cursor: 'pointer', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.28)', color: '#e05aaa', fontFamily: F, fontSize: 11, fontWeight: 600 }}>
-              {booking.songSelections?.[myId] ? `♪ ${booking.songSelections[myId].title} — ${booking.songSelections[myId].artist}` : '♪ Choisir ma musique'}
-            </button>
-          )}
-          {!allPaid && laggards.length > 0 && (hasValidated || hasPaid) && onNudge && (
-            <button onClick={() => onNudge(laggards.map(m => m.name || 'membre').join(', '))}
-              style={{ width: '100%', padding: '9px', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.6)', fontFamily: F, fontSize: 11, fontWeight: 600 }}>
-              Relancer les retardataires ({laggards.length})
-            </button>
-          )}
-          {!hasPaid && !iAmWithdrawn && total > 1 && onWithdraw && (
-            <button onClick={() => onWithdraw(bookingId)}
-              style={{ width: '100%', padding: '8px', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.32)', fontFamily: F, fontSize: 10, fontWeight: 600 }}>
-              Me retirer du groupe
-            </button>
-          )}
-          {iAmWithdrawn && (
-            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'rgba(230,120,120,0.75)', margin: '2px 0 0', textAlign: 'center' }}>Tu t'es retiré de cette sortie</p>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ── Capture webcam (desktop) ─────────────────────────────────────────────────
 // Ouvre un flux caméra via getUserMedia et permet de capturer une photo. Sur

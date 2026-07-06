@@ -395,13 +395,10 @@ export function createDirectConversation(myId, myName, otherId, otherName) {
 }
 
 export function createGroup(name, creatorId, creatorName, memberIds, memberNames) {
-  const equalPct = Math.floor(100 / memberIds.length)
-  const remainder = 100 - equalPct * memberIds.length
   const members = memberIds.map((uid, i) => ({
     userId: uid,
     name: memberNames[i],
     role: uid === creatorId ? 'admin' : 'member',
-    contributionPct: i === 0 ? equalPct + remainder : equalPct,
   }))
   const conv = {
     id: 'grp_' + Date.now(),
@@ -562,7 +559,7 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
         : type === 'poll' ? '📊 Sondage'
         : type === 'event' ? '🎟 Événement'
         : type === 'catalog_item' ? '🏷 Offre prestataire'
-        : type === 'group_booking' ? '👥 Réservation groupe'
+        : type === 'group_booking' ? '👥 Réservation clôturée'
         : type === 'system' ? content
         : '📎'
       localStorage.setItem('lib_conversations', JSON.stringify(all))
@@ -736,117 +733,10 @@ export function deleteMessage(convId, msgId) {
   deleteMessageForAll(convId, msgId)
 }
 
-// ─── Group Bookings ───────────────────────────────────────────────────────────
-export function getGroupBookings() {
-  try { return JSON.parse(localStorage.getItem('lib_group_bookings') || '{}') } catch { return {} }
-}
-
-export function saveGroupBooking(booking) {
-  // CRITIQUE : dériver participantIds depuis members. Les règles Firestore
-  // (isMemberOf) vérifient participantIds/participants ; sans ce champ, les
-  // écritures des membres (ex: payGroupBookingShare → payments[uid]) étaient
-  // rejetées silencieusement → part payée jamais visible par les autres.
-  const participantIds = booking.participantIds?.length
-    ? booking.participantIds
-    : (booking.members || []).map(m => m.userId).filter(Boolean)
-  const withIds = { ...booking, participantIds }
-  const all = getGroupBookings()
-  all[withIds.id] = withIds
-  localStorage.setItem('lib_group_bookings', JSON.stringify(all))
-  // Sync to Firestore so all group members can see/interact with the booking
-  import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`group_bookings/${withIds.id}`, withIds)
-  }).catch(() => {})
-}
-
-export function getGroupBookingById(id) {
-  return getGroupBookings()[id] || null
-}
-
-// Step 1: validate (agree to participate, no payment yet)
-// Sert aussi de RE-JOIN : valider après s'être retiré te ré-inscrit (retire de
-// withdrawnMembers) et ré-équilibre les parts à parts égales.
-export function validateGroupBooking(bookingId, userId) {
-  const all = getGroupBookings()
-  const b = all[bookingId]
-  if (!b) return null
-  b.validations = { ...(b.validations || {}), [userId]: true }
-  if ((b.withdrawnMembers || []).includes(userId)) {
-    b.withdrawnMembers = b.withdrawnMembers.filter(u => u !== userId)
-    // Ré-équilibrer à parts égales entre les membres actifs (retirés exclus)
-    const out = new Set(b.withdrawnMembers)
-    const active = (b.members || []).filter(m => !out.has(m.userId))
-    if (active.length > 0) {
-      const evenPct = Math.floor(100 / active.length)
-      const remainder = 100 - evenPct * active.length
-      const pctByUser = {}
-      active.forEach((m, i) => { pctByUser[m.userId] = evenPct + (i === 0 ? remainder : 0) })
-      b.members = (b.members || []).map(m => out.has(m.userId) ? m : { ...m, contributionPct: pctByUser[m.userId] })
-    }
-  }
-  localStorage.setItem('lib_group_bookings', JSON.stringify(all))
-  import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`group_bookings/${bookingId}`, b)
-  }).catch(() => {})
-  return b
-}
-
-// Step 2: pay share (only after all validated)
-export function payGroupBookingShare(bookingId, userId) {
-  const all = getGroupBookings()
-  if (!all[bookingId]) return null
-  all[bookingId].payments = { ...(all[bookingId].payments || {}), [userId]: true }
-  localStorage.setItem('lib_group_bookings', JSON.stringify(all))
-  import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`group_bookings/${bookingId}`, all[bookingId])
-  }).catch(() => {})
-  return all[bookingId]
-}
-
-// Retrait d'un membre AVANT paiement : l'exclut de la résa, retire sa validation,
-// et ré-équilibre les parts à parts ÉGALES entre les membres restants. Refusé si
-// le membre a déjà payé (remboursement = support). Renvoie la résa mise à jour.
-export function withdrawFromGroupBooking(bookingId, userId) {
-  const all = getGroupBookings()
-  const b = all[bookingId]
-  if (!b) return null
-  if ((b.payments || {})[userId]) return b // déjà payé → ne pas retirer ici
-  const withdrawn = new Set(b.withdrawnMembers || [])
-  withdrawn.add(userId)
-  b.withdrawnMembers = [...withdrawn]
-  // Retirer sa validation
-  if (b.validations) { const v = { ...b.validations }; delete v[userId]; b.validations = v }
-  // Ré-équilibrer les parts à parts égales entre les membres restants (non retirés)
-  const remaining = (b.members || []).filter(m => !withdrawn.has(m.userId))
-  if (remaining.length > 0) {
-    const evenPct = Math.floor(100 / remaining.length)
-    const remainder = 100 - evenPct * remaining.length
-    const pctByUser = {}
-    remaining.forEach((m, i) => { pctByUser[m.userId] = evenPct + (i === 0 ? remainder : 0) })
-    b.members = (b.members || []).map(m => withdrawn.has(m.userId) ? m : { ...m, contributionPct: pctByUser[m.userId] })
-  }
-  localStorage.setItem('lib_group_bookings', JSON.stringify(all))
-  import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`group_bookings/${bookingId}`, b)
-  }).catch(() => {})
-  return b
-}
-
-// Legacy compatibility — keep for EventDetailPage
-export function approveGroupBooking(bookingId, userId) {
-  return validateGroupBooking(bookingId, userId)
-}
-
-export function addSongToGroupBooking(bookingId, userId, song) {
-  const all = getGroupBookings()
-  if (!all[bookingId]) return null
-  all[bookingId].songSelections = { ...(all[bookingId].songSelections || {}), [userId]: song }
-  localStorage.setItem('lib_group_bookings', JSON.stringify(all))
-  import('./firestore-sync').then(({ syncDoc }) => {
-    syncDoc(`group_bookings/${bookingId}`, all[bookingId])
-  }).catch(() => {})
-  return all[bookingId]
-}
+// NB : l'ancien flux « réservation de groupe part-par-part » (getGroupBookings,
+// saveGroupBooking, validateGroupBooking, payGroupBookingShare, etc.) a été
+// retiré — remplacé par le modèle « table hôte » (achat de la table entière +
+// attribution des billets via api/tickets.js, cf. ProfilePage/TableHostPanel).
 
 // ─── Seed demo data ───────────────────────────────────────────────────────────
 export function seedDemoData(myId) {
