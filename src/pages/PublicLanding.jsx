@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PublicNav from '../components/PublicNav'
-import { getAllProviderProfiles } from '../utils/services'
+import { getAllProviderProfiles, getCatalog } from '../utils/services'
+import { getProviderCategory } from '../utils/providerCategories'
 import { play as playDisc, stop as stopDisc, subscribe as subMusic } from '../utils/musicEngine'
 
 // ─── Vitrine publique (utilisateur NON connecté) ─────────────────────────────
@@ -55,6 +56,17 @@ function loadPublicEvents() {
   } catch { return [] }
 }
 
+function firstOfferImage(offers = []) {
+  for (const offer of offers) {
+    const media = Array.isArray(offer.media)
+      ? offer.media
+      : offer.mediaUrl ? [{ url: offer.mediaUrl, type: offer.mediaType || 'image' }] : []
+    const image = media.find(entry => entry?.url && entry.type !== 'video')
+    if (image) return image.url
+  }
+  return null
+}
+
 export default function PublicLanding() {
   const navigate = useNavigate()
   const { openAuthModal } = useAuth()
@@ -70,9 +82,17 @@ export default function PublicLanding() {
     }
     return Object.values(byName).slice(0, 4)
   })
+  const [catalogs, setCatalogs] = useState(() => {
+    const localCatalogs = {}
+    for (const provider of getAllProviderProfiles()) {
+      if (provider.userId) localCatalogs[provider.userId] = getCatalog(provider.userId)
+    }
+    return localCatalogs
+  })
   useEffect(() => {
     let unsub = () => {}
-    import('../utils/firestore-sync').then(({ listenProviders }) => {
+    let unlistenCatalogs = () => {}
+    import('../utils/firestore-sync').then(({ listenProviders, listenCatalogs }) => {
       unsub = listenProviders(remote => {
         const byId = {}
         for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
@@ -87,8 +107,9 @@ export default function PublicLanding() {
         }
         setProviders(Object.values(byName).slice(0, 4))
       })
+      unlistenCatalogs = listenCatalogs(setCatalogs)
     }).catch(() => {})
-    return () => unsub()
+    return () => { unsub(); unlistenCatalogs() }
   }, [])
 
   const register = () => navigate('/connexion?mode=register')
@@ -199,11 +220,14 @@ export default function PublicLanding() {
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 16 }}>
               {providers.map((p, i) => {
-                const pc = PREST_CATS[p.prestataireType] || { color: C.gold, label: 'Prestataire', img: '/media2.jpg' }
+                const pc = getProviderCategory(p.prestataireType)
+                const visibleOffers = (catalogs[p.userId] || []).filter(item => item.available !== false)
+                const coverImage = p.coverUrl || firstOfferImage(visibleOffers) || p.photoUrl
                 return (
                   <Reveal key={p.userId} delay={i * 60}>
-                    <div className="lb-card" style={{ ...card, overflow: 'hidden', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column' }} onClick={() => navigate('/prestataires')}>
-                      <div style={{ position: 'relative', height: 110, background: `url(${p.coverUrl || pc.img}) center/cover, ${C.obsidian}` }}>
+                    <div className="lb-card" style={{ ...card, overflow: 'hidden', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column' }} onClick={() => navigate(`/prestataires/${encodeURIComponent(p.userId)}`)}>
+                      <div style={{ position: 'relative', height: 110, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, ${C.obsidian})`, overflow: 'hidden' }}>
+                        {coverImage && <img src={coverImage} alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,9,14,.92), transparent 60%)' }} />
                         <span style={{ position: 'absolute', top: 10, left: 10, fontFamily: FONT, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>{pc.label}</span>
                         <div style={{ position: 'absolute', left: 12, bottom: -20, width: 46, height: 46, borderRadius: '50%', border: '2px solid #0b0d16', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 18, color: C.obsidian }}>
@@ -423,12 +447,6 @@ function DiscoTitle({ text, style }) {
 
 // ── Styles ──
 const accentSq = (c) => ({ display: 'block', width: 26, height: 26, borderRadius: 8, background: `linear-gradient(135deg, ${c}40, ${c}0d)`, border: `1px solid ${c}66` })
-const PREST_CATS = {
-  prestation: { color: '#ff6b1a', label: 'Artiste & DJ', img: '/img_techno.avif' },
-  salle: { color: '#7b2fff', label: 'Salle & lieu', img: '/img_nuit.jpg' },
-  materiel: { color: '#00c9a7', label: 'Matériel & sono', img: '/media3.jpg' },
-  supermarche: { color: '#c8a96e', label: 'Boissons & conso', img: '/media1.jpg' },
-}
 const card = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16 }
 const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none' }
 const btnGhost = { padding: '13px 24px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.18)' }

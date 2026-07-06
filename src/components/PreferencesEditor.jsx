@@ -35,6 +35,17 @@ async function searchArtistsRemote(q) {
   } catch { return [] }
 }
 
+// Recherche de villes via notre proxy Photon/OpenStreetMap (monde entier).
+async function searchCitiesRemote(q) {
+  try {
+    const { authHeaders } = await import('../utils/apiAuth')
+    const res = await fetch(`/api/search-cities?q=${encodeURIComponent(q)}`, { headers: { ...(await authHeaders()) } })
+    if (!res.ok) return []
+    const data = await res.json()
+    return Array.isArray(data?.cities) ? data.cities : []
+  } catch { return [] }
+}
+
 export function savePreferences(user, setUser, preferences) {
   const uid = user?.uid || user?.id
   if (!uid) return
@@ -194,7 +205,10 @@ function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder
                 {m.picture
                   ? <img src={m.picture} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, background: '#1a1c26' }} />
                   : <span style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: 700 }}>{m.name.charAt(0).toUpperCase()}</span>}
-                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                  <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                  {m.sublabel && <span style={{ display: 'block', fontSize: 11.5, color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.sublabel}</span>}
+                </span>
               </button>
             ))}
             {loading && matches.length === 0 && (
@@ -302,8 +316,8 @@ export default function PreferencesWizard({ user, setUser, onDone, doneLabel = '
           )}
           {current.type === 'search' && (
             <SearchMultiSelect value={val || []} onChange={setSearch} suggestions={current.suggestions} color={current.color}
-              remoteSearch={current.key === 'artists' ? searchArtistsRemote : undefined}
-              placeholder={current.key === 'artists' ? 'Cherche un artiste ou un DJ…' : 'Ex : Lomé, Paris, Abidjan…'} />
+              remoteSearch={current.key === 'artists' ? searchArtistsRemote : current.key === 'cities' ? searchCitiesRemote : undefined}
+              placeholder={current.key === 'artists' ? 'Cherche un artiste ou un DJ…' : 'Cherche une ville…'} />
           )}
         </div>
       </div>
