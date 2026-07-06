@@ -79,8 +79,8 @@ export default function PublicOrganizers() {
         .org-directory{min-height:100vh;color:#fff;background:radial-gradient(circle 900px at 0% 4%,rgba(139,92,246,.18),transparent 58%),radial-gradient(circle 760px at 100% 90%,rgba(224,90,170,.12),transparent 58%),${C.obsidian};font-family:${FONT};overflow:hidden}
         .org-wrap{max-width:1280px;margin:0 auto;padding:64px 30px 96px;position:relative}
         .org-wrap:before{content:'';position:absolute;top:-80px;left:31%;width:1px;height:430px;background:linear-gradient(transparent,rgba(255,255,255,.1),transparent);transform:rotate(27deg);pointer-events:none}
-        .org-hero{display:grid;grid-template-columns:minmax(280px,.75fr) minmax(460px,1.35fr);gap:64px;align-items:end;margin-bottom:64px}
-        .org-title{font-family:${DISPLAY};font-size:clamp(68px,8.6vw,118px);line-height:.84;letter-spacing:.015em;margin:0;text-transform:uppercase}
+        .org-hero{display:grid;grid-template-columns:minmax(520px,.95fr) minmax(500px,1.05fr);gap:40px;align-items:end;margin-bottom:64px}
+        .org-title{font-family:${DISPLAY};font-size:clamp(68px,6.7vw,104px);line-height:.84;letter-spacing:.015em;margin:0;text-transform:uppercase;white-space:nowrap}
         .org-title-line{width:68px;height:2px;margin:24px 0;background:linear-gradient(90deg,${C.gold},transparent)}
         .org-sub{max-width:390px;margin:0;color:rgba(255,255,255,.62);font-size:17px;line-height:1.6}
         .org-controls{padding:18px;border:1px solid rgba(255,255,255,.1);background:rgba(8,10,18,.52);backdrop-filter:blur(20px);box-shadow:0 26px 70px rgba(0,0,0,.28)}
@@ -106,7 +106,7 @@ export default function PublicOrganizers() {
         .org-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}
         .org-tag{padding:6px 8px;border:1px solid rgba(200,169,110,.25);color:rgba(200,169,110,.76);font:8px ${UI};letter-spacing:.1em;text-transform:uppercase}
         .org-empty{padding:64px 20px;text-align:center;border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.55)}
-        @media(max-width:900px){.org-hero{grid-template-columns:1fr;gap:30px}.org-card{grid-template-columns:minmax(260px,.8fr) 1fr}.org-action-panel{grid-column:1/-1;border-left:0;border-top:1px solid rgba(255,255,255,.09);padding:18px 24px}.org-actions{display:grid;grid-template-columns:1fr auto}.org-avatar{left:-40px}}
+        @media(max-width:1120px){.org-hero{grid-template-columns:1fr;gap:30px}.org-title{white-space:normal}.org-card{grid-template-columns:minmax(260px,.8fr) 1fr}.org-action-panel{grid-column:1/-1;border-left:0;border-top:1px solid rgba(255,255,255,.09);padding:18px 24px}.org-actions{display:grid;grid-template-columns:1fr auto}.org-avatar{left:-40px}}
         @media(max-width:640px){.org-wrap{padding:38px 14px 108px}.org-title{font-size:66px}.org-sub{font-size:14px}.org-controls{padding:10px}.org-filters{grid-template-columns:1fr}.org-card{grid-template-columns:1fr}.org-cover{min-height:190px}.org-card-body{padding:48px 18px 24px}.org-avatar{left:18px;top:-41px;bottom:auto}.org-action-panel{grid-column:auto;padding:16px 18px 20px}.org-actions{grid-template-columns:1fr 1fr}.org-wrap:before{display:none}}
       `}</style>
       {!user && <PublicNav />}

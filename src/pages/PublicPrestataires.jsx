@@ -119,12 +119,20 @@ export default function PublicPrestataires() {
         @media(min-width:720px){ .lb-navlink{ display:inline-block } }
         .lb-card{ transition:transform .25s cubic-bezier(.22,.9,.3,1), border-color .25s ease, box-shadow .25s ease }
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4); box-shadow:0 26px 60px -24px rgba(0,0,0,.85) }
+        .provider-category-shell{position:relative}
         .provider-category-rail{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+        .provider-scroll-hint{display:none}
         @media(max-width:719px){
-          .provider-category-rail{margin:16px -22px 0;padding:0 22px 7px;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:none}
+          .provider-category-shell{margin:0 -22px;padding:0 22px}
+          .provider-category-shell:after{content:'';position:absolute;z-index:2;pointer-events:none;top:16px;right:0;width:58px;height:44px;background:linear-gradient(90deg,transparent,rgba(25,12,31,.96))}
+          .provider-category-rail{margin:16px -22px 0;padding:0 70px 7px 22px;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:none}
           .provider-category-rail::-webkit-scrollbar{display:none}
           .provider-category-rail button{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap}
+          .provider-scroll-hint{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:2px 0 0;color:rgba(255,255,255,.46);font:700 8px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
+          .provider-scroll-hint svg{width:17px;height:17px;border:1px solid rgba(78,232,200,.28);border-radius:50%;padding:3px;color:#4ee8c8;animation:provider-hint 1.4s ease-in-out infinite}
         }
+        @keyframes provider-hint{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+        @media(prefers-reduced-motion:reduce){.provider-scroll-hint svg{animation:none}}
       `}</style>
 
       {!user && <PublicNav />}
@@ -147,13 +155,16 @@ export default function PublicPrestataires() {
         </div>
 
         {/* Chips catégories */}
-        <div className="provider-category-rail" aria-label="Catégories de prestataires">
-          <button onClick={() => setActiveCat(null)} style={chip(!activeCat, C.teal)}>Tous {providers.length ? `· ${providers.length}` : ''}</button>
-          {CATS.map(c => (
-            <button key={c.id} onClick={() => setActiveCat(activeCat === c.id ? null : c.id)} style={chip(activeCat === c.id, c.color)}>
-              <CatIcon id={c.icon} color={activeCat === c.id ? c.color : 'rgba(255,255,255,.6)'} size={14} /> {c.label}{counts[c.id] ? ` · ${counts[c.id]}` : ''}
-            </button>
-          ))}
+        <div className="provider-category-shell">
+          <div className="provider-category-rail" aria-label="Catégories de prestataires">
+            <button onClick={() => setActiveCat(null)} style={chip(!activeCat, C.teal)}>Tous {providers.length ? `· ${providers.length}` : ''}</button>
+            {CATS.map(c => (
+              <button key={c.id} onClick={() => setActiveCat(activeCat === c.id ? null : c.id)} style={chip(activeCat === c.id, c.color)}>
+                <CatIcon id={c.icon} color={activeCat === c.id ? c.color : 'rgba(255,255,255,.6)'} size={14} /> {c.label}{counts[c.id] ? ` · ${counts[c.id]}` : ''}
+              </button>
+            ))}
+          </div>
+          <div className="provider-scroll-hint" aria-hidden="true">Glisse pour voir la suite <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M14 7l5 5-5 5"/></svg></div>
         </div>
         <select value={regionId} onChange={event => setRegionId(event.target.value)} aria-label="Filtrer les prestataires par région" style={{ marginTop: 14, minWidth: 210, padding: '10px 13px', borderRadius: 999, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.14)', color: '#fff', fontFamily: FONT, fontSize: 12.5, outline: 'none' }}>
           <option value="">Toutes les régions</option>

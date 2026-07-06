@@ -1,11 +1,7 @@
-// Vercel Serverless Function — Onboarding Stripe Connect (Express) d'un vendeur.
-// Endpoint : POST /api/connect-onboard  { uid, returnPath?, country?, phoneCode? }
-//
-// Crée (si besoin) un compte Stripe Express pour le vendeur (organisateur/prestataire)
-// et renvoie un lien d'onboarding hébergé par Stripe (KYC + IBAN gérés par Stripe).
-// Si le pays du vendeur n'est PAS supporté par Stripe (Afrique de l'Ouest…), on NE crée
-// PAS de compte (sinon Stripe lève une erreur) : on bascule en mode "manuel" (ledger +
-// reversement à la main) et on le signale au client.
+// Vercel Serverless Function — Stripe Connect (Express) d'un vendeur.
+// Endpoint unifié (économise une fonction sur le plan Hobby, limité à 12) :
+//   GET  /api/connect?uid=...                          → statut Connect
+//   POST /api/connect { uid, returnPath?, country?, phoneCode? } → lien onboarding
 //
 // Prérequis : compte plateforme activé + Connect activé dans le Dashboard Stripe.
 
@@ -17,15 +13,59 @@ import { requireAuthAsUid } from '../lib/verifyAuth.js'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST')
-    return res.status(405).json({ error: 'Method not allowed' })
+  if (req.method === 'GET') return status(req, res)
+  if (req.method === 'POST') return onboard(req, res)
+  res.setHeader('Allow', 'GET, POST')
+  return res.status(405).json({ error: 'Method not allowed' })
+}
+
+// ─── Statut Connect (ex /api/connect-status) ─────────────────────────────────
+async function status(req, res) {
+  try {
+    const uid = req.query.uid
+    if (!uid) return res.status(400).json({ error: 'uid requis' })
+    // Strict : on ne consulte le statut Connect QUE pour soi-même.
+    const caller = await requireAuthAsUid(req, res, uid)
+    if (!caller) return
+
+    const db = getDb()
+    const uSnap = await db.collection('users').doc(String(uid)).get()
+    const u = uSnap.exists ? uSnap.data() : {}
+
+    // Vendeur en mode manuel (pays hors zone Stripe) → pas de compte à interroger.
+    if (u.payoutMode === 'manual') {
+      return res.status(200).json({ payoutMode: 'manual', chargesEnabled: false, payoutsEnabled: false })
+    }
+    if (!u.stripeAccountId) {
+      return res.status(200).json({ payoutMode: u.payoutMode || 'none', chargesEnabled: false, payoutsEnabled: false })
+    }
+
+    const acct = await stripe.accounts.retrieve(u.stripeAccountId)
+    const out = {
+      payoutMode: 'connect',
+      chargesEnabled: acct.charges_enabled === true,
+      payoutsEnabled: acct.payouts_enabled === true,
+      detailsSubmitted: acct.details_submitted === true,
+    }
+    await db.collection('users').doc(String(uid)).set({
+      stripeChargesEnabled: out.chargesEnabled,
+      stripePayoutsEnabled: out.payoutsEnabled,
+      stripeDetailsSubmitted: out.detailsSubmitted,
+    }, { merge: true })
+
+    return res.status(200).json(out)
+  } catch (err) {
+    console.error('[/api/connect GET] error:', err)
+    return res.status(500).json({ error: err.message || 'Stripe error' })
   }
+}
+
+// ─── Onboarding Connect (ex /api/connect-onboard) ────────────────────────────
+async function onboard(req, res) {
   try {
     const { uid, returnPath = '/mon-dossier', country, phoneCode } = req.body || {}
     if (!uid) return res.status(400).json({ error: 'uid requis' })
-    // Strict : on ne lance un onboarding Stripe QUE pour soi-même (le token
-    // doit correspondre à l'uid demandé) — faille audit n°3.
+    // Strict : on ne lance un onboarding Stripe QUE pour soi-même.
     const caller = await requireAuthAsUid(req, res, uid)
     if (!caller) return
 
@@ -38,12 +78,10 @@ export default async function handler(req, res) {
     const refresh_url = `${origin}${returnPath}?connect=refresh`
     const return_url = `${origin}${returnPath}?connect=done`
 
-    // Si un compte existe déjà → on renvoie juste un nouveau lien (reprise d'onboarding).
+    // Compte déjà existant → nouveau lien (reprise d'onboarding).
     if (u.stripeAccountId) {
       const link = await stripe.accountLinks.create({
-        account: u.stripeAccountId,
-        refresh_url, return_url,
-        type: 'account_onboarding',
+        account: u.stripeAccountId, refresh_url, return_url, type: 'account_onboarding',
       })
       return res.status(200).json({ url: link.url, accountId: u.stripeAccountId })
     }
@@ -51,7 +89,6 @@ export default async function handler(req, res) {
     // Déterminer le pays ISO-2 du vendeur.
     let iso = resolveCountryISO({ country: country || u.stripeCountry || u.country, phoneCode })
     if (!iso) {
-      // Repli : lire le dernier dossier du vendeur (pays / indicatif tel collectés à l'onboarding).
       try {
         const apps = await db.collection('applications').where('uid', '==', String(uid)).get()
         let best = null
@@ -68,7 +105,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ manual: true, country: iso })
     }
 
-    // Créer le compte Express et stocker son id.
     const account = await stripe.accounts.create({
       type: 'express',
       country: iso,
@@ -89,13 +125,11 @@ export default async function handler(req, res) {
     }, { merge: true })
 
     const link = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url, return_url,
-      type: 'account_onboarding',
+      account: account.id, refresh_url, return_url, type: 'account_onboarding',
     })
     return res.status(200).json({ url: link.url, accountId: account.id })
   } catch (err) {
-    console.error('[/api/connect-onboard] error:', err)
+    console.error('[/api/connect POST] error:', err)
     return res.status(500).json({ error: err.message || 'Stripe error' })
   }
 }

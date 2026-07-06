@@ -28,7 +28,7 @@ const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
 async function searchArtistsRemote(q) {
   try {
     const { authHeaders } = await import('../utils/apiAuth')
-    const res = await fetch(`/api/search-artists?q=${encodeURIComponent(q)}`, { headers: { ...(await authHeaders()) } })
+    const res = await fetch(`/api/search?type=artists&q=${encodeURIComponent(q)}`, { headers: { ...(await authHeaders()) } })
     if (!res.ok) return []
     const data = await res.json()
     return Array.isArray(data?.artists) ? data.artists : []
@@ -39,7 +39,7 @@ async function searchArtistsRemote(q) {
 async function searchCitiesRemote(q) {
   try {
     const { authHeaders } = await import('../utils/apiAuth')
-    const res = await fetch(`/api/search-cities?q=${encodeURIComponent(q)}`, { headers: { ...(await authHeaders()) } })
+    const res = await fetch(`/api/search?type=cities&q=${encodeURIComponent(q)}`, { headers: { ...(await authHeaders()) } })
     if (!res.ok) return []
     const data = await res.json()
     return Array.isArray(data?.cities) ? data.cities : []

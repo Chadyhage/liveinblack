@@ -61,7 +61,7 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
     if (params.get('connect') === 'done') {
       // Au retour de l'onboarding Stripe : forcer un refresh serveur du statut.
       import('../utils/apiAuth').then(({ authHeaders }) => authHeaders())
-        .then(h => fetch(`/api/connect-status?uid=${encodeURIComponent(uid)}`, { headers: h }))
+        .then(h => fetch(`/api/connect?uid=${encodeURIComponent(uid)}`, { headers: h }))
         .then(() => load()).catch(() => {})
     }
   }, [uid]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -70,7 +70,7 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
     setBusy(true); setMsg(null)
     try {
       const { authHeaders } = await import('../utils/apiAuth')
-      const r = await fetch('/api/connect-onboard', {
+      const r = await fetch('/api/connect', {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ uid, returnPath }),
       })
