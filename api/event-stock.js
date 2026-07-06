@@ -15,8 +15,13 @@
 // 'event_not_found' / 'place_not_found' ne bloquent jamais l'appelant (events de démo
 // statiques sans doc Firestore, ou config legacy) — seul un stock réellement insuffisant
 // renvoie une erreur.
+//
+// action:'notify' (fusionné depuis l'ex /api/notify-sale) : notifie l'organisateur
+// d'une réservation GRATUITE. Les règles Firestore interdisent à un client d'écrire
+// dans notifications/{autreUid} (anti-spam) → seul l'Admin SDK peut le faire. Les
+// ventes PAYÉES sont déjà notifiées par les webhooks Stripe/FedaPay.
 
-import { getDb } from '../lib/firebaseAdmin.js'
+import { getDb, FieldValue } from '../lib/firebaseAdmin.js'
 import { requireAuth } from '../lib/verifyAuth.js'
 
 // Cap anti-abus : un seul appel ne peut jamais déplacer plus de 20 places.
@@ -34,6 +39,43 @@ export default async function handler(req, res) {
   if (!caller) return
 
   const { eventId, placeType, qty, action } = req.body || {}
+
+  // ─── Notification de réservation gratuite (ex /api/notify-sale) ─────────────
+  if (action === 'notify') {
+    if (!eventId) return res.status(400).json({ error: 'eventId requis' })
+    try {
+      const db = getDb()
+      // On lit l'event réel pour trouver l'organisateur (on ne fait jamais
+      // confiance au client pour désigner le destinataire de la notification).
+      const evSnap = await db.collection('events').doc(String(eventId)).get()
+      if (!evSnap.exists) return res.status(404).json({ error: 'Événement introuvable' })
+      const ev = evSnap.data()
+      const organizerUid = ev.organizerId || ev.createdBy
+      // buyerId falsifiable → on n'auto-notifie pas, mais on compare tout de même
+      // pour éviter qu'un organisateur se notifie lui-même.
+      if (!organizerUid || organizerUid === caller.uid || organizerUid === req.body?.buyerId) {
+        return res.status(200).json({ ok: true, skipped: 'no-organizer-or-self' })
+      }
+      const notif = {
+        id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
+        type: 'new_order',
+        title: '🎫 Nouvelle réservation',
+        body: `${Math.max(1, Number(qty) || 1)} × ${placeType || req.body?.place || 'place'} — ${ev.name || 'ton événement'}`,
+        data: { eventId: String(eventId) },
+        read: false,
+        createdAt: Date.now(),
+      }
+      const ref = db.collection('notifications').doc(String(organizerUid))
+      const cur = await ref.get()
+      const items = cur.exists ? (cur.data().items || []) : []
+      await ref.set({ items: [notif, ...items].slice(0, 50), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+      return res.status(200).json({ ok: true })
+    } catch (err) {
+      console.error('[/api/event-stock notify] error:', err)
+      return res.status(500).json({ error: err.message || 'Internal error' })
+    }
+  }
+
   const q = Math.max(1, Math.min(MAX_QTY_PER_CALL, Math.floor(Number(qty)) || 1))
   if (!eventId || !placeType || (action !== 'reserve' && action !== 'release')) {
     return res.status(400).json({ error: 'Paramètres invalides' })

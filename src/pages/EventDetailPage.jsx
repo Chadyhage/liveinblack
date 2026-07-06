@@ -831,10 +831,10 @@ export default function EventDetailPage() {
       // payées sont notifiées par le webhook Stripe. Fire-and-forget.
       const organizerUid = event.organizerId || event.createdBy
       if (organizerUid && organizerUid !== uid) {
-        import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/notify-sale', {
+        import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/event-stock', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-          body: JSON.stringify({ eventId: event.id, qty: ticketQty, place: selectedPlace, buyerId: uid }),
+          body: JSON.stringify({ action: 'notify', eventId: event.id, qty: ticketQty, placeType: selectedPlace, buyerId: uid }),
         })).catch(() => {})
       }
       setAllBookedThisSession(prev => [...prev, {
