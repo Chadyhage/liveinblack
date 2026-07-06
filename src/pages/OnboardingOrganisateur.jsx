@@ -1008,7 +1008,10 @@ export default function OnboardingOrganisateur() {
 
 // ── File row (inside DocUploadRow list) ──────────────────────────────────────
 function FileRow({ file, onRemove }) {
-  const failed = !file.url
+  // Fichier gardé en mémoire (avant soumission) : possède `file` mais pas d'`url`
+  // — ce n'est PAS un échec, il sera uploadé à la soumission.
+  const pending = !!file.file && !file.url
+  const failed = !file.url && !file.file
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
@@ -1035,11 +1038,14 @@ function FileRow({ file, onRemove }) {
         }}>
           {failed
             ? 'Envoi échoué — retire et rajoute ce fichier'
-            : file.size != null
-              ? file.size < 1024 * 1024
-                ? `${(file.size / 1024).toFixed(0)} Ko`
-                : `${(file.size / (1024 * 1024)).toFixed(1)} Mo`
-              : ''}
+            : (() => {
+                const size = file.size != null
+                  ? file.size < 1024 * 1024
+                    ? `${(file.size / 1024).toFixed(0)} Ko`
+                    : `${(file.size / (1024 * 1024)).toFixed(1)} Mo`
+                  : ''
+                return pending ? `${size}${size ? ' · ' : ''}prêt à envoyer` : size
+              })()}
         </span>
       </div>
       <button
