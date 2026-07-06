@@ -181,6 +181,46 @@ function Eyebrow({ children, style = {} }) {
   )
 }
 
+const EVENT_ACTIONS = {
+  stats: { label: 'Statistiques', color: '#4ee8c8', icon: <svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg> },
+  bookings: { label: 'Réservations', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> },
+  boost: { label: 'Booster', color: '#e05aaa', icon: <svg viewBox="0 0 24 24"><path d="m12 15-3-3a22 22 0 0 1 2-4A13 13 0 0 1 22 2c0 2.7-.8 7.5-6 11a22 22 0 0 1-4 2Z"/><path d="M9 12H4s.6-3 2-4c1.6-1 5 0 5 0M12 15v5s3-.6 4-2c1-1.6 0-5 0-5"/></svg> },
+  guests: { label: 'Guestlist', color: '#4ee8c8', icon: <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M19 8v6M16 11h6"/></svg> },
+  staff: { label: 'Équipe', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-4M16 3a4 4 0 0 1 0 8"/></svg> },
+  codes: { label: 'Codes', color: 'rgba(255,255,255,.65)', icon: <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
+  edit: { label: 'Modifier', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 3 3L12 15l-4 1 1-4Z"/></svg> },
+  delete: { label: 'Supprimer', color: '#dc7777', icon: <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> },
+}
+
+function EventActionButton({ type, onClick }) {
+  const action = EVENT_ACTIONS[type]
+  return <button className="event-action" onClick={onClick} style={{ '--action-color': action.color }}>
+    <span className="event-action-icon">{action.icon}</span><span>{action.label}</span>
+  </button>
+}
+
+function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGuests, onStaff, onCodes, onEdit, onDelete }) {
+  return <article className="event-manage-card">
+    <button className="event-manage-main" onClick={onOpen}>
+      <div className="event-manage-media" style={event.imageUrl ? {backgroundImage:`linear-gradient(to top,rgba(4,4,11,.72),transparent 65%),url(${event.imageUrl})`} : undefined}>
+        {!event.imageUrl && <svg viewBox="0 0 24 24"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>}
+      </div>
+      <div className="event-manage-copy">
+        <span className="event-status">Publié</span>
+        <h3>{event.name}</h3>
+        <p>{[event.dateDisplay, event.city].filter(Boolean).join(' · ')}</p>
+        <span className="event-open-link">Voir la page de l’événement →</span>
+      </div>
+    </button>
+    <div className="event-action-grid">
+      <EventActionButton type="stats" onClick={onStats}/><EventActionButton type="bookings" onClick={onBookings}/>
+      <EventActionButton type="boost" onClick={onBoost}/><EventActionButton type="guests" onClick={onGuests}/>
+      <EventActionButton type="staff" onClick={onStaff}/>{event.isPrivate && <EventActionButton type="codes" onClick={onCodes}/>} 
+      <EventActionButton type="edit" onClick={onEdit}/><EventActionButton type="delete" onClick={onDelete}/>
+    </div>
+  </article>
+}
+
 function InputField({ label, value, onChange, placeholder, type = 'text', error, style = {}, min, max, locked = false, lockedReason = '' }) {
   const [focused, setFocused] = useState(false)
   return (
@@ -1027,6 +1067,25 @@ export default function MesEvenementsPage() {
   if (view === 'dashboard') {
     return (
       <Layout>
+        <style>{`
+          .event-manage-list{display:flex;flex-direction:column;gap:14px}
+          .event-manage-card{display:grid;grid-template-columns:minmax(390px,1.25fr) minmax(390px,.9fr);min-height:220px;overflow:hidden;border:1px solid rgba(255,255,255,.11);border-radius:16px;background:rgba(8,10,20,.62);box-shadow:0 18px 50px rgba(0,0,0,.18)}
+          .event-manage-main{display:grid;grid-template-columns:minmax(190px,.8fr) 1fr;min-width:0;padding:0;border:0;border-right:1px solid rgba(255,255,255,.08);background:transparent;color:#fff;text-align:left;cursor:pointer}
+          .event-manage-media{min-height:220px;background:linear-gradient(145deg,rgba(200,169,110,.2),rgba(78,232,200,.05));background-size:cover;background-position:center;display:grid;place-items:center}
+          .event-manage-media svg{width:42px;fill:none;stroke:rgba(200,169,110,.7);stroke-width:1.2}
+          .event-manage-copy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:28px;min-width:0}
+          .event-manage-copy h3{font:600 22px Inter,sans-serif;letter-spacing:-.025em;margin:13px 0 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+          .event-manage-copy p{font:9px 'DM Mono',monospace;letter-spacing:.08em;color:rgba(255,255,255,.43);margin:0;text-transform:uppercase}
+          .event-status{font:8px 'DM Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#4ee8c8;border:1px solid rgba(78,232,200,.24);background:rgba(78,232,200,.07);padding:5px 8px;border-radius:999px}
+          .event-open-link{font:9px Inter,sans-serif;color:rgba(255,255,255,.42);margin-top:24px}
+          .event-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:18px;align-content:center}
+          .event-action{min-height:52px;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--action-color) 26%,transparent);background:color-mix(in srgb,var(--action-color) 7%,transparent);color:rgba(255,255,255,.74);font:600 10px Inter,sans-serif;cursor:pointer;text-align:left;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+          .event-action:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--action-color) 55%,transparent);background:color-mix(in srgb,var(--action-color) 12%,transparent)}
+          .event-action-icon{width:27px;height:27px;display:grid;place-items:center;border-radius:7px;background:color-mix(in srgb,var(--action-color) 10%,transparent);color:var(--action-color);flex:none}
+          .event-action-icon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+          @media(max-width:980px){.event-manage-card{grid-template-columns:1fr}.event-manage-main{border-right:0;border-bottom:1px solid rgba(255,255,255,.08)}}
+          @media(max-width:600px){.event-manage-card{border-radius:14px}.event-manage-main{grid-template-columns:1fr}.event-manage-media{min-height:180px}.event-manage-copy{padding:19px}.event-manage-copy h3{font-size:20px}.event-open-link{margin-top:16px}.event-action-grid{padding:12px;gap:7px}.event-action{min-height:50px;padding:9px;font-size:9px}.event-action-icon{width:25px;height:25px}}
+        `}</style>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
           {/* Page header */}
@@ -1217,95 +1276,17 @@ export default function MesEvenementsPage() {
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 4 }}>Lance-toi !</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {upcomingEvents.map(ev => (
-                  <div key={ev.id} style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button onClick={() => navigate(`/evenements/${ev.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
-                      {ev.imageUrl ? (
-                        <img src={ev.imageUrl} alt={ev.name} style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-                      ) : (
-                        <div style={{ width: 52, height: 52, borderRadius: 8, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        </div>
-                      )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: '#4ee8c8', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.18)', padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
-                          PUBLIE
-                        </span>
-                      </div>
-                    </button>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-                      {/* Statistiques détaillées */}
-                      <button
-                        onClick={() => navigate(`/mes-evenements/${ev.id}/statistiques`)}
-                        title="Statistiques"
-                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
-                      </button>
-                      {/* Reservations */}
-                      <button
-                        onClick={() => { setBookingsPanelEvent(ev); setShowBookingsPanel(true) }}
-                        title="Voir les réservations"
-                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
-                      </button>
-                      {/* Boost */}
-                      <button
-                        onClick={() => { setBoostTargetEvent(ev); setShowBoostModal(true) }}
-                        title="Booster"
-                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="1.8"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M15 9v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-                      </button>
-                      {/* Guestlist */}
-                      <button
-                        onClick={() => openGuestlistModal(ev)}
-                        title="Guestlist"
-                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
-                      </button>
-                      {/* Équipe / staff */}
-                      <button
-                        onClick={() => setStaffTargetEvent(ev)}
-                        title="Équipe de la soirée"
-                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                      </button>
-                      {/* Private codes */}
-                      {ev.isPrivate && (
-                        <button
-                          onClick={() => { setCodesTargetEvent(ev); setGeneratedCodes(null); setCodesQty(10); setShowCodesModal(true) }}
-                          title="Codes d'accès"
-                          style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                        </button>
-                      )}
-                      {/* Edit */}
-                      <button
-                        onClick={() => startEdit(ev)}
-                        title="Modifier"
-                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      {/* Delete */}
-                      <button
-                        onClick={() => setDeleteConfirm({ id: ev.id, bookingCount: getEventBookingCount(ev.id) })}
-                        title="Supprimer"
-                        style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div className="event-manage-list">
+                {upcomingEvents.map(ev => <EventDashboardCard key={ev.id} event={ev}
+                  onOpen={() => navigate(`/evenements/${ev.id}`)}
+                  onStats={() => navigate(`/mes-evenements/${ev.id}/statistiques`)}
+                  onBookings={() => { setBookingsPanelEvent(ev); setShowBookingsPanel(true) }}
+                  onBoost={() => { setBoostTargetEvent(ev); setShowBoostModal(true) }}
+                  onGuests={() => openGuestlistModal(ev)} onStaff={() => setStaffTargetEvent(ev)}
+                  onCodes={() => { setCodesTargetEvent(ev); setGeneratedCodes(null); setCodesQty(10); setShowCodesModal(true) }}
+                  onEdit={() => startEdit(ev)}
+                  onDelete={() => setDeleteConfirm({ id: ev.id, bookingCount: getEventBookingCount(ev.id) })}
+                />)}
               </div>
             )}
 

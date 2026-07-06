@@ -44,13 +44,31 @@ export default function BoostActivePage() {
     }
     let cancelled = false
     ;(async () => {
-      const result = await verifyStripeSession(sessionId)
+      let result = null
+      // Le paiement Stripe et le webhook d'activation peuvent arriver à quelques
+      // secondes d'intervalle. On n'annonce jamais « activé » avant que le boost
+      // existe réellement dans la source de vérité Firestore.
+      for (let attempt = 0; attempt < 20 && !cancelled; attempt += 1) {
+        result = await verifyStripeSession(sessionId)
+        if (!result?.paid || (result?.boostStatus && result.boostStatus !== 'pending')) break
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
       if (cancelled) return
       if (!result || !result.paid) {
         setState('error')
         setErrorMsg(result?.paymentStatus
           ? `Paiement non confirmé (${result.paymentStatus}).`
           : 'Impossible de vérifier le paiement. Si tu as été débité, écris-nous à support@liveinblack.com — on régularise ton boost.')
+        return
+      }
+      if (result.boostStatus === 'refunded_conflict') {
+        setState('error')
+        setErrorMsg('Ce créneau a été pris au même instant par un autre paiement. Ton paiement a été remboursé automatiquement ; aucun nouveau paiement n’est nécessaire.')
+        return
+      }
+      if (result.boostStatus !== 'active') {
+        setState('error')
+        setErrorMsg('Ton paiement est confirmé, mais l’activation prend plus de temps que prévu. Ne repaie pas : contacte le support avec ton reçu pour que nous régularisions le boost.')
         return
       }
       // Activer le boost à partir des metadata Stripe (source de vérité)

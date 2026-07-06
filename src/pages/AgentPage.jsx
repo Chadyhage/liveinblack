@@ -339,9 +339,6 @@ export default function AgentPage() {
   const allBookings = (() => {
     try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]') } catch { return [] }
   })()
-  const allBoosts = (() => {
-    try { return JSON.parse(localStorage.getItem('lib_boosts') || '[]') } catch { return [] }
-  })()
   // Activité 30 derniers jours
   const thirtyDaysAgo = Date.now() - 30 * 24 * 3600 * 1000
   const recentBookings = allBookings.filter(b => {
@@ -350,7 +347,8 @@ export default function AgentPage() {
   })
   // GMV (Gross Merchandise Value) — somme totale transactions
   const gmvTickets = allBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0)
-  const gmvBoosts = allBoosts.reduce((sum, b) => sum + (Number(b.price) || 0), 0)
+  const paidBoosts = adminBoosts.filter(boost => !['refunded_conflict', 'cancelled'].includes(boost.status))
+  const gmvBoosts = paidBoosts.reduce((sum, b) => sum + (Number(b.price) || 0), 0)
   const totalGMV = gmvTickets + gmvBoosts
   // Revenus plateforme RÉELS (encaissés) :
   // - frais de service billets = 5%+0,49€/billet plafonné 2,50€ (computeTicketFeeCents), sur le prix de la place

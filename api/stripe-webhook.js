@@ -19,6 +19,7 @@
 
 import Stripe from 'stripe'
 import { getDb, FieldValue } from '../lib/firebaseAdmin.js'
+import { boostSlotId, getBoostPlan, normalizeBoostRegion } from '../lib/boosts.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
@@ -84,7 +85,9 @@ export default async function handler(req, res) {
   if (event.type === 'checkout.session.expired') {
     try {
       const db = getDb()
-      await releaseExpiredSessionStock(db, event.data.object)
+      const expiredSession = event.data.object
+      if (expiredSession.metadata?.intent === 'boost') await releaseExpiredBoostSlot(db, expiredSession)
+      else await releaseExpiredSessionStock(db, expiredSession)
     } catch (err) {
       console.error('[webhook] checkout.session.expired error:', err)
       return res.status(500).json({ error: err.message || 'Internal error' })
@@ -487,8 +490,15 @@ async function finalizeBoost(db, session, meta) {
   const eventId = meta.eventId || ''
   const position = Number(meta.position) || 0
   const days = Math.max(1, Number(meta.days || 1))
-  const region = meta.region || ''
+  const offer = getBoostPlan(position, days)
+  if (!offer) throw new Error(`Offre boost invalide dans la session ${session.id}`)
+  const region = normalizeBoostRegion(meta.region || '')
+  const slotId = meta.slotId || boostSlotId(region, position)
+  const slotRef = db.collection('boost_slots').doc(slotId)
   const priceEUR = (session.amount_total || 0) / 100
+  if (Math.round(priceEUR * 100) !== Math.round(offer.tier.price * 100)) {
+    throw new Error(`Montant boost incohérent dans la session ${session.id}`)
+  }
 
   const boost = {
     id: boostId,
@@ -502,28 +512,52 @@ async function finalizeBoost(db, session, meta) {
     expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
     stripeSessionId: session.id,
     finalizedBy: 'webhook',
+    status: 'active',
   }
 
-  // Garde-fou résiduel anti double-vente : checkout-boost refuse déjà un créneau
-  // occupé AVANT paiement, mais deux checkouts strictement simultanés peuvent
-  // passer. Si un boost actif occupe déjà (région, position), on marque le
-  // conflit — à traiter manuellement (remboursement ou re-slot), jamais silencieux.
   try {
-    const dupSnap = await db.collection('boosts')
-      .where('region', '==', String(region))
-      .where('position', '==', position)
-      .get()
-    const now = Date.now()
-    const clash = dupSnap.docs.map(d => d.data())
-      .find(b => b.id !== boostId && (() => { try { return new Date(b.expiresAt).getTime() > now } catch { return false } })())
-    if (clash) {
-      boost.conflict = true
-      boost.conflictWith = clash.id
-      console.error('[webhook] ⚠ CONFLIT BOOST — deux ventes sur le même créneau:', boostId, 'vs', clash.id, `(Top ${position}, ${region}) — rembourser ou re-sloter manuellement`)
+    await db.runTransaction(async tx => {
+      const slotSnap = await tx.get(slotRef)
+      const boostSnap = await tx.get(ref)
+      if (boostSnap.exists) return
+      const slot = slotSnap.exists ? slotSnap.data() : null
+      if (!slot || slot.boostId !== boostId || slot.eventId !== eventId) {
+        const error = new Error('BOOST_RESERVATION_LOST')
+        error.code = 'BOOST_RESERVATION_LOST'
+        throw error
+      }
+      tx.set(ref, boost)
+      tx.set(slotRef, {
+        ...slot,
+        status: 'active',
+        holdUntil: null,
+        activeUntil: boost.expiresAt,
+        stripeSessionId: session.id,
+        updatedAt: new Date().toISOString(),
+      })
+    })
+  } catch (error) {
+    if (error?.code !== 'BOOST_RESERVATION_LOST' && error?.message !== 'BOOST_RESERVATION_LOST') throw error
+    const paymentIntent = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
+    if (!paymentIntent) throw error
+    const refund = await stripe.refunds.create({ payment_intent: paymentIntent }, { idempotencyKey: `boost-conflict-refund-${boostId}` })
+    const refundedBoost = {
+      ...boost,
+      status: 'refunded_conflict',
+      conflict: true,
+      refundId: refund.id,
+      refundedAt: new Date().toISOString(),
     }
-  } catch {}
-
-  await ref.set(boost)
+    await ref.set(refundedBoost, { merge: true })
+    if (userId) {
+      await db.collection('user_boosts').doc(userId).set({
+        items: FieldValue.arrayUnion(refundedBoost),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+    }
+    console.error('[webhook] réservation boost perdue — paiement remboursé automatiquement:', boostId)
+    return
+  }
 
   if (userId) {
     await db.collection('user_boosts').doc(userId).set({
@@ -533,6 +567,19 @@ async function finalizeBoost(db, session, meta) {
   }
 
   console.log('[webhook] boost finalized:', boostId)
+}
+
+async function releaseExpiredBoostSlot(db, session) {
+  const meta = session.metadata || {}
+  const boostId = meta.boostId
+  const slotId = meta.slotId || boostSlotId(meta.region || '', meta.position)
+  if (!boostId || !slotId) return
+  const slotRef = db.collection('boost_slots').doc(slotId)
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(slotRef)
+    if (snap.exists && snap.data().boostId === boostId && snap.data().status === 'pending') tx.delete(slotRef)
+  })
+  console.log('[webhook] réservation boost expirée libérée:', boostId, slotId)
 }
 
 // ── Compte Connect (account.updated) ─────────────────────────────────────────

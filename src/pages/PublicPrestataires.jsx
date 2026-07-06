@@ -119,6 +119,12 @@ export default function PublicPrestataires() {
         @media(min-width:720px){ .lb-navlink{ display:inline-block } }
         .lb-card{ transition:transform .25s cubic-bezier(.22,.9,.3,1), border-color .25s ease, box-shadow .25s ease }
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4); box-shadow:0 26px 60px -24px rgba(0,0,0,.85) }
+        .provider-category-rail{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+        @media(max-width:719px){
+          .provider-category-rail{margin:16px -22px 0;padding:0 22px 7px;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:none}
+          .provider-category-rail::-webkit-scrollbar{display:none}
+          .provider-category-rail button{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap}
+        }
       `}</style>
 
       {!user && <PublicNav />}
@@ -141,7 +147,7 @@ export default function PublicPrestataires() {
         </div>
 
         {/* Chips catégories */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 18 }}>
+        <div className="provider-category-rail" aria-label="Catégories de prestataires">
           <button onClick={() => setActiveCat(null)} style={chip(!activeCat, C.teal)}>Tous {providers.length ? `· ${providers.length}` : ''}</button>
           {CATS.map(c => (
             <button key={c.id} onClick={() => setActiveCat(activeCat === c.id ? null : c.id)} style={chip(activeCat === c.id, c.color)}>

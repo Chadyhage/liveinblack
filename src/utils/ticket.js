@@ -6,6 +6,8 @@
 // paid:true, et le ScannerPage vérifie l'existence du billet dans ce registre
 // avant de l'accepter. La signature ici sert seulement de pré-filtre rapide
 // (rejeter les QR aléatoires sans requête réseau).
+import { activeBoostsForRegion } from '../../lib/boosts.js'
+
 const SECRET = 'LIB_S3CR3T_K3Y_2026_PRIV'
 
 function computeHash(str) {
@@ -106,16 +108,8 @@ export function saveBoost(eventId, position, days, price, region = '', userId = 
 // streamée par listenBoosts). Si absent → fallback sur lib_boosts (localStorage,
 // = uniquement les boosts du user courant — insuffisant pour un visiteur).
 export function getActiveBoostsByRegion(regionName = '', boostsOverride = null) {
-  const now = Date.now()
-  const active = Array.isArray(boostsOverride)
-    ? boostsOverride.filter(b => {
-        try { return new Date(b.expiresAt).getTime() > now } catch { return false }
-      })
-    : getActiveBoosts()
-  if (!regionName || regionName === 'Toutes') return active
-  // A boost matches if its region equals the viewer's region
-  // (legacy boosts with no region field are shown everywhere for backward compat)
-  return active.filter(b => !b.region || b.region === regionName)
+  const source = Array.isArray(boostsOverride) ? boostsOverride : getActiveBoosts()
+  return activeBoostsForRegion(source, regionName === 'Toutes' ? '' : regionName)
 }
 
 // Check if a given Top-N slot is already taken in a given region

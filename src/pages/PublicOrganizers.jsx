@@ -93,7 +93,7 @@ export default function PublicOrganizers() {
         .org-results-head{display:flex;align-items:center;gap:18px;margin-bottom:18px;color:${C.gold};font:10px ${UI};letter-spacing:.16em;text-transform:uppercase}
         .org-results-head:after{content:'';height:1px;flex:1;background:rgba(255,255,255,.1)}
         .org-grid{display:flex;flex-direction:column;gap:18px}
-        .org-card{display:grid;grid-template-columns:minmax(320px,1.05fr) minmax(300px,.8fr) 210px;min-height:276px;overflow:hidden;background:rgba(7,9,16,.72);border:1px solid rgba(255,255,255,.11);transition:transform .28s ease,border-color .28s ease,box-shadow .28s ease;min-width:0}
+        .org-card{display:grid;grid-template-columns:minmax(320px,1.05fr) minmax(300px,.8fr) 210px;min-height:276px;background:rgba(7,9,16,.72);border:1px solid rgba(255,255,255,.11);transition:transform .28s ease,border-color .28s ease,box-shadow .28s ease;min-width:0}
         .org-card:hover{transform:translateY(-3px);border-color:rgba(78,232,200,.38);box-shadow:0 28px 70px rgba(0,0,0,.35)}
         .org-cover{min-height:276px;position:relative;background:linear-gradient(135deg,rgba(139,92,246,.24),rgba(78,232,200,.08));overflow:hidden}
         .org-cover:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 45%,rgba(7,9,16,.2)),linear-gradient(to top,rgba(7,9,16,.85),transparent 55%)}

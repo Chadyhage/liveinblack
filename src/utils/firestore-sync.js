@@ -782,9 +782,7 @@ export async function pushLocalToFirestore(uid) {
     const gBookings = safeParseObj('lib_group_bookings')
     for (const id of Object.keys(gBookings)) { syncDoc(`group_bookings/${id}`, gBookings[id]) }
 
-    // Boosts
-    const boosts = safeParseArray('lib_boosts')
-    if (boosts.length) syncDoc(`user_boosts/${uid}`, { items: boosts })
+    // Les reçus de boosts sont exclusivement écrits par le webhook Stripe.
 
     // Reports
     const reports = safeParseArray('lib_reports')

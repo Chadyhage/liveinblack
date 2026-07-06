@@ -1,432 +1,126 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { isBoostSlotTaken } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
 import { startStripeBoostCheckout } from '../utils/stripe'
+import { getEventEndTimestamp } from '../utils/eventUrgency'
+import { BOOST_PLANS } from '../../lib/boosts.js'
 
-const BOOST_PLANS = [
-  {
-    position: 1,
-    label: 'Top 1',
-    desc: 'Position n°1 · Visibilité maximale',
-    color: '#c8a96e',
-    tiers: [
-      { label: '1 jour', price: 9.99, days: 1 },
-      { label: '3 jours', price: 24.99, days: 3 },
-      { label: '1 semaine', price: 49.99, days: 7 },
-      { label: '1 mois', price: 149.99, days: 30 },
-    ],
-  },
-  {
-    position: 2,
-    label: 'Top 2',
-    desc: 'Position n°2 · Très haute visibilité',
-    color: 'rgba(255,255,255,0.65)',
-    tiers: [
-      { label: '1 jour', price: 6.99, days: 1 },
-      { label: '3 jours', price: 16.99, days: 3 },
-      { label: '1 semaine', price: 34.99, days: 7 },
-      { label: '1 mois', price: 99.99, days: 30 },
-    ],
-  },
-  {
-    position: 3,
-    label: 'Top 3',
-    desc: 'Position n°3 · Haute visibilité',
-    color: 'rgba(200,169,110,0.6)',
-    tiers: [
-      { label: '1 jour', price: 3.99, days: 1 },
-      { label: '3 jours', price: 9.99, days: 3 },
-      { label: '1 semaine', price: 19.99, days: 7 },
-      { label: '1 mois', price: 59.99, days: 30 },
-    ],
-  },
-]
+const mono = "'DM Mono', monospace"
+const regionOf = event => event?.regionId || event?.country || event?.region || ''
 
-// SVG rank badge icons
 function RankIcon({ position, size = 20 }) {
-  const colors = {
-    1: '#c8a96e',
-    2: 'rgba(255,255,255,0.65)',
-    3: 'rgba(200,169,110,0.6)',
-  }
-  const color = colors[position] || '#c8a96e'
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill={color} stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-      <text x="12" y="15" textAnchor="middle" fontSize="8" fill={position === 2 ? '#111' : '#111'} fontFamily="monospace" fontWeight="bold">{position}</text>
-    </svg>
-  )
+  const color = position === 1 ? '#c8a96e' : position === 2 ? 'rgba(255,255,255,.72)' : 'rgba(200,169,110,.65)'
+  return <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill={color}/>
+    <text x="12" y="15" textAnchor="middle" fontSize="8" fill="#090a10" fontFamily="monospace" fontWeight="bold">{position}</text>
+  </svg>
 }
 
-// SVG rocket icon
-function RocketIcon({ size = 40, color = '#4ee8c8' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
-      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
-      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
-      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
-    </svg>
-  )
-}
-
-const S = {
-  card: {
-    background: 'rgba(8,10,20,0.55)',
-    backdropFilter: 'blur(22px) saturate(1.6)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 12,
-    padding: '16px',
-  },
-  btnGold: {
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-    border: '1px solid rgba(200,169,110,0.45)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 11,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: '#c8a96e',
-    cursor: 'pointer',
-    width: '100%',
-  },
-  btnGhost: {
-    padding: '12px 20px',
-    background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.18)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 11,
-    letterSpacing: '0.15em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.5)',
-    cursor: 'pointer',
-  },
-  label: {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 9,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.42)',
-  },
+function CloseButton({ onClick }) {
+  return <button onClick={onClick} aria-label="Fermer" className="boost-close">×</button>
 }
 
 export default function BoostModal({ event, onClose, onBoostDone }) {
   const { user } = useAuth()
-  const [selectedPlan, setSelectedPlan] = useState(null) // { position, tierIdx }
-  const [step, setStep] = useState('pick') // 'pick' | 'pay' | 'done'
+  const [activePosition, setActivePosition] = useState(1)
+  const [selectedPlan, setSelectedPlan] = useState(null)
+  const [step, setStep] = useState('pick')
   const [paying, setPaying] = useState(false)
-
-  // Boosts globaux (cross-user) — pour savoir quels slots sont DÉJÀ pris par
-  // d'autres organisateurs dans cette région, pas seulement par soi.
+  const [errorMsg, setErrorMsg] = useState('')
   const [globalBoosts, setGlobalBoosts] = useState([])
+
   useEffect(() => {
     let unsub = () => {}
-    import('../utils/firestore-sync').then(({ listenBoosts }) => {
-      unsub = listenBoosts(setGlobalBoosts)
-    }).catch(() => {})
+    import('../utils/firestore-sync').then(({ listenBoosts }) => { unsub = listenBoosts(setGlobalBoosts) }).catch(() => {})
     return () => unsub()
   }, [])
 
+  const activePlan = useMemo(() => BOOST_PLANS.find(plan => plan.position === activePosition), [activePosition])
+  const chosen = selectedPlan ? BOOST_PLANS.find(plan => plan.position === selectedPlan.position) : null
+  const chosenTier = chosen ? chosen.tiers[selectedPlan.tierIdx] : null
   if (!event) return null
 
-  const chosen = selectedPlan
-    ? BOOST_PLANS.find(p => p.position === selectedPlan.position)
-    : null
-  const chosenTier = chosen ? chosen.tiers[selectedPlan.tierIdx] : null
+  const positionTaken = position => isBoostSlotTaken(position, regionOf(event), event.id, globalBoosts)
 
   async function confirmBoost() {
     if (!chosen || !chosenTier) return
     const uid = getUserId(user)
     if (!uid) return
     setPaying(true)
-    // Generate a unique boost ID to track this purchase
-    const arr = new Uint32Array(2)
-    crypto.getRandomValues(arr)
-    const boostId = `${arr[0].toString(36)}${arr[1].toString(36)}`.slice(0, 16).toUpperCase()
+    const random = new Uint32Array(2)
+    crypto.getRandomValues(random)
+    const boostId = `${random[0].toString(36)}${random[1].toString(36)}`.slice(0, 16).toUpperCase()
     const result = await startStripeBoostCheckout({
-      eventId: event.id,
-      eventName: event.name,
-      position: chosen.position,
-      days: chosenTier.days,
-      priceEUR: chosenTier.price,
-      region: event.region || '',
-      userId: uid,
-      userEmail: user?.email,
-      boostId,
+      eventId: event.id, eventName: event.name, position: chosen.position,
+      days: chosenTier.days, priceEUR: chosenTier.price, region: regionOf(event),
+      userId: uid, userEmail: user?.email, boostId,
     })
     if (!result.ok) {
       setPaying(false)
+      setErrorMsg(result.error || 'Impossible de réserver ce créneau de boost.')
       setStep('error')
     }
-    // Sinon : redirect Stripe → l'utilisateur revient sur /boost-active
   }
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)' }}
-        onClick={onClose}
-      />
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: 512,
-        background: 'rgba(4,5,12,0.97)',
-        borderTop: '1px solid rgba(255,255,255,0.10)',
-        borderLeft: '1px solid rgba(255,255,255,0.07)',
-        borderRight: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '16px 16px 0 0',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-      }}>
+  const eventEnd = getEventEndTimestamp(event)
+  return <div className="boost-shell" role="dialog" aria-modal="true" aria-label="Booster mon événement">
+    <style>{`
+      .boost-shell{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px}
+      .boost-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(5px)}
+      .boost-panel{position:relative;width:100%;max-width:660px;max-height:calc(100vh - 36px);overflow:auto;background:rgba(4,5,12,.98);border:1px solid rgba(255,255,255,.11);border-radius:20px;box-shadow:0 30px 100px rgba(0,0,0,.72)}
+      .boost-content{padding:24px;display:flex;flex-direction:column;gap:22px}
+      .boost-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+      .boost-title{font:600 25px Inter,sans-serif;color:#fff;margin:0;letter-spacing:-.02em}
+      .boost-kicker{font:8px ${mono};letter-spacing:.22em;text-transform:uppercase;color:#c8a96e;margin:7px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:430px}
+      .boost-close{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);color:rgba(255,255,255,.65);font:20px Inter;cursor:pointer;flex:none}
+      .boost-label{font:8px ${mono};letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);margin:0 0 10px}
+      .boost-position-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+      .boost-position{min-height:76px;padding:12px 11px;border-radius:12px;text-align:left;color:#fff;cursor:pointer}
+      .boost-position-top{display:flex;align-items:center;gap:8px;font:600 12px ${mono}}
+      .boost-position-state{display:block;font:8px ${mono};letter-spacing:.12em;text-transform:uppercase;margin-top:9px}
+      .boost-duration-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:10px}
+      .boost-description{font:10px ${mono};color:rgba(255,255,255,.38);margin:0}
+      .boost-duration-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+      .boost-duration{min-height:96px;padding:14px 12px;border-radius:12px;text-align:left}
+      .boost-duration span{display:block;font:8px ${mono};letter-spacing:.1em;text-transform:uppercase}
+      .boost-duration strong{display:block;font:500 22px Inter,sans-serif;margin-top:10px;white-space:nowrap}
+      .boost-primary{min-height:52px;width:100%;border-radius:12px;border:1px solid rgba(200,169,110,.5);background:linear-gradient(135deg,rgba(200,169,110,.25),rgba(200,169,110,.08));color:#e0c68e;font:700 10px ${mono};letter-spacing:.15em;text-transform:uppercase;cursor:pointer}
+      .boost-primary:disabled{opacity:.38;cursor:not-allowed}
+      .boost-summary{padding:18px;border:1px solid rgba(200,169,110,.22);border-radius:14px;background:rgba(200,169,110,.055)}
+      .boost-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;font:11px ${mono};color:rgba(255,255,255,.45)}
+      .boost-row strong{color:#fff;font-weight:500}.boost-total{border-top:1px solid rgba(255,255,255,.08);margin-top:5px;padding-top:14px}.boost-total strong{font:500 25px Inter;color:#c8a96e}
+      .boost-pay-actions{display:grid;grid-template-columns:1fr 2fr;gap:9px}.boost-ghost{min-height:50px;border-radius:12px;border:1px solid rgba(255,255,255,.13);background:transparent;color:rgba(255,255,255,.55);font:9px ${mono};text-transform:uppercase;cursor:pointer}
+      @media(max-width:620px){.boost-shell{align-items:flex-end;padding:0}.boost-panel{max-height:92vh;border-radius:18px 18px 0 0}.boost-content{padding:20px 18px 28px}.boost-title{font-size:22px}.boost-duration-grid{grid-template-columns:repeat(2,1fr)}.boost-position{min-height:70px;padding:10px 8px}.boost-position-state{font-size:7px}.boost-kicker{max-width:260px}}
+    `}</style>
+    <div className="boost-backdrop" onClick={onClose}/>
+    <section className="boost-panel">
+      <div className="boost-content">
+        <header className="boost-head"><div><h2 className="boost-title">Booster mon événement</h2><p className="boost-kicker">{event.name}</p></div><CloseButton onClick={onClose}/></header>
 
-        {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 40, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
-        </div>
-
-        <div style={{ padding: '4px 20px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 24, color: 'white', margin: 0 }}>
-                Booster mon événement
-              </h2>
-              <p style={{ ...S.label, marginTop: 4, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {event.name}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.10)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 16,
-                color: 'rgba(255,255,255,0.5)',
-                cursor: 'pointer',
-              }}
-            >
-              ×
-            </button>
+        {step === 'error' ? <div style={{textAlign:'center',padding:'28px 0'}}>
+          <p style={{font:`11px ${mono}`,color:'#ee9bb7',lineHeight:1.7}}>{errorMsg}</p>
+          <button className="boost-ghost" style={{padding:'0 22px'}} onClick={() => setStep('pick')}>Retour aux options</button>
+        </div> : step === 'pay' ? <>
+          <div className="boost-summary">
+            <p className="boost-label" style={{color:'#c8a96e'}}>Récapitulatif avant paiement</p>
+            <div className="boost-row"><span>Position</span><strong style={{display:'flex',alignItems:'center',gap:7}}><RankIcon position={chosen.position} size={17}/>{chosen.label}</strong></div>
+            <div className="boost-row"><span>Durée</span><strong>{chosenTier.label}</strong></div>
+            <div className="boost-row boost-total"><span>Total</span><strong>{chosenTier.price.toFixed(2).replace('.', ',')} €</strong></div>
           </div>
-
-          {step === 'done' ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                background: 'rgba(78,232,200,0.08)',
-                border: '1px solid rgba(78,232,200,0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <RocketIcon size={36} color="#4ee8c8" />
-              </div>
-              <p style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 26, color: 'white', margin: 0 }}>
-                Événement boosté !
-              </p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
-                <span style={{ color: '#c8a96e' }}>{event.name}</span> apparaît désormais en{' '}
-                <span style={{ color: 'white' }}>{chosen?.label}</span> pendant{' '}
-                <span style={{ color: 'white' }}>{chosenTier?.label}</span>.
-              </p>
-              <p style={{ ...S.label, marginTop: -8 }}>
-                Ton événement sera visible dans le Top 3 de ta région.
-              </p>
-              <button onClick={() => { onBoostDone?.(); onClose() }} style={{ ...S.btnGold, marginTop: 8 }}>
-                Parfait
-              </button>
-            </div>
-
-          ) : step === 'error' ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round" />
-                <circle cx="12" cy="16.5" r="0.6" fill="rgba(220,100,100,0.9)" />
-              </svg>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-                Erreur lors de la connexion à Stripe.<br />Réessaie dans un instant.
-              </p>
-              <button onClick={() => setStep('pick')} style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
-                ← Retour
-              </button>
-            </div>
-
-          ) : step === 'pay' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-              {/* Summary */}
-              <div style={{ ...S.card, borderColor: 'rgba(200,169,110,0.20)' }}>
-                <p style={{ ...S.label, marginBottom: 14, color: '#c8a96e' }}>Récapitulatif</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>Position</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <RankIcon position={chosen?.position} size={16} />
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{chosen?.label}</span>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>Durée</span>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{chosenTier?.label}</span>
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderTop: '1px solid rgba(255,255,255,0.07)',
-                    paddingTop: 10,
-                    marginTop: 4,
-                  }}>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white', letterSpacing: '0.1em' }}>Total</span>
-                    <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 24, color: '#c8a96e' }}>
-                      {chosenTier?.price}€
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Paiement sécurisé via Stripe */}
-              <div style={{ ...S.card, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="11" width="16" height="10" rx="2"/>
-                  <path d="M8 11 V7 a4 4 0 0 1 8 0 V11"/>
-                </svg>
-                <div>
-                  <p style={{ ...S.label, color: 'rgba(255,255,255,0.7)', margin: 0 }}>Paiement sécurisé via Stripe</p>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>
-                    Tu seras redirigé vers la page de paiement Stripe.
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setStep('pick')} style={{ ...S.btnGhost, flex: 1 }}>
-                  ← Retour
-                </button>
-                <button
-                  onClick={confirmBoost}
-                  disabled={paying}
-                  style={{
-                    ...S.btnGold,
-                    flex: 1,
-                    width: 'auto',
-                    opacity: paying ? 0.4 : 1,
-                    cursor: paying ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {paying ? 'Redirection vers Stripe…' : `Payer ${chosenTier?.price}€`}
-                </button>
-              </div>
-            </div>
-
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', letterSpacing: '0.05em', margin: 0 }}>
-                Choisis la position et la durée de ton boost dans le Top 3 régional.
-              </p>
-
-              {BOOST_PLANS.map(plan => {
-                const slotTaken = isBoostSlotTaken(plan.position, event.region || '', event.id, globalBoosts)
-                return (
-                <div key={plan.position}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: slotTaken ? 6 : 10 }}>
-                    <RankIcon position={plan.position} size={20} />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white', margin: 0, letterSpacing: '0.1em' }}>
-                        {plan.label}
-                      </p>
-                      <p style={{ ...S.label, marginTop: 2 }}>{plan.desc}</p>
-                    </div>
-                    {slotTaken && (
-                      <span style={{
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 8,
-                        letterSpacing: '0.15em',
-                        color: 'rgba(220,100,100,0.8)',
-                        background: 'rgba(220,50,50,0.08)',
-                        border: '1px solid rgba(220,50,50,0.22)',
-                        padding: '2px 7px',
-                        borderRadius: 3,
-                        flexShrink: 0,
-                      }}>OCCUPÉ</span>
-                    )}
-                  </div>
-                  {slotTaken && (
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', marginBottom: 8, lineHeight: 1.6 }}>
-                      Ce slot est actuellement occupé. Ton boost le remplacera immédiatement à l'achat.
-                    </p>
-                  )}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    {plan.tiers.map((tier, idx) => {
-                      const isSelected = selectedPlan?.position === plan.position && selectedPlan?.tierIdx === idx
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => setSelectedPlan({ position: plan.position, tierIdx: idx })}
-                          style={{
-                            padding: '12px 14px',
-                            borderRadius: 4,
-                            border: isSelected ? '1px solid rgba(200,169,110,0.45)' : '1px solid rgba(255,255,255,0.08)',
-                            background: isSelected
-                              ? 'linear-gradient(135deg, rgba(200,169,110,0.15), rgba(200,169,110,0.04))'
-                              : 'rgba(255,255,255,0.03)',
-                            textAlign: 'left',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                          }}
-                        >
-                          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: isSelected ? 'white' : 'rgba(255,255,255,0.5)', margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                            {tier.label}
-                          </p>
-                          <p style={{
-                            fontFamily: "Inter, sans-serif",
-                            fontWeight: 300,
-                            fontSize: 22,
-                            color: isSelected ? '#c8a96e' : plan.color,
-                            margin: '4px 0 0',
-                          }}>
-                            {tier.price}€
-                          </p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )})}
-
-
-              <button
-                onClick={() => selectedPlan && setStep('pay')}
-                disabled={!selectedPlan}
-                style={{
-                  ...S.btnGold,
-                  opacity: !selectedPlan ? 0.4 : 1,
-                  cursor: !selectedPlan ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {selectedPlan
-                  ? `Booster en ${BOOST_PLANS.find(p => p.position === selectedPlan.position)?.label} — ${BOOST_PLANS.find(p => p.position === selectedPlan.position)?.tiers[selectedPlan.tierIdx]?.price}€`
-                  : 'Sélectionne une option'}
-              </button>
-            </div>
-          )}
-        </div>
+          <p style={{font:`9px ${mono}`,color:'rgba(255,255,255,.38)',lineHeight:1.7,margin:0}}>Paiement sécurisé via Stripe. Le créneau est confirmé uniquement après validation du paiement.</p>
+          <div className="boost-pay-actions"><button className="boost-ghost" onClick={() => setStep('pick')}>Retour</button><button className="boost-primary" onClick={confirmBoost} disabled={paying}>{paying ? 'Redirection vers Stripe…' : `Payer ${chosenTier.price.toFixed(2).replace('.', ',')} €`}</button></div>
+        </> : <>
+          <div><p className="boost-label">1. Choisis ta position</p><div className="boost-position-grid">
+            {BOOST_PLANS.map(plan => { const taken = positionTaken(plan.position); const active = activePosition === plan.position; return <button key={plan.position} className="boost-position" onClick={() => {setActivePosition(plan.position);setSelectedPlan(null)}} style={{border:active?'1px solid rgba(200,169,110,.65)':'1px solid rgba(255,255,255,.09)',background:active?'linear-gradient(145deg,rgba(200,169,110,.18),rgba(200,169,110,.04))':'rgba(255,255,255,.025)'}}><span className="boost-position-top"><RankIcon position={plan.position}/>{plan.label}</span><span className="boost-position-state" style={{color:taken?'#ee8faf':'rgba(78,232,200,.72)'}}>{taken?'Occupé':'Disponible'}</span></button> })}
+          </div></div>
+          <div><div className="boost-duration-head"><div><p className="boost-label" style={{marginBottom:5}}>2. Choisis la durée</p><p className="boost-description">{activePlan.description}</p></div>{positionTaken(activePosition)&&<span style={{font:`8px ${mono}`,color:'#ee8faf',textTransform:'uppercase'}}>Créneau occupé</span>}</div>
+            <div className="boost-duration-grid">{activePlan.tiers.map((tier,index) => { const selected=selectedPlan?.position===activePosition&&selectedPlan?.tierIdx===index; const exceeds=eventEnd>0&&Date.now()+tier.days*86400000>eventEnd; const disabled=positionTaken(activePosition)||exceeds; return <button key={tier.days} className="boost-duration" disabled={disabled} title={exceeds?'Cette durée dépasse la date de l’événement':positionTaken(activePosition)?'Emplacement occupé':''} onClick={()=>setSelectedPlan({position:activePosition,tierIdx:index})} style={{border:selected?'1px solid rgba(78,232,200,.7)':'1px solid rgba(255,255,255,.09)',background:selected?'rgba(78,232,200,.09)':'rgba(255,255,255,.025)',cursor:disabled?'not-allowed':'pointer',opacity:disabled?.38:1}}><span style={{color:selected?'#4ee8c8':'rgba(255,255,255,.48)'}}>{tier.label}</span><strong style={{color:selected?'#fff':activePlan.color}}>{tier.price.toFixed(2).replace('.', ',')} €</strong>{exceeds&&<small style={{display:'block',font:`7px ${mono}`,color:'rgba(255,255,255,.5)',marginTop:5}}>Après l’événement</small>}</button>})}</div>
+            {positionTaken(activePosition)&&<p style={{font:`9px ${mono}`,lineHeight:1.6,color:'rgba(255,255,255,.38)',margin:'10px 0 0'}}>Cette place est déjà réservée dans la région. Choisis une autre position.</p>}
+          </div>
+          <button className="boost-primary" disabled={!selectedPlan} onClick={()=>selectedPlan&&setStep('pay')}>{selectedPlan?`Continuer · ${chosenTier.price.toFixed(2).replace('.', ',')} €`:'Sélectionne une durée'}</button>
+        </>}
       </div>
-    </div>
-  )
+    </section>
+  </div>
 }

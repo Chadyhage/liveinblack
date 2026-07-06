@@ -62,7 +62,7 @@ export default function OrganizerFollowButton({ organizer, compact = false, appe
   if (uid === organizerId) return null
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', minWidth: 0 }}>
       <button onClick={toggle} disabled={busy || organizer?.status !== 'public'} style={{
         width: premium ? '100%' : compact ? 'auto' : '100%', minWidth: compact ? 112 : 148,
         minHeight: premium ? 46 : undefined,
@@ -76,7 +76,7 @@ export default function OrganizerFollowButton({ organizer, compact = false, appe
         {busy ? 'Patiente…' : followed ? <span style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7 }}>Abonné <span aria-hidden="true" style={{ width:6,height:6,borderRadius:'50%',background:'#4ee8c8' }} /></span> : 'S’abonner'}
       </button>
       {menu && (
-        <div style={{ position: 'absolute', zIndex: 30, right: 0, top: 'calc(100% + 7px)', width: 190, padding: 7, borderRadius: 8, background: '#0b0d14', border: '1px solid rgba(255,255,255,.14)', boxShadow: '0 18px 50px rgba(0,0,0,.55)' }}>
+        <div style={{ position: 'absolute', zIndex: 80, right: 0, bottom: 'calc(100% + 8px)', width: 'min(210px, calc(100vw - 52px))', padding: 7, borderRadius: 10, background: '#0b0d14', border: '1px solid rgba(255,255,255,.14)', boxShadow: '0 18px 50px rgba(0,0,0,.65)' }}>
           <button onClick={unfollow} style={{ width: '100%', padding: '10px 12px', border: 0, borderRadius: 5, background: 'rgba(224,90,170,.08)', color: '#f28abe', cursor: 'pointer', fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '.08em', textAlign: 'left' }}>Se désabonner</button>
         </div>
       )}

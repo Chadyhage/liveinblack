@@ -9,6 +9,7 @@ import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { getActiveBoostsByRegion } from '../utils/ticket'
+import { buildRegionalTopThree } from '../../lib/boosts.js'
 import { getEventCountdown, getEventEndTimestamp, isCountdownUrgent, getStockBadge, isEventOngoingOrStartingWithin } from '../utils/eventUrgency'
 import { matchesEntityRegion } from '../utils/locations'
 import { getEnabledRoles } from '../utils/accounts'
@@ -622,28 +623,17 @@ export default function HomePage() {
 
   // Boosts filtrés par la région du visiteur — source = collection globale
   // (cross-device/cross-user), avec fallback localStorage si Firestore indispo
-  const activeBoosts = getActiveBoostsByRegion(regionName, globalBoosts)
+  // Un boost est vendu pour UNE région. Dans la vue « Toutes les régions »,
+  // aucun boost régional n'est favorisé arbitrairement au détriment des autres.
+  const activeBoosts = regionId ? getActiveBoostsByRegion(regionName, globalBoosts) : []
 
-  const boostedByPosition = {}
-  activeBoosts.forEach(b => {
-    const ev = allEvents.find(e => e.id === b.eventId)
-    // Ne montrer l'event boosté que s'il est visible et non passé/annulé
-    if (ev && !ev.cancelled && !isEventPast(ev) && b.position >= 1 && b.position <= 3 && !boostedByPosition[b.position]) {
-      boostedByPosition[b.position] = { ...ev, boostPosition: b.position, featured: true }
-    }
+  const topThree = buildRegionalTopThree({
+    events: regionEvents,
+    fallbackEvents: baseTopThree,
+    boosts: activeBoosts,
+    region: regionName,
+    isEligible: event => isEventVisible(event) && !isEventClosed(event) && matchesEntityRegion(event, regionId),
   })
-  const boostedIds = new Set(Object.values(boostedByPosition).map(e => e.id))
-  const fallback   = baseTopThree.filter(e => !boostedIds.has(e.id))
-
-  const topThree = []
-  let fallbackIdx = 0
-  for (let pos = 1; pos <= 3; pos++) {
-    if (boostedByPosition[pos]) {
-      topThree.push(boostedByPosition[pos])
-    } else {
-      if (fallbackIdx < fallback.length) topThree.push(fallback[fallbackIdx++])
-    }
-  }
 
   // « Réservez pour ce soir » : soirées du JOUR MÊME, dans la région, où il
   // reste des places. Discovery dernière minute pour les sorties spontanées.
@@ -981,13 +971,13 @@ export default function HomePage() {
                         <div style={{
                           fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800,
                           letterSpacing: '0.08em',
-                          color: RANK_COLOR[i],
+                          color: RANK_COLOR[(event.displayPosition || i + 1) - 1],
                           background: 'rgba(5,6,10,0.6)',
                           backdropFilter: 'blur(10px)',
                           padding: '5px 10px', borderRadius: 999,
                           border: '1px solid rgba(255,255,255,0.12)',
                         }}>
-                          {RANK_LABEL[i]}
+                          {RANK_LABEL[(event.displayPosition || i + 1) - 1]}
                         </div>
                         {event.featured && (
                           <div style={{

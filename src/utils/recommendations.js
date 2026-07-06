@@ -19,6 +19,8 @@
 // incompatible (le score de base doit déjà dépasser le seuil).
 
 import { eventEndMs } from './event-time'
+import { musicPreferenceReason } from './recommendationCopy'
+export { musicPreferenceReason } from './recommendationCopy'
 
 // ── Référentiels partagés (onboarding client + tags événement) ────────────────
 export const MUSIC_STYLES = [
@@ -277,7 +279,7 @@ export function scoreEvent(prefs, behavior, event, ctx = {}) {
   // Style musical (champ dédié, sinon dérivé du genre legacy `category`)
   const evStyles = eventStyleIds(event)
   const styleMatch = evStyles.find(s => (p.musicStyles || []).includes(s))
-  if (styleMatch) { score += WEIGHTS.musicStyle; reasons.push({ weight: WEIGHTS.musicStyle, text: `Parce que tu aimes ${styleLabel(styleMatch)}` }) }
+  if (styleMatch) { score += WEIGHTS.musicStyle; reasons.push({ weight: WEIGHTS.musicStyle, text: musicPreferenceReason(styleLabel(styleMatch)) }) }
 
   // Artistes / DJs (artists = [{name}] ou [string] + champ dj libre).
   // Garde ≥ 3 caractères DES DEUX CÔTÉS : sinon un event avec artiste « DJ »

@@ -211,8 +211,8 @@ service cloud.firestore {
 
     // ── Boosts ────────────────────────────────────────────────────────────────
     match /user_boosts/{uid} {
-      allow read:  if isSignedIn();
-      allow write: if isOwner(uid) || isAgent();
+      allow read:  if isOwner(uid) || isAgent();
+      allow write: if isAgent();
     }
 
     // Collection globale des boosts actifs — source de vérité partagée du Top 3.
@@ -222,6 +222,13 @@ service cloud.firestore {
     match /boosts/{id} {
       allow read:  if true;
       allow write: if isAgent();
+    }
+
+    // Verrous transactionnels des emplacements Top 1/2/3. Écriture uniquement
+    // via les fonctions serveur (Admin SDK) ; lecture réservée à l'administration.
+    match /boost_slots/{id} {
+      allow read:  if isAgent();
+      allow write: if false;
     }
 
     // ── Billets scannés ────────────────────────────────────────────────────────
