@@ -352,9 +352,56 @@ export default function OnboardingPrestataire() {
   }, [location.search, user?.uid, subActive]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Lance le paiement de l'abonnement (Stripe Checkout, mode subscription).
+  // Crée le compte Firebase si nécessaire (mode anonyme). C'est ICI que le compte
+  // naît — au moment où l'utilisateur s'engage à payer, pas à l'étape 0.
+  // Renvoie true si le compte existe (créé ou déjà là), false sinon (erreur affichée).
+  async function ensureAccount() {
+    if (!anonMode || anonUidRef.current) return true
+    const { USE_REAL_FIREBASE } = await import('../firebase')
+    const name = `${f.prenom} ${f.nom}`.trim() || 'Prestataire'
+    const phone = f.telephone || ''
+    const loginEmail = regEmail.trim()
+    try {
+      let uid
+      if (USE_REAL_FIREBASE) {
+        const { createUserWithEmailAndPassword } = await import('firebase/auth')
+        const { auth, db } = await import('../firebase')
+        const { doc, setDoc } = await import('firebase/firestore')
+        const cred = await createUserWithEmailAndPassword(auth, loginEmail, regPassword)
+        uid = cred.user.uid
+        await setDoc(doc(db, 'users', uid), {
+          uid, email: loginEmail, name, phone,
+          role: 'client', activeRole: 'client', enabledRoles: ['client'],
+          status: 'draft', emailVerified: false, createdAt: Date.now(),
+        })
+      } else {
+        uid = 'local-prest-' + Date.now()
+        const { saveAccount } = await import('../utils/accounts')
+        saveAccount({ uid, email: loginEmail, name, phone, role: 'prestataire', status: 'draft', emailVerified: false, createdAt: Date.now() })
+      }
+      updateApplication(app.id, { uid, email: loginEmail, name })
+      setApp(prev => ({ ...prev, uid, email: loginEmail, name }))
+      anonUidRef.current = uid
+      saveDraft(app.id, { ...f, regEmail: loginEmail })
+      return true
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        setAwaitingSub(false)
+        setStep(0)
+        setErrors({ regEmail: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte pour continuer.', emailExists: true })
+      } else {
+        setSubError('Impossible de créer ton compte pour le moment. Réessaie dans un instant.')
+      }
+      return false
+    }
+  }
+
   async function handleSubscribe() {
     setSubError('')
     setSubRedirecting(true)
+    // Le compte naît ici, seulement quand l'utilisateur s'engage à payer.
+    const accountOk = await ensureAccount()
+    if (!accountOk) { setSubRedirecting(false); return }
     try {
       const { authHeaders } = await import('../utils/apiAuth')
       const r = await fetch('/api/create-subscription', {
@@ -431,49 +478,27 @@ export default function OnboardingPrestataire() {
   async function next() {
     if (!validate(step)) return
 
-    // Create the account before asking for the provider profile details.
+    // Étape 0 (anonyme) : on NE crée PAS de compte ici. On vérifie seulement que
+    // l'email est libre. Le compte est créé au moment où l'utilisateur s'engage
+    // à payer l'abonnement (handleSubscribe) — plus de comptes fantômes créés
+    // par ceux qui abandonnent avant le paiement.
     if (anonMode && step === 0 && !anonUidRef.current) {
       setCreatingAccount(true)
       try {
         const { USE_REAL_FIREBASE } = await import('../firebase')
-        let uid
-        // Nom du COMPTE (identité perso) = prénom + nom. Le nom de scène / commercial
-        // reste l'identité PRO (providers/{uid}), il n'écrase pas le nom du compte.
-        const name = `${f.prenom} ${f.nom}`.trim() || getDisplayName(f) || 'Prestataire'
-        const phone = f.telephone || ''
-
         if (USE_REAL_FIREBASE) {
-          const { createUserWithEmailAndPassword } = await import('firebase/auth')
-          const { auth, db } = await import('../firebase')
-          const { doc, setDoc } = await import('firebase/firestore')
-          const cred = await createUserWithEmailAndPassword(auth, regEmail.trim(), regPassword)
-          uid = cred.user.uid
-          await setDoc(doc(db, 'users', uid), {
-            uid, email: regEmail.trim(), name, phone,
-            role: 'client', activeRole: 'client', enabledRoles: ['client'],
-            status: 'draft', emailVerified: false, createdAt: Date.now(),
-          })
-        } else {
-          uid = 'local-prest-' + Date.now()
-          const { saveAccount } = await import('../utils/accounts')
-          saveAccount({ uid, email: regEmail.trim(), name, phone, role: 'prestataire', status: 'draft', emailVerified: false, createdAt: Date.now() })
+          const { auth } = await import('../firebase')
+          const { fetchSignInMethodsForEmail } = await import('firebase/auth')
+          const methods = await fetchSignInMethodsForEmail(auth, regEmail.trim())
+          if (methods && methods.length > 0) {
+            setCreatingAccount(false)
+            setErrors({ regEmail: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte, puis débloque l\'interface prestataire depuis ton profil (menu « Mes interfaces » → Devenir prestataire). Pas besoin de créer un nouveau compte.', emailExists: true })
+            return
+          }
         }
-
-        updateApplication(app.id, { uid, email: regEmail.trim(), name })
-        setApp(prev => ({ ...prev, uid, email: regEmail.trim(), name }))
-        anonUidRef.current = uid
-        saveDraft(app.id, { ...f, regEmail: regEmail.trim() })
-
-      } catch (err) {
-        setCreatingAccount(false)
-        if (err.code === 'auth/email-already-in-use') {
-          setErrors({ regEmail: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte, puis débloque l\'interface prestataire depuis ton profil (menu « Mes interfaces » → Devenir prestataire). Pas besoin de créer un nouveau compte.', emailExists: true })
-        } else {
-          setErrors({ regEmail: 'Impossible de créer ton compte pour le moment. Réessaie dans un instant.' })
-        }
-        return
-      }
+      } catch { /* protection anti-énumération / hors-ligne : vérification finale au paiement */ }
       setCreatingAccount(false)
+      saveDraft(app.id, { ...f, regEmail: regEmail.trim() })
     }
 
     // PÉAGE ABONNEMENT : après l'étape 1 (compte créé), on ne passe au dossier

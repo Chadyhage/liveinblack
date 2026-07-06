@@ -104,6 +104,10 @@ export default function OnboardingOrganisateur() {
   const [creatingAccount, setCreatingAccount] = useState(false)
   const [errors, setErrors] = useState({})
   const [uploadStatus, setUploadStatus] = useState({})
+  // Documents gardés EN MÉMOIRE tant que le compte n'existe pas. Ils ne sont
+  // uploadés vers Storage qu'à la soumission finale (après création du compte).
+  // Forme : { [docKey]: [{ file, name, size }] }
+  const [pendingDocs, setPendingDocs] = useState({})
   const [toast, setToast] = useState(null)
   const [successScreen, setSuccessScreen] = useState(false)
 
@@ -218,53 +222,26 @@ export default function OnboardingOrganisateur() {
   async function next() {
     if (!validate(step)) return
 
-    // Anonymous mode: create Firebase account when leaving step 0
-    if (anonMode && step === 0 && !anonUidRef.current) {
+    // Étape 0 (anonyme) : on NE crée AUCUN compte ici. On vérifie seulement que
+    // l'email est libre (best-effort). Le compte n'est créé qu'à la soumission
+    // finale — plus de comptes fantômes à moitié créés qui bloquent l'email.
+    if (anonMode && step === 0) {
       setCreatingAccount(true)
       try {
         const { USE_REAL_FIREBASE } = await import('../firebase')
-        let uid
-        const name = f.nomCommercial.trim()
-        const phone = f.telephonePro || ''
-        const loginEmail = f.emailPro.trim()
-
         if (USE_REAL_FIREBASE) {
-          const { createUserWithEmailAndPassword } = await import('firebase/auth')
-          const { auth, db } = await import('../firebase')
-          const { doc, setDoc } = await import('firebase/firestore')
-          const cred = await createUserWithEmailAndPassword(auth, loginEmail, regPassword)
-          uid = cred.user.uid
-          // Create Firestore user doc — role stays 'client' until admin approval
-          // (OnboardingGuard redirects status:'draft' to the form, so navigation still works)
-          await setDoc(doc(db, 'users', uid), {
-            uid, email: loginEmail, name, phone,
-            role: 'client', activeRole: 'client', enabledRoles: ['client'],
-            status: 'draft', emailVerified: false, createdAt: Date.now(),
-          })
-        } else {
-          uid = 'local-org-' + Date.now()
-          const { saveAccount } = await import('../utils/accounts')
-          saveAccount({ uid, email: loginEmail, name, phone, role: 'organisateur', status: 'draft', emailVerified: false, createdAt: Date.now() })
+          const { auth } = await import('../firebase')
+          const { fetchSignInMethodsForEmail } = await import('firebase/auth')
+          const methods = await fetchSignInMethodsForEmail(auth, f.emailPro.trim())
+          if (methods && methods.length > 0) {
+            setCreatingAccount(false)
+            setErrors({ emailPro: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte, puis débloque l\'interface organisateur depuis ton profil (menu « Mes interfaces » → Devenir organisateur). Pas besoin de créer un nouveau compte.', emailExists: true })
+            return
+          }
         }
-
-        // Update localStorage app with real uid + email
-        updateApplication(app.id, { uid, email: loginEmail, name })
-        setApp(prev => ({ ...prev, uid, email: loginEmail, name }))
-        anonUidRef.current = uid
-
-        // Save draft so it's restored on page reload
-        saveDraft(app.id, f)
-
-      } catch (err) {
-        setCreatingAccount(false)
-        if (err.code === 'auth/email-already-in-use') {
-          setErrors({ emailPro: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte, puis débloque l\'interface organisateur depuis ton profil (menu « Mes interfaces » → Devenir organisateur). Pas besoin de créer un nouveau compte.', emailExists: true })
-        } else {
-          setErrors({ emailPro: `Erreur : ${err.message || 'Réessaie.'}` })
-        }
-        return
-      }
+      } catch { /* protection anti-énumération / hors-ligne : vérification finale à la soumission */ }
       setCreatingAccount(false)
+      saveDraft(app.id, f)
     }
 
     setStep(s => Math.min(s + 1, STEPS.length - 1))
@@ -276,55 +253,82 @@ export default function OnboardingOrganisateur() {
     window.scrollTo(0, 0)
   }
 
-  async function handleUpload(docKey, file) {
-    if (!app || !file) return
-    setUploadStatus(s => ({ ...s, [docKey]: 'uploading' }))
-    const res = await uploadDocument(app.id, docKey, file)
-    if (res.ok) {
-      setUploadStatus(s => ({ ...s, [docKey]: 'done' }))
-      const fresh = getApplicationById(app.id)
-      if (fresh) setApp(fresh)
-    } else {
-      setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
-      const notAuth = /authentifi/i.test(res.error || '')
-      showToast(
-        notAuth
-          ? 'Session expirée — clique sur « Recommencer une nouvelle demande » en haut pour repartir à zéro.'
-          : 'Erreur lors de l\'ajout',
-        'error'
-      )
-    }
+  // Sélection d'un document : on garde le File EN MÉMOIRE (pas d'upload tant que
+  // le compte n'existe pas). L'upload réel se fait à la soumission.
+  function handleUpload(docKey, file) {
+    if (!file) return
+    setPendingDocs(p => ({ ...p, [docKey]: [{ file, name: file.name, size: file.size }] }))
+    setUploadStatus(s => ({ ...s, [docKey]: 'ready' }))
   }
 
-  async function handleRemove(docKey, index) {
-    if (!app) return
-    await removeDocumentFile(app.id, docKey, index)
-    const fresh = getApplicationById(app.id)
-    if (fresh) setApp(fresh)
+  function handleRemove(docKey) {
+    setPendingDocs(p => { const n = { ...p }; delete n[docKey]; return n })
+    setUploadStatus(s => { const n = { ...s }; delete n[docKey]; return n })
   }
 
   async function handleSubmit() {
-    const missingDocs = []
-    if (!hasDoc(app, 'identity'))                    missingDocs.push('Pièce d\'identité')
-    if (missingDocs.length > 0) {
-      showToast(`Document(s) manquant(s) : ${missingDocs.join(', ')}`, 'error')
+    if (!(pendingDocs.identity?.length)) {
+      showToast('Document manquant : Pièce d\'identité', 'error')
       return
     }
     setSubmitting(true)
     try {
-      const freshApp = getApplicationById(app.id)
-      const allDocs = freshApp?.documents || {}
-      const failedDocs = []
-      for (const [docKey, entries] of Object.entries(allDocs)) {
-        const arr = Array.isArray(entries) ? entries : [entries]
-        if (arr.some(e => e && !e.url)) {
-          failedDocs.push(DOCUMENT_LABELS[docKey]?.label || docKey)
+      const { USE_REAL_FIREBASE } = await import('../firebase')
+
+      // 1) CRÉER le compte MAINTENANT (anonyme uniquement — un utilisateur
+      //    connecté a déjà son compte). C'est la seule création de compte.
+      if (anonMode) {
+        const name = f.nomCommercial.trim()
+        const phone = f.telephonePro || ''
+        const loginEmail = f.emailPro.trim()
+        if (USE_REAL_FIREBASE) {
+          const { createUserWithEmailAndPassword } = await import('firebase/auth')
+          const { auth, db } = await import('../firebase')
+          const { doc, setDoc } = await import('firebase/firestore')
+          let cred
+          try {
+            cred = await createUserWithEmailAndPassword(auth, loginEmail, regPassword)
+          } catch (e) {
+            setSubmitting(false)
+            if (e.code === 'auth/email-already-in-use') {
+              setStep(0)
+              setErrors({ emailPro: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte pour continuer.', emailExists: true })
+              showToast('Email déjà associé à un compte', 'error')
+            } else {
+              showToast('Création du compte impossible — réessaie.', 'error')
+            }
+            return
+          }
+          const uid = cred.user.uid
+          await setDoc(doc(db, 'users', uid), {
+            uid, email: loginEmail, name, phone,
+            role: 'client', activeRole: 'client', enabledRoles: ['client'],
+            status: 'draft', emailVerified: false, createdAt: Date.now(),
+          })
+          updateApplication(app.id, { uid, email: loginEmail, name })
+          setApp(prev => ({ ...prev, uid, email: loginEmail, name }))
+        } else {
+          const uid = 'local-org-' + Date.now()
+          const { saveAccount } = await import('../utils/accounts')
+          saveAccount({ uid, email: loginEmail, name, phone, role: 'organisateur', status: 'draft', emailVerified: false, createdAt: Date.now() })
+          updateApplication(app.id, { uid, email: loginEmail, name })
+          setApp(prev => ({ ...prev, uid, email: loginEmail, name }))
         }
       }
-      if (failedDocs.length > 0) {
-        setSubmitting(false)
-        showToast(`Retire et rajoute ces fichiers : ${failedDocs.join(', ')}`, 'error')
-        return
+
+      // 2) Uploader les documents gardés en mémoire (maintenant authentifié)
+      for (const [docKey, entries] of Object.entries(pendingDocs)) {
+        for (const entry of entries) {
+          setUploadStatus(s => ({ ...s, [docKey]: 'uploading' }))
+          const res = await uploadDocument(app.id, docKey, entry.file)
+          if (!res.ok) {
+            setSubmitting(false)
+            setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
+            showToast(`Échec de l'envoi : ${DOCUMENT_LABELS[docKey]?.label || docKey}. Réessaie.`, 'error')
+            return
+          }
+          setUploadStatus(s => ({ ...s, [docKey]: 'done' }))
+        }
       }
 
       const result = await submitApplication(app.id, f, candidateNote)
@@ -875,37 +879,37 @@ export default function OnboardingOrganisateur() {
             <DocUploadRow
               label="Pièce d'identité"
               required
-              files={getDocFiles(app, 'identity')}
+              files={pendingDocs.identity || []}
               status={uploadStatus.identity}
               onChange={file => handleUpload('identity', file)}
-              onRemove={i => handleRemove('identity', i)}
+              onRemove={() => handleRemove('identity')}
             />
 
             {/* ── Optionnel : document officiel entreprise ── */}
             <DocUploadRow
               label="Document officiel de l'entreprise (KBIS, statuts, récépissé INSEE…)"
               required={false}
-              files={getDocFiles(app, 'business_doc')}
+              files={pendingDocs.business_doc || []}
               status={uploadStatus.business_doc}
               onChange={file => handleUpload('business_doc', file)}
-              onRemove={i => handleRemove('business_doc', i)}
+              onRemove={() => handleRemove('business_doc')}
             />
 
             {/* ── Conditionnel : alcool (justificatif FACULTATIF) ── */}
             {f.alcool && (
               <DocUploadRow
                 label="Licence / Justificatif de débit de boissons (facultatif)"
-                files={getDocFiles(app, 'alcohol_license')}
+                files={pendingDocs.alcohol_license || []}
                 status={uploadStatus.alcohol_license}
                 onChange={file => handleUpload('alcohol_license', file)}
-                onRemove={i => handleRemove('alcohol_license', i)}
+                onRemove={() => handleRemove('alcohol_license')}
               />
             )}
 
             {/* Submit section */}
             {(() => {
               const missing = []
-              if (!hasDoc(app, 'identity'))                    missing.push('Pièce d\'identité')
+              if (!(pendingDocs.identity?.length))             missing.push('Pièce d\'identité')
               const canSubmit = missing.length === 0
               return (
                 <div style={{ marginTop: 8, padding: '16px', background: canSubmit ? 'rgba(200,169,110,0.05)' : 'rgba(224,90,170,0.04)', border: `1px solid ${canSubmit ? 'rgba(200,169,110,0.15)' : 'rgba(224,90,170,0.2)'}`, borderRadius: 8 }}>
