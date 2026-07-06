@@ -19,6 +19,15 @@ import PublicLanding from './PublicLanding'
 import { getRecommendations, hasPreferences, personalizationEnabled } from '../utils/recommendations'
 import { PreferencesModal } from '../components/PreferencesEditor'
 
+// Bandeau goûts : petit défilé d'artistes + styles pour donner envie sans
+// alourdir la bannière (pas de photos réseau ici — juste des chips texte,
+// fiable et instantané). Mélange volontaire artistes / styles.
+const TASTE_TEASER_ITEMS = [
+  'Burna Boy', 'Amapiano', 'Aya Nakamura', 'Afrobeat', 'Tiakola', 'Coupé-décalé',
+  'Fally Ipupa', 'Rap / Hip-hop', 'Tyla', 'Dancehall', 'Wizkid', 'House',
+  'Ninho', 'Zouk / Kompa', 'Gazo', 'Techno',
+]
+
 function HostToolsWidget() {
   const tools = [
     { label: 'Billetterie', path: <path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4V7zM9 7v12"/> },
@@ -831,34 +840,57 @@ export default function HomePage() {
         {/* ── Bannière onboarding goûts (optionnelle, non bloquante) ── */}
         {showTasteBanner && (
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
             margin: '0 0 40px', padding: '16px 20px', borderRadius: 20,
             background: 'linear-gradient(135deg, rgba(132,68,255,0.14), rgba(78,232,200,0.06))',
-            border: '1px solid rgba(132,68,255,0.35)',
+            border: '1px solid rgba(132,68,255,0.3)',
           }}>
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.2px' }}>
-                Des soirées choisies pour toi ✨
-              </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.55)', margin: '4px 0 0', lineHeight: 1.5 }}>
-                Dis-nous tes styles, ton budget et ton ambiance — on te recommande les événements qui te ressemblent. 30 secondes, modifiable à tout moment.
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.2px' }}>
+                  Des soirées choisies pour toi
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.55)', margin: '4px 0 0', lineHeight: 1.5 }}>
+                  Dis-nous tes styles, ton budget et ton ambiance — on te recommande les événements qui te ressemblent. 30 secondes, modifiable à tout moment.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button onClick={() => setPrefsOpen(true)} style={{
+                  padding: '10px 18px', borderRadius: 999, cursor: 'pointer',
+                  background: 'rgba(132,68,255,0.16)', color: '#c9b0ff',
+                  border: '1px solid rgba(132,68,255,0.5)',
+                  fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 800,
+                }}>
+                  Personnaliser
+                </button>
+                <button onClick={dismissTasteBanner} aria-label="Plus tard" style={{
+                  width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 16,
+                }}>
+                  ×
+                </button>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button onClick={() => setPrefsOpen(true)} style={{
-                padding: '11px 20px', borderRadius: 999, border: 'none', cursor: 'pointer',
-                background: 'linear-gradient(135deg, #8444ff, #a56bff)', color: '#fff',
-                fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 800,
-                boxShadow: '0 8px 24px -8px rgba(132,68,255,0.55)',
-              }}>
-                Personnaliser
-              </button>
-              <button onClick={dismissTasteBanner} aria-label="Plus tard" style={{
-                width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)',
-                background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 16,
-              }}>
-                ×
-              </button>
+
+            {/* Petit défilé d'artistes / styles — teaser discret, pas de photos réseau */}
+            <div style={{
+              marginTop: 14, position: 'relative', overflow: 'hidden',
+              maskImage: 'linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)',
+              WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)',
+            }}>
+              <div className="lib-marquee-track" style={{ display: 'flex', gap: 8, width: 'max-content' }}>
+                {[...TASTE_TEASER_ITEMS, ...TASTE_TEASER_ITEMS].map((label, i) => (
+                  <span key={i} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                    padding: '5px 12px', borderRadius: 999,
+                    background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.09)',
+                    fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: i % 2 === 0 ? '#a56bff' : '#4ee8c8', flexShrink: 0 }} />
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         )}

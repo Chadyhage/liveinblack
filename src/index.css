@@ -58,6 +58,11 @@
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .hide-scrollbar::-webkit-scrollbar { display: none; height: 0; }
 
+  /* ── Marquee horizontal (bandeau goûts, etc.) : défilement continu, pause au survol ── */
+  .lib-marquee-track { animation: lib-marquee 26s linear infinite; }
+  .lib-marquee-track:hover { animation-play-state: paused; }
+  @keyframes lib-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
   /* ── Lecteur de disque ── */
   .lib-spin { animation: lib-spin 2.4s linear infinite; }
   @keyframes lib-spin { to { transform: rotate(360deg); } }
