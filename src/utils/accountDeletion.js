@@ -217,6 +217,18 @@ async function _anonymizeAccount(req) {
   const { uid, applicationId } = req
   const now = Date.now()
 
+  // 0. Libérer l'email côté Firebase Auth (serveur, authOnly : la pierre
+  //    tombale Firestore est conservée pour l'archivage RGPD). Sans ça,
+  //    l'email resterait verrouillé à vie (auth/email-already-in-use).
+  try {
+    const { authHeaders } = await import('./apiAuth')
+    await fetch('/api/admin-delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+      body: JSON.stringify({ uid, authOnly: true }),
+    })
+  } catch {}
+
   // 1. Anonymiser l'application
   try {
     const apps  = JSON.parse(localStorage.getItem('lib_applications') || '[]')

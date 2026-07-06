@@ -441,18 +441,41 @@ export default function AgentPage() {
     setSelectedUser(null)
   }
 
-  async function handleDelete(uid) {
-    // 1. Supprimer du localStorage
-    deleteAccount(uid)
-    // 2. Supprimer Firestore : profil + toutes les collections liées
+  // ── Suppression complète serveur (Firebase Auth + Firestore) ────────────────
+  // RÈGLE : un compte vit dans 3 couches (Auth, Firestore, localStorage). Seul
+  // le serveur peut supprimer l'utilisateur Auth — sans ça l'email reste
+  // verrouillé à vie (auth/email-already-in-use à la ré-inscription).
+  // Si le serveur échoue → on ne touche à RIEN localement (pas d'état fantôme).
+  async function deleteAccountFull(uid) {
     try {
-      const { db } = await import('../firebase')
-      const { doc, deleteDoc } = await import('firebase/firestore')
-      const collections = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social', 'catalogs', 'providers']
-      await Promise.allSettled(collections.map(col => deleteDoc(doc(db, col, uid))))
-    } catch {}
+      const { authHeaders } = await import('../utils/apiAuth')
+      const res = await fetch('/api/admin-delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ uid }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        return { ok: false, message: data.message || `Erreur serveur (${res.status})` }
+      }
+      // Serveur OK → nettoyage local
+      deleteAccount(uid)
+      return { ok: true, ...data }
+    } catch (e) {
+      return { ok: false, message: 'Serveur injoignable — compte NON supprimé (réessaie).' }
+    }
+  }
+
+  async function handleDelete(uid) {
+    const result = await deleteAccountFull(uid)
+    if (!result.ok) {
+      showToast(result.message, 'error')
+      return
+    }
     refresh()
-    showToast('Compte supprimé', 'error')
+    showToast(result.authDeleted
+      ? `Compte supprimé — email ${result.deletedEmail || ''} libéré pour ré-inscription`.trim()
+      : 'Compte supprimé (données nettoyées)', 'error')
     setConfirmAction(null)
     setSelectedUser(null)
   }
@@ -470,15 +493,13 @@ export default function AgentPage() {
   }
 
   async function handleDeleteUnverified(uid) {
-    deleteAccount(uid)
-    try {
-      const { db } = await import('../firebase')
-      const { doc, deleteDoc } = await import('firebase/firestore')
-      const cols = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social']
-      await Promise.allSettled(cols.map(c => deleteDoc(doc(db, c, uid))))
-    } catch {}
+    const result = await deleteAccountFull(uid)
+    if (!result.ok) {
+      showToast(result.message, 'error')
+      return
+    }
     refresh()
-    showToast('Compte non vérifié supprimé')
+    showToast('Compte non vérifié supprimé (email libéré)')
   }
 
   async function handleCleanupExpired() {
