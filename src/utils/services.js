@@ -1,4 +1,4 @@
-import { getRegionName, normalizeRegionId, normalizeRegionIds } from './locations.js'
+import { getRegionName, inferRegionIdFromCity, normalizeRegionId, normalizeRegionIds } from './locations.js'
 
 // ─── Prestataire Catalog ─────────────────────────────────────────────────────
 // Gère le catalogue public des prestataires.
@@ -134,7 +134,7 @@ export function getProviderProfile(userId) {
 }
 
 export function saveProviderProfile(profile) {
-  const regionId = normalizeRegionId(profile.regionId || profile.country || profile.zonesIntervention?.[0])
+  const regionId = normalizeRegionId(profile.regionId || profile.country || profile.zonesIntervention?.[0]) || inferRegionIdFromCity(profile.city || profile.location)
   const normalizedZones = normalizeRegionIds(profile.zonesIntervention)
   const city = (profile.city || profile.location || '').trim()
   const normalized = {

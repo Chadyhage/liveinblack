@@ -17,7 +17,7 @@ import {
 } from '../utils/services'
 import { getProviderCategory, normalizeProviderType } from '../utils/providerCategories'
 import { regions } from '../data/regions'
-import { getRegionName, normalizeRegionId, normalizeRegionIds, REGION_OPTIONS } from '../utils/locations'
+import { getRegionName, inferRegionIdFromCity, normalizeRegionId, normalizeRegionIds, REGION_OPTIONS } from '../utils/locations'
 
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
@@ -123,7 +123,7 @@ function EmptyCatalog({ onAdd }) {
 }
 
 function providerProfileForm(profile, fallbackName = '') {
-  const regionId = normalizeRegionId(profile?.regionId || profile?.country || profile?.zonesIntervention?.[0]) || 'france'
+  const regionId = normalizeRegionId(profile?.regionId || profile?.country || profile?.zonesIntervention?.[0]) || inferRegionIdFromCity(profile?.city || profile?.location) || 'france'
   const normalizedZones = normalizeRegionIds(profile?.zonesIntervention)
   return {
     name: profile?.name || fallbackName,

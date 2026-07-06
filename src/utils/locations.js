@@ -6,6 +6,13 @@ export const REGION_OPTIONS = [
   { id: INTERNATIONAL_REGION_ID, name: 'International', country: 'International', flag: '🌍', code: 'INT' },
 ]
 
+const LEGACY_CITY_REGION = new Map(Object.entries({
+  paris: 'france', lyon: 'france', marseille: 'france', lille: 'france', bordeaux: 'france',
+  toulouse: 'france', nantes: 'france', nice: 'france', strasbourg: 'france', montpellier: 'france', rennes: 'france',
+  lome: 'togo', kara: 'togo', sokode: 'togo', kpalime: 'togo', atakpame: 'togo',
+  cotonou: 'benin', 'porto novo': 'benin', 'abomey calavi': 'benin', parakou: 'benin', abomey: 'benin',
+}))
+
 export function normalizeGeoText(value = '') {
   return String(value)
     .normalize('NFD')
@@ -48,12 +55,17 @@ export function getRegionName(idOrName) {
   return getRegion(idOrName)?.name || ''
 }
 
+export function inferRegionIdFromCity(value) {
+  return LEGACY_CITY_REGION.get(normalizeGeoText(value)) || ''
+}
+
 export function getEntityRegionIds(entity = {}, relatedItems = []) {
   return normalizeRegionIds([
     entity.regionId,
     entity.primaryRegionId,
     entity.country,
     entity.region,
+    inferRegionIdFromCity(entity.city || entity.location),
     ...(Array.isArray(entity.zonesIntervention) ? entity.zonesIntervention : []),
     ...relatedItems.flatMap(item => [item?.regionId, item?.region, item?.country]),
   ])

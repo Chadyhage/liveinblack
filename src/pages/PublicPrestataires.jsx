@@ -69,7 +69,7 @@ export default function PublicPrestataires() {
     // laissé vide (aucune photo, description ni localisation) est un profil
     // fantôme (onboarding abandonné) → on ne l'affiche pas dans l'annuaire.
     const valid = Object.values(byId).filter(p => p.name && (
-      p.photoUrl || p.description || p.city || p.location || p.regionId || p.country ||
+      p.photoUrl || p.description || p.city || p.location || p.regionId || p.country || p.zonesIntervention?.length ||
       (catalogs[p.userId] || []).some(item => item.available !== false)
     ))
     // Dedup par nom : si deux docs Firestore portent le même nom, garder le plus complet

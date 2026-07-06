@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   getEntityRegionIds,
+  inferRegionIdFromCity,
   matchesEntityRegion,
   normalizeGeoText,
   normalizeRegionId,
@@ -14,6 +15,7 @@ test('normalise les régions actuelles et les anciennes saisies lisibles', () =>
   assert.equal(normalizeRegionId('intervention au Togo'), 'togo')
   assert.equal(normalizeRegionId('Bénin'), 'benin')
   assert.equal(normalizeGeoText('Lomé'), 'lome')
+  assert.equal(inferRegionIdFromCity('Lomé'), 'togo')
 })
 
 test('International remplace les zones individuelles', () => {
@@ -32,4 +34,3 @@ test('utilise aussi la région des événements pour un organisateur historique'
   assert.equal(matchesEntityRegion(organizer, 'togo', [{ region: 'Togo' }]), true)
   assert.equal(matchesEntityRegion(organizer, 'france', [{ region: 'Togo' }]), false)
 })
-

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PublicNav from '../components/PublicNav'
 
@@ -13,6 +14,49 @@ export default function PublicAbout() {
   const navigate = useNavigate()
   const register = () => navigate('/connexion?mode=register')
 
+  const [seconds, setSeconds] = useState(30)
+  const [isCounting, setIsCounting] = useState(false)
+  const ctaRef = useRef(null)
+
+  const [activeTab, setActiveTab] = useState('client')
+
+  const tabs = [
+    { id: 'client', label: 'Tu sors', color: C.teal, roleName: 'Le Clubber', d: 'Découvre les meilleures soirées près de chez toi, réserve en quelques secondes, reçois ton billet QR instantanément et cumule des points à chaque sortie.', cta: 'Créer mon compte', fn: register },
+    { id: 'organizer', label: 'Tu organises', color: C.violet, roleName: 'L’Organisateur', d: 'Crée et publie ton événement, vends tes billets en ligne, gère ta guestlist, scanne les entrées et suis tes ventes en temps réel — POS sur place inclus.', cta: 'Devenir organisateur', fn: register },
+    { id: 'provider', label: 'Tu prestes', color: C.gold, roleName: 'Le Prestataire', d: 'DJ, salle, sono, traiteur… Crée ta vitrine publique, sois visible des organisateurs et reçois des demandes de devis directement.', cta: 'Devenir prestataire', fn: register },
+  ]
+  const currentTab = tabs.find(t => t.id === activeTab)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setSeconds(30)
+          setIsCounting(true)
+        } else {
+          setIsCounting(false)
+        }
+      },
+      { threshold: 0.15 }
+    )
+    if (ctaRef.current) {
+      observer.observe(ctaRef.current)
+    }
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!isCounting) return
+    if (seconds <= 0) {
+      setIsCounting(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      setSeconds(s => s - 1)
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [seconds, isCounting])
+
   return (
     <div style={{
       color: '#fff', overflowX: 'hidden', minHeight: '100vh',
@@ -24,6 +68,35 @@ export default function PublicAbout() {
         @media(min-width:720px){ .lb-navlink{ display:inline-block } }
         .lb-card{ transition:transform .25s cubic-bezier(.22,.9,.3,1), border-color .25s ease }
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4) }
+        @keyframes lib-tick {
+          0% { transform: scale(1.25); filter: brightness(1.3); }
+          100% { transform: scale(1.1); filter: brightness(1); }
+        }
+        .lb-fade-in {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .lb-fade-in.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .lb-tab {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 21px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          cursor: pointer;
+          padding: 8px 22px;
+          border-radius: 99px;
+          border: 1px solid transparent;
+          background: transparent;
+          color: rgba(255,255,255,0.45);
+          transition: all 0.25s ease;
+        }
+        .lb-tab:hover {
+          color: #fff;
+        }
       `}</style>
 
       <PublicNav />
@@ -42,28 +115,50 @@ export default function PublicAbout() {
       </section>
 
       {/* ══ LA PROMESSE ══ */}
-      <Section eyebrow="La promesse" title="Une soirée, ça se vit — pas ça se gère">
-        <p style={txt}>
-          Trouver la bonne soirée, réserver sans stress, garder son billet dans sa poche, contacter un DJ ou une salle en un message : tout devrait être simple. Live in Black enlève les frictions entre l'envie de sortir et le moment où la musique démarre.
-        </p>
-      </Section>
+      <ScrollFadeIn>
+        <Section eyebrow="La promesse" title="LIB, quand créer ta soirée devient une partie de plaisir">
+          <p style={txt}>
+            Trouver la bonne soirée, réserver sans stress, garder son billet dans sa poche, contacter un DJ ou une salle en un message : tout devrait être simple. Live in Black enlève les frictions entre l'envie de sortir et le moment où la musique démarre.
+          </p>
+        </Section>
+      </ScrollFadeIn>
 
       {/* ══ LES 3 PROFILS ══ */}
-      <Section eyebrow="Pour qui ?" title="Trois façons de vivre Live in Black">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 16 }}>
-          {[
-            { c: C.teal, t: 'Tu sors', d: 'Découvre les meilleures soirées près de chez toi, réserve en quelques secondes, reçois ton billet QR instantanément et cumule des points à chaque sortie.', cta: 'Créer mon compte', fn: register },
-            { c: C.violet, t: 'Tu organises', d: 'Crée et publie ton événement, vends tes billets en ligne, gère ta guestlist, scanne les entrées et suis tes ventes en temps réel — POS sur place inclus.', cta: 'Devenir organisateur', fn: register },
-            { c: C.gold, t: 'Tu prestes', d: 'DJ, salle, sono, traiteur… Crée ta vitrine publique, sois visible des organisateurs et reçois des demandes de devis directement.', cta: 'Devenir prestataire', fn: register },
-          ].map(p => (
-            <div key={p.t} className="lb-card" style={{ ...card, padding: 22, display: 'flex', flexDirection: 'column', borderColor: `${p.c}40`, background: `linear-gradient(160deg, ${p.c}12, rgba(9,11,20,.6))` }}>
-              <h3 style={{ fontFamily: FONT, fontSize: 21, fontWeight: 800, letterSpacing: '-.4px', color: p.c, margin: 0 }}>{p.t}</h3>
-              <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,.7)', margin: '10px 0 18px', lineHeight: 1.55, flex: 1 }}>{p.d}</p>
-              <button onClick={p.fn} style={{ ...btnSolid(p.c), width: '100%' }}>{p.cta}</button>
+      <ScrollFadeIn>
+        <Section eyebrow="Pour qui ?" title="Trois façons de vivre Live in Black">
+          {/* Tab buttons swapper */}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 28, flexWrap: 'wrap' }}>
+            {tabs.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className="lb-tab"
+                style={{
+                  color: activeTab === t.id ? '#fff' : 'rgba(255,255,255,0.45)',
+                  background: activeTab === t.id ? `${t.color}22` : 'transparent',
+                  border: `1px solid ${activeTab === t.id ? `${t.color}66` : 'rgba(255,255,255,0.06)'}`,
+                  boxShadow: activeTab === t.id ? `0 0 20px ${t.color}12` : 'none'
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Interactive active tab content card */}
+          <div className="lb-card" style={{ ...card, padding: '36px 30px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 32, alignItems: 'center', textAlign: 'left', minHeight: 280 }}>
+            <div>
+              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: currentTab.color }}>{currentTab.roleName}</span>
+              <h3 style={{ fontFamily: FONT, fontSize: 28, fontWeight: 800, color: '#fff', margin: '6px 0 12px', letterSpacing: '-0.6px' }}>{currentTab.label}</h3>
+              <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 24px' }}>{currentTab.d}</p>
+              <button onClick={currentTab.fn} style={btnSolid(currentTab.color)}>{currentTab.cta}</button>
             </div>
-          ))}
-        </div>
-      </Section>
+            <div>
+              <TabMockup type={activeTab} />
+            </div>
+          </div>
+        </Section>
+      </ScrollFadeIn>
 
       {/* ══ COMMENT ÇA MARCHE ══ */}
       <Section eyebrow="En 3 temps" title="De l'envie à la piste">
@@ -72,44 +167,52 @@ export default function PublicAbout() {
             ['1', 'Découvre', 'Parcours les soirées et les prestataires, filtre par ville et par style.'],
             ['2', 'Réserve', 'Paiement sécurisé, billet QR immédiat, tout reste dans ton compte.'],
             ['3', 'Profite', 'Scan à l\'entrée, commande sur place, et vis chaque nuit à fond.'],
-          ].map(([n, t, d]) => (
-            <div key={n} style={{ ...card, padding: '20px 18px', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: 12, right: 16, fontFamily: FONT, fontSize: 40, fontWeight: 800, color: 'rgba(78,232,200,.14)' }}>{n}</span>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: C.teal, margin: 0 }}>{t}</p>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
-            </div>
+          ].map(([n, t, d], i) => (
+            <ScrollFadeIn key={n} delay={i * 100}>
+              <div style={{ ...card, padding: '20px 18px', position: 'relative', height: '100%' }}>
+                <span style={{ position: 'absolute', top: 12, right: 16, fontFamily: FONT, fontSize: 40, fontWeight: 800, color: 'rgba(78,232,200,.14)' }}>{n}</span>
+                <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: C.teal, margin: 0 }}>{t}</p>
+                <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
+              </div>
+            </ScrollFadeIn>
           ))}
         </div>
       </Section>
 
       {/* ══ CONFIANCE ══ */}
-      <Section eyebrow="La confiance" title="Sérieux là où ça compte">
+      <Section eyebrow="La confiance" title="Tout est protégé et sécurisé">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px,1fr))', gap: 14 }}>
           {[
             ['Paiements sécurisés', 'Transactions protégées, billets authentiques avec QR unique — impossible à falsifier.'],
             ['Profils sélectionnés', 'Chaque organisateur et prestataire visible sur la plateforme a été validé par notre équipe.'],
             ['Tes données te protègent', 'On ne partage jamais ton contact sans ton accord. Confidentialité réelle, pas cosmétique.'],
             ['Un vrai support', 'Une question, un souci ? On répond. La nuit mérite du soin.'],
-          ].map(([t, d]) => (
-            <div key={t} style={{ ...card, padding: 20 }}>
-              <p style={{ fontFamily: FONT, fontSize: 15.5, fontWeight: 800, color: '#fff', margin: 0 }}>{t}</p>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.6)', margin: '8px 0 0', lineHeight: 1.55 }}>{d}</p>
-            </div>
+          ].map(([t, d], i) => (
+            <ScrollFadeIn key={t} delay={i * 100}>
+              <div style={{ ...card, padding: 20, height: '100%' }}>
+                <p style={{ fontFamily: FONT, fontSize: 15.5, fontWeight: 800, color: '#fff', margin: 0 }}>{t}</p>
+                <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.6)', margin: '8px 0 0', lineHeight: 1.55 }}>{d}</p>
+              </div>
+            </ScrollFadeIn>
           ))}
         </div>
       </Section>
 
       {/* ══ CTA FINAL ══ */}
-      <section style={{ padding: '20px 22px 70px' }}>
-        <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid rgba(255,255,255,.1)', background: `radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.2), transparent 60%), linear-gradient(160deg, rgba(20,14,32,.7), rgba(6,8,15,.7))`, backdropFilter: 'blur(16px)' }}>
-          <h2 style={{ fontFamily: FONT, fontSize: 'clamp(26px,6vw,40px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>Prêt à vivre la nuit ?</h2>
-          <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>Rejoins Live in Black gratuitement, en 30 secondes.</p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
-            <button onClick={register} style={btnPrimary}>Créer mon compte</button>
-            <button onClick={() => navigate('/evenements')} style={btnGhost}>Voir les événements</button>
+      <ScrollFadeIn>
+        <section ref={ctaRef} style={{ padding: '20px 22px 70px' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid rgba(255,255,255,.1)', background: `radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.2), transparent 60%), linear-gradient(160deg, rgba(20,14,32,.7), rgba(6,8,15,.7))`, backdropFilter: 'blur(16px)' }}>
+            <h2 style={{ fontFamily: FONT, fontSize: 'clamp(26px,6vw,40px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>Prêt à vivre la nuit ?</h2>
+            <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>
+              Rejoins Live in Black gratuitement, en <span key={seconds} style={{ color: seconds <= 5 ? C.pink : C.teal, display: 'inline-block', fontWeight: 800, transition: 'color 0.4s ease', transform: isCounting && seconds > 0 ? 'scale(1.1)' : 'scale(1)', animation: isCounting && seconds > 0 ? 'lib-tick 0.3s ease-out' : 'none' }}>{seconds}</span> secondes.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
+              <button onClick={register} style={btnPrimary}>Créer mon compte</button>
+              <button onClick={() => navigate('/evenements')} style={btnGhost}>Voir les événements</button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ScrollFadeIn>
     </div>
   )
 }
