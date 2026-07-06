@@ -47,6 +47,7 @@ function getNavItems(role) {
     { path: '/evenements',     icon: '🎟', label: 'Événements' },
     { path: '/messagerie',     icon: '💬', label: 'Messages' },
     { path: '/mes-evenements', icon: '✦',  label: 'Mes Events' },
+    { path: '/organisateurs', icon: '✦', label: 'Organisateurs' },
     { path: '/prestataires',   icon: '◈',  label: 'Prestataires' },
     { path: '/ma-page-organisateur', icon: '◎', label: 'Ma Page' },
   ]
