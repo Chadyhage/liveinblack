@@ -23,6 +23,18 @@ const VIOLET = '#8444ff'
 
 const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
+// Recherche d'artistes via notre proxy Deezer (catalogue mondial). Auth requise.
+// Échec/hors-ligne → [] (le composant retombe sur la liste locale + ajout manuel).
+async function searchArtistsRemote(q) {
+  try {
+    const { authHeaders } = await import('../utils/apiAuth')
+    const res = await fetch(`/api/search-artists?q=${encodeURIComponent(q)}`, { headers: { ...(await authHeaders()) } })
+    if (!res.ok) return []
+    const data = await res.json()
+    return Array.isArray(data?.artists) ? data.artists : []
+  } catch { return [] }
+}
+
 export function savePreferences(user, setUser, preferences) {
   const uid = user?.uid || user?.id
   if (!uid) return
@@ -64,21 +76,56 @@ function Chip({ active, color = TEAL, onClick, children }) {
 }
 
 // ── Recherche + sélection (artistes, villes) ──────────────────────────────────
-function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder, color = TEAL, max = 15 }) {
+// `remoteSearch(q)` (optionnel) : fonction async renvoyant [{name, picture}]
+// depuis une API (Deezer pour les artistes). La liste locale sert de résultats
+// instantanés + secours hors-ligne ; le distant complète le catalogue mondial.
+function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder, color = TEAL, max = 15, remoteSearch }) {
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
+  const [remote, setRemote] = useState([]) // [{name, picture}]
+  const [loading, setLoading] = useState(false)
 
-  const matches = useMemo(() => {
+  // Résultats locaux (instantanés)
+  const localMatches = useMemo(() => {
     const q = norm(query)
     if (!q) return []
     const selectedNorm = new Set(value.map(norm))
-    return suggestions
-      .filter(s => norm(s).includes(q) && !selectedNorm.has(norm(s)))
-      .slice(0, 8)
+    return suggestions.filter(s => norm(s).includes(q) && !selectedNorm.has(norm(s))).slice(0, 6).map(name => ({ name, picture: null }))
   }, [query, suggestions, value])
 
-  // Proposer « Ajouter «query» » si aucune correspondance EXACTE (suggestion ou déjà choisi)
-  const exact = query.trim() && [...suggestions, ...value].some(s => norm(s) === norm(query))
+  // Recherche distante debouncée (300 ms)
+  useEffect(() => {
+    if (!remoteSearch) { setRemote([]); return }
+    const q = query.trim()
+    if (q.length < 2) { setRemote([]); setLoading(false); return }
+    setLoading(true)
+    let cancelled = false
+    const t = setTimeout(async () => {
+      try {
+        const res = await remoteSearch(q)
+        if (!cancelled) setRemote(Array.isArray(res) ? res : [])
+      } catch { if (!cancelled) setRemote([]) }
+      finally { if (!cancelled) setLoading(false) }
+    }, 300)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [query, remoteSearch])
+
+  // Fusion locale + distante, dédupliquée (le local d'abord, plus rapide/prioritaire)
+  const matches = useMemo(() => {
+    const selectedNorm = new Set(value.map(norm))
+    const seen = new Set(localMatches.map(m => norm(m.name)))
+    const merged = [...localMatches]
+    for (const r of remote) {
+      const k = norm(r.name)
+      if (!k || seen.has(k) || selectedNorm.has(k)) continue
+      seen.add(k)
+      merged.push(r)
+    }
+    return merged.slice(0, 8)
+  }, [localMatches, remote, value])
+
+  // Proposer « Ajouter «query» » si aucune correspondance EXACTE (liste, distant ou déjà choisi)
+  const exact = query.trim() && [...suggestions, ...remote.map(r => r.name), ...value].some(s => norm(s) === norm(query))
   const canAddCustom = query.trim().length >= 2 && !exact && value.length < max
 
   const add = name => {
@@ -86,6 +133,7 @@ function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder
     if (!clean || value.length >= max) return
     if (!value.some(v => norm(v) === norm(clean))) onChange([...value, clean])
     setQuery('')
+    setRemote([])
   }
   const remove = name => onChange(value.filter(v => v !== name))
 
@@ -131,21 +179,27 @@ function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder
         </div>
 
         {/* Résultats */}
-        {focused && (matches.length > 0 || canAddCustom) && (
+        {focused && (matches.length > 0 || canAddCustom || loading) && (
           <div style={{
             position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 5,
-            maxHeight: 240, overflowY: 'auto', borderRadius: 12, padding: 6,
+            maxHeight: 280, overflowY: 'auto', borderRadius: 12, padding: 6,
             background: 'rgba(12,13,22,0.99)', border: '1px solid rgba(255,255,255,0.14)',
             boxShadow: '0 18px 50px rgba(0,0,0,0.6)',
           }}>
-            {matches.map(s => (
-              <button key={s} type="button" onMouseDown={e => { e.preventDefault(); add(s) }} style={{
-                width: '100%', textAlign: 'left', padding: '11px 12px', borderRadius: 8, border: 'none',
+            {matches.map(m => (
+              <button key={m.name} type="button" onMouseDown={e => { e.preventDefault(); add(m.name) }} style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 11, textAlign: 'left', padding: '9px 10px', borderRadius: 8, border: 'none',
                 background: 'none', color: '#fff', cursor: 'pointer', fontFamily: FONT, fontSize: 14,
               }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                {s}
+                {m.picture
+                  ? <img src={m.picture} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, background: '#1a1c26' }} />
+                  : <span style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: 700 }}>{m.name.charAt(0).toUpperCase()}</span>}
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
               </button>
             ))}
+            {loading && matches.length === 0 && (
+              <p style={{ padding: '11px 12px', fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Recherche…</p>
+            )}
             {canAddCustom && (
               <button type="button" onMouseDown={e => { e.preventDefault(); add(query) }} style={{
                 width: '100%', textAlign: 'left', padding: '11px 12px', borderRadius: 8, border: 'none',
@@ -248,7 +302,8 @@ export default function PreferencesWizard({ user, setUser, onDone, doneLabel = '
           )}
           {current.type === 'search' && (
             <SearchMultiSelect value={val || []} onChange={setSearch} suggestions={current.suggestions} color={current.color}
-              placeholder={current.key === 'artists' ? 'Ex : Burna Boy, Ninho, DJ Arafat…' : 'Ex : Lomé, Paris, Abidjan…'} />
+              remoteSearch={current.key === 'artists' ? searchArtistsRemote : undefined}
+              placeholder={current.key === 'artists' ? 'Cherche un artiste ou un DJ…' : 'Ex : Lomé, Paris, Abidjan…'} />
           )}
         </div>
       </div>
