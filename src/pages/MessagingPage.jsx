@@ -18,13 +18,15 @@ import {
   seedDemoData, DEMO_USERS,
   getGroupBookings, saveGroupBooking, validateGroupBooking, payGroupBookingShare, addSongToGroupBooking, withdrawFromGroupBooking,
   blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory, deleteConversationCompletely,
+  hideConversationForUser, getHiddenConversationIds, isConversationHidden,
   editMessage, isConvMuted, toggleMuteConv,
   toggleStarMessage, isMessageStarred, getStarredMessages,
   getMyPrivacy, userShowsPhoto,
 } from '../utils/messaging'
-import { startStripeCheckout } from '../utils/stripe'
+import { startTicketCheckout } from '../utils/stripe'
+import { fmtMoney, eventCurrency } from '../utils/money'
 import { playNotifSound } from '../utils/notifSound'
-import { upsertMessageNotification } from '../utils/notifications'
+import { upsertMessageNotification, removeConversationNotifications } from '../utils/notifications'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
@@ -263,7 +265,7 @@ function EventCard({ content }) {
   try { ev = typeof content === 'string' ? JSON.parse(content) : content } catch { return <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.gold }}>🎟 Événement</span> }
   const clickable = ev.id != null && ev.id !== ''
   const go = (e) => { e.stopPropagation(); if (clickable) navigate(`/evenements/${ev.id}`) }
-  const priceLabel = ev.price == null ? null : (Number(ev.price) <= 0 ? 'Gratuit' : `dès ${ev.price}€`)
+  const priceLabel = ev.price == null ? null : (Number(ev.price) <= 0 ? 'Gratuit' : `dès ${fmtMoney(ev.price, ev.currency)}`)
   return (
     <div onClick={go} style={{
       width: 252, borderRadius: 12, overflow: 'hidden',
@@ -366,7 +368,7 @@ function EventPollCard({ msg, myId, convId, onVote }) {
       {/* Infos + vote */}
       <div style={{ padding: '10px 12px 12px', background: 'rgba(4,4,14,0.85)', borderRadius: '0 0 8px 8px', border: '1px solid rgba(255,255,255,0.08)', borderTop: 'none' }}>
         {ev.image && <p style={{ fontFamily: T.cormorant, fontWeight: 500, fontSize: 15, color: '#fff', margin: '0 0 2px' }}>{ev.name}</p>}
-        <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{ev.date}{ev.price ? ` · ${ev.price}€` : ''}</p>
+        <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{ev.date}{ev.price ? ` · ${fmtMoney(ev.price, ev.currency)}` : ''}</p>
         <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted, margin: '0 0 8px', fontWeight: 600 }}>{poll.question || 'On y va ?'}</p>
         <div style={{ display: 'flex', gap: 6 }}>
           <button onClick={() => onVote(msg.id, 'yes')}
@@ -777,9 +779,11 @@ export default function MessagingPage() {
         const local = safeArr('lib_conversations')
         const merged = mergeById(local, convs)
         localStorage.setItem('lib_conversations', JSON.stringify(merged))
+        const hidden = new Set(getHiddenConversationIds(myId).map(String))
 
         // ── Detect new messages → notification ──
         convs.forEach(incoming => {
+          if (hidden.has(String(incoming.id))) return
           const prev = lastConvUpdatedRef.current[incoming.id]
           const isNewer = !prev || incoming.updatedAt > prev
           const notMyMessage = incoming.lastSenderId && incoming.lastSenderId !== myId
@@ -806,9 +810,9 @@ export default function MessagingPage() {
           }
         })
 
-        setConversations(merged.filter(c =>
+        setConversations(merged.filter(c => !hidden.has(String(c.id)) && (
           c.type === 'direct' ? c.participants?.includes(myId) : c.members?.some(m => m.userId === myId)
-        ).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
+        )).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
       }
       // 1. Friend requests — Firestore is source of truth, no merge
       // (merging would re-add accepted/declined requests before syncDelete confirms)
@@ -818,11 +822,19 @@ export default function MessagingPage() {
       }))
       // 2. My friends list
       unsubs.push(listenUserSocial(myId, social => {
-        if (!social?.friends) return
-        const f = safeObj('lib_friends')
-        f[myId] = social.friends
-        localStorage.setItem('lib_friends', JSON.stringify(f))
-        setFriends(social.friends)
+        if (!social) return
+        if (social.friends) {
+          const f = safeObj('lib_friends')
+          f[myId] = social.friends
+          localStorage.setItem('lib_friends', JSON.stringify(f))
+          setFriends(social.friends)
+        }
+        if (social.hiddenConversations) {
+          const hidden = safeObj('lib_hidden_conversations')
+          hidden[myId] = social.hiddenConversations.map(String)
+          localStorage.setItem('lib_hidden_conversations', JSON.stringify(hidden))
+          setConversations(getConversations(myId))
+        }
       }))
       // 3. Direct conversations
       unsubs.push(listenDirectConversations(myId, mergeConvs))
@@ -885,6 +897,7 @@ export default function MessagingPage() {
 
   // ── Open conversation ──
   function openConv(convId) {
+    if (isConversationHidden(myId, convId)) return
     setActiveConvId(convId)
     setView('chat')
     setChatSubView('messages')
@@ -1325,7 +1338,7 @@ export default function MessagingPage() {
     if (!activeConvId) return
     const poll = {
       question: 'On y va ?',
-      event: { id: event.id, name: event.name, date: event.date, price: event.price, image: event.image || null },
+      event: { id: event.id, name: event.name, date: event.date, price: event.price, currency: eventCurrency(event), image: event.image || null },
       options: [
         { id: 'yes', text: 'Oui', votes: {} },
         { id: 'no',  text: 'Non', votes: {} },
@@ -1362,6 +1375,7 @@ export default function MessagingPage() {
       eventEndTime: null,
       placeName: event.placeName || '',
       placePrice: event.price || 0,
+      currency: eventCurrency(event),
       groupMin: memberCount,
       groupMax: memberCount,
       totalPrice: (event.price || 0) * memberCount,
@@ -1453,10 +1467,12 @@ export default function MessagingPage() {
     if (!booking) return
     const conv = activeConv
     // Part = partage égal entre membres ACTIFS (cohérent avec la carte et le
-    // ré-équilibrage au retrait).
+    // ré-équilibrage au retrait). En FCFA : montants entiers (pas de centimes).
     const withdrawnSet = new Set(booking.withdrawnMembers || [])
     const activeCount = (conv?.members || []).filter(m => !withdrawnSet.has(m.userId)).length || Math.max(booking.groupMin || 1, 1)
-    const myShare = Math.round((booking.totalPrice / Math.max(activeCount, 1)) * 100) / 100
+    const gbCur = String(booking.currency || 'EUR').toUpperCase()
+    const rawShare = booking.totalPrice / Math.max(activeCount, 1)
+    const myShare = gbCur === 'XOF' ? Math.round(rawShare) : Math.round(rawShare * 100) / 100
 
     // Construire un pending booking — la page /paiement-reussi le finalisera
     const arr = new Uint32Array(2)
@@ -1473,6 +1489,7 @@ export default function MessagingPage() {
       placeType: booking.placeName,
       qty: 1,
       unitPriceEUR: myShare,
+      currency: gbCur, // XOF → FedaPay, EUR → Stripe (réhydraté à /paiement-reussi)
       preorderItems: [],
       perTicketOrders: [{ items: {}, shows: {} }],
       activeMenu: [],
@@ -1486,16 +1503,18 @@ export default function MessagingPage() {
     }
     try { localStorage.setItem(`lib_pending_booking_${pendingId}`, JSON.stringify(pending)) } catch {}
 
-    showToast('Redirection vers Stripe…')
-    const result = await startStripeCheckout({
+    showToast('Redirection vers le paiement…')
+    const result = await startTicketCheckout({
       eventId: booking.eventId,
       eventName: `${booking.eventName} (part de groupe)`,
       placeType: booking.placeName,
       qty: 1,
       unitPriceEUR: myShare,
+      currency: gbCur,
       preorderItems: [],
       userId: myId,
       userEmail: user?.email,
+      userName: myName,
       bookingId: pendingId,
       // Propagés jusqu'au webhook : si le payeur ferme l'onglet avant le retour
       // sur /paiement-reussi, le webhook marque quand même sa part payée.
@@ -1503,7 +1522,7 @@ export default function MessagingPage() {
       isGroupShare: true,
     })
     if (!result.ok) {
-      showToast('Erreur Stripe — réessaye dans un instant', 'error')
+      showToast(result.error || 'Erreur de paiement — réessaye dans un instant', 'error')
       try { localStorage.removeItem(`lib_pending_booking_${pendingId}`) } catch {}
     }
   }
@@ -1617,6 +1636,17 @@ export default function MessagingPage() {
     setConversations(getConversations(myId))
     setView('list'); setActiveConvId(null)
     showToast('Groupe supprimé')
+  }
+  function handleHideDeletedConversation() {
+    if (!activeConvId || !myId) return
+    hideConversationForUser(myId, activeConvId)
+    removeConversationNotifications(myId, activeConvId)
+    setConversations(getConversations(myId))
+    setMessages([])
+    setActiveConvId(null)
+    setChatSubView('messages')
+    setView('list')
+    showToast('Conversation retirée de ta messagerie')
   }
   function handleRenameGroup() {
     const newName = editGroupName.trim()
@@ -2600,6 +2630,18 @@ export default function MessagingPage() {
                       Effacer l'historique
                     </button>
 
+                    {convDisplay.deleted && (
+                      <button
+                        onClick={() => setConfirmDialog({
+                          action: 'hide_deleted_conversation',
+                          label: 'Retirer définitivement ce compte supprimé de ta liste de conversations ? L’autre participant ne sera pas affecté.',
+                        })}
+                        style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.24)', color: '#d9bd82', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
+                        Retirer de ma messagerie
+                      </button>
+                    )}
+
                     {friends.includes(otherId) && (
                       <button
                         onClick={() => setConfirmDialog({ action: 'remove_friend', label: `Retirer ${other.name} de tes amis ?`, onConfirm: () => { handleRemoveFriend(otherId); setChatSubView('messages') } })}
@@ -3018,6 +3060,7 @@ export default function MessagingPage() {
                   if (confirmDialog.action === 'block_after_report') handleBlockUser(confirmDialog.userId, confirmDialog.userName)
                   if (confirmDialog.action === 'block_user') { handleBlockUser(confirmDialog.userId, confirmDialog.userName); setChatSubView('messages') }
                   if (confirmDialog.action === 'clear_history') { deleteConversationHistory(activeConvId); setMessages([]); showToast('Historique effacé') }
+                  if (confirmDialog.action === 'hide_deleted_conversation') handleHideDeletedConversation()
                   setConfirmDialog(null)
                 }}
                   style={{ flex: 1, padding: '10px', borderRadius: 6, cursor: 'pointer',
@@ -3134,15 +3177,17 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
   const events = useMemo(() => {
     const seen = new Set()
     const result = []
-    const add = (id, name, date, price, placeName, image) => {
+    // currency conservée (XOF/EUR) : sans elle, les sondages/résas de groupe
+    // d'un event FCFA partaient vers Stripe et s'affichaient en euros.
+    const add = (id, name, date, price, placeName, image, currency) => {
       if (!id || seen.has(String(id))) return
       seen.add(String(id))
-      result.push({ id, name, date, price, placeName: placeName || '', image: image || null })
+      result.push({ id, name, date, price, placeName: placeName || '', image: image || null, currency: currency || 'EUR' })
     }
     try {
       // Billets achetés
       const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-      bookings.forEach(b => add(b.eventId, b.eventName, b.eventDate, b.placePrice, b.place, b.eventImage))
+      bookings.forEach(b => add(b.eventId, b.eventName, b.eventDate, b.placePrice, b.place, b.eventImage, b.currency))
     } catch {}
     // Note: user events are stored in lib_created_events (already handled below)
     try {
@@ -3151,7 +3196,7 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
       createdEvents.forEach(ev => {
         const firstPlace = ev.places?.[0]
         const price = firstPlace?.price ?? ev.price
-        add(ev.id, ev.name || ev.title, ev.date, price, ev.location || ev.place, ev.image || ev.imageUrl)
+        add(ev.id, ev.name || ev.title, ev.date, price, ev.location || ev.place, ev.image || ev.imageUrl, ev.currency)
       })
     } catch {}
     return result
@@ -3182,7 +3227,7 @@ function EventPickerModal({ onSelectPoll, onSelectBooking, onClose }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</p>
-                  <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{ev.date}{ev.price ? ` · ${ev.price}€/pers.` : ''}</p>
+                  <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{ev.date}{ev.price ? ` · ${fmtMoney(ev.price, eventCurrency(ev))}/pers.` : ''}</p>
                 </div>
               </div>
               {/* Action buttons */}
@@ -3268,7 +3313,10 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
   // Part = partage ÉGAL entre les membres ACTIFS (hors retirés). Se ré-équilibre
   // automatiquement quand quelqu'un se retire/rejoint, sans dépendre d'un
   // contributionPct figé (qui divergeait entre conv.members et booking.members).
-  const myShare      = Math.round((booking.totalPrice / Math.max(total, 1)) * 100) / 100
+  const gbCurrency   = String(booking.currency || 'EUR').toUpperCase()
+  const myShare      = gbCurrency === 'XOF'
+    ? Math.round(booking.totalPrice / Math.max(total, 1))
+    : Math.round((booking.totalPrice / Math.max(total, 1)) * 100) / 100
 
   // Compte à rebours
   const deadlineTs = booking.deadline ? new Date(booking.deadline).getTime() : null
@@ -3344,7 +3392,7 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
               <p style={{ fontFamily: F, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.38)', margin: '0 0 1px' }}>Ta part</p>
               <p style={{ fontFamily: F, fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>{total} pers. · {Math.round(100 / Math.max(total, 1))}% chacun</p>
             </div>
-            <span style={{ fontFamily: F, fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: '-0.02em', color: hasPaid ? '#22c55e' : '#c8a96e' }}>{myShare}€</span>
+            <span style={{ fontFamily: F, fontWeight: 800, fontSize: gbCurrency === 'XOF' ? 22 : 30, lineHeight: 1, letterSpacing: '-0.02em', color: hasPaid ? '#22c55e' : '#c8a96e' }}>{fmtMoney(myShare, gbCurrency)}</span>
           </div>
         )}
         {expired && (
@@ -3425,7 +3473,7 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
               background: 'linear-gradient(135deg,#4ee8c8,#39c9ab)', color: '#0b0d16',
               fontFamily: F, fontSize: 12, fontWeight: 800, letterSpacing: '0.02em', marginBottom: 8,
               boxShadow: '0 8px 22px rgba(78,232,200,0.30)' }}>
-            Payer ma part · {myShare}€
+            Payer ma part · {fmtMoney(myShare, gbCurrency)}
           </button>
         )}
         {hasValidated && !hasPaid && !allValidated && (
@@ -3437,7 +3485,7 @@ function GroupBookingCard({ bookingId, myId, myName, conv, onValidate, onPay, on
         )}
         {hasPaid && !allPaid && (
           <div style={{ padding: '11px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.22)', borderRadius: 12, marginBottom: 8 }}>
-            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: '#22c55e', margin: 0, textAlign: 'center' }}>Tu as payé ta part · {myShare}€</p>
+            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: '#22c55e', margin: 0, textAlign: 'center' }}>Tu as payé ta part · {fmtMoney(myShare, gbCurrency)}</p>
           </div>
         )}
 

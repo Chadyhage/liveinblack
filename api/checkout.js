@@ -1,7 +1,9 @@
-// Vercel Serverless Function — Crée une session Stripe Checkout
-// Endpoint : POST /api/checkout
+// Vercel Serverless Function — Stripe Checkout (billets)
+// Endpoint unifié (plan Hobby, 12 fonctions max) :
+//   POST /api/checkout                       → crée une session Stripe Checkout
+//   GET  /api/checkout?session_id=cs_...     → vérifie une session (ex /api/verify-session)
 //
-// Body attendu :
+// Body attendu (POST) :
 // {
 //   eventId, eventName, placeType, qty (number),
 //   unitPriceEUR (number), preorderItems? [{ name, qty, priceEUR }],
@@ -20,8 +22,9 @@ import { requireAuth } from '../lib/verifyAuth.js'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
 export default async function handler(req, res) {
+  if (req.method === 'GET') return verifySession(req, res)
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST')
+    res.setHeader('Allow', 'GET, POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
@@ -50,44 +53,63 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
-    // Construire les line_items pour Stripe (montants en CENTIMES)
-    const line_items = []
-
-    // Place principale (si payante — sinon on n'inclut pas, mais on doit avoir quelque chose à payer)
-    const placeUnitCents = Math.round(Number(unitPriceEUR) * 100)
-    if (placeUnitCents > 0 && qty > 0) {
-      line_items.push({
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: `${eventName} — ${placeType}`,
-            ...(eventImage && eventImage.startsWith('http') ? { images: [eventImage] } : {}),
-          },
-          unit_amount: placeUnitCents,
-        },
-        quantity: qty,
-      })
+    // ── Lecture de l'événement (devise + prix serveur) ────────────────────────
+    // Garde devise : les événements FCFA (Togo/Bénin) se paient via FedaPay,
+    // jamais via Stripe — sinon 5 000 (FCFA) serait débité comme 5 000 €.
+    let db = null
+    let evData = null
+    try {
+      const { getDb } = await import('../lib/firebaseAdmin.js')
+      db = getDb()
+      const evSnap = await db.collection('events').doc(String(eventId)).get()
+      evData = evSnap.exists ? evSnap.data() : null
+    } catch (e) {
+      console.warn('[/api/checkout] lecture event skipped:', e.message)
+    }
+    // Devise EXPLICITE uniquement : les events créés avant le multi-devise ont
+    // des prix saisis en euros même avec region=Togo — ils restent sur Stripe.
+    if (evData && String(evData.currency || '').toUpperCase() === 'XOF') {
+      return res.status(400).json({ error: 'Cet événement se paie en FCFA (mobile money). Recharge la page pour utiliser le bon tunnel de paiement.' })
     }
 
-    // Précommandes (consos)
-    for (const it of preorderItems) {
-      const cents = Math.round(Number(it.priceEUR || 0) * 100)
-      const q = Number(it.qty || 0)
-      if (cents > 0 && q > 0) {
-        line_items.push({
-          price_data: {
-            currency: 'eur',
-            product_data: { name: `${it.name} (précommande)` },
-            unit_amount: cents,
-          },
-          quantity: q,
-        })
+    // ── Part de groupe : validation serveur STRICTE ──
+    // Faille corrigée : isGroupShare venait du body et court-circuitait TOUTE
+    // vérification de prix (billet VIP payable 1 ct + frais). Désormais : doc
+    // group_bookings requis + appartenance + plancher = prix réel de la place
+    // sur l'événement ET part égalitaire du groupe.
+    let groupShareCents = null
+    if (isGroupShare) {
+      if (!groupBookingId) return res.status(400).json({ error: 'groupBookingId requis pour une part de groupe' })
+      if (!db) return res.status(503).json({ error: 'Vérification de groupe indisponible — réessaie.' })
+      const gbSnap = await db.collection('group_bookings').doc(String(groupBookingId)).get()
+      if (!gbSnap.exists) return res.status(404).json({ error: 'Réservation de groupe introuvable' })
+      const gb = gbSnap.data()
+      if (String(gb.eventId) !== String(eventId)) {
+        return res.status(400).json({ error: 'Cette réservation de groupe concerne un autre événement.' })
       }
+      const members = Array.isArray(gb.participantIds) ? gb.participantIds : []
+      if (!members.includes(caller.uid)) {
+        return res.status(403).json({ error: 'Tu ne fais pas partie de cette réservation de groupe.' })
+      }
+      const withdrawn = new Set(Array.isArray(gb.withdrawnMembers) ? gb.withdrawnMembers : [])
+      const activeCount = Math.max(1, members.filter(m => !withdrawn.has(m)).length)
+      const expectedShareCents = Math.round((Number(gb.totalPrice) || 0) * 100) / activeCount
+      const placesArr = evData?.places || []
+      const gbPlace = placesArr.find(p => p.type === placeType) || null
+      const paidCents = placesArr.map(p => Math.round(Number(p.price) * 100) || 0).filter(c => c > 0)
+      const placeFloorCents = gbPlace
+        ? (Math.round(Number(gbPlace.price) * 100) || 0)
+        : (paidCents.length ? Math.min(...paidCents) : 0)
+      // Tolérance d'arrondi 1 ct (le client arrondit la part à 2 décimales).
+      const floorCents = Math.max(placeFloorCents, Math.floor(expectedShareCents) - 1)
+      const shareCents = Math.round(Number(unitPriceEUR) * 100)
+      if (shareCents <= 0 || shareCents < floorCents) {
+        return res.status(400).json({ error: 'Part de groupe invalide' })
+      }
+      groupShareCents = shareCents
     }
-
-    if (line_items.length === 0) {
-      return res.status(400).json({ error: 'Aucun montant à payer (place gratuite ?)' })
-    }
+    // Quantité bornée (aligné sur /api/event-stock) ; une part de groupe = 1 place.
+    const nQty = isGroupShare ? 1 : Math.max(1, Math.min(20, Math.floor(Number(qty)) || 1))
 
     // ── Décrément atomique du stock AVANT de créer la session Stripe ──────────
     // C'est le seul point fiable pour empêcher la survente sur le tunnel payant :
@@ -96,11 +118,13 @@ export default async function handler(req, res) {
     // si le paiement est abandonné, /paiement-annule restocke (cf. PaiementAnnulePage).
     // 'event_not_found'/'place_not_found' ne bloquent pas (events de démo statiques
     // sans doc Firestore, ou config legacy) : seul un stock réellement insuffisant bloque.
-    let db = null
     let stockDecremented = false
+    let serverUnitCents = null
     try {
-      const { getDb } = await import('../lib/firebaseAdmin.js')
-      db = getDb()
+      if (!db) {
+        const { getDb } = await import('../lib/firebaseAdmin.js')
+        db = getDb()
+      }
       const eventRef = db.collection('events').doc(String(eventId))
       const decremented = await db.runTransaction(async (tx) => {
         const snap = await tx.get(eventRef)
@@ -108,14 +132,18 @@ export default async function handler(req, res) {
         const places = snap.data().places || []
         const idx = places.findIndex(p => p.type === placeType)
         if (idx === -1) return false
+        // Prix unitaire de RÉFÉRENCE (serveur) — le client n'a pas le dernier mot.
+        if (places[idx].price != null) {
+          serverUnitCents = Math.round(Number(places[idx].price) * 100) || 0
+        }
         const available = Number(places[idx].available) || 0
-        if (available < qty) {
+        if (available < nQty) {
           const err = new Error('insufficient_stock')
           err.code = 'insufficient_stock'
           throw err
         }
         const total = Number(places[idx].total) || 0
-        const nextAvailable = Math.max(0, Math.min(total || Infinity, available - qty))
+        const nextAvailable = Math.max(0, Math.min(total || Infinity, available - nQty))
         const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
         tx.update(eventRef, { places: nextPlaces })
         return true
@@ -143,7 +171,7 @@ export default async function handler(req, res) {
           if (idx === -1) return
           const total = Number(places[idx].total) || 0
           const available = Number(places[idx].available) || 0
-          const nextAvailable = Math.max(0, Math.min(total || Infinity, available + qty))
+          const nextAvailable = Math.max(0, Math.min(total || Infinity, available + nQty))
           const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
           tx.update(eventRef, { places: nextPlaces })
         })
@@ -153,9 +181,59 @@ export default async function handler(req, res) {
       }
     }
 
+    // ── Prix unitaire retenu : SERVEUR prioritaire (faille corrigée : avant,
+    // unitPriceEUR venait du client sans contrôle — un billet VIP payable 1 ct).
+    // Fallback client uniquement si pas de doc/champ (events démo, legacy) ; les
+    // parts de groupe ont été validées plus haut (plancher place + part égale).
+    let placeUnitCents = isGroupShare ? groupShareCents : Math.round(Number(unitPriceEUR) * 100)
+    if (!isGroupShare && serverUnitCents != null && serverUnitCents !== placeUnitCents) {
+      console.warn('[/api/checkout] prix client ≠ serveur — serveur retenu:', placeUnitCents, '→', serverUnitCents)
+      placeUnitCents = serverUnitCents
+    }
+
+    // Construire les line_items pour Stripe (montants en CENTIMES)
+    const line_items = []
+
+    // Place principale (si payante — sinon on n'inclut pas, mais on doit avoir quelque chose à payer)
+    if (placeUnitCents > 0) {
+      line_items.push({
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: `${eventName} — ${placeType}`,
+            ...(eventImage && eventImage.startsWith('http') ? { images: [eventImage] } : {}),
+          },
+          unit_amount: placeUnitCents,
+        },
+        quantity: nQty,
+      })
+    }
+
+    // Précommandes (consos)
+    for (const it of preorderItems) {
+      const cents = Math.round(Number(it.priceEUR || 0) * 100)
+      const q = Number(it.qty || 0)
+      if (cents > 0 && q > 0) {
+        line_items.push({
+          price_data: {
+            currency: 'eur',
+            product_data: { name: `${it.name} (précommande)` },
+            unit_amount: cents,
+          },
+          quantity: q,
+        })
+      }
+    }
+
+    if (line_items.length === 0) {
+      // Rien à payer : rendre la place réservée au décrément ci-dessus.
+      await restockOnFailure()
+      return res.status(400).json({ error: 'Aucun montant à payer (place gratuite ?)' })
+    }
+
     // ── Frais de service LIVEINBLACK (payé par l'acheteur) ──
     // Calculé côté SERVEUR (jamais reçu du client). Sur le prix unitaire du billet.
-    const feeCents = computeTicketFeeCents(placeUnitCents, qty)
+    const feeCents = computeTicketFeeCents(placeUnitCents, nQty)
     if (feeCents > 0) {
       line_items.push({
         price_data: {
@@ -175,11 +253,10 @@ export default async function handler(req, res) {
     let paymentIntentData = null
     try {
       if (!db) { const { getDb } = await import('../lib/firebaseAdmin.js'); db = getDb() }
-      const evSnap = await db.collection('events').doc(String(eventId)).get()
-      if (evSnap.exists) {
-        const ev = evSnap.data()
+      if (evData) {
+        const ev = evData
         sellerUid = ev.organizerId || ev.createdBy || ''
-        if (sellerUid && sellerUid !== userId) {
+        if (sellerUid && sellerUid !== caller.uid) {
           const uSnap = await db.collection('users').doc(String(sellerUid)).get()
           const u = uSnap.exists ? uSnap.data() : {}
           const eligible = !!u.stripeAccountId && u.stripeChargesEnabled === true &&
@@ -216,13 +293,15 @@ export default async function handler(req, res) {
         ...(userEmail ? { customer_email: userEmail } : {}),
         success_url: `${origin}/paiement-reussi?session_id={CHECKOUT_SESSION_ID}&booking_id=${encodeURIComponent(bookingId)}`,
         // place_type + qty : pour que /paiement-annule puisse restocker la place réservée plus haut
-        cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}&place_type=${encodeURIComponent(placeType)}&qty=${encodeURIComponent(qty)}`,
+        cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}&place_type=${encodeURIComponent(placeType)}&qty=${encodeURIComponent(nQty)}`,
         metadata: {
           eventId: String(eventId),
           eventName: String(eventName).slice(0, 200),
           placeType: String(placeType),
-          qty: String(qty),
-          userId: String(userId || ''),
+          qty: String(nQty),
+          // Identité du payeur = TOUJOURS le token vérifié (le webhook s'en sert
+          // pour user_bookings, les points et payments[uid] des groupes).
+          userId: caller.uid,
           bookingId: String(bookingId),
           // Prix unitaire de la place AU MOMENT de la vente (centimes) : le webhook
           // le fige sur chaque billet (placePrice) pour que les stats/CA de
@@ -252,6 +331,57 @@ export default async function handler(req, res) {
     return res.status(200).json({ url: session.url, sessionId: session.id, feeCents, connectMode })
   } catch (err) {
     console.error('[/api/checkout] error:', err)
+    return res.status(500).json({ error: err.message || 'Stripe error' })
+  }
+}
+
+// ─── Vérification d'une session (ex /api/verify-session — fusionné ici) ──────
+// GET /api/checkout?session_id=cs_xxx → statut de paiement + métadonnées pour
+// confirmer la réservation après le redirect success de Stripe.
+async function verifySession(req, res) {
+  // Auth requise : les métadonnées de session (email, nom du payeur…) ne sont
+  // pas publiques — avant, quiconque devinait un session_id pouvait les lire.
+  const caller = await requireAuth(req, res)
+  if (!caller) return
+
+  const sessionId = req.query?.session_id || req.query?.sessionId
+  if (!sessionId) {
+    return res.status(400).json({ error: 'session_id requis' })
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['payment_intent', 'customer'],
+    })
+    if (session.metadata?.userId && session.metadata.userId !== caller.uid) {
+      return res.status(403).json({ error: 'forbidden', message: 'Cette session ne t’appartient pas.' })
+    }
+
+    let boostStatus = null
+    if (session.metadata?.intent === 'boost' && session.metadata?.boostId) {
+      const { getDb } = await import('../lib/firebaseAdmin.js')
+      const db = getDb()
+      const boostSnap = await db.collection('boosts').doc(session.metadata.boostId).get()
+      if (boostSnap.exists) boostStatus = boostSnap.data().status || 'active'
+      else if (session.metadata.slotId) {
+        const slotSnap = await db.collection('boost_slots').doc(session.metadata.slotId).get()
+        boostStatus = slotSnap.exists ? (slotSnap.data().status || 'pending') : 'pending'
+      } else boostStatus = 'pending'
+    }
+
+    return res.status(200).json({
+      paid: session.payment_status === 'paid',
+      paymentStatus: session.payment_status,
+      amountTotal: session.amount_total,
+      currency: session.currency,
+      customerEmail: session.customer_details?.email || null,
+      customerName: session.customer_details?.name || null,
+      metadata: session.metadata || {},
+      boostStatus,
+      receiptUrl: session.payment_intent?.charges?.data?.[0]?.receipt_url || null,
+    })
+  } catch (err) {
+    console.error('[/api/checkout verify] error:', err)
     return res.status(500).json({ error: err.message || 'Stripe error' })
   }
 }

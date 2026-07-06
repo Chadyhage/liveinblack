@@ -40,6 +40,8 @@ export function generateTicketToken(booking) {
     })),
     tp: booking.totalPrice,
     ba: booking.bookedAt,
+    // cur = devise, uniquement si FCFA (les tokens EUR existants restent stables).
+    ...(String(booking.currency || '').toUpperCase() === 'XOF' ? { cur: 'XOF' } : {}),
     // gn = nom de l'invité — uniquement présent pour un billet guestlist, pour
     // que /ticket/:token affiche son nom sans avoir besoin d'un compte/login.
     ...(booking.guestName ? { gn: booking.guestName } : {}),

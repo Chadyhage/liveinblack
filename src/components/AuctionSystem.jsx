@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId, getConversations, sendMessage, getInitials, saveGroupAuctionBid } from '../utils/messaging'
 import { IconCrown } from './icons'
+import { fmtMoney, eventCurrency } from '../utils/money'
 // Note : enchères en mode "réservation" — le paiement réel sera ajouté en V2
 // via Stripe (capture différée jusqu'à fin d'enchère). Pour la démo, l'enchère
 // est enregistrée sans débit immédiat.
@@ -51,7 +52,8 @@ export default function AuctionSystem({ event, initialPlace }) {
   const [groupConvId, setGroupConvId] = useState(null)
   const [groupSentFlash, setGroupSentFlash] = useState(false)
 
-  const INCREMENT = 20 // minimum increment
+  const aCur = eventCurrency(event) // devise de l'événement (XOF = FCFA entiers)
+  const INCREMENT = aCur === 'XOF' ? 2000 : 20 // incrément minimum (2 000 FCFA ≈ 3 €)
 
   // Reload bids when switching between auction places
   useEffect(() => {
@@ -162,7 +164,7 @@ export default function AuctionSystem({ event, initialPlace }) {
       <div>
         <h3 className="text-white font-semibold">Système d'enchères</h3>
         <p className="text-gray-500 text-xs mt-1">
-          Incrément minimum : {INCREMENT}€ · Anti-sniping actif
+          Incrément minimum : {fmtMoney(INCREMENT, aCur)} · Anti-sniping actif
         </p>
       </div>
 
@@ -219,7 +221,7 @@ export default function AuctionSystem({ event, initialPlace }) {
       >
         <p className="text-gray-500 text-xs uppercase tracking-widest mb-1">Meilleure offre</p>
         <p className="text-3xl font-black text-[#d4af37]" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-          {currentBid}€
+          {fmtMoney(currentBid, aCur)}
         </p>
         <div className="flex items-center justify-center gap-2 mt-1">
           <span className="animate-crown" style={{ display: 'inline-flex' }}>
@@ -233,13 +235,13 @@ export default function AuctionSystem({ event, initialPlace }) {
       {!isEnded && (
         <div className="space-y-3">
           <p className="text-gray-500 text-xs">
-            Enchère minimum : <span className="text-white font-semibold">{currentBid + INCREMENT}€</span>
+            Enchère minimum : <span className="text-white font-semibold">{fmtMoney(currentBid + INCREMENT, aCur)}</span>
           </p>
           <div className="flex gap-2">
             <input
               type="number"
               className="input-dark flex-1"
-              placeholder={`Min. ${currentBid + INCREMENT}€`}
+              placeholder={`Min. ${fmtMoney(currentBid + INCREMENT, aCur)}`}
               value={myBid}
               onChange={(e) => setMyBid(e.target.value)}
               min={currentBid + INCREMENT}
@@ -274,7 +276,7 @@ export default function AuctionSystem({ event, initialPlace }) {
                 <div className="text-center space-y-1">
                   <span className="text-3xl">🔨</span>
                   <h3 className="text-white font-bold">Confirmer l'enchère</h3>
-                  <p className="text-[#d4af37] text-2xl font-black" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{myBid}€</p>
+                  <p className="text-[#d4af37] text-2xl font-black" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{fmtMoney(myBid, aCur)}</p>
                   <p className="text-gray-500 text-xs">{event.name} · {selectedAuction}</p>
                 </div>
 
@@ -284,7 +286,7 @@ export default function AuctionSystem({ event, initialPlace }) {
                     onClick={confirmBid}
                     className="w-full py-3.5 rounded-2xl bg-[#d4af37] text-black font-bold text-sm active:scale-95 transition-all"
                   >
-                    💰 Enchérir en solo — {myBid}€
+                    💰 Enchérir en solo — {fmtMoney(myBid, aCur)}
                   </button>
                   <button
                     onClick={() => { setShowGroupPicker(true); setGroupConvId(null) }}
@@ -301,7 +303,7 @@ export default function AuctionSystem({ event, initialPlace }) {
               <>
                 <div>
                   <h3 className="text-white font-bold">Proposer au groupe</h3>
-                  <p className="text-gray-500 text-xs mt-0.5">Enchère de <span className="text-[#d4af37] font-bold">{myBid}€</span> — valide tant que le prix n'a pas dépassé ce montant</p>
+                  <p className="text-gray-500 text-xs mt-0.5">Enchère de <span className="text-[#d4af37] font-bold">{fmtMoney(myBid, aCur)}</span> — valide tant que le prix n'a pas dépassé ce montant</p>
                 </div>
                 <div className="space-y-2 max-h-52 overflow-y-auto">
                   {getConversations(userId).filter(c => c.type === 'group').length === 0 ? (
@@ -368,7 +370,7 @@ export default function AuctionSystem({ event, initialPlace }) {
               </div>
               <div className="text-right">
                 <p className={`font-bold ${i === 0 ? 'text-[#d4af37]' : 'text-gray-500'}`}>
-                  {bid.amount}€
+                  {fmtMoney(bid.amount, aCur)}
                 </p>
                 <p className="text-gray-700 text-xs">{bid.time}</p>
               </div>
@@ -381,9 +383,9 @@ export default function AuctionSystem({ event, initialPlace }) {
         <div className="glass p-4 rounded-2xl border border-[#d4af37]/30 text-center">
           <p className="text-[#d4af37] font-bold">🏆 Enchère terminée</p>
           <p className="text-white text-sm mt-1">
-            Gagnant : <strong>{bids[0]?.user}</strong> — {bids[0]?.amount}€
+            Gagnant : <strong>{bids[0]?.user}</strong> — {fmtMoney(bids[0]?.amount, aCur)}
           </p>
-          <p className="text-gray-500 text-xs mt-1">Paiement Stripe déclenché à la clôture</p>
+          <p className="text-gray-500 text-xs mt-1">Paiement déclenché à la clôture</p>
         </div>
       )}
     </div>

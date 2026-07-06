@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { verifyStripeSession } from '../utils/stripe'
+import { verifyStripeSession, verifyFedapayTransaction, releaseFedapayTransaction } from '../utils/stripe'
 import { generateTicketToken } from '../utils/ticket'
 import { useAuth } from '../context/AuthContext'
 import { IconMail } from '../components/icons'
@@ -31,10 +31,11 @@ const btnGhostS = { padding: '15px 20px', borderRadius: 14, cursor: 'pointer', f
 const PENDING_KEY = (id) => `lib_pending_booking_${id}`
 
 /**
- * Page de retour Stripe après paiement réussi.
- * - Vérifie la session côté serveur (statut paid)
+ * Page de retour après paiement — Stripe (?session_id=&booking_id=) OU
+ * FedaPay (?id=&status=, apposés par FedaPay sur le callback_url).
+ * - Vérifie la session/transaction côté serveur (statut paid)
  * - Si paid : récupère le pending booking en localStorage et le finalise (génère tickets, sync Firestore)
- * - Sinon : affiche une erreur claire
+ * - FedaPay annulé/refusé → redirige vers /paiement-annule (restock serveur re-vérifié)
  */
 export default function PaiementReussiPage() {
   const [params] = useSearchParams()
@@ -42,7 +43,9 @@ export default function PaiementReussiPage() {
   const { user, setUser } = useAuth()
 
   const sessionId = params.get('session_id')
-  const bookingId = params.get('booking_id')
+  const fedapayTxnId = params.get('id')
+  const isFedapay = !sessionId && !!fedapayTxnId
+  const bookingIdParam = params.get('booking_id')
 
   const [state, setState] = useState('loading') // loading | success | pending | error
   const [tickets, setTickets] = useState([])
@@ -65,7 +68,7 @@ export default function PaiementReussiPage() {
   }
 
   useEffect(() => {
-    if (!sessionId || !bookingId) {
+    if ((!sessionId || !bookingIdParam) && !fedapayTxnId) {
       setState('error')
       setErrorMsg('Paramètres de session manquants.')
       return
@@ -73,13 +76,52 @@ export default function PaiementReussiPage() {
 
     let cancelled = false
     ;(async () => {
-      // 1) Vérifier la session Stripe côté serveur. Cet endpoint peut échouer
-      // (indispo, réseau, config) → on NE bloque PAS : le webhook Stripe fait
-      // autorité et a peut-être déjà émis les billets. On arrive de toute façon
-      // ici uniquement après un paiement Stripe réussi (l'annulation → /paiement-annule).
-      const result = await verifyStripeSession(sessionId)
+      // 1) Vérifier la session/transaction côté serveur. Cet endpoint peut échouer
+      // (indispo, réseau, config) → on NE bloque PAS : le webhook (Stripe ou
+      // FedaPay) fait autorité et a peut-être déjà émis les billets.
+      const result = isFedapay
+        ? await verifyFedapayTransaction(fedapayTxnId)
+        : await verifyStripeSession(sessionId)
       if (cancelled) return
       const verified = !!(result && result.paid)
+
+      // 1.5) FedaPay redirige ici même en cas d'annulation/refus (callback_url
+      // unique). Statut re-vérifié SERVEUR (jamais le query param seul pour de
+      // l'argent) → page annulation + restock idempotent côté serveur.
+      if (isFedapay && !verified) {
+        const st = result?.paymentStatus || params.get('status') || ''
+        if (['canceled', 'declined', 'expired'].includes(st)) {
+          releaseFedapayTransaction(fedapayTxnId)
+          const evId = result?.metadata?.eventId || ''
+          navigate(`/paiement-annule?provider=fedapay&txn_id=${encodeURIComponent(fedapayTxnId)}${evId ? `&event_id=${encodeURIComponent(evId)}` : ''}`, { replace: true })
+          return
+        }
+      }
+
+      // FedaPay : le bookingId revient via les métadonnées serveur (le
+      // callback_url ne porte pas de query custom). Dernier recours : l'unique
+      // pending local.
+      let bookingId = bookingIdParam || (isFedapay ? result?.metadata?.bookingId : null) || null
+      if (!bookingId && isFedapay) {
+        try {
+          const keys = Object.keys(localStorage).filter(k => k.startsWith('lib_pending_booking_'))
+          if (keys.length === 1) bookingId = keys[0].replace('lib_pending_booking_', '')
+        } catch {}
+      }
+      if (!bookingId) {
+        // Pas de réservation rapprochable ici — le webhook émet les billets, ils
+        // apparaîtront dans « Mes billets ».
+        setEventName(result?.metadata?.eventName || '')
+        setTickets([])
+        setState(verified ? 'success' : 'pending')
+        return
+      }
+
+      // Identifiants de paiement propagés sur billets + registre anti-fraude :
+      // le webhook rapproche par stripeSessionId (Stripe) ou fedapayTxnId (FedaPay).
+      const payFields = isFedapay
+        ? { paymentMethod: 'fedapay', fedapayTxnId }
+        : { paymentMethod: 'stripe', stripeSessionId: sessionId }
 
       // 2) Récupérer la réservation en attente
       let pending = null
@@ -141,13 +183,13 @@ export default function PaiementReussiPage() {
               preorderSummary: tSummary,
               preorderShowSelections: { ...tOrder.shows },
               totalPrice: pending.unitPriceEUR + tPreorderTotal,
+              currency: pending.currency || 'EUR',
               bookedAt: st.bookedAt || new Date().toISOString(),
               userId: pending.userId,
               userName: pending.userName || null,
               userEmail: pending.userEmail || null,
               paid: true,
-              paymentMethod: 'stripe',
-              stripeSessionId: sessionId,
+              ...payFields,
             }
             const token = generateTicketToken(booking)
             booking.token = token
@@ -159,7 +201,7 @@ export default function PaiementReussiPage() {
             adoptedBookings.forEach(b => { b.groupBookingId = pending.groupBookingId })
           }
           const prev = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-            .filter(b => b.stripeSessionId !== sessionId) // au cas où
+            .filter(b => (isFedapay ? b.fedapayTxnId !== fedapayTxnId : b.stripeSessionId !== sessionId)) // au cas où
           const all = [...prev, ...adoptedBookings]
           localStorage.setItem('lib_bookings', JSON.stringify(all))
           if (pending.userId) {
@@ -187,9 +229,8 @@ export default function PaiementReussiPage() {
 
       // 2.9) La vérif client a échoué ET le webhook n'a pas (encore) publié de
       // billets adoptables. On NE génère RIEN sans confirmation de paiement, mais
-      // on n'affiche pas d'erreur anxiogène : on arrive ici après un paiement
-      // Stripe réussi → état « en cours de confirmation », les billets émis par le
-      // webhook apparaîtront dans « Mes billets ».
+      // on n'affiche pas d'erreur anxiogène : état « en cours de confirmation »,
+      // les billets émis par le webhook apparaîtront dans « Mes billets ».
       if (!verified) {
         setState('pending')
         setEventName(pending?.eventName || '')
@@ -234,13 +275,13 @@ export default function PaiementReussiPage() {
           preorderSummary: tSummary,
           preorderShowSelections: { ...tOrder.shows },
           totalPrice: pending.unitPriceEUR + tPreorderTotal,
+          currency: pending.currency || 'EUR',
           bookedAt: new Date().toISOString(),
           userId: pending.userId,
           userName: pending.userName || null,
           userEmail: pending.userEmail || null,
           paid: true,
-          paymentMethod: 'stripe',
-          stripeSessionId: sessionId,
+          ...payFields,
         }
         const token = generateTicketToken(booking)
         booking.token = token
@@ -262,9 +303,9 @@ export default function PaiementReussiPage() {
           import('../utils/firestore-sync').then(({ syncDoc }) => {
             const myBookings = allBookings.filter(b => b.userId === pending.userId)
             if (myBookings.length) syncDoc(`user_bookings/${pending.userId}`, { items: myBookings })
-            // Registre anti-fraude tickets/{code} — filet si le webhook Stripe
-            // n'a pas encore tourné. Les règles n'autorisent que paid:false côté
-            // client ; le webhook (Admin SDK) écrasera avec paid:true.
+            // Registre anti-fraude tickets/{code} — filet si le webhook (Stripe
+            // ou FedaPay) n'a pas encore tourné. Les règles n'autorisent que
+            // paid:false côté client ; le webhook (Admin SDK) écrasera avec paid:true.
             for (const b of newBookings) {
               syncDoc(`tickets/${b.ticketCode}`, {
                 ticketCode: b.ticketCode,
@@ -274,11 +315,12 @@ export default function PaiementReussiPage() {
                 // Prix payé figé au moment de la vente (les stats lisent ce champ
                 // en priorité — jamais recalculé depuis le tarif actuel)
                 placePrice: b.placePrice != null ? Number(b.placePrice) : 0,
+                currency: b.currency || 'EUR',
                 userId: pending.userId,
                 paid: false,
                 source: 'client-postpay',
                 bookedAt: b.bookedAt,
-                stripeSessionId: sessionId,
+                ...(isFedapay ? { fedapayTxnId } : { stripeSessionId: sessionId }),
               })
             }
           }).catch(() => {})
@@ -314,7 +356,7 @@ export default function PaiementReussiPage() {
       setState('success')
     })()
     return () => { cancelled = true }
-  }, [sessionId, bookingId, user, setUser])
+  }, [sessionId, fedapayTxnId, bookingIdParam, user, setUser]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const successMsg = tickets.length > 0
     ? `${tickets.length} billet${tickets.length > 1 ? 's' : ''} pour ${eventName ? '« ' + eventName + ' »' : 'ton événement'} ${tickets.length > 1 ? 'sont disponibles' : 'est disponible'} dans ton compte.`

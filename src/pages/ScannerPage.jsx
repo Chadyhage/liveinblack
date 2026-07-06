@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import jsQR from 'jsqr'
 import { verifyTicketToken } from '../utils/ticket'
+import { fmtMoney, eventCurrency } from '../utils/money'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import {
@@ -409,7 +410,8 @@ function ScannerInner() {
       setResult({
         code: tc,
         status: isUsed ? 'used' : 'valid',
-        ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en, date: data.ed, price: `${data.tp}€` },
+        ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en, date: data.ed, price: fmtMoney(data.tp, data.cur) },
+        cur: data.cur || null,
         preorders: regPo ?? (data.po || []),
         preordersCertified: regPo != null,
         paidConfirmed: reg.paid,
@@ -469,7 +471,8 @@ function ScannerInner() {
         setResult({
           code: clean,
           status: isUsed ? 'used' : 'valid',
-          ticket: { holder: booking.userName || 'Participant', type: booking.place, event: booking.eventName, date: booking.eventDate, price: `${booking.totalPrice}€` },
+          ticket: { holder: booking.userName || 'Participant', type: booking.place, event: booking.eventName, date: booking.eventDate, price: fmtMoney(booking.totalPrice, booking.currency) },
+          cur: booking.currency || null,
           preorders: (booking.preorderSummary || []).map(i => ({ n: i.name, e: i.emoji || '', q: (booking.preorderItems || {})[i.name] || 0, p: i.price })),
           offline: !!reg.error,
         })
@@ -611,7 +614,7 @@ function ScannerInner() {
   async function posCollect(eventId, code) {
     const r = await markTicketPaid(eventId, code, posActor(eventId))
     refreshOrders(eventId)
-    flashPos(r?.ok ? `Addition encaissée · ${r.total}€` : (r?.error || 'Rien à encaisser'))
+    flashPos(r?.ok ? `Addition encaissée · ${fmtMoney(r.total, eventCurrency(eventsByIdRef.current[eventId]))}` : (r?.error || 'Rien à encaisser'))
   }
   async function posDoCancel() {
     if (!cancelFor) return
@@ -903,7 +906,7 @@ function ScannerInner() {
                       {result.preorders.map((p, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>{p.n} ×{p.q}</span>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold }}>{p.p * p.q}€</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold }}>{fmtMoney(p.p * p.q, result.cur)}</span>
                         </div>
                       ))}
                     </div>
@@ -954,6 +957,7 @@ function ScannerInner() {
         {scanMode === 'service' && (() => {
           const active = openTickets.find(t => t.code === activeCode) || null
           const evId = active?.eventId || null
+          const posCur = eventCurrency(evId ? eventsByIdRef.current[evId] : null)
           const allItems = evId ? (ordersByEvent[evId] || []) : []
           const isServed = i => i.status === ONSITE_STATUS.SERVED || i.status === PREORDER_STATUS.SERVED
           const activeItems = allItems
@@ -1084,7 +1088,7 @@ function ScannerInner() {
                         {totalPaid > 0 && (
                           <div style={{ ...CARD, padding: '13px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderColor: 'rgba(34,197,94,0.28)' }}>
                             <span style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total encaissé ce soir</span>
-                            <span style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 800, color: '#22c55e', letterSpacing: '-0.5px' }}>{totalPaid}€</span>
+                            <span style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 800, color: '#22c55e', letterSpacing: '-0.5px' }}>{fmtMoney(totalPaid, posCur)}</span>
                           </div>
                         )}
                         {log.map(e => {
@@ -1104,7 +1108,7 @@ function ScannerInner() {
                               </div>
                               {typeof e.amount === 'number' && e.amount !== 0 && (
                                 <span style={{ flexShrink: 0, fontFamily: FONTS.mono, fontSize: 13.5, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: e.action === 'pay' ? '#22c55e' : e.amount < 0 ? COLORS.pink : COLORS.gold }}>
-                                  {e.amount > 0 && e.action !== 'pay' ? '+' : ''}{e.amount}€
+                                  {e.amount > 0 && e.action !== 'pay' ? '+' : ''}{fmtMoney(e.amount, posCur)}
                                 </span>
                               )}
                             </div>
@@ -1144,7 +1148,7 @@ function ScannerInner() {
                             <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, textDecoration: served ? 'line-through' : 'none' }}>{item.name} <span style={{ color: COLORS.muted, fontWeight: 500 }}>×{item.quantity}</span></p>
                             <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: chip.c }}>{chip.t}{served && item.served_by_name ? ` par ${item.served_by_name}` : ''}{!served && item.addedByRole === 'client' ? ' · par le client' : ''}</span>
                           </div>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: isPre ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : `${Math.round(item.unitPrice * item.quantity)}€`}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: isPre ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : fmtMoney(Math.round(item.unitPrice * item.quantity), posCur)}</span>
                           {!served && (
                             <button onClick={() => posServe(evId, item.id)} disabled={!canServe(role)}
                               style={{ flexShrink: 0, padding: '7px 11px', borderRadius: 10, cursor: canServe(role) ? 'pointer' : 'default', fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, opacity: canServe(role) ? 1 : 0.4 }}>Servir</button>
@@ -1171,7 +1175,7 @@ function ScannerInner() {
                         <div key={String(m.id || m.name)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                           <span style={{ fontSize: 18, width: 22, textAlign: 'center' }}>{m.emoji || '🍸'}</span>
                           <span style={{ flex: 1, fontFamily: FONTS.mono, fontSize: 13, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: COLORS.gold }}>{Math.round(Number(m.price) || 0)}€</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: COLORS.gold }}>{fmtMoney(Math.round(Number(m.price) || 0), posCur)}</span>
                           <button onClick={() => posAddItem(evId, active.code, m)} style={{ padding: '6px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal }}>+ Ajouter</button>
                         </div>
                       ))}
@@ -1184,7 +1188,7 @@ function ScannerInner() {
                   <div style={{ ...CARD, padding: 15, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <div>
                       <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>À encaisser</p>
-                      <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 800, color: '#fff', margin: '2px 0 0', letterSpacing: '-0.5px' }}>{dueTotal}€</p>
+                      <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 800, color: '#fff', margin: '2px 0 0', letterSpacing: '-0.5px' }}>{fmtMoney(dueTotal, posCur)}</p>
                     </div>
                     {dueTotal > 0 ? (
                       <button onClick={() => posCollect(evId, active.code)} disabled={!canServe(role)}
@@ -1225,7 +1229,7 @@ function ScannerInner() {
                     <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 16, color: '#fff', margin: 0 }}>Clôturer l'onglet de {closeConfirm.holder} ?</p>
                     {closeConfirm.due > 0 && (
                       <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.35)' }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: COLORS.gold, margin: 0 }}>⚠ Il reste {closeConfirm.due}€ à encaisser</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: COLORS.gold, margin: 0 }}>⚠ Il reste {fmtMoney(closeConfirm.due, posCur)} à encaisser</p>
                       </div>
                     )}
                     {closeConfirm.unserved > 0 && (

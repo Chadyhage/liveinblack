@@ -10,6 +10,7 @@ import {
   eventStatsCsvRows,
   ticketPrice,
 } from '../utils/eventStats'
+import { eventCurrency } from '../utils/money'
 import './EventStatsPage.css'
 
 const TABS = [
@@ -20,7 +21,9 @@ const TABS = [
   ['data', 'Données'],
 ]
 
-const money = value => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value || 0)
+const money = (value, cur = 'EUR') => String(cur).toUpperCase() === 'XOF'
+  ? `${Math.round(Number(value) || 0).toLocaleString('fr-FR')} FCFA`
+  : new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value || 0)
 const number = value => new Intl.NumberFormat('fr-FR').format(value || 0)
 const percent = value => value == null ? '—' : `${Math.round(value)} %`
 const shortDate = value => {
@@ -140,7 +143,7 @@ function aggregateByWeek(series) {
   return weeks
 }
 
-function SalesChart({ series: rawSeries }) {
+function SalesChart({ series: rawSeries, cur = 'EUR' }) {
   if (!rawSeries.length) return <EmptyState title="Aucune vente sur cette période" body="Les prochaines attributions apparaîtront ici automatiquement." />
   const series = aggregateByWeek(rawSeries)
   const isAggregated = series.length < rawSeries.length
@@ -166,7 +169,7 @@ function SalesChart({ series: rawSeries }) {
           return <rect key={point.date} x={x(index) - 7} y={height - pad - barHeight} width="14" height={barHeight} className="sales-bar"><title>{point.tickets} billet(s)</title></rect>
         })}
         <path d={line} className="revenue-line" />
-        {series.map((point, index) => <circle key={point.date} cx={x(index)} cy={y(point.cumulativeRevenue)} r="4" className="revenue-dot"><title>{money(point.cumulativeRevenue)}</title></circle>)}
+        {series.map((point, index) => <circle key={point.date} cx={x(index)} cy={y(point.cumulativeRevenue)} r="4" className="revenue-dot"><title>{money(point.cumulativeRevenue, cur)}</title></circle>)}
         {series.map((point, index) => {
           const show = series.length <= 8 || index === 0 || index === series.length - 1 || index % Math.ceil(series.length / 6) === 0
           return show ? <text key={point.date} x={x(index)} y={height - 8} textAnchor="middle">{shortDate(point.date)}</text> : null
@@ -176,7 +179,7 @@ function SalesChart({ series: rawSeries }) {
   )
 }
 
-function PlaceBreakdown({ rows, total }) {
+function PlaceBreakdown({ rows, total, cur = 'EUR' }) {
   if (!rows.length) return <EmptyState title="Aucune catégorie vendue" body="La répartition apparaîtra après la première attribution." />
   return (
     <div className="event-stats-breakdown">
@@ -184,7 +187,7 @@ function PlaceBreakdown({ rows, total }) {
         const ratio = total ? row.count / total * 100 : 0
         return (
           <div className="event-stats-breakdown-row" key={row.name}>
-            <div><strong>{row.name}</strong><span>{number(row.count)} billet{row.count > 1 ? 's' : ''} · {money(row.revenue)}</span></div>
+            <div><strong>{row.name}</strong><span>{number(row.count)} billet{row.count > 1 ? 's' : ''} · {money(row.revenue, cur)}</span></div>
             <div className="event-stats-progress"><span style={{ width: `${ratio}%` }} /></div>
             <b>{Math.round(ratio)} %</b>
           </div>
@@ -213,7 +216,7 @@ function TicketTable({ event, tickets, showBuyer = true }) {
             <tr key={ticket.ticketCode || ticket.id}>
               <td>{ticket.ticketCode || ticket.id}</td>
               <td>{ticket.place || 'Standard'}</td>
-              <td>{ticket.paid === true ? money(ticketPrice(event, ticket)) : 'Gratuit'}</td>
+              <td>{ticket.paid === true ? money(ticketPrice(event, ticket), eventCurrency(event)) : 'Gratuit'}</td>
               {showBuyer && <td>{ticket.userId ? `••••${String(ticket.userId).slice(-4)}` : 'Non renseigné'}</td>}
               <td>{dateTime(ticket.bookedAt)}</td>
               <td><span className={`event-stats-status ${ticket.checkedInAt ? 'checked' : ticket.paid === true ? 'paid' : 'free'}`}>{ticket.checkedInAt ? 'Présent' : ticket.paid === true ? 'Émis' : 'Invitation'}</span></td>
@@ -254,6 +257,7 @@ export default function EventStatsPage() {
   const [range, setRange] = useState('all')
   const [place, setPlace] = useState('all')
   const [updatedAt, setUpdatedAt] = useState(new Date())
+  const statCur = eventCurrency(event) // XOF (FCFA) ou EUR selon la région de l'event
 
   useEffect(() => {
     let unsubscribe = () => {}
@@ -365,7 +369,7 @@ export default function EventStatsPage() {
         {(activeTab === 'overview' || activeTab === 'sales') && (
           <>
             <section className="event-stats-metrics">
-              <MetricCard icon={I.revenue} definition={EVENT_STATS_DEFINITIONS.estimatedRevenue} value={money(stats.estimatedRevenue)} helper="Hors frais, remises & remboursements" tone="teal" />
+              <MetricCard icon={I.revenue} definition={EVENT_STATS_DEFINITIONS.estimatedRevenue} value={money(stats.estimatedRevenue, statCur)} helper="Hors frais, remises & remboursements" tone="teal" />
               <MetricCard icon={I.ticket} definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.paidTickets)} payant${stats.paidTickets > 1 ? 's' : ''} · ${number(stats.freeTickets)} invitation${stats.freeTickets > 1 ? 's' : ''}`} tone="gold" />
               <MetricCard icon={I.gauge} definition={EVENT_STATS_DEFINITIONS.fillRate} value={percent(stats.fillRate)} helper={stats.capacity ? `${number(stats.assignedTickets)} / ${number(stats.capacity)} places vendues` : 'Capacité non définie'} tone="teal" />
               <MetricCard icon={I.seat} definition={EVENT_STATS_DEFINITIONS.remaining} value={stats.remaining == null ? '—' : number(stats.remaining)} helper={stats.capacity ? 'encore vendables' : 'capacité non définie'} tone="gold" />
@@ -374,7 +378,7 @@ export default function EventStatsPage() {
             </section>
 
             <section className="event-stats-overview-grid">
-              <article className="event-stats-panel event-stats-sales-panel"><h2>Évolution des ventes</h2><SalesChart series={stats.salesSeries} /></article>
+              <article className="event-stats-panel event-stats-sales-panel"><h2>Évolution des ventes</h2><SalesChart series={stats.salesSeries} cur={statCur} /></article>
               <aside className="event-stats-panel event-stats-insights"><h2>Insights</h2>{insights.map((item, index) => <div key={index} className={`insight-${item.tone}`}><span>{index + 1}</span><p>{item.text}</p></div>)}</aside>
             </section>
           </>
@@ -382,15 +386,15 @@ export default function EventStatsPage() {
 
         {activeTab === 'overview' && (
           <section className="event-stats-lower-grid">
-            <article className="event-stats-panel"><h2>Répartition par catégorie</h2><PlaceBreakdown rows={stats.byPlace} total={stats.assignedTickets} /></article>
+            <article className="event-stats-panel"><h2>Répartition par catégorie</h2><PlaceBreakdown rows={stats.byPlace} total={stats.assignedTickets} cur={statCur} /></article>
             <article className="event-stats-panel"><h2>Derniers billets</h2><TicketTable event={event} tickets={[...stats.tickets].sort((a, b) => new Date(b.bookedAt) - new Date(a.bookedAt)).slice(0, 6)} /></article>
           </section>
         )}
 
         {activeTab === 'sales' && (
           <section className="event-stats-lower-grid">
-            <div style={{ display: 'grid', gap: 12 }}><article className="event-stats-panel"><h2>Performance des catégories</h2><PlaceBreakdown rows={stats.byPlace} total={stats.assignedTickets} /></article><article className="event-stats-panel event-stats-summary-list"><h2>Précommandes consommations</h2>{stats.preorderItems.length ? <dl>{stats.preorderItems.map(item => <div key={item.name}><dt>{item.emoji} {item.name} · ×{item.quantity}</dt><dd>{money(item.revenue)}</dd></div>)}</dl> : <EmptyState title="Aucune précommande" body="Les boissons et snacks commandés avec les billets apparaîtront ici." />}</article></div>
-            <article className="event-stats-panel event-stats-summary-list"><h2>Lecture des revenus</h2><dl><div><dt>Billetterie estimée</dt><dd>{money(stats.estimatedRevenue)}</dd></div><div><dt>Précommandes</dt><dd>{money(stats.preorderRevenue)}</dd></div><div><dt>Total estimé</dt><dd>{money(stats.totalEstimatedRevenue)}</dd></div><div><dt>Revenu moyen par billet payant</dt><dd>{money(stats.averageRevenuePerPaidTicket)}</dd></div><div><dt>Billets payants</dt><dd>{number(stats.paidTickets)}</dd></div><div><dt>Billets gratuits</dt><dd>{number(stats.freeTickets)}</dd></div></dl><p>Les remboursements, remises et frais Stripe ne sont pas déduits tant qu'ils ne sont pas exposés à l'organisateur.</p></article>
+            <div style={{ display: 'grid', gap: 12 }}><article className="event-stats-panel"><h2>Performance des catégories</h2><PlaceBreakdown rows={stats.byPlace} total={stats.assignedTickets} cur={statCur} /></article><article className="event-stats-panel event-stats-summary-list"><h2>Précommandes consommations</h2>{stats.preorderItems.length ? <dl>{stats.preorderItems.map(item => <div key={item.name}><dt>{item.emoji} {item.name} · ×{item.quantity}</dt><dd>{money(item.revenue, statCur)}</dd></div>)}</dl> : <EmptyState title="Aucune précommande" body="Les boissons et snacks commandés avec les billets apparaîtront ici." />}</article></div>
+            <article className="event-stats-panel event-stats-summary-list"><h2>Lecture des revenus</h2><dl><div><dt>Billetterie estimée</dt><dd>{money(stats.estimatedRevenue, statCur)}</dd></div><div><dt>Précommandes</dt><dd>{money(stats.preorderRevenue, statCur)}</dd></div><div><dt>Total estimé</dt><dd>{money(stats.totalEstimatedRevenue, statCur)}</dd></div><div><dt>Revenu moyen par billet payant</dt><dd>{money(stats.averageRevenuePerPaidTicket, statCur)}</dd></div><div><dt>Billets payants</dt><dd>{number(stats.paidTickets)}</dd></div><div><dt>Billets gratuits</dt><dd>{number(stats.freeTickets)}</dd></div></dl><p>Les remboursements, remises et frais de paiement ne sont pas déduits tant qu'ils ne sont pas exposés à l'organisateur.</p></article>
           </section>
         )}
 

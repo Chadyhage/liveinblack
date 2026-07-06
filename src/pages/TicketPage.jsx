@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { verifyTicketToken } from '../utils/ticket'
+import { fmtMoney } from '../utils/money'
 
 // ─── Design tokens ────────────────────────────────────────────────────────
 const CARD = {
@@ -165,7 +166,7 @@ export default function TicketPage() {
               <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Prix place
               </p>
-              <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: COLORS.gold, margin: 0 }}>{data.pr}€</p>
+              <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: COLORS.gold, margin: 0 }}>{fmtMoney(data.pr, data.cur)}</p>
             </div>
           </div>
         </div>
@@ -193,7 +194,7 @@ export default function TicketPage() {
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim }}>×{item.q}</span>
-                  <span style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 16, color: '#fff' }}>{item.p * item.q}€</span>
+                  <span style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 16, color: '#fff' }}>{fmtMoney(item.p * item.q, data.cur)}</span>
                 </div>
               </div>
             ))}
@@ -203,7 +204,7 @@ export default function TicketPage() {
         {/* Total */}
         <div style={{ ...CARD, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted }}>Total payé</span>
-          <span style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 30, color: COLORS.gold }}>{data.tp}€</span>
+          <span style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: data.cur === 'XOF' ? 22 : 30, color: COLORS.gold }}>{fmtMoney(data.tp, data.cur)}</span>
         </div>
 
         {/* Ticket code */}

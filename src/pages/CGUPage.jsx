@@ -28,14 +28,14 @@ ${LEGAL.brand} agit en qualité d'intermédiaire technique. ${LEGAL.brand} n'est
     {
       n: '04',
       title: 'Rôle de la plateforme et encaissement pour compte de tiers',
-      body: `Pour les ventes réalisées via la plateforme (billets, services), ${LEGAL.brand} encaisse les paiements pour le compte de l'organisateur ou du prestataire vendeur, via son prestataire de services de paiement Stripe. ${LEGAL.brand} agit comme mandataire d'encaissement : les sommes correspondant au prix de la prestation appartiennent au vendeur et lui sont reversées, déduction faite de la commission applicable.
+      body: `Pour les ventes réalisées via la plateforme (billets, services), ${LEGAL.brand} encaisse les paiements pour le compte de l'organisateur ou du prestataire vendeur, via ses prestataires de services de paiement : Stripe (zone euro) et FedaPay (zone FCFA — mobile money et cartes au Togo, Bénin et pays couverts). ${LEGAL.brand} agit comme mandataire d'encaissement : les sommes correspondant au prix de la prestation appartiennent au vendeur et lui sont reversées, déduction faite de la commission applicable.
 
 ${LEGAL.brand} n'est pas partie au contrat de vente conclu entre l'acheteur et le vendeur. La responsabilité de la fourniture du billet, de l'accès à l'événement ou de l'exécution du service incombe exclusivement au vendeur.`,
     },
     {
       n: '05',
       title: 'Prix, frais de service et commission',
-      body: `Le prix des billets et des prestations est fixé librement par l'organisateur ou le prestataire. Des frais de service ${LEGAL.brand} (actuellement 5 % + 0,49 € par billet, plafonnés à 2,50 € par billet, gratuits sur les billets gratuits) sont ajoutés au prix et payés par l'acheteur. Ces frais sont affichés clairement avant la validation du paiement.
+      body: `Le prix des billets et des prestations est fixé librement par l'organisateur ou le prestataire. Des frais de service ${LEGAL.brand} sont ajoutés au prix et payés par l'acheteur : en zone euro, actuellement 5 % + 0,49 € par billet, plafonnés à 2,50 € par billet ; en zone FCFA, actuellement 5 % + 300 FCFA par billet, plafonnés à 1 500 FCFA par billet. Ils sont gratuits sur les billets gratuits et affichés clairement avant la validation du paiement.
 
 Pour les prestations de services réservées et payées via la plateforme, une commission (actuellement 10 %) est prélevée sur le montant dû au prestataire. Les options de mise en avant (« boosts », placements sponsorisés, abonnements) sont des services payants distincts, facturés directement par ${LEGAL.brand}. Les frais de service et commissions ne sont pas remboursables, sauf disposition légale impérative contraire.`,
     },

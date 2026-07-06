@@ -4,6 +4,7 @@
 // même : il ouvre l'appli, voit ce qui se passe ce soir, et réserve direct.
 
 import { inRegion } from '../data/regions'
+import { fmtMoney, eventCurrency } from '../utils/money'
 
 // Places encore disponibles (somme des `available`, fallback `total`).
 // Exporté pour que HomePage filtre les events « il reste des places ».
@@ -114,7 +115,7 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, gap: 6 }}>
                   <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 13, color: '#c8a96e' }}>
-                    {price > 0 ? `dès ${price}€` : 'Gratuit'}
+                    {price > 0 ? `dès ${fmtMoney(price, eventCurrency(ev))}` : 'Gratuit'}
                   </span>
                   {carre
                     ? <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, color: '#4ee8c8', background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.25)', padding: '2px 7px', borderRadius: 6, whiteSpace: 'nowrap' }}>Carré dispo</span>

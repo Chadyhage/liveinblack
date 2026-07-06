@@ -46,10 +46,12 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
         chargesEnabled: u.stripeChargesEnabled === true,
         stripeAccountId: u.stripeAccountId || null,
         amountDueCents: Number(b.amountDueCents || 0),
+        // Ventes FedaPay (Togo/Bénin) : solde FCFA SÉPARÉ (jamais mélangé aux centimes EUR)
+        amountDueXOF: Number(b.amountDueXOF || 0),
         currency: b.currency || 'eur',
       })
     } catch {
-      setStatus({ payoutMode: 'none', chargesEnabled: false, amountDueCents: 0, currency: 'eur' })
+      setStatus({ payoutMode: 'none', chargesEnabled: false, amountDueCents: 0, amountDueXOF: 0, currency: 'eur' })
     }
     setLoading(false)
   }
@@ -97,6 +99,7 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
       await setDoc(doc(db, 'payout_requests', id), {
         id, sellerId: uid,
         amountDueCents: status.amountDueCents,
+        amountDueXOF: status.amountDueXOF || 0,
         currency: status.currency,
         status: 'pending',
         createdAt: Date.now(),
@@ -113,7 +116,7 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
     return <div style={card}><p style={{ ...label, color: 'rgba(255,255,255,0.3)' }}>Reversements — chargement…</p></div>
   }
 
-  const due = status.amountDueCents > 0
+  const due = status.amountDueCents > 0 || (status.amountDueXOF || 0) > 0
   const manual = status.payoutMode === 'manual'
   const connected = status.chargesEnabled
 
@@ -124,13 +127,20 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
         {connected && <span style={{ fontFamily: DM, fontSize: 9, color: '#4ee8c8', letterSpacing: '0.1em' }}>✓ COMPTE CONNECTÉ</span>}
       </div>
 
-      {/* Solde à reverser */}
+      {/* Solde à reverser (EUR et/ou FCFA — deux compteurs séparés) */}
       {due && (
         <div style={{ marginTop: 12 }}>
           <p style={{ ...label, color: 'rgba(255,255,255,0.3)' }}>Solde à reverser</p>
-          <p style={{ fontFamily: CG, fontSize: 32, fontWeight: 300, color: '#c8a96e', margin: '2px 0 0', lineHeight: 1 }}>
-            {eur(status.amountDueCents, status.currency)}
-          </p>
+          {status.amountDueCents > 0 && (
+            <p style={{ fontFamily: CG, fontSize: 32, fontWeight: 300, color: '#c8a96e', margin: '2px 0 0', lineHeight: 1 }}>
+              {eur(status.amountDueCents, status.currency)}
+            </p>
+          )}
+          {(status.amountDueXOF || 0) > 0 && (
+            <p style={{ fontFamily: CG, fontSize: 26, fontWeight: 300, color: '#c8a96e', margin: '2px 0 0', lineHeight: 1.2 }}>
+              {Math.round(status.amountDueXOF).toLocaleString('fr-FR')} FCFA
+            </p>
+          )}
         </div>
       )}
 

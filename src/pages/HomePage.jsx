@@ -12,6 +12,7 @@ import { getActiveBoostsByRegion } from '../utils/ticket'
 import { buildRegionalTopThree } from '../../lib/boosts.js'
 import { getEventCountdown, getEventEndTimestamp, isCountdownUrgent, getStockBadge, isEventOngoingOrStartingWithin } from '../utils/eventUrgency'
 import { matchesEntityRegion } from '../utils/locations'
+import { fmtMoney, eventCurrency } from '../utils/money'
 import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 import { IconTent, IconMic } from '../components/icons'
@@ -1082,7 +1083,7 @@ export default function HomePage() {
                                 ? Math.min(...event.places.map(p => Number(p.price) || 0))
                                 : null
                               const effectivePrice = minPlace !== null ? minPlace : (Number(event.price) || 0)
-                              if (effectivePrice > 0) return `À partir de ${effectivePrice} €`
+                              if (effectivePrice > 0) return `À partir de ${fmtMoney(effectivePrice, eventCurrency(event))}`
                               return 'Gratuit'
                             })()}
                           </span>
@@ -1215,7 +1216,7 @@ export default function HomePage() {
                             {[event.dateDisplay, event.city].filter(Boolean).join(' · ')}
                           </p>
                           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: 'var(--violet-end)', margin: '10px 0 0' }}>
-                            {minPrice != null ? (minPrice <= 0 ? 'Gratuit' : `Dès ${minPrice.toLocaleString('fr-FR')} €`) : (event.price ? `Dès ${event.price} €` : 'Gratuit')}
+                            {minPrice != null ? (minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`) : (event.price ? `Dès ${fmtMoney(event.price, eventCurrency(event))}` : 'Gratuit')}
                           </p>
                         </div>
                       </div>

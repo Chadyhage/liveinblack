@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
+import { eventCurrency } from '../utils/money'
 import {
   listenOrders, getOrders, addOnsiteItem, updateOnsiteItem, removeOnsiteItem,
   ORDER_SOURCE, ONSITE_STATUS, PREORDER_STATUS,
@@ -16,7 +17,10 @@ import {
 
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
 const FONT = 'Inter, sans-serif'
-const euro = n => `${(Math.round((Number(n) || 0) * 100) / 100).toLocaleString('fr-FR')}€`
+// Multi-devise : « euro » historique, désormais paramétrable (XOF = FCFA entiers).
+const euro = (n, cur = 'EUR') => String(cur).toUpperCase() === 'XOF'
+  ? `${Math.round(Number(n) || 0).toLocaleString('fr-FR')} FCFA`
+  : `${(Math.round((Number(n) || 0) * 100) / 100).toLocaleString('fr-FR')}€`
 
 async function loadEvent(eventId) {
   // Firestore public d'abord (frais), puis cache local en secours hors-ligne.
@@ -49,6 +53,7 @@ export default function OnSiteOrderPage() {
   const [items, setItems] = useState(() => { try { return getOrders(eventId) } catch { return [] } }) // lecture optimiste locale
   const [busy, setBusy] = useState('')      // menuItemId en cours d'écriture
   const [toast, setToast] = useState('')
+  const cur = eventCurrency(event)
   const refreshLocal = () => { try { setItems(getOrders(eventId)) } catch {} }
 
   // Charge l'événement (menu + méta)
@@ -152,7 +157,7 @@ export default function OnSiteOrderPage() {
           <section>
             <p style={sectionLabel}>Ma commande</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-              {myItems.map(i => <MyLine key={i.id} item={i} />)}
+              {myItems.map(i => <MyLine key={i.id} item={i} cur={cur} />)}
             </div>
           </section>
         )}
@@ -180,7 +185,7 @@ export default function OnSiteOrderPage() {
                         <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</p>
                         {m.description && <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.4)', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.description}</p>}
                       </div>
-                      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.gold, flexShrink: 0 }}>{euro(m.price)}</span>
+                      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.gold, flexShrink: 0 }}>{euro(m.price, cur)}</span>
                       {qty > 0 ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                           <Stepper label="−" onClick={() => dec(m)} disabled={busy === id} tone="dim" />
@@ -205,7 +210,7 @@ export default function OnSiteOrderPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', margin: 0 }}>À régler au bar</p>
-              <p style={{ fontFamily: FONT, fontSize: 24, fontWeight: 800, color: '#fff', margin: '2px 0 0', letterSpacing: '-.5px' }}>{euro(dueTotal)}</p>
+              <p style={{ fontFamily: FONT, fontSize: 24, fontWeight: 800, color: '#fff', margin: '2px 0 0', letterSpacing: '-.5px' }}>{euro(dueTotal, cur)}</p>
             </div>
             <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.45)', margin: 0, maxWidth: 180, textAlign: 'right', lineHeight: 1.4 }}>Un serveur validera et encaissera ta commande.</p>
           </div>
@@ -220,7 +225,7 @@ export default function OnSiteOrderPage() {
 }
 
 // ── Une ligne de MA commande (avec statut live) ──
-function MyLine({ item }) {
+function MyLine({ item, cur = 'EUR' }) {
   const isPre = item.source === ORDER_SOURCE.PREORDER
   const served = item.status === ONSITE_STATUS.SERVED || item.status === PREORDER_STATUS.SERVED
   const statusLabel = served
@@ -236,7 +241,7 @@ function MyLine({ item }) {
         <p style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 600, color: '#fff', margin: 0 }}>{item.name} <span style={{ color: 'rgba(255,255,255,.45)', fontWeight: 500 }}>×{item.quantity}</span></p>
         <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: statusColor }}>{statusLabel}</span>
       </div>
-      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: isPre ? 'rgba(255,255,255,.5)' : C.gold, flexShrink: 0 }}>{isPre ? 'incluse' : euro(item.unitPrice * item.quantity)}</span>
+      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: isPre ? 'rgba(255,255,255,.5)' : C.gold, flexShrink: 0 }}>{isPre ? 'incluse' : euro(item.unitPrice * item.quantity, cur)}</span>
     </div>
   )
 }

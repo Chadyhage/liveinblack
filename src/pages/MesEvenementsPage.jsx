@@ -10,6 +10,7 @@ import { IconHourglass } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
 import { regions } from '../data/regions'
+import { fmtMoney, eventCurrency, regionToCurrency, currencySymbol } from '../utils/money'
 import { MUSIC_STYLES, EVENT_TYPES, AMBIANCES } from '../utils/recommendations'
 import { getGuestlist, loadGuestlistRemote, addGuestlistEntry, removeGuestlistEntry } from '../utils/guestlist'
 
@@ -630,6 +631,9 @@ export default function MesEvenementsPage() {
       location: [venue.name, venue.city].filter(Boolean).join(', '),
       city: venue.city,
       region: form.region || venue.city,
+      // Devise de facturation : Togo/Bénin → XOF (FedaPay), France → EUR (Stripe).
+      // Figée à la publication — les prix des places sont saisis dans cette devise.
+      currency: regionToCurrency(form.region || venue.city),
       imageUrl: finalImageUrl,
       color: '#c8a96e',
       accentColor: '#e8d49e',
@@ -1354,7 +1358,7 @@ export default function MesEvenementsPage() {
                                 TERMINÉ
                               </span>
                               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: '#c8a96e' }}>
-                                {evBookings.length} billet{evBookings.length !== 1 ? 's' : ''} · {totalRevenue.toFixed(0)}€
+                                {evBookings.length} billet{evBookings.length !== 1 ? 's' : ''} · {fmtMoney(Math.round(totalRevenue), eventCurrency(ev))}
                               </span>
                             </div>
                           </div>
@@ -1595,7 +1599,7 @@ export default function MesEvenementsPage() {
                         style={{ ...S.inputBase, cursor: 'pointer' }}
                       >
                         {guestlistTargetEvent.places.map(p => (
-                          <option key={p.type} value={p.type}>{p.type}{p.price > 0 ? ` (offert, ${p.price}€)` : ''}</option>
+                          <option key={p.type} value={p.type}>{p.type}{p.price > 0 ? ` (offert, ${fmtMoney(p.price, eventCurrency(guestlistTargetEvent))})` : ''}</option>
                         ))}
                       </select>
                     ) : (
@@ -2204,7 +2208,7 @@ export default function MesEvenementsPage() {
                   </div>
                   <div>
                     <InputField
-                      label="Prix (€)"
+                      label={`Prix (${currencySymbol(regionToCurrency(form.region))})`}
                       type="number"
                       placeholder="0 = gratuit"
                       value={place.price}
@@ -2479,6 +2483,7 @@ export default function MesEvenementsPage() {
                       key={i}
                       item={item}
                       index={i}
+                      currency={regionToCurrency(form.region)}
                       placeTypes={places.map(p => p.type).filter(Boolean)}
                       onUpdate={updated => setMenuItems(menuItems.map((m, j) => j === i ? updated : m))}
                       onRemove={i > 0 ? () => setMenuItems(menuItems.filter((_, j) => j !== i)) : null}
@@ -2609,7 +2614,7 @@ export default function MesEvenementsPage() {
 }
 
 // ─── Menu Item Editor ────────────────────────────────────────────────────────
-function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
+function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], currency = 'EUR' }) {
   const photoRef = useRef(null)
   const [showDesc, setShowDesc] = useState(!!item.description)
   const u = (field, val) => onUpdate({ ...item, [field]: val })
@@ -2695,7 +2700,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
       {/* Price + Category */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
-          <label style={S.label}>Prix (€)</label>
+          <label style={S.label}>Prix ({currencySymbol(currency)})</label>
           <input style={{ ...S.inputBase }} type="number" placeholder="0" min="0" value={item.price} onChange={e => u('price', Math.max(0, parseFloat(e.target.value) || 0))}
             onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
             onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }} />
@@ -2874,8 +2879,11 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [] }) {
 // Statistiques de ventes RÉELLES, calculées depuis le registre tickets/ Firestore
 // (un billet = une vente, cross-device), joint aux prix des places de l'event.
 function OrganizerAnalytics({ events, tickets, loading }) {
-  const COMMISSION = 0.10 // 10% plateforme → l'organisateur garde 90%
   const eventById = Object.fromEntries((events || []).map(e => [String(e.id), e]))
+  // Devise d'affichage : XOF si TOUS les events de l'organisateur sont en FCFA,
+  // EUR sinon. (Un organisateur est mono-région en pratique ; s'il mixe un jour,
+  // les lignes « par événement » restent justes, seuls les agrégats mélangent.)
+  const statsCur = (events || []).length && (events || []).every(e => eventCurrency(e) === 'XOF') ? 'XOF' : 'EUR'
   const priceOf = (t) => {
     // Prix payé figé sur le billet en priorité : le CA des ventes passées ne doit
     // JAMAIS changer si l'organisateur modifie ses tarifs (cohérence comptable).
@@ -2887,8 +2895,9 @@ function OrganizerAnalytics({ events, tickets, loading }) {
   const totalTickets = tickets.length
   // Revenu = uniquement les billets PAYÉS. Un billet gratuit (guestlist / event
   // gratuit) occupe une place mais ne rapporte rien — il ne doit pas gonfler le CA.
+  // L'organisateur garde 100 % du prix du billet : le frais de service LIVEINBLACK
+  // est payé par l'ACHETEUR en sus (lib/fees.js) — pas de commission vendeur.
   const grossRevenue = tickets.reduce((s, t) => s + (t.paid ? priceOf(t) : 0), 0)
-  const netRevenue = Math.round(grossRevenue * (1 - COMMISSION) * 100) / 100
   const paidCount = tickets.filter(t => t.paid).length
   const totalCap = (events || []).reduce((s, e) => s + (e.places || []).reduce((a, p) => a + (Number(p.total) || 0), 0), 0)
   const fillPct = totalCap > 0 ? Math.round(totalTickets / totalCap * 100) : 0
@@ -2925,9 +2934,9 @@ function OrganizerAnalytics({ events, tickets, loading }) {
         {/* KPI cards */}
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ ...card, flex: 1.4, padding: '16px 18px', background: 'linear-gradient(135deg, rgba(200,169,110,0.14), rgba(200,169,110,0.03))', border: '1px solid rgba(200,169,110,0.30)' }}>
-            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', margin: '0 0 6px' }}>Revenus nets</p>
-            <p style={{ fontFamily: inter, fontSize: 30, fontWeight: 600, color: '#c8a96e', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{netRevenue.toLocaleString('fr-FR')} €</p>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>brut {grossRevenue.toLocaleString('fr-FR')} € · comm. 10%</p>
+            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', margin: '0 0 6px' }}>Revenus billetterie</p>
+            <p style={{ fontFamily: inter, fontSize: statsCur === 'XOF' ? 24 : 30, fontWeight: 600, color: '#c8a96e', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{fmtMoney(grossRevenue, statsCur)}</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>100% pour toi — frais de service payés par l'acheteur</p>
           </div>
           <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
             <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Billets</p>
@@ -2950,7 +2959,7 @@ function OrganizerAnalytics({ events, tickets, loading }) {
               <div key={event.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, gap: 8 }}>
                   <span style={{ fontFamily: inter, fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.name}</span>
-                  <span style={{ fontFamily: inter, fontSize: 14, fontWeight: 600, color: '#c8a96e', flexShrink: 0 }}>{rev.toLocaleString('fr-FR')} €</span>
+                  <span style={{ fontFamily: inter, fontSize: 14, fontWeight: 600, color: '#c8a96e', flexShrink: 0 }}>{fmtMoney(rev, eventCurrency(event))}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
@@ -3091,10 +3100,10 @@ function BookingsPanel({ event, onClose }) {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.12em' }}>{b.ticketCode}</p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{b.place} · {b.placePrice} €</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{b.place} · {fmtMoney(b.placePrice, eventCurrency(event))}</p>
                       {b.userName && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{b.userName}</p>}
                     </div>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 600, color: '#c8a96e', letterSpacing: '-0.01em' }}>{b.totalPrice} €</span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: eventCurrency(event) === 'XOF' ? 16 : 22, fontWeight: 600, color: '#c8a96e', letterSpacing: '-0.01em' }}>{fmtMoney(b.totalPrice, eventCurrency(event))}</span>
                   </div>
                   {b.preorderSummary?.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 8, borderLeft: '2px solid rgba(255,255,255,0.05)' }}>
@@ -3180,9 +3189,9 @@ function StatsPanel({ event, onClose }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
             { label: 'Billets vendus', value: totalTickets, color: '#4ee8c8' },
-            { label: 'Revenus totaux', value: `${totalRevenue.toFixed(0)} €`, color: '#c8a96e' },
-            { label: 'Dont billetterie', value: `${(totalRevenue - preorderRevenue).toFixed(0)} €`, color: 'rgba(255,255,255,0.55)' },
-            { label: 'Dont précommandes', value: `${preorderRevenue.toFixed(0)} €`, color: 'rgba(255,255,255,0.55)' },
+            { label: 'Revenus totaux', value: fmtMoney(Math.round(totalRevenue), eventCurrency(event)), color: '#c8a96e' },
+            { label: 'Dont billetterie', value: fmtMoney(Math.round(totalRevenue - preorderRevenue), eventCurrency(event)), color: 'rgba(255,255,255,0.55)' },
+            { label: 'Dont précommandes', value: fmtMoney(Math.round(preorderRevenue), eventCurrency(event)), color: 'rgba(255,255,255,0.55)' },
           ].map(k => (
             <div key={k.label} style={{ ...S.card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{k.label}</p>
@@ -3202,7 +3211,7 @@ function StatsPanel({ event, onClose }) {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>{place}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e' }}>{data.revenue.toFixed(0)} €</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e' }}>{fmtMoney(Math.round(data.revenue), eventCurrency(event))}</span>
                       <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 600, color: '#4ee8c8' }}>{data.count}</span>
                     </div>
                   </div>
@@ -3223,7 +3232,7 @@ function StatsPanel({ event, onClose }) {
               <div key={name} style={{ ...S.card, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>{data.emoji} {name}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e' }}>{data.revenue.toFixed(0)} €</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e' }}>{fmtMoney(Math.round(data.revenue), eventCurrency(event))}</span>
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 600, color: '#4ee8c8' }}>×{data.qty}</span>
                 </div>
               </div>

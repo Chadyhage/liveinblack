@@ -8,7 +8,8 @@ import PlaylistDJPanel from '../components/PlaylistDJPanel'
 import { useAuth } from '../context/AuthContext'
 import { generateTicketToken, checkScheduleConflict } from '../utils/ticket'
 import { getConversations, sendMessage, getUserId, formatTime, getInitials, saveGroupBooking, getGroupBookings, validateGroupBooking, payGroupBookingShare } from '../utils/messaging'
-import { startStripeCheckout } from '../utils/stripe'
+import { startTicketCheckout } from '../utils/stripe'
+import { eventCurrency, fmtMoney } from '../utils/money'
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
 import { IconLock } from '../components/icons'
@@ -512,6 +513,8 @@ export default function EventDetailPage() {
   ))
 
   const placePrice = selectedPlaceObj?.price || 0
+  // Devise de l'événement : XOF (FCFA — FedaPay) au Togo/Bénin, EUR (Stripe) sinon.
+  const evCur = eventCurrency(event)
   const curTicketOrder = perTicketOrders[activePreorderTicket] || { items: {}, shows: {} }
   const preorderTotal = perTicketOrders.reduce((total, t) =>
     total + activeMenu.reduce((sum, item) => sum + (t.items[item.name] || 0) * item.price, 0), 0)
@@ -621,9 +624,9 @@ export default function EventDetailPage() {
     }
     setEventStartedError(false)
 
-    // ─── ÉVÉNEMENT PAYANT — Stripe Checkout ───────────────────────────────
+    // ─── ÉVÉNEMENT PAYANT — Stripe Checkout (EUR) ou FedaPay (FCFA) ───────
     if (grandTotal > 0) {
-      // Construire un id de réservation persistant (rapproche pending ↔ session Stripe)
+      // Construire un id de réservation persistant (rapproche pending ↔ session de paiement)
       const arr = new Uint32Array(2)
       crypto.getRandomValues(arr)
       const bookingId = `${arr[0].toString(36)}${arr[1].toString(36)}`.slice(0, 16).toUpperCase()
@@ -655,6 +658,7 @@ export default function EventDetailPage() {
         placeType: selectedPlace,
         qty: ticketQty,
         unitPriceEUR: placePrice,
+        currency: evCur, // XOF (FedaPay) ou EUR (Stripe) — réhydraté à /paiement-reussi
         preorderItems,
         perTicketOrders, // détail par billet — utilisé pour réhydrater à /paiement-reussi
         activeMenu,
@@ -668,22 +672,24 @@ export default function EventDetailPage() {
       } catch {}
 
       setStripeRedirecting(true)
-      const result = await startStripeCheckout({
+      const result = await startTicketCheckout({
         eventId: event.id,
         eventName: event.name,
         eventImage: event.imageUrl,
         placeType: selectedPlace,
         qty: ticketQty,
         unitPriceEUR: placePrice,
+        currency: evCur,
         preorderItems,
         userId: uid,
         userEmail: user?.email,
+        userName: user?.name,
         bookingId,
       })
 
       if (!result.ok) {
         setStripeRedirecting(false)
-        setStripeError(result.error || 'Erreur Stripe — réessaye dans un instant.')
+        setStripeError(result.error || 'Erreur de paiement — réessaye dans un instant.')
         // Cleanup pending si erreur
         try { localStorage.removeItem(`lib_pending_booking_${bookingId}`) } catch {}
       }
@@ -1252,7 +1258,7 @@ export default function EventDetailPage() {
                           {/* encoches cut-out haut/bas */}
                           <span style={{ position: 'absolute', top: -8, left: -8, width: 16, height: 16, borderRadius: '50%', background: '#04040b' }} />
                           <span style={{ position: 'absolute', bottom: -8, left: -8, width: 16, height: 16, borderRadius: '50%', background: '#04040b' }} />
-                          <p style={{ ...S.price, fontSize: 26, margin: 0, lineHeight: 1 }}>{place.price}€</p>
+                          <p style={{ ...S.price, fontSize: 26, margin: 0, lineHeight: 1 }}>{fmtMoney(place.price, evCur)}</p>
                           {isSelected
                             ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: '#c8a96e' }}><CheckIcon size={11} color="#c8a96e" /> Choisi</span>
                             : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}>Choisir →</span>}
@@ -1324,10 +1330,10 @@ export default function EventDetailPage() {
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
                           <span style={S.rowLabel}>
-                            {isAuctionPlace ? (currentAuctionPrice > 0 ? 'Enchère actuelle' : 'Prix de base') : ticketQty > 1 ? `Prix (${placePrice}€ × ${ticketQty})` : 'Prix'}
+                            {isAuctionPlace ? (currentAuctionPrice > 0 ? 'Enchère actuelle' : 'Prix de base') : ticketQty > 1 ? `Prix (${fmtMoney(placePrice, evCur)} × ${ticketQty})` : 'Prix'}
                           </span>
                           <span style={{ ...S.price, fontSize: 20 }}>
-                            {isAuctionPlace ? (currentAuctionPrice > 0 ? currentAuctionPrice : placePrice) : placePrice * ticketQty}€
+                            {fmtMoney(isAuctionPlace ? (currentAuctionPrice > 0 ? currentAuctionPrice : placePrice) : placePrice * ticketQty, evCur)}
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1338,7 +1344,7 @@ export default function EventDetailPage() {
                           <span style={S.rowLabel}>Paiement</span>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            {grandTotal > 0 ? 'Sécurisé · Stripe' : 'Gratuit'}
+                            {grandTotal > 0 ? (evCur === 'XOF' ? 'Sécurisé · Mobile Money' : 'Sécurisé · Stripe') : 'Gratuit'}
                           </span>
                         </div>
                       </div>
@@ -1392,7 +1398,7 @@ export default function EventDetailPage() {
                             const amount = isAuctionPlace ? (currentAuctionPrice > 0 ? currentAuctionPrice : placePrice) : placePrice * ticketQty
                             return (<>
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a1206" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                              {amount > 0 ? `Réserver · ${amount}€` : 'Réserver — Gratuit'}
+                              {amount > 0 ? `Réserver · ${fmtMoney(amount, evCur)}` : 'Réserver — Gratuit'}
                             </>)
                           })()}
                         </button>
@@ -1422,7 +1428,7 @@ export default function EventDetailPage() {
                         >
                           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white' }}>{b.place}</span>
                           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8' }}>
-                            {b.tickets.length} billet{b.tickets.length > 1 ? 's' : ''} · {b.totalPrice}€
+                            {b.tickets.length} billet{b.tickets.length > 1 ? 's' : ''} · {fmtMoney(b.totalPrice, evCur)}
                           </span>
                         </div>
                       ))}
@@ -1562,7 +1568,7 @@ export default function EventDetailPage() {
                                     </div>
                                   )}
                                 </div>
-                                <p style={{ ...S.price, fontSize: 14, margin: '3px 0 0' }}>{item.price}€</p>
+                                <p style={{ ...S.price, fontSize: 14, margin: '3px 0 0' }}>{fmtMoney(item.price, evCur)}</p>
                               </div>
                             </div>
 
@@ -1684,7 +1690,7 @@ export default function EventDetailPage() {
                   <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={S.muted}>Place · {selectedPlace}{ticketQty > 1 ? ` ×${ticketQty}` : ''}</span>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{placePrice * ticketQty}€</span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{fmtMoney(placePrice * ticketQty, evCur)}</span>
                     </div>
                     {perTicketOrders.map((t, n) => {
                       const ticketItems = activeMenu.filter(i => (t.items[i.name] || 0) > 0)
@@ -1697,7 +1703,7 @@ export default function EventDetailPage() {
                           {ticketItems.map(i => (
                             <div key={i.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={S.muted}>{i.name} ×{t.items[i.name]}</span>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{i.price * t.items[i.name]}€</span>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{fmtMoney(i.price * t.items[i.name], evCur)}</span>
                             </div>
                           ))}
                         </div>
@@ -1705,7 +1711,7 @@ export default function EventDetailPage() {
                     })}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8, marginTop: 4 }}>
                       <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white', letterSpacing: '0.1em' }}>Total</span>
-                      <span style={{ ...S.price, fontSize: 22 }}>{grandTotal}€</span>
+                      <span style={{ ...S.price, fontSize: 22 }}>{fmtMoney(grandTotal, evCur)}</span>
                     </div>
                   </div>
 
@@ -1730,7 +1736,7 @@ export default function EventDetailPage() {
                         disabled={!userCanBook}
                         onClick={() => setShowConfirmModal(true)}
                       >
-                        {preorderTotal > 0 ? `Confirmer la commande — ${grandTotal}€` : 'Confirmer la réservation'}
+                        {preorderTotal > 0 ? `Confirmer la commande — ${fmtMoney(grandTotal, evCur)}` : 'Confirmer la réservation'}
                       </button>
                       {preorderTotal > 0 && (
                         <button
@@ -1995,7 +2001,7 @@ export default function EventDetailPage() {
                 <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 20, color: 'white', margin: 0 }}>
                   {descModal.name}
                 </p>
-                <p style={{ ...S.price, fontSize: 16 }}>{descModal.price}€</p>
+                <p style={{ ...S.price, fontSize: 16 }}>{fmtMoney(descModal.price, evCur)}</p>
               </div>
             </div>
             <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, letterSpacing: '0.03em' }}>
@@ -2247,7 +2253,7 @@ export default function EventDetailPage() {
                   </p>
                 </div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-1px', color: '#4ee8c8', margin: 0, whiteSpace: 'nowrap' }}>
-                  {grandTotal.toFixed(2)} €
+                  {fmtMoney(grandTotal, evCur)}
                 </p>
               </div>
             )}
@@ -2257,7 +2263,9 @@ export default function EventDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                 <IconLock size={12} color="rgba(255,255,255,0.4)" />
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
-                  Paiement sécurisé via Stripe — tu seras redirigé.
+                  {evCur === 'XOF'
+                    ? 'Paiement sécurisé via FedaPay (Mixx by Yas, Moov, carte) — tu seras redirigé.'
+                    : 'Paiement sécurisé via Stripe — tu seras redirigé.'}
                 </span>
               </div>
             )}
@@ -2281,7 +2289,7 @@ export default function EventDetailPage() {
                   opacity: stripeRedirecting ? 0.6 : 1, cursor: stripeRedirecting ? 'wait' : 'pointer',
                 }}
               >
-                {stripeRedirecting ? 'Redirection vers Stripe…' : grandTotal > 0 ? `Payer ${grandTotal.toFixed(2)} €` : 'Oui, confirmer'}
+                {stripeRedirecting ? 'Redirection vers le paiement…' : grandTotal > 0 ? `Payer ${fmtMoney(grandTotal, evCur)}` : 'Oui, confirmer'}
               </button>
               <button
                 onClick={() => { setShowConfirmModal(false); setStripeError('') }}
@@ -2341,6 +2349,7 @@ export default function EventDetailPage() {
             eventImage: event.imageUrl || null,
             placeName: selectedPlace,
             placePrice,
+            currency: evCur,
             groupMin,
             groupMax,
             preorderData,
@@ -2429,7 +2438,7 @@ export default function EventDetailPage() {
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, marginTop: 2 }}>
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Total</span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: '#c8a96e', letterSpacing: '-0.02em' }}>{grandTotal} €</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: '#c8a96e', letterSpacing: '-0.02em' }}>{fmtMoney(grandTotal, evCur)}</span>
                 </div>
               </div>
 
@@ -2593,6 +2602,8 @@ export default function EventDetailPage() {
 // ─── BookedCard ────────────────────────────────────────────────────────────────
 
 function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems = {}, totalPrice, bookedTickets = [], onBookAnother }) {
+  // Composant top-level : evCur du parent n'est PAS dans la portée ici.
+  const evCur = eventCurrency(event)
   const [visibleQr, setVisibleQr] = useState(0)
   const ticket = bookedTickets[visibleQr] || bookedTickets[0] || {}
   const qrUrl = ticket.ticketToken ? `${window.location.origin}/ticket/${ticket.ticketToken}` : ''
@@ -2705,7 +2716,7 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 6, marginTop: 2 }}>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Total payé</span>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{totalPrice}€</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{fmtMoney(totalPrice, evCur)}</span>
           </div>
         </div>
       )}

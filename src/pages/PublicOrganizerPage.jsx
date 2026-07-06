@@ -6,6 +6,7 @@ import OrganizerFollowButton from '../components/OrganizerFollowButton'
 import { useAuth } from '../context/AuthContext'
 import { cacheOrganizerProfiles, getOrganizerProfile, reportOrganizer } from '../utils/organizers'
 import { createDirectConversation, getUserId } from '../utils/messaging'
+import { fmtMoney, eventCurrency } from '../utils/money'
 
 const C = { obsidian:'#04040b', teal:'#4ee8c8', gold:'#c8a96e', pink:'#e05aaa' }
 const DISPLAY = 'Bebas Neue, Impact, sans-serif'
@@ -30,7 +31,7 @@ function EventCard({ event, past, onOpen }) {
     <div className="op-event-body">
       <h3>{event.name}</h3>
       <p>{formatDate(event.date)} · {event.city || event.location || 'Lieu à venir'}</p>
-      <p>{prices.length ? `À partir de ${Math.min(...prices).toLocaleString('fr-FR')} €` : 'Entrée gratuite ou sur invitation'}</p>
+      <p>{prices.length ? `À partir de ${fmtMoney(Math.min(...prices), eventCurrency(event))}` : 'Entrée gratuite ou sur invitation'}</p>
       <span className={`op-status ${status === 'Annulé' || status === 'Complet' ? 'danger' : ''}`}>{status}</span>
       <button onClick={() => onOpen(event)}>Voir l’événement</button>
     </div>

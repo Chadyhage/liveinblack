@@ -6,6 +6,7 @@ import { events } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { getUserId, sendMessage } from '../utils/messaging'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/eventUrgency'
+import { fmtMoney, eventCurrency } from '../utils/money'
 import EmptyState from '../components/EmptyState'
 import { MessagingSearchBar } from '../components/MessagingActions'
 
@@ -98,7 +99,7 @@ export default function EventsPage() {
   function handleShareEvent(event) {
     if (!shareConvId || !myId) return
     const minPrice = event.places?.length > 0 ? Math.min(...event.places.map(p => p.price)) : null
-    const payload = JSON.stringify({ id: event.id, name: event.name, date: event.dateDisplay, price: minPrice, image: event.imageUrl || null })
+    const payload = JSON.stringify({ id: event.id, name: event.name, date: event.dateDisplay, price: minPrice, currency: eventCurrency(event), image: event.imageUrl || null })
     sendMessage(shareConvId, myId, myName, 'event', payload)
     setSharedEventId(event.id)
     setTimeout(() => navigate('/messagerie'), 800)
@@ -580,7 +581,7 @@ function EventPoster({ event, onClick }) {
         )}
         {/* Prix */}
         {minP != null && (
-          <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: '#c8a96e', background: 'rgba(5,6,10,0.65)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: '1px solid rgba(200,169,110,0.4)' }}>{minP > 0 ? `dès ${minP}€` : 'Gratuit'}</span>
+          <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: '#c8a96e', background: 'rgba(5,6,10,0.65)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: '1px solid rgba(200,169,110,0.4)' }}>{minP > 0 ? `dès ${fmtMoney(minP, eventCurrency(event))}` : 'Gratuit'}</span>
         )}
         {/* Nom + meta */}
         <div style={{ position: 'absolute', left: 9, right: 9, bottom: 9 }}>

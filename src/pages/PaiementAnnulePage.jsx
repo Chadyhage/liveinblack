@@ -20,8 +20,8 @@ const CARD = {
 }
 
 /**
- * Page de retour Stripe après annulation du paiement.
- * Aucune donnée n'est créée — on nettoie juste les pendings éventuels.
+ * Page de retour après annulation du paiement (Stripe ou FedaPay).
+ * Aucune donnée n'est créée — restock + nettoyage des pendings.
  */
 export default function PaiementAnnulePage() {
   const [params] = useSearchParams()
@@ -29,11 +29,20 @@ export default function PaiementAnnulePage() {
   const eventId = params.get('event_id')
   const placeType = params.get('place_type')
   const qty = params.get('qty')
+  const provider = params.get('provider')
+  const fedapayTxnId = params.get('txn_id')
 
   useEffect(() => {
-    // Restocker la place réservée avant la session Stripe (api/checkout.js décrémente
-    // dès la création de la session — si l'acheteur annule, il faut rendre le stock).
-    if (eventId && placeType && qty) {
+    if (provider === 'fedapay') {
+      // FedaPay : restock via /api/fedapay (le serveur RE-VÉRIFIE le statut chez
+      // FedaPay et restocke de façon idempotente — registre partagé avec le webhook).
+      if (fedapayTxnId) {
+        import('../utils/stripe').then(({ releaseFedapayTransaction }) =>
+          releaseFedapayTransaction(fedapayTxnId)).catch(() => {})
+      }
+    } else if (eventId && placeType && qty) {
+      // Stripe : restocker la place réservée avant la session (api/checkout.js
+      // décrémente dès la création de la session).
       import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/event-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
@@ -45,7 +54,7 @@ export default function PaiementAnnulePage() {
       const keys = Object.keys(localStorage).filter(k => k.startsWith('lib_pending_booking_'))
       keys.forEach(k => localStorage.removeItem(k))
     } catch {}
-  }, [eventId, placeType, qty])
+  }, [eventId, placeType, qty, provider, fedapayTxnId])
 
   return (
     <Layout hideNav>

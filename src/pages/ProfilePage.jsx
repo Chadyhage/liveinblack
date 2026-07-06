@@ -5,6 +5,7 @@ import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
+import { fmtMoney } from '../utils/money'
 // Wallet retiré : les paiements passent désormais par Stripe
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
@@ -2312,14 +2313,14 @@ function SingleTicketCard({ booking: b, index }) {
                 {item.name} <span style={{ color: 'rgba(255,255,255,0.35)' }}>×{b.preorderItems?.[item.name] || 0}</span>
               </span>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 600, color: '#c8a96e' }}>
-                {item.price * (b.preorderItems?.[item.name] || 0)}€
+                {fmtMoney(item.price * (b.preorderItems?.[item.name] || 0), b.currency)}
               </span>
             </div>
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3px', paddingTop: '7px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Total précommande</span>
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 700, color: '#c8a96e' }}>
-              {b.preorderSummary.reduce((s, i) => s + i.price * (b.preorderItems?.[i.name] || 0), 0)}€
+              {fmtMoney(b.preorderSummary.reduce((s, i) => s + i.price * (b.preorderItems?.[i.name] || 0), 0), b.currency)}
             </span>
           </div>
         </div>
