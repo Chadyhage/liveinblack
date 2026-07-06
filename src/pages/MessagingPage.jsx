@@ -670,7 +670,10 @@ export default function MessagingPage() {
     setShowScrollBtn(scrollHeight - scrollTop - clientHeight > 120)
   }
   function scrollToBottom() {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Scroller le CONTENEUR du chat, pas la fenêtre : scrollIntoView remontait
+    // toute la page (nav + footer visibles) à chaque nouveau message.
+    const el = chatScrollRef.current
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
     setShowScrollBtn(false)
   }
 
@@ -872,9 +875,11 @@ export default function MessagingPage() {
   }, [activeConvId, myId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // Auto-scroll seulement si l'utilisateur est déjà en bas
+    // Auto-scroll seulement si l'utilisateur est déjà en bas — et uniquement
+    // dans le conteneur du chat (jamais la fenêtre, sinon la page entière saute).
     if (!showScrollBtn) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      const el = chatScrollRef.current
+      if (el) el.scrollTop = el.scrollHeight
     }
   }, [messages])
 
@@ -951,7 +956,17 @@ export default function MessagingPage() {
     if (conv.type === 'direct') {
       const otherId = conv.participants?.find(id => id !== myId)
       const other   = getUserById(otherId) || allUsers.find(u => u.id === otherId)
-      return { name: other?.name || conv.names?.[otherId] || 'Utilisateur', user: other, isGroup: false, otherId }
+      // Compte supprimé : soit pierre tombale (role/status 'deleted'), soit
+      // contact d'une conversation existante devenu introuvable une fois les
+      // utilisateurs chargés (supprimé et purgé). On garde le nom en cache mais
+      // on signale visuellement que le compte n'existe plus.
+      const isDeleted = !!other && (other.status === 'deleted' || other.role === 'deleted')
+      const isGone = (!other && allUsers.length > 0 && !!otherId)
+      return {
+        name: isDeleted ? 'Compte supprimé' : (other?.name || conv.names?.[otherId] || 'Utilisateur'),
+        user: other, isGroup: false, otherId,
+        deleted: isDeleted || isGone,
+      }
     }
     return { name: conv.name, user: null, isGroup: true, memberCount: conv.members?.length || 0 }
   }
@@ -1918,7 +1933,7 @@ export default function MessagingPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14.5, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</p>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14.5, color: d.deleted ? 'rgba(255,255,255,0.4)' : '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</p>
                             {muted && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.dim} strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
@@ -1928,8 +1943,8 @@ export default function MessagingPage() {
                             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: T.dim }}>{formatTime(conv.updatedAt)}</span>
                           </div>
                         </div>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: unread > 0 ? 'rgba(255,255,255,0.6)' : T.dim, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {d.isGroup && conv.type === 'group' ? `${d.memberCount} membres · ` : ''}{conv.lastMessage}
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: d.deleted ? 'rgba(255,255,255,0.3)' : (unread > 0 ? 'rgba(255,255,255,0.6)' : T.dim), fontStyle: d.deleted ? 'italic' : 'normal', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {d.deleted ? 'Compte supprimé' : `${d.isGroup && conv.type === 'group' ? `${d.memberCount} membres · ` : ''}${conv.lastMessage}`}
                         </p>
                       </div>
                     </button>
@@ -2339,6 +2354,7 @@ export default function MessagingPage() {
     // Blocage : l'autre participant d'une conv directe est-il bloqué ?
     const directOtherId = activeConv?.type === 'direct' ? activeConv.participants?.find(id => id !== myId) : null
     const otherBlocked = !!(directOtherId && isBlocked(myId, directOtherId))
+    const convDeleted = !!convDisplay.deleted
     return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', height: isDesktop ? '100%' : '100dvh', maxWidth: isDesktop ? 'none' : 520, width: '100%', margin: isDesktop ? 0 : '0 auto', position: 'relative', overflow: 'hidden' }}>
@@ -2348,11 +2364,13 @@ export default function MessagingPage() {
           {!isDesktop && <button onClick={() => { setView('list'); setActiveConvId(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0, flexShrink: 0 }}>←</button>}
           {convDisplay.isGroup ? <GroupAvatar conv={activeConv} size={38} /> : <Avatar user={convDisplay.user} size={38} showOnline />}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{convDisplay.name}</p>
-            <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 11, color: T.dim, margin: '2px 0 0' }}>
+            <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600, fontSize: 15, color: convDisplay.deleted ? 'rgba(255,255,255,0.45)' : '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{convDisplay.name}</p>
+            <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 11, color: convDisplay.deleted ? 'rgba(255,255,255,0.3)' : T.dim, margin: '2px 0 0' }}>
               {convDisplay.isGroup
                 ? `${convDisplay.memberCount} membres`
-                : isOnline(convDisplay.otherId) ? <span style={{ color: '#22c55e' }}>● En ligne</span> : 'Hors ligne'
+                : convDisplay.deleted
+                  ? 'Compte supprimé — ce compte n\'existe plus'
+                  : isOnline(convDisplay.otherId) ? <span style={{ color: '#22c55e' }}>● En ligne</span> : 'Hors ligne'
               }
             </p>
           </div>
@@ -2722,7 +2740,14 @@ export default function MessagingPage() {
               </div>
             )}
 
-            {!otherBlocked && (<>
+            {/* ── Notice compte supprimé (remplace la barre d'envoi) ── */}
+            {!otherBlocked && convDeleted && (
+              <div style={{ background: 'rgba(255,255,255,0.03)', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '14px 16px', textAlign: 'center' }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Ce compte a été supprimé — tu ne peux plus lui envoyer de message.</span>
+              </div>
+            )}
+
+            {!otherBlocked && !convDeleted && (<>
             {/* ── Edit bar ── */}
             {editingMsg && (
               <div style={{ background: 'rgba(200,169,110,0.07)', borderTop: '1px solid rgba(200,169,110,0.18)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>

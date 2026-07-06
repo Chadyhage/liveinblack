@@ -5,7 +5,7 @@ import {
   getAllAccounts, updateAccount, deleteAccount,
   getPendingValidations, approveValidation, rejectValidation,
   getPendingRoleRequests, approveRoleRequest, rejectRoleRequest,
-  ROLES, PRESTATAIRE_TYPES,
+  ROLES,
 } from '../utils/accounts'
 // Wallet supprimé : les paiements passent désormais par Stripe
 import {
@@ -19,6 +19,7 @@ import {
 } from '../utils/accountDeletion'
 // Source unique des taux (mêmes valeurs que le back-end api/checkout.js)
 import { computeTicketFeeCents } from '../../lib/fees.js'
+import { getProviderCategories, getProviderTypes } from '../utils/providerCategories'
 
 const ADMIN_EMAIL = 'hagechady4@gmail.com'
 
@@ -1448,13 +1449,13 @@ export default function AgentPage() {
                     )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                       <RoleBadge role={u.role} small />
-                      {u.prestataireType && (
+                      {getProviderCategories(u).length > 0 && (u.prestataireType || u.prestataireTypes?.length) && (
                         <span style={{
                           fontFamily: FONTS.mono, fontSize: 9,
                           background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
                           borderRadius: 4, padding: '2px 6px', color: COLORS.dim,
                         }}>
-                          {PRESTATAIRE_TYPES.find(t => t.key === u.prestataireType)?.label || u.prestataireType}
+                          {getProviderCategories(u).map(category => category.singular).join(' · ')}
                         </span>
                       )}
                     </div>
@@ -1544,9 +1545,9 @@ export default function AgentPage() {
                         <span style={{ fontFamily: FONTS.mono, fontSize: 9, padding: '2px 6px', borderRadius: 4, border: `1px solid ${roleCfg.color}44`, background: roleCfg.color + '14', color: roleCfg.color }}>
                           {roleCfg.label}
                         </span>
-                        {req.prestataireType && (
+                        {(req.prestataireType || req.prestataireTypes?.length) && (
                           <span style={{ fontFamily: FONTS.mono, fontSize: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '2px 6px', color: COLORS.dim }}>
-                            {PRESTATAIRE_TYPES.find(t => t.key === req.prestataireType)?.label || req.prestataireType}
+                            {getProviderCategories(req).map(category => category.singular).join(' · ')}
                           </span>
                         )}
                       </div>
@@ -1670,7 +1671,7 @@ export default function AgentPage() {
                   if (!q) return true
                   const name = (a.formData?.nomCommercial || a.name || '').toLowerCase()
                   const email = (a.email || '').toLowerCase()
-                  const type = (a.formData?.prestataireType || '').toLowerCase()
+                  const type = getProviderCategories(a.formData || {}).map(category => `${category.id} ${category.label}`).join(' ').toLowerCase()
                   return name.includes(q) || email.includes(q) || type.includes(q)
                 })
                 .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
@@ -1694,7 +1695,7 @@ export default function AgentPage() {
                 </div>
               )
               const openApp = (app) => { setSelectedApp(app); setAppNote(''); setAppAdminNote(''); setActiveAction(null); setAdminNoteInput('') }
-              const typeLabel = (app) => app.type === 'organisateur' ? '🎪 Organisateur' : `🎤 Prestataire · ${app.formData?.prestataireType || ''}`
+              const typeLabel = (app) => app.type === 'organisateur' ? '🎪 Organisateur' : `🎤 Prestataire · ${getProviderCategories(app.formData || {}).map(category => category.singular).join(' · ')}`
               const scoreColor = (s) => s >= 80 ? COLORS.teal : s >= 50 ? COLORS.gold : COLORS.pink
 
               const AppCard = (app) => {
@@ -1872,8 +1873,8 @@ export default function AgentPage() {
                 <InfoRow label="UID" value={selectedUser.uid} mono />
                 <InfoRow label="Email" value={selectedUser.email} />
                 <InfoRow label="Inscrit le" value={formatDate(selectedUser.createdAt)} />
-                {selectedUser.prestataireType && (
-                  <InfoRow label="Type" value={PRESTATAIRE_TYPES.find(t => t.key === selectedUser.prestataireType)?.label || selectedUser.prestataireType} />
+                {(selectedUser.prestataireType || selectedUser.prestataireTypes?.length) && (
+                  <InfoRow label="Activités" value={getProviderCategories(selectedUser).map(category => category.singular).join(' · ')} />
                 )}
               </Section>
 
@@ -2068,7 +2069,7 @@ export default function AgentPage() {
                   </p>
                   <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
                     {selectedApp.email} · {selectedApp.type === 'prestataire'
-                      ? `Prestataire · ${PRESTATAIRE_TYPES.find(t => t.key === selectedApp.formData?.prestataireType)?.label || selectedApp.formData?.prestataireType || ''}`
+                      ? `Prestataire · ${getProviderCategories(selectedApp.formData || {}).map(category => category.singular).join(' · ')}`
                       : selectedApp.type}
                   </p>
                 </div>
@@ -2130,7 +2131,7 @@ export default function AgentPage() {
                 {(() => {
                   const fd = selectedApp.formData || {}
                   const type = selectedApp.type
-                  const pt = fd.prestataireType
+                  const pts = getProviderTypes(fd)
 
                   const FR = ({ label, value, href, mono }) => !value ? null : (
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -2154,19 +2155,18 @@ export default function AgentPage() {
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {/* Common fields */}
-                      {type === 'prestataire' && pt && (
-                        <FR label="Type prestataire" value={
-                          PRESTATAIRE_TYPES.find(t => t.key === pt) ? `${PRESTATAIRE_TYPES.find(t => t.key === pt).icon || ''} ${PRESTATAIRE_TYPES.find(t => t.key === pt).label}` : pt
-                        } />
+                      {type === 'prestataire' && pts.length > 0 && (
+                        <FR label="Activités prestataire" value={getProviderCategories(fd).map(category => category.singular).join(' · ')} />
                       )}
                       <FR label="Nom" value={[fd.prenom, fd.nom].filter(Boolean).join(' ')} />
                       <FR label="Téléphone" value={fd.telephoneCode ? `${fd.telephoneCode} ${fd.telephone}` : fd.telephone} />
                       <FR label="Ville" value={[fd.ville, fd.pays].filter(Boolean).join(', ')} />
-                      {type === 'prestataire' && pt === 'artiste' && fd.nomScene && (
+                      {type === 'prestataire' && pts.includes('artiste') && fd.nomScene && (
                         <FR label="Nom de scène" value={fd.nomScene} />
                       )}
                       <FR label="Nom commercial" value={fd.nomCommercial} />
                       <FR label="SIRET" value={fd.siret} />
+                      <FR label="Site web / Instagram" value={fd.siteWeb} href={fd.siteWeb?.startsWith('http') ? fd.siteWeb : undefined} />
                       <FR label="Zones d'intervention" value={
                         Array.isArray(fd.zonesIntervention) && fd.zonesIntervention.length
                           ? fd.zonesIntervention.map(id => {
@@ -2185,7 +2185,7 @@ export default function AgentPage() {
                       <FR label="Description" value={fd.description} />
 
                       {/* ── Artiste ── */}
-                      {pt === 'artiste' && (
+                      {pts.includes('artiste') && (
                         <>
                           <Sub title="Artiste" />
                           {fd.typeArtiste && (
@@ -2206,7 +2206,7 @@ export default function AgentPage() {
                       )}
 
                       {/* ── Salle ── */}
-                      {pt === 'salle' && (
+                      {pts.includes('salle') && (
                         <>
                           <Sub title="Lieu" />
                           <FR label="Adresse" value={fd.adresseLieu} />
@@ -2219,7 +2219,7 @@ export default function AgentPage() {
                       )}
 
                       {/* ── Matériel ── */}
-                      {pt === 'materiel' && (
+                      {pts.includes('materiel') && (
                         <>
                           <Sub title="Matériel" />
                           <FR label="Catégories" value={fd.categoriesMateriel} />
@@ -2230,7 +2230,7 @@ export default function AgentPage() {
                       )}
 
                       {/* ── Food ── */}
-                      {pt === 'food' && (
+                      {pts.includes('food') && (
                         <>
                           <Sub title="Food / Boissons" />
                           <FR label="Type activité" value={fd.typeActiviteFood} />
