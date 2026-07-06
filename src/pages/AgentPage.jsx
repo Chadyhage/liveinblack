@@ -1850,12 +1850,48 @@ export default function AgentPage() {
               <Section title="Informations">
                 <InfoRow label="UID" value={selectedUser.uid} mono />
                 <InfoRow label="Email" value={selectedUser.email} />
-                <InfoRow label="Téléphone" value={selectedUser.phone || '—'} />
                 <InfoRow label="Inscrit le" value={formatDate(selectedUser.createdAt)} />
                 {selectedUser.prestataireType && (
                   <InfoRow label="Type" value={PRESTATAIRE_TYPES.find(t => t.key === selectedUser.prestataireType)?.label || selectedUser.prestataireType} />
                 )}
               </Section>
+
+              {/* Coordonnées — numéros & adresses de toutes les interfaces, clairement distingués */}
+              {(() => {
+                const roles = selectedUser.enabledRoles || [selectedUser.role]
+                const isPro = roles.includes('organisateur') || roles.includes('prestataire')
+                  || selectedUser.role === 'organisateur' || selectedUser.role === 'prestataire'
+                const userApps = applications.filter(a => a.uid === selectedUser.uid)
+                return (
+                  <Section title="Coordonnées">
+                    {/* Numéros */}
+                    <ContactRow label="Téléphone" value={selectedUser.phone} tag="Perso" tagColor={COLORS.teal} />
+                    {isPro && <ContactRow label="Téléphone" value={selectedUser.proPhone} tag="Pro" tagColor={COLORS.gold} />}
+                    {isPro && (
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 8.5, color: COLORS.dim, margin: '6px 0 0', lineHeight: 1.5 }}>
+                        Le numéro pro est unique par compte, partagé entre les interfaces organisateur et prestataire.
+                      </p>
+                    )}
+                    {/* Adresses issues des dossiers (une par interface) */}
+                    {userApps.map(app => {
+                      const fd = app.formData || {}
+                      const roleLabel = app.type === 'organisateur' ? 'Organisateur' : 'Prestataire'
+                      const roleColor = app.type === 'organisateur' ? COLORS.gold : COLORS.pink
+                      const ville = [fd.ville, fd.pays].filter(Boolean).join(', ')
+                      const addr = app.type === 'organisateur'
+                        ? (fd.noFixedAddress ? 'Pas de lieu fixe (en ligne / itinérant)' : (fd.adresseEtablissement || ''))
+                        : (fd.adresseLieu || '')
+                      if (!ville && !addr) return null
+                      return (
+                        <div key={app.id} style={{ marginTop: 10 }}>
+                          {addr && <AddressRow label="Adresse" value={addr} tag={roleLabel} tagColor={roleColor} />}
+                          {ville && <ContactRow label="Ville" value={ville} tag={roleLabel} tagColor={roleColor} />}
+                        </div>
+                      )
+                    })}
+                  </Section>
+                )
+              })()}
 
               {/* Edit fields */}
               <Section title="Modifier">
@@ -3171,6 +3207,50 @@ function InfoRow({ label, value, mono }) {
         maxWidth: '60%', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         letterSpacing: mono ? '0.04em' : 0,
       }}>{value}</span>
+    </div>
+  )
+}
+
+// Petit badge de qualification (Perso / Pro / Organisateur / Prestataire)
+function Tag({ label, color }) {
+  return (
+    <span style={{
+      fontFamily: FONTS_SUB.mono, fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase',
+      color: color || 'rgba(255,255,255,0.42)', border: `1px solid ${color || 'rgba(255,255,255,0.42)'}55`,
+      borderRadius: 4, padding: '1px 5px', flexShrink: 0, whiteSpace: 'nowrap',
+    }}>{label}</span>
+  )
+}
+
+// Ligne « numéro / info courte » avec badge à gauche de la valeur
+function ContactRow({ label, value, tag, tagColor }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+      padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)',
+    }}>
+      <span style={{ fontFamily: FONTS_SUB.mono, fontSize: 10, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>{label}</span>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        {tag && <Tag label={tag} color={tagColor} />}
+        <span style={{
+          fontFamily: FONTS_SUB.mono, fontSize: 11,
+          color: value ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.25)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{value || '— non renseigné'}</span>
+      </span>
+    </div>
+  )
+}
+
+// Ligne « adresse » (multi-ligne, ne tronque pas)
+function AddressRow({ label, value, tag, tagColor }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontFamily: FONTS_SUB.mono, fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{label}</span>
+        {tag && <Tag label={tag} color={tagColor} />}
+      </div>
+      <span style={{ fontFamily: FONTS_SUB.display, fontSize: 13, fontWeight: 300, color: 'rgba(255,255,255,0.78)', lineHeight: 1.4, wordBreak: 'break-word' }}>{value}</span>
     </div>
   )
 }
