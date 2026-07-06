@@ -548,7 +548,10 @@ export default function OnboardingOrganisateur() {
             {/* ── Mot de passe (mode anonyme, avant création du compte) ── */}
             {anonMode && !anonUidRef.current && (
               <>
-                <p style={{ ...S.section, marginTop: 4 }}>🔐 Mot de passe</p>
+                <p style={{ ...S.section, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Mot de passe
+                </p>
                 <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '-4px 0 8px' }}>
                   Tu te connecteras avec l'<strong style={{ color: 'rgba(200,169,110,0.8)' }}>email professionnel</strong> ci-dessus. Choisis un mot de passe pour accéder à ton espace une fois le dossier validé.
                 </p>
