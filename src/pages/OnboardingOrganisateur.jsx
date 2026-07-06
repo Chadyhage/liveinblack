@@ -202,6 +202,7 @@ export default function OnboardingOrganisateur() {
       if (!f.typeEtablissement) errs.typeEtablissement = 'Requis'
       if (f.typeEtablissement === 'Autre' && !f.typeEtablissementCustom?.trim()) errs.typeEtablissementCustom = 'Précisez le type'
       if (!f.itinerant && !f.ville.trim()) errs.ville = 'Requis (ou cocher "Itinérant")'
+      if (f.itinerant && !f.zonesActivite.trim()) errs.zonesActivite = 'Sélectionne au moins un pays'
     }
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -642,7 +643,7 @@ export default function OnboardingOrganisateur() {
               {/* Ville / Pays — ou itinérant */}
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={S.label}>
-                  Localisation principale{!f.itinerant && <span style={{ color: '#e05aaa' }}> *</span>}
+                  Localisation principale<span style={{ color: '#e05aaa' }}> *</span>
                 </label>
 
                 {/* Toggle itinérant */}
@@ -670,14 +671,37 @@ export default function OnboardingOrganisateur() {
 
                 {f.itinerant ? (
                   <>
-                    <input
-                      style={S.input}
-                      value={f.zonesActivite}
-                      onChange={e => update('zonesActivite', e.target.value)}
-                      placeholder="Ex: Paris, Lyon, Bruxelles, Montréal..."
-                    />
-                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: '6px 0 0', letterSpacing: '0.04em' }}>
-                      Indique les principales villes ou pays où tu opères (optionnel)
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {regions.map(region => {
+                        const selectedZones = f.zonesActivite.split(',').map(s => s.trim()).filter(Boolean)
+                        const isSel = selectedZones.includes(region.name)
+                        return (
+                          <button
+                            type="button"
+                            key={region.id}
+                            onClick={() => {
+                              const next = isSel
+                                ? selectedZones.filter(n => n !== region.name)
+                                : [...selectedZones, region.name]
+                              update('zonesActivite', next.join(', '))
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer',
+                              padding: '9px 14px', borderRadius: 8, transition: 'all 0.15s',
+                              border: `1.5px solid ${isSel ? '#4ee8c8' : 'rgba(255,255,255,0.12)'}`,
+                              background: isSel ? 'rgba(78,232,200,0.12)' : 'transparent',
+                              fontFamily: DM, fontSize: 12, color: isSel ? '#4ee8c8' : 'rgba(255,255,255,0.6)',
+                            }}>
+                            <span style={{ fontSize: 15 }}>{region.flag}</span>
+                            {region.name}
+                            {isSel && <span style={{ marginLeft: 2 }}>✓</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {errors.zonesActivite && <p style={S.error}>{errors.zonesActivite}</p>}
+                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: '8px 0 0', letterSpacing: '0.04em' }}>
+                      Sélectionne les pays où tu organises (plusieurs possibles)
                     </p>
                   </>
                 ) : (
