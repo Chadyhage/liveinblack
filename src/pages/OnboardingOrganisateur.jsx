@@ -63,10 +63,10 @@ function PhoneInput({ codeField, numberField, formState, onUpdate, inputStyle, e
 const TYPES_ETAB = ['Boîte / Club','Bar','Autre']
 
 const STEPS = [
-  { label: 'Établissement', icon: '🏢' },
-  { label: 'Activité',      icon: '🎪' },
-  { label: 'Revenus',       icon: '💳' },
-  { label: 'Documents',     icon: '📎' },
+  { label: 'Établissement' },
+  { label: 'Activité' },
+  { label: 'Revenus' },
+  { label: 'Documents' },
 ]
 
 function Field({ label, required, children }) {
@@ -797,9 +797,10 @@ export default function OnboardingOrganisateur() {
             ))}
 
             {/* Note sécurité */}
-            <div style={{ padding: '10px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '10px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1, opacity: 0.65 }}><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
               <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.55)', letterSpacing: '0.06em', margin: 0, lineHeight: 1.7 }}>
-                🔒 Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK. Stripe est certifié PCI-DSS niveau 1 (la norme de sécurité bancaire la plus élevée).
+                Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK. Stripe est certifié PCI-DSS niveau 1 (la norme de sécurité bancaire la plus élevée).
               </p>
             </div>
 
@@ -961,7 +962,11 @@ function FileRow({ file, onRemove }) {
       background: failed ? 'rgba(224,90,170,0.06)' : 'rgba(78,232,200,0.05)',
       border: `1px solid ${failed ? 'rgba(224,90,170,0.25)' : 'rgba(78,232,200,0.12)'}`,
     }}>
-      <span style={{ fontSize: 14, flexShrink: 0 }}>{failed ? '⚠' : '📄'}</span>
+      {failed ? (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+      ) : (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{
           fontFamily: "Inter, sans-serif", fontSize: 10,

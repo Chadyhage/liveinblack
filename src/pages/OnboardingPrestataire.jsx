@@ -11,6 +11,11 @@ import {
   updateApplication, DOCUMENT_LABELS, getRequiredDocs,
   hasDoc, getDocFiles, removeDocumentFile,
 } from '../utils/applications'
+import {
+  PROVIDER_CATEGORIES,
+  getPrimaryProviderType,
+  normalizeProviderTypes,
+} from '../utils/providerCategories'
 
 const DM = "Inter, sans-serif"
 const CG = "Inter, sans-serif"
@@ -60,16 +65,16 @@ function PhoneInput({ codeField, numberField, formState, onUpdate, inputStyle, e
   )
 }
 
-const TYPES = [
-  { key: 'artiste',  label: 'Artiste / DJ / Performer',  icon: '🎤', color: '#8b5cf6', desc: 'DJ, musicien live, performeur, saxophoniste, animateur...' },
-  { key: 'salle',    label: 'Lieu / Salle à louer',      icon: '🏛',  color: '#3b82f6', desc: 'Club, loft, rooftop, château, salle de réception...' },
-  { key: 'materiel', label: 'Matériel à louer',          icon: '🔊', color: '#f59e0b', desc: 'Son, lumière, scène, vidéo, structure, mobilier...' },
-  { key: 'food',     label: 'Food / Boissons / Traiteur', icon: '🍽', color: '#22c55e', desc: 'Traiteur, bar, cocktails, food truck, pâtisserie...' },
-]
+const FLEXIBLE_TYPES = PROVIDER_CATEGORIES.map(category => ({
+  key: category.id,
+  label: category.singular,
+  color: category.color,
+  desc: category.description,
+}))
 
 const STEPS = [
-  { label: 'Type' },
-  { label: 'Profil' },
+  { label: 'Compte' },
+  { label: 'Activités' },
   { label: 'Spécifique' },
   { label: 'Fonctionnement' },
   { label: 'Documents' },
@@ -82,7 +87,14 @@ function TypeIcon({ type, size = 22 }) {
   if (type === 'salle')    return <svg {...p}><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/><path d="M9 11h.01M15 11h.01"/></svg>
   if (type === 'materiel') return <svg {...p}><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><circle cx="12" cy="6" r="1"/></svg>
   if (type === 'food')     return <svg {...p}><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M11 2v20M11 8c0-3 1.5-6 4-6s4 3 4 6-1.5 4-4 4"/></svg>
-  return null
+  if (type === 'photo_video') return <svg {...p}><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>
+  if (type === 'decoration') return <svg {...p}><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+  if (type === 'securite') return <svg {...p}><path d="M12 3l7 3v5c0 4.6-2.8 8.4-7 10-4.2-1.6-7-5.4-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+  if (type === 'transport') return <svg {...p}><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+  if (type === 'staff') return <svg {...p}><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 20c0-4 2.5-6 6-6s6 2 6 6M15 15c3 0 5 1.5 5 5"/></svg>
+  if (type === 'communication') return <svg {...p}><path d="M3 11v2l11 4V7L3 11z"/><path d="M14 9l6-3v12l-6-3M6 14l1 6h4l-2-5"/></svg>
+  if (type === 'bien_etre') return <svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>
+  return <svg {...p}><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
 }
 
 const ANON_DRAFT_KEY = 'lib_anon_prest_draft_id'
@@ -111,9 +123,19 @@ function Toggle({ value, onChange, label }) {
 
 // ── Helper : nom d'affichage ──────────────────────────────────────────────────
 function getDisplayName(f) {
-  if (f.prestataireType === 'artiste' && f.nomScene?.trim()) return f.nomScene.trim()
+  if (normalizeProviderTypes(f.prestataireTypes, f.prestataireType).includes('artiste') && f.nomScene?.trim()) return f.nomScene.trim()
   if (f.nomCommercial?.trim()) return f.nomCommercial.trim()
   return [f.prenom, f.nom].filter(Boolean).map(s => s.trim()).join(' ') || ''
+}
+
+function hydrateProviderForm(previous, incoming = {}) {
+  const prestataireTypes = normalizeProviderTypes(incoming.prestataireTypes, incoming.prestataireType)
+  return {
+    ...previous,
+    ...incoming,
+    prestataireTypes,
+    prestataireType: getPrimaryProviderType({ prestataireTypes }),
+  }
 }
 
 // ── TarifBlock ────────────────────────────────────────────────────────────────
@@ -241,6 +263,7 @@ export default function OnboardingPrestataire() {
 
   const [f, setF] = useState({
     prestataireType: '',
+    prestataireTypes: [],
     // Identité de la personne
     prenom: '', nom: '',
     telephoneCode: '+33', telephone: '',
@@ -249,6 +272,7 @@ export default function OnboardingPrestataire() {
     nomCommercial: '', nomScene: '', siret: '',
     // Activité
     zonesIntervention: [], description: '',
+    specialitesLibre: '',
     // Artiste
     typeArtiste: '', styles: '', anneesExperience: '', statutFacturation: '',
     portfolio: '', instagram: '', besoinstechniques: '',
@@ -270,7 +294,7 @@ export default function OnboardingPrestataire() {
       if (existing) {
         setApp(existing)
         const fd = existing.formData || {}
-        setF(prev => ({ ...prev, ...fd }))
+        setF(prev => hydrateProviderForm(prev, fd))
         if (['submitted', 'under_review', 'approved'].includes(existing.status)) {
           navigate('/mon-dossier')
         }
@@ -278,7 +302,7 @@ export default function OnboardingPrestataire() {
         const created = createApplication(user.uid, user.email, user.name, 'prestataire')
         setApp(created)
         const prefill = location.state?.prefill
-        if (prefill) setF(prev => ({ ...prev, ...prefill }))
+        if (prefill) setF(prev => hydrateProviderForm(prev, prefill))
       }
     } else {
       // Anonymous mode
@@ -287,7 +311,7 @@ export default function OnboardingPrestataire() {
       if (existing) {
         setApp(existing)
         const fd = existing.formData || {}
-        setF(prev => ({ ...prev, ...fd }))
+        setF(prev => hydrateProviderForm(prev, fd))
         if (fd.regEmail) setRegEmail(fd.regEmail)
       } else {
         const tempId = 'anon-prest-' + Date.now()
@@ -311,12 +335,12 @@ export default function OnboardingPrestataire() {
   }, [user?.uid])
 
   // Retour de Stripe (?sub=success) : une fois l'abonnement actif, on reprend au
-  // dossier (étape 2 = Spécifique ; type + profil + paiement déjà faits).
+  // profil prestataire (étape 1 = activités ; compte + paiement déjà faits).
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     if (params.get('sub') === 'success' && user?.uid && subActive) {
       setAwaitingSub(false)
-      setStep(s => (s < 2 ? 2 : s))
+      setStep(s => (s < 1 ? 1 : s))
       navigate('/inscription-prestataire', { replace: true })
     }
   }, [location.search, user?.uid, subActive]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -352,24 +376,27 @@ export default function OnboardingPrestataire() {
     saveDraft(app?.id, { ...f, ...patch })
   }
 
+  function toggleProviderType(type) {
+    const current = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
+    const next = current.includes(type) ? current.filter(item => item !== type) : [...current, type]
+    const patch = {
+      prestataireTypes: next,
+      prestataireType: getPrimaryProviderType({ prestataireTypes: next }),
+    }
+    setF(previous => ({ ...previous, ...patch }))
+    saveDraft(app?.id, { ...f, ...patch })
+  }
+
   // ── Validation par step ──────────────────────────────────────────────────────
   function validate(s) {
     const errs = {}
     if (s === 0) {
-      if (!f.prestataireType) errs.prestataireType = 'Sélectionne un type'
-    }
-    if (s === 1) {
       if (!f.prenom.trim()) errs.prenom = 'Requis'
       if (!f.nom.trim()) errs.nom = 'Requis'
       if (!f.telephone.trim()) errs.telephone = 'Requis'
       else if (!isValidPhone(f.telephoneCode, f.telephone)) errs.telephone = 'Numéro invalide pour ce pays'
-      const isStructure = ['salle', 'materiel', 'food'].includes(f.prestataireType)
-      if (isStructure && !f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
       // SIRET optionnel pour tous — mais si renseigné, format strict (évite le renvoi de dossier)
       if (f.siret.trim() && !isValidSiret(f.siret)) errs.siret = 'Numéro invalide : SIREN = 9 chiffres, SIRET = 14 chiffres'
-      if (f.prestataireType === 'artiste' && !f.nomScene.trim() && !f.nomCommercial.trim()) {
-        errs.nomScene = 'Renseigne ton nom de scène ou nom commercial'
-      }
       if (anonMode) {
         const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail.trim())
         if (!regEmail.trim() || !emailOk) errs.regEmail = 'Email invalide'
@@ -385,8 +412,8 @@ export default function OnboardingPrestataire() {
   async function next() {
     if (!validate(step)) return
 
-    // Anonymous mode: create Firebase account when leaving step 1
-    if (anonMode && step === 1 && !anonUidRef.current) {
+    // Create the account before asking for the provider profile details.
+    if (anonMode && step === 0 && !anonUidRef.current) {
       setCreatingAccount(true)
       try {
         const { USE_REAL_FIREBASE } = await import('../firebase')
@@ -432,7 +459,7 @@ export default function OnboardingPrestataire() {
 
     // PÉAGE ABONNEMENT : après l'étape 1 (compte créé), on ne passe au dossier
     // qu'avec un abonnement 9,99 €/mois actif. Sinon → écran de paiement.
-    if (step === 1 && !subActive) {
+    if (step === 0 && !subActive) {
       setAwaitingSub(true)
       window.scrollTo(0, 0)
       return
@@ -470,11 +497,12 @@ export default function OnboardingPrestataire() {
 
   async function handleSubmit() {
     // Dynamic check based on type
-    const requiredDocKeys = getRequiredDocs('prestataire', f.prestataireType)
+    const providerTypes = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
+    const requiredDocKeys = getRequiredDocs('prestataire', providerTypes)
     const missingDocs = requiredDocKeys
       .filter(key => !hasDoc(app, key))
       .map(key => DOCUMENT_LABELS[key]?.label || key)
-    if (f.prestataireType === 'food' && f.alcoolFood && !hasDoc(app, 'alcohol_license')) {
+    if (providerTypes.includes('food') && f.alcoolFood && !hasDoc(app, 'alcohol_license')) {
       missingDocs.push('Licence alcool')
     }
     if (missingDocs.length > 0) {
@@ -498,7 +526,12 @@ export default function OnboardingPrestataire() {
         return
       }
 
-      const result = await submitApplication(app.id, f, candidateNote)
+      const submittedForm = {
+        ...f,
+        prestataireTypes: providerTypes,
+        prestataireType: getPrimaryProviderType({ prestataireTypes: providerTypes }),
+      }
+      const result = await submitApplication(app.id, submittedForm, candidateNote)
       setApp(result)
 
       // Email d'accusé de réception (best-effort — le dossier vient d'être
@@ -521,7 +554,10 @@ export default function OnboardingPrestataire() {
       if (user) {
         try {
           const { syncDoc } = await import('../utils/firestore-sync')
-          syncDoc(`users/${user.uid}`, { prestataireType: f.prestataireType })
+          syncDoc(`users/${user.uid}`, {
+            prestataireType: submittedForm.prestataireType,
+            prestataireTypes: submittedForm.prestataireTypes,
+          })
         } catch {}
       }
 
@@ -628,9 +664,10 @@ export default function OnboardingPrestataire() {
     )
   }
 
-  const selectedType = TYPES.find(t => t.key === f.prestataireType)
+  const selectedTypes = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
+  const selectedType = FLEXIBLE_TYPES.find(t => t.key === selectedTypes[0])
   const typeColor = selectedType?.color || PURPLE
-  const requiredDocs = getRequiredDocs('prestataire', f.prestataireType)
+  const requiredDocs = getRequiredDocs('prestataire', selectedTypes)
 
   return (
     <PublicShell>
@@ -711,16 +748,19 @@ export default function OnboardingPrestataire() {
           </div>
         </div>
 
-        {/* ── STEP 0: Choix du type ── */}
-        {step === 0 && (
+        {/* ── STEP 1: Activités du prestataire (facultatives et modifiables) ── */}
+        {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <p style={{ fontFamily: DM, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>
-              Quel type de prestataire es-tu ?
+              Quelles activités proposes-tu ?
             </p>
-            {TYPES.map(t => {
-              const sel = f.prestataireType === t.key
+            <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, margin: '0 0 8px' }}>
+              Choisis une ou plusieurs catégories. Tu pourras les modifier plus tard depuis ton espace, ou continuer sans choisir pour le moment.
+            </p>
+            {FLEXIBLE_TYPES.map(t => {
+              const sel = selectedTypes.includes(t.key)
               return (
-                <button key={t.key} onClick={() => update('prestataireType', t.key)} className="lib-onb-card" style={{
+                <button type="button" key={t.key} onClick={() => toggleProviderType(t.key)} className="lib-onb-card" style={{
                   padding: '17px 18px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
                   background: sel ? t.color + '14' : 'rgba(255,255,255,0.025)',
                   border: sel ? `1px solid ${t.color}66` : '1px solid rgba(255,255,255,0.09)',
@@ -739,16 +779,35 @@ export default function OnboardingPrestataire() {
                   </div>
                   {sel
                     ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
-                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>}
+                    : <span style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />}
                 </button>
               )
             })}
-            {errors.prestataireType && <p style={S.error}>{errors.prestataireType}</p>}
+            <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(78,232,200,0.18)', background: 'rgba(78,232,200,0.04)' }}>
+              <p style={{ fontFamily: DM, fontSize: 10.5, color: 'rgba(78,232,200,0.7)', margin: 0, lineHeight: 1.6 }}>
+                {selectedTypes.length
+                  ? `${selectedTypes.length} activité${selectedTypes.length > 1 ? 's' : ''} sélectionnée${selectedTypes.length > 1 ? 's' : ''}. La première devient ta catégorie principale.`
+                  : 'Aucune catégorie choisie : ton profil sera classé provisoirement dans « Autres services ».'}
+              </p>
+            </div>
+            {selectedTypes.includes('artiste') && (
+              <Field label="Nom de scène / nom public (optionnel)">
+                <input style={S.input} value={f.nomScene} onChange={e => update('nomScene', e.target.value)} placeholder="Ex. DJ Paradox, Les Twins…" />
+              </Field>
+            )}
+            <Field label="Précise librement tes spécialités">
+              <textarea
+                style={{ ...S.input, minHeight: 76, resize: 'vertical' }}
+                value={f.specialitesLibre}
+                onChange={e => update('specialitesLibre', e.target.value)}
+                placeholder="Ex. photobooth 360°, décoration florale, navettes VIP, équipe de régie…"
+              />
+            </Field>
           </div>
         )}
 
-        {/* ── STEP 1: Profil ── */}
-        {step === 1 && (
+        {/* ── STEP 0: Création du compte et identité de base ── */}
+        {step === 0 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>Ton identité</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -795,13 +854,13 @@ export default function OnboardingPrestataire() {
 
             {/* ── Structure (nom commercial / nom de scène / SIRET) ── */}
             <p style={{ ...S.section, marginTop: 4 }}>
-              {f.prestataireType === 'artiste' ? '🎭 Ton identité artistique' : '🏢 Ta structure'}
+              Ton identité professionnelle
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
               {/* Nom de scène — artiste uniquement, c'est son nom public */}
-              {f.prestataireType === 'artiste' && (
-                <Field label="Nom de scène" required>
+              {selectedTypes.includes('artiste') && (
+                <Field label="Nom de scène">
                   <input
                     style={{ ...S.input, borderColor: errors.nomScene ? '#e05aaa' : undefined }}
                     value={f.nomScene}
@@ -819,14 +878,13 @@ export default function OnboardingPrestataire() {
 
               {/* Nom commercial */}
               <Field
-                label={f.prestataireType === 'artiste' ? 'Structure / collectif' : 'Nom commercial'}
-                required={['salle', 'materiel', 'food'].includes(f.prestataireType)}
+                label={selectedTypes.includes('artiste') ? 'Structure / collectif' : 'Nom commercial'}
               >
                 <input
                   style={{ ...S.input, borderColor: errors.nomCommercial ? '#e05aaa' : undefined }}
                   value={f.nomCommercial}
                   onChange={e => update('nomCommercial', e.target.value)}
-                  placeholder={f.prestataireType === 'artiste'
+                  placeholder={selectedTypes.includes('artiste')
                     ? 'Optionnel — collectif, label, association...'
                     : 'Nom officiel de ta structure'}
                 />
@@ -846,7 +904,7 @@ export default function OnboardingPrestataire() {
                 />
                 {errors.siret
                   ? <p style={S.error}>{errors.siret}</p>
-                  : f.prestataireType === 'artiste' && (
+                  : selectedTypes.includes('artiste') && (
                     <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.2)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
                       Optionnel — indique ton statut de facturation à l'étape suivante
                     </p>
@@ -857,7 +915,7 @@ export default function OnboardingPrestataire() {
             </div>
 
             {/* ── Activité ── */}
-            <p style={{ ...S.section, marginTop: 4 }}>📍 Ton activité</p>
+            <p style={{ ...S.section, marginTop: 4 }}>Ton activité</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Field label="Zones d'intervention">
                 <RegionPicker value={Array.isArray(f.zonesIntervention) ? f.zonesIntervention : []} onChange={v => update('zonesIntervention', v)} />
@@ -873,7 +931,10 @@ export default function OnboardingPrestataire() {
             {/* ── Identifiants de connexion (mode anonyme uniquement) ── */}
             {anonMode && (
               <>
-                <p style={{ ...S.section, marginTop: 4 }}>🔐 Identifiants de connexion</p>
+                <p style={{ ...S.section, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                  Identifiants de connexion
+                </p>
                 <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '-4px 0 8px' }}>
                   Ton email servira à te connecter une fois ton dossier validé.
                 </p>
@@ -940,10 +1001,10 @@ export default function OnboardingPrestataire() {
         {/* ── STEP 2: Informations spécifiques + tarifs ── */}
         {step === 2 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={S.section}>Informations spécifiques — {selectedType?.label}</p>
+            <p style={S.section}>Informations spécifiques {selectedTypes.length ? `— ${selectedTypes.length} activité${selectedTypes.length > 1 ? 's' : ''}` : ''}</p>
 
             {/* Artiste */}
-            {f.prestataireType === 'artiste' && (
+            {selectedTypes.includes('artiste') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <Field label="Type d'artiste" required>
                   <select style={S.select} value={f.typeArtiste} onChange={e => update('typeArtiste', e.target.value)}>
@@ -995,7 +1056,7 @@ export default function OnboardingPrestataire() {
             )}
 
             {/* Salle */}
-            {f.prestataireType === 'salle' && (
+            {selectedTypes.includes('salle') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <Field label="Adresse exacte du lieu">
                   <input style={S.input} value={f.adresseLieu} onChange={e => update('adresseLieu', e.target.value)} placeholder="12 rue de la Soirée, 75001 Paris" />
@@ -1029,7 +1090,7 @@ export default function OnboardingPrestataire() {
             )}
 
             {/* Matériel */}
-            {f.prestataireType === 'materiel' && (
+            {selectedTypes.includes('materiel') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <Field label="Catégories de matériel">
                   <input style={S.input} value={f.categoriesMateriel} onChange={e => update('categoriesMateriel', e.target.value)} placeholder="Son, Lumière, Scène, Vidéo, Structure..." />
@@ -1053,7 +1114,7 @@ export default function OnboardingPrestataire() {
             )}
 
             {/* Food */}
-            {f.prestataireType === 'food' && (
+            {selectedTypes.includes('food') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <Field label="Type d'activité">
                   <select style={S.select} value={f.typeActiviteFood} onChange={e => update('typeActiviteFood', e.target.value)}>
@@ -1081,7 +1142,7 @@ export default function OnboardingPrestataire() {
             )}
 
             {/* TarifBlock — affiché pour tous les types */}
-            {f.prestataireType && <TarifBlock f={f} update={update} />}
+            <TarifBlock f={f} update={update} />
           </div>
         )}
 
@@ -1175,7 +1236,7 @@ export default function OnboardingPrestataire() {
             )}
 
             {/* Alcool food — conditionnelle */}
-            {f.prestataireType === 'food' && f.alcoolFood && (
+            {selectedTypes.includes('food') && f.alcoolFood && (
               <DocUploadRow
                 label="Licence alcool (II / III / IV)"
                 required
@@ -1189,11 +1250,11 @@ export default function OnboardingPrestataire() {
             {/* Submit section */}
             {(() => {
               const missing = []
-              const reqKeys = getRequiredDocs('prestataire', f.prestataireType)
+              const reqKeys = getRequiredDocs('prestataire', selectedTypes)
               reqKeys.forEach(key => {
                 if (!hasDoc(app, key)) missing.push(DOCUMENT_LABELS[key]?.label || key)
               })
-              if (f.prestataireType === 'food' && f.alcoolFood && !hasDoc(app, 'alcohol_license')) missing.push('Licence alcool')
+              if (selectedTypes.includes('food') && f.alcoolFood && !hasDoc(app, 'alcohol_license')) missing.push('Licence alcool')
               const canSubmit = missing.length === 0
               return (
                 <div style={{ marginTop: 8, padding: '16px', background: canSubmit ? 'rgba(139,92,246,0.05)' : 'rgba(224,90,170,0.04)', border: `1px solid ${canSubmit ? 'rgba(139,92,246,0.18)' : 'rgba(224,90,170,0.2)'}`, borderRadius: 8 }}>
@@ -1299,7 +1360,11 @@ function FileRow({ file, onRemove }) {
       background: failed ? 'rgba(224,90,170,0.06)' : 'rgba(78,232,200,0.05)',
       border: `1px solid ${failed ? 'rgba(224,90,170,0.25)' : 'rgba(78,232,200,0.12)'}`,
     }}>
-      <span style={{ fontSize: 14, flexShrink: 0 }}>{failed ? '⚠' : '📄'}</span>
+      {failed ? (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+      ) : (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{
           fontFamily: "Inter, sans-serif", fontSize: 10,
