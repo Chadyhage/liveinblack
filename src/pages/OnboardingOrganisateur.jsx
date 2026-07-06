@@ -108,7 +108,6 @@ export default function OnboardingOrganisateur() {
 
   // Anonymous mode state (used when no user logged in)
   const anonUidRef = useRef(null) // real Firebase uid once account is created
-  const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
   const [regPasswordConfirm, setRegPasswordConfirm] = useState('')
   const [showPwd, setShowPwd] = useState(false)
@@ -153,7 +152,6 @@ export default function OnboardingOrganisateur() {
         setApp(existing)
         const fd = existing.formData || {}
         setF(prev => ({ ...prev, ...fd }))
-        if (fd.regEmail) setRegEmail(fd.regEmail)
       } else {
         const tempId = 'anon-org-' + Date.now()
         localStorage.setItem(ANON_DRAFT_KEY, tempId)
@@ -186,13 +184,11 @@ export default function OnboardingOrganisateur() {
     const errs = {}
     if (s === 0) {
       if (!f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
-      if (!f.emailPro.trim() || !f.emailPro.includes('@')) errs.emailPro = 'Email invalide'
+      if (!f.emailPro.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.emailPro.trim())) errs.emailPro = 'Email invalide'
       if (!f.telephonePro.trim()) errs.telephonePro = 'Requis'
       if (!f.noFixedAddress && !f.adresseEtablissement.trim()) errs.adresseEtablissement = 'Requis (ou cocher "Pas de lieu fixe")'
-      // Anonymous mode: validate login credentials on step 0
+      // Anonymous mode: cet email pro sert aussi de login → valider le mot de passe
       if (anonMode) {
-        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail.trim())
-        if (!regEmail.trim() || !emailOk) errs.regEmail = 'Email invalide'
         if (!regPassword || regPassword.length < 8) errs.regPassword = 'Au moins 8 caractères'
         if (!/[A-Z]/.test(regPassword)) errs.regPassword = 'Au moins une majuscule'
         if (regPassword !== regPasswordConfirm) errs.regPasswordConfirm = 'Les mots de passe ne correspondent pas'
@@ -218,40 +214,41 @@ export default function OnboardingOrganisateur() {
         let uid
         const name = f.nomCommercial.trim()
         const phone = f.telephonePro || ''
+        const loginEmail = f.emailPro.trim()
 
         if (USE_REAL_FIREBASE) {
           const { createUserWithEmailAndPassword } = await import('firebase/auth')
           const { auth, db } = await import('../firebase')
           const { doc, setDoc } = await import('firebase/firestore')
-          const cred = await createUserWithEmailAndPassword(auth, regEmail.trim(), regPassword)
+          const cred = await createUserWithEmailAndPassword(auth, loginEmail, regPassword)
           uid = cred.user.uid
           // Create Firestore user doc — role stays 'client' until admin approval
           // (OnboardingGuard redirects status:'draft' to the form, so navigation still works)
           await setDoc(doc(db, 'users', uid), {
-            uid, email: regEmail.trim(), name, phone,
+            uid, email: loginEmail, name, phone,
             role: 'client', activeRole: 'client', enabledRoles: ['client'],
             status: 'draft', emailVerified: false, createdAt: Date.now(),
           })
         } else {
           uid = 'local-org-' + Date.now()
           const { saveAccount } = await import('../utils/accounts')
-          saveAccount({ uid, email: regEmail.trim(), name, phone, role: 'organisateur', status: 'draft', emailVerified: false, createdAt: Date.now() })
+          saveAccount({ uid, email: loginEmail, name, phone, role: 'organisateur', status: 'draft', emailVerified: false, createdAt: Date.now() })
         }
 
         // Update localStorage app with real uid + email
-        updateApplication(app.id, { uid, email: regEmail.trim(), name })
-        setApp(prev => ({ ...prev, uid, email: regEmail.trim(), name }))
+        updateApplication(app.id, { uid, email: loginEmail, name })
+        setApp(prev => ({ ...prev, uid, email: loginEmail, name }))
         anonUidRef.current = uid
 
-        // Save email to draft so it's restored on page reload
-        saveDraft(app.id, { ...f, regEmail: regEmail.trim() })
+        // Save draft so it's restored on page reload
+        saveDraft(app.id, f)
 
       } catch (err) {
         setCreatingAccount(false)
         if (err.code === 'auth/email-already-in-use') {
-          setErrors({ regEmail: 'Cet email est déjà lié à un compte. Si c\'est un essai précédent, supprime le compte dans Firebase Console (Authentication → Users) puis réessaie. Ou connecte-toi sur /mon-dossier pour voir son état.' })
+          setErrors({ emailPro: 'Cet email est déjà lié à un compte. Si c\'est un essai précédent, supprime le compte dans Firebase Console (Authentication → Users) puis réessaie. Ou connecte-toi sur /mon-dossier pour voir son état.' })
         } else {
-          setErrors({ regEmail: `Erreur : ${err.message || 'Réessaie.'}` })
+          setErrors({ emailPro: `Erreur : ${err.message || 'Réessaie.'}` })
         }
         return
       }
@@ -369,7 +366,7 @@ export default function OnboardingOrganisateur() {
               Ton dossier a été transmis à l'équipe LIVEINBLACK.
             </p>
             <p style={{ fontFamily: DM, fontSize: 12, color: GOLD, lineHeight: 1.8, marginBottom: 32 }}>
-              Tu seras contacté à <strong>{regEmail}</strong> une fois ton compte validé.
+              Tu seras contacté à <strong>{f.emailPro}</strong> une fois ton compte validé.
             </p>
             <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.7, marginBottom: 32 }}>
               La validation prend généralement moins de 24h. Tu recevras un email dès que ton espace est activé.
@@ -481,8 +478,13 @@ export default function OnboardingOrganisateur() {
 
               {/* Email + Téléphone */}
               <Field label="Email professionnel" required>
-                <input type="email" style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined }} value={f.emailPro} onChange={e => update('emailPro', e.target.value)} placeholder="contact@monclub.fr" />
+                <input type="email" style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined }} value={f.emailPro} onChange={e => update('emailPro', e.target.value)} placeholder="contact@monclub.fr" disabled={anonMode && !!anonUidRef.current} />
                 {errors.emailPro && <p style={S.error}>{errors.emailPro}</p>}
+                {anonMode && (
+                  anonUidRef.current
+                    ? <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.6)', marginTop: 4 }}>✓ Compte créé — cet email te sert à te connecter (verrouillé)</p>
+                    : <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(200,169,110,0.7)', marginTop: 4 }}>Cet email te servira aussi à te connecter à ton espace.</p>
+                )}
               </Field>
               <Field label="Téléphone professionnel" required>
                 <PhoneInput codeField="telephoneProCode" numberField="telephonePro" formState={f} onUpdate={update} inputStyle={S.input} error={errors.telephonePro} />
@@ -543,30 +545,14 @@ export default function OnboardingOrganisateur() {
               </div>
             </div>
 
-            {/* ── Identifiants de connexion (mode anonyme uniquement) ── */}
-            {anonMode && (
+            {/* ── Mot de passe (mode anonyme, avant création du compte) ── */}
+            {anonMode && !anonUidRef.current && (
               <>
-                <p style={{ ...S.section, marginTop: 4 }}>🔐 Identifiants de connexion</p>
+                <p style={{ ...S.section, marginTop: 4 }}>🔐 Mot de passe</p>
                 <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '-4px 0 8px' }}>
-                  L'email servira à accéder à l'espace une fois le dossier validé.
+                  Tu te connecteras avec l'<strong style={{ color: 'rgba(200,169,110,0.8)' }}>email professionnel</strong> ci-dessus. Choisis un mot de passe pour accéder à ton espace une fois le dossier validé.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <Field label="Email de l'organisation" required>
-                      <input
-                        type="email"
-                        style={{ ...S.input, borderColor: errors.regEmail ? '#e05aaa' : undefined }}
-                        value={regEmail}
-                        onChange={e => setRegEmail(e.target.value)}
-                        placeholder="contact@monorganisation.com"
-                        disabled={!!anonUidRef.current}
-                      />
-                      {errors.regEmail && <p style={S.error}>{errors.regEmail}</p>}
-                      {anonUidRef.current && (
-                        <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.6)', marginTop: 4 }}>✓ Compte créé — email verrouillé</p>
-                      )}
-                    </Field>
-                  </div>
                   {!anonUidRef.current && (
                     <>
                       <Field label="Mot de passe" required>
