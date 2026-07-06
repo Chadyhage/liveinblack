@@ -121,20 +121,27 @@ async function checkout(req, res, body) {
       if (!members.includes(caller.uid)) {
         return res.status(403).json({ error: 'Tu ne fais pas partie de cette réservation de groupe.' })
       }
-      // Part attendue = partage égal entre membres ACTIFS (modèle MessagingPage).
+      // ── Plancher par part = tarif réel de la place ÷ nombre MAX de partageurs
+      // (groupMax), dérivé de l'ÉVÉNEMENT (fiable). Ex. table à 60 000 FCFA
+      // partageable par 6 → part minimale légitime = 10 000. Descendre sous ce
+      // plancher est impossible même en gonflant le nombre de participants avec
+      // de faux comptes (le plancher ne dépend PAS du total du doc, forgeable).
       const withdrawn = new Set(Array.isArray(gb.withdrawnMembers) ? gb.withdrawnMembers : [])
       const activeCount = Math.max(1, members.filter(m => !withdrawn.has(m)).length)
-      const expectedShare = (Math.round(Number(gb.totalPrice) || 0)) / activeCount
-      // Plancher anti-fraude : ≥ prix réel de la place sur l'event (ou, si le
-      // type de place du groupe n'existe plus, le prix payant minimum de
-      // l'event) ET ≥ part égalitaire (tolérance d'arrondi 1 FCFA).
-      const paidPrices = places.map(p => Math.round(Number(p.price) || 0)).filter(p => p > 0)
-      const placeFloor = place
-        ? Math.round(Number(place.price) || 0)
-        : (paidPrices.length ? Math.min(...paidPrices) : 0)
-      const floor = Math.max(placeFloor, Math.floor(expectedShare) - 1)
+      let floor
+      if (place) {
+        const P = Math.round(Number(place.price) || 0)
+        const G = Math.max(1, Number(place.groupMax) || 1)
+        floor = Math.floor(P / G)
+      } else {
+        // Place absente (booking legacy) : plancher = billet payant le moins cher
+        // de l'event ÷ nombre de participants actifs.
+        const paidPrices = places.map(p => Math.round(Number(p.price) || 0)).filter(p => p > 0)
+        const minPaid = paidPrices.length ? Math.min(...paidPrices) : 0
+        floor = Math.floor(minPaid / activeCount)
+      }
       const share = Math.round(Number(body.unitPrice) || 0)
-      if (share <= 0 || share < floor) {
+      if (share <= 0 || share < floor - 1) { // -1 : tolérance d'arrondi
         return res.status(400).json({ error: 'Part de groupe invalide' })
       }
       unitPrice = share

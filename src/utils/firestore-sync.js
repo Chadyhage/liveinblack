@@ -234,6 +234,16 @@ export function listenGroupConversations(uid, callback) {
   } catch { return () => {} }
 }
 
+// Listen to the group bookings a user participates in — temps réel des
+// validations/paiements pour que la carte de résa de groupe se mette à jour
+// sans rafraîchir la page quand un autre membre valide ou paie.
+export function listenGroupBookings(uid, callback) {
+  try {
+    const q = query(collection(db, 'group_bookings'), where('participantIds', 'array-contains', uid))
+    return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id }))), () => {})
+  } catch { return () => {} }
+}
+
 // Listen to a user's presence (lastSeen / isOnline) — for MessagingPage "En ligne" indicator
 export function listenUserPresence(userId, callback) {
   try {

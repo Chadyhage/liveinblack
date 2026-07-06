@@ -755,7 +755,7 @@ export default function MessagingPage() {
     const unsubs = []
     import('../utils/firestore-sync').then(({
       listenFriendRequests, listenUserSocial,
-      listenDirectConversations, listenGroupConversations, mergeById,
+      listenDirectConversations, listenGroupConversations, listenGroupBookings, mergeById,
     }) => {
       const safeArr = key => { try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] } }
       const safeObj = key => { try { return JSON.parse(localStorage.getItem(key) || '{}') } catch { return {} } }
@@ -840,6 +840,20 @@ export default function MessagingPage() {
       unsubs.push(listenDirectConversations(myId, mergeConvs))
       // 4. Group conversations
       unsubs.push(listenGroupConversations(myId, mergeConvs))
+      // 5. Group bookings temps réel : dès qu'un membre valide/paie/se retire,
+      // la carte se met à jour chez tout le monde sans rafraîchir la page.
+      unsubs.push(listenGroupBookings(myId, remote => {
+        if (!remote?.length) return
+        const local = safeObj('lib_group_bookings')
+        let changed = false
+        remote.forEach(gb => {
+          if (gb.id && JSON.stringify(local[gb.id]) !== JSON.stringify(gb)) { local[gb.id] = gb; changed = true }
+        })
+        if (changed) {
+          localStorage.setItem('lib_group_bookings', JSON.stringify(local))
+          setGroupBookings({ ...local })
+        }
+      }))
     }).catch(() => {})
     return () => unsubs.forEach(u => u?.())
   }, [myId])

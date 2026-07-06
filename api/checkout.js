@@ -75,8 +75,9 @@ export default async function handler(req, res) {
     // ── Part de groupe : validation serveur STRICTE ──
     // Faille corrigée : isGroupShare venait du body et court-circuitait TOUTE
     // vérification de prix (billet VIP payable 1 ct + frais). Désormais : doc
-    // group_bookings requis + appartenance + plancher = prix réel de la place
-    // sur l'événement ET part égalitaire du groupe.
+    // group_bookings requis + appartenance + plancher = tarif réel de la place
+    // ÷ nombre max de partageurs (groupMax), dérivé de l'événement — jamais du
+    // total du doc de groupe (forgeable).
     let groupShareCents = null
     if (isGroupShare) {
       if (!groupBookingId) return res.status(400).json({ error: 'groupBookingId requis pour une part de groupe' })
@@ -93,17 +94,20 @@ export default async function handler(req, res) {
       }
       const withdrawn = new Set(Array.isArray(gb.withdrawnMembers) ? gb.withdrawnMembers : [])
       const activeCount = Math.max(1, members.filter(m => !withdrawn.has(m)).length)
-      const expectedShareCents = Math.round((Number(gb.totalPrice) || 0) * 100) / activeCount
       const placesArr = evData?.places || []
       const gbPlace = placesArr.find(p => p.type === placeType) || null
-      const paidCents = placesArr.map(p => Math.round(Number(p.price) * 100) || 0).filter(c => c > 0)
-      const placeFloorCents = gbPlace
-        ? (Math.round(Number(gbPlace.price) * 100) || 0)
-        : (paidCents.length ? Math.min(...paidCents) : 0)
-      // Tolérance d'arrondi 1 ct (le client arrondit la part à 2 décimales).
-      const floorCents = Math.max(placeFloorCents, Math.floor(expectedShareCents) - 1)
+      let floorCents
+      if (gbPlace) {
+        const Pc = Math.round(Number(gbPlace.price) * 100) || 0
+        const G = Math.max(1, Number(gbPlace.groupMax) || 1)
+        floorCents = Math.floor(Pc / G)
+      } else {
+        const paidCents = placesArr.map(p => Math.round(Number(p.price) * 100) || 0).filter(c => c > 0)
+        const minPaid = paidCents.length ? Math.min(...paidCents) : 0
+        floorCents = Math.floor(minPaid / activeCount)
+      }
       const shareCents = Math.round(Number(unitPriceEUR) * 100)
-      if (shareCents <= 0 || shareCents < floorCents) {
+      if (shareCents <= 0 || shareCents < floorCents - 1) { // -1 ct : tolérance d'arrondi
         return res.status(400).json({ error: 'Part de groupe invalide' })
       }
       groupShareCents = shareCents
