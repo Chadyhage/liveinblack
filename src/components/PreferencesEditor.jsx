@@ -121,18 +121,25 @@ function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder
     return () => { cancelled = true; clearTimeout(t) }
   }, [query, remoteSearch])
 
-  // Fusion locale + distante, dédupliquée (le local d'abord, plus rapide/prioritaire)
+  // Fusion locale + distante. Le DISTANT est prioritaire car il porte la PHOTO :
+  // pour un artiste présent dans les deux (ex. Ninho), on garde la version
+  // Deezer (avec photo) plutôt que la locale (initiale seule). Le local ne sert
+  // qu'à afficher un résultat instantané avant la réponse réseau, et à combler
+  // les noms absents du distant.
   const matches = useMemo(() => {
     const selectedNorm = new Set(value.map(norm))
-    const seen = new Set(localMatches.map(m => norm(m.name)))
-    const merged = [...localMatches]
-    for (const r of remote) {
+    const byKey = new Map()
+    for (const r of remote) {           // distant d'abord (photos)
       const k = norm(r.name)
-      if (!k || seen.has(k) || selectedNorm.has(k)) continue
-      seen.add(k)
-      merged.push(r)
+      if (!k || selectedNorm.has(k) || byKey.has(k)) continue
+      byKey.set(k, r)
     }
-    return merged.slice(0, 8)
+    for (const m of localMatches) {      // local comble les trous
+      const k = norm(m.name)
+      if (!k || selectedNorm.has(k) || byKey.has(k)) continue
+      byKey.set(k, m)
+    }
+    return [...byKey.values()].slice(0, 8)
   }, [localMatches, remote, value])
 
   // Proposer « Ajouter «query» » si aucune correspondance EXACTE (liste, distant ou déjà choisi)

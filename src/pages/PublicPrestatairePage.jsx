@@ -166,7 +166,6 @@ export default function PublicPrestatairePage() {
           <div style={{ flex: 1, minWidth: 210, paddingBottom: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <h1 style={{ fontFamily: FONT, fontSize: 'clamp(27px,5vw,40px)', lineHeight: 1, letterSpacing: '-1px', margin: 0 }}>{profile.name}</h1>
-              {profile.verified && <span style={{ color: C.teal, fontFamily: FONT, fontSize: 12, fontWeight: 800 }}>✓ Vérifié</span>}
             </div>
             <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: category.color, margin: '8px 0 0' }}>{category.singular}</p>
           </div>

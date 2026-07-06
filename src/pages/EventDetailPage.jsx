@@ -1874,10 +1874,6 @@ export default function EventDetailPage() {
                     <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 18, color: 'white', margin: 0 }}>
                       {organizerProfile?.publicName || event.organizerName || event.organizer || 'Organisateur'}
                     </p>
-                    {organizerProfile?.isVerified && <p style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
-                      Organisateur vérifié
-                    </p>}
                   </div>
                   {organizerProfile && <button onClick={() => navigate(`/organisateurs/${organizerProfile.slug}`)} style={{ flexShrink: 0, padding: '9px 11px', borderRadius: 4, border: '1px solid rgba(78,232,200,.35)', background: 'rgba(78,232,200,.07)', color: '#4ee8c8', fontFamily: 'DM Mono, monospace', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Voir la page</button>}
                 </div>

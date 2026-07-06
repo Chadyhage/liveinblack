@@ -165,7 +165,7 @@ export default function PublicOrganizerPage() {
         <div className="op-hero-bg" style={profile.bannerUrl ? {backgroundImage:`url(${profile.bannerUrl})`} : {background:'radial-gradient(circle at 70% 20%,rgba(139,92,246,.55),transparent 40%),linear-gradient(135deg,#18122f,#071719)'}} />
         <div className="op-identity">
           <div className="op-avatar">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : profile.publicName?.[0]}</div>
-          <div><div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}><h1 className="op-name">{profile.publicName}</h1>{profile.isVerified && <span style={{color:C.teal,font: '10px DM Mono'}}>● Organisateur vérifié</span>}</div><p className="op-meta">{[profile.city,profile.country].filter(Boolean).join(' · ') || 'Live in Black'}</p></div>
+          <div><div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}><h1 className="op-name">{profile.publicName}</h1></div><p className="op-meta">{[profile.city,profile.country].filter(Boolean).join(' · ') || 'Live in Black'}</p></div>
           <div className="op-hero-actions">{!isSelf && <button className="op-secondary" style={{background:C.teal,border:'1px solid transparent',color:C.obsidian,fontWeight:700}} onClick={handleContact}>Envoyer un message</button>}<OrganizerFollowButton organizer={profile}/><button className="op-secondary" onClick={share}>{copied ? 'Lien copié' : 'Partager'}</button></div>
         </div>
       </section>

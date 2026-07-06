@@ -29,7 +29,6 @@ export default function PublicOrganizers() {
   const [events, setEvents] = useState([])
   const [query, setQuery] = useState('')
   const [city, setCity] = useState('')
-  const [verified, setVerified] = useState(false)
   const [upcomingOnly, setUpcomingOnly] = useState(false)
   const [sort, setSort] = useState('popular')
 
@@ -60,14 +59,17 @@ export default function PublicOrganizers() {
     return { now, byOrganizer }
   }, [events])
 
-  const cities = useMemo(() => [...new Set(profiles.map(p => p.city).filter(Boolean))].sort(), [profiles])
+  const cities = useMemo(() => [...new Set(profiles.flatMap(profile => [
+    profile.city,
+    ...(eventData.byOrganizer[profile.id] || []).map(event => event.city),
+  ]).map(value => value?.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr')), [profiles, eventData])
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const list = profiles.filter(profile => {
       const ownEvents = eventData.byOrganizer[profile.id] || []
       const next = ownEvents.find(e => !e.cancelled && dateValue(e) >= eventData.now)
-      if (city && profile.city !== city) return false
-      if (verified && !profile.isVerified) return false
+      const profileCities = [profile.city, ...ownEvents.map(event => event.city)].filter(Boolean)
+      if (city && !profileCities.includes(city)) return false
       if (upcomingOnly && !next) return false
       if (!q) return true
       return [profile.publicName, profile.city, profile.country, profile.shortDescription, ...(profile.eventTypes || []), ...(profile.vibes || [])]
@@ -76,7 +78,7 @@ export default function PublicOrganizers() {
     return list.sort((a, b) => sort === 'recent'
       ? (b.createdAt || 0) - (a.createdAt || 0)
       : (b.followersCount || 0) - (a.followersCount || 0))
-  }, [profiles, eventData, query, city, verified, upcomingOnly, sort])
+  }, [profiles, eventData, query, city, upcomingOnly, sort])
 
   const content = (
     <div className="org-directory">
@@ -111,10 +113,9 @@ export default function PublicOrganizers() {
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher un organisateur, une ville…" />
         </label>
         <div className="org-filters">
-          <select className="org-filter" value={city} onChange={e => setCity(e.target.value)} aria-label="Filtrer par ville">
+          {cities.length > 0 && <select className="org-filter" value={city} onChange={e => setCity(e.target.value)} aria-label="Filtrer par ville">
             <option value="">Toutes les villes</option>{cities.map(value => <option key={value}>{value}</option>)}
-          </select>
-          <button className={`org-filter ${verified ? 'active' : ''}`} onClick={() => setVerified(v => !v)}>Organisateurs vérifiés</button>
+          </select>}
           <button className={`org-filter ${upcomingOnly ? 'active' : ''}`} onClick={() => setUpcomingOnly(v => !v)}>Événements à venir</button>
           <select className="org-filter" value={sort} onChange={e => setSort(e.target.value)} aria-label="Trier les organisateurs">
             <option value="popular">Les plus populaires</option><option value="recent">Les plus récents</option>
@@ -134,7 +135,6 @@ export default function PublicOrganizers() {
                     <div className="org-avatar">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }} /> : (profile.publicName?.[0] || 'O')}</div>
                     <div style={{ display:'flex',alignItems:'center',gap:8,marginTop:12,flexWrap:'wrap' }}>
                       <h2 style={{ fontFamily:DISPLAY,fontSize:30,letterSpacing:'.025em',margin:0 }}>{profile.publicName}</h2>
-                      {profile.isVerified && <span title="Organisateur vérifié" style={{ color:C.teal,fontFamily:UI,fontSize:10 }}>● Vérifié</span>}
                     </div>
                     <p style={{ fontFamily:UI,fontSize:10,color:C.gold,letterSpacing:'.08em',margin:'3px 0 0' }}>{[profile.city, profile.country].filter(Boolean).join(' · ') || 'Live in Black'}</p>
                     <p style={{ color:'rgba(255,255,255,.55)',fontSize:13,lineHeight:1.55,minHeight:40,margin:'13px 0 0' }}>{profile.shortDescription || 'Découvre ses prochains événements et son univers.'}</p>

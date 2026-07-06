@@ -169,9 +169,6 @@ export default function PublicPrestataires() {
                     <span style={{ position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${c.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
                       <CatIcon id={c.icon} color="#fff" size={12} /> {c.label}
                     </span>
-                    {p.verified && (
-                      <span style={{ position: 'absolute', top: 10, right: 10, display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FONT, fontSize: 10, fontWeight: 800, color: C.teal, background: 'rgba(5,6,10,.7)', padding: '4px 8px', borderRadius: 999, border: '1px solid rgba(78,232,200,.4)' }}>✓ Vérifié</span>
-                    )}
                     {/* Avatar */}
                     <div style={{ position: 'absolute', left: 14, bottom: -22, width: 52, height: 52, borderRadius: '50%', border: '2px solid #0b0d16', overflow: 'hidden', background: c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 20, color: C.obsidian }}>
                       {p.photoUrl ? <img src={p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (p.name?.[0]?.toUpperCase() || '?')}

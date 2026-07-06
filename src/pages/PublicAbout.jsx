@@ -87,7 +87,7 @@ export default function PublicAbout() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px,1fr))', gap: 14 }}>
           {[
             ['Paiements sécurisés', 'Transactions protégées, billets authentiques avec QR unique — impossible à falsifier.'],
-            ['Prestataires vérifiés', 'Les profils validés portent un badge. Tu sais à qui tu parles.'],
+            ['Profils sélectionnés', 'Chaque organisateur et prestataire visible sur la plateforme a été validé par notre équipe.'],
             ['Tes données te protègent', 'On ne partage jamais ton contact sans ton accord. Confidentialité réelle, pas cosmétique.'],
             ['Un vrai support', 'Une question, un souci ? On répond. La nuit mérite du soin.'],
           ].map(([t, d]) => (
