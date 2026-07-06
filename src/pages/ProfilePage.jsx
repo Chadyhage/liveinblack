@@ -868,9 +868,10 @@ export default function ProfilePage() {
       const { USE_REAL_FIREBASE } = await import('../firebase')
       const uid = user?.uid
       if (USE_REAL_FIREBASE) {
-        // Verify password first by re-authenticating
+        // Vérifie le mot de passe, puis délègue TOUTE la suppression au serveur :
+        // abonnement Stripe d'abord, Firebase Auth / Firestore ensuite.
         const { auth } = await import('../firebase')
-        const { EmailAuthProvider, reauthenticateWithCredential, deleteUser } = await import('firebase/auth')
+        const { EmailAuthProvider, reauthenticateWithCredential } = await import('firebase/auth')
         const currentUser = auth.currentUser
         if (!currentUser) throw { code: 'auth/requires-recent-login' }
         // Only re-auth with password for email/password accounts
@@ -878,15 +879,18 @@ export default function ProfilePage() {
           const cred = EmailAuthProvider.credential(currentUser.email, deletePassword)
           await reauthenticateWithCredential(currentUser, cred)
         }
-        // Delete all linked Firestore documents (fire-and-forget for non-critical ones)
-        const { db } = await import('../firebase')
-        const { doc, deleteDoc } = await import('firebase/firestore')
-        const linkedCollections = ['users', 'wallets', 'user_bookings', 'user_events', 'user_social', 'user_boosts', 'catalogs', 'providers', 'organizer_profiles', 'organizer_follows']
-        await Promise.allSettled(
-          linkedCollections.map(coll => deleteDoc(doc(db, coll, uid)))
-        )
-        // Delete Firebase Auth user (must be last)
-        await deleteUser(currentUser)
+        const { authHeaders } = await import('../utils/apiAuth')
+        const response = await fetch('/api/admin-delete-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders(true)) },
+          body: JSON.stringify({ uid, selfDelete: true }),
+        })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          const error = new Error(data.message || 'La suppression sécurisée a échoué.')
+          error.code = data.error || 'delete/server-error'
+          throw error
+        }
       } else {
         // Local mode: check password
         if (user.password && user.password !== deletePassword) {
@@ -908,7 +912,7 @@ export default function ProfilePage() {
       setUser(null)
       navigate('/accueil')
     } catch (err) {
-      setDeleteError(getProfileError(err.code || 'unknown'))
+      setDeleteError(err.message || getProfileError(err.code || 'unknown'))
     } finally {
       setDeleting(false)
     }

@@ -492,7 +492,7 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
     if (app.type === 'prestataire') {
       try {
         const { getProviderProfile, saveProviderProfile } = await import('./services')
-        // Reporte le statut d'abonnement (payé à l'inscription, avant le dossier) sur
+        // Reporte le statut d'abonnement (payé à la dernière étape du dossier) sur
         // le profil annuaire : sans ce seed, un prestataire abonné + validé resterait
         // invisible (le gate annuaire exige subscriptionActive). Le webhook maintient
         // ensuite ce champ à jour (renouvellement / résiliation).

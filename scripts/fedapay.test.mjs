@@ -2,7 +2,11 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import { computeTicketFeeCents, computeTicketFeeXOF, regionToCurrency, FEES } from '../lib/fees.js'
-import { verifyWebhookSignature } from '../lib/fedapay.js'
+import {
+  verifyWebhookSignature,
+  isApprovedTransactionEvent,
+  transactionAmountMatches,
+} from '../lib/fedapay.js'
 import { fmtMoney, eventCurrency, regionToCurrency as regionToCurrencyClient } from '../src/utils/money.js'
 
 // ─── Frais de service FCFA (5 % + 300, plafond 1 500, gratuit si billet gratuit) ──
@@ -94,4 +98,18 @@ test('signature webhook : rejetée au-delà de la tolérance anti-replay (5 min)
   const secret = 'wh_sandbox_test'
   const oldTs = Math.floor(Date.now() / 1000) - 3600
   assert.equal(verifyWebhookSignature(payload, signedHeader(payload, secret, oldTs), secret), false)
+})
+
+test('webhook FedaPay : approved direct ou via transaction.updated', () => {
+  assert.equal(isApprovedTransactionEvent('transaction.approved', { status: 'approved' }), true)
+  assert.equal(isApprovedTransactionEvent('transaction.updated', { status: 'approved' }), true)
+  assert.equal(isApprovedTransactionEvent('transaction.updated', { status: 'pending' }), false)
+  assert.equal(isApprovedTransactionEvent('transaction.declined', { status: 'declined' }), false)
+})
+
+test('webhook FedaPay : aucun billet si le montant ne correspond pas exactement', () => {
+  assert.equal(transactionAmountMatches(12800, 12800), true)
+  assert.equal(transactionAmountMatches(12799, 12800), false)
+  assert.equal(transactionAmountMatches(12801, 12800), false)
+  assert.equal(transactionAmountMatches(0, 0), false)
 })

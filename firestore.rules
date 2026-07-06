@@ -299,6 +299,13 @@ service cloud.firestore {
       allow write: if isAgent() || (isSignedIn() && (resource == null || resource.data.uid == request.auth.uid));
     }
 
+    // Anomalies financières créées uniquement par les webhooks (Admin SDK).
+    // L'agent les consulte et les clôture après vérification/remboursement.
+    match /payment_alerts/{id} {
+      allow read, update: if isAgent();
+      allow create, delete: if false;
+    }
+
     // ── Inscriptions boîte (JeSuisUneBoitePage) ───────────────────────────────
     match /boite_registrations/{id} {
       allow read:  if isAgent();

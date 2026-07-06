@@ -3,11 +3,11 @@
 // désormais un ID token Firebase : `Authorization: Bearer <token>`.
 //
 // Usage : headers: { 'Content-Type': 'application/json', ...(await authHeaders()) }
-export async function authHeaders() {
+export async function authHeaders(forceRefresh = false) {
   try {
     const { auth, USE_REAL_FIREBASE } = await import('../firebase')
     if (!USE_REAL_FIREBASE || !auth?.currentUser) return {}
-    const token = await auth.currentUser.getIdToken()
+    const token = await auth.currentUser.getIdToken(forceRefresh)
     return token ? { Authorization: `Bearer ${token}` } : {}
   } catch {
     return {}

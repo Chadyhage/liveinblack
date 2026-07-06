@@ -193,6 +193,7 @@ export default function AgentPage() {
   const [payoutRequests, setPayoutRequests]     = useState([])  // demandes de virement en attente
   const [reports, setReports]                   = useState([])  // signalements d'utilisateurs
   const [adminBoosts, setAdminBoosts]           = useState([])  // boosts vendus (webhook) — surveille aussi les conflits de créneau
+  const [paymentAlerts, setPaymentAlerts]       = useState([])  // paiements à examiner manuellement
 
   function loadReports() {
     try { return JSON.parse(localStorage.getItem('lib_reports') || '[]').filter(r => !r.handled) } catch { return [] }
@@ -213,6 +214,21 @@ export default function AgentPage() {
       import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`reports/${id}`, { handled: true, handledAt: new Date().toISOString() })).catch(() => {})
       setReports(loadReports())
     } catch {}
+  }
+
+  async function resolvePaymentAlert(id) {
+    const resolvedAt = new Date().toISOString()
+    try {
+      const { syncDocAwaitable } = await import('../utils/firestore-sync')
+      const result = await syncDocAwaitable(`payment_alerts/${id}`, {
+        status: 'resolved', resolvedAt, resolvedBy: user?.uid || null,
+      })
+      if (!result.ok) throw new Error(result.error)
+      setPaymentAlerts(items => items.filter(item => item.id !== id))
+      showToast('Alerte financière clôturée')
+    } catch {
+      showToast("Impossible de clôturer l'alerte", 'error')
+    }
   }
 
   // Returns the org/business name for organisateurs & prestataires, personal name otherwise
@@ -283,14 +299,16 @@ export default function AgentPage() {
 
         // Reversements vendeurs : soldes dus + demandes de virement en attente
         // + boosts vendus (surveillance des créneaux Top 3 et des conflits)
-        const [balances, payouts, boosts] = await Promise.all([
+        const [balances, payouts, boosts, alerts] = await Promise.all([
           loadCollection('seller_balances'),
           loadCollection('payout_requests'),
           loadCollection('boosts'),
+          loadCollection('payment_alerts'),
         ])
         setSellerBalances((balances || []).filter(b => Number(b.amountDueCents) > 0))
         setPayoutRequests((payouts || []).filter(p => p.status === 'pending'))
         setAdminBoosts((boosts || []).sort((a, b) => new Date(b.purchasedAt || 0) - new Date(a.purchasedAt || 0)))
+        setPaymentAlerts((alerts || []).filter(a => a.status === 'manual_review'))
       } catch {}
     }
     fetchFromFirestore()
@@ -748,6 +766,7 @@ export default function AgentPage() {
             { key: 'dossiers',     label: 'Dossiers',      count: totalAppsSubmitted, alert: totalAppsSubmitted > 0 },
             { key: 'boosts',       label: 'Boosts',        count: adminBoosts.filter(b => new Date(b.expiresAt).getTime() > Date.now()).length, alert: adminBoosts.some(b => b.conflict && new Date(b.expiresAt).getTime() > Date.now()) },
             { key: 'reversements', label: 'Reversements',  count: payoutRequests.length, alert: payoutRequests.length > 0 },
+            { key: 'paiements',     label: 'Paiements',      count: paymentAlerts.length, alert: paymentAlerts.length > 0 },
             { key: 'suppressions', label: 'Suppressions',  count: deletionRequests.length, alert: deletionRequests.length > 0 },
             { key: 'reports',      label: 'Signalements',  count: reports.length, alert: reports.length > 0 },
           ].map(t => (
@@ -2930,6 +2949,50 @@ export default function AgentPage() {
                   <button onClick={() => resolveReport(r.id)} style={{ padding: '9px 16px', borderRadius: 999, cursor: 'pointer', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.32)', color: '#22c55e', fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em' }}>Marquer traité</button>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'paiements' && (
+        <div style={{ padding: '16px 16px 40px', maxWidth: 620, margin: '0 auto' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 8px' }}>
+            Alertes financières
+          </p>
+          <p style={{ fontFamily: FONTS.display, fontSize: 13, color: COLORS.muted, lineHeight: 1.55, margin: '0 0 18px' }}>
+            Vérifie le paiement dans Stripe ou FedaPay avant de rembourser ou de clôturer l'alerte.
+          </p>
+          {paymentAlerts.length === 0 ? (
+            <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 18, color: COLORS.muted, margin: 0 }}>Aucune anomalie à traiter</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {paymentAlerts.map(alert => {
+                const reason = {
+                  account_deleted_after_payment: 'Paiement reçu après suppression du compte',
+                  amount_mismatch: 'Montant payé différent du montant attendu',
+                  missing_server_metadata: 'Paiement sans dossier serveur vérifiable',
+                }[alert.reason] || alert.reason || 'Anomalie de paiement'
+                const reference = alert.stripeSessionId || alert.transactionId || alert.bookingId || alert.id
+                const created = alert.createdAt?.toMillis ? alert.createdAt.toMillis() : alert.createdAt
+                return (
+                  <div key={alert.id} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,.32)', background: 'rgba(224,90,170,.04)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                      <div>
+                        <p style={{ fontFamily: FONTS.display, fontWeight: 750, fontSize: 15, color: '#fff', margin: '0 0 5px' }}>{reason}</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0 }}>{String(alert.provider || '').toUpperCase()} · {created ? formatDate(created) : 'date inconnue'}</p>
+                      </div>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, border: '1px solid rgba(224,90,170,.35)', borderRadius: 999, padding: '4px 8px' }}>À vérifier</span>
+                    </div>
+                    <div style={{ marginTop: 13, padding: '10px 12px', borderRadius: 9, background: 'rgba(255,255,255,.035)' }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, overflowWrap: 'anywhere' }}>Référence : {reference}</p>
+                      {alert.paidAmount != null && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '5px 0 0' }}>Payé : {alert.paidAmount} FCFA · Attendu : {alert.expectedAmount} FCFA</p>}
+                    </div>
+                    <button onClick={() => resolvePaymentAlert(alert.id)} style={{ marginTop: 13, padding: '9px 15px', borderRadius: 9, cursor: 'pointer', background: 'rgba(78,232,200,.10)', border: '1px solid rgba(78,232,200,.30)', color: COLORS.teal, fontFamily: FONTS.display, fontWeight: 700, fontSize: 12 }}>Marquer comme examiné</button>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

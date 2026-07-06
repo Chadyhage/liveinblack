@@ -150,6 +150,19 @@ export default async function handler(req, res) {
 // existe déjà (ne pas créer de profil fantôme pour un abonné pas encore validé).
 async function writeSubStatus(db, uid, { active, status, periodEndIso, subId, customerId }) {
   if (!uid) return
+  // Une suppression de compte crée ce tombstone AVANT d'annuler Stripe. Les
+  // événements customer.subscription.deleted/updated peuvent arriver après la
+  // purge : ils ne doivent jamais recréer un users/{uid} fantôme.
+  const tombstoneRef = db.collection('deleted_accounts').doc(String(uid))
+  const tombstone = await tombstoneRef.get()
+  if (tombstone.exists && tombstone.data()?.blockBillingWrites === true) {
+    await tombstoneRef.set({
+      lastStripeEventAt: Date.now(),
+      lastStripeSubscriptionStatus: status || null,
+      lastStripeSubscriptionId: subId || null,
+    }, { merge: true })
+    return
+  }
   await db.collection('users').doc(String(uid)).set({
     prestataireSubActive: active,
     prestataireSubStatus: status,
@@ -195,6 +208,24 @@ async function finalizeBooking(db, session, meta) {
   const bookingId = meta.bookingId
   if (!bookingId) return
 
+  const userId = meta.userId || ''
+
+  // Un paiement peut etre confirme quelques secondes apres la suppression du
+  // compte (webhook retarde). Ne jamais recreer de donnees pour un uid supprime.
+  if (userId) {
+    const deleted = await db.collection('deleted_accounts').doc(String(userId)).get()
+    if (deleted.exists && deleted.data()?.blockBillingWrites === true) {
+      await db.collection('payment_alerts').doc(`stripe_${session.id}`).set({
+        provider: 'stripe', stripeSessionId: session.id, bookingId,
+        userId: String(userId), reason: 'account_deleted_after_payment',
+        status: 'manual_review', amountTotal: session.amount_total || null,
+        currency: session.currency || null, createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+      console.warn('[webhook] paiement recu apres suppression du compte - revue manuelle:', session.id)
+      return
+    }
+  }
+
   // Prix unitaire payé (en €), figé au moment du checkout. Les stats organisateur
   // lisent ticket.placePrice en priorité — sans ce snapshot, un changement de
   // tarif réécrirait rétroactivement le CA des ventes passées (risque fiscal).
@@ -226,7 +257,6 @@ async function finalizeBooking(db, session, meta) {
   }
 
   const eventId = meta.eventId || ''
-  const userId = meta.userId || ''
   const qty = Math.max(1, Number(meta.qty || 1))
   const eventName = meta.eventName || ''
   const placeType = meta.placeType || ''

@@ -167,13 +167,14 @@ export async function resolveDeletionRequest(requestId, decision, adminUid, admi
     resolvedByName: adminName,
     adminNote:      adminNote.trim(),
   }
+  if (decision === 'approved') {
+    await _anonymizeAccount({ ...all[idx], ...patch })
+  }
+
+  // Ne marquer la demande comme traitée qu'après une résiliation/anonymisation
+  // réussie. En cas d'erreur, elle reste en attente et peut être retentée.
   all[idx] = { ...all[idx], ...patch }
   _saveAll(all)
-
-  // Si approuvé : anonymiser le compte
-  if (decision === 'approved') {
-    await _anonymizeAccount(all[idx])
-  }
 
   // Sync Firestore
   try {
@@ -220,14 +221,18 @@ async function _anonymizeAccount(req) {
   // 0. Libérer l'email côté Firebase Auth (serveur, authOnly : la pierre
   //    tombale Firestore est conservée pour l'archivage RGPD). Sans ça,
   //    l'email resterait verrouillé à vie (auth/email-already-in-use).
-  try {
+  {
     const { authHeaders } = await import('./apiAuth')
-    await fetch('/api/admin-delete-account', {
+    const response = await fetch('/api/admin-delete-account', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify({ uid, authOnly: true }),
     })
-  } catch {}
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new Error(data.message || "La résiliation et la suppression du compte ont échoué.")
+    }
+  }
 
   // 1. Anonymiser l'application
   try {

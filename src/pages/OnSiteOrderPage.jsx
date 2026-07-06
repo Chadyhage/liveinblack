@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import { eventCurrency } from '../utils/money'
+import { isEventEnded } from '../utils/event-time'
 import {
   listenOrders, getOrders, addOnsiteItem, updateOnsiteItem, removeOnsiteItem,
   ORDER_SOURCE, ONSITE_STATUS, PREORDER_STATUS,
@@ -103,7 +104,7 @@ export default function OnSiteOrderPage() {
     if (line) { await updateOnsiteItem(eventId, line.id, { quantity: line.quantity + 1 }, actor) }
     else {
       const res = await addOnsiteItem(eventId, { ticketId: ticketCode, menuItem, qty: 1 }, actor, true)
-      flash(res && res._synced === false ? `${menuItem.name} ajouté · ⚠ hors-ligne` : `${menuItem.name} ajouté`)
+      flash(res && res._synced === false ? `${menuItem.name} ajouté · mode hors ligne` : `${menuItem.name} ajouté`)
     }
     refreshLocal(); setBusy('')
   }
@@ -124,7 +125,7 @@ export default function OnSiteOrderPage() {
     return [...map.entries()]
   }, [menu])
 
-  const eventOver = event && (event.cancelled === true)
+  const eventOver = event && isEventEnded(event)
 
   if (loading) return <Shell><div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,.5)', fontFamily: FONT }}>Chargement…</div></Shell>
   if (!event) return (
@@ -145,13 +146,14 @@ export default function OnSiteOrderPage() {
   return (
     <Shell>
       {/* Header */}
-      <div style={{ padding: '16px 16px 10px', borderBottom: '1px solid rgba(255,255,255,.07)', position: 'sticky', top: 0, zIndex: 5, background: 'rgba(4,4,11,.92)', backdropFilter: 'blur(18px)' }}>
-        <button onClick={() => navigate(-1)} style={{ background: 'none', border: 0, color: C.teal, fontFamily: FONT, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, letterSpacing: '.02em' }}>← Retour</button>
-        <h1 style={{ fontFamily: FONT, fontWeight: 800, fontSize: 22, color: '#fff', margin: '10px 0 2px', letterSpacing: '-.4px' }}>Commander sur place</h1>
-        <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', margin: 0 }}>{event.name} · billet <span style={{ color: C.gold, fontWeight: 600 }}>{ticketCode}</span></p>
+      <div className="order-header">
+        <button onClick={() => navigate(-1)} className="order-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>Retour au billet</button>
+        <span className="order-kicker">Service sur place</span>
+        <h1>Commander</h1>
+        <p>{event.name}<span>{ticketCode}</span></p>
       </div>
 
-      <div style={{ padding: '14px 16px 120px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div className="order-content">
         {/* Ma commande en direct */}
         {myItems.length > 0 && (
           <section>
@@ -179,8 +181,8 @@ export default function OnSiteOrderPage() {
                   const qty = line?.quantity || 0
                   const id = String(m.id || m.name)
                   return (
-                    <div key={id} style={{ ...cardStyle, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <span style={{ fontSize: 22, width: 26, textAlign: 'center' }}>{m.emoji || '🍸'}</span>
+                    <div key={id} className="order-product-card">
+                      <OrderItemVisual item={m}/>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</p>
                         {m.description && <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.4)', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.description}</p>}
@@ -206,7 +208,7 @@ export default function OnSiteOrderPage() {
 
       {/* Barre total fixe */}
       {dueTotal > 0 && (
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10, maxWidth: 480, margin: '0 auto', padding: '14px 16px calc(14px + env(safe-area-inset-bottom))', background: 'rgba(6,8,15,.95)', backdropFilter: 'blur(18px)', borderTop: '1px solid rgba(255,255,255,.09)' }}>
+        <div className="order-total-bar">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', margin: 0 }}>À régler au bar</p>
@@ -229,14 +231,14 @@ function MyLine({ item, cur = 'EUR' }) {
   const isPre = item.source === ORDER_SOURCE.PREORDER
   const served = item.status === ONSITE_STATUS.SERVED || item.status === PREORDER_STATUS.SERVED
   const statusLabel = served
-    ? `Servie ✓${item.served_by_name ? ' par ' + item.served_by_name : ''}`
+    ? `Servie${item.served_by_name ? ' par ' + item.served_by_name : ''}`
     : isPre ? 'Précommande · payée'
-    : item.paid_at ? 'Payée ✓'
+    : item.paid_at ? 'Payée'
     : (ONSITE_STATUS_LABEL[item.status] || 'Envoyée')
   const statusColor = served ? '#22c55e' : isPre ? C.gold : (ONSITE_STATUS_COLOR[item.status] || C.teal)
   return (
-    <div style={{ ...cardStyle, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 12, opacity: served ? 0.72 : 1 }}>
-      <span style={{ fontSize: 20, width: 24, textAlign: 'center' }}>{item.emoji || (isPre ? '🎟️' : '🍸')}</span>
+    <div className="order-live-line" style={{ opacity: served ? 0.72 : 1 }}>
+      <OrderItemVisual item={item} preorder={isPre}/>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 600, color: '#fff', margin: 0 }}>{item.name} <span style={{ color: 'rgba(255,255,255,.45)', fontWeight: 500 }}>×{item.quantity}</span></p>
         <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: statusColor }}>{statusLabel}</span>
@@ -244,6 +246,16 @@ function MyLine({ item, cur = 'EUR' }) {
       <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: isPre ? 'rgba(255,255,255,.5)' : C.gold, flexShrink: 0 }}>{isPre ? 'incluse' : euro(item.unitPrice * item.quantity, cur)}</span>
     </div>
   )
+}
+
+function OrderItemVisual({ item, preorder = false }) {
+  const image = item?.imageUrl || item?.mediaUrl || item?.image
+  return <span className="order-item-visual">{image
+    ? <img src={image} alt=""/>
+    : preorder
+      ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4Z"/><path d="M12 5v14" strokeDasharray="2 3"/></svg>
+      : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M7 3h10l-1 18H8L7 3Z"/><path d="M8 8h8M10 3l1-2"/></svg>
+  }</span>
 }
 
 function Stepper({ label, onClick, disabled, tone }) {
@@ -264,7 +276,20 @@ const cardStyle = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)'
 
 function Shell({ children }) {
   return (
-    <div style={{ minHeight: '100vh', background: C.obsidian, color: '#fff' }}>
+    <div className="onsite-order-shell" style={{ minHeight: '100vh', background: C.obsidian, color: '#fff' }}>
+      <style>{`
+        .onsite-order-shell{background:radial-gradient(circle at 50% -10%,rgba(132,68,255,.18),transparent 42%),#04040b!important;font-family:Inter,sans-serif}
+        .onsite-order-shell>div{max-width:560px!important}
+        .order-header{padding:20px 20px 22px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;z-index:5;background:rgba(4,4,11,.9);backdrop-filter:blur(22px)}
+        .order-back{display:flex;align-items:center;gap:5px;background:none;border:0;color:rgba(255,255,255,.55);font:600 12px Inter,sans-serif;cursor:pointer;padding:0;margin-bottom:28px}
+        .order-kicker{font:800 9px Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#4ee8c8}
+        .order-header h1{font:800 34px/1 Inter,sans-serif;letter-spacing:-.045em;color:#fff;margin:8px 0 12px}.order-header p{display:flex;justify-content:space-between;gap:16px;font:500 12px Inter,sans-serif;color:rgba(255,255,255,.48);margin:0}.order-header p span{color:#c8a96e;font-weight:700}
+        .order-content{padding:22px 18px 140px;display:flex;flex-direction:column;gap:30px}
+        .order-product-card,.order-live-line{display:flex;align-items:center;gap:13px;padding:13px;border-radius:16px;background:rgba(12,13,23,.76);border:1px solid rgba(255,255,255,.1);box-shadow:0 12px 30px rgba(0,0,0,.14)}
+        .order-item-visual{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;overflow:hidden;flex:none;color:#4ee8c8;background:linear-gradient(145deg,rgba(78,232,200,.12),rgba(132,68,255,.1));border:1px solid rgba(255,255,255,.08)}.order-item-visual img{width:100%;height:100%;object-fit:cover}.order-item-visual svg{width:21px;height:21px}
+        .order-total-bar{position:fixed;left:0;right:0;bottom:0;z-index:10;max-width:560px;margin:0 auto;padding:17px 20px calc(17px + env(safe-area-inset-bottom));background:rgba(8,9,17,.96);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.1);border-bottom:0;border-radius:20px 20px 0 0;box-shadow:0 -18px 55px rgba(0,0,0,.45)}
+        @media(max-width:600px){.order-header{padding:18px 18px 20px}.order-content{padding-left:14px;padding-right:14px}.order-header h1{font-size:32px}}
+      `}</style>
       <div style={{ maxWidth: 480, margin: '0 auto', position: 'relative', minHeight: '100vh' }}>{children}</div>
     </div>
   )

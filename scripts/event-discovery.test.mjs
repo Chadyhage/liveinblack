@@ -6,6 +6,7 @@ import {
   isEventOngoingOrStartingWithin,
 } from '../src/utils/eventUrgency.js'
 import { matchesEntityRegion } from '../src/utils/locations.js'
+import { eventEffectiveEndMs, isEventEnded } from '../src/utils/event-time.js'
 
 test('une soirée qui traverse minuit reste visible jusqu’à son heure de fin', () => {
   const event = { date: '2026-07-05', time: '21:00', endTime: '06:00' }
@@ -27,3 +28,24 @@ test('Île-de-France correspond au filtre national France', () => {
   assert.equal(matchesEntityRegion({ region: 'Île-de-France', city: 'Paris' }, 'france'), true)
 })
 
+test('un billet expire à la fin de la soirée, y compris après minuit', () => {
+  const event = { date: '2026-07-05', time: '21:00', endTime: '06:00' }
+  const justBefore = new Date('2026-07-06T05:59:59').getTime()
+  const atClosing = new Date('2026-07-06T06:00:00').getTime()
+
+  assert.equal(isEventEnded(event, justBefore), false)
+  assert.equal(isEventEnded(event, atClosing), true)
+})
+
+test('closingDate prime sur l’horaire théorique de fin', () => {
+  const event = {
+    date: '2026-07-05',
+    time: '21:00',
+    endTime: '02:00',
+    closingDate: '2026-07-06T04:30:00',
+  }
+
+  assert.equal(eventEffectiveEndMs(event), new Date('2026-07-06T04:30:00').getTime())
+  assert.equal(isEventEnded(event, new Date('2026-07-06T03:00:00').getTime()), false)
+  assert.equal(isEventEnded(event, new Date('2026-07-06T04:30:00').getTime()), true)
+})

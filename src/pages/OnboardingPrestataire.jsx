@@ -78,7 +78,15 @@ const STEPS = [
   { label: 'Spécifique' },
   { label: 'Fonctionnement' },
   { label: 'Documents' },
+  { label: 'Abonnement' },
 ]
+
+const LAST_STEP = STEPS.length - 1
+
+function savedStep(formData = {}) {
+  const value = Number(formData._onboardingStep)
+  return Number.isInteger(value) ? Math.min(Math.max(value, 0), LAST_STEP) : 0
+}
 
 // Icônes SVG (au lieu d'emojis) par type de prestataire — style ligne cohérent avec l'app
 function TypeIcon({ type, size = 22 }) {
@@ -233,7 +241,7 @@ function RegionPicker({ value = [], onChange }) {
 }
 
 export default function OnboardingPrestataire() {
-  const { user } = useAuth()
+  const { user, setUser } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [app, setApp] = useState(null)
@@ -253,11 +261,14 @@ export default function OnboardingPrestataire() {
   const [regPasswordConfirm, setRegPasswordConfirm] = useState('')
   const [showPwd, setShowPwd] = useState(false)
 
-  // ── Abonnement prestataire (9,99 €/mois) — péage AVANT le dossier ─────────────
+  // ── Abonnement prestataire (9,99 €/mois) — dernière étape du dossier ──────────
   const [subActive, setSubActive] = useState(false)      // abonnement actif (source = webhook)
-  const [awaitingSub, setAwaitingSub] = useState(false)  // écran de paiement affiché
   const [subRedirecting, setSubRedirecting] = useState(false)
   const [subError, setSubError] = useState('')
+  const [checkingSubReturn, setCheckingSubReturn] = useState(false)
+  const [emailVerification, setEmailVerification] = useState('idle')
+  const [authChecked, setAuthChecked] = useState(false)
+  const checkedSubSessionRef = useRef('')
 
   const anonMode = !user
 
@@ -287,24 +298,60 @@ export default function OnboardingPrestataire() {
     tarifMin: '', tarifMax: '', tarifType: '', tarifDevis: false,
   })
 
+  // Après un aller-retour Stripe, Firebase restaure sa session avant que la
+  // session locale LIVEINBLACK ne soit forcément reconstruite. On réconcilie
+  // les deux ici pour ne jamais revenir en mode anonyme ni perdre le brouillon.
   useEffect(() => {
+    if (user) { setAuthChecked(true); return }
+    let alive = true
+    import('../firebase').then(async ({ USE_REAL_FIREBASE, auth, db }) => {
+      if (!USE_REAL_FIREBASE || !auth?.currentUser) return
+      const { doc, getDoc } = await import('firebase/firestore')
+      const snap = await getDoc(doc(db, 'users', auth.currentUser.uid))
+      if (!alive || !snap.exists()) return
+      setUser({ ...snap.data(), uid: auth.currentUser.uid })
+    }).catch(() => {}).finally(() => { if (alive) setAuthChecked(true) })
+    return () => { alive = false }
+  }, [user, setUser])
+
+  useEffect(() => {
+    let alive = true
     if (user) {
-      // Logged-in mode
-      const existing = getApplicationByUser(user.uid, 'prestataire')
-      if (existing) {
+      // Local d'abord, Firestore ensuite : le retour Stripe reste fiable même
+      // si le cache du navigateur a été vidé ou si le dossier vient d'un autre appareil.
+      ;(async () => {
+        const existing = getApplicationByUser(user.uid, 'prestataire')
+          || await loadApplicationByUser(user.uid, 'prestataire')
+        if (!alive) return
+        if (existing) {
         setApp(existing)
         const fd = existing.formData || {}
         setF(prev => hydrateProviderForm(prev, fd))
+        setStep(savedStep(fd))
+        // Répare les comptes créés par l'ancien tunnel : ils étaient enregistrés
+        // comme « client » avant le paiement, bien qu'un dossier prestataire leur
+        // soit déjà rattaché.
+        if (user.role !== 'prestataire' && fd.regEmail && existing.uid === user.uid) {
+          const accountPatch = {
+            role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['prestataire'], status: 'draft',
+          }
+          setUser({ ...user, ...accountPatch })
+          import('../utils/firestore-sync').then(({ syncDoc }) => {
+            syncDoc(`users/${user.uid}`, accountPatch)
+          }).catch(() => {})
+        }
         if (['submitted', 'under_review', 'approved'].includes(existing.status)) {
           navigate('/mon-dossier')
         }
-      } else {
-        const created = createApplication(user.uid, user.email, user.name, 'prestataire')
-        setApp(created)
-        const prefill = location.state?.prefill
-        if (prefill) setF(prev => hydrateProviderForm(prev, prefill))
-      }
+        } else {
+          const created = createApplication(user.uid, user.email, user.name, 'prestataire')
+          setApp(created)
+          const prefill = location.state?.prefill
+          if (prefill) setF(prev => hydrateProviderForm(prev, prefill))
+        }
+      })().catch(() => {})
     } else {
+      if (!authChecked) return () => { alive = false }
       // Anonymous mode
       const savedId = localStorage.getItem(ANON_DRAFT_KEY)
       const existing = savedId ? getApplicationById(savedId) : null
@@ -312,6 +359,7 @@ export default function OnboardingPrestataire() {
         setApp(existing)
         const fd = existing.formData || {}
         setF(prev => hydrateProviderForm(prev, fd))
+        setStep(savedStep(fd))
         if (fd.regEmail) setRegEmail(fd.regEmail)
         // Compte Firebase déjà créé (uid réel != id temporaire "anon-prest-…") :
         // restaurer la référence pour NE PAS retenter la création au rechargement
@@ -326,13 +374,15 @@ export default function OnboardingPrestataire() {
         setApp(created)
       }
     }
-  }, [user])
+    return () => { alive = false }
+  }, [user, authChecked])
 
   // Statut d'abonnement en temps réel (users/{uid}.prestataireSubActive, écrit par
   // le webhook Stripe = source de vérité). Dispo une fois le compte créé.
   useEffect(() => {
     const uid = user?.uid
     if (!uid) return
+    if (user.prestataireSubActive) setSubActive(true)
     let unsub = () => {}
     import('../utils/firestore-sync').then(({ listenDoc }) => {
       unsub = listenDoc(`users/${uid}`, data => setSubActive(!!data?.prestataireSubActive))
@@ -340,21 +390,53 @@ export default function OnboardingPrestataire() {
     return () => { try { unsub() } catch {} }
   }, [user?.uid])
 
-  // Retour de Stripe (?sub=success) : une fois l'abonnement actif, on reprend au
-  // profil prestataire (étape 1 = activités ; compte + paiement déjà faits).
+  // Retour de Stripe : vérification serveur immédiate de la session. Le webhook
+  // reste la source de vérité pour les renouvellements, mais le retour utilisateur
+  // n'attend plus sa latence et reprend toujours à la DERNIÈRE étape.
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    if (params.get('sub') === 'success' && user?.uid && subActive) {
-      setAwaitingSub(false)
-      setStep(s => (s < 1 ? 1 : s))
-      navigate('/inscription-prestataire', { replace: true })
-    }
-  }, [location.search, user?.uid, subActive]) // eslint-disable-line react-hooks/exhaustive-deps
+    const result = params.get('sub')
+    if (!result || !user?.uid) return
+    setStep(LAST_STEP)
+    if (app?.id) saveDraft(app.id, { _onboardingStep: LAST_STEP })
 
-  // Lance le paiement de l'abonnement (Stripe Checkout, mode subscription).
-  // Crée le compte Firebase si nécessaire (mode anonyme). C'est ICI que le compte
-  // naît — au moment où l'utilisateur s'engage à payer, pas à l'étape 0.
-  // Renvoie true si le compte existe (créé ou déjà là), false sinon (erreur affichée).
+    if (result === 'cancel') {
+      setSubError('Paiement annulé. Ton dossier est conservé, tu peux reprendre quand tu veux.')
+      navigate('/inscription-prestataire', { replace: true })
+      return
+    }
+    if (result !== 'success') return
+
+    const sessionId = params.get('session_id')
+    if (!sessionId) {
+      setSubError('Paiement reçu, mais la session est introuvable. Actualise la page dans quelques secondes.')
+      return
+    }
+    if (checkedSubSessionRef.current === sessionId) return
+    checkedSubSessionRef.current = sessionId
+
+    let alive = true
+    setCheckingSubReturn(true)
+    import('../utils/apiAuth').then(async ({ authHeaders }) => {
+      const response = await fetch(`/api/create-subscription?session_id=${encodeURIComponent(sessionId)}`, {
+        headers: await authHeaders(),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.active) throw new Error(data.error || 'subscription_pending')
+      if (!alive) return
+      setSubActive(true)
+      setSubError('')
+      setUser({ ...user, prestataireSubActive: true, prestataireSubStatus: data.status || 'active' })
+      navigate('/inscription-prestataire', { replace: true })
+    }).catch(() => {
+      checkedSubSessionRef.current = ''
+      if (alive) setSubError('Paiement en cours de confirmation. Ne repaie pas : le statut va se mettre à jour automatiquement.')
+    }).finally(() => { if (alive) setCheckingSubReturn(false) })
+    return () => { alive = false }
+  }, [location.search, user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Crée le compte à la fin de l'étape « Compte », puis garde la session active
+  // pendant tout le dossier. L'abonnement n'intervient qu'à la dernière étape.
   async function ensureAccount() {
     if (!anonMode || anonUidRef.current) return true
     const { USE_REAL_FIREBASE } = await import('../firebase')
@@ -364,29 +446,49 @@ export default function OnboardingPrestataire() {
     try {
       let uid
       if (USE_REAL_FIREBASE) {
-        const { createUserWithEmailAndPassword } = await import('firebase/auth')
+        const { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } = await import('firebase/auth')
         const { auth, db } = await import('../firebase')
         const { doc, setDoc } = await import('firebase/firestore')
         const cred = await createUserWithEmailAndPassword(auth, loginEmail, regPassword)
         uid = cred.user.uid
-        await setDoc(doc(db, 'users', uid), {
+        if (name) await updateProfile(cred.user, { displayName: name })
+        const account = {
           uid, email: loginEmail, name, phone,
-          role: 'client', activeRole: 'client', enabledRoles: ['client'],
-          status: 'draft', emailVerified: false, createdAt: Date.now(),
-        })
+          role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['prestataire'],
+          status: 'draft', emailVerified: false, emailVerificationRequired: true, createdAt: Date.now(),
+        }
+        await setDoc(doc(db, 'users', uid), account)
+        // Contrairement à l'ancien tunnel, le premier mail part réellement dès
+        // la création. En cas de panne temporaire, l'écran final permet de renvoyer.
+        try {
+          await sendEmailVerification(cred.user)
+          setEmailVerification('sent')
+        } catch {
+          setEmailVerification('required')
+        }
+        setUser(account)
       } else {
         uid = 'local-prest-' + Date.now()
         const { saveAccount } = await import('../utils/accounts')
-        saveAccount({ uid, email: loginEmail, name, phone, role: 'prestataire', status: 'draft', emailVerified: false, createdAt: Date.now() })
+        const account = { uid, email: loginEmail, name, phone, role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['prestataire'], status: 'draft', emailVerified: true, createdAt: Date.now() }
+        saveAccount(account)
+        setUser(account)
       }
-      updateApplication(app.id, { uid, email: loginEmail, name })
-      setApp(prev => ({ ...prev, uid, email: loginEmail, name }))
+      const linkedApp = updateApplication(app.id, { uid, email: loginEmail, name })
       anonUidRef.current = uid
-      saveDraft(app.id, { ...f, regEmail: loginEmail })
+      const persistedApp = saveDraft(app.id, { ...f, regEmail: loginEmail, _onboardingStep: 1 }) || linkedApp
+      if (persistedApp) {
+        setApp(persistedApp)
+        // Le brouillon temporaire a pu être créé avant authentification et donc
+        // refusé par Firestore. On resynchronise ici le document COMPLET.
+        import('../utils/firestore-sync').then(({ syncDoc }) => {
+          syncDoc(`applications/${app.id}`, persistedApp)
+        }).catch(() => {})
+      }
+      localStorage.removeItem(ANON_DRAFT_KEY)
       return true
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') {
-        setAwaitingSub(false)
         setStep(0)
         setErrors({ regEmail: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte pour continuer.', emailExists: true })
       } else {
@@ -396,12 +498,64 @@ export default function OnboardingPrestataire() {
     }
   }
 
+  async function checkEmailVerification({ resend = false } = {}) {
+    try {
+      const { USE_REAL_FIREBASE, auth, db } = await import('../firebase')
+      if (!USE_REAL_FIREBASE) {
+        setEmailVerification('verified')
+        return true
+      }
+      const current = auth?.currentUser
+      if (!current) {
+        setEmailVerification('required')
+        setSubError('Ta session a expiré. Reconnecte-toi : ton dossier est déjà sauvegardé.')
+        return false
+      }
+      const { reload, sendEmailVerification } = await import('firebase/auth')
+      await reload(current)
+      if (current.emailVerified) {
+        const { doc, setDoc } = await import('firebase/firestore')
+        await setDoc(doc(db, 'users', current.uid), {
+          emailVerified: true,
+          emailVerificationRequired: false,
+        }, { merge: true })
+        if (user) setUser({ ...user, emailVerified: true, emailVerificationRequired: false })
+        setEmailVerification('verified')
+        setSubError('')
+        return true
+      }
+      if (resend) {
+        await sendEmailVerification(current)
+        setEmailVerification('sent')
+      } else {
+        setEmailVerification('required')
+      }
+      return false
+    } catch (error) {
+      setEmailVerification('error')
+      setSubError(error?.code === 'auth/too-many-requests'
+        ? 'Trop de demandes ont été envoyées. Attends quelques minutes avant de réessayer.'
+        : "Impossible de vérifier l'email pour le moment. Réessaie dans un instant.")
+      return false
+    }
+  }
+
   async function handleSubscribe() {
     setSubError('')
     setSubRedirecting(true)
-    // Le compte naît ici, seulement quand l'utilisateur s'engage à payer.
     const accountOk = await ensureAccount()
     if (!accountOk) { setSubRedirecting(false); return }
+    const emailOk = await checkEmailVerification()
+    if (!emailOk) { setSubRedirecting(false); return }
+
+    const providerTypes = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
+    const missingDocs = getRequiredDocs('prestataire', providerTypes).filter(key => !hasDoc(app, key))
+    if (missingDocs.length) {
+      setSubRedirecting(false)
+      setSubError('Ajoute tous les documents requis avant de prendre l’abonnement.')
+      return
+    }
+    saveDraft(app.id, { ...f, regEmail: regEmail.trim() || user?.email || '', _onboardingStep: LAST_STEP })
     try {
       const { authHeaders } = await import('../utils/apiAuth')
       const r = await fetch('/api/create-subscription', {
@@ -410,6 +564,12 @@ export default function OnboardingPrestataire() {
         body: JSON.stringify({}),
       })
       const data = await r.json().catch(() => ({}))
+      if (r.ok && data.alreadyActive) {
+        setSubActive(true)
+        setSubRedirecting(false)
+        setSubError('')
+        return
+      }
       if (r.ok && data.url) { window.location.href = data.url; return }
       throw new Error(data.error || 'checkout')
     } catch {
@@ -478,43 +638,25 @@ export default function OnboardingPrestataire() {
   async function next() {
     if (!validate(step)) return
 
-    // Étape 0 (anonyme) : on NE crée PAS de compte ici. On vérifie seulement que
-    // l'email est libre. Le compte est créé au moment où l'utilisateur s'engage
-    // à payer l'abonnement (handleSubscribe) — plus de comptes fantômes créés
-    // par ceux qui abandonnent avant le paiement.
+    // Étape Compte : création réelle + email de vérification. Le compte reste
+    // connecté et le brouillon est ensuite synchronisé pendant tout le dossier.
     if (anonMode && step === 0 && !anonUidRef.current) {
       setCreatingAccount(true)
-      try {
-        const { USE_REAL_FIREBASE } = await import('../firebase')
-        if (USE_REAL_FIREBASE) {
-          const { auth } = await import('../firebase')
-          const { fetchSignInMethodsForEmail } = await import('firebase/auth')
-          const methods = await fetchSignInMethodsForEmail(auth, regEmail.trim())
-          if (methods && methods.length > 0) {
-            setCreatingAccount(false)
-            setErrors({ regEmail: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte, puis débloque l\'interface prestataire depuis ton profil (menu « Mes interfaces » → Devenir prestataire). Pas besoin de créer un nouveau compte.', emailExists: true })
-            return
-          }
-        }
-      } catch { /* protection anti-énumération / hors-ligne : vérification finale au paiement */ }
+      const accountOk = await ensureAccount()
       setCreatingAccount(false)
-      saveDraft(app.id, { ...f, regEmail: regEmail.trim() })
+      if (!accountOk) return
     }
 
-    // PÉAGE ABONNEMENT : après l'étape 1 (compte créé), on ne passe au dossier
-    // qu'avec un abonnement 9,99 €/mois actif. Sinon → écran de paiement.
-    if (step === 0 && !subActive) {
-      setAwaitingSub(true)
-      window.scrollTo(0, 0)
-      return
-    }
-
-    setStep(s => Math.min(s + 1, STEPS.length - 1))
+    const nextStep = Math.min(step + 1, LAST_STEP)
+    saveDraft(app.id, { ...f, regEmail: regEmail.trim() || user?.email || '', _onboardingStep: nextStep })
+    setStep(nextStep)
     window.scrollTo(0, 0)
   }
 
   function prev() {
-    setStep(s => Math.max(s - 1, 0))
+    const previousStep = Math.max(step - 1, 0)
+    saveDraft(app.id, { _onboardingStep: previousStep })
+    setStep(previousStep)
     window.scrollTo(0, 0)
   }
 
@@ -546,6 +688,13 @@ export default function OnboardingPrestataire() {
   }
 
   async function handleSubmit() {
+    if (!subActive) {
+      setSubError('Active ton abonnement avant d’envoyer le dossier.')
+      setStep(LAST_STEP)
+      return
+    }
+    const emailOk = await checkEmailVerification()
+    if (!emailOk) return
     // Dynamic check based on type
     const providerTypes = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
     const requiredDocKeys = getRequiredDocs('prestataire', providerTypes)
@@ -662,55 +811,6 @@ export default function OnboardingPrestataire() {
     )
   }
 
-  // ── Péage abonnement : compte créé, en attente du paiement de l'abonnement ──
-  if (awaitingSub && !subActive) {
-    return (
-      <PublicShell>
-        <div style={S.page}>
-          <div style={{ ...S.card, textAlign: 'center' }}>
-            <div style={{ width: 60, height: 60, borderRadius: '50%', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(200,169,110,0.12)', border: `1px solid ${GOLD}55` }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-            </div>
-            <p style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>Étape 2 sur 3 · Abonnement</p>
-            <h2 style={{ fontFamily: CG, fontWeight: 800, fontSize: '1.9rem', color: '#fff', margin: '10px 0 6px', letterSpacing: '-0.5px' }}>Active ton abonnement</h2>
-            <p style={{ fontFamily: DM, fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>
-              Ton compte est créé. Pour être présent sur LIVEINBLACK, il te faut l'abonnement prestataire.
-            </p>
-
-            <div style={{ background: 'rgba(6,8,16,0.6)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '20px', marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-                <span style={{ fontFamily: CG, fontWeight: 800, fontSize: 38, color: '#fff', letterSpacing: '-1px' }}>9,99 €</span>
-                <span style={{ fontFamily: DM, fontSize: 15, color: 'rgba(255,255,255,0.5)' }}>/ mois</span>
-              </div>
-              <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>Sans engagement · résiliable à tout moment</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 18, textAlign: 'left' }}>
-                {['Profil visible dans l\'annuaire prestataires', 'Contacté directement par les organisateurs', 'Aucune commission sur tes prestations — tu factures en direct'].map(t => (
-                  <div key={t} style={{ display: 'flex', gap: 9, alignItems: 'flex-start' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
-                    <span style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.45 }}>{t}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Après le paiement, tu rempliras ton dossier (docs, activité). Notre équipe le valide, puis ton profil est en ligne.
-            </p>
-
-            {subError && <p style={{ ...S.error, textAlign: 'center', marginBottom: 12 }}>{subError}</p>}
-
-            <button onClick={handleSubscribe} disabled={subRedirecting} style={{ ...S.btnGold, opacity: subRedirecting ? 0.6 : 1, cursor: subRedirecting ? 'default' : 'pointer' }}>
-              {subRedirecting ? 'Redirection vers le paiement…' : 'S\'abonner · 9,99 €/mois'}
-            </button>
-            <button onClick={() => setAwaitingSub(false)} style={{ ...S.btnGhost, marginTop: 10 }}>
-              Revenir en arrière
-            </button>
-          </div>
-        </div>
-      </PublicShell>
-    )
-  }
-
   const selectedTypes = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
   const selectedType = FLEXIBLE_TYPES.find(t => t.key === selectedTypes[0])
   const typeColor = selectedType?.color || PURPLE
@@ -740,7 +840,7 @@ export default function OnboardingPrestataire() {
             Compte Prestataire
           </h1>
           <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 10, lineHeight: 1.6 }}>
-            Crée ton compte, puis construis librement ton profil et ton catalogue.
+            Crée ton compte, complète ton dossier, puis active ton abonnement à la toute fin.
           </p>
           {anonMode && (
             <button
@@ -758,14 +858,14 @@ export default function OnboardingPrestataire() {
           )}
         </div>
 
-        {/* Rappel tarif + parcours — visible AVANT le paiement (étapes 0-1) */}
-        {step <= 1 && !subActive && (
+        {/* Rappel transparent du tarif — le paiement reste la dernière étape */}
+        {!subActive && step < LAST_STEP && (
           <div style={{ marginBottom: 24, padding: '14px 16px', background: 'rgba(200,169,110,0.06)', border: `1px solid ${GOLD}33`, borderRadius: 12 }}>
             <p style={{ fontFamily: DM, fontSize: 13.5, color: '#fff', margin: 0, fontWeight: 600 }}>
               Abonnement <span style={{ color: GOLD }}>9,99 €/mois</span> pour être sur LIVEINBLACK
             </p>
             <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '5px 0 0', lineHeight: 1.55 }}>
-              1. Crée ton compte · 2. <span style={{ color: 'rgba(255,255,255,0.72)' }}>Paie l'abonnement</span> · 3. Remplis ton dossier · 4. On valide → tu es en ligne. Aucune commission sur tes prestations.
+              1. Crée ton compte · 2. Remplis tout ton dossier · 3. <span style={{ color: 'rgba(255,255,255,0.72)' }}>Paie l'abonnement à la fin</span> · 4. On valide → tu es en ligne. Aucune commission sur tes prestations.
             </p>
           </div>
         )}
@@ -1349,73 +1449,63 @@ export default function OnboardingPrestataire() {
               />
             )}
 
-            {/* Submit section */}
-            {(() => {
-              const missing = []
-              const reqKeys = getRequiredDocs('prestataire', selectedTypes)
-              reqKeys.forEach(key => {
-                if (!hasDoc(app, key)) missing.push(DOCUMENT_LABELS[key]?.label || key)
-              })
-              const canSubmit = missing.length === 0
-              return (
-                <div style={{ marginTop: 8, padding: '16px', background: canSubmit ? 'rgba(139,92,246,0.05)' : 'rgba(224,90,170,0.04)', border: `1px solid ${canSubmit ? 'rgba(139,92,246,0.18)' : 'rgba(224,90,170,0.2)'}`, borderRadius: 8 }}>
-                  {!canSubmit ? (
-                    <>
-                      <p style={{ fontFamily: DM, fontSize: 9, color: '#e05aaa', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
-                        Documents requis manquants
-                      </p>
-                      {missing.map(d => (
-                        <p key={d} style={{ fontFamily: DM, fontSize: 10, color: 'rgba(224,90,170,0.7)', margin: '0 0 4px', letterSpacing: '0.04em' }}>
-                          ✗ {d}
-                        </p>
-                      ))}
-                      <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.2)', margin: '10px 0 0', lineHeight: 1.6 }}>
-                        Ajoute les documents ci-dessus pour débloquer la soumission.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p style={{ fontFamily: DM, fontSize: 9, color: PURPLE, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Prêt à soumettre ✓</p>
-                      <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, marginBottom: 16 }}>
-                        {anonMode
-                          ? 'Une fois envoyé, ton dossier sera examiné par l\'équipe LIVEINBLACK. Tu seras contacté par email dès validation.'
-                          : 'Une fois soumis, ton dossier sera examiné par l\'équipe LIVEINBLACK. Tu peux suivre l\'avancement dans Mon Dossier.'}
-                      </p>
-                      <div style={{ marginBottom: 14 }}>
-                        <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-                          Message pour l'équipe (optionnel)
-                        </p>
-                        <textarea
-                          value={candidateNote}
-                          onChange={e => setCandidateNote(e.target.value)}
-                          placeholder={app?.status === 'needs_changes'
-                            ? 'Ex : J\'ai mis à jour les documents demandés et corrigé les informations...'
-                            : 'Ex : Bonjour, voici mon dossier prestataire. Je suis disponible pour tout complément...'}
-                          style={{
-                            width: '100%', boxSizing: 'border-box',
-                            background: 'rgba(8,10,20,0.6)',
-                            border: '1px solid rgba(255,255,255,0.10)',
-                            borderRadius: 6, color: '#fff',
-                            fontFamily: DM, fontSize: 11,
-                            padding: '9px 12px', outline: 'none', resize: 'vertical',
-                            minHeight: 64, lineHeight: 1.5,
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting || !canSubmit}
-                    style={{ ...S.btnGold, opacity: (submitting || !canSubmit) ? 0.35 : 1, cursor: !canSubmit ? 'not-allowed' : 'pointer', marginTop: canSubmit ? 0 : 12 }}
-                  >
-                    {submitting ? 'Envoi en cours...' : anonMode ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
-                  </button>
-                </div>
-              )
-            })()}
+            <div style={{ padding: '13px 15px', borderRadius: 10, background: 'rgba(78,232,200,.04)', border: '1px solid rgba(78,232,200,.16)' }}>
+              <p style={{ margin: 0, fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,.55)', lineHeight: 1.6 }}>
+                Une fois les documents ajoutés, continue vers la dernière étape pour vérifier ton email et activer l'abonnement.
+              </p>
+            </div>
           </div>
         )}
+
+        {/* ── STEP 5: Vérification, abonnement puis envoi ── */}
+        {step === LAST_STEP && (() => {
+          const missing = getRequiredDocs('prestataire', selectedTypes)
+            .filter(key => !hasDoc(app, key))
+            .map(key => DOCUMENT_LABELS[key]?.label || key)
+          const docsReady = missing.length === 0
+          const emailReady = emailVerification === 'verified' || user?.emailVerified === true
+          const paymentPending = checkingSubReturn
+          return (
+            <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={S.section}>Finaliser mon inscription</p>
+
+              <div style={{ padding: 16, borderRadius: 13, background: docsReady ? 'rgba(78,232,200,.05)' : 'rgba(224,90,170,.05)', border: `1px solid ${docsReady ? 'rgba(78,232,200,.22)' : 'rgba(224,90,170,.24)'}` }}>
+                <p style={{ margin: 0, fontFamily: DM, fontWeight: 700, fontSize: 12, color: docsReady ? '#4ee8c8' : '#e05aaa' }}>{docsReady ? 'Dossier complet' : 'Documents manquants'}</p>
+                {!docsReady && missing.map(label => <p key={label} style={{ margin: '7px 0 0', fontFamily: DM, fontSize: 10, color: 'rgba(224,90,170,.75)' }}>— {label}</p>)}
+              </div>
+
+              <div style={{ padding: 16, borderRadius: 13, background: emailReady ? 'rgba(78,232,200,.05)' : 'rgba(200,169,110,.06)', border: `1px solid ${emailReady ? 'rgba(78,232,200,.22)' : 'rgba(200,169,110,.28)'}` }}>
+                <p style={{ margin: 0, fontFamily: DM, fontWeight: 700, fontSize: 12, color: emailReady ? '#4ee8c8' : GOLD }}>{emailReady ? 'Email vérifié' : 'Vérifie ton adresse email'}</p>
+                {!emailReady && <>
+                  <p style={{ margin: '7px 0 12px', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.48)' }}>Le premier email a été envoyé à {regEmail || user?.email}. Vérifie aussi les courriers indésirables.</p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button type="button" onClick={() => checkEmailVerification()} style={{ ...S.btnGhost, width: 'auto', flex: 1, padding: 11 }}>J'ai vérifié</button>
+                    <button type="button" onClick={() => checkEmailVerification({ resend: true })} style={{ ...S.btnGhost, width: 'auto', flex: 1, padding: 11 }}>Renvoyer l'email</button>
+                  </div>
+                </>}
+              </div>
+
+              <div style={{ padding: 20, borderRadius: 14, background: 'linear-gradient(145deg,rgba(200,169,110,.12),rgba(10,12,22,.72))', border: '1px solid rgba(200,169,110,.32)' }}>
+                <p style={{ margin: 0, fontFamily: DM, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: GOLD }}>Abonnement prestataire</p>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 9 }}><strong style={{ fontFamily: CG, fontSize: 34, color: '#fff' }}>9,99 €</strong><span style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,.45)' }}>/ mois</span></div>
+                <p style={{ margin: '5px 0 0', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.46)' }}>Sans engagement · résiliable à tout moment · aucune commission sur tes prestations.</p>
+                <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 9.5, lineHeight: 1.55, color: 'rgba(255,255,255,.38)' }}>Abonnement récurrent réglé par carte via Stripe. FedaPay Mobile Money est actuellement réservé à l'achat de billets.</p>
+              </div>
+
+              {subError && <p style={{ ...S.error, margin: 0 }}>{subError}</p>}
+
+              {!subActive ? (
+                <button onClick={handleSubscribe} disabled={!docsReady || !emailReady || subRedirecting || paymentPending} style={{ ...S.btnGold, opacity: (!docsReady || !emailReady || subRedirecting || paymentPending) ? .45 : 1, cursor: (!docsReady || !emailReady || subRedirecting || paymentPending) ? 'not-allowed' : 'pointer' }}>
+                  {paymentPending ? 'Confirmation du paiement…' : subRedirecting ? 'Redirection sécurisée…' : 'Activer mon abonnement · 9,99 €/mois'}
+                </button>
+              ) : <>
+                <div style={{ padding: '12px 14px', borderRadius: 11, background: 'rgba(78,232,200,.08)', border: '1px solid rgba(78,232,200,.26)', fontFamily: DM, fontSize: 11, fontWeight: 700, color: '#4ee8c8', textAlign: 'center' }}>Abonnement actif · paiement confirmé</div>
+                <textarea value={candidateNote} onChange={e => setCandidateNote(e.target.value)} placeholder="Message pour l'équipe (optionnel)" style={{ ...S.input, minHeight: 78, resize: 'vertical' }} />
+                <button onClick={handleSubmit} disabled={submitting || !docsReady} style={{ ...S.btnGold, opacity: submitting || !docsReady ? .45 : 1 }}>{submitting ? 'Envoi en cours…' : 'Soumettre mon dossier'}</button>
+              </>}
+            </div>
+          )
+        })()}
 
         {/* Navigation */}
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>

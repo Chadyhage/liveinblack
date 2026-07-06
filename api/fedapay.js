@@ -23,6 +23,7 @@ import { computeTicketFeeXOF } from '../lib/fees.js'
 import {
   createTransaction, createToken, getTransaction,
   verifyWebhookSignature, isFedapayConfigured,
+  isApprovedTransactionEvent, transactionAmountMatches,
 } from '../lib/fedapay.js'
 import { requireAuth } from '../lib/verifyAuth.js'
 
@@ -379,7 +380,7 @@ async function webhook(req, res) {
   try {
     const db = getDb()
 
-    if (name === 'transaction.approved') {
+    if (isApprovedTransactionEvent(name, entity)) {
       await finalizeFedapayBooking(db, entity)
       return res.status(200).json({ received: true })
     }
@@ -407,19 +408,38 @@ async function finalizeFedapayBooking(db, entity) {
   if (!txnId) return
 
   const metaSnap = await db.collection('fedapay_txns').doc(txnId).get()
-  const meta = metaSnap.exists
-    ? metaSnap.data()
-    : (entity.custom_metadata && entity.custom_metadata.bookingId
-      ? { bookingId: String(entity.custom_metadata.bookingId), userId: String(entity.custom_metadata.userId || ''), qty: 1, preorders: [], unitPrice: 0, feeAmount: 0, sellerUid: '', eventId: '', eventName: '', placeType: '' }
-      : null)
+  const meta = metaSnap.exists ? metaSnap.data() : null
   if (!meta || !meta.bookingId) {
-    console.warn('[fedapay-webhook] transaction sans métadonnées — ignorée:', txnId)
+    // Le checkout considère l'écriture fedapay_txns obligatoire. Sans ce doc,
+    // custom_metadata ne contient ni le prix serveur ni les détails du billet :
+    // émettre un billet serait financièrement invérifiable.
+    console.error('[fedapay-webhook] transaction approuvée sans registre serveur — revue manuelle:', txnId)
+    await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
+      provider: 'fedapay', transactionId: txnId, reason: 'missing_server_metadata',
+      status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
     return
   }
 
   const bookingId = meta.bookingId
   const ref = db.collection('bookings').doc(bookingId)
   const metaRef = db.collection('fedapay_txns').doc(txnId)
+
+  // Un paiement peut être approuvé alors qu'une suppression de compte vient
+  // d'être finalisée. On conserve la trace financière pour remboursement/revue,
+  // mais on ne recrée aucune donnée personnelle ni aucun billet inaccessible.
+  if (meta.userId) {
+    const deleted = await db.collection('deleted_accounts').doc(String(meta.userId)).get()
+    if (deleted.exists && deleted.data()?.blockBillingWrites === true) {
+      await metaRef.set({ status: 'manual_review', reviewReason: 'account_deleted_after_payment', reviewedAt: null }, { merge: true })
+      await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
+        provider: 'fedapay', transactionId: txnId, bookingId,
+        userId: String(meta.userId), reason: 'account_deleted_after_payment',
+        status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+      return
+    }
+  }
 
   // ── CLAIM transactionnel anti-concurrence : FedaPay peut livrer le même
   // événement deux fois EN PARALLÈLE (timeout + retry). Un simple read-then-act
@@ -448,8 +468,18 @@ async function finalizeFedapayBooking(db, entity) {
 
   // Intégrité : le montant payé doit être celui calculé au checkout.
   const paidAmount = Math.round(Number(entity.amount) || 0)
-  if (meta.amountTotal && paidAmount !== meta.amountTotal) {
-    console.warn('[fedapay-webhook] montant payé ≠ montant attendu:', paidAmount, 'vs', meta.amountTotal, '— txn', txnId)
+  if (!transactionAmountMatches(paidAmount, meta.amountTotal)) {
+    console.error('[fedapay-webhook] montant payé ≠ montant attendu — revue manuelle:', paidAmount, 'vs', meta.amountTotal, '— txn', txnId)
+    await metaRef.set({
+      status: 'amount_mismatch', paidAmount, expectedAmount: meta.amountTotal,
+      fulfillStartedAt: null, reviewRequired: true,
+    }, { merge: true })
+    await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
+      provider: 'fedapay', transactionId: txnId, bookingId,
+      reason: 'amount_mismatch', paidAmount, expectedAmount: meta.amountTotal,
+      status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+    return
   }
 
   const eventId = meta.eventId || ''

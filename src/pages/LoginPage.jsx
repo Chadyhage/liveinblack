@@ -51,20 +51,19 @@ async function doEmailLogin(email, password, role = null) {
   const cred = await signInWithEmailAndPassword(auth, email, password)
   const isSuperAdmin = isSuperAdminEmail(email)
   // Read Firestore profile BEFORE the email-verification check.
-  // Organisateur/prestataire accounts are created silently during onboarding (no verification email sent).
-  // They must be allowed to log in so OnboardingGuard can redirect them to /mon-dossier.
+  // Les anciens comptes pro n'exigeaient pas toujours la vérification ; les
+  // nouveaux portent emailVerificationRequired:true et suivent le flux normal.
   const snap = await getDoc(doc(db, 'users', cred.user.uid))
   if (snap.exists()) {
     let profile = snap.data()
     const isPendingOrDraft = profile.status === 'pending' || profile.status === 'draft'
-    // Organisateurs and prestataires never receive a verification email —
-    // their account is verified by the admin validation process instead.
-    // So skip the emailVerified check entirely for these roles (at any status).
     const isOrgOrPrest = profile.role === 'organisateur' || profile.role === 'prestataire'
+    const mustVerifyEmail = !isOrgOrPrest || profile.emailVerificationRequired === true
     if (!isSuperAdmin) {
       if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
-      if (!isOrgOrPrest && !cred.user.emailVerified) {
-        await auth.signOut()
+      if (mustVerifyEmail && !cred.user.emailVerified) {
+        const { sendEmailVerification } = await import('firebase/auth')
+        await sendEmailVerification(cred.user).catch(() => {})
         throw { code: 'auth/email-not-verified' }
       }
     }
@@ -85,8 +84,8 @@ async function doEmailLogin(email, password, role = null) {
     // même mais gardent emailVerified:false)
     if (!profile.emailVerified && cred.user.emailVerified) {
       const { setDoc: setUserDoc } = await import('firebase/firestore')
-      await setUserDoc(doc(db, 'users', cred.user.uid), { emailVerified: true }, { merge: true })
-      return { ...profile, emailVerified: true, uid: cred.user.uid }
+      await setUserDoc(doc(db, 'users', cred.user.uid), { emailVerified: true, emailVerificationRequired: false }, { merge: true })
+      return { ...profile, emailVerified: true, emailVerificationRequired: false, uid: cred.user.uid }
     }
     // uid d'auth = source de vérité (jamais l'éventuel champ uid divergent du doc)
     return { ...profile, uid: cred.user.uid }
@@ -103,7 +102,8 @@ async function doEmailLogin(email, password, role = null) {
     return agentObj
   }
   if (!cred.user.emailVerified) {
-    await auth.signOut()
+    const { sendEmailVerification } = await import('firebase/auth')
+    await sendEmailVerification(cred.user).catch(() => {})
     throw { code: 'auth/email-not-verified' }
   }
   return { uid: cred.user.uid, name: cred.user.displayName || email.split('@')[0], email: cred.user.email, role: 'user', activeRole: 'user', enabledRoles: ['user'], status: 'active', emailVerified: true }
