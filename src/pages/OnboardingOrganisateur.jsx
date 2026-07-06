@@ -4,6 +4,7 @@ import PublicShell from '../components/PublicShell'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { DIAL_CODES } from '../data/dialCodes'
+import { formatSiret, isValidSiret, isValidPhone } from '../utils/validation'
 import {
   createApplication, saveDraft, submitApplication,
   uploadDocument, getApplicationById, getApplicationByUser,
@@ -185,7 +186,10 @@ export default function OnboardingOrganisateur() {
     if (s === 0) {
       if (!f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
       if (!f.emailPro.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.emailPro.trim())) errs.emailPro = 'Email invalide'
+      if (!f.siret.trim()) errs.siret = 'Requis — indiquez 000000 si vous n\'avez pas de numéro'
+      else if (!isValidSiret(f.siret)) errs.siret = 'Numéro invalide : SIREN = 9 chiffres, SIRET = 14 chiffres (ou 000000 si aucun)'
       if (!f.telephonePro.trim()) errs.telephonePro = 'Requis'
+      else if (!isValidPhone(f.telephoneProCode, f.telephonePro)) errs.telephonePro = 'Numéro invalide pour ce pays'
       if (!f.noFixedAddress && !f.adresseEtablissement.trim()) errs.adresseEtablissement = 'Requis (ou cocher "Pas de lieu fixe")'
       // Anonymous mode: cet email pro sert aussi de login → valider le mot de passe
       if (anonMode) {
@@ -246,7 +250,7 @@ export default function OnboardingOrganisateur() {
       } catch (err) {
         setCreatingAccount(false)
         if (err.code === 'auth/email-already-in-use') {
-          setErrors({ emailPro: 'Cet email est déjà lié à un compte. Si c\'est un essai précédent, supprime le compte dans Firebase Console (Authentication → Users) puis réessaie. Ou connecte-toi sur /mon-dossier pour voir son état.' })
+          setErrors({ emailPro: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte, puis débloque l\'interface organisateur depuis ton profil (menu « Mes interfaces » → Devenir organisateur). Pas besoin de créer un nouveau compte.', emailExists: true })
         } else {
           setErrors({ emailPro: `Erreur : ${err.message || 'Réessaie.'}` })
         }
@@ -470,17 +474,32 @@ export default function OnboardingOrganisateur() {
                 <label style={S.label}>
                   Numéro SIRET / SIREN
                   <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6, letterSpacing: '0.1em' }}>
-                    — si pas de numéro, indiquez <span style={{ color: GOLD }}>000.000</span>
+                    — si pas de numéro, indiquez <span style={{ color: GOLD }}>000000</span>
                   </span>
                 </label>
-                <input style={S.input} value={f.siret} onChange={e => update('siret', e.target.value)} placeholder="123 456 789 00012 — ou 000.000" />
+                <input
+                  style={{ ...S.input, borderColor: errors.siret ? '#e05aaa' : undefined }}
+                  value={f.siret}
+                  onChange={e => update('siret', formatSiret(e.target.value))}
+                  inputMode="numeric"
+                  placeholder="9 chiffres (SIREN) ou 14 (SIRET) — ou 000000"
+                />
+                {errors.siret && <p style={S.error}>{errors.siret}</p>}
               </div>
 
               {/* Email + Téléphone */}
               <Field label="Email professionnel" required>
                 <input type="email" style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined }} value={f.emailPro} onChange={e => update('emailPro', e.target.value)} placeholder="contact@monclub.fr" disabled={anonMode && !!anonUidRef.current} />
                 {errors.emailPro && <p style={S.error}>{errors.emailPro}</p>}
-                {anonMode && (
+                {errors.emailExists && (
+                  <button type="button" onClick={() => navigate('/connexion')} style={{
+                    marginTop: 8, padding: '9px 14px', width: '100%', cursor: 'pointer',
+                    background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
+                    border: '1px solid rgba(78,232,200,0.4)', borderRadius: 6,
+                    fontFamily: DM, fontSize: 11, letterSpacing: '0.05em', color: '#4ee8c8',
+                  }}>Se connecter à ce compte →</button>
+                )}
+                {anonMode && !errors.emailExists && (
                   anonUidRef.current
                     ? <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.6)', marginTop: 4 }}>✓ Compte créé — cet email te sert à te connecter (verrouillé)</p>
                     : <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(200,169,110,0.7)', marginTop: 4 }}>Cet email te servira aussi à te connecter à ton espace.</p>

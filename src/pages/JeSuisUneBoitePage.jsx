@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
+import { formatSiret } from '../utils/validation'
 
 const STEPS = ['Infos boîte', 'Options', 'Louer ma salle', 'Confirmation']
 
@@ -300,9 +301,10 @@ export default function JeSuisUneBoitePage() {
                     </label>
                     <input
                       style={S.inputBase}
-                      placeholder="Ex: 123 456 789 00012 — ou 000.000"
+                      placeholder="9 chiffres (SIREN) ou 14 (SIRET) — ou 000000"
+                      inputMode="numeric"
                       value={boiteForm.siret}
-                      onChange={e => setBoiteForm(prev => ({ ...prev, siret: e.target.value }))}
+                      onChange={e => setBoiteForm(prev => ({ ...prev, siret: formatSiret(e.target.value) }))}
                       onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
                       onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.10)'; e.target.style.boxShadow = 'none' }}
                     />

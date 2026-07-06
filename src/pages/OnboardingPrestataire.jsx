@@ -4,6 +4,7 @@ import PublicShell from '../components/PublicShell'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { DIAL_CODES } from '../data/dialCodes'
+import { formatSiret, isValidSiret, isValidPhone } from '../utils/validation'
 import {
   createApplication, saveDraft, submitApplication,
   uploadDocument, getApplicationById, getApplicationByUser,
@@ -361,9 +362,11 @@ export default function OnboardingPrestataire() {
       if (!f.prenom.trim()) errs.prenom = 'Requis'
       if (!f.nom.trim()) errs.nom = 'Requis'
       if (!f.telephone.trim()) errs.telephone = 'Requis'
+      else if (!isValidPhone(f.telephoneCode, f.telephone)) errs.telephone = 'Numéro invalide pour ce pays'
       const isStructure = ['salle', 'materiel', 'food'].includes(f.prestataireType)
       if (isStructure && !f.nomCommercial.trim()) errs.nomCommercial = 'Requis'
-      // SIRET optionnel pour tous — l'admin vérifie manuellement
+      // SIRET optionnel pour tous — mais si renseigné, format strict (évite le renvoi de dossier)
+      if (f.siret.trim() && !isValidSiret(f.siret)) errs.siret = 'Numéro invalide : SIREN = 9 chiffres, SIRET = 14 chiffres'
       if (f.prestataireType === 'artiste' && !f.nomScene.trim() && !f.nomCommercial.trim()) {
         errs.nomScene = 'Renseigne ton nom de scène ou nom commercial'
       }
@@ -418,7 +421,7 @@ export default function OnboardingPrestataire() {
       } catch (err) {
         setCreatingAccount(false)
         if (err.code === 'auth/email-already-in-use') {
-          setErrors({ regEmail: 'Cet email est déjà lié à un compte. Connecte-toi sur /mon-dossier pour voir son état.' })
+          setErrors({ regEmail: 'Cet email est déjà associé à un compte. Connecte-toi à ce compte, puis débloque l\'interface prestataire depuis ton profil (menu « Mes interfaces » → Devenir prestataire). Pas besoin de créer un nouveau compte.', emailExists: true })
         } else {
           setErrors({ regEmail: 'Impossible de créer ton compte pour le moment. Réessaie dans un instant.' })
         }
@@ -837,8 +840,9 @@ export default function OnboardingPrestataire() {
                 <input
                   style={{ ...S.input, borderColor: errors.siret ? '#e05aaa' : undefined }}
                   value={f.siret}
-                  onChange={e => update('siret', e.target.value)}
-                  placeholder="Optionnel — laisse vide si tu n'en as pas"
+                  onChange={e => update('siret', formatSiret(e.target.value))}
+                  inputMode="numeric"
+                  placeholder="Optionnel — 9 chiffres (SIREN) ou 14 (SIRET)"
                 />
                 {errors.siret
                   ? <p style={S.error}>{errors.siret}</p>
@@ -885,6 +889,14 @@ export default function OnboardingPrestataire() {
                         disabled={!!anonUidRef.current}
                       />
                       {errors.regEmail && <p style={S.error}>{errors.regEmail}</p>}
+                      {errors.emailExists && (
+                        <button type="button" onClick={() => navigate('/connexion')} style={{
+                          marginTop: 8, padding: '9px 14px', width: '100%', cursor: 'pointer',
+                          background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
+                          border: '1px solid rgba(78,232,200,0.4)', borderRadius: 6,
+                          fontFamily: DM, fontSize: 11, letterSpacing: '0.05em', color: '#4ee8c8',
+                        }}>Se connecter à ce compte →</button>
+                      )}
                       {anonUidRef.current && (
                         <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.6)', marginTop: 4 }}>✓ Compte créé — email verrouillé</p>
                       )}
