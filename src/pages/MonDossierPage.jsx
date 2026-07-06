@@ -17,6 +17,7 @@ import {
   getDeletionRequestByUser,
 } from '../utils/accountDeletion'
 import Layout from '../components/Layout'
+import { getProviderCategories } from '../utils/providerCategories'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────
 const FONTS = {
@@ -66,7 +67,7 @@ function openValidationReceipt(app) {
   const ville = fd.ville || '—'
   const typeEtab = isOrg
     ? (fd.typeEtablissement || 'Organisateur')
-    : ({ artiste: 'Artiste / Performeur', salle: 'Salle & Espace événementiel', materiel: 'Location de matériel', food: 'Restauration & Boissons' }[fd.prestataireType] || 'Prestataire')
+    : getProviderCategories(fd).map(category => category.singular).join(' · ')
 
   const roleWord   = isOrg ? 'organisateur' : 'prestataire'
   const subtitle   = isOrg ? "Dossier organisateur approuvé par l'équipe LIVEINBLACK" : "Dossier prestataire approuvé par l'équipe LIVEINBLACK"
@@ -579,7 +580,7 @@ export default function MonDossierPage() {
   const isEditable = app.status === 'draft' || app.status === 'needs_changes'
   const editPath   = app.type === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire'
 
-  const requiredDocs = getRequiredDocs(app.type, app.formData?.prestataireType)
+  const requiredDocs = getRequiredDocs(app.type, app.formData?.prestataireTypes || app.formData?.prestataireType)
   const allDocKeys   = [...new Set([...requiredDocs, ...Object.keys(app.documents || {})])]
 
   return (
@@ -982,7 +983,7 @@ export default function MonDossierPage() {
                   { label: 'Ville',            value: app.formData?.ville          },
                   app.type === 'organisateur'
                     ? { label: 'SIRET',        value: app.formData?.siret          }
-                    : { label: 'Type activité', value: app.formData?.prestataireType },
+                    : { label: 'Activités', value: getProviderCategories(app.formData || {}).map(category => category.singular).join(' · ') },
                 ].filter(f => f?.value).map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, flexShrink: 0 }}>{f.label}</span>
@@ -1060,12 +1061,12 @@ export default function MonDossierPage() {
               uploading={uploadStatus.business_doc === 'uploading'}
             />
 
-            {/* Doc conditionnel : licence alcool */}
+            {/* Doc conditionnel : licence alcool (facultatif — responsabilité déléguée à l'organisateur) */}
             {app.formData?.alcool && (
               <DocRow
                 docKey="alcohol_license"
                 entry={app.documents?.alcohol_license}
-                required
+                required={false}
                 onUpload={isEditable ? (file => handleUpload('alcohol_license', file)) : undefined}
                 uploading={uploadStatus.alcohol_license === 'uploading'}
               />

@@ -282,7 +282,7 @@ export default function OnboardingPrestataire() {
     // Matériel
     categoriesMateriel: '', inventaire: '', conditionsLocation: '', politiqueCaution: '',
     // Food
-    typeActiviteFood: '', menuBase: '', alcoolFood: false,
+    typeActiviteFood: '', menuBase: '', alcoolFood: false, alcoolFoodAtteste: false,
     // Tarifs (tous types)
     tarifMin: '', tarifMax: '', tarifType: '', tarifDevis: false,
   })
@@ -378,7 +378,11 @@ export default function OnboardingPrestataire() {
 
   function toggleProviderType(type) {
     const current = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
-    const next = current.includes(type) ? current.filter(item => item !== type) : [...current, type]
+    const next = current.includes(type)
+      ? current.filter(item => item !== type)
+      : type === 'autre'
+        ? ['autre']
+        : [...current.filter(item => item !== 'autre'), type]
     const patch = {
       prestataireTypes: next,
       prestataireType: getPrimaryProviderType({ prestataireTypes: next }),
@@ -403,6 +407,15 @@ export default function OnboardingPrestataire() {
         if (!regPassword || regPassword.length < 8) errs.regPassword = 'Au moins 8 caractères'
         if (!/[A-Z]/.test(regPassword)) errs.regPassword = 'Au moins une majuscule'
         if (regPassword !== regPasswordConfirm) errs.regPasswordConfirm = 'Les mots de passe ne correspondent pas'
+      }
+    }
+    if (s === 1 && f.siret.trim() && !isValidSiret(f.siret)) {
+      errs.siret = 'Numéro invalide : SIREN = 9 chiffres, SIRET = 14 chiffres'
+    }
+    if (s === 2) {
+      const types = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
+      if (types.includes('food') && f.alcoolFood && !f.alcoolFoodAtteste) {
+        errs.alcoolFoodAtteste = 'Coche l\'attestation pour proposer de l\'alcool'
       }
     }
     setErrors(errs)
@@ -502,9 +515,6 @@ export default function OnboardingPrestataire() {
     const missingDocs = requiredDocKeys
       .filter(key => !hasDoc(app, key))
       .map(key => DOCUMENT_LABELS[key]?.label || key)
-    if (providerTypes.includes('food') && f.alcoolFood && !hasDoc(app, 'alcohol_license')) {
-      missingDocs.push('Licence alcool')
-    }
     if (missingDocs.length > 0) {
       showToast(`Document(s) manquant(s) : ${missingDocs[0]}${missingDocs.length > 1 ? ` (+${missingDocs.length - 1})` : ''}`, 'error')
       return
@@ -671,7 +681,7 @@ export default function OnboardingPrestataire() {
 
   return (
     <PublicShell>
-      <style>{`.lib-onb-card{transition:transform .18s ease,border-color .2s ease,background .2s ease}.lib-onb-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.2)}`}</style>
+      <style>{`.lib-onb-card{transition:transform .18s ease,border-color .2s ease,background .2s ease}.lib-onb-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.2)}.lib-provider-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.lib-provider-type-grid{grid-template-columns:1fr}}`}</style>
       <div style={S.page}>
         {/* Bouton retour — quitte l'étape courante (ou l'onboarding depuis l'étape 1) */}
         <button type="button" onClick={() => step > 0 ? prev() : navigate('/accueil')}
@@ -693,7 +703,7 @@ export default function OnboardingPrestataire() {
             Compte Prestataire
           </h1>
           <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 10, lineHeight: 1.6 }}>
-            Complète ton dossier. Tu peux sauvegarder et revenir plus tard.
+            Crée ton compte, puis construis librement ton profil et ton catalogue.
           </p>
         </div>
 
@@ -757,25 +767,26 @@ export default function OnboardingPrestataire() {
             <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, margin: '0 0 8px' }}>
               Choisis une ou plusieurs catégories. Tu pourras les modifier plus tard depuis ton espace, ou continuer sans choisir pour le moment.
             </p>
+            <div className="lib-provider-type-grid">
             {FLEXIBLE_TYPES.map(t => {
               const sel = selectedTypes.includes(t.key)
               return (
                 <button type="button" key={t.key} onClick={() => toggleProviderType(t.key)} className="lib-onb-card" style={{
-                  padding: '17px 18px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
+                  padding: '14px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
                   background: sel ? t.color + '14' : 'rgba(255,255,255,0.025)',
                   border: sel ? `1px solid ${t.color}66` : '1px solid rgba(255,255,255,0.09)',
                   display: 'flex', alignItems: 'center', gap: 15, transition: 'all 0.2s',
                 }}>
                   <span style={{
-                    width: 46, height: 46, borderRadius: 13, flexShrink: 0,
+                    width: 40, height: 40, borderRadius: 12, flexShrink: 0,
                     background: `${t.color}1a`, border: `1px solid ${t.color}3a`, color: t.color,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <TypeIcon type={t.key} />
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: DM, fontSize: 16, fontWeight: 700, letterSpacing: '-0.2px', color: '#fff', margin: '0 0 3px' }}>{t.label}</p>
-                    <p style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.4 }}>{t.desc}</p>
+                    <p style={{ fontFamily: DM, fontSize: 14, fontWeight: 700, letterSpacing: '-0.2px', color: '#fff', margin: '0 0 3px' }}>{t.label}</p>
+                    <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.4 }}>{t.desc}</p>
                   </div>
                   {sel
                     ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
@@ -783,6 +794,7 @@ export default function OnboardingPrestataire() {
                 </button>
               )
             })}
+            </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(78,232,200,0.18)', background: 'rgba(78,232,200,0.04)' }}>
               <p style={{ fontFamily: DM, fontSize: 10.5, color: 'rgba(78,232,200,0.7)', margin: 0, lineHeight: 1.6 }}>
                 {selectedTypes.length
@@ -790,6 +802,9 @@ export default function OnboardingPrestataire() {
                   : 'Aucune catégorie choisie : ton profil sera classé provisoirement dans « Autres services ».'}
               </p>
             </div>
+            <Field label="Nom de ta page / nom commercial">
+              <input style={S.input} value={f.nomCommercial} onChange={e => update('nomCommercial', e.target.value)} placeholder="Le nom visible par les clients et organisateurs" />
+            </Field>
             {selectedTypes.includes('artiste') && (
               <Field label="Nom de scène / nom public (optionnel)">
                 <input style={S.input} value={f.nomScene} onChange={e => update('nomScene', e.target.value)} placeholder="Ex. DJ Paradox, Les Twins…" />
@@ -802,6 +817,16 @@ export default function OnboardingPrestataire() {
                 onChange={e => update('specialitesLibre', e.target.value)}
                 placeholder="Ex. photobooth 360°, décoration florale, navettes VIP, équipe de régie…"
               />
+            </Field>
+            <Field label="Description courte">
+              <textarea style={{ ...S.input, minHeight: 86, resize: 'vertical' }} value={f.description} onChange={e => update('description', e.target.value)} placeholder="Décris ton activité, ton style et ce qui te différencie…" />
+            </Field>
+            <Field label="Zones d'intervention">
+              <RegionPicker value={Array.isArray(f.zonesIntervention) ? f.zonesIntervention : []} onChange={value => update('zonesIntervention', value)} />
+            </Field>
+            <Field label="Numéro SIRET (optionnel)">
+              <input style={{ ...S.input, borderColor: errors.siret ? '#e05aaa' : undefined }} value={f.siret} onChange={e => update('siret', formatSiret(e.target.value))} inputMode="numeric" placeholder="9 chiffres (SIREN) ou 14 chiffres (SIRET)" />
+              {errors.siret && <p style={S.error}>{errors.siret}</p>}
             </Field>
           </div>
         )}
@@ -853,10 +878,10 @@ export default function OnboardingPrestataire() {
             </div>
 
             {/* ── Structure (nom commercial / nom de scène / SIRET) ── */}
-            <p style={{ ...S.section, marginTop: 4 }}>
+            <p style={{ ...S.section, marginTop: 4, display: 'none' }}>
               Ton identité professionnelle
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'none', flexDirection: 'column', gap: 12 }}>
 
               {/* Nom de scène — artiste uniquement, c'est son nom public */}
               {selectedTypes.includes('artiste') && (
@@ -915,8 +940,8 @@ export default function OnboardingPrestataire() {
             </div>
 
             {/* ── Activité ── */}
-            <p style={{ ...S.section, marginTop: 4 }}>Ton activité</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ ...S.section, marginTop: 4, display: 'none' }}>Ton activité</p>
+            <div style={{ display: 'none', flexDirection: 'column', gap: 12 }}>
               <Field label="Zones d'intervention">
                 <RegionPicker value={Array.isArray(f.zonesIntervention) ? f.zonesIntervention : []} onChange={v => update('zonesIntervention', v)} />
                 <p style={{ fontFamily: "Inter, sans-serif", fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: '8px 0 0', letterSpacing: '0.04em' }}>
@@ -972,7 +997,7 @@ export default function OnboardingPrestataire() {
                             style={{ ...S.input, paddingRight: 52, borderColor: errors.regPassword ? '#e05aaa' : undefined }}
                             value={regPassword}
                             onChange={e => setRegPassword(e.target.value)}
-                            placeholder="••••••••"
+                            placeholder="8 caractères, 1 majuscule"
                           />
                           <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
                             {showPwd ? 'Cacher' : 'Voir'}
@@ -986,7 +1011,7 @@ export default function OnboardingPrestataire() {
                           style={{ ...S.input, borderColor: errors.regPasswordConfirm ? '#e05aaa' : undefined }}
                           value={regPasswordConfirm}
                           onChange={e => setRegPasswordConfirm(e.target.value)}
-                          placeholder="••••••••"
+                          placeholder="Retape ton mot de passe"
                         />
                         {errors.regPasswordConfirm && <p style={S.error}>{errors.regPasswordConfirm}</p>}
                       </Field>
@@ -1133,9 +1158,35 @@ export default function OnboardingPrestataire() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <Toggle value={f.alcoolFood} onChange={v => update('alcoolFood', v)} label="Alcool proposé" />
                   {f.alcoolFood && (
-                    <p style={{ fontFamily: DM, fontSize: 9, color: GOLD, letterSpacing: '0.06em', margin: '2px 0 0 46px' }}>
-                      → Une licence alcool pourra t'être demandée
-                    </p>
+                    <div style={{ marginTop: 6, marginLeft: 46, padding: '12px 14px', background: 'rgba(200,169,110,0.05)', border: `1px solid ${errors.alcoolFoodAtteste ? '#e05aaa' : 'rgba(200,169,110,0.22)'}`, borderRadius: 8 }}>
+                      <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                        La vente d'alcool est soumise à la réglementation de ton pays (licence, autorisations, âge légal). Cette responsabilité t'incombe entièrement — LIVEINBLACK n'est pas responsable de la conformité de ton activité.
+                      </p>
+                      <div
+                        onClick={() => update('alcoolFoodAtteste', !f.alcoolFoodAtteste)}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                      >
+                        <div style={{
+                          width: 18, height: 18, borderRadius: 4, flexShrink: 0, marginTop: 1,
+                          border: `1.5px solid ${f.alcoolFoodAtteste ? '#4ee8c8' : 'rgba(255,255,255,0.25)'}`,
+                          background: f.alcoolFoodAtteste ? 'rgba(78,232,200,0.15)' : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
+                        }}>
+                          {f.alcoolFoodAtteste && (
+                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                              <polyline points="2,6 5,9 10,3" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <span style={{ fontFamily: DM, fontSize: 10.5, color: f.alcoolFoodAtteste ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                          J'atteste respecter la réglementation locale sur la vente d'alcool et en assumer l'entière responsabilité.
+                        </span>
+                      </div>
+                      {errors.alcoolFoodAtteste && <p style={{ ...S.error, margin: '6px 0 0 28px' }}>{errors.alcoolFoodAtteste}</p>}
+                      <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '8px 0 0 28px', letterSpacing: '0.04em' }}>
+                        Facultatif : tu pourras joindre un justificatif à l'étape Documents si tu en as un.
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1235,11 +1286,11 @@ export default function OnboardingPrestataire() {
               />
             )}
 
-            {/* Alcool food — conditionnelle */}
+            {/* Alcool food — justificatif FACULTATIF */}
             {selectedTypes.includes('food') && f.alcoolFood && (
               <DocUploadRow
-                label="Licence alcool (II / III / IV)"
-                required
+                label="Licence alcool (II / III / IV) — facultatif"
+                required={false}
                 files={getDocFiles(app, 'alcohol_license')}
                 status={uploadStatus.alcohol_license}
                 onChange={file => handleUpload('alcohol_license', file)}
@@ -1254,7 +1305,6 @@ export default function OnboardingPrestataire() {
               reqKeys.forEach(key => {
                 if (!hasDoc(app, key)) missing.push(DOCUMENT_LABELS[key]?.label || key)
               })
-              if (selectedTypes.includes('food') && f.alcoolFood && !hasDoc(app, 'alcohol_license')) missing.push('Licence alcool')
               const canSubmit = missing.length === 0
               return (
                 <div style={{ marginTop: 8, padding: '16px', background: canSubmit ? 'rgba(139,92,246,0.05)' : 'rgba(224,90,170,0.04)', border: `1px solid ${canSubmit ? 'rgba(139,92,246,0.18)' : 'rgba(224,90,170,0.2)'}`, borderRadius: 8 }}>

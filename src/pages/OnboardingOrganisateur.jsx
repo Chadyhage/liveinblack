@@ -122,7 +122,7 @@ export default function OnboardingOrganisateur() {
     adresseEtablissement: '', emailPro: '', telephoneProCode: '+33', telephonePro: '', siteWeb: '',
     // Step 1 — Activité
     typeEtablissement: '', typeEtablissementCustom: '', itinerant: false, ville: '', pays: 'France', zonesActivite: '', capacite: '',
-    horaires: '', alcool: false,
+    horaires: '', alcool: false, alcoolAtteste: false,
     description: '',
     // Step 3 — Revenus (informatif, pas de champs)
   })
@@ -203,6 +203,7 @@ export default function OnboardingOrganisateur() {
       if (f.typeEtablissement === 'Autre' && !f.typeEtablissementCustom?.trim()) errs.typeEtablissementCustom = 'Précisez le type'
       if (!f.itinerant && !f.ville.trim()) errs.ville = 'Requis (ou cocher "Itinérant")'
       if (f.itinerant && !f.zonesActivite.trim()) errs.zonesActivite = 'Sélectionne au moins un pays'
+      if (f.alcool && !f.alcoolAtteste) errs.alcoolAtteste = 'Coche l\'attestation pour vendre de l\'alcool'
     }
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -293,7 +294,6 @@ export default function OnboardingOrganisateur() {
   async function handleSubmit() {
     const missingDocs = []
     if (!hasDoc(app, 'identity'))                    missingDocs.push('Pièce d\'identité')
-    if (f.alcool && !hasDoc(app, 'alcohol_license')) missingDocs.push('Licence alcool')
     if (missingDocs.length > 0) {
       showToast(`Document(s) manquant(s) : ${missingDocs.join(', ')}`, 'error')
       return
@@ -585,7 +585,7 @@ export default function OnboardingOrganisateur() {
                             style={{ ...S.input, paddingRight: 52, borderColor: errors.regPassword ? '#e05aaa' : undefined }}
                             value={regPassword}
                             onChange={e => setRegPassword(e.target.value)}
-                            placeholder="••••••••"
+                            placeholder="8 caractères, 1 majuscule"
                           />
                           <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
                             {showPwd ? 'Cacher' : 'Voir'}
@@ -599,7 +599,7 @@ export default function OnboardingOrganisateur() {
                           style={{ ...S.input, borderColor: errors.regPasswordConfirm ? '#e05aaa' : undefined }}
                           value={regPasswordConfirm}
                           onChange={e => setRegPasswordConfirm(e.target.value)}
-                          placeholder="••••••••"
+                          placeholder="Retape ton mot de passe"
                         />
                         {errors.regPasswordConfirm && <p style={S.error}>{errors.regPasswordConfirm}</p>}
                       </Field>
@@ -734,9 +734,35 @@ export default function OnboardingOrganisateur() {
               <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <Toggle value={f.alcool} onChange={v => update('alcool', v)} label="Alcool vendu sur place" />
                 {f.alcool && (
-                  <p style={{ fontFamily: DM, fontSize: 9, color: GOLD, letterSpacing: '0.06em', margin: '2px 0 0 46px' }}>
-                    → Une licence / justificatif alcool vous sera demandé à l'étape Documents
-                  </p>
+                  <div style={{ marginTop: 6, marginLeft: 46, padding: '12px 14px', background: 'rgba(200,169,110,0.05)', border: `1px solid ${errors.alcoolAtteste ? '#e05aaa' : 'rgba(200,169,110,0.22)'}`, borderRadius: 8 }}>
+                    <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                      La vente d'alcool est soumise à la réglementation de ton pays (licence, autorisations, âge légal). Cette responsabilité t'incombe entièrement — LIVEINBLACK n'est pas responsable de la conformité de ton activité.
+                    </p>
+                    <div
+                      onClick={() => update('alcoolAtteste', !f.alcoolAtteste)}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                    >
+                      <div style={{
+                        width: 18, height: 18, borderRadius: 4, flexShrink: 0, marginTop: 1,
+                        border: `1.5px solid ${f.alcoolAtteste ? '#4ee8c8' : 'rgba(255,255,255,0.25)'}`,
+                        background: f.alcoolAtteste ? 'rgba(78,232,200,0.15)' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
+                      }}>
+                        {f.alcoolAtteste && (
+                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                            <polyline points="2,6 5,9 10,3" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                      <span style={{ fontFamily: DM, fontSize: 10.5, color: f.alcoolAtteste ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                        J'atteste respecter la réglementation locale sur la vente d'alcool et en assumer l'entière responsabilité.
+                      </span>
+                    </div>
+                    {errors.alcoolAtteste && <p style={{ ...S.error, margin: '6px 0 0 28px' }}>{errors.alcoolAtteste}</p>}
+                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '8px 0 0 28px', letterSpacing: '0.04em' }}>
+                      Facultatif : tu pourras joindre un justificatif à l'étape Documents si tu en as un.
+                    </p>
+                  </div>
                 )}
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
@@ -839,11 +865,10 @@ export default function OnboardingOrganisateur() {
               onRemove={i => handleRemove('business_doc', i)}
             />
 
-            {/* ── Conditionnel : alcool ── */}
+            {/* ── Conditionnel : alcool (justificatif FACULTATIF) ── */}
             {f.alcool && (
               <DocUploadRow
-                label="Licence / Justificatif de débit de boissons"
-                required
+                label="Licence / Justificatif de débit de boissons (facultatif)"
                 files={getDocFiles(app, 'alcohol_license')}
                 status={uploadStatus.alcohol_license}
                 onChange={file => handleUpload('alcohol_license', file)}
@@ -855,7 +880,6 @@ export default function OnboardingOrganisateur() {
             {(() => {
               const missing = []
               if (!hasDoc(app, 'identity'))                    missing.push('Pièce d\'identité')
-              if (f.alcool && !hasDoc(app, 'alcohol_license')) missing.push('Licence alcool')
               const canSubmit = missing.length === 0
               return (
                 <div style={{ marginTop: 8, padding: '16px', background: canSubmit ? 'rgba(200,169,110,0.05)' : 'rgba(224,90,170,0.04)', border: `1px solid ${canSubmit ? 'rgba(200,169,110,0.15)' : 'rgba(224,90,170,0.2)'}`, borderRadius: 8 }}>
