@@ -286,7 +286,13 @@ export default function OnboardingOrganisateur() {
       if (fresh) setApp(fresh)
     } else {
       setUploadStatus(s => ({ ...s, [docKey]: 'error' }))
-      showToast('Erreur lors de l\'ajout', 'error')
+      const notAuth = /authentifi/i.test(res.error || '')
+      showToast(
+        notAuth
+          ? 'Session expirée — clique sur « Recommencer une nouvelle demande » en haut pour repartir à zéro.'
+          : 'Erreur lors de l\'ajout',
+        'error'
+      )
     }
   }
 
