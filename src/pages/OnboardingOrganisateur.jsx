@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import PublicShell from '../components/PublicShell'
 import { useAuth } from '../context/AuthContext'
+import { regions } from '../data/regions'
 import { DIAL_CODES } from '../data/dialCodes'
 import {
   createApplication, saveDraft, submitApplication,
@@ -682,7 +683,9 @@ export default function OnboardingOrganisateur() {
                       />
                       {errors.ville && <p style={S.error}>{errors.ville}</p>}
                     </div>
-                    <input style={S.input} value={f.pays} onChange={e => update('pays', e.target.value)} placeholder="France" />
+                    <select style={S.select} value={f.pays} onChange={e => update('pays', e.target.value)}>
+                      {regions.map(region => <option key={region.id} value={region.name}>{region.flag} {region.name}</option>)}
+                    </select>
                   </div>
                 )}
               </div>

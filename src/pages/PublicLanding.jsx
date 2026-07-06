@@ -74,7 +74,7 @@ export default function PublicLanding() {
 
   // Aperçu prestataires (annuaire cross-device) — mis en avant comme les events
   const [providers, setProviders] = useState(() => {
-    const valid = getAllProviderProfiles().filter(p => p.name && (p.photoUrl || p.description || p.location))
+    const valid = getAllProviderProfiles().filter(p => p.name && (p.photoUrl || p.description || p.city || p.location || p.regionId))
     const byName = {}
     for (const p of valid) {
       const k = p.name.trim().toLowerCase()
@@ -97,7 +97,7 @@ export default function PublicLanding() {
         const byId = {}
         for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
         for (const p of remote) if (p.userId) byId[p.userId] = p
-        const valid = Object.values(byId).filter(p => p.name && (p.photoUrl || p.description || p.location))
+        const valid = Object.values(byId).filter(p => p.name && (p.photoUrl || p.description || p.city || p.location || p.regionId))
         const byName = {}
         for (const p of valid) {
           const k = p.name.trim().toLowerCase()
@@ -236,7 +236,7 @@ export default function PublicLanding() {
                       </div>
                       <div style={{ padding: '26px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                         <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, letterSpacing: '-.3px', color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
-                        {p.location && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '3px 0 0' }}>{p.location}</p>}
+                        {(p.city || p.location || p.country) && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '3px 0 0' }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>}
                         <span style={{ marginTop: 'auto', paddingTop: 12, fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: C.teal }}>Voir le profil →</span>
                       </div>
                     </div>

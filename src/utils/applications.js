@@ -1,3 +1,5 @@
+import { normalizeRegionId } from './locations.js'
+
 // ─── Applications / Candidatures ─────────────────────────────────────────────
 // Gestion des dossiers d'onboarding organisateurs et prestataires
 // Données stockées dans Firestore (prod) ou localStorage (démo)
@@ -496,12 +498,16 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
         const existing = getProviderProfile(app.uid)
         if (!existing) {
           const fd = app.formData || {}
+          const regionId = normalizeRegionId(fd.pays || fd.zonesIntervention?.[0])
           const profile = {
             userId: app.uid,
             name: providerDisplayName || fd.nomCommercial || [fd.prenom, fd.nom].filter(Boolean).join(' ') || 'Prestataire',
             prestataireType: fd.prestataireType || null,
             description: (fd.description || '').trim(),
             location: (fd.ville || fd.adresseLieu || '').trim(),
+            city: (fd.ville || fd.adresseLieu || '').trim(),
+            country: (fd.pays || '').trim(),
+            regionId,
             phone: (fd.telephone || '').trim(),
             website: (fd.instagram || fd.portfolio || '').trim(),
             zonesIntervention: fd.zonesIntervention || [],

@@ -90,7 +90,10 @@ function Chip({ active, color = TEAL, onClick, children }) {
 // `remoteSearch(q)` (optionnel) : fonction async renvoyant [{name, picture}]
 // depuis une API (Deezer pour les artistes). La liste locale sert de résultats
 // instantanés + secours hors-ligne ; le distant complète le catalogue mondial.
-function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder, color = TEAL, max = 15, remoteSearch }) {
+// `photos` : map { nom: urlPhoto } pour afficher l'avatar de l'artiste dans sa
+// pastille sélectionnée. `chipAvatars` : active l'avatar dans les pastilles
+// (artistes) ; les villes restent en texte simple. onChange(names, photos).
+function SearchMultiSelect({ value = [], photos = {}, onChange, suggestions = [], placeholder, color = TEAL, max = 15, remoteSearch, chipAvatars = false }) {
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
   const [remote, setRemote] = useState([]) // [{name, picture}]
@@ -146,14 +149,44 @@ function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder
   const exact = query.trim() && [...suggestions, ...remote.map(r => r.name), ...value].some(s => norm(s) === norm(query))
   const canAddCustom = query.trim().length >= 2 && !exact && value.length < max
 
-  const add = name => {
-    const clean = String(name).trim()
-    if (!clean || value.length >= max) return
-    if (!value.some(v => norm(v) === norm(clean))) onChange([...value, clean])
+  // add(item) : item = { name, picture } (résultat) ou une chaîne (ajout libre).
+  const add = item => {
+    const name = String(item?.name ?? item).trim()
+    if (!name || value.length >= max) return
+    if (value.some(v => norm(v) === norm(name))) { setQuery(''); setRemote([]); return }
+    const picture = item?.picture || null
+    onChange([...value, name], picture ? { ...photos, [name]: picture } : photos)
     setQuery('')
     setRemote([])
   }
-  const remove = name => onChange(value.filter(v => v !== name))
+  const remove = name => {
+    const nextPhotos = { ...photos }; delete nextPhotos[name]
+    onChange(value.filter(v => v !== name), nextPhotos)
+  }
+
+  // Enrichissement automatique : pour les pastilles d'artistes SANS photo (ex.
+  // ajoutés avant cette fonctionnalité, ou en texte libre), on va chercher leur
+  // image en tâche de fond. enrichTried évite de réessayer en boucle un échec.
+  const enrichTried = useRef(new Set())
+  useEffect(() => {
+    if (!remoteSearch || !chipAvatars) return
+    const missing = value.filter(n => !photos[n] && !enrichTried.current.has(norm(n))).slice(0, 6)
+    if (!missing.length) return
+    let cancelled = false
+    ;(async () => {
+      const found = {}
+      for (const name of missing) {
+        enrichTried.current.add(norm(name))
+        try {
+          const res = await remoteSearch(name)
+          const hit = (res || []).find(r => norm(r.name) === norm(name))
+          if (hit?.picture) found[name] = hit.picture
+        } catch {}
+      }
+      if (!cancelled && Object.keys(found).length) onChange(value, { ...photos, ...found })
+    })()
+    return () => { cancelled = true }
+  }, [value, photos, remoteSearch, chipAvatars]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
@@ -162,14 +195,20 @@ function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 12 }}>
           {value.map(v => (
             <span key={v} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7, padding: '7px 8px 7px 13px',
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: chipAvatars ? '4px 8px 4px 5px' : '7px 8px 7px 13px',
               borderRadius: 999, background: `${color}1f`, border: `1px solid ${color}66`,
               color, fontFamily: FONT, fontSize: 13, fontWeight: 700,
             }}>
+              {chipAvatars && (
+                photos[v]
+                  ? <img src={photos[v]} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', background: '#1a1c26' }} />
+                  : <span style={{ width: 24, height: 24, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.28)', color, fontSize: 11, fontWeight: 800 }}>{v.charAt(0).toUpperCase()}</span>
+              )}
               {v}
               <button type="button" onClick={() => remove(v)} aria-label={`Retirer ${v}`} style={{
                 width: 18, height: 18, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                background: 'rgba(0,0,0,0.25)', color, fontSize: 12, lineHeight: 1, display: 'grid', placeItems: 'center',
+                background: 'rgba(0,0,0,0.25)', color, fontSize: 12, lineHeight: 1, display: 'grid', placeItems: 'center', flexShrink: 0,
               }}>×</button>
             </span>
           ))}
@@ -205,7 +244,7 @@ function SearchMultiSelect({ value = [], onChange, suggestions = [], placeholder
             boxShadow: '0 18px 50px rgba(0,0,0,0.6)',
           }}>
             {matches.map(m => (
-              <button key={m.name} type="button" onMouseDown={e => { e.preventDefault(); add(m.name) }} style={{
+              <button key={m.name} type="button" onMouseDown={e => { e.preventDefault(); add(m) }} style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: 11, textAlign: 'left', padding: '9px 10px', borderRadius: 8, border: 'none',
                 background: 'none', color: '#fff', cursor: 'pointer', fontFamily: FONT, fontSize: 14,
               }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
@@ -275,7 +314,16 @@ export default function PreferencesWizard({ user, setUser, onDone, doneLabel = '
     // figée : deux clics rapprochés ne s'écrasent plus.
     setPrefs(p => { const list = p[current.key] || []; return { ...p, [current.key]: list.includes(id) ? list.filter(x => x !== id) : [...list, id] } })
   }
-  const setSearch = arr => { touchedRef.current = true; setPrefs(p => ({ ...p, [current.key]: arr })) }
+  // Recherche : names[] + photos{} (les photos ne sont utilisées que pour les
+  // artistes → stockées dans artistPhotos, pour afficher l'avatar des pastilles).
+  const setSearch = (names, photos) => {
+    touchedRef.current = true
+    setPrefs(p => ({
+      ...p,
+      [current.key]: names,
+      ...(current.key === 'artists' ? { artistPhotos: photos || {} } : {}),
+    }))
+  }
 
   const goNext = () => { savePreferences(user, setUser, prefs); if (isLast) onDone?.(prefs); else setStep(s => s + 1) }
   const goBack = () => setStep(s => Math.max(0, s - 1))
@@ -323,6 +371,8 @@ export default function PreferencesWizard({ user, setUser, onDone, doneLabel = '
           )}
           {current.type === 'search' && (
             <SearchMultiSelect value={val || []} onChange={setSearch} suggestions={current.suggestions} color={current.color}
+              photos={current.key === 'artists' ? (prefs.artistPhotos || {}) : {}}
+              chipAvatars={current.key === 'artists'}
               remoteSearch={current.key === 'artists' ? searchArtistsRemote : current.key === 'cities' ? searchCitiesRemote : undefined}
               placeholder={current.key === 'artists' ? 'Cherche un artiste ou un DJ…' : 'Cherche une ville…'} />
           )}

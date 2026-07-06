@@ -5,6 +5,8 @@ import Layout from '../components/Layout'
 import PublicNav from '../components/PublicNav'
 import { getAllProviderProfiles } from '../utils/services'
 import { PROVIDER_CATEGORIES, getProviderCategory, normalizeProviderType } from '../utils/providerCategories'
+import { regions } from '../data/regions'
+import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '../utils/locations'
 
 // ─── Page publique PRESTATAIRES ──────────────────────────────────────────────
 // Annuaire ouvert aux visiteurs non connectés : ils explorent librement les
@@ -44,6 +46,7 @@ export default function PublicPrestataires() {
 
   const [query, setQuery] = useState('')
   const [activeCat, setActiveCat] = useState(null)
+  const [regionId, setRegionId] = useState('')
   const [remote, setRemote] = useState([])
   const [catalogs, setCatalogs] = useState({})
 
@@ -66,7 +69,7 @@ export default function PublicPrestataires() {
     // laissé vide (aucune photo, description ni localisation) est un profil
     // fantôme (onboarding abandonné) → on ne l'affiche pas dans l'annuaire.
     const valid = Object.values(byId).filter(p => p.name && (
-      p.photoUrl || p.description || p.location ||
+      p.photoUrl || p.description || p.city || p.location || p.regionId || p.country ||
       (catalogs[p.userId] || []).some(item => item.available !== false)
     ))
     // Dedup par nom : si deux docs Firestore portent le même nom, garder le plus complet
@@ -83,13 +86,16 @@ export default function PublicPrestataires() {
   }, [remote, catalogs])
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = normalizeGeoText(query)
     return providers.filter(p => {
       if (activeCat && normalizeProviderType(p.prestataireType) !== activeCat) return false
+      if (!matchesEntityRegion(p, regionId)) return false
       if (!q) return true
-      return [p.name, p.description, p.location].filter(Boolean).join(' ').toLowerCase().includes(q)
+      const regionNames = getEntityRegionIds(p).map(getRegionName)
+      return [p.name, p.description, p.city, p.location, p.country, ...regionNames]
+        .filter(Boolean).map(normalizeGeoText).join(' ').includes(q)
     })
-  }, [providers, query, activeCat])
+  }, [providers, query, activeCat, regionId])
 
   const register = () => navigate('/connexion?mode=register')
 
@@ -143,6 +149,10 @@ export default function PublicPrestataires() {
             </button>
           ))}
         </div>
+        <select value={regionId} onChange={event => setRegionId(event.target.value)} aria-label="Filtrer les prestataires par région" style={{ marginTop: 14, minWidth: 210, padding: '10px 13px', borderRadius: 999, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.14)', color: '#fff', fontFamily: FONT, fontSize: 12.5, outline: 'none' }}>
+          <option value="">Toutes les régions</option>
+          {regions.map(region => <option key={region.id} value={region.id}>{region.flag} {region.name}</option>)}
+        </select>
       </section>
 
       {/* ══ GRILLE ══ */}
@@ -176,8 +186,8 @@ export default function PublicPrestataires() {
                   </div>
                   <div style={{ padding: '30px 15px 15px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, letterSpacing: '-.3px', color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
-                    {p.location && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>{p.location}
+                    {(p.city || p.location || p.country) && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}
                     </p>}
                     {p.description && <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.62)', margin: '10px 0 0', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.description}</p>}
                     {offerCount > 0 && <p style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,.42)', margin: '12px 0 0' }}>{offerCount} offre{offerCount > 1 ? 's' : ''} au catalogue</p>}

@@ -16,6 +16,8 @@ import {
   CATALOG_CATEGORIES,
 } from '../utils/services'
 import { getProviderCategory, normalizeProviderType } from '../utils/providerCategories'
+import { regions } from '../data/regions'
+import { getRegionName, normalizeRegionId, normalizeRegionIds, REGION_OPTIONS } from '../utils/locations'
 
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
@@ -120,6 +122,21 @@ function EmptyCatalog({ onAdd }) {
   )
 }
 
+function providerProfileForm(profile, fallbackName = '') {
+  const regionId = normalizeRegionId(profile?.regionId || profile?.country || profile?.zonesIntervention?.[0]) || 'france'
+  const normalizedZones = normalizeRegionIds(profile?.zonesIntervention)
+  return {
+    name: profile?.name || fallbackName,
+    description: profile?.description || '',
+    city: profile?.city || profile?.location || '',
+    regionId,
+    website: profile?.website || '',
+    zonesIntervention: normalizedZones.length ? normalizedZones : [regionId],
+    photoUrl: profile?.photoUrl || '',
+    coverUrl: profile?.coverUrl || '',
+  }
+}
+
 export default function ProposerServicesPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -129,15 +146,7 @@ export default function ProposerServicesPage() {
   const [tab, setTab] = useState('profil')
   const [profile, setProfile] = useState(() => getProviderProfile(uid))
   const [catalog, setCatalog] = useState(() => getCatalog(uid))
-  const [profileForm, setProfileForm] = useState(() => ({
-    name: profile?.name || user?.name || '',
-    description: profile?.description || '',
-    location: profile?.location || '',
-    website: profile?.website || '',
-    zonesIntervention: profile?.zonesIntervention || [],
-    photoUrl: profile?.photoUrl || '',
-    coverUrl: profile?.coverUrl || '',
-  }))
+  const [profileForm, setProfileForm] = useState(() => providerProfileForm(profile, user?.name || ''))
   const [showItemForm, setShowItemForm] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [newItem, setNewItem] = useState({ name: '', price: '', unit: '', category: '', description: '', available: true, media: [] })
@@ -155,15 +164,7 @@ export default function ProposerServicesPage() {
       unlistenProfile = listenDoc(`providers/${uid}`, remoteProfile => {
         if (!remoteProfile) return
         setProfile(remoteProfile)
-        setProfileForm({
-          name: remoteProfile.name || user?.name || '',
-          description: remoteProfile.description || '',
-          location: remoteProfile.location || '',
-          website: remoteProfile.website || '',
-          zonesIntervention: remoteProfile.zonesIntervention || [],
-          photoUrl: remoteProfile.photoUrl || '',
-          coverUrl: remoteProfile.coverUrl || '',
-        })
+        setProfileForm(providerProfileForm(remoteProfile, user?.name || ''))
       })
       unlistenCatalog = listenDoc(`catalogs/${uid}`, data => {
         if (!data?.items) return
@@ -204,21 +205,38 @@ export default function ProposerServicesPage() {
       notify('Ajoute le nom de ta page.')
       return
     }
-    const saved = {
+    const saved = saveProviderProfile({
       ...(profile || {}),
       ...profileForm,
       name: profileForm.name.trim(),
       description: profileForm.description.trim(),
-      location: profileForm.location.trim(),
+      city: profileForm.city.trim(),
+      location: profileForm.city.trim(),
+      country: getRegionName(profileForm.regionId),
+      regionId: profileForm.regionId,
       website: profileForm.website.trim(),
       zonesIntervention: profileForm.zonesIntervention,
       userId: uid,
       prestataireType: type,
       updatedAt: Date.now(),
-    }
-    saveProviderProfile(saved)
+    })
     setProfile(saved)
+    setProfileForm(providerProfileForm(saved, user?.name || ''))
     notify('Ta page a été enregistrée.')
+  }
+
+  function toggleInterventionRegion(regionId) {
+    setProfileForm(current => {
+      const selected = current.zonesIntervention || []
+      if (regionId === 'international') {
+        return { ...current, zonesIntervention: selected.includes(regionId) ? [current.regionId] : ['international'] }
+      }
+      const withoutInternational = selected.filter(value => value !== 'international')
+      const zonesIntervention = withoutInternational.includes(regionId)
+        ? withoutInternational.filter(value => value !== regionId)
+        : [...withoutInternational, regionId]
+      return { ...current, zonesIntervention: zonesIntervention.length ? zonesIntervention : [current.regionId] }
+    })
   }
 
   function handleImage(field, file) {
@@ -378,15 +396,25 @@ export default function ProposerServicesPage() {
                   <textarea style={{ ...input, minHeight: 125, resize: 'vertical' }} value={profileForm.description} onChange={event => setProfileForm(current => ({ ...current, description: event.target.value }))} placeholder="Présente ton activité, ton style et ce qui te différencie." />
                 </Field>
                 <div className="provider-fields-two">
-                  <Field label="Ville ou zone principale">
-                    <input style={input} value={profileForm.location} onChange={event => setProfileForm(current => ({ ...current, location: event.target.value }))} placeholder="Paris, Lyon, France entière…" />
+                  <Field label="Ville principale">
+                    <input style={input} value={profileForm.city} onChange={event => setProfileForm(current => ({ ...current, city: event.target.value }))} placeholder="Paris, Lomé, Cotonou…" />
                   </Field>
                   <Field label="Site ou réseau social" helper="Optionnel. Le contact principal reste la messagerie LIVE IN BLACK.">
                     <input style={input} value={profileForm.website} onChange={event => setProfileForm(current => ({ ...current, website: event.target.value }))} placeholder="instagram.com/tonprofil" />
                   </Field>
                 </div>
-                <Field label="Zones d’intervention" helper="Sépare les zones par des virgules.">
-                  <input style={input} value={profileForm.zonesIntervention.join(', ')} onChange={event => setProfileForm(current => ({ ...current, zonesIntervention: event.target.value.split(',').map(value => value.trim()).filter(Boolean) }))} placeholder="Île-de-France, Hauts-de-France…" />
+                <Field label="Pays / région principale">
+                  <select style={input} value={profileForm.regionId} onChange={event => setProfileForm(current => ({ ...current, regionId: event.target.value, zonesIntervention: current.zonesIntervention.length ? current.zonesIntervention : [event.target.value] }))}>
+                    {regions.map(region => <option key={region.id} value={region.id}>{region.flag} {region.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="Zones d’intervention" helper="Choisis toutes les zones dans lesquelles tu peux intervenir.">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {REGION_OPTIONS.map(region => {
+                      const selected = profileForm.zonesIntervention.includes(region.id)
+                      return <button key={region.id} type="button" onClick={() => toggleInterventionRegion(region.id)} style={{ padding: '8px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 12, color: selected ? C.teal : 'rgba(255,255,255,.62)', background: selected ? 'rgba(78,232,200,.1)' : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? 'rgba(78,232,200,.55)' : 'rgba(255,255,255,.12)'}` }}>{region.flag} {region.name}</button>
+                    })}
+                  </div>
                 </Field>
                 <button onClick={handleSaveProfile} disabled={!!uploading} style={{ ...primaryButton, alignSelf: 'flex-start', opacity: uploading ? .6 : 1 }}>{uploading ? 'Envoi de l’image…' : 'Enregistrer ma page'}</button>
               </div>

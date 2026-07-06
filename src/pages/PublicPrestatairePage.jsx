@@ -7,6 +7,7 @@ import { getCatalog, getAllProviderProfiles } from '../utils/services'
 import { createDirectConversation, getUserId } from '../utils/messaging'
 import { getProviderCategory } from '../utils/providerCategories'
 import ShareToChatModal from '../components/ShareToChatModal'
+import { getRegionName, normalizeRegionIds } from '../utils/locations'
 
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e' }
@@ -131,7 +132,9 @@ export default function PublicPrestatairePage() {
   }
 
   const website = externalUrl(profile.website)
-  const zones = Array.isArray(profile.zonesIntervention) ? profile.zonesIntervention.filter(Boolean) : []
+  const zones = normalizeRegionIds(profile.zonesIntervention).map(getRegionName).filter(Boolean)
+  const locationLabel = [profile.city || profile.location, profile.country].filter(Boolean)
+    .filter((value, index, all) => all.indexOf(value) === index).join(' · ')
 
   return (
     <PageChrome user={user}>
@@ -177,9 +180,9 @@ export default function PublicPrestatairePage() {
             <section style={sectionStyle}>
               <h2 style={sectionTitle}>À propos</h2>
               <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.68)', lineHeight: 1.75, whiteSpace: 'pre-wrap', margin: 0 }}>{profile.description || 'Ce prestataire n’a pas encore ajouté de présentation.'}</p>
-              {(profile.location || zones.length > 0 || website || profile.phone) && (
+              {(locationLabel || zones.length > 0 || website || profile.phone) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 18 }}>
-                  {profile.location && <span style={detailLine}><Icon name="location" size={16} /> {profile.location}</span>}
+                  {locationLabel && <span style={detailLine}><Icon name="location" size={16} /> {locationLabel}</span>}
                   {zones.length > 0 && <span style={detailLine}><Icon name="location" size={16} /> Intervient dans : {zones.join(', ')}</span>}
                   {website && <a href={website} target="_blank" rel="noreferrer" style={{ ...detailLine, color: C.teal, textDecoration: 'none' }}><Icon name="link" size={16} /> Voir son site ou réseau social</a>}
                   {/* Numéro PRO = contact business, public (pas d'opt-in). Clic = appel. */}

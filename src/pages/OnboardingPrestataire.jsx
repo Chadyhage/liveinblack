@@ -783,7 +783,9 @@ export default function OnboardingPrestataire() {
                 <input style={S.input} value={f.ville} onChange={e => update('ville', e.target.value)} placeholder="Paris" />
               </Field>
               <Field label="Pays">
-                <input style={S.input} value={f.pays} onChange={e => update('pays', e.target.value)} placeholder="France" />
+                <select style={S.select} value={f.pays} onChange={e => update('pays', e.target.value)}>
+                  {regions.map(region => <option key={region.id} value={region.name}>{region.flag} {region.name}</option>)}
+                </select>
               </Field>
 
             </div>

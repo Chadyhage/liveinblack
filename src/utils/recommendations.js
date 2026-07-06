@@ -88,7 +88,8 @@ export const GROUP_PREFS = [
 
 export const EMPTY_PREFERENCES = {
   musicStyles: [],   // ids de MUSIC_STYLES
-  artists: [],       // texte libre (noms d'artistes/DJs)
+  artists: [],       // noms d'artistes/DJs (recherche Deezer + ajout libre)
+  artistPhotos: {},  // { nom: urlPhoto } — display seul (avatar des pastilles)
   eventTypes: [],    // ids de EVENT_TYPES
   cities: [],        // texte libre (villes)
   budget: '',        // id de BUDGETS

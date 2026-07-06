@@ -1,3 +1,5 @@
+import { getRegionName, normalizeRegionId } from './locations.js'
+
 // Profils publics organisateurs + abonnements privés par utilisateur.
 // Lecture instantanée via localStorage, persistance cross-device via Firestore.
 
@@ -74,6 +76,7 @@ export function createOrganizerProfileSeed(user, formData = {}, verified = false
   const uid = user?.uid || user?.id
   const profiles = getLocalOrganizerProfiles()
   const publicName = (formData.nomCommercial || formData.nomOrganisation || user?.name || 'Organisateur').trim()
+  const regionId = normalizeRegionId(formData.pays)
   return {
     id: uid,
     userId: uid,
@@ -83,6 +86,7 @@ export function createOrganizerProfileSeed(user, formData = {}, verified = false
     longDescription: '',
     city: (formData.ville || '').trim(),
     country: (formData.pays || '').trim(),
+    regionId,
     avatarUrl: user?.avatar || null,
     bannerUrl: null,
     status: 'draft',
@@ -107,6 +111,7 @@ export async function saveOrganizerProfile(profile) {
   if (!profile?.id && !profile?.userId) return null
   const id = profile.id || profile.userId
   const profiles = getLocalOrganizerProfiles()
+  const regionId = normalizeRegionId(profile.regionId || profile.country)
   const normalized = {
     ...profile,
     id,
@@ -115,6 +120,9 @@ export async function saveOrganizerProfile(profile) {
     slug: makeUniqueOrganizerSlug(profile.slug || profile.publicName, profiles, id),
     status: ORGANIZER_STATUSES.includes(profile.status) ? profile.status : 'draft',
     isPublic: profile.status === 'public',
+    city: (profile.city || '').trim(),
+    country: getRegionName(regionId) || (profile.country || '').trim(),
+    regionId,
     followersCount: Math.max(0, Number(profile.followersCount) || 0),
     // Compteurs TOUJOURS présents et numériques : les règles Firestore comparent
     // `viewsCount == resource.viewsCount + 1` — si le champ manque sur le doc,

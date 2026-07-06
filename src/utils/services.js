@@ -1,3 +1,5 @@
+import { getRegionName, normalizeRegionId, normalizeRegionIds } from './locations.js'
+
 // ─── Prestataire Catalog ─────────────────────────────────────────────────────
 // Gère le catalogue public des prestataires.
 // Les anciennes fonctions de commande restent lisibles pour compatibilité avec
@@ -132,17 +134,29 @@ export function getProviderProfile(userId) {
 }
 
 export function saveProviderProfile(profile) {
+  const regionId = normalizeRegionId(profile.regionId || profile.country || profile.zonesIntervention?.[0])
+  const normalizedZones = normalizeRegionIds(profile.zonesIntervention)
+  const city = (profile.city || profile.location || '').trim()
+  const normalized = {
+    ...profile,
+    city,
+    location: city,
+    regionId,
+    country: getRegionName(regionId) || profile.country || '',
+    zonesIntervention: normalizedZones.length ? normalizedZones : (profile.zonesIntervention || []),
+  }
   const all = getAllProviderProfiles()
-  const idx = all.findIndex(p => p.userId === profile.userId)
-  if (idx >= 0) all[idx] = profile
-  else all.push(profile)
+  const idx = all.findIndex(p => p.userId === normalized.userId)
+  if (idx >= 0) all[idx] = normalized
+  else all.push(normalized)
   localStorage.setItem(PROVIDER_PROFILES_KEY, JSON.stringify(all))
   // Sync to Firestore
-  if (profile.userId) {
+  if (normalized.userId) {
     import('./firestore-sync').then(({ syncDoc }) => {
-      syncDoc(`providers/${profile.userId}`, profile)
+      syncDoc(`providers/${normalized.userId}`, normalized)
     }).catch(() => {})
   }
+  return normalized
 }
 
 // ── Category labels ────────────────────────────────────────────────────────────

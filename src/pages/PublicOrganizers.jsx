@@ -5,6 +5,8 @@ import PublicNav from '../components/PublicNav'
 import OrganizerFollowButton from '../components/OrganizerFollowButton'
 import { useAuth } from '../context/AuthContext'
 import { cacheOrganizerProfiles, getLocalOrganizerProfiles } from '../utils/organizers'
+import { regions } from '../data/regions'
+import { matchesEntityRegion, normalizeGeoText } from '../utils/locations'
 
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
 const FONT = 'Inter, system-ui, sans-serif'
@@ -28,7 +30,7 @@ export default function PublicOrganizers() {
   const [profiles, setProfiles] = useState(() => getLocalOrganizerProfiles().filter(p => p.status === 'public'))
   const [events, setEvents] = useState([])
   const [query, setQuery] = useState('')
-  const [city, setCity] = useState('')
+  const [regionId, setRegionId] = useState('')
   const [upcomingOnly, setUpcomingOnly] = useState(false)
   const [sort, setSort] = useState('popular')
 
@@ -59,26 +61,21 @@ export default function PublicOrganizers() {
     return { now, byOrganizer }
   }, [events])
 
-  const cities = useMemo(() => [...new Set(profiles.flatMap(profile => [
-    profile.city,
-    ...(eventData.byOrganizer[profile.id] || []).map(event => event.city),
-  ]).map(value => value?.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr')), [profiles, eventData])
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = normalizeGeoText(query)
     const list = profiles.filter(profile => {
       const ownEvents = eventData.byOrganizer[profile.id] || []
       const next = ownEvents.find(e => !e.cancelled && dateValue(e) >= eventData.now)
-      const profileCities = [profile.city, ...ownEvents.map(event => event.city)].filter(Boolean)
-      if (city && !profileCities.includes(city)) return false
+      if (!matchesEntityRegion(profile, regionId, ownEvents)) return false
       if (upcomingOnly && !next) return false
       if (!q) return true
       return [profile.publicName, profile.city, profile.country, profile.shortDescription, ...(profile.eventTypes || []), ...(profile.vibes || [])]
-        .filter(Boolean).join(' ').toLowerCase().includes(q)
+        .filter(Boolean).map(normalizeGeoText).join(' ').includes(q)
     })
     return list.sort((a, b) => sort === 'recent'
       ? (b.createdAt || 0) - (a.createdAt || 0)
       : (b.followersCount || 0) - (a.followersCount || 0))
-  }, [profiles, eventData, query, city, upcomingOnly, sort])
+  }, [profiles, eventData, query, regionId, upcomingOnly, sort])
 
   const content = (
     <div className="org-directory">
@@ -113,9 +110,9 @@ export default function PublicOrganizers() {
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher un organisateur, une ville…" />
         </label>
         <div className="org-filters">
-          {cities.length > 0 && <select className="org-filter" value={city} onChange={e => setCity(e.target.value)} aria-label="Filtrer par ville">
-            <option value="">Toutes les villes</option>{cities.map(value => <option key={value}>{value}</option>)}
-          </select>}
+          <select className="org-filter" value={regionId} onChange={e => setRegionId(e.target.value)} aria-label="Filtrer par région">
+            <option value="">Toutes les régions</option>{regions.map(region => <option key={region.id} value={region.id}>{region.flag} {region.name}</option>)}
+          </select>
           <button className={`org-filter ${upcomingOnly ? 'active' : ''}`} onClick={() => setUpcomingOnly(v => !v)}>Événements à venir</button>
           <select className="org-filter" value={sort} onChange={e => setSort(e.target.value)} aria-label="Trier les organisateurs">
             <option value="popular">Les plus populaires</option><option value="recent">Les plus récents</option>

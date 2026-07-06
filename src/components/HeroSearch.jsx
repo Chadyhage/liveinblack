@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAllProviderProfiles } from '../utils/services'
 import { MessagingSearchBar } from './MessagingActions'
+import { getEntityRegionIds, getRegionName, normalizeGeoText } from '../utils/locations'
 
 // Recherche globale de l'accueil : cherche À LA FOIS les événements, les
 // artistes/organisateurs (via les champs des events) et les prestataires
@@ -62,7 +63,7 @@ export default function HeroSearch() {
   }, [open])
 
   // ── Résultats ──
-  const query = q.trim().toLowerCase()
+  const query = normalizeGeoText(q)
   let results = []
   if (query) {
     const events = readEvents()
@@ -70,7 +71,7 @@ export default function HeroSearch() {
 
     const evMatches = events.filter(e => {
       const hay = [e.name, e.city, e.category, e.subtitle, e.organizer, e.venue,
-        ...(e.tags || []), ...(e.artists || []), ...(e.lineup || [])].join(' ').toLowerCase()
+        e.region, ...(e.tags || []), ...(e.artists || []), ...(e.lineup || [])].map(normalizeGeoText).join(' ')
       return hay.includes(query)
     }).slice(0, 5).map(e => ({
       kind: 'event', id: e.id, title: e.name || 'Événement',
@@ -79,12 +80,12 @@ export default function HeroSearch() {
     }))
 
     const prMatches = providers.filter(p => {
-      const hay = [p.name, p.location, p.description, p.prestataireType, PREST_LABEL[p.prestataireType],
-        ...(p.tags || [])].join(' ').toLowerCase()
+      const hay = [p.name, p.city, p.location, p.country, p.description, p.prestataireType, PREST_LABEL[p.prestataireType],
+        ...getEntityRegionIds(p).map(getRegionName), ...(p.tags || [])].map(normalizeGeoText).join(' ')
       return hay.includes(query)
     }).slice(0, 5).map(p => ({
       kind: 'provider', id: p.userId, title: p.name || 'Prestataire',
-      meta: [PREST_LABEL[p.prestataireType] || 'Prestataire', p.location].filter(Boolean).join(' · '),
+      meta: [PREST_LABEL[p.prestataireType] || 'Prestataire', p.city || p.location, p.country].filter(Boolean).join(' · '),
       color: '#c8a96e', tag: PREST_LABEL[p.prestataireType] || 'Prestataire',
     }))
 
@@ -94,7 +95,7 @@ export default function HeroSearch() {
   function go(r) {
     setOpen(false); setQ('')
     if (r.kind === 'event') navigate(`/evenements/${r.id}`)
-    else navigate('/proposer')
+    else navigate(`/prestataires/${encodeURIComponent(r.id)}`)
   }
 
   function submit() {
