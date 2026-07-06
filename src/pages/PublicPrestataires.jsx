@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Layout from '../components/Layout'
 import PublicNav from '../components/PublicNav'
 import { getAllProviderProfiles } from '../utils/services'
-import { PROVIDER_CATEGORIES, getProviderCategory, normalizeProviderType } from '../utils/providerCategories'
+import { PROVIDER_CATEGORIES, getProviderCategories, getProviderCategory, getProviderTypes, providerMatchesCategory } from '../utils/providerCategories'
 import { regions } from '../data/regions'
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '../utils/locations'
 
@@ -37,7 +37,7 @@ function CatIcon({ id, color = '#fff', size = 18 }) {
   if (id === 'building') return <svg {...p}><rect x="4" y="3" width="16" height="18" rx="1.5" /><path d="M9 8h1m4 0h1M9 12h1m4 0h1M9 16h1m4 0h1" /></svg>
   if (id === 'speaker') return <svg {...p}><rect x="5" y="2" width="14" height="20" rx="2" /><circle cx="12" cy="14" r="4" /><circle cx="12" cy="6" r="1" /></svg>
   if (id === 'cart') return <svg {...p}><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
-  return null
+  return <svg {...p}><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
 }
 
 export default function PublicPrestataires() {
@@ -88,11 +88,12 @@ export default function PublicPrestataires() {
   const filtered = useMemo(() => {
     const q = normalizeGeoText(query)
     return providers.filter(p => {
-      if (activeCat && normalizeProviderType(p.prestataireType) !== activeCat) return false
+      if (!providerMatchesCategory(p, activeCat)) return false
       if (!matchesEntityRegion(p, regionId)) return false
       if (!q) return true
       const regionNames = getEntityRegionIds(p).map(getRegionName)
-      return [p.name, p.description, p.city, p.location, p.country, ...regionNames]
+      const categoryNames = getProviderCategories(p).flatMap(category => [category.label, category.singular])
+      return [p.name, p.description, p.specialitesLibre, p.city, p.location, p.country, ...regionNames, ...categoryNames]
         .filter(Boolean).map(normalizeGeoText).join(' ').includes(q)
     })
   }, [providers, query, activeCat, regionId])
@@ -102,8 +103,7 @@ export default function PublicPrestataires() {
   const counts = useMemo(() => {
     const m = {}
     for (const p of providers) {
-      const type = normalizeProviderType(p.prestataireType)
-      m[type] = (m[type] || 0) + 1
+      for (const type of getProviderTypes(p)) m[type] = (m[type] || 0) + 1
     }
     return m
   }, [providers])
@@ -167,7 +167,8 @@ export default function PublicPrestataires() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px,1fr))', gap: 16 }}>
             {filtered.map(p => {
-              const c = catOf(p.prestataireType)
+              const categories = getProviderCategories(p)
+              const c = categories[0] || catOf(p.prestataireType)
               const visibleOffers = (catalogs[p.userId] || []).filter(item => item.available !== false)
               const offerCount = visibleOffers.length
               const coverImage = p.coverUrl || firstOfferImage(visibleOffers)
@@ -177,7 +178,7 @@ export default function PublicPrestataires() {
                   <div style={{ position: 'relative', height: 118, background: coverImage ? `url(${coverImage}) center/cover, ${C.obsidian}` : `linear-gradient(135deg, ${c.color}44, ${c.color}12 55%, ${C.obsidian})` }}>
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,.95), rgba(6,8,14,.25))' }} />
                     <span style={{ position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${c.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
-                      <CatIcon id={c.icon} color="#fff" size={12} /> {c.label}
+                      <CatIcon id={c.icon} color="#fff" size={12} /> {c.label}{categories.length > 1 ? ` +${categories.length - 1}` : ''}
                     </span>
                     {/* Avatar */}
                     <div style={{ position: 'absolute', left: 14, bottom: -22, width: 52, height: 52, borderRadius: '50%', border: '2px solid #0b0d16', overflow: 'hidden', background: c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 20, color: C.obsidian }}>

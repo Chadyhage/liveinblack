@@ -1,3 +1,5 @@
+import { PROVIDER_CATEGORIES, getPrimaryProviderType, normalizeProviderTypes } from './providerCategories.js'
+
 // ─── Account Management ────────────────────────────────────────────────────
 // Centralise la gestion des comptes utilisateurs
 // Pour le vrai lancement : remplacer localStorage par Firestore
@@ -195,6 +197,10 @@ export function getEnabledRoles(user) {
  * Writes to lib_role_requests (local) + optionally Firestore pending_validations.
  */
 export async function requestAdditionalRole(user, role, prestataireType = null) {
+  const prestataireTypes = role === 'prestataire'
+    ? normalizeProviderTypes(Array.isArray(prestataireType) ? prestataireType : null, Array.isArray(prestataireType) ? null : prestataireType)
+    : []
+  const primaryPrestataireType = getPrimaryProviderType({ prestataireTypes })
   // Prevent duplicates
   const existing = getPendingRoleRequests().find(
     r => r.uid === user.uid && r.requestedRole === role && r.status === 'pending'
@@ -207,7 +213,8 @@ export async function requestAdditionalRole(user, role, prestataireType = null) 
     email: user.email,
     name: user.name,
     requestedRole: role,
-    prestataireType: prestataireType || null,
+    prestataireType: role === 'prestataire' ? primaryPrestataireType : null,
+    prestataireTypes,
     requestedAt: Date.now(),
     status: 'pending',
   }
@@ -219,7 +226,7 @@ export async function requestAdditionalRole(user, role, prestataireType = null) 
   // Mark status on the account
   const patch = role === 'organisateur'
     ? { orgStatus: 'pending', orgRequestedAt: Date.now() }
-    : { prestStatus: 'pending', prestataireType, prestRequestedAt: Date.now() }
+    : { prestStatus: 'pending', prestataireType: primaryPrestataireType, prestataireTypes, prestRequestedAt: Date.now() }
   updateAccount(user.uid, patch)
 
   // Sync to Firestore if Firebase active
@@ -274,7 +281,7 @@ export async function approveRoleRequest(requestId) {
     status: 'active',
     ...(req.requestedRole === 'organisateur'
       ? { orgStatus: 'active', orgValidatedAt: Date.now() }
-      : { prestStatus: 'active', prestataireType: req.prestataireType, prestValidatedAt: Date.now() }
+      : { prestStatus: 'active', prestataireType: req.prestataireType, prestataireTypes: normalizeProviderTypes(req.prestataireTypes, req.prestataireType), prestValidatedAt: Date.now() }
     ),
   }
 
@@ -447,9 +454,14 @@ export const ROLES = {
   agent:        { label: 'Admin',        icon: '🔑', color: '#d4af37' },
 }
 
-export const PRESTATAIRE_TYPES = [
-  { key: 'salle',       label: 'Salle / Lieu',       icon: '🏛' },
-  { key: 'prestation',  label: 'Artiste / DJ',        icon: '🎤' },
-  { key: 'materiel',    label: 'Matériel',             icon: '🔊' },
-  { key: 'supermarche', label: 'Supermarché / Traiteur', icon: '🛒' },
-]
+const PROVIDER_TYPE_ICONS = {
+  artiste: '🎤', salle: '🏛', materiel: '🔊', food: '🍽', photo_video: '📷',
+  decoration: '✨', securite: '🛡', transport: '🚐', staff: '👥',
+  communication: '📣', bien_etre: '♡', autre: '▦',
+}
+
+export const PRESTATAIRE_TYPES = PROVIDER_CATEGORIES.map(category => ({
+  key: category.id,
+  label: category.singular,
+  icon: PROVIDER_TYPE_ICONS[category.id] || '▦',
+}))

@@ -1,4 +1,5 @@
 import { normalizeRegionId } from './locations.js'
+import { getPrimaryProviderType, normalizeProviderTypes } from './providerCategories.js'
 
 // ─── Applications / Candidatures ─────────────────────────────────────────────
 // Gestion des dossiers d'onboarding organisateurs et prestataires
@@ -26,7 +27,7 @@ export const DOCUMENT_LABELS = {
   rib:               { label: 'RIB (Relevé d\'identité bancaire)',                   required: false },
   business_doc:      { label: 'Document officiel d\'entreprise (Kbis, extrait INSEE, statuts…)', required: true  },
   alcohol_license:   { label: 'Licence / Justificatif de débit de boissons',         required: false },
-  activity_proof:    { label: 'Justificatif d\'activité',                            required: false },
+  activity_proof:    { label: 'Justificatif d\'activité',                            required: true  },
   insurance:         { label: 'Attestation RC Pro / assurance professionnelle',      required: true  },
   exploitation_proof:{ label: 'Autorisation d\'exploitation du lieu (licence ERP, arrêté de capacité…)', required: true },
   billing_proof:     { label: 'Justificatif de statut (Kbis AE, attestation Agessa/MDA, attestation CDDU intermittent…)', required: true },
@@ -38,15 +39,19 @@ export function getRequiredDocs(type, prestataireType = null) {
     return ['identity']   // Stripe gère les coords bancaires — on ne demande que l'identité
   }
   if (type === 'prestataire') {
-    // Artiste (DJ, danseur, musicien…) — souvent sans SIRET, statut billing variable
-    if (prestataireType === 'artiste')  return ['identity', 'billing_proof']
-    // Salle (lieu, club, rooftop…) — ERP, licence exploitation obligatoire
-    if (prestataireType === 'salle')    return ['identity', 'business_doc', 'exploitation_proof', 'insurance']
-    // Matériel (sono, lumière, scène…) — société de location
-    if (prestataireType === 'materiel') return ['identity', 'business_doc', 'insurance']
-    // Food (traiteur, bar, food truck…) — entreprise, RC Pro, +alcool conditionnel
-    if (prestataireType === 'food')     return ['identity', 'business_doc', 'insurance']
-    return ['identity']
+    const types = normalizeProviderTypes(prestataireType)
+    if (types.length === 0) types.push('autre')
+    const required = new Set(['identity'])
+    for (const providerType of types) {
+      if (['artiste', 'photo_video', 'decoration', 'communication', 'bien_etre', 'staff', 'autre'].includes(providerType)) required.add('activity_proof')
+      if (providerType === 'artiste') required.add('billing_proof')
+      if (['salle', 'materiel', 'food', 'securite', 'transport'].includes(providerType)) {
+        required.add('business_doc')
+        required.add('insurance')
+      }
+      if (providerType === 'salle') required.add('exploitation_proof')
+    }
+    return [...required]
   }
   return ['identity']
 }
@@ -460,10 +465,12 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
     // interface CLIENT, qui n'a rien à voir avec l'activité de prestataire.
     let providerDisplayName = null
     if (app.type === 'prestataire') {
-      perms.prestataireType = app.formData?.prestataireType || null
+      const providerTypes = normalizeProviderTypes(app.formData?.prestataireTypes, app.formData?.prestataireType)
+      perms.prestataireTypes = providerTypes
+      perms.prestataireType = getPrimaryProviderType({ prestataireTypes: providerTypes })
       const fd = app.formData || {}
       providerDisplayName =
-        (fd.prestataireType === 'artiste' && fd.nomScene?.trim())
+        (providerTypes.includes('artiste') && fd.nomScene?.trim())
           ? fd.nomScene.trim()
           : fd.nomCommercial?.trim() ||
             [fd.prenom, fd.nom].filter(Boolean).map(s => s.trim()).join(' ')
@@ -499,11 +506,14 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
         if (!existing) {
           const fd = app.formData || {}
           const regionId = normalizeRegionId(fd.pays || fd.zonesIntervention?.[0])
+          const providerTypes = normalizeProviderTypes(fd.prestataireTypes, fd.prestataireType)
           const profile = {
             userId: app.uid,
             name: providerDisplayName || fd.nomCommercial || [fd.prenom, fd.nom].filter(Boolean).join(' ') || 'Prestataire',
-            prestataireType: fd.prestataireType || null,
+            prestataireType: getPrimaryProviderType({ prestataireTypes: providerTypes }),
+            prestataireTypes: providerTypes,
             description: (fd.description || '').trim(),
+            specialitesLibre: (fd.specialitesLibre || '').trim(),
             location: (fd.ville || fd.adresseLieu || '').trim(),
             city: (fd.ville || fd.adresseLieu || '').trim(),
             country: (fd.pays || '').trim(),
@@ -579,7 +589,7 @@ export function getCompleteness(app) {
 
   const fieldScore = coreFields.filter(f => form[f] && String(form[f]).trim()).length / coreFields.length
 
-  const requiredDocs = getRequiredDocs(type, form.prestataireType)
+  const requiredDocs = getRequiredDocs(type, form.prestataireTypes || form.prestataireType)
   const uploadedDocs = Object.keys(app.documents || {})
   const docScore = requiredDocs.length > 0
     ? uploadedDocs.filter(d => requiredDocs.includes(d)).length / requiredDocs.length

@@ -6,7 +6,7 @@ import { USE_REAL_FIREBASE } from '../firebase'
 import { DIAL_CODES } from '../data/dialCodes'
 import {
   saveAccount, getAccountByEmail, getAllAccountsByEmail, getAccountByEmailAndRole,
-  addPendingValidation, checkPasswordStrength, validatePassword, ROLES, PRESTATAIRE_TYPES,
+  addPendingValidation, checkPasswordStrength, validatePassword, ROLES,
   requestAdditionalRole, getAccountByPhone, updateAccount, deleteAccount,
 } from '../utils/accounts'
 
@@ -153,6 +153,7 @@ async function doEmailRegister(data) {
       activeRole: baseRole,
       enabledRoles: [baseRole],
       prestataireType: isDedicated && baseRole === 'prestataire' ? (prestataireType || null) : null,
+      prestataireTypes: [],
       status: initialStatus,
       emailVerified: false,
       createdAt: Date.now(),
@@ -249,6 +250,7 @@ async function doEmailRegister(data) {
     activeRole: baseRole,
     enabledRoles: [baseRole],
     prestataireType: isDedicated && baseRole === 'prestataire' ? (prestataireType || null) : null,
+    prestataireTypes: [],
     status: initialStatus,
     emailVerified: false,
     createdAt: Date.now(),
@@ -377,7 +379,6 @@ export default function LoginPage() {
   const [regPhone, setRegPhone] = useState('')
   const [regDialCode, setRegDialCode] = useState('+33')
   const [showDialPicker, setShowDialPicker] = useState(false)
-  const [regPrestType, setRegPrestType] = useState('')
   const [regPwd, setRegPwd] = useState('')
   const [regPwdConfirm, setRegPwdConfirm] = useState('')
   const [showRegPwd, setShowRegPwd] = useState(false)
@@ -498,7 +499,6 @@ export default function LoginPage() {
     const pwdErrs = validatePassword(regPwd)
     if (pwdErrs.length > 0) { setError(pwdErrs[0]); return }
     if (regPwd !== regPwdConfirm) { setError('Les mots de passe ne correspondent pas.'); return }
-    if (regRole === 'prestataire' && !regPrestType) { setError('Sélectionne ton type de service.'); return }
 
     setLoading(true)
     try {
@@ -506,7 +506,7 @@ export default function LoginPage() {
         email: regEmail, password: regPwd,
         name: regName.trim(),
         phone: isDedicatedRole ? (regDialCode + regPhone.trim()).replace(/\s/g, '') : '',
-        role: regRole, prestataireType: regPrestType,
+        role: regRole,
       })
       if (userData._pendingOrgOnboarding) {
         // Org/prest : connecté directement, redirigé vers le formulaire d'onboarding
@@ -1092,29 +1092,12 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Prestataire type */}
+              {/* Le prestataire choisit ensuite une ou plusieurs activités dans son profil. */}
               {regRole === 'prestataire' && (
-                <div>
-                  <label style={S.label}>Type de service</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                    {PRESTATAIRE_TYPES.map(t => (
-                      <button key={t.key} type="button"
-                        onClick={() => setRegPrestType(t.key)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '8px',
-                          padding: '10px',
-                          background: regPrestType === t.key ? 'rgba(200,169,110,0.10)' : 'rgba(6,8,16,0.5)',
-                          border: `1px solid ${regPrestType === t.key ? 'rgba(200,169,110,0.45)' : 'rgba(255,255,255,0.07)'}`,
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          textAlign: 'left',
-                        }}>
-                        <span style={{ fontSize: '14px' }}>{t.icon}</span>
-                        <span style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: regPrestType === t.key ? '#c8a96e' : 'rgba(255,255,255,0.45)', lineHeight: 1.3 }}>{t.label}</span>
-                      </button>
-                    ))}
-                  </div>
+                <div style={{ padding: '11px 13px', borderRadius: 8, border: '1px solid rgba(78,232,200,.18)', background: 'rgba(78,232,200,.05)' }}>
+                  <p style={{ margin: 0, fontFamily: "Inter, sans-serif", fontSize: 11, color: 'rgba(255,255,255,.55)', lineHeight: 1.55 }}>
+                    Crée d’abord ton compte. Tu choisiras ensuite librement tes activités et compléteras ta page prestataire.
+                  </p>
                 </div>
               )}
 

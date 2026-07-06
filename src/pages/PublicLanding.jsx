@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PublicNav from '../components/PublicNav'
 import { getAllProviderProfiles, getCatalog } from '../utils/services'
-import { getProviderCategory } from '../utils/providerCategories'
+import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
 import { play as playDisc, stop as stopDisc, subscribe as subMusic } from '../utils/musicEngine'
 
 // ─── Vitrine publique (utilisateur NON connecté) ─────────────────────────────
@@ -220,7 +220,8 @@ export default function PublicLanding() {
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 16 }}>
               {providers.map((p, i) => {
-                const pc = getProviderCategory(p.prestataireType)
+                const providerCategories = getProviderCategories(p)
+                const pc = providerCategories[0] || getProviderCategory(p.prestataireType)
                 const visibleOffers = (catalogs[p.userId] || []).filter(item => item.available !== false)
                 const coverImage = p.coverUrl || firstOfferImage(visibleOffers) || p.photoUrl
                 return (
@@ -229,7 +230,7 @@ export default function PublicLanding() {
                       <div style={{ position: 'relative', height: 110, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, ${C.obsidian})`, overflow: 'hidden' }}>
                         {coverImage && <img src={coverImage} alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,9,14,.92), transparent 60%)' }} />
-                        <span style={{ position: 'absolute', top: 10, left: 10, fontFamily: FONT, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>{pc.label}</span>
+                        <span style={{ position: 'absolute', top: 10, left: 10, fontFamily: FONT, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>{pc.label}{providerCategories.length > 1 ? ` +${providerCategories.length - 1}` : ''}</span>
                         <div style={{ position: 'absolute', left: 12, bottom: -20, width: 46, height: 46, borderRadius: '50%', border: '2px solid #0b0d16', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 18, color: C.obsidian }}>
                           {p.photoUrl ? <img src={p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (p.name?.[0]?.toUpperCase() || '?')}
                         </div>

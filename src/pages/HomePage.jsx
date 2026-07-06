@@ -9,13 +9,47 @@ import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { getActiveBoostsByRegion } from '../utils/ticket'
-import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/eventUrgency'
+import { getEventCountdown, getEventEndTimestamp, isCountdownUrgent, getStockBadge, isEventOngoingOrStartingWithin } from '../utils/eventUrgency'
+import { matchesEntityRegion } from '../utils/locations'
 import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 import { IconTent, IconMic } from '../components/icons'
 import PublicLanding from './PublicLanding'
 import { getRecommendations, hasPreferences, personalizationEnabled } from '../utils/recommendations'
 import { PreferencesModal } from '../components/PreferencesEditor'
+
+function HostToolsWidget() {
+  const tools = [
+    { label: 'Billetterie', path: <path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4V7zM9 7v12"/> },
+    { label: 'Scanner QR', path: <><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><path d="M9 9h6v6H9z"/></> },
+    { label: 'Statistiques réelles', path: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></> },
+    { label: 'Prestataires', path: <><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.5-6 6-6s6 2 6 6M16 7h5M18.5 4.5v5"/></> },
+  ]
+  return (
+    <div style={{
+      width: '100%', maxWidth: 340, margin: '0 auto', padding: 20,
+      borderRadius: 20, background: 'rgba(6,6,12,.5)',
+      border: '1px solid rgba(255,255,255,.07)', backdropFilter: 'blur(16px)',
+      boxShadow: '0 20px 60px rgba(0,0,0,.38)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 15 }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ee8c8', boxShadow: '0 0 8px rgba(78,232,200,.8)' }} />
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)' }}>Ton espace organisateur</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+        {tools.map(tool => (
+          <div key={tool.label} style={{ minHeight: 76, padding: '12px 11px', borderRadius: 13, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.065)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 9 }}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#c9b0ff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{tool.path}</svg>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.78)', lineHeight: 1.25 }}>{tool.label}</span>
+          </div>
+        ))}
+      </div>
+      <p style={{ margin: '13px 0 0', fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,.32)', lineHeight: 1.5 }}>
+        Les données affichées dans ton espace proviennent uniquement de tes événements et de tes ventes.
+      </p>
+    </div>
+  )
+}
 
 function HostStatsWidget() {
   const [percent, setPercent] = useState(0)
@@ -156,18 +190,8 @@ function HostStatsWidget() {
 }
 
 function isEventPast(ev) {
-  try {
-    if (!ev.date) return false
-    const endTime = ev.endTime || ev.time || '23:59'
-    const [h, m] = endTime.split(':').map(Number)
-    const d = new Date(ev.date + 'T00:00:00')
-    d.setHours(h, m, 0, 0)
-    // Si endTime < startTime → croise minuit → ajouter 1 jour
-    const startTime = ev.time || '00:00'
-    const [sh, sm] = startTime.split(':').map(Number)
-    if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
-    return d.getTime() < Date.now()
-  } catch { return false }
+  const end = getEventEndTimestamp(ev)
+  return end > 0 && end < Date.now()
 }
 
 // Event visible si : non annulé, publishAt passé (ou absent), clôture non encore atteinte (ou absente), et pas expiré depuis 48h
@@ -228,12 +252,13 @@ function useReveal() {
   return { ref, visible }
 }
 
-function RevealSection({ children, delay = 0, style = {} }) {
+function RevealSection({ children, delay = 0, style = {}, eager = false }) {
   const { ref, visible } = useReveal()
+  const isVisible = eager || visible
   return (
     <div ref={ref} style={{
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(36px)',
+      opacity: isVisible ? 1 : 0,
+      transform: isVisible ? 'translateY(0)' : 'translateY(36px)',
       transition: `opacity 0.72s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.72s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
       ...style,
     }}>
@@ -314,7 +339,7 @@ function HeroVideoGallery() {
   // Auto-avance continue (pause au survol) → « circule de façon continue »
   useEffect(() => {
     if (paused || n < 2) return
-    const t = setInterval(() => setIdx(i => (i + 1) % n), 4200)
+    const t = setInterval(() => setIdx(i => (i + 1) % n), 2800)
     return () => clearInterval(t)
   }, [paused, n])
 
@@ -585,8 +610,9 @@ export default function HomePage() {
 
   // Top 3 : filtre par région sur tous les événements (statiques + créés par organisateurs)
   const regionName = selectedRegion?.name
+  const regionId = selectedRegion?.id
   const regionEvents = allEvents.filter(e =>
-    !regionName || regionName === 'Toutes' || e.region === regionName
+    !regionId || regionName === 'Toutes' || matchesEntityRegion(e, regionId)
   )
   // Non-boostés : triés par date la plus proche — on exclut les events clos/invisibles
   const baseTopThree = regionEvents
@@ -626,19 +652,11 @@ export default function HomePage() {
   // qu'un « aujourd'hui pile » qui disparaissait au passage de minuit.
   const tonightEvents = (() => {
     const now = Date.now()
-    const WINDOW = 18 * 3600 * 1000     // à venir dans 18h
-    const GRACE = 6 * 3600 * 1000        // ou démarré il y a moins de 6h
     return regionEvents
       .filter(e => isEventVisible(e) && !isEventClosed(e) && !isEventPast(e))
       .filter(e => remainingPlaces(e) > 0)
-      .filter(e => {
-        try {
-          const start = new Date(`${e.date}T${e.time || '20:00'}:00`).getTime()
-          const delta = start - now
-          return delta <= WINDOW && delta >= -GRACE
-        } catch { return false }
-      })
-      .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+      .filter(e => isEventOngoingOrStartingWithin(e, now, 18))
+      .sort((a, b) => new Date(`${a.date}T${a.time || '20:00'}`) - new Date(`${b.date}T${b.time || '20:00'}`))
   })()
 
   const handleRegionSelect = (region) => {
@@ -856,7 +874,7 @@ export default function HomePage() {
         )}
 
         {/* ── Top 3 Events ── */}
-        <RevealSection delay={60}>
+        <RevealSection delay={60} eager>
           <div style={{ marginBottom: 56 }}>
             {/* section header */}
             <div style={{ marginBottom: 36 }}>
@@ -1150,12 +1168,14 @@ export default function HomePage() {
                           {reason && (
                             <span style={{
                               position: 'absolute', top: 10, left: 10, maxWidth: 'calc(100% - 20px)',
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
                               fontFamily: 'Inter, sans-serif', fontSize: 10.5, fontWeight: 700,
                               color: '#e5d8ff', background: 'rgba(24,10,50,0.72)', backdropFilter: 'blur(8px)',
                               padding: '5px 10px', borderRadius: 999, border: '1px solid rgba(132,68,255,0.45)',
                               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                             }}>
-                              ✨ {reason}
+                              <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: '50%', background: '#c9b0ff', boxShadow: '0 0 7px rgba(201,176,255,.75)', flexShrink: 0 }} />
+                              {reason}
                             </span>
                           )}
                         </div>
@@ -1391,7 +1411,7 @@ export default function HomePage() {
                           {/* Right Column (Widget) */}
                           <div style={{ flex: '1 1 40%', minWidth: 0, display: 'flex', justifyContent: 'center' }}>
                             <div className="stats-widget-wrapper">
-                              <HostStatsWidget />
+                              <HostToolsWidget />
                             </div>
                           </div>
                         </div>

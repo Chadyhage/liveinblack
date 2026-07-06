@@ -1,4 +1,5 @@
 import { getRegionName, inferRegionIdFromCity, normalizeRegionId, normalizeRegionIds } from './locations.js'
+import { getPrimaryProviderType, normalizeProviderTypes } from './providerCategories.js'
 
 // ─── Prestataire Catalog ─────────────────────────────────────────────────────
 // Gère le catalogue public des prestataires.
@@ -137,8 +138,11 @@ export function saveProviderProfile(profile) {
   const regionId = normalizeRegionId(profile.regionId || profile.country || profile.zonesIntervention?.[0]) || inferRegionIdFromCity(profile.city || profile.location)
   const normalizedZones = normalizeRegionIds(profile.zonesIntervention)
   const city = (profile.city || profile.location || '').trim()
+  const prestataireTypes = normalizeProviderTypes(profile.prestataireTypes, profile.prestataireType)
   const normalized = {
     ...profile,
+    prestataireType: getPrimaryProviderType({ prestataireTypes }),
+    prestataireTypes,
     city,
     location: city,
     regionId,
@@ -171,6 +175,14 @@ export const CATALOG_CATEGORIES = {
   artiste: ['DJ set', 'Concert / live', 'Animation', 'Performance', 'Package', 'Autre'],
   materiel: ['Sono', 'Lumières', 'Scène / Structure', 'Mobilier', 'Autre'],
   food: ['Traiteur', 'Boissons', 'Bar / cocktails', 'Food truck', 'Pâtisserie', 'Autre'],
+  photo_video: ['Photographie', 'Video', 'Drone', 'Photobooth', 'Montage', 'Autre'],
+  decoration: ['Decoration', 'Scenographie', 'Fleurs', 'Mobilier decoratif', 'Autre'],
+  securite: ['Securite', 'Accueil', "Controle d'acces", 'Vestiaire', 'Autre'],
+  transport: ['Navette', 'Chauffeur', 'Livraison', 'Montage / logistique', 'Autre'],
+  staff: ['Service', 'Hotes / hotesses', 'Regie', 'Renfort technique', 'Autre'],
+  communication: ['Graphisme', 'Reseaux sociaux', 'Promotion', 'Impression', 'Autre'],
+  bien_etre: ['Maquillage', 'Coiffure', 'Stylisme', 'Preparation', 'Autre'],
+  autre: ['Prestation sur mesure', 'Accompagnement', 'Location', 'Autre'],
 }
 
 export const ORDER_STATUS_LABELS = {

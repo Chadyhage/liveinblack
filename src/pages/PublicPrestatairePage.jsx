@@ -5,7 +5,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getCatalog, getAllProviderProfiles } from '../utils/services'
 import { createDirectConversation, getUserId } from '../utils/messaging'
-import { getProviderCategory } from '../utils/providerCategories'
+import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
 import ShareToChatModal from '../components/ShareToChatModal'
 import { getRegionName, normalizeRegionIds } from '../utils/locations'
 
@@ -68,7 +68,8 @@ export default function PublicPrestatairePage() {
   }, [decodedId])
 
   const visibleCatalog = useMemo(() => catalog.filter(item => item.available !== false), [catalog])
-  const category = getProviderCategory(profile?.prestataireType)
+  const categories = getProviderCategories(profile || {})
+  const category = categories[0] || getProviderCategory(profile?.prestataireType)
   // isSelf = même compte (peu importe l'interface active) → jamais de bouton
   // « Envoyer un message » vers soi-même. canManage = interface prestataire
   // active → seul cas où « Gérer ma page » s'affiche.
@@ -170,7 +171,11 @@ export default function PublicPrestatairePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <h1 style={{ fontFamily: FONT, fontSize: 'clamp(27px,5vw,40px)', lineHeight: 1, letterSpacing: '-1px', margin: 0 }}>{profile.name}</h1>
             </div>
-            <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: category.color, margin: '8px 0 0' }}>{category.singular}</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 9 }}>
+              {categories.map(item => (
+                <span key={item.id} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: item.color, border: `1px solid ${item.color}55`, background: `${item.color}12`, borderRadius: 999, padding: '5px 9px' }}>{item.singular}</span>
+              ))}
+            </div>
           </div>
           {(canManage || !isSelf) && <button onClick={handleContact} style={primaryButton}><Icon name="message" /> {canManage ? 'Gérer ma page' : 'Envoyer un message'}</button>}
         </div>

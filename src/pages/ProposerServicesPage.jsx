@@ -15,7 +15,7 @@ import {
   updateCatalogItem,
   CATALOG_CATEGORIES,
 } from '../utils/services'
-import { getProviderCategory, normalizeProviderType } from '../utils/providerCategories'
+import { PROVIDER_CATEGORIES, getPrimaryProviderType, getProviderCategory, normalizeProviderTypes } from '../utils/providerCategories'
 import { regions } from '../data/regions'
 import { getRegionName, inferRegionIdFromCity, normalizeRegionId, normalizeRegionIds, REGION_OPTIONS } from '../utils/locations'
 
@@ -122,9 +122,13 @@ function EmptyCatalog({ onAdd }) {
   )
 }
 
-function providerProfileForm(profile, fallbackName = '') {
+function providerProfileForm(profile, fallbackName = '', fallbackTypes = []) {
   const regionId = normalizeRegionId(profile?.regionId || profile?.country || profile?.zonesIntervention?.[0]) || inferRegionIdFromCity(profile?.city || profile?.location) || 'france'
   const normalizedZones = normalizeRegionIds(profile?.zonesIntervention)
+  const hasProfileCategories = !!profile && (Array.isArray(profile.prestataireTypes) || !!profile.prestataireType)
+  const prestataireTypes = hasProfileCategories
+    ? normalizeProviderTypes(profile.prestataireTypes, profile.prestataireType)
+    : normalizeProviderTypes(fallbackTypes)
   return {
     name: profile?.name || fallbackName,
     description: profile?.description || '',
@@ -134,6 +138,7 @@ function providerProfileForm(profile, fallbackName = '') {
     zonesIntervention: normalizedZones.length ? normalizedZones : [regionId],
     photoUrl: profile?.photoUrl || '',
     coverUrl: profile?.coverUrl || '',
+    prestataireTypes,
   }
 }
 
@@ -141,12 +146,11 @@ export default function ProposerServicesPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const uid = getUserId(user)
-  const type = normalizeProviderType(user?.prestataireType)
-  const category = getProviderCategory(type)
+  const accountTypes = normalizeProviderTypes(user?.prestataireTypes, user?.prestataireType)
   const [tab, setTab] = useState('profil')
   const [profile, setProfile] = useState(() => getProviderProfile(uid))
   const [catalog, setCatalog] = useState(() => getCatalog(uid))
-  const [profileForm, setProfileForm] = useState(() => providerProfileForm(profile, user?.name || ''))
+  const [profileForm, setProfileForm] = useState(() => providerProfileForm(profile, user?.name || '', accountTypes))
   const [showItemForm, setShowItemForm] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [newItem, setNewItem] = useState({ name: '', price: '', unit: '', category: '', description: '', available: true, media: [] })
@@ -155,6 +159,9 @@ export default function ProposerServicesPage() {
   const [toast, setToast] = useState('')
   const avatarInputRef = useRef(null)
   const coverInputRef = useRef(null)
+  const providerTypes = normalizeProviderTypes(profileForm.prestataireTypes)
+  const type = getPrimaryProviderType({ prestataireTypes: providerTypes })
+  const category = getProviderCategory(type)
 
   useEffect(() => {
     if (!uid) return undefined
@@ -164,7 +171,7 @@ export default function ProposerServicesPage() {
       unlistenProfile = listenDoc(`providers/${uid}`, remoteProfile => {
         if (!remoteProfile) return
         setProfile(remoteProfile)
-        setProfileForm(providerProfileForm(remoteProfile, user?.name || ''))
+        setProfileForm(providerProfileForm(remoteProfile, user?.name || '', accountTypes))
       })
       unlistenCatalog = listenDoc(`catalogs/${uid}`, data => {
         if (!data?.items) return
@@ -193,7 +200,7 @@ export default function ProposerServicesPage() {
 
   if (user?.role !== 'prestataire') return <Navigate to="/prestataires" replace />
 
-  const catalogCategories = CATALOG_CATEGORIES[type] || []
+  const catalogCategories = [...new Set((providerTypes.length ? providerTypes : [type]).flatMap(providerType => CATALOG_CATEGORIES[providerType] || CATALOG_CATEGORIES.autre || []))]
 
   function notify(message) {
     setToast(message)
@@ -218,11 +225,27 @@ export default function ProposerServicesPage() {
       zonesIntervention: profileForm.zonesIntervention,
       userId: uid,
       prestataireType: type,
+      prestataireTypes: providerTypes,
       updatedAt: Date.now(),
     })
     setProfile(saved)
-    setProfileForm(providerProfileForm(saved, user?.name || ''))
+    setProfileForm(providerProfileForm(saved, user?.name || '', accountTypes))
+    import('../utils/firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`users/${uid}`, { prestataireType: type, prestataireTypes: providerTypes })
+    }).catch(() => {})
     notify('Ta page a été enregistrée.')
+  }
+
+  function toggleProviderCategory(categoryId) {
+    setProfileForm(current => {
+      const selected = normalizeProviderTypes(current.prestataireTypes)
+      const prestataireTypes = selected.includes(categoryId)
+        ? selected.filter(value => value !== categoryId)
+        : categoryId === 'autre'
+          ? ['autre']
+          : [...selected.filter(value => value !== 'autre'), categoryId]
+      return { ...current, prestataireTypes }
+    })
   }
 
   function toggleInterventionRegion(regionId) {
@@ -392,6 +415,18 @@ export default function ProposerServicesPage() {
                 <Field label="Nom de la page">
                   <input style={input} value={profileForm.name} onChange={event => setProfileForm(current => ({ ...current, name: event.target.value }))} placeholder="Nom commercial ou nom de scène" />
                 </Field>
+                <Field label="Mes activités" helper="Tu peux en choisir plusieurs et les modifier à tout moment. La première sélectionnée est utilisée comme catégorie principale.">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {PROVIDER_CATEGORIES.map(item => {
+                      const selected = providerTypes.includes(item.id)
+                      return (
+                        <button key={item.id} type="button" onClick={() => toggleProviderCategory(item.id)} style={{ padding: '8px 11px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: selected ? item.color : 'rgba(255,255,255,.62)', background: selected ? `${item.color}18` : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? `${item.color}88` : 'rgba(255,255,255,.12)'}` }}>
+                          {selected ? '✓ ' : ''}{item.singular}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </Field>
                 <Field label="Présentation">
                   <textarea style={{ ...input, minHeight: 125, resize: 'vertical' }} value={profileForm.description} onChange={event => setProfileForm(current => ({ ...current, description: event.target.value }))} placeholder="Présente ton activité, ton style et ce qui te différencie." />
                 </Field>
@@ -431,7 +466,9 @@ export default function ProposerServicesPage() {
                 </button>
                 <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={event => { handleImage('photoUrl', event.target.files?.[0]); event.target.value = '' }} />
                 <h3 style={{ fontFamily: FONT, fontSize: 20, margin: '11px 0 0' }}>{profileForm.name || 'Nom de ta page'}</h3>
-                <p style={{ fontFamily: FONT, fontSize: 12, fontWeight: 800, color: category.color, margin: '5px 0 0' }}>{category.singular}</p>
+                <p style={{ fontFamily: FONT, fontSize: 12, fontWeight: 800, color: category.color, margin: '5px 0 0' }}>
+                  {(providerTypes.length ? providerTypes : ['autre']).map(value => getProviderCategory(value).singular).join(' · ')}
+                </p>
                 <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', lineHeight: 1.55, margin: '12px 0 0' }}>{profileForm.description || 'Ta présentation apparaîtra ici.'}</p>
               </div>
             </aside>

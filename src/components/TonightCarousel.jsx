@@ -8,7 +8,14 @@ import { inRegion } from '../data/regions'
 // Places encore disponibles (somme des `available`, fallback `total`).
 // Exporté pour que HomePage filtre les events « il reste des places ».
 export function remainingPlaces(ev) {
-  return (ev.places || []).reduce((sum, p) => {
+  const places = Array.isArray(ev?.places) ? ev.places : []
+  if (places.length === 0) {
+    if (Number.isFinite(Number(ev?.ticketsAvailable))) return Math.max(0, Number(ev.ticketsAvailable))
+    if (Number.isFinite(Number(ev?.capacity))) return Math.max(0, Number(ev.capacity) - (Number(ev.ticketsSold) || 0))
+    // L'absence d'un schéma de stock ne signifie pas « complet ».
+    return Number.POSITIVE_INFINITY
+  }
+  return places.reduce((sum, p) => {
     const av = p.available != null ? Number(p.available)
              : p.total != null ? Number(p.total)
              : 0

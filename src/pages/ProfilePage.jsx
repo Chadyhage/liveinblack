@@ -13,6 +13,7 @@ import PlaylistSystem from '../components/PlaylistSystem'
 import { PreferencesModal, summarizePreferences } from '../components/PreferencesEditor'
 import { IconMail, IconIdBadge } from '../components/icons'
 import { events as staticEvents } from '../data/events'
+import { getProviderCategories, getPrimaryProviderType } from '../utils/providerCategories'
 
 // ─── Génération carte d'accréditation (organisateur + prestataire) ───────────
 function openCredentialPDF(app, role) {
@@ -30,12 +31,8 @@ function openCredentialPDF(app, role) {
 
   const typeLabel = isOrg
     ? (fd.typeEtablissement || 'Organisateur')
-    : ({
-        artiste:  'Artiste / Performeur',
-        salle:    'Salle & Espace événementiel',
-        materiel: 'Location de matériel',
-        food:     'Restauration & Boissons',
-      }[fd.prestataireType] || 'Prestataire')
+    : getProviderCategories(fd).map(category => category.singular).join(' · ')
+  const primaryProviderType = getPrimaryProviderType(fd)
 
   // Icône SVG propre (fini les emojis) selon le rôle / type de prestataire
   const svg = (paths) => `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`
@@ -46,7 +43,7 @@ function openCredentialPDF(app, role) {
         salle:    svg('<path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/>'),
         materiel: svg('<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><circle cx="12" cy="6" r="1"/>'),
         food:     svg('<path d="M3 2v7a2 2 0 0 0 4 0V2M5 11v11M11 2v20M11 8c0-3 1.5-6 4-6s4 3 4 6-1.5 4-4 4"/>'),
-      }[fd.prestataireType] || svg('<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>'))
+      }[primaryProviderType] || svg('<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>'))
 
   const roleLabel  = isOrg ? 'Organisateur Partenaire' : 'Prestataire Partenaire'
   const roleDesc   = isOrg
@@ -65,7 +62,7 @@ function openCredentialPDF(app, role) {
   ] : [
     ['Nom / Nom de scène',  displayName],
     ['Type de prestataire', typeLabel],
-    ...(fd.prestataireType === 'artiste' && fd.typeArtiste ? [['Spécialité', fd.typeArtiste]] : []),
+    ...(getProviderCategories(fd).some(category => category.id === 'artiste') && fd.typeArtiste ? [['Spécialité', fd.typeArtiste]] : []),
     ['Email',               app.email || '—'],
     ['Téléphone',           [fd.telephoneCode, fd.telephone].filter(Boolean).join(' ') || '—'],
     ['Ville',               fd.ville || '—'],
@@ -662,6 +659,7 @@ export default function ProfilePage() {
         ...base,
         userId: uid,
         prestataireType: base.prestataireType || user?.prestataireType,
+        prestataireTypes: base.prestataireTypes || user?.prestataireTypes || [],
         name,
         phone, // '' = numéro retiré (jamais undefined : le champ resterait en base)
         updatedAt: Date.now(),

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getAllProviderProfiles } from '../utils/services'
 import { MessagingSearchBar } from './MessagingActions'
 import { getEntityRegionIds, getRegionName, normalizeGeoText } from '../utils/locations'
+import { getProviderCategories } from '../utils/providerCategories'
 
 // Recherche globale de l'accueil : cherche À LA FOIS les événements, les
 // artistes/organisateurs (via les champs des events) et les prestataires
@@ -16,13 +17,6 @@ const EXAMPLES = [
   'une soirée afro',
   'un prestataire',
 ]
-
-// libellé court par type de prestataire
-const PREST_LABEL = {
-  salle: 'Salle', dj: 'DJ', artiste: 'Artiste', materiel: 'Matériel',
-  traiteur: 'Traiteur', photographe: 'Photo/Vidéo', securite: 'Sécurité',
-  supermarche: 'Supermarché', organisateur: 'Organisateur',
-}
 
 function readEvents() {
   try { return JSON.parse(localStorage.getItem('lib_created_events') || '[]') } catch { return [] }
@@ -80,14 +74,21 @@ export default function HeroSearch() {
     }))
 
     const prMatches = providers.filter(p => {
-      const hay = [p.name, p.city, p.location, p.country, p.description, p.prestataireType, PREST_LABEL[p.prestataireType],
+      const categories = getProviderCategories(p)
+      const hay = [p.name, p.city, p.location, p.country, p.description, p.specialitesLibre,
+        ...categories.flatMap(category => [category.label, category.singular]),
         ...getEntityRegionIds(p).map(getRegionName), ...(p.tags || [])].map(normalizeGeoText).join(' ')
       return hay.includes(query)
-    }).slice(0, 5).map(p => ({
-      kind: 'provider', id: p.userId, title: p.name || 'Prestataire',
-      meta: [PREST_LABEL[p.prestataireType] || 'Prestataire', p.city || p.location, p.country].filter(Boolean).join(' · '),
-      color: '#c8a96e', tag: PREST_LABEL[p.prestataireType] || 'Prestataire',
-    }))
+    }).slice(0, 5).map(p => {
+      const categories = getProviderCategories(p)
+      const primary = categories[0]
+      const label = `${primary?.singular || 'Prestataire'}${categories.length > 1 ? ` +${categories.length - 1}` : ''}`
+      return {
+        kind: 'provider', id: p.userId, title: p.name || 'Prestataire',
+        meta: [label, p.city || p.location, p.country].filter(Boolean).join(' · '),
+        color: primary?.color || '#c8a96e', tag: label,
+      }
+    })
 
     results = [...evMatches, ...prMatches]
   }

@@ -13,11 +13,9 @@ const FONT = 'Inter, sans-serif'
 export default function PublicAbout() {
   const navigate = useNavigate()
   const register = () => navigate('/connexion?mode=register')
-
   const [seconds, setSeconds] = useState(30)
   const [isCounting, setIsCounting] = useState(false)
   const ctaRef = useRef(null)
-
   const [activeTab, setActiveTab] = useState('client')
 
   const tabs = [
@@ -28,32 +26,23 @@ export default function PublicAbout() {
   const currentTab = tabs.find(t => t.id === activeTab)
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setSeconds(30)
-          setIsCounting(true)
-        } else {
-          setIsCounting(false)
-        }
-      },
-      { threshold: 0.15 }
-    )
-    if (ctaRef.current) {
-      observer.observe(ctaRef.current)
-    }
+    const target = ctaRef.current
+    if (!target) return undefined
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setSeconds(30)
+        setIsCounting(true)
+      } else {
+        setIsCounting(false)
+      }
+    }, { threshold: 0.2 })
+    observer.observe(target)
     return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
-    if (!isCounting) return
-    if (seconds <= 0) {
-      setIsCounting(false)
-      return
-    }
-    const timer = setTimeout(() => {
-      setSeconds(s => s - 1)
-    }, 1000)
+    if (!isCounting || seconds <= 0) return undefined
+    const timer = setTimeout(() => setSeconds(value => value - 1), 1000)
     return () => clearTimeout(timer)
   }, [seconds, isCounting])
 
@@ -68,10 +57,9 @@ export default function PublicAbout() {
         @media(min-width:720px){ .lb-navlink{ display:inline-block } }
         .lb-card{ transition:transform .25s cubic-bezier(.22,.9,.3,1), border-color .25s ease }
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4) }
-        @keyframes lib-tick {
-          0% { transform: scale(1.25); filter: brightness(1.3); }
-          100% { transform: scale(1.1); filter: brightness(1); }
-        }
+        @keyframes lib-flow { from { transform:translateX(-110%); } to { transform:translateX(310%); } }
+        @keyframes lib-node-in { from { opacity:.35; transform:translateY(7px); } to { opacity:1; transform:none; } }
+        @keyframes lib-tick { 0% { transform:scale(1.28); filter:brightness(1.35); } 100% { transform:scale(1); filter:brightness(1); } }
         .lb-fade-in {
           opacity: 0;
           transform: translateY(20px);
@@ -97,6 +85,17 @@ export default function PublicAbout() {
         .lb-tab:hover {
           color: #fff;
         }
+        .lb-journey{position:relative;padding:24px 20px;border-radius:18px;background:linear-gradient(150deg,rgba(255,255,255,.045),rgba(255,255,255,.018));border:1px solid rgba(255,255,255,.09);overflow:hidden;min-height:210px;display:flex;flex-direction:column;justify-content:center}
+        .lb-journey-line{position:absolute;left:16%;right:16%;top:82px;height:1px;background:rgba(255,255,255,.12);overflow:hidden}
+        .lb-journey-line:after{content:'';display:block;width:34%;height:100%;background:linear-gradient(90deg,transparent,var(--journey-color),transparent);animation:lib-flow 2.8s linear infinite}
+        .lb-journey-steps{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .lb-journey-step{text-align:center;min-width:0;transition:opacity .35s ease,transform .35s ease}
+        .lb-journey-dot{width:42px;height:42px;margin:0 auto 13px;border-radius:50%;display:grid;place-items:center;background:#090b13;border:1px solid rgba(255,255,255,.16);font:700 13px 'DM Mono',monospace;transition:all .35s ease}
+        .lb-journey-step.active{animation:lib-node-in .4s ease both}
+        .lb-journey-step.active .lb-journey-dot{color:#04040b;background:var(--journey-color);border-color:var(--journey-color);box-shadow:0 0 28px color-mix(in srgb,var(--journey-color) 34%,transparent)}
+        .lb-journey-step p{font-family:${FONT};font-size:12px;font-weight:700;margin:0;color:rgba(255,255,255,.72)}
+        .lb-journey-step span{display:block;font-family:${FONT};font-size:10.5px;line-height:1.45;color:rgba(255,255,255,.38);margin-top:5px}
+        @media(max-width:560px){.lb-journey{padding:20px 12px;min-height:195px}.lb-journey-line{left:18%;right:18%;top:72px}.lb-journey-dot{width:36px;height:36px}.lb-journey-step p{font-size:11px}.lb-journey-step span{font-size:9.5px}}
       `}</style>
 
       <PublicNav />
@@ -154,7 +153,7 @@ export default function PublicAbout() {
               <button onClick={currentTab.fn} style={btnSolid(currentTab.color)}>{currentTab.cta}</button>
             </div>
             <div>
-              <TabMockup type={activeTab} />
+              <JourneyVisual type={activeTab} color={currentTab.color} />
             </div>
           </div>
         </Section>
@@ -203,8 +202,10 @@ export default function PublicAbout() {
         <section ref={ctaRef} style={{ padding: '20px 22px 70px' }}>
           <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid rgba(255,255,255,.1)', background: `radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.2), transparent 60%), linear-gradient(160deg, rgba(20,14,32,.7), rgba(6,8,15,.7))`, backdropFilter: 'blur(16px)' }}>
             <h2 style={{ fontFamily: FONT, fontSize: 'clamp(26px,6vw,40px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>Prêt à vivre la nuit ?</h2>
-            <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>
-              Rejoins Live in Black gratuitement, en <span key={seconds} style={{ color: seconds <= 5 ? C.pink : C.teal, display: 'inline-block', fontWeight: 800, transition: 'color 0.4s ease', transform: isCounting && seconds > 0 ? 'scale(1.1)' : 'scale(1)', animation: isCounting && seconds > 0 ? 'lib-tick 0.3s ease-out' : 'none' }}>{seconds}</span> secondes.
+            <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 500, lineHeight: 1.5 }}>
+              Crée ton compte et découvre tout ce que Live in Black peut simplifier pour toi en{' '}
+              <span key={seconds} style={{ display: 'inline-block', minWidth: 20, color: seconds <= 5 ? C.pink : C.teal, fontWeight: 900, animation: isCounting && seconds > 0 ? 'lib-tick .35s ease-out' : 'none' }}>{seconds}</span>{' '}
+              secondes.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
               <button onClick={register} style={btnPrimary}>Créer mon compte</button>
@@ -234,3 +235,75 @@ const txt = { fontFamily: FONT, fontSize: 'clamp(15px,4vw,18px)', color: 'rgba(2
 const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none' }
 const btnGhost = { padding: '13px 24px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.18)' }
 const btnSolid = (c) => ({ padding: '11px 18px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: C.obsidian, background: c, border: 'none' })
+
+function ScrollFadeIn({ children, delay = 0 }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.unobserve(entry.target)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      className={`lb-fade-in ${visible ? 'visible' : ''}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  )
+}
+
+const JOURNEYS = {
+  client: [
+    ['01', 'Découvrir', 'Trouver une soirée'],
+    ['02', 'Réserver', 'Choisir son billet'],
+    ['03', 'Entrer', 'Présenter son QR'],
+  ],
+  organizer: [
+    ['01', 'Créer', 'Construire son événement'],
+    ['02', 'Publier', 'Ouvrir la billetterie'],
+    ['03', 'Piloter', 'Gérer et scanner'],
+  ],
+  provider: [
+    ['01', 'Présenter', 'Créer sa vitrine'],
+    ['02', 'Proposer', 'Ajouter son catalogue'],
+    ['03', 'Échanger', 'Recevoir un message'],
+  ],
+}
+
+function JourneyVisual({ type, color }) {
+  const [activeStep, setActiveStep] = useState(0)
+
+  useEffect(() => {
+    setActiveStep(0)
+    const timer = setInterval(() => setActiveStep(step => (step + 1) % 3), 1800)
+    return () => clearInterval(timer)
+  }, [type])
+
+  return (
+    <div className="lb-journey" style={{ '--journey-color': color }} aria-label={`Parcours ${type}`}>
+      <div className="lb-journey-line" />
+      <div className="lb-journey-steps">
+        {JOURNEYS[type].map(([number, title, detail], index) => (
+          <div key={title} className={`lb-journey-step ${activeStep === index ? 'active' : ''}`} style={{ opacity: activeStep === index ? 1 : .52, transform: activeStep === index ? 'translateY(-3px)' : 'none' }}>
+            <div className="lb-journey-dot">{number}</div>
+            <p>{title}</p>
+            <span>{detail}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
