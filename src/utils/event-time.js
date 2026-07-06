@@ -29,6 +29,26 @@ export function eventEndMs(ev) {
   } catch { return 0 }
 }
 
+// Fin métier effective : closingDate permet à l'organisateur de publier une
+// heure de clôture précise. À défaut, on retombe sur date + endTime.
+export function eventEffectiveEndMs(ev) {
+  if (ev?.closingDate) {
+    const closing = new Date(ev.closingDate).getTime()
+    if (Number.isFinite(closing)) return closing
+  }
+  return eventEndMs(ev)
+}
+
+// Un événement annulé est immédiatement clos. Pour un événement normal, le
+// billet expire dès la fin effective ; graceMs est réservé aux outils internes
+// qui ont explicitement besoin d'une marge opérationnelle.
+export function isEventEnded(ev, now = Date.now(), graceMs = 0) {
+  if (!ev) return false
+  if (ev.cancelled) return true
+  const end = eventEffectiveEndMs(ev)
+  return end > 0 && now >= end + Math.max(0, Number(graceMs) || 0)
+}
+
 // « La soirée a commencé » (borne basse fiable). Un event annulé n'a jamais commencé.
 export function isEventStarted(ev, now = Date.now()) {
   if (!ev || ev.cancelled) return false
@@ -41,9 +61,6 @@ export function isEventStarted(ev, now = Date.now()) {
 // (le POS sert des consos jusqu'à ~12h après la fin théorique).
 export function isEventLive(ev, now = Date.now(), graceMs = 0) {
   if (!isEventStarted(ev, now)) return false
-  if (ev.closingDate) {
-    try { return new Date(ev.closingDate).getTime() + graceMs > now } catch { return true }
-  }
-  const end = eventEndMs(ev)
+  const end = eventEffectiveEndMs(ev)
   return end > 0 && now < end + graceMs
 }
