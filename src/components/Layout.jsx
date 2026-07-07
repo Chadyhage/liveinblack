@@ -722,6 +722,7 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
     }
     if (n.type === 'staff_invited' || n.type === 'staff_removed') return { path: '/mes-soirees' }
     if (n.type?.startsWith('application_')) return { path: '/mon-dossier' }
+    if (n.type?.startsWith('sub_')) return { path: '/proposer' }
     if (n.type?.startsWith('organizer_')) {
       const eventId = n.data?.eventId
       return eventId ? { path: `/evenements/${eventId}` } : { path: '/evenements' }

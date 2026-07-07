@@ -16,6 +16,7 @@ import {
   CATALOG_CATEGORIES,
 } from '../utils/services'
 import { PROVIDER_CATEGORIES, getPrimaryProviderType, getProviderCategory, normalizeProviderTypes } from '../utils/providerCategories'
+import { subPresentation, subPriceLabel } from '../utils/providerSub'
 import { regions } from '../data/regions'
 import { getRegionName, inferRegionIdFromCity, normalizeRegionId, normalizeRegionIds, REGION_OPTIONS } from '../utils/locations'
 
@@ -157,6 +158,7 @@ export default function ProposerServicesPage() {
   const [uploading, setUploading] = useState(null)
   const [mediaUploading, setMediaUploading] = useState(false)
   const [toast, setToast] = useState('')
+  const [renewing, setRenewing] = useState(false)
   const avatarInputRef = useRef(null)
   const coverInputRef = useRef(null)
   const providerTypes = normalizeProviderTypes(profileForm.prestataireTypes)
@@ -205,6 +207,43 @@ export default function ProposerServicesPage() {
   function notify(message) {
     setToast(message)
     setTimeout(() => setToast(''), 2400)
+  }
+
+  // Retour depuis FedaPay (?sub=retour) : le webhook fait autorité et prolonge
+  // l'abonnement ; le listener providers/{uid} mettra le statut à jour. On informe
+  // juste que la confirmation peut prendre quelques secondes.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('sub') === 'retour') {
+      notify('Paiement reçu — ta visibilité est mise à jour dans quelques secondes.')
+      window.history.replaceState({}, '', '/proposer')
+    }
+  }, [])
+
+  // Lance le renouvellement : paiement ponctuel FedaPay (redirection). Aucun
+  // prélèvement automatique — le prestataire déclenche lui-même.
+  async function handleRenew() {
+    if (renewing) return
+    setRenewing(true)
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const res = await fetch('/api/fedapay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ action: 'subscribe', email: user?.email || undefined }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) {
+        setRenewing(false)
+        notify(data.error || 'Impossible de démarrer le paiement. Réessaie.')
+        return
+      }
+      window.location.href = data.url
+    } catch {
+      setRenewing(false)
+      notify('Erreur réseau. Réessaie dans un instant.')
+    }
   }
 
   function handleSaveProfile() {
@@ -396,6 +435,31 @@ export default function ProposerServicesPage() {
           </div>
           {profile?.userId && <button onClick={() => navigate(`/prestataires/${encodeURIComponent(uid)}`)} style={secondaryButton}>Voir ma page publique</button>}
         </header>
+
+        {(() => {
+          const p = subPresentation(profile)
+          const dim = p.tone === 'off'
+          return (
+            <section style={{ ...card, padding: 16, marginTop: 18, borderColor: `${p.color}44`, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+              <div style={{ width: 8, alignSelf: 'stretch', minHeight: 40, borderRadius: 8, background: p.color, flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, margin: 0, color: dim ? 'rgba(255,255,255,.9)' : p.color }}>{p.title}</h2>
+                  {p.status !== 'none' && (
+                    <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: p.color, background: `${p.color}1e`, border: `1px solid ${p.color}55`, borderRadius: 999, padding: '2px 8px' }}>
+                      {p.status === 'active' ? 'Actif' : p.status === 'expiring_soon' ? 'Expire bientôt' : p.status === 'grace' ? 'Grâce' : 'Expiré'}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '5px 0 0', lineHeight: 1.45 }}>{p.message}</p>
+                <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{subPriceLabel()}</p>
+              </div>
+              <button onClick={handleRenew} disabled={renewing} style={{ ...primaryButton, background: `linear-gradient(135deg,${p.color},${p.color}cc)`, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
+                {renewing ? 'Redirection…' : p.cta}
+              </button>
+            </section>
+          )
+        })()}
 
         <div style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.07)' }}>
           {[

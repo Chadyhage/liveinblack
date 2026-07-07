@@ -26,6 +26,7 @@ import {
   isApprovedTransactionEvent, transactionAmountMatches,
 } from '../lib/fedapay.js'
 import { requireAuth } from '../lib/verifyAuth.js'
+import { PROVIDER_SUB, computeRenewal } from '../lib/providerSubscription.js'
 
 // Raw body indispensable pour vérifier la signature du webhook.
 export const config = {
@@ -60,8 +61,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Corps JSON invalide' })
     }
     if (body.action === 'checkout') return checkout(req, res, body)
+    if (body.action === 'subscribe') return subscriptionCheckout(req, res, body)
     if (body.action === 'release') return release(req, res, body)
-    return res.status(400).json({ error: "action doit être 'checkout' ou 'release'" })
+    return res.status(400).json({ error: "action doit être 'checkout', 'subscribe' ou 'release'" })
   }
 
   res.setHeader('Allow', 'GET, POST')
@@ -279,6 +281,157 @@ async function checkout(req, res, body) {
   }
 }
 
+// ─── Abonnement prestataire : checkout de RENOUVELLEMENT (manuel, 30 j) ──────
+// Paiement ponctuel FedaPay (le mobile money n'a pas de prélèvement récurrent).
+// L'identité = le token vérifié (jamais le body) → un prestataire ne peut
+// renouveler QUE son propre profil.
+async function subscriptionCheckout(req, res, body) {
+  const caller = await requireAuth(req, res)
+  if (!caller) return
+  try {
+    const uid = caller.uid
+    const db = getDb()
+    const provSnap = await db.collection('providers').doc(uid).get()
+    if (!provSnap.exists) {
+      return res.status(404).json({ error: "Profil prestataire introuvable." })
+    }
+    const amount = PROVIDER_SUB.price
+    const origin = req.headers.origin || `https://${req.headers.host}`
+    // reference unique par tentative (une transaction FedaPay = un renouvellement)
+    const ref = `sub_${uid}_${Date.now().toString(36)}`
+
+    let txn = null
+    let payUrl = null
+    try {
+      txn = await createTransaction({
+        description: `Abonnement prestataire LIVEINBLACK — ${PROVIDER_SUB.periodDays} jours`,
+        amount,
+        callbackUrl: `${origin}/proposer?sub=retour`,
+        customer: body?.email ? { email: String(body.email) } : null,
+        metadata: { kind: 'provider_subscription', providerUid: uid },
+        reference: ref,
+      })
+      const tok = await createToken(txn.id)
+      payUrl = tok.url
+      if (!payUrl) throw new Error('Lien de paiement FedaPay manquant')
+    } catch (fpErr) {
+      return res.status(502).json({ error: fpErr.message || 'FedaPay error' })
+    }
+
+    // Registre serveur = source de vérité pour le webhook (kind + montant attendu).
+    await db.collection('fedapay_txns').doc(String(txn.id)).set({
+      txnId: String(txn.id),
+      reference: txn.reference || ref,
+      kind: 'provider_subscription',
+      providerUid: uid,
+      amountTotal: amount,
+      currency: 'XOF',
+      status: 'pending',
+      createdAt: FieldValue.serverTimestamp(),
+    })
+
+    return res.status(200).json({ url: payUrl, transactionId: String(txn.id) })
+  } catch (err) {
+    console.error('[/api/fedapay subscribe] error:', err)
+    return res.status(500).json({ error: err.message || 'FedaPay error' })
+  }
+}
+
+// Prolongation de l'abonnement après paiement CONFIRMÉ (webhook = autorité).
+// Idempotent + anti-concurrence : tout est dans UNE transaction, gardée par
+// `settled` sur le doc fedapay_txns (un retry FedaPay ne prolonge pas 2×).
+async function finalizeProviderSubscription(db, entity, meta) {
+  const txnId = String(entity?.id || '')
+  const uid = String(meta?.providerUid || '')
+  if (!txnId || !uid) {
+    console.error('[fedapay-webhook] sub sans providerUid — revue:', txnId)
+    return
+  }
+  // Intégrité montant : le montant payé doit être celui attendu.
+  const paidAmount = Number(entity?.amount) || 0
+  if (!transactionAmountMatches(paidAmount, meta.amountTotal)) {
+    console.error('[fedapay-webhook] sub montant ≠ attendu:', paidAmount, 'vs', meta.amountTotal, txnId)
+    await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
+      provider: 'fedapay', transactionId: txnId, providerUid: uid,
+      reason: 'sub_amount_mismatch', status: 'manual_review',
+      createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+    return
+  }
+
+  const txnRef = db.collection('fedapay_txns').doc(txnId)
+  const provRef = db.collection('providers').doc(uid)
+  const now = Date.now()
+  let renewal = null
+
+  await db.runTransaction(async (tx) => {
+    const tSnap = await tx.get(txnRef)
+    if (tSnap.exists && tSnap.data().settled === true) return // déjà traité (retry)
+    const pSnap = await tx.get(provRef)
+    const prov = pSnap.exists ? pSnap.data() : {}
+
+    // Suspension admin active → on encaisse mais on NE réactive PAS (spec §14).
+    const adminSuspended = prov.adminSuspended === true
+    renewal = computeRenewal(prov, now)
+
+    tx.set(provRef, {
+      subscriptionCurrency: 'XOF',
+      subscriptionPrice: PROVIDER_SUB.price,
+      subscriptionStartedAt: renewal.subscriptionStartedAt,
+      subscriptionExpiresAt: renewal.subscriptionExpiresAt,
+      gracePeriodEndsAt: renewal.gracePeriodEndsAt,
+      lastSubscriptionPaymentAt: now,
+      subscriptionStatus: adminSuspended ? 'suspended' : 'active',
+      // Le gate isProviderVisible lit ce booléen : visible sauf suspension admin.
+      subscriptionActive: adminSuspended ? false : true,
+      _syncedAt: now,
+    }, { merge: true })
+
+    tx.set(db.collection('subscription_payments').doc(txnId), {
+      id: txnId,
+      providerUid: uid,
+      amount: paidAmount,
+      currency: 'XOF',
+      paymentMethod: 'fedapay',
+      status: 'paid',
+      paidAt: now,
+      periodStart: renewal.periodStart,
+      periodEnd: renewal.periodEnd,
+      transactionReference: meta.reference || null,
+      createdAt: FieldValue.serverTimestamp(),
+    })
+
+    tx.set(txnRef, { settled: true, status: 'approved', settledAt: now }, { merge: true })
+  })
+
+  if (renewal) {
+    // Notification in-app côté prestataire (écriture directe Admin SDK).
+    await pushProviderNotif(db, uid, {
+      type: 'sub_renewed',
+      title: 'Abonnement renouvelé ✓',
+      body: `Ton profil est visible pendant ${PROVIDER_SUB.periodDays} jours de plus.`,
+    })
+    console.log('[fedapay-webhook] abonnement prestataire prolongé:', uid, '→', new Date(renewal.subscriptionExpiresAt).toISOString())
+  }
+}
+
+// Écrit une notification dans notifications/{uid} (l'organisateur/serveur ne
+// passe pas par le client). Merge + cap 50, même schéma que la cloche.
+async function pushProviderNotif(db, uid, { type, title, body, data = {} }) {
+  try {
+    const notif = {
+      id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      type, title, body, data, read: false, createdAt: Date.now(),
+    }
+    const ref = db.collection('notifications').doc(String(uid))
+    const cur = await ref.get()
+    const items = cur.exists ? (cur.data().items || []) : []
+    await ref.set({ items: [notif, ...items].slice(0, 50), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+  } catch (e) {
+    console.warn('[fedapay] notif prestataire échouée (non bloquant):', e.message)
+  }
+}
+
 // ─── Vérification d'une transaction (retour /paiement-reussi) ────────────────
 async function verify(req, res) {
   const caller = await requireAuth(req, res)
@@ -391,7 +544,15 @@ async function webhook(req, res) {
     const db = getDb()
 
     if (isApprovedTransactionEvent(name, entity)) {
-      await finalizeFedapayBooking(db, entity)
+      // Un paiement approuvé peut être un BILLET ou un ABONNEMENT prestataire :
+      // on regarde le registre serveur (kind) pour router vers le bon traitement.
+      const mSnap = await db.collection('fedapay_txns').doc(String(entity.id || '')).get()
+      const m = mSnap.exists ? mSnap.data() : null
+      if (m?.kind === 'provider_subscription') {
+        await finalizeProviderSubscription(db, entity, m)
+      } else {
+        await finalizeFedapayBooking(db, entity)
+      }
       return res.status(200).json({ received: true })
     }
 
