@@ -405,8 +405,12 @@ export default function OnboardingPrestataire() {
         uid = cred.user.uid
         if (name) await updateProfile(cred.user, { displayName: name })
         const account = {
+          // Base 'client' (consommateur) + interface prestataire : tout pro est
+          // aussi un client → il peut basculer d'interface (switcher « Mes
+          // interfaces ») et réserver des billets comme n'importe qui. Cohérent
+          // avec l'onboarding organisateur qui part aussi de 'client'.
           uid, email: loginEmail, name, phone,
-          role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['prestataire'],
+          role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['client', 'prestataire'],
           status: 'draft', emailVerified: false, emailVerificationRequired: true, createdAt: Date.now(),
         }
         await setDoc(doc(db, 'users', uid), account)
@@ -422,7 +426,7 @@ export default function OnboardingPrestataire() {
       } else {
         uid = 'local-prest-' + Date.now()
         const { saveAccount } = await import('../utils/accounts')
-        const account = { uid, email: loginEmail, name, phone, role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['prestataire'], status: 'draft', emailVerified: true, createdAt: Date.now() }
+        const account = { uid, email: loginEmail, name, phone, role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['client', 'prestataire'], status: 'draft', emailVerified: true, createdAt: Date.now() }
         saveAccount(account)
         setUser(account)
       }
