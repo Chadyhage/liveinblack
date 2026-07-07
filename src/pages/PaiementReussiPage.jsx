@@ -52,6 +52,7 @@ export default function PaiementReussiPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [eventName, setEventName] = useState('')
   const [copied, setCopied] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   const SUPPORT_EMAIL = 'hagechady@liveinblack.com'
   function copySupport() {
@@ -343,7 +344,16 @@ export default function PaiementReussiPage() {
       setState('success')
     })()
     return () => { cancelled = true }
-  }, [sessionId, fedapayTxnId, bookingIdParam, user, setUser]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionId, fedapayTxnId, bookingIdParam, user, setUser, attempt]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-refresh borné : tant que « en attente », on re-vérifie tout seul toutes
+  // les 3,5 s (jusqu'à 5 fois) — le webhook finit en général en quelques secondes.
+  // Re-vérification idempotente côté serveur → l'utilisateur n'a plus à cliquer.
+  useEffect(() => {
+    if (state !== 'pending' || attempt >= 5) return
+    const t = setTimeout(() => setAttempt(a => a + 1), 3500)
+    return () => clearTimeout(t)
+  }, [state, attempt])
 
   const successMsg = tickets.length > 0
     ? `${tickets.length} billet${tickets.length > 1 ? 's' : ''} pour ${eventName ? '« ' + eventName + ' »' : 'ton événement'} ${tickets.length > 1 ? 'sont disponibles' : 'est disponible'} dans ton compte.`
@@ -400,8 +410,11 @@ export default function PaiementReussiPage() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
                 <button onClick={() => navigate('/profil')} style={btnPrimary(COLORS.violet)}>Voir mes billets →</button>
-                <button onClick={() => window.location.reload()} style={btnGhostS}>Rafraîchir</button>
+                <button onClick={() => setAttempt(a => a + 1)} style={btnGhostS}>Vérifier maintenant</button>
               </div>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 14 }}>
+                {attempt < 5 ? 'Vérification automatique en cours…' : 'Tes billets apparaîtront dans « Mes billets » dès confirmation.'}
+              </p>
             </>
           )}
 
