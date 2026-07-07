@@ -159,6 +159,19 @@ export async function startStripeBoostCheckout(params) {
   }
 }
 
+export async function getBoostAvailability(eventId) {
+  try {
+    if (!eventId) return null
+    const res = await fetch(`/api/checkout-boost?eventId=${encodeURIComponent(eventId)}`, {
+      headers: { ...(await authHeaders()) },
+    })
+    if (!res.ok) return null
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
 /**
  * Vérifie le statut d'une session Stripe après redirect success.
  * @param {string} sessionId

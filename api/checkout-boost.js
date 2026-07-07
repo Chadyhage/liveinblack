@@ -22,14 +22,73 @@ function eventEndTimestamp(event) {
   return end.getTime()
 }
 
+async function readBoostAvailability(db, event, now = Date.now()) {
+  const region = normalizeBoostRegion(event.regionId || event.country || event.region)
+  if (!region) return { region: '', slots: [] }
+
+  const legacySnaps = await Promise.all(
+    [1, 2, 3].map(position => db.collection('boosts').where('position', '==', position).get())
+  )
+  const activeByPosition = new Map()
+  for (const snap of legacySnaps) {
+    for (const doc of snap.docs) {
+      const boost = doc.data()
+      const position = Number(boost.position)
+      if (!position || activeByPosition.has(position)) continue
+      const expiresAtMs = new Date(boost.expiresAt || 0).getTime()
+      const boostRegion = normalizeBoostRegion(boost.regionId || boost.region)
+      const active = boostRegion === region
+        && expiresAtMs > now
+        && boost.conflict !== true
+        && !['refunded_conflict', 'cancelled'].includes(boost.status)
+      if (active) activeByPosition.set(position, { status: 'active', until: new Date(expiresAtMs).toISOString() })
+    }
+  }
+
+  const slotRefs = [1, 2, 3].map(position => db.collection('boost_slots').doc(boostSlotId(region, position)))
+  const slotSnaps = await db.getAll(...slotRefs)
+
+  const slots = [1, 2, 3].map((position, index) => {
+    const active = activeByPosition.get(position)
+    if (active) return { position, ...active }
+
+    const slot = slotSnaps[index].exists ? slotSnaps[index].data() : null
+    const activeUntilMs = new Date(slot?.activeUntil || 0).getTime() || 0
+    const holdUntilMs = new Date(slot?.holdUntil || 0).getTime() || 0
+    if (activeUntilMs > now) return { position, status: 'active', until: new Date(activeUntilMs).toISOString() }
+    if (holdUntilMs > now && slot?.status === 'pending') return { position, status: 'held', until: new Date(holdUntilMs).toISOString() }
+    return { position, status: 'available', until: null }
+  })
+
+  return { region, slots }
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST')
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const caller = await requireAuth(req, res)
   if (!caller) return
+
+  if (req.method === 'GET') {
+    try {
+      const eventId = String(req.query?.eventId || '')
+      if (!eventId) return res.status(400).json({ error: 'eventId requis.' })
+      const db = getDb()
+      const eventSnap = await db.collection('events').doc(eventId).get()
+      if (!eventSnap.exists) return res.status(404).json({ error: "Cet événement n'existe pas sur le serveur." })
+      const event = { ...eventSnap.data(), id: eventSnap.id }
+      const ownerId = String(event.organizerId || event.createdBy || '')
+      if (!ownerId || ownerId !== caller.uid) return res.status(403).json({ error: "Tu ne peux consulter que tes propres boosts." })
+      const eventEnd = eventEndTimestamp(event)
+      return res.status(200).json({ eventEnd, ...(await readBoostAvailability(db, event)) })
+    } catch (err) {
+      console.error('[/api/checkout-boost availability] error:', err)
+      return res.status(500).json({ error: 'Impossible de vérifier les créneaux de boost.' })
+    }
+  }
 
   let slotRef = null
   let reservedBoostId = ''

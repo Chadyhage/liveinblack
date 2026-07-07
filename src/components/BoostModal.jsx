@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { isBoostSlotTaken } from '../utils/ticket'
 import { getUserId } from '../utils/messaging'
-import { startStripeBoostCheckout } from '../utils/stripe'
+import { getBoostAvailability, startStripeBoostCheckout } from '../utils/stripe'
 import { getEventEndTimestamp } from '../utils/eventUrgency'
 import { BOOST_PLANS } from '../../lib/boosts.js'
 
@@ -29,6 +29,8 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
   const [paying, setPaying] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [globalBoosts, setGlobalBoosts] = useState([])
+  const [availability, setAvailability] = useState(null)
+  const [checkingSlots, setCheckingSlots] = useState(false)
 
   useEffect(() => {
     let unsub = () => {}
@@ -36,15 +38,48 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
     return () => unsub()
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    if (!event?.id) return
+    setCheckingSlots(true)
+    getBoostAvailability(event.id)
+      .then(data => { if (!cancelled) setAvailability(data) })
+      .finally(() => { if (!cancelled) setCheckingSlots(false) })
+    return () => { cancelled = true }
+  }, [event?.id])
+
   const activePlan = useMemo(() => BOOST_PLANS.find(plan => plan.position === activePosition), [activePosition])
   const chosen = selectedPlan ? BOOST_PLANS.find(plan => plan.position === selectedPlan.position) : null
   const chosenTier = chosen ? chosen.tiers[selectedPlan.tierIdx] : null
   if (!event) return null
 
+  const availabilityByPosition = new Map((availability?.slots || []).map(slot => [Number(slot.position), slot]))
   const positionTaken = position => isBoostSlotTaken(position, regionOf(event), event.id, globalBoosts)
+  const positionStatus = position => {
+    if (positionTaken(position)) return { status: 'active' }
+    return availabilityByPosition.get(Number(position)) || { status: 'available' }
+  }
+  const positionBlocked = position => ['active', 'held'].includes(positionStatus(position).status)
+  const positionLabel = position => {
+    const status = positionStatus(position).status
+    if (status === 'held') return 'Réservé temporairement'
+    if (status === 'active') return 'Occupé'
+    return checkingSlots ? 'Vérification…' : 'Disponible'
+  }
+  const positionColor = position => {
+    const status = positionStatus(position).status
+    if (status === 'held') return '#c8a96e'
+    if (status === 'active') return '#ee8faf'
+    return 'rgba(78,232,200,.72)'
+  }
 
   async function confirmBoost() {
     if (!chosen || !chosenTier) return
+    if (positionBlocked(chosen.position)) {
+      setErrorMsg('Ce créneau est déjà pris ou temporairement réservé. Choisis une autre position.')
+      setStep('error')
+      return
+    }
     const uid = getUserId(user)
     if (!uid) return
     setPaying(true)
@@ -112,13 +147,51 @@ export default function BoostModal({ event, onClose, onBoostDone }) {
           <div className="boost-pay-actions"><button className="boost-ghost" onClick={() => setStep('pick')}>Retour</button><button className="boost-primary" onClick={confirmBoost} disabled={paying}>{paying ? 'Redirection vers Stripe…' : `Payer ${chosenTier.price.toFixed(2).replace('.', ',')} €`}</button></div>
         </> : <>
           <div><p className="boost-label">1. Choisis ta position</p><div className="boost-position-grid">
-            {BOOST_PLANS.map(plan => { const taken = positionTaken(plan.position); const active = activePosition === plan.position; return <button key={plan.position} className="boost-position" onClick={() => {setActivePosition(plan.position);setSelectedPlan(null)}} style={{border:active?'1px solid rgba(200,169,110,.65)':'1px solid rgba(255,255,255,.09)',background:active?'linear-gradient(145deg,rgba(200,169,110,.18),rgba(200,169,110,.04))':'rgba(255,255,255,.025)'}}><span className="boost-position-top"><RankIcon position={plan.position}/>{plan.label}</span><span className="boost-position-state" style={{color:taken?'#ee8faf':'rgba(78,232,200,.72)'}}>{taken?'Occupé':'Disponible'}</span></button> })}
+            {BOOST_PLANS.map(plan => {
+              const blocked = positionBlocked(plan.position)
+              const active = activePosition === plan.position
+              return <button
+                key={plan.position}
+                className="boost-position"
+                onClick={() => { setActivePosition(plan.position); setSelectedPlan(null) }}
+                style={{
+                  border: active ? '1px solid rgba(200,169,110,.65)' : '1px solid rgba(255,255,255,.09)',
+                  background: active ? 'linear-gradient(145deg,rgba(200,169,110,.18),rgba(200,169,110,.04))' : 'rgba(255,255,255,.025)',
+                  opacity: blocked ? .78 : 1,
+                }}
+              >
+                <span className="boost-position-top"><RankIcon position={plan.position}/>{plan.label}</span>
+                <span className="boost-position-state" style={{ color: positionColor(plan.position) }}>{positionLabel(plan.position)}</span>
+              </button>
+            })}
           </div></div>
-          <div><div className="boost-duration-head"><div><p className="boost-label" style={{marginBottom:5}}>2. Choisis la durée</p><p className="boost-description">{activePlan.description}</p></div>{positionTaken(activePosition)&&<span style={{font:`8px ${mono}`,color:'#ee8faf',textTransform:'uppercase'}}>Créneau occupé</span>}</div>
-            <div className="boost-duration-grid">{activePlan.tiers.map((tier,index) => { const selected=selectedPlan?.position===activePosition&&selectedPlan?.tierIdx===index; const exceeds=eventEnd>0&&Date.now()+tier.days*86400000>eventEnd; const disabled=positionTaken(activePosition)||exceeds; return <button key={tier.days} className="boost-duration" disabled={disabled} title={exceeds?'Cette durée dépasse la date de l’événement':positionTaken(activePosition)?'Emplacement occupé':''} onClick={()=>setSelectedPlan({position:activePosition,tierIdx:index})} style={{border:selected?'1px solid rgba(78,232,200,.7)':'1px solid rgba(255,255,255,.09)',background:selected?'rgba(78,232,200,.09)':'rgba(255,255,255,.025)',cursor:disabled?'not-allowed':'pointer',opacity:disabled?.38:1}}><span style={{color:selected?'#4ee8c8':'rgba(255,255,255,.48)'}}>{tier.label}</span><strong style={{color:selected?'#fff':activePlan.color}}>{tier.price.toFixed(2).replace('.', ',')} €</strong>{exceeds&&<small style={{display:'block',font:`7px ${mono}`,color:'rgba(255,255,255,.5)',marginTop:5}}>Après l’événement</small>}</button>})}</div>
-            {positionTaken(activePosition)&&<p style={{font:`9px ${mono}`,lineHeight:1.6,color:'rgba(255,255,255,.38)',margin:'10px 0 0'}}>Cette place est déjà réservée dans la région. Choisis une autre position.</p>}
+          <div><div className="boost-duration-head"><div><p className="boost-label" style={{marginBottom:5}}>2. Choisis la durée</p><p className="boost-description">{activePlan.description}</p></div>{positionBlocked(activePosition)&&<span style={{font:`8px ${mono}`,color:positionColor(activePosition),textTransform:'uppercase'}}>{positionLabel(activePosition)}</span>}</div>
+            <div className="boost-duration-grid">{activePlan.tiers.map((tier,index) => {
+              const selected = selectedPlan?.position === activePosition && selectedPlan?.tierIdx === index
+              const exceeds = eventEnd > 0 && Date.now() + tier.days * 86400000 > eventEnd
+              const blocked = positionBlocked(activePosition)
+              const disabled = blocked || exceeds
+              return <button
+                key={tier.days}
+                className="boost-duration"
+                disabled={disabled}
+                title={exceeds ? 'Cette durée dépasse la date de l’événement' : blocked ? 'Emplacement indisponible pour le moment' : ''}
+                onClick={() => setSelectedPlan({ position: activePosition, tierIdx: index })}
+                style={{
+                  border: selected ? '1px solid rgba(78,232,200,.7)' : '1px solid rgba(255,255,255,.09)',
+                  background: selected ? 'rgba(78,232,200,.09)' : 'rgba(255,255,255,.025)',
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  opacity: disabled ? .38 : 1,
+                }}
+              >
+                <span style={{ color: selected ? '#4ee8c8' : 'rgba(255,255,255,.48)' }}>{tier.label}</span>
+                <strong style={{ color: selected ? '#fff' : activePlan.color }}>{tier.price.toFixed(2).replace('.', ',')} €</strong>
+                {exceeds&&<small style={{display:'block',font:`7px ${mono}`,color:'rgba(255,255,255,.5)',marginTop:5}}>Après l’événement</small>}
+              </button>
+            })}</div>
+            {positionBlocked(activePosition)&&<p style={{font:`9px ${mono}`,lineHeight:1.6,color:'rgba(255,255,255,.38)',margin:'10px 0 0'}}>Cette place est déjà prise ou en paiement dans cette région. Choisis une autre position.</p>}
           </div>
-          <button className="boost-primary" disabled={!selectedPlan} onClick={()=>selectedPlan&&setStep('pay')}>{selectedPlan?`Continuer · ${chosenTier.price.toFixed(2).replace('.', ',')} €`:'Sélectionne une durée'}</button>
+          <button className="boost-primary" disabled={!selectedPlan || positionBlocked(selectedPlan.position)} onClick={()=>selectedPlan&&setStep('pay')}>{selectedPlan?`Continuer · ${chosenTier.price.toFixed(2).replace('.', ',')} €`:'Sélectionne une durée'}</button>
         </>}
       </div>
     </section>
