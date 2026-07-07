@@ -165,6 +165,14 @@ export default function ProposerServicesPage() {
   const providerTypes = normalizeProviderTypes(profileForm.prestataireTypes)
   const type = getPrimaryProviderType({ prestataireTypes: providerTypes })
   const category = getProviderCategory(type)
+  // Zone du prestataire (décide de la MÉTHODE d'abonnement) — même chaîne de
+  // résolution que providerProfileForm : regionId → pays → zones → ville.
+  const providerRegionId = normalizeRegionId(profile?.regionId || profile?.country || profile?.zonesIntervention?.[0])
+    || inferRegionIdFromCity(profile?.city || profile?.location)
+    || normalizeRegionId(user?.country)
+    || 'france'
+  const providerZone = regions.find(r => r.id === providerRegionId) || null
+  const subCurrency = regionToCurrency(providerRegionId)
 
   useEffect(() => {
     if (!uid) return undefined
@@ -462,7 +470,7 @@ export default function ProposerServicesPage() {
         {/* La MÉTHODE d'abonnement dépend de la ZONE du prestataire (1 prestataire
             = 1 zone) : France → Stripe (récurrent auto, 9,99 €/mois) ; Togo/Bénin →
             FedaPay (renouvellement manuel 30 j). On n'affiche JAMAIS les deux. */}
-        {regionToCurrency(profile?.regionId || profile?.country || user?.country) === 'EUR' ? (() => {
+        {subCurrency === 'EUR' ? (() => {
           const active = profile?.subscriptionActive === true
           const color = active ? '#4ee8c8' : '#e05aaa'
           return (
@@ -478,7 +486,7 @@ export default function ProposerServicesPage() {
                     ? 'Ton profil est visible. Renouvellement automatique chaque mois par carte bancaire.'
                     : 'Ton profil n\'est pas visible publiquement. Active ton abonnement pour le mettre en ligne.'}
                 </p>
-                <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>9,99 € / mois · carte bancaire (Stripe)</p>
+                <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{providerZone ? `Zone : ${providerZone.flag} ${providerZone.name} · ` : ''}9,99 € / mois · carte bancaire (Stripe) · renouvellement automatique</p>
               </div>
               {!active && (
                 <button onClick={handleStripeSubscribe} disabled={renewing} style={{ ...primaryButton, background: `linear-gradient(135deg,${color},${color}cc)`, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
@@ -503,7 +511,7 @@ export default function ProposerServicesPage() {
                   )}
                 </div>
                 <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '5px 0 0', lineHeight: 1.45 }}>{p.message}</p>
-                <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{subPriceLabel()}</p>
+                <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{providerZone ? `Zone : ${providerZone.flag} ${providerZone.name} · ` : ''}{subPriceLabel()} · Mobile Money (FedaPay) · renouvellement manuel</p>
               </div>
               <button onClick={handleRenew} disabled={renewing} style={{ ...primaryButton, background: `linear-gradient(135deg,${p.color},${p.color}cc)`, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
                 {renewing ? 'Redirection…' : p.cta}

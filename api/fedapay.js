@@ -291,12 +291,16 @@ async function subscriptionCheckout(req, res, body) {
   try {
     const uid = caller.uid
     const db = getDb()
-    const provSnap = await db.collection('providers').doc(uid).get()
-    if (!provSnap.exists) {
-      return res.status(404).json({ error: "Profil prestataire introuvable." })
-    }
+    // Pas d'exigence d'un doc providers/{uid} existant : un CANDIDAT paie son
+    // abonnement à la dernière étape de l'onboarding, AVANT l'approbation du
+    // dossier (donc avant la création du profil annuaire). Le webhook écrit en
+    // merge → le doc est créé/complété au paiement, puis enrichi à l'approbation.
     const amount = PROVIDER_SUB.price
     const origin = req.headers.origin || `https://${req.headers.host}`
+    // Retour post-paiement : dashboard (renouvellement) ou onboarding (péage
+    // candidat). Liste blanche stricte — jamais une URL arbitraire du client.
+    const RETURN_PATHS = ['/proposer', '/inscription-prestataire']
+    const returnTo = RETURN_PATHS.includes(body?.returnTo) ? body.returnTo : '/proposer'
     // reference unique par tentative (une transaction FedaPay = un renouvellement)
     const ref = `sub_${uid}_${Date.now().toString(36)}`
 
@@ -306,7 +310,7 @@ async function subscriptionCheckout(req, res, body) {
       txn = await createTransaction({
         description: `Abonnement prestataire LIVEINBLACK — ${PROVIDER_SUB.periodDays} jours`,
         amount,
-        callbackUrl: `${origin}/proposer?sub=retour`,
+        callbackUrl: `${origin}${returnTo}?sub=retour`,
         customer: body?.email ? { email: String(body.email) } : null,
         metadata: { kind: 'provider_subscription', providerUid: uid },
         reference: ref,
@@ -359,8 +363,21 @@ async function finalizeProviderSubscription(db, entity, meta) {
     return
   }
 
+  // Compte supprimé entre le paiement et le webhook : trace financière
+  // conservée, aucune donnée recréée (même règle que les billets).
+  const deleted = await db.collection('deleted_accounts').doc(uid).get()
+  if (deleted.exists && deleted.data()?.blockBillingWrites === true) {
+    await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
+      provider: 'fedapay', transactionId: txnId, providerUid: uid,
+      reason: 'account_deleted_after_payment', status: 'manual_review',
+      createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+    return
+  }
+
   const txnRef = db.collection('fedapay_txns').doc(txnId)
   const provRef = db.collection('providers').doc(uid)
+  const userRef = db.collection('users').doc(uid)
   const now = Date.now()
   let renewal = null
 
@@ -373,6 +390,18 @@ async function finalizeProviderSubscription(db, entity, meta) {
     // Suspension admin active → on encaisse mais on NE réactive PAS (spec §14).
     const adminSuspended = prov.adminSuspended === true
     renewal = computeRenewal(prov, now)
+
+    // Miroir users/{uid} — même sémantique que le rail Stripe (writeSubStatus) :
+    // c'est CE flag que lisent le péage de l'onboarding (prestataireSubActive)
+    // et le seeding du profil à l'approbation du dossier. Sans lui, un candidat
+    // XOF qui paie serait bloqué à « Active ton abonnement » pour toujours.
+    tx.set(userRef, {
+      prestataireSubActive: true,
+      prestataireSubStatus: 'active',
+      prestataireSubEnd: new Date(renewal.subscriptionExpiresAt).toISOString(),
+      prestataireSubRail: 'fedapay',
+      _syncedAt: now,
+    }, { merge: true })
 
     tx.set(provRef, {
       subscriptionCurrency: 'XOF',
@@ -445,7 +474,11 @@ async function verify(req, res) {
     const metaSnap = await db.collection('fedapay_txns').doc(String(txnId)).get()
     const meta = metaSnap.exists ? metaSnap.data() : null
     // Les métadonnées (email, booking…) ne sont pas publiques : propriétaire only.
+    // Billets → meta.userId ; abonnements prestataire → meta.providerUid.
     if (meta && meta.userId && meta.userId !== caller.uid) {
+      return res.status(403).json({ error: 'forbidden', message: 'Cette transaction ne t’appartient pas.' })
+    }
+    if (meta && meta.providerUid && meta.providerUid !== caller.uid) {
       return res.status(403).json({ error: 'forbidden', message: 'Cette transaction ne t’appartient pas.' })
     }
 

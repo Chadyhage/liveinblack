@@ -4,6 +4,8 @@ import PublicShell from '../components/PublicShell'
 import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { DIAL_CODES } from '../data/dialCodes'
+import { regionToCurrency, fmtMoney } from '../utils/money'
+import { PROVIDER_SUB } from '../utils/providerSub'
 import { formatSiret, isValidSiret, isValidPhone } from '../utils/validation'
 import {
   createApplication, saveDraft, submitApplication,
@@ -415,6 +417,21 @@ export default function OnboardingPrestataire() {
       navigate('/inscription-prestataire', { replace: true })
       return
     }
+    // Retour FedaPay (?sub=retour&id=&status=) : le webhook fait autorité pour
+    // activer (users.prestataireSubActive, suivi par le listener plus haut).
+    // Le status de l'URL ne sert qu'à l'UX (annulation visible tout de suite).
+    if (result === 'retour') {
+      const urlStatus = params.get('status') || ''
+      if (['canceled', 'declined', 'expired'].includes(urlStatus)) {
+        setSubError('Paiement annulé ou refusé. Ton dossier est conservé, tu peux réessayer.')
+      } else {
+        setSubError('')
+        setToast({ msg: 'Paiement reçu — confirmation en cours (quelques secondes)…', type: 'success' })
+        setTimeout(() => setToast(null), 6000)
+      }
+      navigate('/inscription-prestataire', { replace: true })
+      return
+    }
     if (result !== 'success') return
 
     const sessionId = params.get('session_id')
@@ -550,6 +567,9 @@ export default function OnboardingPrestataire() {
     }
   }
 
+  // Devise du candidat = son PAYS déclaré au dossier (Togo/Bénin → XOF, sinon EUR).
+  const candidateCurrency = regionToCurrency(f.pays)
+
   async function handleSubscribe() {
     setSubError('')
     setSubRedirecting(true)
@@ -568,6 +588,23 @@ export default function OnboardingPrestataire() {
     saveDraft(app.id, { ...f, regEmail: regEmail.trim() || user?.email || '', _onboardingStep: LAST_STEP })
     try {
       const { authHeaders } = await import('../utils/apiAuth')
+      // « 1 prestataire = 1 zone » : le PAYS du dossier décide du rail de
+      // paiement. Togo/Bénin → FedaPay (9 000 FCFA / 30 j, renouvellement
+      // manuel) ; France → Stripe (9,99 €/mois, récurrent automatique).
+      if (candidateCurrency === 'XOF') {
+        const r = await fetch('/api/fedapay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+          body: JSON.stringify({
+            action: 'subscribe',
+            email: regEmail.trim() || user?.email || undefined,
+            returnTo: '/inscription-prestataire',
+          }),
+        })
+        const data = await r.json().catch(() => ({}))
+        if (r.ok && data.url) { window.location.href = data.url; return }
+        throw new Error(data.error || 'checkout')
+      }
       const r = await fetch('/api/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
@@ -872,7 +909,7 @@ export default function OnboardingPrestataire() {
         {!subActive && step < LAST_STEP && (
           <div style={{ marginBottom: 24, padding: '14px 16px', background: 'rgba(200,169,110,0.06)', border: `1px solid ${GOLD}33`, borderRadius: 12 }}>
             <p style={{ fontFamily: DM, fontSize: 13.5, color: '#fff', margin: 0, fontWeight: 600 }}>
-              Abonnement <span style={{ color: GOLD }}>9,99 €/mois</span> pour être sur LIVEINBLACK
+              Abonnement <span style={{ color: GOLD }}>{candidateCurrency === 'XOF' ? `${fmtMoney(PROVIDER_SUB.price, 'XOF')} / ${PROVIDER_SUB.periodDays} jours` : '9,99 €/mois'}</span> pour être sur LIVEINBLACK
             </p>
             <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '5px 0 0', lineHeight: 1.55 }}>
               1. Crée ton compte · 2. Remplis tout ton dossier · 3. <span style={{ color: 'rgba(255,255,255,0.72)' }}>Paie l'abonnement à la fin</span> · 4. On valide → tu es en ligne. Aucune commission sur tes prestations.
@@ -1497,16 +1534,22 @@ export default function OnboardingPrestataire() {
 
               <div style={{ padding: 20, borderRadius: 14, background: 'linear-gradient(145deg,rgba(200,169,110,.12),rgba(10,12,22,.72))', border: '1px solid rgba(200,169,110,.32)' }}>
                 <p style={{ margin: 0, fontFamily: DM, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: GOLD }}>Abonnement prestataire</p>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 9 }}><strong style={{ fontFamily: CG, fontSize: 34, color: '#fff' }}>9,99 €</strong><span style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,.45)' }}>/ mois</span></div>
-                <p style={{ margin: '5px 0 0', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.46)' }}>Sans engagement · résiliable à tout moment · aucune commission sur tes prestations.</p>
-                <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 9.5, lineHeight: 1.55, color: 'rgba(255,255,255,.38)' }}>Abonnement récurrent réglé par carte via Stripe. FedaPay Mobile Money est actuellement réservé à l'achat de billets.</p>
+                {candidateCurrency === 'XOF' ? <>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 9 }}><strong style={{ fontFamily: CG, fontSize: 34, color: '#fff' }}>{fmtMoney(PROVIDER_SUB.price, 'XOF')}</strong><span style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,.45)' }}>/ {PROVIDER_SUB.periodDays} jours</span></div>
+                  <p style={{ margin: '5px 0 0', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.46)' }}>Ton profil reste visible pendant {PROVIDER_SUB.periodDays} jours. Tu recevras un rappel avant expiration pour renouveler manuellement.</p>
+                  <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 9.5, lineHeight: 1.55, color: 'rgba(255,255,255,.38)' }}>Paiement Mobile Money ou carte via FedaPay. Aucun prélèvement automatique · aucune commission sur tes prestations.</p>
+                </> : <>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 9 }}><strong style={{ fontFamily: CG, fontSize: 34, color: '#fff' }}>9,99 €</strong><span style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,.45)' }}>/ mois</span></div>
+                  <p style={{ margin: '5px 0 0', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.46)' }}>Sans engagement · résiliable à tout moment · aucune commission sur tes prestations.</p>
+                  <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 9.5, lineHeight: 1.55, color: 'rgba(255,255,255,.38)' }}>Abonnement récurrent réglé par carte via Stripe.</p>
+                </>}
               </div>
 
               {subError && <p style={{ ...S.error, margin: 0 }}>{subError}</p>}
 
               {!subActive ? (
                 <button onClick={handleSubscribe} disabled={!docsReady || !emailReady || subRedirecting || paymentPending} style={{ ...S.btnGold, opacity: (!docsReady || !emailReady || subRedirecting || paymentPending) ? .45 : 1, cursor: (!docsReady || !emailReady || subRedirecting || paymentPending) ? 'not-allowed' : 'pointer' }}>
-                  {paymentPending ? 'Confirmation du paiement…' : subRedirecting ? 'Redirection sécurisée…' : 'Activer mon abonnement · 9,99 €/mois'}
+                  {paymentPending ? 'Confirmation du paiement…' : subRedirecting ? 'Redirection sécurisée…' : candidateCurrency === 'XOF' ? `Activer mon abonnement · ${fmtMoney(PROVIDER_SUB.price, 'XOF')} / ${PROVIDER_SUB.periodDays} jours` : 'Activer mon abonnement · 9,99 €/mois'}
                 </button>
               ) : <>
                 <div style={{ padding: '12px 14px', borderRadius: 11, background: 'rgba(78,232,200,.08)', border: '1px solid rgba(78,232,200,.26)', fontFamily: DM, fontSize: 11, fontWeight: 700, color: '#4ee8c8', textAlign: 'center' }}>Abonnement actif · paiement confirmé</div>

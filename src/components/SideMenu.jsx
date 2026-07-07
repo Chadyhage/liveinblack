@@ -54,8 +54,18 @@ export default function SideMenu({ open, onClose }) {
 
   function go(path) { navigate(path); onClose() }
 
-  function logout() {
+  async function logout() {
     setConfirmLogout(false)
+    // Déconnexion Firebase RÉELLE obligatoire : sans signOut, auth.currentUser
+    // reste vivant et les pages qui « réconcilient » la session (onboarding,
+    // retour Stripe) re-connectent automatiquement l'ancien compte.
+    try {
+      const { USE_REAL_FIREBASE, auth } = await import('../firebase')
+      if (USE_REAL_FIREBASE && auth) {
+        const { signOut } = await import('firebase/auth')
+        await signOut(auth).catch(() => {})
+      }
+    } catch {}
     setUser(null)
     navigate('/accueil')
     onClose()
