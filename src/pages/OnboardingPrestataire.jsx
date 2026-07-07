@@ -80,7 +80,7 @@ const STEPS = [
   { label: 'Spécifique' },
   { label: 'Fonctionnement' },
   { label: 'Documents' },
-  { label: 'Abonnement' },
+  { label: 'Finaliser' },
 ]
 
 const LAST_STEP = STEPS.length - 1
@@ -263,14 +263,11 @@ export default function OnboardingPrestataire() {
   const [regPasswordConfirm, setRegPasswordConfirm] = useState('')
   const [showPwd, setShowPwd] = useState(false)
 
-  // ── Abonnement prestataire (9,99 €/mois) — dernière étape du dossier ──────────
-  const [subActive, setSubActive] = useState(false)      // abonnement actif (source = webhook)
-  const [subRedirecting, setSubRedirecting] = useState(false)
+  // subError = message d'erreur générique de l'étape finale (création de compte,
+  // vérif email, soumission). Le PAIEMENT ne se fait plus ici (après validation).
   const [subError, setSubError] = useState('')
-  const [checkingSubReturn, setCheckingSubReturn] = useState(false)
   const [emailVerification, setEmailVerification] = useState('idle')
   const [authChecked, setAuthChecked] = useState(false)
-  const checkedSubSessionRef = useRef('')
 
   const anonMode = !user
 
@@ -389,81 +386,9 @@ export default function OnboardingPrestataire() {
     return () => { alive = false }
   }, [user, authChecked])
 
-  // Statut d'abonnement en temps réel (users/{uid}.prestataireSubActive, écrit par
-  // le webhook Stripe = source de vérité). Dispo une fois le compte créé.
-  useEffect(() => {
-    const uid = user?.uid
-    if (!uid) return
-    if (user.prestataireSubActive) setSubActive(true)
-    let unsub = () => {}
-    import('../utils/firestore-sync').then(({ listenDoc }) => {
-      unsub = listenDoc(`users/${uid}`, data => setSubActive(!!data?.prestataireSubActive))
-    }).catch(() => {})
-    return () => { try { unsub() } catch {} }
-  }, [user?.uid])
-
-  // Retour de Stripe : vérification serveur immédiate de la session. Le webhook
-  // reste la source de vérité pour les renouvellements, mais le retour utilisateur
-  // n'attend plus sa latence et reprend toujours à la DERNIÈRE étape.
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const result = params.get('sub')
-    if (!result || !user?.uid) return
-    setStep(LAST_STEP)
-    if (app?.id) saveDraft(app.id, { _onboardingStep: LAST_STEP })
-
-    if (result === 'cancel') {
-      setSubError('Paiement annulé. Ton dossier est conservé, tu peux reprendre quand tu veux.')
-      navigate('/inscription-prestataire', { replace: true })
-      return
-    }
-    // Retour FedaPay (?sub=retour&id=&status=) : le webhook fait autorité pour
-    // activer (users.prestataireSubActive, suivi par le listener plus haut).
-    // Le status de l'URL ne sert qu'à l'UX (annulation visible tout de suite).
-    if (result === 'retour') {
-      const urlStatus = params.get('status') || ''
-      if (['canceled', 'declined', 'expired'].includes(urlStatus)) {
-        setSubError('Paiement annulé ou refusé. Ton dossier est conservé, tu peux réessayer.')
-      } else {
-        setSubError('')
-        setToast({ msg: 'Paiement reçu — confirmation en cours (quelques secondes)…', type: 'success' })
-        setTimeout(() => setToast(null), 6000)
-      }
-      navigate('/inscription-prestataire', { replace: true })
-      return
-    }
-    if (result !== 'success') return
-
-    const sessionId = params.get('session_id')
-    if (!sessionId) {
-      setSubError('Paiement reçu, mais la session est introuvable. Actualise la page dans quelques secondes.')
-      return
-    }
-    if (checkedSubSessionRef.current === sessionId) return
-    checkedSubSessionRef.current = sessionId
-
-    let alive = true
-    setCheckingSubReturn(true)
-    import('../utils/apiAuth').then(async ({ authHeaders }) => {
-      const response = await fetch(`/api/create-subscription?session_id=${encodeURIComponent(sessionId)}`, {
-        headers: await authHeaders(),
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || !data.active) throw new Error(data.error || 'subscription_pending')
-      if (!alive) return
-      setSubActive(true)
-      setSubError('')
-      setUser({ ...user, prestataireSubActive: true, prestataireSubStatus: data.status || 'active' })
-      navigate('/inscription-prestataire', { replace: true })
-    }).catch(() => {
-      checkedSubSessionRef.current = ''
-      if (alive) setSubError('Paiement en cours de confirmation. Ne repaie pas : le statut va se mettre à jour automatiquement.')
-    }).finally(() => { if (alive) setCheckingSubReturn(false) })
-    return () => { alive = false }
-  }, [location.search, user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
-
   // Crée le compte à la fin de l'étape « Compte », puis garde la session active
-  // pendant tout le dossier. L'abonnement n'intervient qu'à la dernière étape.
+  // pendant tout le dossier. Le PAIEMENT n'a plus lieu ici : l'abonnement se
+  // prend depuis l'espace prestataire APRÈS validation du dossier.
   async function ensureAccount() {
     if (!anonMode || anonUidRef.current) return true
     const { USE_REAL_FIREBASE } = await import('../firebase')
@@ -568,62 +493,8 @@ export default function OnboardingPrestataire() {
   }
 
   // Devise du candidat = son PAYS déclaré au dossier (Togo/Bénin → XOF, sinon EUR).
+  // Sert UNIQUEMENT à afficher le futur tarif d'abonnement (payé après validation).
   const candidateCurrency = regionToCurrency(f.pays)
-
-  async function handleSubscribe() {
-    setSubError('')
-    setSubRedirecting(true)
-    const accountOk = await ensureAccount()
-    if (!accountOk) { setSubRedirecting(false); return }
-    const emailOk = await checkEmailVerification()
-    if (!emailOk) { setSubRedirecting(false); return }
-
-    const providerTypes = normalizeProviderTypes(f.prestataireTypes, f.prestataireType)
-    const missingDocs = getRequiredDocs('prestataire', providerTypes).filter(key => !hasDoc(app, key))
-    if (missingDocs.length) {
-      setSubRedirecting(false)
-      setSubError('Ajoute tous les documents requis avant de prendre l’abonnement.')
-      return
-    }
-    saveDraft(app.id, { ...f, regEmail: regEmail.trim() || user?.email || '', _onboardingStep: LAST_STEP })
-    try {
-      const { authHeaders } = await import('../utils/apiAuth')
-      // « 1 prestataire = 1 zone » : le PAYS du dossier décide du rail de
-      // paiement. Togo/Bénin → FedaPay (9 000 FCFA / 30 j, renouvellement
-      // manuel) ; France → Stripe (9,99 €/mois, récurrent automatique).
-      if (candidateCurrency === 'XOF') {
-        const r = await fetch('/api/fedapay', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-          body: JSON.stringify({
-            action: 'subscribe',
-            email: regEmail.trim() || user?.email || undefined,
-            returnTo: '/inscription-prestataire',
-          }),
-        })
-        const data = await r.json().catch(() => ({}))
-        if (r.ok && data.url) { window.location.href = data.url; return }
-        throw new Error(data.error || 'checkout')
-      }
-      const r = await fetch('/api/create-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-        body: JSON.stringify({}),
-      })
-      const data = await r.json().catch(() => ({}))
-      if (r.ok && data.alreadyActive) {
-        setSubActive(true)
-        setSubRedirecting(false)
-        setSubError('')
-        return
-      }
-      if (r.ok && data.url) { window.location.href = data.url; return }
-      throw new Error(data.error || 'checkout')
-    } catch {
-      setSubRedirecting(false)
-      setSubError("Impossible de lancer le paiement pour le moment. Réessaie dans un instant.")
-    }
-  }
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type })
@@ -735,11 +606,9 @@ export default function OnboardingPrestataire() {
   }
 
   async function handleSubmit() {
-    if (!subActive) {
-      setSubError('Active ton abonnement avant d’envoyer le dossier.')
-      setStep(LAST_STEP)
-      return
-    }
+    // Plus de paiement à l'inscription : le dossier se soumet gratuitement.
+    // L'abonnement se prend APRÈS validation, depuis l'espace prestataire —
+    // ainsi personne ne paie pour un dossier qui pourrait être refusé.
     const emailOk = await checkEmailVerification()
     if (!emailOk) return
     // Dynamic check based on type
@@ -887,7 +756,7 @@ export default function OnboardingPrestataire() {
             Compte Prestataire
           </h1>
           <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 10, lineHeight: 1.6 }}>
-            Crée ton compte, complète ton dossier, puis active ton abonnement à la toute fin.
+            Crée ton compte et envoie ton dossier — c'est gratuit. Une fois validé, tu actives ton abonnement pour être visible.
           </p>
           {anonMode && (
             <button
@@ -905,14 +774,14 @@ export default function OnboardingPrestataire() {
           )}
         </div>
 
-        {/* Rappel transparent du tarif — le paiement reste la dernière étape */}
-        {!subActive && step < LAST_STEP && (
+        {/* Rappel transparent du parcours — inscription gratuite, abonnement APRÈS validation */}
+        {step < LAST_STEP && (
           <div style={{ marginBottom: 24, padding: '14px 16px', background: 'rgba(200,169,110,0.06)', border: `1px solid ${GOLD}33`, borderRadius: 12 }}>
             <p style={{ fontFamily: DM, fontSize: 13.5, color: '#fff', margin: 0, fontWeight: 600 }}>
-              Abonnement <span style={{ color: GOLD }}>{candidateCurrency === 'XOF' ? `${fmtMoney(PROVIDER_SUB.price, 'XOF')} / ${PROVIDER_SUB.periodDays} jours` : '9,99 €/mois'}</span> pour être sur LIVEINBLACK
+              Inscription <span style={{ color: GOLD }}>gratuite</span> · abonnement seulement une fois validé
             </p>
             <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '5px 0 0', lineHeight: 1.55 }}>
-              1. Crée ton compte · 2. Remplis tout ton dossier · 3. <span style={{ color: 'rgba(255,255,255,0.72)' }}>Paie l'abonnement à la fin</span> · 4. On valide → tu es en ligne. Aucune commission sur tes prestations.
+              1. Crée ton compte · 2. Remplis ton dossier · 3. <span style={{ color: 'rgba(255,255,255,0.72)' }}>Envoie-le (gratuit)</span> · 4. On valide → tu actives ton abonnement pour être visible. Aucune commission sur tes prestations.
             </p>
           </div>
         )}
@@ -1498,20 +1367,19 @@ export default function OnboardingPrestataire() {
 
             <div style={{ padding: '13px 15px', borderRadius: 10, background: 'rgba(78,232,200,.04)', border: '1px solid rgba(78,232,200,.16)' }}>
               <p style={{ margin: 0, fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,.55)', lineHeight: 1.6 }}>
-                Une fois les documents ajoutés, continue vers la dernière étape pour vérifier ton email et activer l'abonnement.
+                Une fois les documents ajoutés, continue vers la dernière étape pour vérifier ton email et envoyer ton dossier.
               </p>
             </div>
           </div>
         )}
 
-        {/* ── STEP 5: Vérification, abonnement puis envoi ── */}
+        {/* ── STEP 5: Vérification email + envoi du dossier (paiement APRÈS validation) ── */}
         {step === LAST_STEP && (() => {
           const missing = getRequiredDocs('prestataire', selectedTypes)
             .filter(key => !hasDoc(app, key))
             .map(key => DOCUMENT_LABELS[key]?.label || key)
           const docsReady = missing.length === 0
           const emailReady = emailVerification === 'verified' || user?.emailVerified === true
-          const paymentPending = checkingSubReturn
           return (
             <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={S.section}>Finaliser mon inscription</p>
@@ -1533,29 +1401,21 @@ export default function OnboardingPrestataire() {
               </div>
 
               <div style={{ padding: 20, borderRadius: 14, background: 'linear-gradient(145deg,rgba(200,169,110,.12),rgba(10,12,22,.72))', border: '1px solid rgba(200,169,110,.32)' }}>
-                <p style={{ margin: 0, fontFamily: DM, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: GOLD }}>Abonnement prestataire</p>
-                {candidateCurrency === 'XOF' ? <>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 9 }}><strong style={{ fontFamily: CG, fontSize: 34, color: '#fff' }}>{fmtMoney(PROVIDER_SUB.price, 'XOF')}</strong><span style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,.45)' }}>/ {PROVIDER_SUB.periodDays} jours</span></div>
-                  <p style={{ margin: '5px 0 0', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.46)' }}>Ton profil reste visible pendant {PROVIDER_SUB.periodDays} jours. Tu recevras un rappel avant expiration pour renouveler manuellement.</p>
-                  <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 9.5, lineHeight: 1.55, color: 'rgba(255,255,255,.38)' }}>Paiement Mobile Money ou carte via FedaPay. Aucun prélèvement automatique · aucune commission sur tes prestations.</p>
-                </> : <>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 9 }}><strong style={{ fontFamily: CG, fontSize: 34, color: '#fff' }}>9,99 €</strong><span style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,.45)' }}>/ mois</span></div>
-                  <p style={{ margin: '5px 0 0', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.46)' }}>Sans engagement · résiliable à tout moment · aucune commission sur tes prestations.</p>
-                  <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 9.5, lineHeight: 1.55, color: 'rgba(255,255,255,.38)' }}>Abonnement récurrent réglé par carte via Stripe.</p>
-                </>}
+                <p style={{ margin: 0, fontFamily: DM, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: GOLD }}>Après validation</p>
+                <p style={{ margin: '9px 0 0', fontFamily: DM, fontSize: 13, lineHeight: 1.6, color: 'rgba(255,255,255,.72)' }}>
+                  L'inscription est <strong style={{ color: '#fff' }}>gratuite</strong>. Ton dossier part à l'équipe LIVEINBLACK pour validation.
+                </p>
+                <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.46)' }}>
+                  Une fois validé, ton compte est créé. Pour rendre ton profil <strong style={{ color: 'rgba(255,255,255,.7)' }}>visible publiquement</strong>, tu activeras ton abonnement depuis ton espace ({candidateCurrency === 'XOF' ? `${fmtMoney(PROVIDER_SUB.price, 'XOF')} / ${PROVIDER_SUB.periodDays} j · Mobile Money` : '9,99 €/mois · carte'}). Aucune commission sur tes prestations.
+                </p>
               </div>
 
               {subError && <p style={{ ...S.error, margin: 0 }}>{subError}</p>}
 
-              {!subActive ? (
-                <button onClick={handleSubscribe} disabled={!docsReady || !emailReady || subRedirecting || paymentPending} style={{ ...S.btnGold, opacity: (!docsReady || !emailReady || subRedirecting || paymentPending) ? .45 : 1, cursor: (!docsReady || !emailReady || subRedirecting || paymentPending) ? 'not-allowed' : 'pointer' }}>
-                  {paymentPending ? 'Confirmation du paiement…' : subRedirecting ? 'Redirection sécurisée…' : candidateCurrency === 'XOF' ? `Activer mon abonnement · ${fmtMoney(PROVIDER_SUB.price, 'XOF')} / ${PROVIDER_SUB.periodDays} jours` : 'Activer mon abonnement · 9,99 €/mois'}
-                </button>
-              ) : <>
-                <div style={{ padding: '12px 14px', borderRadius: 11, background: 'rgba(78,232,200,.08)', border: '1px solid rgba(78,232,200,.26)', fontFamily: DM, fontSize: 11, fontWeight: 700, color: '#4ee8c8', textAlign: 'center' }}>Abonnement actif · paiement confirmé</div>
-                <textarea value={candidateNote} onChange={e => setCandidateNote(e.target.value)} placeholder="Message pour l'équipe (optionnel)" style={{ ...S.input, minHeight: 78, resize: 'vertical' }} />
-                <button onClick={handleSubmit} disabled={submitting || !docsReady} style={{ ...S.btnGold, opacity: submitting || !docsReady ? .45 : 1 }}>{submitting ? 'Envoi en cours…' : 'Soumettre mon dossier'}</button>
-              </>}
+              <textarea value={candidateNote} onChange={e => setCandidateNote(e.target.value)} placeholder="Message pour l'équipe (optionnel)" style={{ ...S.input, minHeight: 78, resize: 'vertical' }} />
+              <button onClick={handleSubmit} disabled={submitting || !docsReady || !emailReady} style={{ ...S.btnGold, opacity: (submitting || !docsReady || !emailReady) ? .45 : 1, cursor: (submitting || !docsReady || !emailReady) ? 'not-allowed' : 'pointer' }}>
+                {submitting ? 'Envoi en cours…' : 'Envoyer mon dossier'}
+              </button>
             </div>
           )
         })()}
