@@ -46,7 +46,6 @@ src/
     OnboardingOrganisateur.jsx
     OnboardingPrestataire.jsx
     CGUPage.jsx
-    JeSuisUneBoitePage.jsx
   utils/
     firestore-sync.js   — Sync Firestore (syncDoc, syncOnLogin, pushLocalToFirestore)
     messaging.js        — Conversations, amis, groupes, polls, block/report

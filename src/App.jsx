@@ -14,7 +14,6 @@ import GlobalSearchPage from './pages/GlobalSearchPage'
 import PublicAbout from './pages/PublicAbout'
 import EventDetailPage from './pages/EventDetailPage'
 import ProposerServicesPage from './pages/ProposerServicesPage'
-import JeSuisUneBoitePage from './pages/JeSuisUneBoitePage'
 import MesEvenementsPage from './pages/MesEvenementsPage'
 import EventStatsPage from './pages/EventStatsPage'
 import ProfilePage from './pages/ProfilePage'
@@ -426,9 +425,6 @@ export default function App() {
             } />
             <Route path="/commander/:eventId/:ticketCode" element={
               <RequireAuth user={user} to="/profil"><OnSiteOrderPage /></RequireAuth>
-            } />
-            <Route path="/boite" element={
-              <RequireAuth user={user} to="/boite"><JeSuisUneBoitePage /></RequireAuth>
             } />
 
             {/* ── Role-protected: organisateur + agent only ── */}

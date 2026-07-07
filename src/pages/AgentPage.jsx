@@ -119,7 +119,7 @@ const LIB_KEYS = [
   'lib_provider_profiles', 'lib_group_bookings', 'lib_last_read',
   'lib_friend_requests', 'lib_friends', 'lib_blocked', 'lib_online',
   'lib_new_contacts', 'lib_event_codes', 'lib_reports', 'lib_typing',
-  'lib_photo_cache', 'lib_boite_registration',
+  'lib_photo_cache',
 ]
 
 async function resetAllData() {

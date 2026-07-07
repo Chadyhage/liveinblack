@@ -306,13 +306,6 @@ service cloud.firestore {
       allow create, delete: if false;
     }
 
-    // ── Inscriptions boîte (JeSuisUneBoitePage) ───────────────────────────────
-    match /boite_registrations/{id} {
-      allow read:  if isAgent();
-      allow write: if isSignedIn();
-      allow create: if true;  // Allow anonymous submissions too
-    }
-
     // ── Profils prestataires ──────────────────────────────────────────────────
     // Lecture PUBLIQUE : la vitrine /prestataires et les pages prestataires sont
     // accessibles sans compte (le doc ne contient que des infos publiées par le

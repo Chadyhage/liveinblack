@@ -314,7 +314,6 @@ Bottom-sheet d'achat de boost Top 3 régional via Stripe. 3 positions × 4 palie
 | `/profil`                     | tout connecté              | `ProfilePage.jsx` (2310 l.)   | Avatar (`react-easy-crop`), billets groupés par event, changement nom (1×/30j), changement mdp/email, suppression compte, **génération PDF d'accréditation** pour orgs/prestas approuvés (`openCredentialPDF`). |
 | `/messagerie`                 | tout connecté              | `MessagingPage.jsx` (2730 l.) | Conversations + groupes + photos compressées (qualité 0,78 / max 900px) + vocaux + sondages + réservations de groupe + photo cache (`lib_photo_cache`). |
 | `/scanner`                    | tout connecté (filtré par `canScanTickets`) | `ScannerPage.jsx` (825 l.)    | Caméra (`navigator.mediaDevices.getUserMedia`) + `jsqr` ; mode billet ou commande ; marque les billets utilisés dans `lib_used_tickets` + sync `used_tickets/{uid}`. |
-| `/boite`                      | tout connecté              | `JeSuisUneBoitePage.jsx`      | Formulaire « inscription boîte/club » → `boite_registrations/{id}` Firestore. |
 | `/mes-evenements`             | `organisateur` ou `agent`  | `MesEvenementsPage.jsx` (2490 l.) | Création/édition d'event multi-étapes (`Cropper` photo, génération codes, places, menus, shows), publication via `syncDocAwaitable` avec bandeau d'erreur, annulation avec message aux acheteurs, panneau réservations et stats par event, modal Boost. |
 | `/proposer`                   | prestataire/org/agent      | `ProposerServicesPage.jsx` (1610 l.) | Dashboard prestataire (Aperçu, Catalogue, Commandes, Profil) + vue publique catalogue (commande avec panier, contact via messagerie). Demande de rôle prestataire pour les non-prestas. |
 | `/inscription-organisateur`   | public                     | `OnboardingOrganisateur.jsx` (1050 l.) | Formulaire multi-étapes (identité, contact, entreprise, docs). Auto-save Firestore. |
@@ -399,7 +398,6 @@ Tous utilisent `process.env.STRIPE_SECRET_KEY` côté server, locale `fr`, devis
 | `used_tickets/{uid}`         | `{items: string[]}` — billets scannés                                   |
 | `reports/{id}`               | Signalements                                                            |
 | `deletion_requests/{id}`     | Demandes de suppression RGPD                                            |
-| `boite_registrations/{id}`   | Soumissions « Je suis une boîte »                                       |
 | `notifications/{uid}`        | `{items: Notification[]}`                                               |
 
 ### Règles (`firestore.rules`)
@@ -410,7 +408,6 @@ Les règles utilisent les helpers `isSignedIn()`, `isAgent()` (lit `users/{uid}.
 - `users/*` : read pour tout signed-in (nécessaire au sync contacts), write réservé au propriétaire ou agent.
 - `events/*` : **read public** (visiteurs non connectés peuvent voir), write réservé à `createdBy`/`organizerId`/agent.
 - `conversations`, `conv_messages`, `friend_requests`, `group_bookings`, `service_orders`, `conv_photos` : read+write pour tout signed-in (les access controls sont côté app, **pas** Firestore — exposition potentielle à durcir).
-- `boite_registrations` : **create public** (anonymes possibles) + read agent uniquement.
 - `reports` : write public signed-in, read agent uniquement.
 - `event_playlists` : read public, write signed-in.
 
