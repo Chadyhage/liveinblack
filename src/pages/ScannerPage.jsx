@@ -215,6 +215,7 @@ function ScannerInner() {
   const location = useLocation()
   const { user } = useAuth()
   const myId = getUserId(user)
+  const userRole = user?.role || user?.activeRole
 
   // Mode initial : deep-link depuis « Mes soirées » (state.mode) — un serveur arrive
   // en mode service (POS bar), un contrôle entrée en mode entrée.

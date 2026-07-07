@@ -678,7 +678,20 @@ export default function MessagingPage() {
   const notifSound = playNotifSound
 
   // ── Mirror activeConvId into ref (safe to use inside closures) ──
-  useEffect(() => { activeConvIdRef.current = activeConvId }, [activeConvId])
+  // + on l'expose en localStorage pour que le listener GLOBAL (Layout) sache
+  //   quelle conversation est ouverte et n'émette aucune notif pour elle,
+  //   INDÉPENDAMMENT de la visibilité de l'onglet (l'iframe/preview et un
+  //   onglet en arrière-plan ne sont pas « visible » → l'ancienne garde basée
+  //   sur visibilityState laissait passer la notif de la conv ouverte).
+  useEffect(() => {
+    activeConvIdRef.current = activeConvId
+    try {
+      if (activeConvId) localStorage.setItem('lib_active_conv', String(activeConvId))
+      else localStorage.removeItem('lib_active_conv')
+    } catch {}
+  }, [activeConvId])
+  // Nettoie le marqueur quand on quitte la messagerie (démontage).
+  useEffect(() => () => { try { localStorage.removeItem('lib_active_conv') } catch {} }, [])
 
   // ── Request push notification permission once ──
   useEffect(() => {
@@ -781,7 +794,9 @@ export default function MessagingPage() {
           const prev = lastConvUpdatedRef.current[incoming.id]
           const isNewer = !prev || incoming.updatedAt > prev
           const notMyMessage = incoming.lastSenderId && incoming.lastSenderId !== myId
-          const isActive = incoming.id === activeConvIdRef.current && document.visibilityState === 'visible'
+          // Si c'est la conversation ACTUELLEMENT ouverte → aucune notif, quel
+          // que soit l'état de visibilité (on est dedans, on lit déjà).
+          const isActive = String(incoming.id) === String(activeConvIdRef.current)
           if (isNewer && incoming.lastMessage && !isActive) {
             const lastRead = getLastRead(incoming.id)
             const hasUnread = !lastRead || incoming.updatedAt > lastRead

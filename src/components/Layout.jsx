@@ -279,6 +279,11 @@ export default function Layout({ children, hideNav, chatMode }) {
           if (Date.now() - mountTime < 4000) return
           if (!isNewer || !c.lastMessage) return
           if (!c.lastSenderId || c.lastSenderId === uid) return // pas mes propres messages
+          // Si c'est la conversation actuellement OUVERTE → jamais de notif, même
+          // si l'onglet/l'iframe n'est pas « visible » (on est dedans).
+          let activeConv = null
+          try { activeConv = localStorage.getItem('lib_active_conv') } catch {}
+          if (activeConv && String(c.id) === activeConv) return
           // Si l'utilisateur est sur la Messagerie et visible → MessagingPage gère
           const onMessages = pathnameRef.current.startsWith('/messagerie') && document.visibilityState === 'visible'
           if (onMessages) return
