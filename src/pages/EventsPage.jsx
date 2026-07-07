@@ -75,7 +75,7 @@ function isEventVisible(ev) {
   return true
 }
 
-const KNOWN_CATEGORIES = ['Afrobeat', 'Rap', 'Électronique']
+const KNOWN_CATEGORIES = ['Afrobeat', 'Amapiano', 'Zouk / Kompa', 'Hip-Hop', 'House', 'Live']
 const CATEGORIES = ['Tous', ...KNOWN_CATEGORIES, 'Autre']
 
 export default function EventsPage() {
@@ -524,6 +524,37 @@ export default function EventsPage() {
 
 // ── Rangée horizontale par genre (façon Netflix) ──
 function EventRow({ title, events, onOpen }) {
+  const scrollRef = useRef(null)
+  const pausedRef = useRef(false)
+  // Défilement automatique TRÈS lent (aller-retour). Se met en pause au survol /
+  // au toucher pour laisser l'utilisateur explorer, et respecte « réduire les
+  // animations ». Ne s'active que si le contenu déborde réellement. On relit
+  // scrollRef.current À CHAQUE frame (jamais une réf capturée qui pourrait être
+  // détachée après un re-render React).
+  useEffect(() => {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+    let dir = 1, raf = 0, last = 0
+    const SPEED = 16 // px/seconde — doux
+    const step = (t) => {
+      const el = scrollRef.current
+      if (el) {
+        if (!last) last = t
+        const dt = Math.min(t - last, 50); last = t
+        const max = el.scrollWidth - el.clientWidth
+        if (!pausedRef.current && max > 4) {
+          el.scrollLeft += dir * SPEED * dt / 1000
+          if (el.scrollLeft >= max - 0.5) dir = -1
+          else if (el.scrollLeft <= 0.5) dir = 1
+        }
+      } else { last = 0 }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  const pause = () => { pausedRef.current = true }
+  const resume = () => { pausedRef.current = false }
   return (
     <div>
       <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 18, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 12px' }}>
@@ -537,7 +568,10 @@ function EventRow({ title, events, onOpen }) {
           - horizontal : paddingLeft/Right 16 + marges -16 → la 1re carte n'est
             plus tranchée à gauche (c'était la « ligne invisible » au survol) ;
             scrollPaddingLeft aligne les positions de snap sur ce padding. */}
-      <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', overflowY: 'hidden', height: 340, marginTop: -70, marginBottom: -70, marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16, scrollPaddingLeft: 16, scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={scrollRef} className="hide-scrollbar"
+        onMouseEnter={pause} onMouseLeave={resume}
+        onTouchStart={pause} onTouchEnd={resume} onPointerDown={pause} onPointerUp={resume}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', overflowY: 'hidden', height: 340, marginTop: -70, marginBottom: -70, marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16, scrollPaddingLeft: 16, WebkitOverflowScrolling: 'touch' }}>
         {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
       </div>
     </div>
@@ -579,18 +613,18 @@ function EventPoster({ event, onClick }) {
           : <div style={{ width: '100%', height: '100%', background: `radial-gradient(circle at 30% 25%, ${(event.color || '#2a2440')}aa, transparent 60%), linear-gradient(150deg, #1a1426, #0b0d14)` }} />}
         {/* Voile bas — plus opaque quand la carte est ouverte pour lire les infos */}
         <div style={{ position: 'absolute', inset: 0, background: expanded ? 'linear-gradient(to top, rgba(8,9,14,0.97) 18%, rgba(8,9,14,0.4) 55%, transparent 80%)' : 'linear-gradient(to top, rgba(8,9,14,0.95) 6%, transparent 55%)', transition: 'background 0.35s ease' }} />
-        {/* Countdown */}
+        {/* Countdown — bornée à gauche pour ne jamais chevaucher le prix */}
         {countdown && (
-          <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: urgent ? '#fff' : '#4ee8c8', background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(5,6,10,0.6)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{countdown}</span>
+          <span style={{ position: 'absolute', top: 8, left: 8, maxWidth: '42%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: urgent ? '#fff' : '#4ee8c8', background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(5,6,10,0.6)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{countdown}</span>
         )}
-        {/* Prix */}
-        {minP != null && (
-          <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: '#c8a96e', background: 'rgba(5,6,10,0.65)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: '1px solid rgba(200,169,110,0.4)' }}>{minP > 0 ? `dès ${fmtMoney(minP, eventCurrency(event))}` : 'Gratuit'}</span>
-        )}
-        {/* Nom + meta */}
+        {/* Nom + meta + prix (le prix vit EN BAS : les prix FCFA sont longs et
+            chevaucheraient le compte à rebours s'ils étaient en haut à droite). */}
         <div style={{ position: 'absolute', left: 9, right: 9, bottom: 9 }}>
           <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 13.5, letterSpacing: '-0.3px', color: accent, margin: 0, lineHeight: 1.15, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{event.name}</p>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ')}</p>
+          {minP != null && (
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 800, color: '#c8a96e', margin: '4px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{minP > 0 ? `dès ${fmtMoney(minP, eventCurrency(event))}` : 'Gratuit'}</p>
+          )}
 
           {/* Bloc révélé au survol prolongé */}
           <div style={{ maxHeight: expanded ? 90 : 0, opacity: expanded ? 1 : 0, overflow: 'hidden', transition: 'max-height 0.35s ease, opacity 0.3s ease 0.05s' }}>
