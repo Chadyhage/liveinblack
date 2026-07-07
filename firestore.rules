@@ -321,6 +321,14 @@ service cloud.firestore {
       allow write: if isOwner(uid) || isAgent();
     }
 
+    // ── Paiements d'abonnement prestataire (historique) ───────────────────────
+    // Écrit UNIQUEMENT par le serveur (webhook FedaPay, Admin SDK). Lecture
+    // réservée au prestataire concerné (providerUid) et aux agents.
+    match /subscription_payments/{txnId} {
+      allow read:  if isAgent() || (isSignedIn() && resource.data.providerUid == request.auth.uid);
+      allow write: if false;
+    }
+
     // ── Soldes vendeurs (ledger de reversement) ───────────────────────────────
     // Montant que la plateforme doit au vendeur quand le paiement n'a pas été
     // reversé automatiquement via Stripe Connect (ex. vendeur hors zone Stripe).
