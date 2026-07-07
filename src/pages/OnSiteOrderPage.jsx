@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import { eventCurrency } from '../utils/money'
-import { isEventEnded } from '../utils/event-time'
+import { isEventEnded, eventStartMs } from '../utils/event-time'
 import {
   listenOrders, getOrders, addOnsiteItem, updateOnsiteItem, removeOnsiteItem,
   ORDER_SOURCE, ONSITE_STATUS, PREORDER_STATUS,
@@ -54,6 +54,7 @@ export default function OnSiteOrderPage() {
   const [items, setItems] = useState(() => { try { return getOrders(eventId) } catch { return [] } }) // lecture optimiste locale
   const [busy, setBusy] = useState('')      // menuItemId en cours d'écriture
   const [toast, setToast] = useState('')
+  const [access, setAccess] = useState('checking') // 'checking' | 'ok' | 'denied'
   const cur = eventCurrency(event)
   const refreshLocal = () => { try { setItems(getOrders(eventId)) } catch {} }
 
@@ -75,6 +76,37 @@ export default function OnSiteOrderPage() {
     window.addEventListener('storage', onStorage)
     return () => { unsub(); window.removeEventListener('storage', onStorage) }
   }, [eventId])
+
+  // GARDE APPARTENANCE — un ticketCode dans l'URL ne suffit pas : on vérifie que
+  // ce billet appartient bien au compte connecté (local d'abord, puis registre
+  // tickets/{code} cross-device). Sinon n'importe qui devinant un code pourrait
+  // passer des consos sur la note d'un autre.
+  useEffect(() => {
+    let alive = true
+    if (!ticketCode) { setAccess('denied'); return }
+    if (!myId) { setAccess('checking'); return } // on attend l'auth
+    try {
+      const mine = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+      if (mine.some(b => String(b.userId) === String(myId) && String(b.ticketCode) === String(ticketCode))) {
+        setAccess('ok'); return
+      }
+    } catch {}
+    ;(async () => {
+      try {
+        const { db, USE_REAL_FIREBASE } = await import('../firebase')
+        if (USE_REAL_FIREBASE) {
+          const { doc, getDoc } = await import('firebase/firestore')
+          const snap = await getDoc(doc(db, 'tickets', String(ticketCode)))
+          if (snap.exists() && String(snap.data().userId) === String(myId)) {
+            if (alive) setAccess('ok')
+            return
+          }
+        }
+      } catch {}
+      if (alive) setAccess('denied')
+    })()
+    return () => { alive = false }
+  }, [myId, ticketCode])
 
   const flash = msg => { setToast(msg); setTimeout(() => setToast(''), 2200) }
 
@@ -126,6 +158,10 @@ export default function OnSiteOrderPage() {
   }, [menu])
 
   const eventOver = event && isEventEnded(event)
+  // Ouverture des commandes 3 h avant le début (arrivée / ouverture des portes) —
+  // avant ça, pas de commande sur place possible (sinon spam du bar à J-10).
+  const startMs = event ? eventStartMs(event) : 0
+  const notStarted = !!startMs && Date.now() < startMs - 3 * 3600 * 1000
 
   if (loading) return <Shell><div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,.5)', fontFamily: FONT }}>Chargement…</div></Shell>
   if (!event) return (
@@ -139,6 +175,21 @@ export default function OnSiteOrderPage() {
     <Shell>
       <Center title="Commande indisponible" sub="Cet événement est terminé ou annulé — les commandes sur place sont closes.">
         <BackBtn onClick={() => navigate(-1)} />
+      </Center>
+    </Shell>
+  )
+  if (notStarted) return (
+    <Shell>
+      <Center title="Pas encore ouvert" sub="Les commandes sur place ouvrent le soir de l'événement, à l'approche du début. Reviens un peu avant !">
+        <BackBtn onClick={() => navigate(-1)} />
+      </Center>
+    </Shell>
+  )
+  if (access === 'checking') return <Shell><div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,.5)', fontFamily: FONT }}>Vérification du billet…</div></Shell>
+  if (access === 'denied') return (
+    <Shell>
+      <Center title="Billet non reconnu" sub="Ce billet n'est pas rattaché à ton compte. Ouvre-le depuis « Mes billets » pour commander.">
+        <BackBtn onClick={() => navigate('/profil')} />
       </Center>
     </Shell>
   )
