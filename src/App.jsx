@@ -77,8 +77,24 @@ function usePersistedUser() {
     import('./firebase').then(({ auth, USE_REAL_FIREBASE }) => {
       if (!USE_REAL_FIREBASE || !auth) return
       import('firebase/auth').then(({ onAuthStateChanged }) => {
-        unsub = onAuthStateChanged(auth, fbUser => {
-          if (fbUser) return // session Firebase valide → OK
+        unsub = onAuthStateChanged(auth, async fbUser => {
+          if (fbUser) {
+            // Firebase Auth fait AUTORITÉ sur l'identité. Si la session locale
+            // pointe sur un AUTRE uid (doc orphelin sans compte Auth, ancienne
+            // session, onboarding abandonné) → « split-brain » : l'UI affiche un
+            // compte pendant que les écritures serveur passent sous un autre uid.
+            // On recharge le profil du vrai uid Firebase (ou on purge si absent).
+            let localUid = null
+            try { localUid = JSON.parse(localStorage.getItem('lib_user') || 'null')?.uid || null } catch {}
+            if (localUid && localUid !== fbUser.uid) {
+              try {
+                const { loadDoc } = await import('./utils/firestore-sync')
+                const profile = await loadDoc(`users/${fbUser.uid}`)
+                setUser(profile ? { ...profile, uid: fbUser.uid } : null)
+              } catch { setUser(null) }
+            }
+            return // session Firebase valide (et cohérente) → OK
+          }
           let hasLocal = false
           try { hasLocal = !!JSON.parse(localStorage.getItem('lib_user') || 'null') } catch {}
           if (hasLocal) setUser(null) // session périmée → déconnexion réelle
