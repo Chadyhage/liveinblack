@@ -17,6 +17,7 @@ import {
 } from '../utils/services'
 import { PROVIDER_CATEGORIES, getPrimaryProviderType, getProviderCategory, normalizeProviderTypes } from '../utils/providerCategories'
 import { subPresentation, subPriceLabel } from '../utils/providerSub'
+import { regionToCurrency } from '../utils/money'
 import { regions } from '../data/regions'
 import { getRegionName, inferRegionIdFromCity, normalizeRegionId, normalizeRegionIds, REGION_OPTIONS } from '../utils/locations'
 
@@ -246,6 +247,28 @@ export default function ProposerServicesPage() {
     }
   }
 
+  // Zone EUR : abonnement Stripe (récurrent auto). (Ré)abonnement via checkout.
+  async function handleStripeSubscribe() {
+    if (renewing) return
+    setRenewing(true)
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const res = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.alreadyActive) { setRenewing(false); notify('Ton abonnement est déjà actif.'); return }
+      if (res.ok && data.url) { window.location.href = data.url; return }
+      setRenewing(false)
+      notify(data.error || 'Impossible de démarrer le paiement. Réessaie.')
+    } catch {
+      setRenewing(false)
+      notify('Erreur réseau. Réessaie dans un instant.')
+    }
+  }
+
   function handleSaveProfile() {
     if (!profileForm.name.trim()) {
       notify('Ajoute le nom de ta page.')
@@ -436,7 +459,35 @@ export default function ProposerServicesPage() {
           {profile?.userId && <button onClick={() => navigate(`/prestataires/${encodeURIComponent(uid)}`)} style={secondaryButton}>Voir ma page publique</button>}
         </header>
 
-        {(() => {
+        {/* La MÉTHODE d'abonnement dépend de la ZONE du prestataire (1 prestataire
+            = 1 zone) : France → Stripe (récurrent auto, 9,99 €/mois) ; Togo/Bénin →
+            FedaPay (renouvellement manuel 30 j). On n'affiche JAMAIS les deux. */}
+        {regionToCurrency(profile?.regionId || profile?.country || user?.country) === 'EUR' ? (() => {
+          const active = profile?.subscriptionActive === true
+          const color = active ? '#4ee8c8' : '#e05aaa'
+          return (
+            <section style={{ ...card, padding: 16, marginTop: 18, borderColor: `${color}44`, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+              <div style={{ width: 8, alignSelf: 'stretch', minHeight: 40, borderRadius: 8, background: color, flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, margin: 0, color }}>{active ? 'Abonnement actif' : 'Abonnement inactif'}</h2>
+                  <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color, background: `${color}1e`, border: `1px solid ${color}55`, borderRadius: 999, padding: '2px 8px' }}>{active ? 'Actif' : 'Inactif'}</span>
+                </div>
+                <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '5px 0 0', lineHeight: 1.45 }}>
+                  {active
+                    ? 'Ton profil est visible. Renouvellement automatique chaque mois par carte bancaire.'
+                    : 'Ton profil n\'est pas visible publiquement. Active ton abonnement pour le mettre en ligne.'}
+                </p>
+                <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>9,99 € / mois · carte bancaire (Stripe)</p>
+              </div>
+              {!active && (
+                <button onClick={handleStripeSubscribe} disabled={renewing} style={{ ...primaryButton, background: `linear-gradient(135deg,${color},${color}cc)`, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
+                  {renewing ? 'Redirection…' : 'Activer mon abonnement'}
+                </button>
+              )}
+            </section>
+          )
+        })() : (() => {
           const p = subPresentation(profile)
           const dim = p.tone === 'off'
           return (
