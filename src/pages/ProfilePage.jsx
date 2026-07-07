@@ -2078,6 +2078,8 @@ function TableHostPanel({ tickets, inactive }) {
 
 function EventTicketGroup({ group }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const myId = getUserId(user)
   const [expanded, setExpanded] = useState(true)
   const [showPlaylist, setShowPlaylist] = useState(false)
 
@@ -2318,7 +2320,7 @@ function EventTicketGroup({ group }) {
             // PAS afficher de QR scannable ici (sinon l'hôte pourrait entrer à la
             // place de son invité). Il reste géré dans « Ma table » (attribuer /
             // reprendre). Seuls les sièges que le titulaire détient vraiment ont un QR.
-            .filter(b => !(b.tableId && b.assignedTo && String(b.assignedTo) !== String(getUserId(user))))
+            .filter(b => !(b.tableId && b.assignedTo && String(b.assignedTo) !== String(myId)))
             .map((b, i) => (
               <PremiumTicketCard key={b.id} booking={b} index={i} inactive={ticketInactive} inactiveLabel={inactiveLabel} />
             ))}
