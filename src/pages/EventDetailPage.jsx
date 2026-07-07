@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { generateTicketToken, checkScheduleConflict } from '../utils/ticket'
 import { getConversations, sendMessage, getUserId, formatTime, getInitials } from '../utils/messaging'
 import { startTicketCheckout } from '../utils/stripe'
+import { shareOrCopy } from '../utils/share'
 import { eventCurrency, fmtMoney } from '../utils/money'
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
@@ -423,6 +424,7 @@ export default function EventDetailPage() {
   const [bookedTickets, setBookedTickets] = useState([]) // tickets for the LAST confirmed booking
   const [allBookedThisSession, setAllBookedThisSession] = useState([]) // { place, tickets, preorderSummary, totalPrice }
   const [showShareModal, setShowShareModal] = useState(false)
+  const [extShareMsg, setExtShareMsg] = useState('')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   // Garde de réentrance pour la réservation gratuite (anti double-clic / multi-onglet,
   // sinon double création de billets + double points). Le chemin payant est déjà
@@ -2028,6 +2030,28 @@ export default function EventDetailPage() {
                 <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,0.15)', borderRadius: 2, margin: '0 auto 12px' }} />
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', textAlign: 'center' }}>
                   Partager l'événement
+                </p>
+              </div>
+              {/* Partage EXTERNE (hors app) : feuille native mobile + repli copier-lien */}
+              <div style={{ padding: '14px 16px 4px' }}>
+                <button
+                  onClick={async () => {
+                    const res = await shareOrCopy({
+                      title: event.name,
+                      text: `${event.name} — sur Live in Black`,
+                      url: `${window.location.origin}/evenements/${event.id}`,
+                    })
+                    if (res.method === 'share') { setShowShareModal(false); return }
+                    setExtShareMsg(res.method === 'copy' ? 'Lien copié ✓' : 'Indisponible sur ce navigateur')
+                    setTimeout(() => setExtShareMsg(''), 1800)
+                  }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '13px 16px', borderRadius: 12, border: '1px solid rgba(78,232,200,0.4)', background: 'rgba(78,232,200,0.10)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  <ShareIcon size={15} color="#4ee8c8" />
+                  {extShareMsg || 'Partager le lien (WhatsApp, Insta…)'}
+                </button>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.32)', textAlign: 'center', margin: '12px 0 2px' }}>
+                  ou envoyer dans une conversation
                 </p>
               </div>
               <div style={{ flex: 1, overflowY: 'auto' }}>

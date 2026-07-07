@@ -11,6 +11,7 @@ import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
 import { generateTicketToken } from '../utils/ticket'
 import { isEventEnded } from '../utils/event-time'
+import { shareOrCopy, downloadICS, combineDateTime } from '../utils/share'
 import PlaylistSystem from '../components/PlaylistSystem'
 import { PreferencesModal, summarizePreferences } from '../components/PreferencesEditor'
 import { IconMail, IconIdBadge } from '../components/icons'
@@ -2411,6 +2412,34 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
   const preorderTotal = (b.preorderSummary || []).reduce((sum, item) => sum + item.price * (b.preorderItems?.[item.name] || 0), 0)
   const downloadId = `premium-qr-${b.id}`
   const displayEventDate = b.eventDate || eventDateFallback || 'À confirmer'
+  const [shareMsg, setShareMsg] = useState('')
+  const flashShare = m => { setShareMsg(m); setTimeout(() => setShareMsg(''), 1800) }
+
+  // Partage l'ÉVÉNEMENT (pour que les amis réservent aussi) — feuille de partage
+  // native sur mobile, repli copier-lien sur desktop. Aucune fonction serveur.
+  async function shareEvent() {
+    const url = b.eventId ? `${window.location.origin}/evenements/${b.eventId}` : window.location.href
+    const res = await shareOrCopy({
+      title: b.eventName || 'Live in Black',
+      text: `Rejoins-moi à ${b.eventName || 'cette soirée'} 🎉`,
+      url,
+    })
+    if (res.method === 'copy') flashShare('Lien copié ✓')
+    else if (res.method === 'none') flashShare('Partage indisponible sur ce navigateur')
+  }
+
+  function addToCalendar() {
+    const start = combineDateTime(b.eventDateISO, b.eventStartTime)
+    if (!start) { flashShare('Date de l’événement indisponible'); return }
+    const ok = downloadICS({
+      title: b.eventName || 'Live in Black',
+      description: `Ton billet Live in Black${b.ticketCode ? ` · code ${b.ticketCode}` : ''}`,
+      location: b.eventVenue || b.venue || b.eventCity || '',
+      start,
+      end: combineDateTime(b.eventDateISO, b.eventEndTime),
+    })
+    flashShare(ok ? 'Ajouté au calendrier ✓' : 'Ajout au calendrier impossible')
+  }
 
   async function downloadTicket() {
     if (downloadStatus === 'loading') return
@@ -2556,10 +2585,13 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
         {qrUrl && <button className="ticket-pass-action" onClick={() => setShowLargeQr(v => !v)}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h4v4h-7z"/></svg>{showLargeQr?'Réduire le QR':'Afficher le QR'}</button>}
         {qrUrl && <button className="ticket-pass-action" onClick={downloadTicket} disabled={downloadStatus === 'loading'} aria-busy={downloadStatus === 'loading'}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>{downloadStatus === 'loading' ? 'Préparation…' : downloadStatus === 'success' ? 'Billet téléchargé' : 'Télécharger le billet'}</button>}
         {b.eventId && b.ticketCode && <button className="ticket-pass-action primary" onClick={() => navigate(`/commander/${b.eventId}/${b.ticketCode}`)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 9h16l-1 11H5L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>Commander sur place</button>}
+        <button className="ticket-pass-action" onClick={shareEvent}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
+        <button className="ticket-pass-action" onClick={addToCalendar}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</button>
       </>}
     </div>
 
     {downloadStatus === 'error' && <p role="alert" style={{margin:'0 20px 16px',font:'600 12px Inter,sans-serif',color:'#ff8585'}}>Le téléchargement n’a pas pu démarrer. Réessaie dans quelques secondes.</p>}
+    {shareMsg && <p role="status" style={{margin:'0 20px 16px',font:'600 12px Inter,sans-serif',color:'#4ee8c8'}}>{shareMsg}</p>}
 
     {showLargeQr && qrUrl && <div className="ticket-expanded-qr"><div className="ticket-qr"><QRCodeSVG value={qrUrl} size={210} level="H"/></div><span style={{font:'600 9px Inter,sans-serif',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(255,255,255,.35)'}}>Présente ce code à l’entrée · usage unique</span></div>}
   </article>
