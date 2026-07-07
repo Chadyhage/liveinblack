@@ -298,6 +298,16 @@ export default function OnboardingPrestataire() {
     tarifMin: '', tarifMax: '', tarifType: '', tarifDevis: false,
   })
 
+  // Un prestataire DÉJÀ validé (status 'active') n'a rien à faire dans le tunnel
+  // d'inscription : il n'y a aucun dossier à créer, donc l'écran resterait vide
+  // (le composant renvoie null tant que `app` est absent). On le renvoie vers son
+  // espace prestataire, où il gère son profil et son abonnement.
+  useEffect(() => {
+    if (user?.role === 'prestataire' && user?.status === 'active') {
+      navigate('/proposer', { replace: true })
+    }
+  }, [user?.role, user?.status]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Après un aller-retour Stripe, Firebase restaure sa session avant que la
   // session locale LIVEINBLACK ne soit forcément reconstruite. On réconcilie
   // les deux ici pour ne jamais revenir en mode anonyme ni perdre le brouillon.
