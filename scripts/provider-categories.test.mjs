@@ -41,9 +41,9 @@ test('profiles without a category remain valid and fall back to other services',
 
 test('required documents are the union of every selected activity', () => {
   const docs = getRequiredDocs('prestataire', ['artiste', 'salle'])
-  for (const key of ['identity', 'activity_proof', 'billing_proof', 'business_doc', 'insurance', 'exploitation_proof']) {
+  for (const key of ['identity', 'billing_proof', 'business_doc', 'insurance', 'exploitation_proof']) {
     assert.equal(docs.includes(key), true, `${key} should be required`)
   }
   assert.equal(new Set(docs).size, docs.length)
-  assert.deepEqual(getRequiredDocs('prestataire', []), ['identity', 'activity_proof'])
+  assert.deepEqual(getRequiredDocs('prestataire', []), ['identity'])
 })

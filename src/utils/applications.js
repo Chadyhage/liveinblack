@@ -27,7 +27,6 @@ export const DOCUMENT_LABELS = {
   rib:               { label: 'RIB (Relevé d\'identité bancaire)',                   required: false },
   business_doc:      { label: 'Document officiel d\'entreprise (Kbis, extrait INSEE, statuts…)', required: true  },
   alcohol_license:   { label: 'Licence / Justificatif de débit de boissons',         required: false },
-  activity_proof:    { label: 'Justificatif d\'activité',                            required: true  },
   insurance:         { label: 'Attestation RC Pro / assurance professionnelle',      required: true  },
   exploitation_proof:{ label: 'Autorisation d\'exploitation du lieu (licence ERP, arrêté de capacité…)', required: true },
   billing_proof:     { label: 'Justificatif de statut (Kbis AE, attestation Agessa/MDA, attestation CDDU intermittent…)', required: true },
@@ -43,7 +42,6 @@ export function getRequiredDocs(type, prestataireType = null) {
     if (types.length === 0) types.push('autre')
     const required = new Set(['identity'])
     for (const providerType of types) {
-      if (['artiste', 'photo_video', 'decoration', 'communication', 'bien_etre', 'staff', 'autre'].includes(providerType)) required.add('activity_proof')
       if (providerType === 'artiste') required.add('billing_proof')
       if (['salle', 'materiel', 'food', 'securite', 'transport'].includes(providerType)) {
         required.add('business_doc')
