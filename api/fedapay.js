@@ -145,6 +145,16 @@ async function checkout(req, res, body) {
     if (amountTotal <= 0) {
       return res.status(400).json({ error: 'Aucun montant à payer (place gratuite ?)' })
     }
+    // ── Garde-fou seuil mobile money ────────────────────────────────────────
+    // Les opérateurs mobile money (MTN/Moov/Mixx by Yas) refusent les micro-montants
+    // (~100 FCFA plancher). En pratique le frais fixe de 300 FCFA rend ce cas
+    // impossible pour un vrai billet, mais on rejette proprement AVANT d'appeler
+    // FedaPay pour ne jamais laisser l'opérateur renvoyer une erreur opaque en
+    // plein tunnel de paiement.
+    const MIN_XOF = 100
+    if (amountTotal < MIN_XOF) {
+      return res.status(400).json({ error: `Montant trop faible pour un paiement mobile money (minimum ${MIN_XOF} FCFA).` })
+    }
 
     // ── Décrément atomique du stock AVANT de créer la transaction (survente) ──
     // Même logique que api/checkout.js : accepter de payer = réserver la place.
