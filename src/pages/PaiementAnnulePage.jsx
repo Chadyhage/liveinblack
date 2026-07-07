@@ -16,7 +16,7 @@ const CARD = {
   backdropFilter: 'blur(22px) saturate(1.6)',
   WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
   border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 12,
+  borderRadius: 20,
 }
 
 /**
@@ -49,10 +49,18 @@ export default function PaiementAnnulePage() {
         body: JSON.stringify({ eventId, placeType, qty, action: 'release' }),
       })).catch(() => {})
     }
-    // Nettoyer tous les pendings (au cas où — ils sont en localStorage)
+    // Nettoyer UNIQUEMENT le panier de CET achat annulé (par event) — surtout pas
+    // tous les pendings : un second achat en cours dans un autre onglet doit
+    // survivre (sinon son retour /paiement-reussi perd son contexte local).
     try {
       const keys = Object.keys(localStorage).filter(k => k.startsWith('lib_pending_booking_'))
-      keys.forEach(k => localStorage.removeItem(k))
+      keys.forEach(k => {
+        try {
+          const p = JSON.parse(localStorage.getItem(k) || 'null')
+          const matchesEvent = eventId && p && String(p.eventId) === String(eventId)
+          if (!p || matchesEvent) localStorage.removeItem(k) // corrompu OU le bon event
+        } catch { localStorage.removeItem(k) }
+      })
     } catch {}
   }, [eventId, placeType, qty, provider, fedapayTxnId])
 
@@ -61,7 +69,7 @@ export default function PaiementAnnulePage() {
       <div style={{
         minHeight: 'calc(100vh - 80px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 20px', fontFamily: FONTS.mono,
+        padding: '40px 20px', fontFamily: FONTS.display,
       }}>
         <div style={{ ...CARD, padding: 32, maxWidth: 460, width: '100%', textAlign: 'center' }}>
           {/* Icon */}
@@ -89,19 +97,20 @@ export default function PaiementAnnulePage() {
               <button
                 onClick={() => navigate(`/evenements/${eventId}`)}
                 style={{
-                  padding: '12px 18px', borderRadius: 4, cursor: 'pointer',
-                  fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
-                  background: 'rgba(200,169,110,0.10)', border: `1px solid ${COLORS.gold}`, color: COLORS.gold,
+                  padding: '15px 20px', borderRadius: 14, cursor: 'pointer',
+                  fontFamily: FONTS.display, fontSize: 15, fontWeight: 700,
+                  background: 'linear-gradient(135deg,#c8a96e,#e0c48a)', border: 'none', color: '#04040b',
+                  boxShadow: '0 8px 26px rgba(200,169,110,0.30)',
                 }}
               >
-                ↺ Retourner à l'événement
+                Retourner à l'événement
               </button>
             )}
             <button
               onClick={() => navigate('/evenements')}
               style={{
-                padding: '12px 18px', borderRadius: 4, cursor: 'pointer',
-                fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
+                padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
+                fontFamily: FONTS.display, fontSize: 14, fontWeight: 600,
                 background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)',
               }}
             >
