@@ -75,16 +75,11 @@ export default function PublicLanding() {
   const { openAuthModal } = useAuth()
   const events = useMemo(loadPublicEvents, [])
 
-  // Aperçu prestataires (annuaire cross-device) — mis en avant comme les events
-  const [providers, setProviders] = useState(() => {
-    const valid = getAllProviderProfiles().filter(p => isProviderVisible(p) && p.name && (p.photoUrl || p.description || p.city || p.location || p.regionId))
-    const byName = {}
-    for (const p of valid) {
-      const k = p.name.trim().toLowerCase()
-      if (!byName[k]) byName[k] = p
-    }
-    return Object.values(byName).slice(0, 4)
-  })
+  // Aperçu prestataires (annuaire cross-device) — mis en avant comme les events.
+  // On démarre VIDE : la visibilité (abonnement) vient de Firestore temps réel
+  // (listener ci-dessous), jamais du cache local qui peut être périmé — sinon un
+  // prestataire non payé pourrait clignoter à l'écran avant correction.
+  const [providers, setProviders] = useState([])
   const [catalogs, setCatalogs] = useState(() => {
     const localCatalogs = {}
     for (const provider of getAllProviderProfiles()) {

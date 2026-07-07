@@ -27,8 +27,20 @@ export default function HeroSearch() {
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
   const [placeholder, setPlaceholder] = useState('Rechercher…')
+  const [remoteProviders, setRemoteProviders] = useState([])
   const wrapRef = useRef(null)
   const reduce = useRef(false)
+
+  // Source de vérité de la visibilité = Firestore temps réel (providers/), PAS le
+  // cache local qui peut garder un subscriptionActive périmé (ex. abonnement
+  // annulé) → sinon un prestataire non payé resterait affiché dans la recherche.
+  useEffect(() => {
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenProviders }) => {
+      unsub = listenProviders(setRemoteProviders)
+    }).catch(() => {})
+    return () => { try { unsub() } catch {} }
+  }, [])
 
   // ── Placeholder « machine à écrire » ──
   useEffect(() => {
@@ -61,7 +73,11 @@ export default function HeroSearch() {
   let results = []
   if (query) {
     const events = readEvents()
-    const providers = getAllProviderProfiles().filter(p => isProviderVisible(p))
+    // Firestore (remoteProviders) prioritaire sur le cache → subscriptionActive à jour.
+    const byId = {}
+    for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
+    for (const p of remoteProviders) if (p.userId) byId[p.userId] = p
+    const providers = Object.values(byId).filter(p => isProviderVisible(p))
 
     const evMatches = events.filter(e => {
       const hay = [e.name, e.city, e.category, e.subtitle, e.organizer, e.venue,

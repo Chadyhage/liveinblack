@@ -5,7 +5,7 @@ import PublicNav from '../components/PublicNav'
 import { useAuth } from '../context/AuthContext'
 import { getEntityRegionIds, getRegionName, normalizeGeoText } from '../utils/locations'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
-import { getAllProviderProfiles, isProviderVisible } from '../utils/services'
+import { isProviderVisible } from '../utils/services'
 import { getLocalOrganizerProfiles } from '../utils/organizers'
 import { isClientDiscoverableEvent } from '../utils/eventDiscovery'
 
@@ -103,7 +103,9 @@ export default function GlobalSearchPage() {
   const [query, setQuery] = useState(searchParamQuery)
   const [events, setEvents] = useState(() => readLocalEvents())
   const [organizers, setOrganizers] = useState(() => getLocalOrganizerProfiles().filter(profile => profile.status === 'public'))
-  const [providers, setProviders] = useState(() => getAllProviderProfiles())
+  // Vide au départ : la visibilité (abonnement) vient du listener Firestore
+  // ci-dessous, pas du cache local qui peut garder un subscriptionActive périmé.
+  const [providers, setProviders] = useState([])
 
   useEffect(() => {
     setQuery(searchParamQuery)
