@@ -14,6 +14,7 @@ import GlobalSearchPage from './pages/GlobalSearchPage'
 import PublicAbout from './pages/PublicAbout'
 import EventDetailPage from './pages/EventDetailPage'
 import ProposerServicesPage from './pages/ProposerServicesPage'
+import MonAbonnementPage from './pages/MonAbonnementPage'
 import MesEvenementsPage from './pages/MesEvenementsPage'
 import EventStatsPage from './pages/EventStatsPage'
 import ProfilePage from './pages/ProfilePage'
@@ -457,6 +458,9 @@ export default function App() {
             {/* ── Studio de la page publique du prestataire ── */}
             <Route path="/proposer" element={
               <RequireServiceAccess user={user}><ProposerServicesPage /></RequireServiceAccess>
+            } />
+            <Route path="/mon-abonnement" element={
+              <RequireServiceAccess user={user}><MonAbonnementPage /></RequireServiceAccess>
             } />
 
             {/* ── Inscription candidatures (public — no account required) ── */}

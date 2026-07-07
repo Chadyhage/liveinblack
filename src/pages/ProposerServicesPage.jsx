@@ -489,7 +489,7 @@ export default function ProposerServicesPage() {
                 <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{providerZone ? `Zone : ${providerZone.flag} ${providerZone.name} · ` : ''}9,99 € / mois · carte bancaire (Stripe) · renouvellement automatique</p>
               </div>
               {!active && (
-                <button onClick={handleStripeSubscribe} disabled={renewing} style={{ ...primaryButton, background: `linear-gradient(135deg,${color},${color}cc)`, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
+                <button onClick={handleStripeSubscribe} disabled={renewing} style={{ ...primaryButton, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
                   {renewing ? 'Redirection…' : 'Activer mon abonnement'}
                 </button>
               )}
@@ -513,12 +513,17 @@ export default function ProposerServicesPage() {
                 <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '5px 0 0', lineHeight: 1.45 }}>{p.message}</p>
                 <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{providerZone ? `Zone : ${providerZone.flag} ${providerZone.name} · ` : ''}{subPriceLabel()} · Mobile Money (FedaPay) · renouvellement manuel</p>
               </div>
-              <button onClick={handleRenew} disabled={renewing} style={{ ...primaryButton, background: `linear-gradient(135deg,${p.color},${p.color}cc)`, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
+              <button onClick={handleRenew} disabled={renewing} style={{ ...primaryButton, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
                 {renewing ? 'Redirection…' : p.cta}
               </button>
             </section>
           )
         })()}
+
+        {/* Lien vers la page détaillée de l'abonnement (durée, historique, reçus). */}
+        <button onClick={() => navigate('/mon-abonnement')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, background: 'none', border: 'none', color: C.teal, fontFamily: FONT, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+          Détails de mon abonnement · historique →
+        </button>
 
         <div style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.07)' }}>
           {[
