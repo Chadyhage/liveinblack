@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import PublicNav from '../components/PublicNav'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
-import { getCatalog, getAllProviderProfiles } from '../utils/services'
+import { getCatalog, getAllProviderProfiles, isProviderVisible } from '../utils/services'
 import { createDirectConversation, getUserId } from '../utils/messaging'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
 import ShareToChatModal from '../components/ShareToChatModal'
@@ -117,7 +117,9 @@ export default function PublicPrestatairePage() {
     )
   }
 
-  if (!profile) {
+  // Gate abonnement : un prestataire non abonné n'est pas visible publiquement.
+  // Exception : lui-même (isSelf) peut toujours consulter/gérer sa propre page.
+  if (!profile || (!isSelf && !isProviderVisible(profile, user))) {
     return (
       <PageChrome user={user}>
         <div style={{ minHeight: '100vh', background: C.obsidian, color: '#fff' }}>

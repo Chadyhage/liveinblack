@@ -5,7 +5,7 @@ import PublicNav from '../components/PublicNav'
 import { useAuth } from '../context/AuthContext'
 import { getEntityRegionIds, getRegionName, normalizeGeoText } from '../utils/locations'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
-import { getAllProviderProfiles } from '../utils/services'
+import { getAllProviderProfiles, isProviderVisible } from '../utils/services'
 import { getLocalOrganizerProfiles } from '../utils/organizers'
 import { isClientDiscoverableEvent } from '../utils/eventDiscovery'
 
@@ -124,9 +124,9 @@ export default function GlobalSearchPage() {
   const normalizedQuery = normalizeGeoText(query)
   const searchableEvents = useMemo(() => events.filter(event => isClientDiscoverableEvent(event)), [events])
   const searchableOrganizers = useMemo(() => organizers.filter(organizer => organizer.status === 'public'), [organizers])
-  const searchableProviders = useMemo(() => providers.filter(provider => provider?.name && (
+  const searchableProviders = useMemo(() => providers.filter(provider => isProviderVisible(provider, user) && provider?.name && (
     provider.photoUrl || provider.description || provider.city || provider.location || provider.regionId || provider.country || provider.zonesIntervention?.length
-  )), [providers])
+  )), [providers, user])
   const results = useMemo(() => ({
     events: normalizedQuery ? searchableEvents.filter(event => containsQuery(normalizedQuery, event.name, event.city, event.region, event.category, event.subtitle, event.description)).slice(0, 8) : [],
     organizers: normalizedQuery ? searchableOrganizers.filter(organizer => containsQuery(normalizedQuery, organizer.publicName, organizer.city, organizer.country, organizer.shortDescription, ...(organizer.vibes || []))).slice(0, 8) : [],

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PublicNav from '../components/PublicNav'
-import { getAllProviderProfiles, getCatalog } from '../utils/services'
+import { getAllProviderProfiles, getCatalog, isProviderVisible } from '../utils/services'
 import { fmtMoney, eventCurrency } from '../utils/money'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
 import { play as playDisc, stop as stopDisc, subscribe as subMusic } from '../utils/musicEngine'
@@ -77,7 +77,7 @@ export default function PublicLanding() {
 
   // Aperçu prestataires (annuaire cross-device) — mis en avant comme les events
   const [providers, setProviders] = useState(() => {
-    const valid = getAllProviderProfiles().filter(p => p.name && (p.photoUrl || p.description || p.city || p.location || p.regionId))
+    const valid = getAllProviderProfiles().filter(p => isProviderVisible(p) && p.name && (p.photoUrl || p.description || p.city || p.location || p.regionId))
     const byName = {}
     for (const p of valid) {
       const k = p.name.trim().toLowerCase()
@@ -100,7 +100,7 @@ export default function PublicLanding() {
         const byId = {}
         for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p
         for (const p of remote) if (p.userId) byId[p.userId] = p
-        const valid = Object.values(byId).filter(p => p.name && (p.photoUrl || p.description || p.city || p.location || p.regionId))
+        const valid = Object.values(byId).filter(p => isProviderVisible(p) && p.name && (p.photoUrl || p.description || p.city || p.location || p.regionId))
         const byName = {}
         for (const p of valid) {
           const k = p.name.trim().toLowerCase()

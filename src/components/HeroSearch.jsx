@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAllProviderProfiles } from '../utils/services'
+import { getAllProviderProfiles, isProviderVisible } from '../utils/services'
 import { MessagingSearchBar } from './MessagingActions'
 import { getEntityRegionIds, getRegionName, normalizeGeoText } from '../utils/locations'
 import { getProviderCategories } from '../utils/providerCategories'
@@ -61,7 +61,7 @@ export default function HeroSearch() {
   let results = []
   if (query) {
     const events = readEvents()
-    const providers = getAllProviderProfiles()
+    const providers = getAllProviderProfiles().filter(p => isProviderVisible(p))
 
     const evMatches = events.filter(e => {
       const hay = [e.name, e.city, e.category, e.subtitle, e.organizer, e.venue,

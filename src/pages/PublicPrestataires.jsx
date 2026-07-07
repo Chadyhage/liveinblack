@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Layout from '../components/Layout'
 import PublicNav from '../components/PublicNav'
-import { getAllProviderProfiles } from '../utils/services'
+import { getAllProviderProfiles, isProviderVisible } from '../utils/services'
 import { PROVIDER_CATEGORIES, getProviderCategories, getProviderCategory, getProviderTypes, providerMatchesCategory } from '../utils/providerCategories'
 import { regions } from '../data/regions'
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '../utils/locations'
@@ -68,7 +68,7 @@ export default function PublicPrestataires() {
     // Uniquement les profils réellement renseignés : un doc providers/ créé mais
     // laissé vide (aucune photo, description ni localisation) est un profil
     // fantôme (onboarding abandonné) → on ne l'affiche pas dans l'annuaire.
-    const valid = Object.values(byId).filter(p => p.name && (
+    const valid = Object.values(byId).filter(p => isProviderVisible(p, user) && p.name && (
       p.photoUrl || p.description || p.city || p.location || p.regionId || p.country || p.zonesIntervention?.length ||
       (catalogs[p.userId] || []).some(item => item.available !== false)
     ))
@@ -83,7 +83,7 @@ export default function PublicPrestataires() {
       }
     }
     return Object.values(byName)
-  }, [remote, catalogs])
+  }, [remote, catalogs, user])
 
   const filtered = useMemo(() => {
     const q = normalizeGeoText(query)

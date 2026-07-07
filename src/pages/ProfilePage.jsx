@@ -174,7 +174,11 @@ function openCredentialPDF(app, role) {
 function getAllEvents() {
   try {
     const created = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
-    return [...staticEvents, ...created]
+    // lib_event_view_cache = events d'organisateurs consultés/achetés (peuplé par
+    // EventDetailPage). SANS lui, un billet acheté à l'event d'un organisateur est
+    // introuvable ici → autrefois classé « annulé », QR désactivé. Bug critique.
+    const viewed = JSON.parse(localStorage.getItem('lib_event_view_cache') || '[]')
+    return [...staticEvents, ...created, ...viewed]
   } catch { return staticEvents }
 }
 
@@ -1498,7 +1502,9 @@ export default function ProfilePage() {
     getAllEvents().forEach(e => { evById[String(e.id)] = e })
     const groups = Object.values(grouped).map(g => {
       const ev = evById[String(g.eventId)]
-      const cancelled = !ev || !!ev?.cancelled
+      // Event introuvable en local ≠ annulé : le billet reste valide, on se base
+      // sur le snapshot du booking. Seul ev.cancelled === true = vraie annulation.
+      const cancelled = !!ev?.cancelled
       const firstTicket = g.tickets[0] || {}
       const timing = {
         date: ev?.date || firstTicket.eventDateISO,
@@ -2093,10 +2099,12 @@ function EventTicketGroup({ group }) {
 
   // Récupère l'objet événement complet pour savoir s'il a une playlist et son statut
   const event = getAllEvents().find(e => String(e.id) === String(group.eventId))
+  // Event introuvable en local (acheté sur un autre appareil, cache purgé…) ≠ annulé :
+  // le billet reste valide, timing basé sur le snapshot du booking. Seul un event
+  // explicitement cancelled désactive le billet.
   const isCancelled = !!event?.cancelled
-  const isDeleted = !event   // l'event n'existe plus du tout
   const cancellationMessage = event?.cancellationMessage || ''
-  const cancelled = isCancelled || isDeleted
+  const cancelled = isCancelled
   const firstTicket = group.tickets[0] || {}
   const timing = {
     date: event?.date || firstTicket.eventDateISO,

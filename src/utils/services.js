@@ -134,6 +134,19 @@ export function getProviderProfile(userId) {
   return getAllProviderProfiles().find(p => p.userId === userId) || null
 }
 
+// GATE ABONNEMENT — un prestataire n'apparaît dans les vues publiques (annuaire,
+// recherche globale, hero, vitrine, page détail) QUE si son abonnement est actif.
+// Strict `=== true` : un champ absent = non abonné → invisible. Les agents voient
+// tout le monde. La page détail ajoute en plus une exception « voir MA propre page ».
+// subscriptionActive est maintenu par api/stripe-webhook.js (writeSubStatus) et
+// seedé à l'approbation du dossier par applications.js. NE PAS retirer ce filtre :
+// c'est la condition du modèle économique (abonnement mensuel prestataire).
+export function isProviderVisible(provider, user) {
+  if (!provider) return false
+  if (user?.role === 'agent') return true
+  return provider.subscriptionActive === true
+}
+
 export function saveProviderProfile(profile) {
   const regionId = normalizeRegionId(profile.regionId || profile.country || profile.zonesIntervention?.[0]) || inferRegionIdFromCity(profile.city || profile.location)
   const normalizedZones = normalizeRegionIds(profile.zonesIntervention)
