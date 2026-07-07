@@ -94,6 +94,17 @@ export function markAllRead(uid) {
   } catch {}
 }
 
+// Vide entièrement la liste de notifications (bouton « Tout lire » = tout effacer).
+export function clearAllNotifications(uid) {
+  if (!uid) return
+  try {
+    localStorage.setItem(KEY(uid), JSON.stringify([]))
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`notifications/${uid}`, { items: [], updatedAt: Date.now() })
+    }).catch(() => {})
+  } catch {}
+}
+
 export function removeConversationNotifications(uid, convId) {
   if (!uid || !convId) return
   try {
@@ -134,6 +145,7 @@ export const NOTIF_CONFIG = {
   application_rejected:       { icon: '❌', color: '#e05aaa', label: 'Dossier refusé'   },
   application_needs_changes:  { icon: '⚠️', color: '#f59e0b', label: 'Corrections requises' },
   new_order:                  { icon: '🛒', color: '#4ee8c8', label: 'Nouvelle commande' },
+  ticket_assigned:            { icon: '🎟', color: '#c8a96e', label: 'Billet attribué'    },
   message:                    { icon: '💬', color: '#8b5cf6', label: 'Nouveau message'   },
   mention:                    { icon: '📣', color: '#4ee8c8', label: 'Mention'           },
   staff_invited:              { icon: '🎫', color: '#c8a96e', label: 'Équipe soirée'     },

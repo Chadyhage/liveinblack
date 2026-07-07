@@ -6,7 +6,7 @@ import AnimatedLogo from './AnimatedLogo'
 import AnimatedHamburger from './AnimatedHamburger'
 import { getUserId, getTotalUnreadCount, getLastRead, getConversationById, getUserById, getInitials, userShowsPhoto, isConversationHidden } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
-import { getNotifications, getUnreadCount, markAllRead, markRead, NOTIF_CONFIG, upsertMessageNotification, createNotification } from '../utils/notifications'
+import { getNotifications, getUnreadCount, markAllRead, markRead, clearAllNotifications, NOTIF_CONFIG, upsertMessageNotification, createNotification } from '../utils/notifications'
 import { playNotifSound } from '../utils/notifSound'
 import { IconBell } from './icons'
 
@@ -92,7 +92,9 @@ export default function Layout({ children, hideNav, chatMode }) {
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadNotifCount, setUnreadNotifCount] = useState(0)
-  const notifBellRef = useRef(null)
+  const notifBellRef = useRef(null)        // desktop header
+  const notifBellRefMobile = useRef(null)  // mobile header (refs séparés : sinon le
+  // dropdown de l'un est considéré « hors zone » et se ferme sur son propre clic)
   // Compteurs précédents pour déclencher le son global UNE fois à la hausse
   // (null au premier passage → pas de bip au chargement initial).
   const prevMsgCountRef = useRef(null)
@@ -301,9 +303,9 @@ export default function Layout({ children, hideNav, chatMode }) {
   useEffect(() => {
     if (!notifOpen) return
     const handler = e => {
-      if (notifBellRef.current && !notifBellRef.current.contains(e.target)) {
-        setNotifOpen(false)
-      }
+      const inDesktop = notifBellRef.current && notifBellRef.current.contains(e.target)
+      const inMobile = notifBellRefMobile.current && notifBellRefMobile.current.contains(e.target)
+      if (!inDesktop && !inMobile) setNotifOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -483,7 +485,7 @@ export default function Layout({ children, hideNav, chatMode }) {
               {user ? (
                 <>
                   {/* Notification bell — mobile */}
-                  <div ref={notifBellRef} style={{ position: 'relative' }}>
+                  <div ref={notifBellRefMobile} style={{ position: 'relative' }}>
                     <NotifBell open={notifOpen} unread={unreadNotifCount} onClick={handleOpenNotifs} size={32} />
                     {notifOpen && (
                       <NotifDropdown notifications={notifications} onClose={() => setNotifOpen(false)} uid={uid} mobile />
@@ -700,19 +702,32 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
 
   const recent = showAll ? grouped : grouped.slice(0, 6)
 
-  // Destination de clic selon le type de notification
+  // Destination de clic selon le type de notification — renvoie { path, state? }
+  // pour amener l'utilisateur à l'endroit EXACT (la conversation, l'événement…)
+  // et pas seulement à la page générique.
   function routeFor(n) {
-    if (n.type === 'message') return '/messagerie'
-    if (n.type === 'new_order') return '/mes-evenements'
-    if (n.type === 'staff_invited' || n.type === 'staff_removed') return '/mes-soirees'
-    if (n.type?.startsWith('application_')) return '/mon-dossier'
+    if (n.type === 'message' || n.type === 'mention') {
+      const convId = n.data?.convId
+      return convId ? { path: '/messagerie', state: { conversationId: convId } } : { path: '/messagerie' }
+    }
+    if (n.type === 'new_order') return { path: '/mes-evenements' }
+    if (n.type === 'ticket_assigned') {
+      const eventId = n.data?.eventId
+      return eventId ? { path: `/evenements/${eventId}` } : { path: '/profil' }
+    }
+    if (n.type === 'staff_invited' || n.type === 'staff_removed') return { path: '/mes-soirees' }
+    if (n.type?.startsWith('application_')) return { path: '/mon-dossier' }
+    if (n.type?.startsWith('organizer_')) {
+      const eventId = n.data?.eventId
+      return eventId ? { path: `/evenements/${eventId}` } : { path: '/evenements' }
+    }
     return null
   }
   function handleClickNotif(n) {
     if (uid) markRead(uid, n.id)
     const dest = routeFor(n)
     onClose?.()
-    if (dest) navigate(dest)
+    if (dest) navigate(dest.path, dest.state ? { state: dest.state } : undefined)
   }
 
   function timeAgo(ts) {
@@ -745,8 +760,8 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
           Notifications
         </span>
         {notifications.length > 0 && (
-          <button onClick={() => { if (uid) markAllRead(uid) }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(217,70,239,0.8)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            Tout lire
+          <button onClick={() => { if (uid) clearAllNotifications(uid); onClose?.() }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(217,70,239,0.8)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            Tout effacer
           </button>
         )}
       </div>
