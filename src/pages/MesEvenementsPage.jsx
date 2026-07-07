@@ -10,7 +10,7 @@ import { IconHourglass } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
 import { regions } from '../data/regions'
-import { fmtMoney, eventCurrency, regionToCurrency, currencySymbol } from '../utils/money'
+import { fmtMoney, eventCurrency, regionToCurrency, currencySymbol, organizerCurrency, payRailLabel } from '../utils/money'
 import { MUSIC_STYLES, EVENT_TYPES, AMBIANCES } from '../utils/recommendations'
 import { getGuestlist, loadGuestlistRemote, addGuestlistEntry, removeGuestlistEntry } from '../utils/guestlist'
 
@@ -323,6 +323,10 @@ export default function MesEvenementsPage() {
   const [justPublishedEvent, setJustPublishedEvent] = useState(null)
   const [publishing, setPublishing] = useState(false)
   const toastTimerRef = useRef(null)
+  // Devise de l'organisateur (« 1 organisateur = 1 zone ») : ancrée à son profil,
+  // source de vérité de la devise de TOUS ses events. null tant qu'inconnue → on
+  // retombe sur la région de l'event (rétro-compat, ne casse pas l'existant).
+  const [orgCurrency, setOrgCurrency] = useState(null)
 
   // Step 0: Bases
   const [form, setForm] = useState({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18, region: '' })
@@ -404,6 +408,17 @@ export default function MesEvenementsPage() {
       if (cached.length) setCreatedEvents(cached)
     } catch {}
   }, [])
+
+  // Charge la devise de zone de l'organisateur depuis son profil.
+  useEffect(() => {
+    if (!user?.uid) return
+    let cancelled = false
+    import('../utils/organizers').then(({ getOrganizerProfile }) => {
+      const cur = organizerCurrency(getOrganizerProfile(user.uid))
+      if (!cancelled && cur) setOrgCurrency(cur)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [user?.uid])
 
   useEffect(() => {
     if (!user?.uid) return
@@ -642,7 +657,9 @@ export default function MesEvenementsPage() {
       region: form.region || venue.city,
       // Devise de facturation : Togo/Bénin → XOF (FedaPay), France → EUR (Stripe).
       // Figée à la publication — les prix des places sont saisis dans cette devise.
-      currency: regionToCurrency(form.region || venue.city),
+      // « 1 organisateur = 1 zone » : la devise vient de la zone de l'organisateur
+      // (orgCurrency) ; à défaut (profil sans zone connue) on retombe sur la région.
+      currency: orgCurrency || regionToCurrency(form.region || venue.city),
       imageUrl: finalImageUrl,
       color: '#c8a96e',
       accentColor: '#e8d49e',
@@ -2195,6 +2212,21 @@ export default function MesEvenementsPage() {
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Configure chaque type de place que tu veux proposer.</p>
             </div>
 
+            {/* Devise explicite : l'organisateur voit clairement dans quelle devise
+                il fixe ses prix et par quel moyen les billets seront payés. */}
+            {(() => {
+              const cur = orgCurrency || regionToCurrency(form.region)
+              const isXof = cur === 'XOF'
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: isXof ? 'rgba(78,232,200,0.06)' : 'rgba(200,169,110,0.06)', border: `1px solid ${isXof ? 'rgba(78,232,200,0.22)' : 'rgba(200,169,110,0.22)'}` }}>
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>{isXof ? '📱' : '💳'}</span>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.4 }}>
+                    Tu fixes tes prix en <strong style={{ color: isXof ? '#4ee8c8' : '#c8a96e' }}>{currencySymbol(cur)}</strong> — paiement par {payRailLabel(cur)}.
+                  </p>
+                </div>
+              )
+            })()}
+
             {places.map((place, i) => {
               // Cette place a-t-elle déjà été vendue ? (uniquement si on édite un event existant)
               const placeSoldCount = editingEventId && place.type ? getPlaceBookingCount(editingEventId, place.type) : 0
@@ -2245,7 +2277,7 @@ export default function MesEvenementsPage() {
                   </div>
                   <div>
                     <InputField
-                      label={`Prix (${currencySymbol(regionToCurrency(form.region))})`}
+                      label={`Prix (${currencySymbol(orgCurrency || regionToCurrency(form.region))})`}
                       type="number"
                       placeholder="0 = gratuit"
                       value={place.price}
@@ -2520,7 +2552,7 @@ export default function MesEvenementsPage() {
                       key={i}
                       item={item}
                       index={i}
-                      currency={regionToCurrency(form.region)}
+                      currency={orgCurrency || regionToCurrency(form.region)}
                       placeTypes={places.map(p => p.type).filter(Boolean)}
                       onUpdate={updated => setMenuItems(menuItems.map((m, j) => j === i ? updated : m))}
                       onRemove={i > 0 ? () => setMenuItems(menuItems.filter((_, j) => j !== i)) : null}
@@ -2917,10 +2949,14 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
 // (un billet = une vente, cross-device), joint aux prix des places de l'event.
 function OrganizerAnalytics({ events, tickets, loading }) {
   const eventById = Object.fromEntries((events || []).map(e => [String(e.id), e]))
-  // Devise d'affichage : XOF si TOUS les events de l'organisateur sont en FCFA,
-  // EUR sinon. (Un organisateur est mono-région en pratique ; s'il mixe un jour,
-  // les lignes « par événement » restent justes, seuls les agrégats mélangent.)
-  const statsCur = (events || []).length && (events || []).every(e => eventCurrency(e) === 'XOF') ? 'XOF' : 'EUR'
+  // « 1 organisateur = 1 zone » : en principe TOUS les events sont dans la même
+  // devise. Par sécurité on ne SOMME JAMAIS deux devises : on retient la devise
+  // dominante (le plus d'events) et le CA agrégé n'additionne QUE les billets de
+  // cette devise. Un event résiduel dans l'autre devise reste juste sur sa propre
+  // ligne « par événement » mais ne pollue pas le total (jamais de « 5012 »).
+  const curCounts = (events || []).reduce((m, e) => { const c = eventCurrency(e); m[c] = (m[c] || 0) + 1; return m }, {})
+  const statsCur = (curCounts.XOF || 0) > (curCounts.EUR || 0) ? 'XOF' : 'EUR'
+  const inStatsCur = (t) => eventCurrency(eventById[String(t.eventId)]) === statsCur
   const priceOf = (t) => {
     // Prix payé figé sur le billet en priorité : le CA des ventes passées ne doit
     // JAMAIS changer si l'organisateur modifie ses tarifs (cohérence comptable).
@@ -2934,7 +2970,7 @@ function OrganizerAnalytics({ events, tickets, loading }) {
   // gratuit) occupe une place mais ne rapporte rien — il ne doit pas gonfler le CA.
   // L'organisateur garde 100 % du prix du billet : le frais de service LIVEINBLACK
   // est payé par l'ACHETEUR en sus (lib/fees.js) — pas de commission vendeur.
-  const grossRevenue = tickets.reduce((s, t) => s + (t.paid ? priceOf(t) : 0), 0)
+  const grossRevenue = tickets.reduce((s, t) => s + (t.paid && inStatsCur(t) ? priceOf(t) : 0), 0)
   const paidCount = tickets.filter(t => t.paid).length
   const totalCap = (events || []).reduce((s, e) => s + (e.places || []).reduce((a, p) => a + (Number(p.total) || 0), 0), 0)
   const fillPct = totalCap > 0 ? Math.round(totalTickets / totalCap * 100) : 0

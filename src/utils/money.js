@@ -24,6 +24,23 @@ export function eventCurrency(event) {
   return String(event.currency || '').toUpperCase() === 'XOF' ? 'XOF' : 'EUR'
 }
 
+// Devise d'un ORGANISATEUR = sa zone, ancrée à son profil (organizer_profiles :
+// regionId/country posé à l'onboarding). Principe « 1 organisateur = 1 zone » :
+// tous ses events sont dans CETTE devise, un seul rail de paiement. Retourne
+// null si le profil/zone n'est pas connu (l'appelant retombe alors sur la
+// devise dérivée de la région de l'event, pour ne rien casser sur l'existant).
+export function organizerCurrency(profile) {
+  if (!profile) return null
+  const anchor = profile.regionId || profile.country
+  if (!anchor) return null
+  return regionToCurrency(anchor)
+}
+
+// Libellé humain du rail de paiement associé à une devise (bandeaux explicites).
+export function payRailLabel(currency = 'EUR') {
+  return String(currency).toUpperCase() === 'XOF' ? 'Mobile Money / carte (FedaPay)' : 'Carte bancaire (Stripe)'
+}
+
 // Formate un montant : fmtMoney(5000, 'XOF') → « 5 000 FCFA » ;
 // fmtMoney(12.5) → « 12,50 € » ; fmtMoney(12) → « 12 € ».
 export function fmtMoney(amount, currency = 'EUR') {
