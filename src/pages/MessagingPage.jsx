@@ -921,6 +921,10 @@ export default function MessagingPage() {
       markMessagesRead(convId, myId)
     }
     setLastRead(convId, myId)
+    // On est DANS la conversation → sa notif dans la cloche n'a plus de raison
+    // d'être. On l'efface à l'ouverture (et les nouveaux messages de la conv
+    // active ne créent pas de notif, cf. isActive plus haut).
+    removeConversationNotifications(myId, convId)
     const conv = getConversationById(convId)
     if (conv?.pinnedMessageId) {
       // will be rendered in pinned bar

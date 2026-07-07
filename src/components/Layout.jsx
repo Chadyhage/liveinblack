@@ -6,7 +6,7 @@ import AnimatedLogo from './AnimatedLogo'
 import AnimatedHamburger from './AnimatedHamburger'
 import { getUserId, getTotalUnreadCount, getLastRead, getConversationById, getUserById, getInitials, userShowsPhoto, isConversationHidden } from '../utils/messaging'
 import { getTotalPendingCount } from '../utils/accounts'
-import { getNotifications, getUnreadCount, markAllRead, markRead, clearAllNotifications, NOTIF_CONFIG, upsertMessageNotification, createNotification } from '../utils/notifications'
+import { getNotifications, getUnreadCount, markAllRead, clearAllNotifications, removeNotificationGroup, NOTIF_CONFIG, upsertMessageNotification, createNotification } from '../utils/notifications'
 import { playNotifSound } from '../utils/notifSound'
 import { IconBell } from './icons'
 
@@ -724,7 +724,9 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
     return null
   }
   function handleClickNotif(n) {
-    if (uid) markRead(uid, n.id)
+    // Un clic ouvre la cible ET fait disparaître la notif (tout le groupe
+    // regroupé sur cette ligne, pas seulement la représentante).
+    if (uid) removeNotificationGroup(uid, n.type, n.title)
     const dest = routeFor(n)
     onClose?.()
     if (dest) navigate(dest.path, dest.state ? { state: dest.state } : undefined)

@@ -94,6 +94,20 @@ export function markAllRead(uid) {
   } catch {}
 }
 
+// Retire toutes les notifications d'un « groupe » affiché (même type + même
+// titre) — le dropdown regroupe ces notifs sur une seule ligne, donc un clic
+// doit toutes les faire disparaître, pas seulement la représentante.
+export function removeNotificationGroup(uid, type, title) {
+  if (!uid) return
+  try {
+    const items = getNotifications(uid).filter(n => !(n.type === type && n.title === title))
+    localStorage.setItem(KEY(uid), JSON.stringify(items))
+    import('./firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`notifications/${uid}`, { items, updatedAt: Date.now() })
+    }).catch(() => {})
+  } catch {}
+}
+
 // Vide entièrement la liste de notifications (bouton « Tout lire » = tout effacer).
 export function clearAllNotifications(uid) {
   if (!uid) return
