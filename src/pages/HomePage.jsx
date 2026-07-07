@@ -16,6 +16,7 @@ import { fmtMoney, eventCurrency } from '../utils/money'
 import { getEnabledRoles } from '../utils/accounts'
 import { GooeyText } from '../components/ui/gooey-text-morphing'
 import { IconTent, IconMic } from '../components/icons'
+import EventHoverMedia from '../components/EventHoverMedia'
 import PublicLanding from './PublicLanding'
 import { getRecommendations, hasPreferences, personalizationEnabled } from '../utils/recommendations'
 import { PreferencesModal } from '../components/PreferencesEditor'
@@ -957,45 +958,43 @@ export default function HomePage() {
                     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(0,0,0,0.5)' }}
                     onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}>
 
-                      {/* Banner */}
-                      {event.imageUrl ? (
-                        <div style={{ width: '100%', height: 240, overflow: 'hidden', position: 'relative' }}>
-                          <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,6,10,0.8) 0%, transparent 60%)' }} />
-                        </div>
-                      ) : (
-                        <div style={{
-                          height: 240, position: 'relative', overflow: 'hidden',
-                          background: `radial-gradient(circle at 26% 34%, ${event.color}88 0%, transparent 45%), radial-gradient(circle at 72% 40%, ${event.accentColor || event.color}66 0%, transparent 42%), linear-gradient(165deg, #110e19, #08080f)`,
-                        }}>
-                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,6,10,0.75) 0%, transparent 55%)' }} />
-                          <div style={{ position: 'absolute', top: 16, left: 18, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                            {event.tags?.map((tag) => (
-                              <span key={tag} style={{
-                                fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600,
-                                letterSpacing: '0.06em', textTransform: 'uppercase',
-                                padding: '4px 10px', borderRadius: 999,
-                                border: '1px solid rgba(255,255,255,0.15)',
-                                background: 'rgba(255,255,255,0.08)',
-                                color: 'rgba(255,255,255,0.75)',
-                                backdropFilter: 'blur(8px)',
+                      {/* Banner + vidéo d'aperçu au survol */}
+                      <EventHoverMedia
+                        event={event}
+                        height={240}
+                        zoom
+                        fallbackBackground={`radial-gradient(circle at 26% 34%, ${event.color}88 0%, transparent 45%), radial-gradient(circle at 72% 40%, ${event.accentColor || event.color}66 0%, transparent 42%), linear-gradient(165deg, #110e19, #08080f)`}
+                      >
+                        {!event.imageUrl && (
+                          <>
+                            <div style={{ position: 'absolute', top: 16, left: 18, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              {event.tags?.map((tag) => (
+                                <span key={tag} style={{
+                                  fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600,
+                                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                                  padding: '4px 10px', borderRadius: 999,
+                                  border: '1px solid rgba(255,255,255,0.15)',
+                                  background: 'rgba(255,255,255,0.08)',
+                                  color: 'rgba(255,255,255,0.75)',
+                                  backdropFilter: 'blur(8px)',
+                                }}>
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                              <span style={{
+                                fontFamily: 'Inter, sans-serif', fontWeight: 900,
+                                fontSize: 'clamp(26px, 8vw, 44px)',
+                                letterSpacing: '-1px', opacity: 0.10, color: '#fff',
+                                whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '88%', textOverflow: 'ellipsis',
                               }}>
-                                {tag}
+                                {event.name}
                               </span>
-                            ))}
-                          </div>
-                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                            <span style={{
-                              fontFamily: 'Inter, sans-serif', fontWeight: 900,
-                              fontSize: 'clamp(26px, 8vw, 44px)',
-                              letterSpacing: '-1px', opacity: 0.10, color: '#fff',
-                              whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '88%', textOverflow: 'ellipsis',
-                            }}>
-                              {event.name}
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                            </div>
+                          </>
+                        )}
+                      </EventHoverMedia>
 
                       {/* Rank badge + indicateur BOOSTÉ si l'event est vraiment promu */}
                       <div style={{
@@ -1184,10 +1183,12 @@ export default function HomePage() {
                         borderRadius: 24, overflow: 'hidden',
                       }}>
                         <div style={{ position: 'relative', height: 168 }}>
-                          {event.imageUrl
-                            ? <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                            : <div style={{ width: '100%', height: '100%', background: `radial-gradient(circle at 30% 20%, ${event.color || '#8444ff'}44, transparent 60%), linear-gradient(135deg, rgba(132,68,255,0.25), rgba(78,232,200,0.08))` }} />}
-                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,6,10,0.8), transparent 60%)' }} />
+                          <EventHoverMedia
+                            event={event}
+                            height={168}
+                            zoom
+                            fallbackBackground={`radial-gradient(circle at 30% 20%, ${event.color || '#8444ff'}44, transparent 60%), linear-gradient(135deg, rgba(132,68,255,0.25), rgba(78,232,200,0.08))`}
+                          />
                           {/* Raison de la recommandation — discrète, jamais intrusive */}
                           {reason && (
                             <span style={{

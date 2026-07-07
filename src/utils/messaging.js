@@ -558,7 +558,7 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
         : type === 'story' ? '📰 Article'
         : type === 'poll' ? '📊 Sondage'
         : type === 'event' ? '🎟 Événement'
-        : type === 'catalog_item' ? '🏷 Offre prestataire'
+        : type === 'catalog_item' ? 'Offre prestataire'
         : type === 'group_booking' ? '👥 Réservation clôturée'
         : type === 'system' ? content
         : '📎'

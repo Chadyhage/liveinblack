@@ -83,6 +83,26 @@ export async function uploadEventPoster(eventId, dataUrl) {
   return await getDownloadURL(snap.ref)
 }
 
+// Vidéo courte d'aperçu d'un événement → Storage events/{uid}/{eventId}/...
+// On garde uniquement une URL dans les documents. Le lecteur côté interface ne
+// charge la vidéo qu'après intention utilisateur (survol prolongé), pour éviter
+// de rendre la home ou les listes trop lourdes.
+export async function uploadEventVideo(eventId, file) {
+  if (!eventId || !file) throw new Error('Vidéo manquante')
+  const allowed = ['video/mp4', 'video/webm', 'video/quicktime']
+  if (!allowed.includes(file.type)) throw new Error('Utilise une vidéo MP4, WEBM ou MOV.')
+  if (file.size > 30 * 1024 * 1024) throw new Error('La vidéo dépasse 30 Mo.')
+
+  const { storage, auth } = await import('../firebase')
+  const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+  const uid = auth?.currentUser?.uid
+  if (!uid) throw new Error('Non authentifié — impossible d\'uploader la vidéo')
+  const safeName = (file.name || 'preview_video').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80)
+  const path = `events/${uid}/${eventId}/preview_${Date.now()}_${safeName}`
+  const snap = await uploadBytes(ref(storage, path), file, { contentType: file.type })
+  return await getDownloadURL(snap.ref)
+}
+
 // Sanitise une liste d'événements avant sync vers user_events/{uid} :
 // les anciens events peuvent encore contenir des images base64 énormes
 // qui feraient dépasser la limite Firestore de 1 Mo sur le doc complet.
@@ -95,6 +115,9 @@ export async function sanitizeEventsForSync(events) {
       } catch {
         return { ...ev, imageUrl: null }
       }
+    }
+    if (ev?.videoUrl && !/^https?:\/\//i.test(ev.videoUrl)) {
+      return { ...ev, videoUrl: null }
     }
     return ev
   }))

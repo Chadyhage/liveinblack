@@ -5,6 +5,7 @@
 
 import { inRegion } from '../data/regions'
 import { fmtMoney, eventCurrency } from '../utils/money'
+import EventHoverMedia from './EventHoverMedia'
 
 // Places encore disponibles (somme des `available`, fallback `total`).
 // Exporté pour que HomePage filtre les events « il reste des places ».
@@ -90,11 +91,13 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
               onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)' }}>
               {/* Visuel */}
               <div className="tonight-card-img" style={{ position: 'relative' }}>
-                {ev.imageUrl
-                  ? <img src={ev.imageUrl} alt={ev.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <div style={{ width: '100%', height: '100%', background: `radial-gradient(circle at 30% 30%, ${ev.color || '#2a2440'}99, transparent 60%), linear-gradient(135deg, #1a1426, #0b0d14)` }} />
-                }
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,13,20,0.92) 4%, transparent 62%)' }} />
+                <EventHoverMedia
+                  event={ev}
+                  height="100%"
+                  zoom
+                  fallbackBackground={`radial-gradient(circle at 30% 30%, ${ev.color || '#2a2440'}99, transparent 60%), linear-gradient(135deg, #1a1426, #0b0d14)`}
+                  overlay="linear-gradient(to top, rgba(11,13,20,0.92) 4%, transparent 62%)"
+                />
                 {/* Heure de début — l'info clé pour "ce soir" */}
                 <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: "'Syne', sans-serif", fontSize: 11, fontWeight: 800, color: '#0b0d14', background: '#e05aaa', padding: '3px 9px', borderRadius: 7, boxShadow: '0 4px 12px rgba(224,90,170,0.4)' }}>
                   {ev.time || 'CE SOIR'}

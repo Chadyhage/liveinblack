@@ -9,6 +9,7 @@ import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/ev
 import { fmtMoney, eventCurrency } from '../utils/money'
 import EmptyState from '../components/EmptyState'
 import { MessagingSearchBar } from '../components/MessagingActions'
+import EventHoverMedia from '../components/EventHoverMedia'
 import { isEventEnded } from '../utils/event-time'
 import { isPlaceholderEvent } from '../utils/eventDiscovery'
 
@@ -608,11 +609,13 @@ function EventPoster({ event, onClick }) {
         boxShadow: expanded ? `0 20px 44px -10px rgba(0,0,0,0.75), 0 0 24px -6px ${accent}55` : 'none',
         transition: 'border-color 0.35s ease, box-shadow 0.35s ease',
       }}>
-        {event.imageUrl
-          ? <img src={event.imageUrl} alt={event.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: expanded ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.6s cubic-bezier(0.22,0.9,0.3,1)' }} />
-          : <div style={{ width: '100%', height: '100%', background: `radial-gradient(circle at 30% 25%, ${(event.color || '#2a2440')}aa, transparent 60%), linear-gradient(150deg, #1a1426, #0b0d14)` }} />}
-        {/* Voile bas — plus opaque quand la carte est ouverte pour lire les infos */}
-        <div style={{ position: 'absolute', inset: 0, background: expanded ? 'linear-gradient(to top, rgba(8,9,14,0.97) 18%, rgba(8,9,14,0.4) 55%, transparent 80%)' : 'linear-gradient(to top, rgba(8,9,14,0.95) 6%, transparent 55%)', transition: 'background 0.35s ease' }} />
+        <EventHoverMedia
+          event={event}
+          height="100%"
+          zoom={expanded}
+          fallbackBackground={`radial-gradient(circle at 30% 25%, ${(event.color || '#2a2440')}aa, transparent 60%), linear-gradient(150deg, #1a1426, #0b0d14)`}
+          overlay={expanded ? 'linear-gradient(to top, rgba(8,9,14,0.97) 18%, rgba(8,9,14,0.4) 55%, transparent 80%)' : 'linear-gradient(to top, rgba(8,9,14,0.95) 6%, transparent 55%)'}
+        />
         {/* Countdown — bornée à gauche pour ne jamais chevaucher le prix */}
         {countdown && (
           <span style={{ position: 'absolute', top: 8, left: 8, maxWidth: '42%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: urgent ? '#fff' : '#4ee8c8', background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(5,6,10,0.6)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{countdown}</span>
@@ -776,16 +779,11 @@ function EventCard({ event, onClick, shareMode, shared }) {
           /* Image card (user-created events with photo) */
           <>
             <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
-              <img
-                src={event.imageUrl}
-                alt={event.name}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  transition: 'transform 0.5s ease',
-                  transform: hovered ? 'scale(1.05)' : 'scale(1)',
-                }}
+              <EventHoverMedia
+                event={event}
+                height="100%"
+                zoom={hovered}
+                fallbackBackground={`radial-gradient(circle at 30% 25%, ${(event.color || '#2a2440')}aa, transparent 60%), linear-gradient(150deg, #1a1426, #0b0d14)`}
               />
             </div>
             <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -824,13 +822,12 @@ function EventCard({ event, onClick, shareMode, shared }) {
         ) : (
           /* Gradient card (static events) */
           <>
-            <div
-              style={{
-                height: 120,
-                position: 'relative',
-                overflow: 'hidden',
-                background: `linear-gradient(135deg, ${event.color}22 0%, ${event.color}08 100%)`,
-              }}
+            <EventHoverMedia
+              event={event}
+              height={120}
+              zoom={hovered}
+              fallbackBackground={`linear-gradient(135deg, ${event.color}22 0%, ${event.color}08 100%)`}
+              overlay={false}
             >
               <div style={{
                 position: 'absolute',
@@ -872,7 +869,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
                   </span>
                 ))}
               </div>
-            </div>
+            </EventHoverMedia>
 
             {/* Card body */}
             <div style={{ padding: '14px 16px' }}>

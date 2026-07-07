@@ -5,6 +5,7 @@ import PublicNav from '../components/PublicNav'
 import { getAllProviderProfiles, getCatalog, isProviderVisible } from '../utils/services'
 import { fmtMoney, eventCurrency } from '../utils/money'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
+import EventHoverMedia from '../components/EventHoverMedia'
 import { play as playDisc, stop as stopDisc, subscribe as subMusic } from '../utils/musicEngine'
 import { eventStartMs } from '../utils/event-time'
 import { isClientDiscoverableEvent } from '../utils/eventDiscovery'
@@ -183,8 +184,14 @@ export default function PublicLanding() {
                 return (
                   <Reveal key={e.id} delay={i * 60}>
                     <div className="lb-card" style={{ ...card, overflow: 'hidden', cursor: 'pointer', height: '100%' }} onClick={() => navigate(`/evenements/${e.id}`)}>
-                      <div style={{ position: 'relative', aspectRatio: '4/3', background: e.imageUrl ? `url(${e.imageUrl}) center/cover` : `linear-gradient(135deg, ${C.violet}44, ${C.obsidian})` }}>
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,9,14,.9), transparent 55%)' }} />
+                      <div style={{ position: 'relative', aspectRatio: '4/3' }}>
+                        <EventHoverMedia
+                          event={e}
+                          aspectRatio="4 / 3"
+                          zoom
+                          fallbackBackground={`linear-gradient(135deg, ${C.violet}44, ${C.obsidian})`}
+                          overlay="linear-gradient(to top, rgba(8,9,14,.9), transparent 55%)"
+                        />
                         {min != null && <span style={{ position: 'absolute', top: 10, right: 10, fontFamily: FONT, fontSize: 11, fontWeight: 800, color: C.gold, background: 'rgba(5,6,10,.7)', backdropFilter: 'blur(8px)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>dès {fmtMoney(min, eventCurrency(e))}</span>}
                       </div>
                       <div style={{ padding: '12px 14px 14px' }}>

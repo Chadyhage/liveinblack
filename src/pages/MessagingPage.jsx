@@ -312,7 +312,7 @@ function EventCard({ content }) {
 function CatalogItemCard({ content }) {
   const navigate = useNavigate()
   let it
-  try { it = typeof content === 'string' ? JSON.parse(content) : content } catch { return <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.gold }}>🏷 Offre prestataire</span> }
+  try { it = typeof content === 'string' ? JSON.parse(content) : content } catch { return <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.gold }}>Offre prestataire</span> }
   const clickable = it.providerId != null && it.providerId !== ''
   const go = (e) => { e.stopPropagation(); if (clickable) navigate(`/prestataires/${encodeURIComponent(it.providerId)}`) }
   const priceLabel = it.price != null && Number(it.price) > 0
@@ -333,6 +333,7 @@ function CatalogItemCard({ content }) {
       <div style={{ padding: '11px 13px 13px' }}>
         <p style={{ fontFamily: T.cormorant, fontWeight: 500, fontSize: 16, color: '#fff', margin: '0 0 3px', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name || 'Offre'}</p>
         {it.category && <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 11px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{it.category}</p>}
+        {it.description && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,0.58)', margin: '0 0 11px', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{it.description}</p>}
         {clickable && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 7, background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.32)' }}>
             <span style={{ fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: T.gold }}>Voir le prestataire →</span>
@@ -1674,9 +1675,9 @@ export default function MessagingPage() {
                   padding: isDeleted ? '8px 14px' : msg.type === 'image' || msg.type === 'poll' || msg.type === 'story' ? '6px' : '10px 14px',
                   borderRadius: isMe ? '18px 18px 5px 18px' : '18px 18px 18px 5px',
                   background: isMe
-                    ? 'linear-gradient(135deg, rgba(78,232,200,0.26), rgba(78,232,200,0.13))'
-                    : 'rgba(255,255,255,0.06)',
-                  border: `1px solid ${isMe ? 'rgba(78,232,200,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                    ? 'linear-gradient(135deg, rgba(78,232,200,0.34), rgba(78,232,200,0.18))'
+                    : 'linear-gradient(135deg, rgba(255,255,255,0.115), rgba(255,255,255,0.075))',
+                  border: `1px solid ${isMe ? 'rgba(78,232,200,0.42)' : 'rgba(255,255,255,0.14)'}`,
                   maxWidth: '100%',
                   cursor: 'context-menu',
                   position: 'relative',
@@ -2620,8 +2621,8 @@ export default function MessagingPage() {
               {/* Attach button */}
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setShowAttachMenu(v => !v)} aria-label="Ajouter"
-                  style={{ width: 38, height: 38, borderRadius: '50%', background: showAttachMenu ? 'rgba(78,232,200,0.18)' : 'rgba(255,255,255,0.05)', border: `1px solid ${showAttachMenu ? 'rgba(78,232,200,0.4)' : 'rgba(255,255,255,0.12)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={showAttachMenu ? '#4ee8c8' : 'rgba(255,255,255,0.6)'} strokeWidth="2.4" strokeLinecap="round" style={{ transform: showAttachMenu ? 'rotate(45deg)' : 'none', transition: 'transform 0.25s cubic-bezier(0.22,0.9,0.3,1)' }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  style={{ width: 38, height: 38, borderRadius: '50%', background: showAttachMenu ? 'linear-gradient(135deg, rgba(78,232,200,0.28), rgba(78,232,200,0.16))' : 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08))', border: `1px solid ${showAttachMenu ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.18)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: showAttachMenu ? '0 0 18px rgba(78,232,200,0.16)' : '0 8px 22px rgba(0,0,0,0.22)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={showAttachMenu ? '#4ee8c8' : 'rgba(255,255,255,0.82)'} strokeWidth="2.4" strokeLinecap="round" style={{ transform: showAttachMenu ? 'rotate(45deg)' : 'none', transition: 'transform 0.25s cubic-bezier(0.22,0.9,0.3,1)' }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
                 {showAttachMenu && (
                   <div style={{ position: 'absolute', bottom: 48, left: 0, background: 'rgba(10,12,22,0.98)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 6, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 214, zIndex: 20, boxShadow: '0 16px 40px -8px rgba(0,0,0,0.7)' }}>
@@ -2652,7 +2653,7 @@ export default function MessagingPage() {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 placeholder="Message…"
                 rows={1}
-                style={{ ...INPUT_S, flex: 1, resize: 'none', maxHeight: 100, lineHeight: 1.5, borderRadius: 22, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 16px' }}
+                style={{ ...INPUT_S, flex: 1, resize: 'none', maxHeight: 100, lineHeight: 1.5, borderRadius: 22, background: 'rgba(255,255,255,0.075)', border: '1px solid rgba(255,255,255,0.15)', fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 16px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}
               />
 
               {/* Voice button — tap une fois ou maintenir (glisser vers le haut pour verrouiller) */}
@@ -2670,8 +2671,8 @@ export default function MessagingPage() {
                     onPointerDown={handleVoicePointerDown}
                     onPointerMove={handleVoicePointerMove}
                     onPointerUp={handleVoicePointerUp}
-                    style={{ width: 38, height: 38, borderRadius: '50%', background: isRecording ? 'rgba(224,90,170,0.25)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isRecording ? 'rgba(224,90,170,0.5)' : 'rgba(255,255,255,0.12)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: isRecording ? T.pink : 'rgba(255,255,255,0.6)', transition: 'all 0.2s', touchAction: 'none', boxShadow: isRecording ? '0 0 16px rgba(224,90,170,0.4)' : 'none' }}>
-                    <MicIcon color={isRecording ? T.pink : 'rgba(255,255,255,0.6)'} size={17} />
+                    style={{ width: 38, height: 38, borderRadius: '50%', background: isRecording ? 'linear-gradient(135deg, rgba(224,90,170,0.34), rgba(224,90,170,0.18))' : 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08))', border: `1px solid ${isRecording ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.18)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: isRecording ? T.pink : 'rgba(255,255,255,0.82)', transition: 'all 0.2s', touchAction: 'none', boxShadow: isRecording ? '0 0 18px rgba(224,90,170,0.42)' : '0 8px 22px rgba(0,0,0,0.22)' }}>
+                    <MicIcon color={isRecording ? T.pink : 'rgba(255,255,255,0.82)'} size={17} />
                   </button>
                   {isRecording && !tapMode && !voiceLocked && (
                     <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.dim, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>↑ verrouiller</span>
@@ -2685,7 +2686,7 @@ export default function MessagingPage() {
 
               {/* Send button */}
               <button onClick={handleSend} disabled={!inputText.trim()}
-                style={{ width: 38, height: 38, borderRadius: '50%', background: inputText.trim() ? 'linear-gradient(135deg, #8b5cf6, #e05aaa)' : 'rgba(255,255,255,0.05)', border: inputText.trim() ? 'none' : '1px solid rgba(255,255,255,0.12)', cursor: inputText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: inputText.trim() ? '#fff' : 'rgba(255,255,255,0.3)', transition: 'all 0.2s', boxShadow: inputText.trim() ? '0 6px 18px -4px rgba(139,92,246,0.6)' : 'none', transform: inputText.trim() ? 'scale(1)' : 'scale(0.96)' }}>
+                style={{ width: 38, height: 38, borderRadius: '50%', background: inputText.trim() ? 'linear-gradient(135deg, #4ee8c8, #8b5cf6)' : 'linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.065))', border: inputText.trim() ? '1px solid rgba(78,232,200,0.42)' : '1px solid rgba(255,255,255,0.16)', cursor: inputText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: inputText.trim() ? '#04040b' : 'rgba(255,255,255,0.42)', transition: 'all 0.2s', boxShadow: inputText.trim() ? '0 8px 22px -6px rgba(78,232,200,0.5)' : '0 8px 22px rgba(0,0,0,0.18)', transform: inputText.trim() ? 'scale(1)' : 'scale(0.96)' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>

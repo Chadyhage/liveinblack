@@ -310,6 +310,8 @@ export default function MesEvenementsPage() {
 
   const userCanCreate = canCreateEvent(user)
   const imageInputRef = useRef(null)
+  const videoInputRef = useRef(null)
+  const videoObjectUrlRef = useRef(null)
 
   const [view, setView] = useState('dashboard')
   const [createStep, setCreateStep] = useState(0)
@@ -333,6 +335,9 @@ export default function MesEvenementsPage() {
   const [artists, setArtists] = useState([]) // [{ name: '', role: 'DJ' }]
   const [showArtistSection, setShowArtistSection] = useState(false)
   const [imagePreview, setImagePreview] = useState(null)
+  const [videoFile, setVideoFile] = useState(null)
+  const [videoPreview, setVideoPreview] = useState(null)
+  const [videoName, setVideoName] = useState('')
   const [eventType, setEventType] = useState(null)
   const [category, setCategory] = useState(null)
   const [customGenre, setCustomGenre] = useState('')
@@ -466,6 +471,48 @@ export default function MesEvenementsPage() {
     }).catch(() => { if (!cancelled) { setSalesLoading(false); setSalesError(true) } })
     return () => { cancelled = true }
   }, [myEventIdsKey, salesRetry]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    return () => {
+      if (videoObjectUrlRef.current) URL.revokeObjectURL(videoObjectUrlRef.current)
+    }
+  }, [])
+
+  function clearEventVideoPreview() {
+    if (videoObjectUrlRef.current) {
+      URL.revokeObjectURL(videoObjectUrlRef.current)
+      videoObjectUrlRef.current = null
+    }
+    setVideoFile(null)
+    setVideoPreview(null)
+    setVideoName('')
+    setErrors(err => ({ ...err, video: null }))
+    if (videoInputRef.current) videoInputRef.current.value = ''
+  }
+
+  function handleVideo(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const allowed = ['video/mp4', 'video/webm', 'video/quicktime']
+    if (!allowed.includes(file.type)) {
+      setErrors(err => ({ ...err, video: 'Format invalide — MP4, WEBM ou MOV uniquement' }))
+      e.target.value = ''
+      return
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      setErrors(err => ({ ...err, video: 'Vidéo trop lourde — 30 MB maximum' }))
+      e.target.value = ''
+      return
+    }
+    if (videoObjectUrlRef.current) URL.revokeObjectURL(videoObjectUrlRef.current)
+    const nextPreview = URL.createObjectURL(file)
+    videoObjectUrlRef.current = nextPreview
+    setVideoFile(file)
+    setVideoPreview(nextPreview)
+    setVideoName(file.name || 'Vidéo d’aperçu')
+    setErrors(err => ({ ...err, video: null }))
+    e.target.value = ''
+  }
 
   function handleImage(e) {
     const file = e.target.files[0]
@@ -610,6 +657,22 @@ export default function MesEvenementsPage() {
       }
     }
 
+    let finalVideoUrl = videoPreview && !videoPreview.startsWith('blob:') ? videoPreview : null
+    if (videoFile) {
+      setPublishing(true)
+      try {
+        const { uploadEventVideo } = await import('../utils/uploadImage')
+        finalVideoUrl = await uploadEventVideo(eventId, videoFile)
+      } catch (err) {
+        setPublishing(false)
+        setSyncErrorBanner({
+          title: 'Vidéo non envoyée',
+          message: err?.message || 'La vidéo d’aperçu est trop lourde ou son format n’est pas accepté. Utilise une courte vidéo MP4/WEBM/MOV de moins de 30 Mo.',
+        })
+        return
+      }
+    }
+
     // ── Photos par type de place → Storage (mêmes raisons que l'affiche : jamais
     // de base64 dans Firestore). On upload chaque photo data: et on ne garde que
     // les URLs. Secours si Storage échoue : version compressée. Les URLs http(s)
@@ -661,6 +724,7 @@ export default function MesEvenementsPage() {
       // (orgCurrency) ; à défaut (profil sans zone connue) on retombe sur la région.
       currency: orgCurrency || regionToCurrency(form.region || venue.city),
       imageUrl: finalImageUrl,
+      videoUrl: finalVideoUrl,
       color: '#c8a96e',
       accentColor: '#e8d49e',
       category: category === 'Autre' ? (customGenre.trim() || 'Autre') : (category || 'Autre'),
@@ -816,6 +880,7 @@ export default function MesEvenementsPage() {
     setArtists([])
     setShowArtistSection(false)
     setImagePreview(null)
+    clearEventVideoPreview()
     setEventType(null)
     setCategory(null)
     setCustomGenre('')
@@ -849,6 +914,13 @@ export default function MesEvenementsPage() {
     setArtists(loadedArtists)
     setShowArtistSection(loadedArtists.length > 0)
     setImagePreview(ev.imageUrl || null)
+    if (videoObjectUrlRef.current) {
+      URL.revokeObjectURL(videoObjectUrlRef.current)
+      videoObjectUrlRef.current = null
+    }
+    setVideoFile(null)
+    setVideoPreview(ev.videoUrl || null)
+    setVideoName(ev.videoUrl ? 'Vidéo d’aperçu enregistrée' : '')
     // FIX : c'était setEventType('public') en dur → éditer un événement PRIVÉ le
     // republiait en PUBLIC (isPrivate recalculé depuis eventType à la sauvegarde).
     setEventType(ev.isPrivate ? 'private' : 'public')
@@ -1875,6 +1947,63 @@ export default function MesEvenementsPage() {
               </div>
               <input ref={imageInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" style={{ display: 'none' }} onChange={handleImage} />
               {errors.image && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
+            </div>
+
+            {/* Video preview upload */}
+            <div>
+              <label style={S.label}>Vidéo d’aperçu au survol <span style={{ color: 'rgba(255,255,255,0.28)' }}>(optionnel)</span></label>
+              <div
+                style={{
+                  position: 'relative',
+                  minHeight: 118,
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  border: videoPreview ? '1px solid rgba(78,232,200,0.32)' : '1px dashed rgba(78,232,200,0.22)',
+                  background: 'linear-gradient(135deg, rgba(78,232,200,0.055), rgba(132,68,255,0.055))',
+                }}
+              >
+                {videoPreview ? (
+                  <>
+                    <video src={videoPreview} controls muted playsInline preload="metadata" style={{ display: 'block', width: '100%', maxHeight: 220, objectFit: 'cover', background: '#05060b' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#4ee8c8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9.5, color: 'rgba(255,255,255,0.36)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
+                      </div>
+                      <button onClick={clearEventVideoPreview} style={{ flexShrink: 0, padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(220,100,100,0.28)', background: 'rgba(220,50,50,0.08)', color: 'rgba(255,150,150,0.95)', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                        Retirer
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => videoInputRef.current?.click()}
+                    style={{
+                      width: '100%',
+                      minHeight: 118,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 13,
+                      padding: 16,
+                      border: 0,
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <span style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.28)', color: '#4ee8c8', flexShrink: 0 }}>
+                      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </span>
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>Ajouter une courte vidéo</span>
+                      <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: 'rgba(255,255,255,0.42)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · max 30 MB. Idéal : 6–12 secondes en 720p.</span>
+                    </span>
+                  </button>
+                )}
+              </div>
+              <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime" style={{ display: 'none' }} onChange={handleVideo} />
+              {errors.video && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.video}</p>}
             </div>
 
             {/* Basic fields */}

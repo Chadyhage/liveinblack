@@ -4,7 +4,7 @@ import PublicNav from '../components/PublicNav'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getCatalog, getAllProviderProfiles, isProviderVisible } from '../utils/services'
-import { createDirectConversation, getUserId } from '../utils/messaging'
+import { createDirectConversation, getUserId, sendMessage } from '../utils/messaging'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
 import ShareToChatModal from '../components/ShareToChatModal'
 import { getRegionName, normalizeRegionIds } from '../utils/locations'
@@ -45,6 +45,9 @@ export default function PublicPrestatairePage() {
   const [loading, setLoading] = useState(true)
   const [shareItem, setShareItem] = useState(null) // offre en cours de partage
   const [shareMsg, setShareMsg] = useState('')
+  const [inquiryItem, setInquiryItem] = useState(null)
+  const [inquiryText, setInquiryText] = useState('')
+  const [inquirySending, setInquirySending] = useState(false)
 
   useEffect(() => {
     let unlistenProviders = () => {}
@@ -93,6 +96,55 @@ export default function PublicPrestatairePage() {
       return
     }
     setShareItem(item)
+  }
+
+  function buildServicePayload(item) {
+    const media = getOfferMedia(item)
+    const image = media.find(m => m.type !== 'video')?.url || media[0]?.url || null
+    return {
+      providerId: profile.userId,
+      providerName: profile.name || 'Prestataire',
+      itemId: item.id,
+      name: item.name,
+      description: item.description || '',
+      price: item.price ?? null,
+      unit: item.unit || '',
+      category: item.category || '',
+      image,
+    }
+  }
+
+  function openServiceInquiry(item) {
+    if (isSelf) return
+    const defaultMessage = `Bonjour ${profile?.name || ''}, je suis intéressé par « ${item.name} ». Est-ce que tu peux me donner plus d'infos ?`
+    if (!user) {
+      openAuthModal('Connecte-toi pour envoyer une demande au prestataire.', () => {
+        setInquiryItem(item)
+        setInquiryText(defaultMessage)
+      })
+      return
+    }
+    setInquiryItem(item)
+    setInquiryText(defaultMessage)
+  }
+
+  function sendServiceInquiry() {
+    if (!inquiryItem || inquirySending || !user || !profile?.userId) return
+    const myId = getUserId(user)
+    if (!myId) return
+    setInquirySending(true)
+    try {
+      const myName = user?.name || 'Membre LIVE IN BLACK'
+      const conv = createDirectConversation(myId, myName, profile.userId, profile.name || 'Prestataire')
+      sendMessage(conv.id, myId, myName, 'catalog_item', JSON.stringify(buildServicePayload(inquiryItem)))
+      const text = inquiryText.trim()
+      if (text) sendMessage(conv.id, myId, myName, 'text', text)
+      setInquiryItem(null)
+      setInquiryText('')
+      navigate('/messagerie', { state: { conversationId: conv.id } })
+    } finally {
+      setInquirySending(false)
+    }
   }
 
   function handleContact() {
@@ -244,10 +296,18 @@ export default function PublicPrestatairePage() {
                           {Number(item.price) > 0 ? `${Number(item.price).toLocaleString('fr-FR')} €${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
                         </p>
                         {Number(item.price) > 0 && <p style={{ fontFamily: FONT, fontSize: 10, color: 'rgba(255,255,255,.35)', margin: '4px 0 0' }}>Tarif indicatif</p>}
-                        <button onClick={() => handleShare(item)} style={shareButton}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                          Partager cette offre
-                        </button>
+                        <div style={{ display: 'flex', gap: 9, marginTop: 15, flexWrap: 'wrap' }}>
+                          {!isSelf && (
+                            <button onClick={() => openServiceInquiry(item)} style={serviceInquiryButton}>
+                              <Icon name="message" size={14} />
+                              Demander ce service
+                            </button>
+                          )}
+                          <button onClick={() => handleShare(item)} style={shareButton}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            Partager
+                          </button>
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -265,22 +325,55 @@ export default function PublicPrestatairePage() {
         </div>
       </main>
       </div>
+      {inquiryItem && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.78)', backdropFilter: 'blur(5px)' }} onClick={() => { setInquiryItem(null); setInquiryText('') }} />
+          <div style={{ position: 'relative', width: 'min(100%, 520px)', maxHeight: '88vh', overflowY: 'auto', borderRadius: '22px 22px 0 0', background: 'linear-gradient(180deg, rgba(12,14,24,.98), rgba(4,4,11,.99))', border: '1px solid rgba(255,255,255,.12)', boxShadow: '0 -26px 80px rgba(0,0,0,.65)', padding: '18px 18px 24px' }}>
+            <div style={{ width: 44, height: 4, borderRadius: 999, background: 'rgba(255,255,255,.18)', margin: '0 auto 16px' }} />
+            <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 850, letterSpacing: '.18em', textTransform: 'uppercase', color: C.gold, margin: '0 0 7px' }}>Demande au prestataire</p>
+            <h3 style={{ fontFamily: FONT, fontSize: 25, lineHeight: 1.08, letterSpacing: '-.7px', margin: '0 0 14px', color: '#fff' }}>Envoyer ce service à {profile.name}</h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '82px 1fr', gap: 13, padding: 12, borderRadius: 16, background: 'rgba(255,255,255,.045)', border: '1px solid rgba(255,255,255,.10)', marginBottom: 14 }}>
+              <div style={{ width: 82, height: 82, borderRadius: 13, overflow: 'hidden', background: 'linear-gradient(135deg, rgba(200,169,110,.18), rgba(78,232,200,.12))', display: 'grid', placeItems: 'center' }}>
+                {buildServicePayload(inquiryItem).image
+                  ? <img src={buildServicePayload(inquiryItem).image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" strokeWidth="1.5"><path d="M20.59 13.41 12 22l-9-9V4a1 1 0 0 1 1-1h9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                {inquiryItem.category && <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: C.teal, margin: '0 0 5px' }}>{inquiryItem.category}</p>}
+                <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 850, color: '#fff', margin: 0, lineHeight: 1.2 }}>{inquiryItem.name}</p>
+                <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 800, color: C.gold, margin: '8px 0 0' }}>
+                  {Number(inquiryItem.price) > 0 ? `${Number(inquiryItem.price).toLocaleString('fr-FR')} €${inquiryItem.unit ? ` / ${inquiryItem.unit}` : ''}` : 'Tarif sur demande'}
+                </p>
+              </div>
+            </div>
+
+            <label style={{ display: 'block', fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.48)', marginBottom: 8 }}>Message</label>
+            <textarea
+              value={inquiryText}
+              onChange={e => setInquiryText(e.target.value)}
+              rows={4}
+              placeholder="Ajoute ta date, ton lieu, ton budget ou ta question..."
+              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 112, borderRadius: 15, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.065)', color: '#fff', outline: 'none', padding: 14, fontFamily: FONT, fontSize: 14, lineHeight: 1.55 }}
+            />
+            <p style={{ fontFamily: FONT, fontSize: 11, lineHeight: 1.55, color: 'rgba(255,255,255,.42)', margin: '9px 0 16px' }}>
+              Le prestataire recevra la fiche du service dans la conversation, puis ton message. Vous gérez ensuite les conditions et le paiement entre vous.
+            </p>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => { setInquiryItem(null); setInquiryText('') }} style={{ flex: 1, minHeight: 48, borderRadius: 14, border: '1px solid rgba(255,255,255,.13)', background: 'rgba(255,255,255,.055)', color: 'rgba(255,255,255,.72)', fontFamily: FONT, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Annuler</button>
+              <button onClick={sendServiceInquiry} disabled={inquirySending} style={{ flex: 1.6, minHeight: 48, borderRadius: 14, border: 0, background: `linear-gradient(135deg, ${C.gold}, #ecd396)`, color: C.obsidian, fontFamily: FONT, fontSize: 13, fontWeight: 900, cursor: inquirySending ? 'wait' : 'pointer' }}>{inquirySending ? 'Envoi...' : 'Envoyer la demande'}</button>
+            </div>
+          </div>
+        </div>
+      )}
       <ShareToChatModal
         open={!!shareItem}
         onClose={() => setShareItem(null)}
         user={user}
         title="Partager cette offre"
         messageType="catalog_item"
-        payload={shareItem ? {
-          providerId: profile.userId,
-          providerName: profile.name || 'Prestataire',
-          itemId: shareItem.id,
-          name: shareItem.name,
-          price: shareItem.price ?? null,
-          unit: shareItem.unit || '',
-          category: shareItem.category || '',
-          image: (Array.isArray(shareItem.media) ? shareItem.media.find(m => m?.url && m.type !== 'video')?.url : shareItem.mediaUrl) || null,
-        } : {}}
+        payload={shareItem ? buildServicePayload(shareItem) : {}}
       />
     </PageChrome>
   )
@@ -292,4 +385,5 @@ const detailLine = { display: 'flex', alignItems: 'center', gap: 8, fontFamily: 
 const primaryButton = { display: 'inline-flex', alignItems: 'center', gap: 9, minHeight: 46, padding: '12px 18px', borderRadius: 13, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${C.gold},#e0c48a)`, color: C.obsidian, fontFamily: FONT, fontSize: 13.5, fontWeight: 800 }
 const secondaryButton = { minHeight: 44, padding: '11px 17px', borderRadius: 12, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.05)', color: '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer' }
 const linkButton = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 40, padding: 0, border: 0, background: 'none', color: 'rgba(255,255,255,.58)', fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer' }
-const shareButton = { display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 14, padding: '9px 14px', borderRadius: 10, border: '1px solid rgba(78,232,200,.28)', background: 'rgba(78,232,200,.08)', color: '#4ee8c8', fontFamily: FONT, fontSize: 12, fontWeight: 700, cursor: 'pointer' }
+const serviceInquiryButton = { flex: '1 1 160px', minHeight: 42, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(200,169,110,.45)', background: 'linear-gradient(135deg, rgba(200,169,110,.95), rgba(232,207,154,.88))', color: C.obsidian, fontFamily: FONT, fontSize: 12.5, fontWeight: 850, cursor: 'pointer', boxShadow: '0 12px 24px -18px rgba(200,169,110,.85)' }
+const shareButton = { minHeight: 42, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 13px', borderRadius: 12, border: '1px solid rgba(78,232,200,.32)', background: 'rgba(78,232,200,.11)', color: '#4ee8c8', fontFamily: FONT, fontSize: 12, fontWeight: 750, cursor: 'pointer' }
