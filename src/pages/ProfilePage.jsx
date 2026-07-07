@@ -1557,7 +1557,7 @@ export default function ProfilePage() {
             .ticket-pass-action.primary{margin-left:auto;background:#4ee8c8;border-color:#4ee8c8;color:#04040b}
             .ticket-preorders{padding:16px 22px;border-top:1px solid rgba(255,255,255,.07);display:grid;gap:8px}.ticket-preorders-title{font:800 9px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#c8a96e}.ticket-preorder-row{display:flex;justify-content:space-between;gap:16px;font:500 12px Inter,sans-serif;color:rgba(255,255,255,.65)}
             .ticket-expanded-qr{padding:22px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;gap:13px;background:rgba(0,0,0,.2)}
-            .digital-ticket.is-inactive{border-color:rgba(255,255,255,.08);box-shadow:none}.digital-ticket.is-inactive .ticket-pass-main{filter:saturate(.35);opacity:.72}.ticket-inactive-stub{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}.ticket-inactive-stub svg{color:rgba(255,255,255,.34)}.ticket-inactive-stub strong{font:800 12px Inter,sans-serif;color:rgba(255,255,255,.7)}.ticket-inactive-stub small{font:600 9px Inter,sans-serif;color:rgba(255,255,255,.34);text-transform:uppercase;letter-spacing:.1em}.ticket-pass-expired{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font:700 11px Inter,sans-serif;color:rgba(255,255,255,.45)}
+            .digital-ticket.is-inactive{border-color:rgba(255,255,255,.06);box-shadow:none;opacity:.9}.digital-ticket.is-inactive .ticket-pass-main{filter:grayscale(.85) saturate(.15);opacity:.55}.ticket-inactive-stub{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}.ticket-inactive-stub svg{color:rgba(255,255,255,.34)}.ticket-inactive-stub strong{font:800 12px Inter,sans-serif;color:rgba(255,255,255,.7)}.ticket-inactive-stub small{font:600 9px Inter,sans-serif;color:rgba(255,255,255,.34);text-transform:uppercase;letter-spacing:.1em}.ticket-pass-expired{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font:700 11px Inter,sans-serif;color:rgba(255,255,255,.45)}
             @media(max-width:700px){.ticket-wallet-page{padding-left:12px!important;padding-right:12px!important}.ticket-event-head{min-height:92px;padding:14px!important}.ticket-event-thumb{width:58px!important;height:58px!important}.ticket-event-actions{flex-wrap:wrap}.ticket-playlist-action{width:100%;min-width:0;border-left:0;border-top:1px solid rgba(255,255,255,.07);padding:0 16px}.ticket-pass-top{grid-template-columns:1fr}.ticket-pass-main{padding:24px 22px}.ticket-stub{border-left:0;border-top:1px dashed rgba(255,255,255,.2);padding:20px}.ticket-stub:before,.ticket-stub:after{top:-10px;bottom:auto}.ticket-stub:before{left:-10px}.ticket-stub:after{left:auto;right:-10px}.ticket-meta-grid{grid-template-columns:1fr 1fr}.ticket-event-name{font-size:28px}.ticket-pass-action{flex:1}.ticket-pass-action.primary{margin-left:0;flex-basis:100%}}
           `}</style>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -2412,6 +2412,19 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
   const preorderTotal = (b.preorderSummary || []).reduce((sum, item) => sum + item.price * (b.preorderItems?.[item.name] || 0), 0)
   const downloadId = `premium-qr-${b.id}`
   const displayEventDate = b.eventDate || eventDateFallback || 'À confirmer'
+  // Compte à rebours léger sur un billet actif : « C'est ce soir ! » / « Demain » /
+  // « Dans N jours » (uniquement à J-7 pour rester pertinent).
+  const countdownLabel = (() => {
+    if (inactive) return ''
+    const start = combineDateTime(b.eventDateISO, b.eventStartTime)
+    if (!start) return ''
+    const ms = start.getTime() - Date.now()
+    if (ms < 0) return ''
+    if (new Date().toDateString() === start.toDateString()) return "C'est ce soir !"
+    if (new Date(Date.now() + 86400000).toDateString() === start.toDateString()) return 'Demain'
+    const days = Math.ceil(ms / 86400000)
+    return days <= 7 ? `Dans ${days} jours` : ''
+  })()
   const [shareMsg, setShareMsg] = useState('')
   const flashShare = m => { setShareMsg(m); setTimeout(() => setShareMsg(''), 1800) }
 
@@ -2561,6 +2574,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
       <div className="ticket-pass-main">
         <span className="ticket-brand">Live in Black · Billet officiel</span>
         <h3 className="ticket-event-name">{b.eventName || 'Événement Live in Black'}</h3>
+        {countdownLabel && <span style={{ display: 'inline-block', marginBottom: 8, padding: '3px 11px', borderRadius: 999, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.42)', color: '#4ee8c8', font: '700 10px Inter, sans-serif', letterSpacing: '0.05em' }}>{countdownLabel}</span>}
         <div className="ticket-meta-grid">
           <div><span>Place</span><strong>{b.place || 'Standard'}</strong></div>
           <div><span>Date</span><strong>{displayEventDate}</strong></div>

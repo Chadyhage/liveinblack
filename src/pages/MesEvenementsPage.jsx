@@ -189,6 +189,7 @@ const EVENT_ACTIONS = {
   guests: { label: 'Guestlist', color: '#4ee8c8', icon: <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M19 8v6M16 11h6"/></svg> },
   staff: { label: 'Équipe', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-4M16 3a4 4 0 0 1 0 8"/></svg> },
   codes: { label: 'Codes', color: 'rgba(255,255,255,.65)', icon: <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
+  duplicate: { label: 'Dupliquer', color: '#8b8ff5', icon: <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> },
   edit: { label: 'Modifier', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 3 3L12 15l-4 1 1-4Z"/></svg> },
   delete: { label: 'Supprimer', color: '#dc7777', icon: <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> },
 }
@@ -200,7 +201,7 @@ function EventActionButton({ type, onClick }) {
   </button>
 }
 
-function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGuests, onStaff, onCodes, onEdit, onDelete }) {
+function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGuests, onStaff, onCodes, onDuplicate, onEdit, onDelete }) {
   return <article className="event-manage-card">
     <button className="event-manage-main" onClick={onOpen}>
       <div className="event-manage-media" style={event.imageUrl ? {backgroundImage:`linear-gradient(to top,rgba(4,4,11,.72),transparent 65%),url(${event.imageUrl})`} : undefined}>
@@ -216,8 +217,8 @@ function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGue
     <div className="event-action-grid">
       <EventActionButton type="stats" onClick={onStats}/><EventActionButton type="bookings" onClick={onBookings}/>
       <EventActionButton type="boost" onClick={onBoost}/><EventActionButton type="guests" onClick={onGuests}/>
-      <EventActionButton type="staff" onClick={onStaff}/>{event.isPrivate && <EventActionButton type="codes" onClick={onCodes}/>} 
-      <EventActionButton type="edit" onClick={onEdit}/><EventActionButton type="delete" onClick={onDelete}/>
+      <EventActionButton type="staff" onClick={onStaff}/>{event.isPrivate && <EventActionButton type="codes" onClick={onCodes}/>}
+      <EventActionButton type="duplicate" onClick={onDuplicate}/><EventActionButton type="edit" onClick={onEdit}/><EventActionButton type="delete" onClick={onDelete}/>
     </div>
   </article>
 }
@@ -383,6 +384,8 @@ export default function MesEvenementsPage() {
   const [guestlistError, setGuestlistError] = useState('')
   const [guestlistAdding, setGuestlistAdding] = useState(false)
   const [copiedGuestId, setCopiedGuestId] = useState(null)
+  const [codesCopied, setCodesCopied] = useState(false)
+  const [copiedCodeIdx, setCopiedCodeIdx] = useState(null)
 
   // Staff / équipe state
   const [staffTargetEvent, setStaffTargetEvent] = useState(null)
@@ -862,6 +865,18 @@ export default function MesEvenementsPage() {
     setView('create')
   }
 
+  // Duplique un événement : réutilise tout le pré-remplissage de startEdit, mais
+  // en NOUVEL événement (editingEventId = null → la publication crée un nouvel id,
+  // n'écrase pas l'original) avec la date à re-choisir. Gain de temps pour un
+  // organisateur qui refait la même soirée.
+  function duplicateEvent(ev) {
+    startEdit(ev)
+    setEditingEventId(null)
+    setForm(f => ({ ...f, name: `${ev.name || 'Événement'} (copie)`, date: '' }))
+    setPublishAt('')
+    setClosingDate('')
+  }
+
   function getEventBookingCount(eventId) {
     try {
       const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
@@ -1019,6 +1034,20 @@ export default function MesEvenementsPage() {
     navigator.clipboard?.writeText(url).then(() => {
       setCopiedGuestId(entry.id)
       setTimeout(() => setCopiedGuestId(null), 1800)
+    }).catch(() => {})
+  }
+
+  function copyAllCodes() {
+    const text = (generatedCodes || []).map(c => c.code).join('\n')
+    navigator.clipboard?.writeText(text).then(() => {
+      setCodesCopied(true)
+      setTimeout(() => setCodesCopied(false), 1800)
+    }).catch(() => {})
+  }
+  function copyOneCode(code, idx) {
+    navigator.clipboard?.writeText(code).then(() => {
+      setCopiedCodeIdx(idx)
+      setTimeout(() => setCopiedCodeIdx(null), 1400)
     }).catch(() => {})
   }
 
@@ -1294,6 +1323,7 @@ export default function MesEvenementsPage() {
                   onBoost={() => { setBoostTargetEvent(ev); setShowBoostModal(true) }}
                   onGuests={() => openGuestlistModal(ev)} onStaff={() => setStaffTargetEvent(ev)}
                   onCodes={() => { setCodesTargetEvent(ev); setGeneratedCodes(null); setCodesQty(10); setShowCodesModal(true) }}
+                  onDuplicate={() => duplicateEvent(ev)}
                   onEdit={() => startEdit(ev)}
                   onDelete={() => setDeleteConfirm({ id: ev.id, bookingCount: getEventBookingCount(ev.id) })}
                 />)}
@@ -1547,18 +1577,19 @@ export default function MesEvenementsPage() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 240, overflowY: 'auto' }}>
                     {generatedCodes.map((c, i) => (
-                      <div key={i} style={{ ...S.card, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div key={i} style={{ ...S.card, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#c8a96e', letterSpacing: '0.25em' }}>{c.code}</span>
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>1 utilisation</span>
+                        <button onClick={() => copyOneCode(c.code, i)} style={{ padding: '4px 10px', borderRadius: 4, cursor: 'pointer', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.20)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>{copiedCodeIdx === i ? '✓ Copié' : 'Copier'}</button>
                       </div>
                     ))}
                   </div>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7 }}>
                     Copie et envoie ces codes à tes invités. Chaque code ne peut être utilisé qu'une seule fois.
                   </p>
+                  <button onClick={copyAllCodes} style={{ ...S.btnGold, width: '100%' }}>{codesCopied ? '✓ Tous les codes copiés' : 'Copier tous les codes'}</button>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => setGeneratedCodes(null)} style={{ ...S.btnGhost, flex: 1 }}>Regénérer</button>
-                    <button onClick={() => { setShowCodesModal(false); setGeneratedCodes(null) }} style={{ ...S.btnGold, flex: 1 }}>Fermer</button>
+                    <button onClick={() => setGeneratedCodes(null)} style={{ ...S.btnGhost, flex: 1 }}>Générer d'autres</button>
+                    <button onClick={() => { setShowCodesModal(false); setGeneratedCodes(null) }} style={{ ...S.btnGhost, flex: 1 }}>Fermer</button>
                   </div>
                 </>
               )}

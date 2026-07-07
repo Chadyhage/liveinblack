@@ -8,6 +8,7 @@ import { createDirectConversation, getUserId } from '../utils/messaging'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
 import ShareToChatModal from '../components/ShareToChatModal'
 import { getRegionName, normalizeRegionIds } from '../utils/locations'
+import { shareOrCopy } from '../utils/share'
 
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e' }
@@ -43,6 +44,7 @@ export default function PublicPrestatairePage() {
   const [catalog, setCatalog] = useState(() => getCatalog(decodedId))
   const [loading, setLoading] = useState(true)
   const [shareItem, setShareItem] = useState(null) // offre en cours de partage
+  const [shareMsg, setShareMsg] = useState('')
 
   useEffect(() => {
     let unlistenProviders = () => {}
@@ -179,7 +181,19 @@ export default function PublicPrestatairePage() {
               ))}
             </div>
           </div>
-          {(canManage || !isSelf) && <button onClick={handleContact} style={primaryButton}><Icon name="message" /> {canManage ? 'Gérer ma page' : 'Envoyer un message'}</button>}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {(canManage || !isSelf) && <button onClick={handleContact} style={primaryButton}><Icon name="message" /> {canManage ? 'Gérer ma page' : 'Envoyer un message'}</button>}
+            <button
+              onClick={async () => {
+                const res = await shareOrCopy({ title: profile?.name || 'Prestataire', text: `${profile?.name || 'Ce prestataire'} sur Live in Black`, url: window.location.href })
+                if (res.method !== 'share') { setShareMsg(res.method === 'copy' ? 'Lien copié ✓' : 'Indisponible'); setTimeout(() => setShareMsg(''), 1600) }
+              }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 16px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+              {shareMsg || 'Partager'}
+            </button>
+          </div>
         </div>
 
         <div className="provider-main-grid">

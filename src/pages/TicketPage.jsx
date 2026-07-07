@@ -120,7 +120,7 @@ export default function TicketPage() {
         {/* QR code — à présenter à l'entrée pour scan */}
         <div style={{ ...CARD, padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <div style={{ padding: 14, background: 'white', borderRadius: 8 }}>
-            <QRCodeSVG value={typeof window !== 'undefined' ? window.location.href : ''} size={140} level="H" />
+            <QRCodeSVG value={typeof window !== 'undefined' ? window.location.href : ''} size={168} level="H" />
           </div>
           <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, letterSpacing: '0.08em', margin: 0 }}>
             Présente ce QR code à l'entrée
