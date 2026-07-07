@@ -8,6 +8,10 @@
  */
 export function canBook(user) {
   if (!user) return false
+  // Aligné sur getBookingBlockedReason : un compte en attente ou rejeté ne peut
+  // pas lancer d'achat (sinon le bouton reste actif alors que la réservation
+  // est censée être bloquée). Un client normal (status absent/actif) réserve.
+  if (user.status === 'pending' || user.status === 'rejected') return false
   return user.role === 'client' || user.role === 'user'
 }
 

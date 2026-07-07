@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 // ─── Style tokens ─────────────────────────────────────────────────────────────
 const S = {
   overlay: {
@@ -56,6 +58,13 @@ const S = {
  *   onCancel: () => void
  */
 export default function AgeVerificationModal({ minAge = 18, onVerified, onCancel }) {
+  // Fermeture au clavier (Échap) — cohérent avec le clic sur le fond.
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onCancel?.() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onCancel])
+
   return (
     <div style={S.overlay} onClick={onCancel}>
       <div style={S.modal} onClick={e => e.stopPropagation()}>

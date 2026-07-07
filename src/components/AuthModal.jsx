@@ -35,6 +35,14 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
     }
   }, [open])
 
+  // Fermeture au clavier (Échap) — cohérent avec le clic sur le fond.
+  useEffect(() => {
+    if (!open) return
+    const onKey = e => { if (e.key === 'Escape') onClose?.() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   if (!open) return null
 
   function close() {

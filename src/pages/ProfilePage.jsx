@@ -1488,6 +1488,7 @@ export default function ProfilePage() {
     const grouped = bookings.reduce((acc, b) => {
       const key = String(b.eventId)
       if (!acc[key]) acc[key] = { eventName: b.eventName, eventDate: b.eventDate, eventId: b.eventId, tickets: [] }
+      if (!acc[key].eventDate && b.eventDate) acc[key].eventDate = b.eventDate
       acc[key].tickets.push(b)
       return acc
     }, {})
@@ -2076,6 +2077,13 @@ function TableHostPanel({ tickets, inactive }) {
   )
 }
 
+function formatTicketEventDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+}
+
 function EventTicketGroup({ group }) {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -2100,6 +2108,7 @@ function EventTicketGroup({ group }) {
   const ticketInactive = cancelled || isPast
   const inactiveLabel = cancelled ? 'Billet annulé' : 'Billet expiré'
   const hasPlaylist = !!event?.playlist && !ticketInactive
+  const displayGroupDate = group.eventDate || formatTicketEventDate(event?.date || firstTicket.eventDateISO)
   // Bannière d'annulation masquable : une fois lue, l'utilisateur la ferme et
   // elle ne réapparaît plus (mémorisée par event). Le billet, lui, reste classé en bas.
   const DKEY = 'lib_dismissed_cancel'
@@ -2167,7 +2176,7 @@ function EventTicketGroup({ group }) {
                   fontWeight: 500,
                   color: 'rgba(255,255,255,0.4)',
                   margin: 0,
-                }}>{group.eventDate}</p>
+                }}>{displayGroupDate || 'Date à confirmer'}</p>
                 {showCancellationBanner && (
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#ff8a8a', background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.35)', borderRadius: 999, padding: '2px 8px' }}>
                     Annulé
@@ -2322,7 +2331,7 @@ function EventTicketGroup({ group }) {
             // reprendre). Seuls les sièges que le titulaire détient vraiment ont un QR.
             .filter(b => !(b.tableId && b.assignedTo && String(b.assignedTo) !== String(myId)))
             .map((b, i) => (
-              <PremiumTicketCard key={b.id} booking={b} index={i} inactive={ticketInactive} inactiveLabel={inactiveLabel} />
+              <PremiumTicketCard key={b.id} booking={b} index={i} inactive={ticketInactive} inactiveLabel={inactiveLabel} eventDateFallback={displayGroupDate} />
             ))}
         </div>
       )}
@@ -2385,7 +2394,7 @@ function EventTicketGroup({ group }) {
   )
 }
 
-function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel = 'Billet expiré' }) {
+function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel = 'Billet expiré', eventDateFallback = '' }) {
   const [showLargeQr, setShowLargeQr] = useState(false)
   const [downloadStatus, setDownloadStatus] = useState('idle')
   const navigate = useNavigate()
@@ -2393,6 +2402,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
   const qrUrl = token ? `${window.location.origin}/ticket/${token}` : ''
   const preorderTotal = (b.preorderSummary || []).reduce((sum, item) => sum + item.price * (b.preorderItems?.[item.name] || 0), 0)
   const downloadId = `premium-qr-${b.id}`
+  const displayEventDate = b.eventDate || eventDateFallback || 'À confirmer'
 
   async function downloadTicket() {
     if (downloadStatus === 'loading') return
@@ -2465,7 +2475,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
       ctx.fillText(eventName, x + 56, y + 190)
 
       drawTicketMeta(ctx, 'PLACE', b.place || 'Standard', x + 56, y + 330)
-      drawTicketMeta(ctx, 'DATE', b.eventDate || 'À confirmer', x + 390, y + 330)
+      drawTicketMeta(ctx, 'DATE', displayEventDate, x + 390, y + 330)
       drawTicketMeta(ctx, 'BILLET', String(index + 1).padStart(2, '0'), x + 770, y + 330)
 
       ctx.fillStyle = 'rgba(255,255,255,.18)'
@@ -2516,7 +2526,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
         <h3 className="ticket-event-name">{b.eventName || 'Événement Live in Black'}</h3>
         <div className="ticket-meta-grid">
           <div><span>Place</span><strong>{b.place || 'Standard'}</strong></div>
-          <div><span>Date</span><strong>{b.eventDate || 'À confirmer'}</strong></div>
+          <div><span>Date</span><strong>{displayEventDate}</strong></div>
           <div><span>Billet</span><strong>{String(index + 1).padStart(2, '0')}</strong></div>
         </div>
       </div>

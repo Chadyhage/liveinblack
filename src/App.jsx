@@ -469,6 +469,9 @@ export default function App() {
             <Route path="/agent/organisateurs" element={
               <RequireRole user={user} role="agent"><OrganizerAdminPage /></RequireRole>
             } />
+
+            {/* ── Catch-all : toute URL inconnue → accueil (jamais d'écran vide) ── */}
+            <Route path="*" element={<Navigate to="/accueil" replace />} />
           </Routes>
           </RouteTransition>
           </OnboardingGuard>

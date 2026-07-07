@@ -1,0 +1,12 @@
+# LIVEINBLACK — robots.txt
+User-agent: *
+Allow: /
+
+# Pas d'intérêt à indexer les zones privées / techniques
+Disallow: /agent
+Disallow: /scanner
+Disallow: /commander
+Disallow: /paiement-reussi
+Disallow: /paiement-annule
+
+Sitemap: https://liveinblack.com/sitemap.xml

@@ -465,6 +465,10 @@ export async function syncOnLogin(uid, opts = {}) {
   const light = !!opts.light
   if (!uid) return
   console.log(`[sync] ${light ? 'Light' : 'Full'} sync starting for`, uid)
+  const currentLocalUser = (() => {
+    try { return JSON.parse(localStorage.getItem('lib_user') || '{}') || {} } catch { return {} }
+  })()
+  const myRole = currentLocalUser?.role
 
   try {
     // ── 0. User profile (metadata only — never email/name) ──
@@ -666,8 +670,11 @@ export async function syncOnLogin(uid, opts = {}) {
       await syncNotificationsFromFirestore(uid)
     } catch {}
 
-    // ── 14. Reports (only reports submitted by this user) ──
-    const reports = await loadCollection('reports', [where('fromId', '==', uid)])
+    // ── 14. Reports ──
+    // Collection de modération : les règles Firestore la réservent aux agents.
+    // Les clients gardent leurs signalements en local après l'envoi, sans spammer
+    // la console avec une requête que Firestore refusera systématiquement.
+    const reports = (!light && (myRole === 'agent' || myRole === 'admin')) ? await loadCollection('reports') : []
     if (reports.length) localStorage.setItem('lib_reports', JSON.stringify(reports))
 
     // ── 15. Public events (shared collection — all organizers) ──
@@ -685,7 +692,6 @@ export async function syncOnLogin(uid, opts = {}) {
     // Les règles Firestore rejetaient déjà cette lecture pour les non-agents
     // (d'où le spam « Missing or insufficient permissions » en console) : on
     // ne tente même plus la requête pour un client/organisateur.
-    const myRole = (() => { try { return JSON.parse(localStorage.getItem('lib_user') || '{}').role } catch { return null } })()
     const pendingSnap = (!light && (myRole === 'agent' || myRole === 'admin')) ? await loadCollection('pending_validations') : []
     if (pendingSnap.length) {
       const validations = pendingSnap.filter(p => p.type !== 'role_request' && p.status === 'pending')

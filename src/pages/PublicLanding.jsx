@@ -6,6 +6,8 @@ import { getAllProviderProfiles, getCatalog } from '../utils/services'
 import { fmtMoney, eventCurrency } from '../utils/money'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
 import { play as playDisc, stop as stopDisc, subscribe as subMusic } from '../utils/musicEngine'
+import { eventStartMs } from '../utils/event-time'
+import { isClientDiscoverableEvent } from '../utils/eventDiscovery'
 
 // ─── Vitrine publique (utilisateur NON connecté) ─────────────────────────────
 // Objectif : montrer la valeur de Live in Black et convertir vers la création de
@@ -47,12 +49,12 @@ function loadPublicEvents() {
       const arr = JSON.parse(localStorage.getItem(k) || '[]')
       for (const e of (Array.isArray(arr) ? arr : [])) {
         if (!e || !e.id || seen.has(String(e.id))) continue
-        if (e.cancelled === true || e.visibility === 'private' || e.isPrivate) continue
+        if (!isClientDiscoverableEvent(e)) continue
         seen.add(String(e.id)); out.push(e)
       }
     }
     // À venir d'abord (date future), puis les autres
-    const ts = e => { const d = new Date(e.date || e.dateISO || 0).getTime(); return Number.isFinite(d) ? d : 0 }
+    const ts = e => eventStartMs(e)
     return out.sort((a, b) => ts(a) - ts(b)).slice(0, 6)
   } catch { return [] }
 }

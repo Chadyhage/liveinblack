@@ -9,6 +9,8 @@ import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/ev
 import { fmtMoney, eventCurrency } from '../utils/money'
 import EmptyState from '../components/EmptyState'
 import { MessagingSearchBar } from '../components/MessagingActions'
+import { isEventEnded } from '../utils/event-time'
+import { isPlaceholderEvent } from '../utils/eventDiscovery'
 
 // Coquille publique (visiteur NON connecté) : même navbar que la vitrine
 // (PublicNav, vidéo + onglet actif) pour une transition cohérente depuis la
@@ -52,7 +54,9 @@ function isEventPast(ev) {
 function isEventVisible(ev) {
   const now = Date.now()
   if (ev.cancelled) return false
+  if (ev.isDemo === true || ev.demoLabel || isPlaceholderEvent(ev)) return false
   if (ev.publishAt && new Date(ev.publishAt).getTime() > now) return false
+  if (isEventEnded(ev)) return false
   const gracePeriodMs = 48 * 60 * 60 * 1000
   if (ev.closingDate) {
     if (new Date(ev.closingDate).getTime() + gracePeriodMs < now) return false

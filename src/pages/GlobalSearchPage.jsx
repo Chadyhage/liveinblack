@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import PublicNav from '../components/PublicNav'
 import { useAuth } from '../context/AuthContext'
 import { getEntityRegionIds, getRegionName, normalizeGeoText } from '../utils/locations'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
+import { getAllProviderProfiles } from '../utils/services'
+import { getLocalOrganizerProfiles } from '../utils/organizers'
+import { isClientDiscoverableEvent } from '../utils/eventDiscovery'
 
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', violet: '#8b5cf6' }
 const FONT = 'Inter, system-ui, sans-serif'
@@ -17,6 +20,28 @@ function formatDate(value) {
   if (!value) return ''
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(date)
+}
+
+function readLocalArray(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '[]')
+    return Array.isArray(value) ? value : []
+  } catch { return [] }
+}
+
+function mergeSearchItems(localItems, remoteItems, keys = ['id', 'userId', 'slug']) {
+  const byKey = new Map()
+  for (const item of [...(localItems || []), ...(remoteItems || [])]) {
+    if (!item) continue
+    const key = keys.map(k => item[k]).find(Boolean)
+    if (!key) continue
+    byKey.set(String(key), item)
+  }
+  return [...byKey.values()]
+}
+
+function readLocalEvents() {
+  return mergeSearchItems(readLocalArray('lib_created_events'), readLocalArray('lib_events_cache'), ['id'])
 }
 
 function ResultCard({ item, type, onOpen }) {
@@ -73,29 +98,40 @@ function ResultSection({ title, items, type, onOpen }) {
 export default function GlobalSearchPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const [events, setEvents] = useState([])
-  const [organizers, setOrganizers] = useState([])
-  const [providers, setProviders] = useState([])
+  const [searchParams] = useSearchParams()
+  const searchParamQuery = searchParams.get('q') || ''
+  const [query, setQuery] = useState(searchParamQuery)
+  const [events, setEvents] = useState(() => readLocalEvents())
+  const [organizers, setOrganizers] = useState(() => getLocalOrganizerProfiles().filter(profile => profile.status === 'public'))
+  const [providers, setProviders] = useState(() => getAllProviderProfiles())
+
+  useEffect(() => {
+    setQuery(searchParamQuery)
+  }, [searchParamQuery])
 
   useEffect(() => {
     let stopEvents = () => {}
     let stopOrganizers = () => {}
     let stopProviders = () => {}
     import('../utils/firestore-sync').then(({ listenEvents, listenOrganizerProfiles, listenProviders }) => {
-      stopEvents = listenEvents(setEvents)
-      stopOrganizers = listenOrganizerProfiles(setOrganizers)
-      stopProviders = listenProviders(setProviders)
+      stopEvents = listenEvents(items => setEvents(prev => mergeSearchItems(prev, items, ['id'])))
+      stopOrganizers = listenOrganizerProfiles(items => setOrganizers(prev => mergeSearchItems(prev, items, ['id', 'userId', 'slug'])))
+      stopProviders = listenProviders(items => setProviders(prev => mergeSearchItems(prev, items, ['userId', 'id'])))
     }).catch(() => {})
     return () => { stopEvents(); stopOrganizers(); stopProviders() }
   }, [])
 
   const normalizedQuery = normalizeGeoText(query)
+  const searchableEvents = useMemo(() => events.filter(event => isClientDiscoverableEvent(event)), [events])
+  const searchableOrganizers = useMemo(() => organizers.filter(organizer => organizer.status === 'public'), [organizers])
+  const searchableProviders = useMemo(() => providers.filter(provider => provider?.name && (
+    provider.photoUrl || provider.description || provider.city || provider.location || provider.regionId || provider.country || provider.zonesIntervention?.length
+  )), [providers])
   const results = useMemo(() => ({
-    events: normalizedQuery ? events.filter(event => !event.isPrivate && containsQuery(normalizedQuery, event.name, event.city, event.region, event.category, event.subtitle, event.description)).slice(0, 8) : [],
-    organizers: normalizedQuery ? organizers.filter(organizer => containsQuery(normalizedQuery, organizer.publicName, organizer.city, organizer.country, organizer.shortDescription, ...(organizer.vibes || []))).slice(0, 8) : [],
-    providers: normalizedQuery ? providers.filter(provider => containsQuery(normalizedQuery, provider.name, provider.city, provider.location, provider.country, provider.description, provider.specialitesLibre, ...getProviderCategories(provider).flatMap(category => [category.label, category.singular]), ...getEntityRegionIds(provider).map(getRegionName))).slice(0, 8) : [],
-  }), [normalizedQuery, events, organizers, providers])
+    events: normalizedQuery ? searchableEvents.filter(event => containsQuery(normalizedQuery, event.name, event.city, event.region, event.category, event.subtitle, event.description)).slice(0, 8) : [],
+    organizers: normalizedQuery ? searchableOrganizers.filter(organizer => containsQuery(normalizedQuery, organizer.publicName, organizer.city, organizer.country, organizer.shortDescription, ...(organizer.vibes || []))).slice(0, 8) : [],
+    providers: normalizedQuery ? searchableProviders.filter(provider => containsQuery(normalizedQuery, provider.name, provider.city, provider.location, provider.country, provider.description, provider.specialitesLibre, ...getProviderCategories(provider).flatMap(category => [category.label, category.singular]), ...getEntityRegionIds(provider).map(getRegionName))).slice(0, 8) : [],
+  }), [normalizedQuery, searchableEvents, searchableOrganizers, searchableProviders])
 
   const content = (
     <div className="global-search-page">

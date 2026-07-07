@@ -19,6 +19,7 @@ import { IconTent, IconMic } from '../components/icons'
 import PublicLanding from './PublicLanding'
 import { getRecommendations, hasPreferences, personalizationEnabled } from '../utils/recommendations'
 import { PreferencesModal } from '../components/PreferencesEditor'
+import { isClientDiscoverableEvent } from '../utils/eventDiscovery'
 
 // Bandeau goûts : petit défilé d'artistes + styles pour donner envie sans
 // alourdir la bannière (pas de photos réseau ici — juste des chips texte,
@@ -627,7 +628,7 @@ export default function HomePage() {
   )
   // Non-boostés : triés par date la plus proche — on exclut les events clos/invisibles
   const baseTopThree = regionEvents
-    .filter(e => isEventVisible(e) && !isEventClosed(e))
+    .filter(e => isClientDiscoverableEvent(e) && isEventVisible(e) && !isEventClosed(e))
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 10) // plus de candidats pour le fallback
 
@@ -642,7 +643,7 @@ export default function HomePage() {
     fallbackEvents: baseTopThree,
     boosts: activeBoosts,
     region: regionName,
-    isEligible: event => isEventVisible(event) && !isEventClosed(event) && matchesEntityRegion(event, regionId),
+    isEligible: event => isClientDiscoverableEvent(event) && isEventVisible(event) && !isEventClosed(event) && matchesEntityRegion(event, regionId),
   })
 
   // « Réservez pour ce soir » : soirées du JOUR MÊME, dans la région, où il
@@ -653,7 +654,7 @@ export default function HomePage() {
   const tonightEvents = (() => {
     const now = Date.now()
     return regionEvents
-      .filter(e => isEventVisible(e) && !isEventClosed(e) && !isEventPast(e))
+      .filter(e => isClientDiscoverableEvent(e) && isEventVisible(e) && !isEventClosed(e) && !isEventPast(e))
       .filter(e => remainingPlaces(e) > 0)
       .filter(e => isEventOngoingOrStartingWithin(e, now, 18))
       .sort((a, b) => new Date(`${a.date}T${a.time || '20:00'}`) - new Date(`${b.date}T${b.time || '20:00'}`))
@@ -669,7 +670,7 @@ export default function HomePage() {
   // Score simple préférences déclarées + activité (voir utils/recommendations).
   const topThreeIds = new Set(topThree.map(e => String(e.id)))
   const recoCandidates = regionEvents.filter(e =>
-    isEventVisible(e) && !isEventClosed(e) && !topThreeIds.has(String(e.id))
+    isClientDiscoverableEvent(e) && isEventVisible(e) && !isEventClosed(e) && !topThreeIds.has(String(e.id))
   )
   const recommendations = user ? getRecommendations({
     user,
