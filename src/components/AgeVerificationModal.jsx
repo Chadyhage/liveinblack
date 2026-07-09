@@ -105,21 +105,21 @@ export default function AgeVerificationModal({ minAge = 18, onVerified, onCancel
           marginBottom: 20,
         }}>
           <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#c8a96e', margin: '0 0 6px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            🪪 Pièce d'identité obligatoire
+            🪪 Pièce d'identité
           </p>
           <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
-            Une pièce d'identité valide sera demandée à l'entrée de l'événement pour vérifier ta majorité. Pense à la prendre avec toi.
+            Une pièce d'identité pourra être demandée à l'entrée. Si tu ne peux pas prouver ton âge, l'accès pourra être refusé selon les conditions de l'événement.
           </p>
         </div>
 
         {/* Note légale */}
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em', lineHeight: 1.6, marginBottom: 20 }}>
-          En continuant, tu confirmes avoir {minAge} ans ou plus et acceptes de présenter une pièce d'identité le soir de l'événement.
+          En continuant, tu confirmes avoir {minAge} ans ou plus.
         </p>
 
         {/* CTA */}
         <button style={S.btnPrimary} onClick={onVerified}>
-          J'ai compris — continuer
+          J'ai compris
         </button>
         <button style={S.btnGhost} onClick={onCancel}>
           Annuler

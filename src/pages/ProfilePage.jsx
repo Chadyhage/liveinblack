@@ -2597,7 +2597,10 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
       <div className="ticket-pass-main">
         <span className="ticket-brand">Live in Black · Billet officiel</span>
         <h3 className="ticket-event-name">{b.eventName || 'Événement Live in Black'}</h3>
-        {countdownLabel && <span style={{ display: 'inline-block', marginBottom: 8, padding: '3px 11px', borderRadius: 999, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.42)', color: '#4ee8c8', font: '700 10px Inter, sans-serif', letterSpacing: '0.05em' }}>{countdownLabel}</span>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+          {countdownLabel && <span style={{ display: 'inline-block', padding: '3px 11px', borderRadius: 999, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.42)', color: '#4ee8c8', font: '700 10px Inter, sans-serif', letterSpacing: '0.05em' }}>{countdownLabel}</span>}
+          {(eventForTicket?.minAge || 0) >= 18 && <span title="Pièce d'identité pouvant être demandée à l'entrée" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.42)', color: '#c8a96e', font: '700 10px Inter, sans-serif', letterSpacing: '0.05em' }}>🪪 {eventForTicket.minAge}+</span>}
+        </div>
         <div className="ticket-meta-grid">
           <div><span>Place</span><strong>{b.place || 'Standard'}</strong></div>
           <div><span>Date</span><strong>{displayEventDate}</strong></div>

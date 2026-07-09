@@ -581,14 +581,23 @@ export default function EventDetailPage() {
     ))
   }
 
-  async function confirmBooking() {
-    const uid = getUserId(user)
-    // Age check
+  // Ouvre le résumé/paiement — mais affiche D'ABORD l'avertissement d'âge si
+  // l'événement est 18+ et pas encore acquitté. But : que « Payer » n'apparaisse
+  // qu'UNE SEULE fois. Avant, l'avertissement s'intercalait APRÈS un premier clic
+  // sur Payer, puis renvoyait sur le paiement → impression de double débit.
+  function openConfirm() {
     if ((event.minAge || 0) >= 18 && !ageVerified) {
       setShowAgeModal(true)
-      setShowConfirmModal(false)
       return
     }
+    setShowConfirmModal(true)
+  }
+
+  async function confirmBooking() {
+    const uid = getUserId(user)
+    // NB : la restriction d'âge est acquittée AVANT ce point (openConfirm →
+    // AgeVerificationModal → confirm modal). Plus de check ici, sinon on
+    // ré-intercalerait une modal après le clic « Payer » (double clic).
     // Event already started?
     const eventStartTs = (() => {
       try {
@@ -1382,7 +1391,7 @@ export default function EventDetailPage() {
                             pointerEvents: (user && !userCanBook) || bookingDisabled ? 'none' : 'auto',
                           }}
                           disabled={(user && !userCanBook) || bookingDisabled}
-                          onClick={() => !bookingDisabled && requireUserThenDo(() => tryProceed(() => setShowConfirmModal(true)))}
+                          onClick={() => !bookingDisabled && requireUserThenDo(() => tryProceed(() => openConfirm()))}
                         >
                           {isEventCancelled || isEventSoldOut || isEventClosed ? (
                             isEventCancelled ? 'Événement annulé' : isEventSoldOut ? 'Complet' : 'Réservations closes'
@@ -1402,7 +1411,7 @@ export default function EventDetailPage() {
                             pointerEvents: (user && !userCanBook) || bookingDisabled ? 'none' : 'auto',
                           }}
                           disabled={(user && !userCanBook) || bookingDisabled}
-                          onClick={() => !bookingDisabled && requireUserThenDo(() => tryProceed(() => setShowConfirmModal(true)))}
+                          onClick={() => !bookingDisabled && requireUserThenDo(() => tryProceed(() => openConfirm()))}
                         >
                           {isEventCancelled || isEventSoldOut || isEventClosed ? (
                             isEventCancelled ? 'Événement annulé' : isEventSoldOut ? 'Complet' : 'Réservations closes'
@@ -1731,7 +1740,7 @@ export default function EventDetailPage() {
                     <button
                       style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                       disabled={!userCanBook}
-                      onClick={() => setShowConfirmModal(true)}
+                      onClick={() => openConfirm()}
                     >
                       <GroupIcon size={16} color="#1a1206" />
                       {`Réserver la table — ${fmtMoney(grandTotal, evCur)}`}
@@ -1741,13 +1750,13 @@ export default function EventDetailPage() {
                       <button
                         style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                         disabled={!userCanBook}
-                        onClick={() => setShowConfirmModal(true)}
+                        onClick={() => openConfirm()}
                       >
                         {preorderTotal > 0 ? `Confirmer la commande — ${fmtMoney(grandTotal, evCur)}` : 'Confirmer la réservation'}
                       </button>
                       {preorderTotal > 0 && (
                         <button
-                          onClick={() => setShowConfirmModal(true)}
+                          onClick={() => openConfirm()}
                           disabled={!userCanBook}
                           style={{ ...S.btnGhost, width: '100%', padding: '10px', opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                         >
@@ -2327,6 +2336,19 @@ export default function EventDetailPage() {
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-1px', color: '#4ee8c8', margin: 0, whiteSpace: 'nowrap' }}>
                   {fmtMoney(grandTotal, evCur)}
                 </p>
+              </div>
+            )}
+
+            {/* Rappel restriction d'âge — reste visible dans le résumé avant de
+                payer (l'avertissement détaillé a déjà été acquitté en amont). */}
+            {(event.minAge || 0) >= 18 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(200,169,110,0.07)', border: '1px solid rgba(200,169,110,0.22)', borderRadius: 12, padding: '11px 14px' }}>
+                <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(200,169,110,0.4)', background: 'rgba(200,169,110,0.10)', fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 600, color: '#c8a96e' }}>
+                  {event.minAge}+
+                </span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
+                  Événement {event.minAge}+ · une pièce d'identité pourra être demandée à l'entrée.
+                </span>
               </div>
             )}
 
