@@ -80,22 +80,42 @@ export default function PaiementReussiPage() {
       // 1) Vérifier la session/transaction côté serveur. Cet endpoint peut échouer
       // (indispo, réseau, config) → on NE bloque PAS : le webhook (Stripe ou
       // FedaPay) fait autorité et a peut-être déjà émis les billets.
-      const result = isFedapay
+      let result = isFedapay
         ? await verifyFedapayTransaction(fedapayTxnId)
         : await verifyStripeSession(sessionId)
       if (cancelled) return
-      const verified = !!(result && result.paid)
+      let verified = !!(result && result.paid)
 
-      // 1.5) FedaPay redirige ici même en cas d'annulation/refus (callback_url
-      // unique). Statut re-vérifié SERVEUR (jamais le query param seul pour de
-      // l'argent) → page annulation + restock idempotent côté serveur.
+      // 1.5) RETOUR FEDAPAY NON PAYÉ — distinguer « abandon » de « en cours ».
+      // FedaPay redirige ici via un callback_url unique et y appose ?status= et,
+      // quand l'utilisateur FERME la page de paiement sans finaliser, ?close=true.
+      // Sans ça, un abandon tombait dans l'état « Paiement bien reçu / on finalise »
+      // → le client croyait avoir payé (et redouté un double débit).
+      // On traite comme ABANDON : soit un statut terminal (canceled/declined/expired),
+      // soit close=true. Statut TOUJOURS relu côté serveur (jamais le query param
+      // seul pour de l'argent). Grâce courte pour le mobile money, qui peut
+      // confirmer avec quelques secondes de retard après la fermeture du widget.
       if (isFedapay && !verified) {
+        const closed = params.get('close') === 'true'
         const st = result?.paymentStatus || params.get('status') || ''
-        if (['canceled', 'declined', 'expired'].includes(st)) {
-          releaseFedapayTransaction(fedapayTxnId)
-          const evId = result?.metadata?.eventId || ''
-          navigate(`/paiement-annule?provider=fedapay&txn_id=${encodeURIComponent(fedapayTxnId)}${evId ? `&event_id=${encodeURIComponent(evId)}` : ''}`, { replace: true })
-          return
+        const terminal = ['canceled', 'declined', 'expired'].includes(st)
+        if (terminal || closed) {
+          // close=true mais statut encore « pending » : le paiement mobile money
+          // peut se finaliser juste après. On relaisse une chance au webhook, puis
+          // on relit le statut serveur avant de conclure à l'annulation.
+          if (!terminal) {
+            await new Promise(r => setTimeout(r, 2500))
+            if (cancelled) return
+            const recheck = await verifyFedapayTransaction(fedapayTxnId)
+            if (cancelled) return
+            if (recheck && recheck.paid) { result = recheck; verified = true }
+          }
+          if (!verified) {
+            releaseFedapayTransaction(fedapayTxnId)
+            const evId = result?.metadata?.eventId || ''
+            navigate(`/paiement-annule?provider=fedapay&txn_id=${encodeURIComponent(fedapayTxnId)}${evId ? `&event_id=${encodeURIComponent(evId)}` : ''}`, { replace: true })
+            return
+          }
         }
       }
 
