@@ -726,7 +726,7 @@ export default function MesEvenementsPage() {
     const validMenuItems = menuItems.filter(i => i.name.trim() && i.price)
     const menuNames = new Set(validMenuItems.map(i => i.name.trim()))
     const sanitizeIncluded = (p) => (Array.isArray(p.included) ? p.included : [])
-      .map(inc => ({ name: String(inc?.name || '').trim(), qty: Math.max(1, Number(inc?.qty) || 1), free: inc?.free !== false }))
+      .map(inc => ({ name: String(inc?.name || '').trim(), qty: Math.max(1, Number(inc?.qty) || 1) }))
       .filter(inc => inc.name && menuNames.has(inc.name))
     const anyIncluded = places.some(p => sanitizeIncluded(p).length > 0)
 
@@ -2579,13 +2579,12 @@ export default function MesEvenementsPage() {
                                 title="Quantité incluse"
                                 style={{ width: 52, background: 'rgba(8,10,20,0.85)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 6px', textAlign: 'center', outline: 'none' }}
                               />
-                              <button
-                                onClick={() => !isReadOnly && setInc(list => list.map((x, m) => m === k ? { ...x, free: x.free === false } : x))}
-                                title={inc.free !== false ? 'Inclus gratuitement dans le billet' : 'Réservé par le billet, à régler sur place'}
-                                style={{ flexShrink: 0, padding: '7px 9px', borderRadius: 999, cursor: isReadOnly ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.04em', border: `1px solid ${inc.free !== false ? 'rgba(78,232,200,0.4)' : 'rgba(200,169,110,0.4)'}`, background: inc.free !== false ? 'rgba(78,232,200,0.10)' : 'rgba(200,169,110,0.10)', color: inc.free !== false ? '#4ee8c8' : '#c8a96e' }}
+                              <span
+                                title="Inclus gratuitement dans le billet"
+                                style={{ flexShrink: 0, padding: '7px 9px', borderRadius: 999, fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.04em', border: '1px solid rgba(78,232,200,0.4)', background: 'rgba(78,232,200,0.10)', color: '#4ee8c8' }}
                               >
-                                {inc.free !== false ? 'GRATUIT' : 'SUR PLACE'}
-                              </button>
+                                GRATUIT
+                              </span>
                               {!isReadOnly && (
                                 <button
                                   onClick={() => setInc(list => list.filter((_, m) => m !== k))}
@@ -2598,7 +2597,7 @@ export default function MesEvenementsPage() {
                         })}
                         {!isReadOnly && menuChoices.length > 0 && (
                           <button
-                            onClick={() => setInc(list => [...list, { name: menuChoices[0].name.trim(), qty: 1, free: true }])}
+                            onClick={() => setInc(list => [...list, { name: menuChoices[0].name.trim(), qty: 1 }])}
                             style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 9, background: 'rgba(78,232,200,0.07)', border: '1px dashed rgba(78,232,200,0.35)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}
                           >
                             + Inclure un article du menu

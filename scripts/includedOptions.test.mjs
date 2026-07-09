@@ -21,10 +21,10 @@ const event = {
     {
       type: 'VIP dîner', price: 25000,
       included: [
-        { name: 'Dîner', qty: 1, free: true },
-        { name: 'Boisson', qty: 2, free: true },
-        { name: 'Bouteille', qty: 1, free: false },
-        { name: 'Article supprimé du menu', qty: 1, free: true },
+        { name: 'Dîner', qty: 1 },
+        { name: 'Boisson', qty: 2 },
+        { name: 'Bouteille', qty: 1 },
+        { name: 'Article supprimé du menu', qty: 1 },
       ],
     },
   ],
@@ -39,9 +39,7 @@ console.log('includedForPlace :')
 const vip = includedForPlace(event, 'VIP dîner')
 check('3 options retenues (l\'orpheline hors menu est écartée)', vip.length === 3)
 check('quantité respectée (2 boissons)', vip.find(i => i.name === 'Boisson')?.qty === 2)
-check('gratuit par défaut', vip.find(i => i.name === 'Dîner')?.free === true)
-check('non gratuit conservé', vip.find(i => i.name === 'Bouteille')?.free === false)
-check('prix résolu depuis le MENU (pas le billet)', vip.find(i => i.name === 'Bouteille')?.price === 30000)
+check('toujours gratuit (pas de champ free/prix résiduel)', vip.every(i => i.free === undefined && i.price === undefined))
 check('emoji résolu depuis le menu', vip.find(i => i.name === 'Dîner')?.emoji === '🍽️')
 check('place sans options → []', includedForPlace(event, 'Entrée simple').length === 0)
 check('place inconnue → []', includedForPlace(event, 'Inexistante').length === 0)

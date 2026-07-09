@@ -920,7 +920,7 @@ function ScannerInner() {
                       {result.included.map((inc, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>{inc.emoji ? `${inc.emoji} ` : ''}{inc.name} ×{inc.qty}</span>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: inc.free ? COLORS.teal : COLORS.gold }}>{inc.free ? 'Gratuit' : 'À régler sur place'}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal }}>Gratuit</span>
                         </div>
                       ))}
                       <p style={{ fontFamily: FONTS.mono, fontSize: 8.5, color: COLORS.dim, margin: '2px 0 0', letterSpacing: '0.06em' }}>
@@ -1159,7 +1159,7 @@ function ScannerInner() {
                       const isPre = item.source === ORDER_SOURCE.PREORDER
                       const isInc = item.source === ORDER_SOURCE.INCLUDED
                       const chip = served ? { t: 'Servi', c: '#22c55e' }
-                        : isInc ? { t: item.unitPrice > 0 ? 'Inclus billet · à régler' : 'Inclus billet', c: COLORS.teal }
+                        : isInc ? { t: 'Inclus billet', c: COLORS.teal }
                         : item.paid_at ? { t: 'Payé', c: COLORS.teal }
                         : isPre ? { t: 'Précommande', c: COLORS.gold }
                         : { t: ONSITE_STATUS_LABEL[item.status] || 'Envoyée', c: ONSITE_STATUS_COLOR[item.status] || COLORS.teal }
@@ -1170,7 +1170,7 @@ function ScannerInner() {
                             <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, textDecoration: served ? 'line-through' : 'none' }}>{item.name} <span style={{ color: COLORS.muted, fontWeight: 500 }}>×{item.quantity}</span></p>
                             <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: chip.c }}>{chip.t}{served && item.served_by_name ? ` par ${item.served_by_name}` : ''}{!served && item.addedByRole === 'client' ? ' · par le client' : ''}</span>
                           </div>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: (isPre || isInc) ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : (isInc && !(item.unitPrice > 0)) ? 'inclus' : fmtMoney(Math.round(item.unitPrice * item.quantity), posCur)}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: (isPre || isInc) ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : isInc ? 'inclus' : fmtMoney(Math.round(item.unitPrice * item.quantity), posCur)}</span>
                           {!served && (
                             <button onClick={() => posServe(evId, item.id)} disabled={!canServe(role)}
                               style={{ flexShrink: 0, padding: '7px 11px', borderRadius: 10, cursor: canServe(role) ? 'pointer' : 'default', fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, opacity: canServe(role) ? 1 : 0.4 }}>Servir</button>

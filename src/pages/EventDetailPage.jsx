@@ -1994,16 +1994,14 @@ export default function EventDetailPage() {
               </div>
               {includedModal.items.map((inc, k) => {
                 const menuItem = (event.menu || []).find(m => m?.name === inc.name)
-                const free = inc.free !== false
                 return (
-                  <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: `1px solid ${free ? 'rgba(78,232,200,0.22)' : 'rgba(200,169,110,0.28)'}`, background: free ? 'rgba(78,232,200,0.05)' : 'rgba(200,169,110,0.05)' }}>
+                  <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: '1px solid rgba(78,232,200,0.22)', background: 'rgba(78,232,200,0.05)' }}>
                     <span style={{ fontSize: 17, flexShrink: 0 }}>{menuItem?.emoji || '🍾'}</span>
                     <span style={{ flex: 1, minWidth: 0, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
                       {inc.qty > 1 ? `${inc.qty}× ` : '1× '}{inc.name}
-                      {!free && menuItem?.price ? <span style={{ display: 'block', fontSize: 10.5, fontWeight: 500, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{fmtMoney(menuItem.price, evCur)} — à régler sur place</span> : null}
                     </span>
-                    <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.05em', padding: '4px 9px', borderRadius: 999, color: free ? '#4ee8c8' : '#c8a96e', background: free ? 'rgba(78,232,200,0.10)' : 'rgba(200,169,110,0.10)', border: `1px solid ${free ? 'rgba(78,232,200,0.32)' : 'rgba(200,169,110,0.38)'}` }}>
-                      {free ? 'INCLUS' : 'RÉSERVÉ'}
+                    <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.05em', padding: '4px 9px', borderRadius: 999, color: '#4ee8c8', background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.32)' }}>
+                      INCLUS
                     </span>
                   </div>
                 )

@@ -2623,7 +2623,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
         const line = includedLineFor(inc.name)
         const served = !!line && line.status === 'served'
         return <div className="ticket-preorder-row" key={inc.name}>
-          <span>{inc.emoji ? `${inc.emoji} ` : ''}{inc.qty}× {inc.name}{inc.free ? '' : ' · à régler sur place'}</span>
+          <span>{inc.emoji ? `${inc.emoji} ` : ''}{inc.qty}× {inc.name}</span>
           <strong style={{color: served ? '#22c55e' : '#c8a96e'}}>{served ? 'Servi ✓' : 'À récupérer'}</strong>
         </div>
       })}

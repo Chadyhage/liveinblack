@@ -448,8 +448,8 @@ export function listenOrderLog(eventId, cb) {
 // ── Options incluses dans un type de place ────────────────────────────────────
 // Résout place.included[] contre le menu de l'événement : seules les entrées
 // dont l'article existe ENCORE au menu sont retenues (lien menu obligatoire).
-// Le prix vient du MENU (pas du billet) — pour une option non gratuite, c'est
-// le tarif à régler sur place ; pour une gratuite il sert d'info comptable.
+// Toujours gratuites — comprises dans le prix du billet (aucun montant à
+// régler sur place pour ces articles).
 export function includedForPlace(event, placeType) {
   const place = (event?.places || []).find(p => String(p.type) === String(placeType))
   if (!place || !Array.isArray(place.included) || !place.included.length) return []
@@ -463,8 +463,6 @@ export function includedForPlace(event, placeType) {
         name: item.name,
         emoji: item.emoji || '',
         qty: Math.max(1, Number(inc.qty) || 1),
-        free: inc.free !== false,
-        price: Number(item.price) || 0,
       }
     })
     .filter(Boolean)
@@ -482,18 +480,15 @@ export async function ensureIncludedMaterialized(eventId, ticketId, included, ac
     .map(inc => {
       const id = `inc_${ticketId}_${String(inc.name).replace(/\s+/g, '_')}`.slice(0, 90)
       if (existing.has(id)) return null
-      const free = inc.free !== false
       return {
         id, eventId: String(eventId), ticketId: String(ticketId),
         menuItemId: inc.name, name: inc.name, emoji: inc.emoji || '',
         source: ORDER_SOURCE.INCLUDED, quantity: Math.max(1, Number(inc.qty) || 1),
-        // Gratuit : rien à encaisser (paid_at posé) — sinon l'article est réservé
-        // par le billet mais se règle sur place (compté dans l'addition).
-        unitPrice: free ? 0 : (Number(inc.price) || 0),
+        unitPrice: 0, // toujours gratuit — compris dans le prix du billet
         options: null, note: '', status: PREORDER_STATUS.TO_SERVE,
         addedBy: null, addedByRole: 'included', addedByName: 'Inclus billet', addedAt: now(),
         served_at: null, served_by: null,
-        paid_at: free ? now() : null, paid_by: free ? 'included' : null,
+        paid_at: now(), paid_by: 'included',
         cancelled_at: null, cancelled_by: null, cancellation_reason: null,
       }
     })
