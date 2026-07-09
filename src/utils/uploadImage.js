@@ -87,20 +87,33 @@ export async function uploadEventPoster(eventId, dataUrl) {
 // On garde uniquement une URL dans les documents. Le lecteur côté interface ne
 // charge la vidéo qu'après intention utilisateur (survol prolongé), pour éviter
 // de rendre la home ou les listes trop lourdes.
-export async function uploadEventVideo(eventId, file) {
+export async function uploadEventVideo(eventId, file, onProgress) {
   if (!eventId || !file) throw new Error('Vidéo manquante')
   const allowed = ['video/mp4', 'video/webm', 'video/quicktime']
   if (!allowed.includes(file.type)) throw new Error('Utilise une vidéo MP4, WEBM ou MOV.')
   if (file.size > 30 * 1024 * 1024) throw new Error('La vidéo dépasse 30 Mo.')
 
   const { storage, auth } = await import('../firebase')
-  const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+  const { ref, uploadBytesResumable, getDownloadURL } = await import('firebase/storage')
   const uid = auth?.currentUser?.uid
   if (!uid) throw new Error('Non authentifié — impossible d\'uploader la vidéo')
   const safeName = (file.name || 'preview_video').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80)
   const path = `events/${uid}/${eventId}/preview_${Date.now()}_${safeName}`
-  const snap = await uploadBytes(ref(storage, path), file, { contentType: file.type })
-  return await getDownloadURL(snap.ref)
+  // Resumable : les règles Storage sont vérifiées à la CRÉATION de la session
+  // d'upload (refus immédiat sans envoyer 30 Mo pour rien) + progression réelle.
+  const task = uploadBytesResumable(ref(storage, path), file, { contentType: file.type })
+  await new Promise((resolve, reject) => {
+    task.on('state_changed',
+      snap => {
+        if (typeof onProgress === 'function' && snap.totalBytes > 0) {
+          onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100))
+        }
+      },
+      reject,
+      resolve,
+    )
+  })
+  return await getDownloadURL(task.snapshot.ref)
 }
 
 // Sanitise une liste d'événements avant sync vers user_events/{uid} :

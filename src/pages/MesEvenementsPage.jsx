@@ -324,6 +324,7 @@ export default function MesEvenementsPage() {
   const [showBoostToast, setShowBoostToast] = useState(false)
   const [justPublishedEvent, setJustPublishedEvent] = useState(null)
   const [publishing, setPublishing] = useState(false)
+  const [videoUploadPct, setVideoUploadPct] = useState(null)
   const toastTimerRef = useRef(null)
   // Devise de l'organisateur (« 1 organisateur = 1 zone ») : ancrée à son profil,
   // source de vérité de la devise de TOUS ses events. null tant qu'inconnue → on
@@ -660,9 +661,10 @@ export default function MesEvenementsPage() {
     let finalVideoUrl = videoPreview && !videoPreview.startsWith('blob:') ? videoPreview : null
     if (videoFile) {
       setPublishing(true)
+      setVideoUploadPct(0)
       try {
         const { uploadEventVideo } = await import('../utils/uploadImage')
-        finalVideoUrl = await uploadEventVideo(eventId, videoFile)
+        finalVideoUrl = await uploadEventVideo(eventId, videoFile, pct => setVideoUploadPct(pct))
       } catch (err) {
         setPublishing(false)
         setSyncErrorBanner({
@@ -670,6 +672,8 @@ export default function MesEvenementsPage() {
           message: err?.message || 'La vidéo d’aperçu est trop lourde ou son format n’est pas accepté. Utilise une courte vidéo MP4/WEBM/MOV de moins de 30 Mo.',
         })
         return
+      } finally {
+        setVideoUploadPct(null)
       }
     }
 
@@ -2801,7 +2805,7 @@ export default function MesEvenementsPage() {
               disabled={publishing}
             >
               {publishing
-                ? 'Publication en cours…'
+                ? (videoUploadPct != null ? `Envoi de la vidéo… ${videoUploadPct}%` : 'Publication en cours…')
                 : editingEventId ? 'Enregistrer les modifications' : 'Publier mon événement'}
             </button>
           </div>

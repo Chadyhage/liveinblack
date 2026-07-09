@@ -61,13 +61,18 @@ service firebase.storage {
                    && request.resource.size < 25 * 1024 * 1024;
     }
 
-    // Affiches d'événements — seul l'organisateur écrit sous son préfixe.
-    // Empêche le defacement par upload d'affiche d'un tiers. Lecture publique.
+    // Affiches (images) et vidéos d'aperçu d'événements — seul l'organisateur
+    // écrit sous son préfixe. Empêche le defacement par upload d'un tiers.
+    // Lecture publique. Vidéo : max 31 Mo (le client limite à 30 Mo).
     match /events/{uid}/{allPaths=**} {
       allow read:  if true;
       allow write: if request.auth != null && request.auth.uid == uid
-                   && request.resource.size < 8 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+                   && (
+                     (request.resource.contentType.matches('image/.*')
+                      && request.resource.size < 8 * 1024 * 1024) ||
+                     (request.resource.contentType.matches('video/.*')
+                      && request.resource.size < 31 * 1024 * 1024)
+                   );
     }
 
   }
