@@ -17,6 +17,7 @@ import { PreferencesModal, summarizePreferences } from '../components/Preference
 import { IconMail, IconIdBadge } from '../components/icons'
 import { events as staticEvents } from '../data/events'
 import { getProviderCategories, getPrimaryProviderType } from '../utils/providerCategories'
+import { includedForPlace, getTicketOrders, ORDER_SOURCE } from '../utils/eventOrders'
 
 // ─── Génération carte d'accréditation (organisateur + prestataire) ───────────
 function openCredentialPDF(app, role) {
@@ -2428,6 +2429,28 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
   const [shareMsg, setShareMsg] = useState('')
   const flashShare = m => { setShareMsg(m); setTimeout(() => setShareMsg(''), 1800) }
 
+  // ── Options incluses dans le type de place (définies par l'organisateur) ──
+  // Définition = doc événement (le client ne peut pas la modifier) ; état
+  // servi/restant = lignes 'included' de event_orders (écrites par le staff).
+  const eventForTicket = getAllEvents().find(e => String(e.id) === String(b.eventId)) || null
+  const includedDef = eventForTicket ? includedForPlace(eventForTicket, b.place) : []
+  const [showIncluded, setShowIncluded] = useState(false)
+  const [includedLines, setIncludedLines] = useState(null) // lignes serveur (null = pas encore chargé)
+  async function toggleIncluded() {
+    const next = !showIncluded
+    setShowIncluded(next)
+    if (!next || !b.eventId || !b.ticketCode) return
+    // Lecture optimiste locale puis rafraîchissement serveur (une fois par ouverture)
+    setIncludedLines(getTicketOrders(b.eventId, b.ticketCode).filter(i => i.source === ORDER_SOURCE.INCLUDED))
+    try {
+      const { loadDoc } = await import('../utils/firestore-sync')
+      const doc = await loadDoc(`event_orders/${b.eventId}`)
+      const items = Array.isArray(doc?.items) ? doc.items : []
+      setIncludedLines(items.filter(i => String(i.ticketId) === String(b.ticketCode) && i.source === ORDER_SOURCE.INCLUDED))
+    } catch {}
+  }
+  const includedLineFor = (name) => (includedLines || []).find(l => String(l.name) === String(name)) || null
+
   // Partage l'ÉVÉNEMENT (pour que les amis réservent aussi) — feuille de partage
   // native sur mobile, repli copier-lien sur desktop. Aucune fonction serveur.
   async function shareEvent() {
@@ -2594,10 +2617,26 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
       <div className="ticket-preorder-row" style={{paddingTop:8,borderTop:'1px solid rgba(255,255,255,.07)'}}><span>Total précommande</span><strong style={{color:'#c8a96e'}}>{fmtMoney(preorderTotal,b.currency)}</strong></div>
     </div>}
 
+    {showIncluded && includedDef.length > 0 && <div className="ticket-preorders">
+      <span className="ticket-preorders-title" style={{color:'#4ee8c8'}}>Options incluses dans ton billet · {b.place || 'Standard'}</span>
+      {includedDef.map(inc => {
+        const line = includedLineFor(inc.name)
+        const served = !!line && line.status === 'served'
+        return <div className="ticket-preorder-row" key={inc.name}>
+          <span>{inc.emoji ? `${inc.emoji} ` : ''}{inc.qty}× {inc.name}{inc.free ? '' : ' · à régler sur place'}</span>
+          <strong style={{color: served ? '#22c55e' : '#c8a96e'}}>{served ? 'Servi ✓' : 'À récupérer'}</strong>
+        </div>
+      })}
+      <p style={{margin:0,font:'500 10px Inter,sans-serif',color:'rgba(255,255,255,.38)',lineHeight:1.5}}>
+        Présente ton billet au staff pendant la soirée : il coche chaque option au moment où il te la sert.
+      </p>
+    </div>}
+
     <div className="ticket-pass-bottom">
       {inactive ? <div className="ticket-pass-expired"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{inactiveLabel} · aucune action disponible</div> : <>
         {qrUrl && <button className="ticket-pass-action" onClick={() => setShowLargeQr(v => !v)}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h4v4h-7z"/></svg>{showLargeQr?'Réduire le QR':'Afficher le QR'}</button>}
         {qrUrl && <button className="ticket-pass-action" onClick={downloadTicket} disabled={downloadStatus === 'loading'} aria-busy={downloadStatus === 'loading'}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>{downloadStatus === 'loading' ? 'Préparation…' : downloadStatus === 'success' ? 'Billet téléchargé' : 'Télécharger le billet'}</button>}
+        {includedDef.length > 0 && <button className="ticket-pass-action" onClick={toggleIncluded} style={showIncluded ? {borderColor:'rgba(78,232,200,.45)',color:'#4ee8c8'} : undefined}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 12v8H4v-8"/><path d="M2 7h20v5H2z"/><path d="M12 7v13"/></svg>{showIncluded ? 'Masquer les options' : 'Voir les options incluses'}</button>}
         {b.eventId && b.ticketCode && <button className="ticket-pass-action primary" onClick={() => navigate(`/commander/${b.eventId}/${b.ticketCode}`)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 9h16l-1 11H5L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>Commander sur place</button>}
         <button className="ticket-pass-action" onClick={shareEvent}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
         <button className="ticket-pass-action" onClick={addToCalendar}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</button>

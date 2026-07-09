@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import { isEventEnded } from '../utils/event-time'
 import {
-  listenOrders, getOrders, ensurePreordersMaterialized, addOnsiteItem, serveItem,
+  listenOrders, getOrders, ensurePreordersMaterialized, ensureIncludedMaterialized, includedForPlace, addOnsiteItem, serveItem,
   cancelItem, markTicketPaid, getStaffRole, canServe, canManage,
   listenOrderLog, getOrderLog, getMyStaffEvents, listenEventStaff, listenMyStaffAssignments,
   ORDER_SOURCE, ONSITE_STATUS, PREORDER_STATUS, ONSITE_STATUS_LABEL, ONSITE_STATUS_COLOR,
@@ -384,6 +384,10 @@ function ScannerInner() {
       // (avant, un billet d'un ancien événement passait « VALIDE »).
       const guard = await eventScanGuard(reg.data?.eventId || data.ei)
       if (guard) { setResult({ code: tc, status: 'wrong_event', sub: guard.sub, ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en } }); return }
+      // Options incluses dans le type de place — définies sur le DOC ÉVÉNEMENT
+      // (seul l'organisateur peut l'écrire → infalsifiable par le client).
+      const scanEv = await fetchEventForScan(reg.data?.eventId || data.ei)
+      const includedEntry = includedForPlace(scanEv, reg.data?.place || data.pl)
       // Précommandes : le REGISTRE (écrit par le webhook depuis les line_items
       // Stripe) prime sur le token — le token est signé côté client avec une
       // clé publique, donc falsifiable (champagne gratuit au bar sinon).
@@ -401,6 +405,7 @@ function ScannerInner() {
         cur: data.cur || null,
         preorders: regPo ?? (data.po || []),
         preordersCertified: regPo != null,
+        included: includedEntry,
         paidConfirmed: reg.paid,
         freeTicket: reg.data?.source === 'free',
         isGuestlist: reg.data?.source === 'guestlist',
@@ -431,6 +436,7 @@ function ScannerInner() {
       }
       const guard = await eventScanGuard(reg.data?.eventId)
       if (guard) { setResult({ code: clean, status: 'wrong_event', sub: guard.sub, ticket: { holder: reg.data.guestName || 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—' } }); return }
+      const scanEv = await fetchEventForScan(reg.data?.eventId)
       // Déjà entré ? état local (cet appareil) OU registre serveur (checkedInAt,
       // cross-device) — ferme la double-entrée entre deux portes/deux agents.
       const isUsed = currentUsed.has(clean) || !!reg.data?.checkedInAt
@@ -444,6 +450,7 @@ function ScannerInner() {
           ? reg.data.preorders.map(i => ({ n: i.name, e: i.emoji || '', q: Number(i.qty) || 0, p: Number(i.priceEUR) || 0 })).filter(i => i.q > 0)
           : [],
         preordersCertified: Array.isArray(reg.data?.preorders),
+        included: includedForPlace(scanEv, reg.data?.place),
         paidConfirmed: reg.paid,
         freeTicket: reg.data?.source === 'free',
         isGuestlist: reg.data?.source === 'guestlist',
@@ -574,8 +581,11 @@ function ScannerInner() {
     setRoleByEvent(prev => ({ ...prev, [eventId]: role }))
     setMenuByEvent(prev => ({ ...prev, [eventId]: (ev?.menu || []).filter(m => m && m.name && m.available !== false) }))
 
-    // 6) Matérialise les précommandes en lignes de commande (idempotent)
+    // 6) Matérialise précommandes + options incluses du billet en lignes de
+    //    commande (idempotent — impossible de servir 2× la même option incluse)
     if (preorders.length) await ensurePreordersMaterialized(eventId, code, preorders, localActor)
+    const included = includedForPlace(ev, place)
+    if (included.length) await ensureIncludedMaterialized(eventId, code, included, localActor)
 
     // 7) Ouvre/active l'onglet — plus besoin de rescanner pour y revenir.
     //    Lecture optimiste locale immédiate (le listener temps réel prend ensuite le relais).
@@ -901,6 +911,24 @@ function ScannerInner() {
                     </div>
                   )}
 
+                  {/* Options incluses dans le type de place (à servir au bar) */}
+                  {result.included?.length > 0 && (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                        Inclus dans le billet · à servir
+                      </p>
+                      {result.included.map((inc, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>{inc.emoji ? `${inc.emoji} ` : ''}{inc.name} ×{inc.qty}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: inc.free ? COLORS.teal : COLORS.gold }}>{inc.free ? 'Gratuit' : 'À régler sur place'}</span>
+                        </div>
+                      ))}
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 8.5, color: COLORS.dim, margin: '2px 0 0', letterSpacing: '0.06em' }}>
+                        Passe en mode Service pour marquer chaque option servie.
+                      </p>
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
                     {isValid && (
                       <button onClick={validateEntry} style={{
@@ -1051,8 +1079,8 @@ function ScannerInner() {
                   {(() => {
                     const log = (evId && logByEvent[evId]) || []
                     const holderOf = tid => openTickets.find(t => t.code === tid)?.holder || (tid ? `#${String(tid).slice(-6)}` : '—')
-                    const roleLabel = r => ({ client: 'Client', serveur: 'Serveur', manager: 'Manager', preorder: 'Système', staff: 'Staff' }[r] || r || '—')
-                    const roleColor = r => r === 'client' ? '#8b5cf6' : r === 'manager' ? COLORS.gold : r === 'preorder' ? COLORS.muted : COLORS.teal
+                    const roleLabel = r => ({ client: 'Client', serveur: 'Serveur', manager: 'Manager', preorder: 'Système', included: 'Inclus billet', staff: 'Staff' }[r] || r || '—')
+                    const roleColor = r => r === 'client' ? '#8b5cf6' : r === 'manager' ? COLORS.gold : (r === 'preorder' || r === 'included') ? COLORS.muted : COLORS.teal
                     const fmt = e => {
                       switch (e.action) {
                         case 'add': return { verb: 'a ajouté', detail: e.newValue, c: COLORS.teal }
@@ -1129,7 +1157,12 @@ function ScannerInner() {
                     ) : activeItems.map(item => {
                       const served = isServed(item)
                       const isPre = item.source === ORDER_SOURCE.PREORDER
-                      const chip = served ? { t: 'Servi', c: '#22c55e' } : item.paid_at ? { t: 'Payé', c: COLORS.teal } : isPre ? { t: 'Précommande', c: COLORS.gold } : { t: ONSITE_STATUS_LABEL[item.status] || 'Envoyée', c: ONSITE_STATUS_COLOR[item.status] || COLORS.teal }
+                      const isInc = item.source === ORDER_SOURCE.INCLUDED
+                      const chip = served ? { t: 'Servi', c: '#22c55e' }
+                        : isInc ? { t: item.unitPrice > 0 ? 'Inclus billet · à régler' : 'Inclus billet', c: COLORS.teal }
+                        : item.paid_at ? { t: 'Payé', c: COLORS.teal }
+                        : isPre ? { t: 'Précommande', c: COLORS.gold }
+                        : { t: ONSITE_STATUS_LABEL[item.status] || 'Envoyée', c: ONSITE_STATUS_COLOR[item.status] || COLORS.teal }
                       return (
                         <div key={item.id} style={{ ...CARD, padding: '11px 12px', display: 'flex', alignItems: 'center', gap: 11, opacity: served ? 0.72 : 1 }}>
                           <span style={{ fontSize: 20, width: 24, textAlign: 'center' }}>{item.emoji || '🍸'}</span>
@@ -1137,7 +1170,7 @@ function ScannerInner() {
                             <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, textDecoration: served ? 'line-through' : 'none' }}>{item.name} <span style={{ color: COLORS.muted, fontWeight: 500 }}>×{item.quantity}</span></p>
                             <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: chip.c }}>{chip.t}{served && item.served_by_name ? ` par ${item.served_by_name}` : ''}{!served && item.addedByRole === 'client' ? ' · par le client' : ''}</span>
                           </div>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: isPre ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : fmtMoney(Math.round(item.unitPrice * item.quantity), posCur)}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: (isPre || isInc) ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : (isInc && !(item.unitPrice > 0)) ? 'inclus' : fmtMoney(Math.round(item.unitPrice * item.quantity), posCur)}</span>
                           {!served && (
                             <button onClick={() => posServe(evId, item.id)} disabled={!canServe(role)}
                               style={{ flexShrink: 0, padding: '7px 11px', borderRadius: 10, cursor: canServe(role) ? 'pointer' : 'default', fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, opacity: canServe(role) ? 1 : 0.4 }}>Servir</button>

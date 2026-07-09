@@ -280,21 +280,23 @@ export default function OnSiteOrderPage() {
 // ── Une ligne de MA commande (avec statut live) ──
 function MyLine({ item, cur = 'EUR' }) {
   const isPre = item.source === ORDER_SOURCE.PREORDER
+  const isInc = item.source === ORDER_SOURCE.INCLUDED
   const served = item.status === ONSITE_STATUS.SERVED || item.status === PREORDER_STATUS.SERVED
   const statusLabel = served
     ? `Servie${item.served_by_name ? ' par ' + item.served_by_name : ''}`
     : isPre ? 'Précommande · payée'
+    : isInc ? (item.unitPrice > 0 ? 'Incluse dans ton billet · à régler sur place' : 'Incluse dans ton billet')
     : item.paid_at ? 'Payée'
     : (ONSITE_STATUS_LABEL[item.status] || 'Envoyée')
-  const statusColor = served ? '#22c55e' : isPre ? C.gold : (ONSITE_STATUS_COLOR[item.status] || C.teal)
+  const statusColor = served ? '#22c55e' : isPre ? C.gold : isInc ? C.teal : (ONSITE_STATUS_COLOR[item.status] || C.teal)
   return (
     <div className="order-live-line" style={{ opacity: served ? 0.72 : 1 }}>
-      <OrderItemVisual item={item} preorder={isPre}/>
+      <OrderItemVisual item={item} preorder={isPre || isInc}/>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 600, color: '#fff', margin: 0 }}>{item.name} <span style={{ color: 'rgba(255,255,255,.45)', fontWeight: 500 }}>×{item.quantity}</span></p>
         <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: statusColor }}>{statusLabel}</span>
       </div>
-      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: isPre ? 'rgba(255,255,255,.5)' : C.gold, flexShrink: 0 }}>{isPre ? 'incluse' : euro(item.unitPrice * item.quantity, cur)}</span>
+      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: (isPre || (isInc && !(item.unitPrice > 0))) ? 'rgba(255,255,255,.5)' : C.gold, flexShrink: 0 }}>{isPre ? 'incluse' : (isInc && !(item.unitPrice > 0)) ? 'incluse' : euro(item.unitPrice * item.quantity, cur)}</span>
     </div>
   )
 }

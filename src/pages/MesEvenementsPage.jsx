@@ -367,7 +367,7 @@ export default function MesEvenementsPage() {
   const onCropComplete = useCallback((_, cap) => setCroppedAreaPixels(cap), [])
 
   // Step 1: Places
-  const [places, setPlaces] = useState([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
+  const [places, setPlaces] = useState([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', included: [] }])
 
   // Step 2: Venue
   const [venue, setVenue] = useState({ name: '', address: '', city: '', country: '' })
@@ -720,6 +720,16 @@ export default function MesEvenementsPage() {
       } catch {}
     }
 
+    // ── Options incluses par type de place : STRICTEMENT liées au menu de
+    // l'événement (jamais d'option orpheline). On ne garde que les entrées dont
+    // l'article existe encore dans le menu validé au moment de la publication.
+    const validMenuItems = menuItems.filter(i => i.name.trim() && i.price)
+    const menuNames = new Set(validMenuItems.map(i => i.name.trim()))
+    const sanitizeIncluded = (p) => (Array.isArray(p.included) ? p.included : [])
+      .map(inc => ({ name: String(inc?.name || '').trim(), qty: Math.max(1, Number(inc?.qty) || 1), free: inc?.free !== false }))
+      .filter(inc => inc.name && menuNames.has(inc.name))
+    const anyIncluded = places.some(p => sanitizeIncluded(p).length > 0)
+
     const eventData = {
       id: eventId,
       name: form.name,
@@ -765,6 +775,7 @@ export default function MesEvenementsPage() {
         groupMin: Number(p.groupMin) || 0,
         groupMax: Number(p.groupMax) || 0,
         photos: placesPhotos[i] || [],
+        included: sanitizeIncluded(p),
       })),
       playlist: options.playlist,
       preorder: options.preorder,
@@ -780,7 +791,9 @@ export default function MesEvenementsPage() {
       userCreated: true,
       isPrivate: eventType === 'private',
       privateCode: eventType === 'private' ? form.privateCode.trim() : null,
-      menu: options.preorder ? menuItems.filter(i => i.name.trim() && i.price) : null,
+      // Le menu est publié si les précommandes sont actives OU si un billet
+      // inclut des options (elles pointent vers le menu — il doit exister).
+      menu: (options.preorder || anyIncluded) ? validMenuItems : null,
       publishAt: publishAt || null,
       // Utilisé par les abonnements organisateur pour notifier uniquement les
       // événements réellement publiés après l'abonnement (anti-doublon).
@@ -901,7 +914,7 @@ export default function MesEvenementsPage() {
     setMusicStyles([])
     setAmbiances([])
     setErrors({})
-    setPlaces([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '' }])
+    setPlaces([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', included: [] }])
     setVenue({ name: '', address: '', city: '', country: '' })
     setOptions({ playlist: false, preorder: false, qr: true })
     setMenuItems([{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
@@ -959,7 +972,7 @@ export default function MesEvenementsPage() {
       city: ev.city || '',
       country: ev.region !== ev.city ? ev.region || '' : '',
     })
-    setPlaces(ev.places?.map(p => ({ type: p.type, price: p.price, qty: p.total, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '', photos: Array.isArray(p.photos) ? p.photos : [] })) || [{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', photos: [] }])
+    setPlaces(ev.places?.map(p => ({ type: p.type, price: p.price, qty: p.total, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '', photos: Array.isArray(p.photos) ? p.photos : [], included: Array.isArray(p.included) ? p.included : [] })) || [{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', photos: [], included: [] }])
     setOptions({ playlist: ev.playlist || false, preorder: ev.preorder || false, qr: true })
     setMenuItems(ev.menu?.length ? ev.menu : [{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
     setPublishAt(ev.publishAt || '')
@@ -2527,6 +2540,77 @@ export default function MesEvenementsPage() {
                     Montre le carré, la table, la vue… Le client les verra avant de réserver. Max 6.
                   </p>
                 </div>
+
+                {/* Options incluses dans ce billet — liées au menu de l'événement */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
+                  <p style={{ ...S.label }}>Options incluses dans ce billet <span style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: 0 }}>(optionnel)</span></p>
+                  {(() => {
+                    const menuChoices = menuItems.filter(m => m.name.trim() && m.price)
+                    const incs = Array.isArray(place.included) ? place.included : []
+                    const setInc = (updater) => setPlaces(places.map((p, j) => j === i ? { ...p, included: updater(Array.isArray(p.included) ? p.included : []) } : p))
+                    if (!menuChoices.length && !incs.length) {
+                      return (
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 8, lineHeight: 1.5 }}>
+                          Ajoute d'abord des articles au <span style={{ color: '#c8a96e', fontWeight: 700 }}>menu de l'événement</span> (étape Options → Précommandes / Menu). Tu pourras ensuite inclure une boisson, un dîner ou une bouteille directement dans ce billet — ex. « Entrée + boisson ».
+                        </p>
+                      )
+                    }
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                        {incs.map((inc, k) => {
+                          const stillInMenu = menuChoices.some(m => m.name.trim() === inc.name)
+                          return (
+                            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(78,232,200,0.22)' : 'rgba(220,100,100,0.35)'}`, background: 'rgba(78,232,200,0.04)' }}>
+                              <select
+                                value={inc.name}
+                                disabled={isReadOnly}
+                                onChange={e => setInc(list => list.map((x, m) => m === k ? { ...x, name: e.target.value } : x))}
+                                style={{ flex: 1, minWidth: 0, background: 'rgba(8,10,20,0.85)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 8px', outline: 'none' }}
+                              >
+                                {!stillInMenu && <option value={inc.name}>{inc.name} (retiré du menu)</option>}
+                                {menuChoices.map(m => (
+                                  <option key={m.name} value={m.name.trim()}>{m.emoji ? `${m.emoji} ` : ''}{m.name.trim()} · {m.price} {currencySymbol(orgCurrency || regionToCurrency(form.region))}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="number" min="1" value={inc.qty || 1}
+                                disabled={isReadOnly}
+                                onChange={e => setInc(list => list.map((x, m) => m === k ? { ...x, qty: Math.max(1, parseInt(e.target.value) || 1) } : x))}
+                                title="Quantité incluse"
+                                style={{ width: 52, background: 'rgba(8,10,20,0.85)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 6px', textAlign: 'center', outline: 'none' }}
+                              />
+                              <button
+                                onClick={() => !isReadOnly && setInc(list => list.map((x, m) => m === k ? { ...x, free: x.free === false } : x))}
+                                title={inc.free !== false ? 'Inclus gratuitement dans le billet' : 'Réservé par le billet, à régler sur place'}
+                                style={{ flexShrink: 0, padding: '7px 9px', borderRadius: 999, cursor: isReadOnly ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.04em', border: `1px solid ${inc.free !== false ? 'rgba(78,232,200,0.4)' : 'rgba(200,169,110,0.4)'}`, background: inc.free !== false ? 'rgba(78,232,200,0.10)' : 'rgba(200,169,110,0.10)', color: inc.free !== false ? '#4ee8c8' : '#c8a96e' }}
+                              >
+                                {inc.free !== false ? 'GRATUIT' : 'SUR PLACE'}
+                              </button>
+                              {!isReadOnly && (
+                                <button
+                                  onClick={() => setInc(list => list.filter((_, m) => m !== k))}
+                                  title="Retirer cette option"
+                                  style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', cursor: 'pointer', padding: 0 }}
+                                >×</button>
+                              )}
+                            </div>
+                          )
+                        })}
+                        {!isReadOnly && menuChoices.length > 0 && (
+                          <button
+                            onClick={() => setInc(list => [...list, { name: menuChoices[0].name.trim(), qty: 1, free: true }])}
+                            style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 9, background: 'rgba(78,232,200,0.07)', border: '1px dashed rgba(78,232,200,0.35)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            + Inclure un article du menu
+                          </button>
+                        )}
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: 0 }}>
+                          Ex. « Entrée + boisson », « VIP dîner »… Le client voit ce qui est inclus avant de réserver, et le staff coche chaque option servie au scan (aucun dépassement possible).
+                        </p>
+                      </div>
+                    )
+                  })()}
+                </div>
               </div>
               )
             })}
@@ -2534,7 +2618,7 @@ export default function MesEvenementsPage() {
             <button
               onClick={() => {
                 if (isReadOnly) return
-                setPlaces(p => [...p, { type: '', price: 0, qty: 50 }])
+                setPlaces(p => [...p, { type: '', price: 0, qty: 50, included: [] }])
               }}
               disabled={isReadOnly}
               style={{ ...S.btnGhost, opacity: isReadOnly ? 0.4 : 1, cursor: isReadOnly ? 'not-allowed' : 'pointer' }}

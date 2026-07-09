@@ -421,6 +421,7 @@ export default function EventDetailPage() {
   const [showInfoInput, setShowInfoInput] = useState('')
   const [descModal, setDescModal] = useState(null) // item description to display
   const [photoGallery, setPhotoGallery] = useState(null) // { type, photos[], index } — aperçu photos d'une place
+  const [includedModal, setIncludedModal] = useState(null) // { type, items[] } — détail des options incluses d'un billet
   const [bookedTickets, setBookedTickets] = useState([]) // tickets for the LAST confirmed booking
   const [allBookedThisSession, setAllBookedThisSession] = useState([]) // { place, tickets, preorderSummary, totalPrice }
   const [showShareModal, setShowShareModal] = useState(false)
@@ -1231,18 +1232,31 @@ export default function EventDetailPage() {
                             <div style={{ height: '100%', borderRadius: 99, width: `${(place.available / place.total) * 100}%`, background: place.available < 10 ? 'rgba(220,50,50,0.85)' : event.color, transition: 'width 0.4s' }} />
                           </div>
 
-                          {/* Aperçu photos de la place (fourni par l'organisateur) */}
-                          {Array.isArray(place.photos) && place.photos.length > 0 && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setPhotoGallery({ type: place.type, photos: place.photos, index: 0 }) }}
-                              className="lib-press"
-                              style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 9, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.32)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                              Voir à quoi ressemble ma place
-                              <span style={{ opacity: 0.7, fontWeight: 500 }}>· {place.photos.length}</span>
-                            </button>
-                          )}
+                          {/* Aperçu photos + options incluses (fournis par l'organisateur) */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {Array.isArray(place.photos) && place.photos.length > 0 && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setPhotoGallery({ type: place.type, photos: place.photos, index: 0 }) }}
+                                className="lib-press"
+                                style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 9, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.32)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                Voir à quoi ressemble ma place
+                                <span style={{ opacity: 0.7, fontWeight: 500 }}>· {place.photos.length}</span>
+                              </button>
+                            )}
+                            {Array.isArray(place.included) && place.included.length > 0 && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setIncludedModal({ type: place.type, items: place.included }) }}
+                                className="lib-press"
+                                style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 9, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.38)', color: '#c8a96e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v8H4v-8"/><path d="M2 7h20v5H2z"/><path d="M12 7v13"/><path d="M12 7c-1.5 0-4-.5-4-3 0-2 3-2 4 3Z"/><path d="M12 7c1.5 0 4-.5 4-3 0-2-3-2-4 3Z"/></svg>
+                                Voir ce qui est inclus
+                                <span style={{ opacity: 0.7, fontWeight: 500 }}>· {place.included.length}</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Perforation + talon de prix (l'aspect « vrai billet ») */}
@@ -1953,6 +1967,51 @@ export default function EventDetailPage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Options incluses dans un billet (détail) ────────────────────────── */}
+      {includedModal && (
+        <div
+          onClick={() => setIncludedModal(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'linear-gradient(160deg, #14121f, #0a0b12)', border: '1px solid rgba(200,169,110,0.30)', borderRadius: 18, padding: 22, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 30px 80px rgba(0,0,0,0.55)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Inclus dans ce billet</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 19, fontWeight: 800, color: '#fff', margin: '2px 0 0' }}>{includedModal.type}</p>
+              </div>
+              <button onClick={() => setIncludedModal(null)} aria-label="Fermer" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* L'entrée elle-même, toujours incluse */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: '1px solid rgba(78,232,200,0.22)', background: 'rgba(78,232,200,0.05)' }}>
+                <span style={{ fontSize: 17, flexShrink: 0 }}>🎟️</span>
+                <span style={{ flex: 1, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>1 entrée à la soirée</span>
+                <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.05em', color: '#4ee8c8', padding: '4px 9px', borderRadius: 999, background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.32)' }}>INCLUS</span>
+              </div>
+              {includedModal.items.map((inc, k) => {
+                const menuItem = (event.menu || []).find(m => m?.name === inc.name)
+                const free = inc.free !== false
+                return (
+                  <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: `1px solid ${free ? 'rgba(78,232,200,0.22)' : 'rgba(200,169,110,0.28)'}`, background: free ? 'rgba(78,232,200,0.05)' : 'rgba(200,169,110,0.05)' }}>
+                    <span style={{ fontSize: 17, flexShrink: 0 }}>{menuItem?.emoji || '🍾'}</span>
+                    <span style={{ flex: 1, minWidth: 0, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
+                      {inc.qty > 1 ? `${inc.qty}× ` : '1× '}{inc.name}
+                      {!free && menuItem?.price ? <span style={{ display: 'block', fontSize: 10.5, fontWeight: 500, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{fmtMoney(menuItem.price, evCur)} — à régler sur place</span> : null}
+                    </span>
+                    <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.05em', padding: '4px 9px', borderRadius: 999, color: free ? '#4ee8c8' : '#c8a96e', background: free ? 'rgba(78,232,200,0.10)' : 'rgba(200,169,110,0.10)', border: `1px solid ${free ? 'rgba(78,232,200,0.32)' : 'rgba(200,169,110,0.38)'}` }}>
+                      {free ? 'INCLUS' : 'RÉSERVÉ'}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: 'rgba(255,255,255,0.38)', lineHeight: 1.5, margin: 0 }}>
+              Tes options t'attendent sur place : le staff les coche sur ton billet au moment où il te les sert. Elles apparaissent aussi dans « Mes billets » après l'achat.
+            </p>
           </div>
         </div>
       )}

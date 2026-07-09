@@ -20,6 +20,7 @@ const ROLE_RANK = { scan: 1, serveur: 2, manager: 3 }
 // ── Sources d'une ligne de commande ──────────────────────────────────────────
 export const ORDER_SOURCE = {
   PREORDER: 'preorder',            // commandé avant l'event, payé au checkout
+  INCLUDED: 'included',            // inclus dans le type de place (billet)
   ONSITE_CLIENT: 'onsite_client',  // ajouté par le client pendant la soirée
   ONSITE_STAFF: 'onsite_staff',    // ajouté par un serveur
   ONSITE_MANAGER: 'onsite_manager',// ajouté par un manager
@@ -442,6 +443,71 @@ export function listenOrderLog(eventId, cb) {
     })
   }).catch(() => {})
   return () => unsub()
+}
+
+// ── Options incluses dans un type de place ────────────────────────────────────
+// Résout place.included[] contre le menu de l'événement : seules les entrées
+// dont l'article existe ENCORE au menu sont retenues (lien menu obligatoire).
+// Le prix vient du MENU (pas du billet) — pour une option non gratuite, c'est
+// le tarif à régler sur place ; pour une gratuite il sert d'info comptable.
+export function includedForPlace(event, placeType) {
+  const place = (event?.places || []).find(p => String(p.type) === String(placeType))
+  if (!place || !Array.isArray(place.included) || !place.included.length) return []
+  const menu = Array.isArray(event?.menu) ? event.menu : []
+  const byName = new Map(menu.filter(m => m && m.name).map(m => [String(m.name), m]))
+  return place.included
+    .map(inc => {
+      const item = byName.get(String(inc?.name || ''))
+      if (!item) return null
+      return {
+        name: item.name,
+        emoji: item.emoji || '',
+        qty: Math.max(1, Number(inc.qty) || 1),
+        free: inc.free !== false,
+        price: Number(item.price) || 0,
+      }
+    })
+    .filter(Boolean)
+}
+
+// Matérialise les options incluses d'un billet en lignes de commande (comme les
+// précommandes) : au 1er scan en mode service, chaque option devient une ligne
+// source 'included', à servir dans le même flux POS. Idempotent (id déterministe
+// par billet + article) → impossible de « recréer » une option déjà servie, et
+// la quantité incluse ne peut pas être dépassée.
+export async function ensureIncludedMaterialized(eventId, ticketId, included, actor) {
+  if (!Array.isArray(included) || !included.length) return
+  const existing = new Set(getTicketOrders(eventId, ticketId).filter(i => i.source === ORDER_SOURCE.INCLUDED).map(i => i.id))
+  const toAdd = included
+    .map(inc => {
+      const id = `inc_${ticketId}_${String(inc.name).replace(/\s+/g, '_')}`.slice(0, 90)
+      if (existing.has(id)) return null
+      const free = inc.free !== false
+      return {
+        id, eventId: String(eventId), ticketId: String(ticketId),
+        menuItemId: inc.name, name: inc.name, emoji: inc.emoji || '',
+        source: ORDER_SOURCE.INCLUDED, quantity: Math.max(1, Number(inc.qty) || 1),
+        // Gratuit : rien à encaisser (paid_at posé) — sinon l'article est réservé
+        // par le billet mais se règle sur place (compté dans l'addition).
+        unitPrice: free ? 0 : (Number(inc.price) || 0),
+        options: null, note: '', status: PREORDER_STATUS.TO_SERVE,
+        addedBy: null, addedByRole: 'included', addedByName: 'Inclus billet', addedAt: now(),
+        served_at: null, served_by: null,
+        paid_at: free ? now() : null, paid_by: free ? 'included' : null,
+        cancelled_at: null, cancelled_by: null, cancellation_reason: null,
+      }
+    })
+    .filter(Boolean)
+  if (!toAdd.length) return
+  const local = getOrders(eventId)
+  const present = new Set(local.map(i => String(i.id)))
+  const fresh = toAdd.filter(i => !present.has(String(i.id)))
+  if (fresh.length) writeLocalOrders(eventId, [...local, ...fresh])
+  // insertOnly : une option déjà servie/annulée côté serveur n'est jamais écrasée.
+  try {
+    const { mergeItemsById } = await import('./firestore-sync')
+    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', insertOnly: toAdd })
+  } catch {}
 }
 
 // ── Matérialiser les précommandes d'un billet en lignes de commande ──────────
