@@ -6,6 +6,7 @@ import PayoutPanel from '../components/PayoutPanel'
 import { useAuth } from '../context/AuthContext'
 import BoostModal from '../components/BoostModal'
 import EventStaffModal from '../components/EventStaffModal'
+import EventHoverMedia from '../components/EventHoverMedia'
 import { IconHourglass } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
@@ -204,8 +205,16 @@ function EventActionButton({ type, onClick }) {
 function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGuests, onStaff, onCodes, onDuplicate, onEdit, onDelete }) {
   return <article className="event-manage-card">
     <button className="event-manage-main" onClick={onOpen}>
-      <div className="event-manage-media" style={event.imageUrl ? {backgroundImage:`linear-gradient(to top,rgba(4,4,11,.72),transparent 65%),url(${event.imageUrl})`} : undefined}>
+      <div className="event-manage-media" style={{ position: 'relative', ...(event.imageUrl ? {backgroundImage:`linear-gradient(to top,rgba(4,4,11,.72),transparent 65%),url(${event.imageUrl})`} : {}) }}>
         {!event.imageUrl && <svg viewBox="0 0 24 24"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>}
+        {event.videoUrl && (
+          <EventHoverMedia
+            event={event}
+            showBadge
+            overlay="linear-gradient(to top,rgba(4,4,11,.72),transparent 65%)"
+            style={{ position: 'absolute', inset: 0, height: '100%', aspectRatio: 'auto' }}
+          />
+        )}
       </div>
       <div className="event-manage-copy">
         <span className="event-status">Publié</span>

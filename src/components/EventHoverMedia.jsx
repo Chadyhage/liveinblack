@@ -21,6 +21,9 @@ export default function EventHoverMedia({
   const video = videoUrl || event?.videoUrl || event?.previewVideoUrl || ''
   const [armed, setArmed] = useState(false)
   const [hovered, setHovered] = useState(false)
+  // La vidéo peut peser plusieurs Mo : l'affiche ne s'efface que quand la
+  // lecture a RÉELLEMENT démarré (sinon carte noire pendant le téléchargement).
+  const [playing, setPlaying] = useState(false)
   const timerRef = useRef(null)
   const videoRef = useRef(null)
 
@@ -42,6 +45,7 @@ export default function EventHoverMedia({
     setHovered(false)
     clearHoverTimer()
     setArmed(false)
+    setPlaying(false)
     const node = videoRef.current
     if (node) {
       node.pause()
@@ -84,7 +88,7 @@ export default function EventHoverMedia({
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            opacity: armed ? 0 : 1,
+            opacity: playing ? 0 : 1,
             transform: zoom && hovered ? 'scale(1.06)' : 'scale(1)',
             transition: 'opacity .24s ease, transform .55s cubic-bezier(.22,.9,.3,1)',
           }}
@@ -93,21 +97,25 @@ export default function EventHoverMedia({
         <div style={{ position: 'absolute', inset: 0, background: fallbackBackground }} />
       )}
 
-      {video && armed && (
+      {/* Monté dès le survol (préchargement pendant le délai d'armement) pour
+          que la lecture démarre vite ; visible seulement quand elle a démarré. */}
+      {video && hovered && (
         <video
           ref={videoRef}
           src={video}
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
+          onPlaying={() => setPlaying(true)}
+          onError={() => { setPlaying(false); setArmed(false) }}
           style={{
             position: 'absolute',
             inset: 0,
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            opacity: armed ? 1 : 0,
+            opacity: playing ? 1 : 0,
             transition: 'opacity .24s ease',
           }}
         />
@@ -131,15 +139,15 @@ export default function EventHoverMedia({
             fontWeight: 800,
             letterSpacing: '.08em',
             textTransform: 'uppercase',
-            color: armed ? '#04040b' : '#4ee8c8',
-            background: armed ? '#4ee8c8' : 'rgba(5,6,10,.68)',
-            border: `1px solid ${armed ? 'rgba(78,232,200,.4)' : 'rgba(78,232,200,.35)'}`,
+            color: playing ? '#04040b' : '#4ee8c8',
+            background: playing ? '#4ee8c8' : 'rgba(5,6,10,.68)',
+            border: `1px solid ${playing ? 'rgba(78,232,200,.4)' : 'rgba(78,232,200,.35)'}`,
             backdropFilter: 'blur(8px)',
             pointerEvents: 'none',
             zIndex: 2,
           }}
         >
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: armed ? '#04040b' : '#4ee8c8' }} />
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: playing ? '#04040b' : '#4ee8c8' }} />
           Aperçu vidéo
         </span>
       )}
