@@ -319,9 +319,10 @@ export function hideConversationForUser(myId, convId) {
     const starred = JSON.parse(localStorage.getItem('lib_starred') || '{}')
     starred[myId] = (starred[myId] || []).filter(key => !String(key).startsWith(`${id}:`))
     localStorage.setItem('lib_starred', JSON.stringify(starred))
-    const muted = JSON.parse(localStorage.getItem('lib_muted_convs') || '{}')
-    muted[myId] = (muted[myId] || []).filter(value => String(value) !== id)
-    localStorage.setItem('lib_muted_convs', JSON.stringify(muted))
+    // Sourdine des notifs : le format est une MAP { convId: untilMs } depuis la
+    // refonte — un .filter (ancien format tableau) planterait ici et avortait
+    // toute la fonction AVANT la sync Firestore. On passe par le helper migré.
+    clearConvMute(myId, id)
     const pinned = JSON.parse(localStorage.getItem('lib_pinned_convs') || '{}')
     pinned[myId] = (pinned[myId] || []).filter(value => String(value) !== id)
     localStorage.setItem('lib_pinned_convs', JSON.stringify(pinned))
@@ -329,7 +330,6 @@ export function hideConversationForUser(myId, convId) {
     import('./firestore-sync').then(({ syncDoc }) => syncDoc(`user_social/${myId}`, {
       hiddenConversations: all[myId],
       starred: starred[myId],
-      mutedConvs: muted[myId],
       pinnedConvs: pinned[myId],
     })).catch(() => {})
     return all[myId]
@@ -593,6 +593,13 @@ export function clearGroupMemberMute(convId, adminId, memberId) {
   const memberMutes = { ...(conv.memberMutes || {}) }
   delete memberMutes[memberId]
   saveConversation({ ...conv, memberMutes })
+  // saveConversation synchronise via syncDoc(merge:true), qui NE PEUT PAS retirer
+  // une clé imbriquée : sans ça l'échéance (souvent +100 ans « jusqu'à
+  // réactivation ») survit côté serveur et la règle isMutedGroupMember continue
+  // de bloquer le membre APRÈS sa réactivation. On supprime donc explicitement
+  // memberMutes.<memberId> côté serveur avec le sentinel deleteField().
+  import('./firestore-sync').then(({ syncDeleteField }) =>
+    syncDeleteField(`conversations/${convId}`, `memberMutes.${memberId}`)).catch(() => {})
   return { ok: true, changed: true }
 }
 

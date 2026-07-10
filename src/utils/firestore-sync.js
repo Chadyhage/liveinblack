@@ -4,7 +4,7 @@
 // On login → pull from Firestore into localStorage (async)
 
 import { db } from '../firebase'
-import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, onSnapshot, increment, runTransaction } from 'firebase/firestore'
+import { doc, setDoc, getDoc, getDocs, deleteDoc, deleteField, collection, query, where, onSnapshot, increment, runTransaction } from 'firebase/firestore'
 
 // ── Merge concurrent-safe d'un tableau d'items keyés par id ───────────────────
 // Écrire le tableau complet depuis le cache local = « dernier écrivain gagne » :
@@ -436,6 +436,21 @@ export function syncDelete(path) {
   try {
     const ref = doc(db, ...path.split('/'))
     deleteDoc(ref).catch(e => console.warn('[sync] delete:', path, e.message))
+  } catch (e) { console.warn('[sync]', e.message) }
+}
+
+// Supprime UN champ (éventuellement imbriqué) d'un doc. Indispensable car un
+// setDoc(..., { merge:true }) classique fusionne les maps et ne peut JAMAIS
+// retirer une clé imbriquée : il faut le sentinel deleteField(). fieldPath en
+// notation pointée, ex. 'memberMutes.uid123'.
+export function syncDeleteField(path, fieldPath) {
+  try {
+    const ref = doc(db, ...path.split('/'))
+    const segs = String(fieldPath).split('.')
+    let payload = deleteField()
+    for (let i = segs.length - 1; i >= 0; i--) payload = { [segs[i]]: payload }
+    setDoc(ref, payload, { merge: true })
+      .catch(e => console.warn('[sync] delete-field:', path, fieldPath, e.message))
   } catch (e) { console.warn('[sync]', e.message) }
 }
 
