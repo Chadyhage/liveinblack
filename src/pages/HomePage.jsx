@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import RegionSelector from '../components/RegionSelector'
 import EmptyState from '../components/EmptyState'
 import TonightCarousel, { remainingPlaces } from '../components/TonightCarousel'
+import ActualiteCarousel from '../components/ActualiteCarousel'
 import HeroSearch from '../components/HeroSearch'
 import { events, getTopEventsByRegion } from '../data/events'
 import { useAuth } from '../context/AuthContext'
@@ -808,6 +809,35 @@ export default function HomePage() {
                 </span>
               </div>
             </button>
+
+            {/* Accès direct au portefeuille de billets (connecté) — ouvre
+                directement le panneau « Mes billets » du profil */}
+            {user && (
+              <button
+                onClick={() => navigate('/profil', { state: { panel: 'billets' } })}
+                className="lib-press"
+                aria-label="Voir mes places"
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(78,232,200,0.45)'; e.currentTarget.style.background = '#161825' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; e.currentTarget.style.background = '#12131c' }}
+                style={{
+                  marginTop: 12, width: 'min(440px, 100%)', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '13px 16px', borderRadius: 14, textAlign: 'left', cursor: 'pointer',
+                  background: '#12131c', border: '1px solid rgba(255,255,255,0.14)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.35)', transition: 'all 0.2s',
+                }}
+              >
+                <span style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#123028' }}>
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 8a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a2 2 0 0 0 0 4v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a2 2 0 0 0 0-4z"/><path d="M14 7v10" strokeDasharray="1.5 2.5"/>
+                  </svg>
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 14, color: '#fff' }}>Voir mes places</span>
+                  <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Tous tes billets et leurs QR codes</span>
+                </span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            )}
           </div>
 
           {/* Colonne droite : galerie vidéo (desktop) — flèches + aperçus latéraux */}
@@ -1076,6 +1106,12 @@ export default function HomePage() {
                 />
               )}
             </div>
+
+            {/* ── Actualité ── (bandeau éditorial curé par l'admin ; s'efface seul si vide) */}
+            <ActualiteCarousel
+              allEvents={allEvents}
+              onOpen={(id) => navigate(`/evenements/${id}`)}
+            />
 
             {/* ── Réservez pour ce soir ── (toujours visible : carrousel ou état vide) */}
             <RevealSection delay={150}>

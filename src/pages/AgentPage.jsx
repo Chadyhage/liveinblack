@@ -21,6 +21,8 @@ import {
 import { computeTicketFeeCents, computeTicketFeeXOF } from '../../lib/fees.js'
 import { getProviderCategories, getProviderTypes } from '../utils/providerCategories'
 import { IconCheck, IconEdit } from '../components/icons'
+import AdminReviewsPanel from '../components/AdminReviewsPanel'
+import ActualiteAdminPanel from '../components/ActualiteAdminPanel'
 
 const ADMIN_EMAIL = 'hagechady4@gmail.com'
 
@@ -1038,6 +1040,8 @@ export default function AgentPage() {
             { key: 'paiements',     label: 'Paiements',      count: paymentAlerts.length, alert: paymentAlerts.length > 0 },
             { key: 'suppressions', label: 'Suppressions',  count: deletionRequests.length, alert: deletionRequests.length > 0 },
             { key: 'reports',      label: 'Signalements',  count: reports.length, alert: reports.length > 0 },
+            { key: 'avis',         label: 'Avis' },
+            { key: 'actualite',    label: 'Actualité' },
           ].map(t => (
             <button
               key={t.key}
@@ -3283,6 +3287,16 @@ export default function AgentPage() {
           </div>
         )
       })()}
+
+      {/* ══════════════════════════════════════════════
+          AVIS PRESTATAIRES (modération)
+      ══════════════════════════════════════════════ */}
+      {tab === 'avis' && <AdminReviewsPanel />}
+
+      {/* ══════════════════════════════════════════════
+          ACTUALITÉ (carrousel éditorial de l'accueil)
+      ══════════════════════════════════════════════ */}
+      {tab === 'actualite' && <ActualiteAdminPanel allEvents={allEvents} />}
 
       {/* ══════════════════════════════════════════════
           SIGNALEMENTS

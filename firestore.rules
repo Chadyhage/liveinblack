@@ -553,5 +553,14 @@ service cloud.firestore {
       allow read:  if isAgent() || isEventOwnerOf(eventId);
       allow write: if isSignedIn();
     }
+
+    // ── Config éditoriale globale de l'accueil ────────────────────────────────
+    // app_config/homepage_actualite = carrousel « Actualité » curé par l'admin
+    // (titre, accent, liste ordonnée d'eventIds). Lecture PUBLIQUE (le carrousel
+    // s'affiche pour les visiteurs non connectés) ; écriture réservée aux agents.
+    match /app_config/{docId} {
+      allow read:  if true;
+      allow write: if isAgent();
+    }
   }
 }
