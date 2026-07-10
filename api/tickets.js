@@ -17,6 +17,7 @@
 
 import { getDb, FieldValue } from '../lib/firebaseAdmin.js'
 import { requireAuth } from '../lib/verifyAuth.js'
+import { findGroupTieForEvent } from '../lib/groupTicketGuard.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -85,6 +86,23 @@ export default async function handler(req, res) {
     }
 
     if (target === prevHolder) return res.status(200).json({ ok: true, skipped: 'already_holder' })
+
+    // ── RÈGLE « 1 place de groupe par compte et par événement » ───────────────
+    // On ne peut pas attribuer un siège à quelqu'un qui est DÉJÀ lié à une place
+    // de groupe pour ce même événement : hôte d'une (autre) table, ou membre
+    // titulaire d'un siège (dans cette table ou une autre). Sans ça, une même
+    // personne cumulerait plusieurs places de groupe sur un même événement.
+    if (action === 'assign') {
+      const tie = await findGroupTieForEvent(db, ticket.eventId, target)
+      if (tie) {
+        const who = targetName || 'Cette personne'
+        return res.status(409).json({
+          error: tie.tableId === String(ticket.tableId)
+            ? `${who} a déjà une place dans cette table.`
+            : `${who} est déjà lié(e) à une place de groupe pour cet événement${tie.place ? ` (${tie.place})` : ''} — une seule place de groupe par personne et par événement.`,
+        })
+      }
+    }
 
     const assignedAt = action === 'assign' ? new Date().toISOString() : null
 

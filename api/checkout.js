@@ -83,6 +83,15 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Cette place n'est pas une table de groupe." })
       }
       tableSeats = Math.min(50, Math.max(2, Number(tPlace.groupMax) || 2))
+      // ── RÈGLE « 1 place de groupe par compte et par événement » ─────────────
+      // Refus si l'acheteur (identité = token vérifié, jamais le body) est DÉJÀ
+      // lié à une place de groupe de cet événement — hôte d'une table OU membre
+      // titulaire d'un siège attribué. Vérifié AVANT le décrément de stock.
+      if (db) {
+        const { findGroupTieForEvent, groupTieBuyMessage } = await import('../lib/groupTicketGuard.js')
+        const tie = await findGroupTieForEvent(db, eventId, caller.uid)
+        if (tie) return res.status(409).json({ error: groupTieBuyMessage(tie) })
+      }
     }
 
     // Quantité bornée (aligné sur /api/event-stock). Une table entière = 1 unité

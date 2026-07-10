@@ -27,6 +27,7 @@ import {
 } from '../lib/fedapay.js'
 import { requireAuth } from '../lib/verifyAuth.js'
 import { PROVIDER_SUB, computeRenewal } from '../lib/providerSubscription.js'
+import { findGroupTieForEvent, groupTieBuyMessage } from '../lib/groupTicketGuard.js'
 
 // Raw body indispensable pour vérifier la signature du webhook.
 export const config = {
@@ -116,6 +117,12 @@ async function checkout(req, res, body) {
       if (String(place.groupType) !== 'group' || (Number(place.groupMax) || 0) < 2) {
         return res.status(400).json({ error: "Cette place n'est pas une table de groupe." })
       }
+      // ── RÈGLE « 1 place de groupe par compte et par événement » ─────────────
+      // Refus si l'acheteur est DÉJÀ lié à une place de groupe de cet événement,
+      // comme hôte (il a acheté une table) OU comme membre (un siège lui a été
+      // attribué). Vérifié AVANT le décrément de stock — rien à restocker.
+      const tie = await findGroupTieForEvent(db, eventId, userId)
+      if (tie) return res.status(409).json({ error: groupTieBuyMessage(tie) })
       unitPrice = Math.round(Number(place.price) || 0) // prix PLEIN de la table
     } else {
       if (!place) return res.status(404).json({ error: 'Type de place introuvable sur cet événement' })

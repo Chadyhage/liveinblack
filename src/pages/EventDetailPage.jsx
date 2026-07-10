@@ -438,6 +438,7 @@ export default function EventDetailPage() {
   const [showConflictModal, setShowConflictModal] = useState(false)
   const [conflictProceedFn, setConflictProceedFn] = useState(null)
   const [eventStartedError, setEventStartedError] = useState(false)
+  const [groupLimitError, setGroupLimitError] = useState('') // règle « 1 place de groupe par compte »
   const [showPointsToast, setShowPointsToast] = useState(false)
   const [showAgeModal, setShowAgeModal] = useState(false)
   const [ageVerified, setAgeVerified] = useState(false)
@@ -581,11 +582,39 @@ export default function EventDetailPage() {
     ))
   }
 
+  // RÈGLE « 1 place de groupe par compte et par événement » — vérif LOCALE
+  // (l'autorité reste le serveur : /api/checkout et /api/fedapay refusent en 409).
+  // Lié = hôte d'une table (tous ses sièges portent tableId + userId=lui) OU
+  // membre (copie de siège attribuée, tableId + assignedByHost).
+  function findMyGroupTie() {
+    try {
+      const uid = getUserId(user)
+      const bookings = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+      return bookings.find(b =>
+        b.userId === uid && String(b.eventId) === String(event.id) && b.tableId && !b.revoked
+      ) || null
+    } catch { return null }
+  }
+
   // Ouvre le résumé/paiement — mais affiche D'ABORD l'avertissement d'âge si
   // l'événement est 18+ et pas encore acquitté. But : que « Payer » n'apparaisse
   // qu'UNE SEULE fois. Avant, l'avertissement s'intercalait APRÈS un premier clic
   // sur Payer, puis renvoyait sur le paiement → impression de double débit.
   function openConfirm() {
+    // Place de groupe : blocage AVANT tout tunnel si l'utilisateur est déjà lié
+    // à une place de groupe (achetée ou reçue) pour cet événement.
+    if (isGroupPlace) {
+      const tie = findMyGroupTie()
+      if (tie) {
+        setGroupLimitError(
+          tie.assignedByHost
+            ? `Une place t'a déjà été attribuée dans une place de groupe pour cet événement (${tie.place || 'place de groupe'}). Une seule place de groupe par compte et par événement.`
+            : `Tu as déjà réservé une place de groupe pour cet événement (${tie.place || 'place de groupe'}). Une seule place de groupe par compte et par événement.`
+        )
+        return
+      }
+    }
+    setGroupLimitError('')
     if ((event.minAge || 0) >= 18 && !ageVerified) {
       setShowAgeModal(true)
       return
@@ -896,6 +925,7 @@ export default function EventDetailPage() {
     setPerTicketOrders([])
     setActivePreorderTicket(0)
     setTicketQty(1)
+    setGroupLimitError('')
   }
 
   function selectShowOption(itemName, opt) {
@@ -1200,7 +1230,7 @@ export default function EventDetailPage() {
                     return (
                       <div
                         key={place.type}
-                        onClick={() => { setSelectedPlace(place.type === selectedPlace ? null : place.type); setTicketQty(1) }}
+                        onClick={() => { setSelectedPlace(place.type === selectedPlace ? null : place.type); setTicketQty(1); setGroupLimitError('') }}
                         className="lib-press"
                         style={{
                           position: 'relative', display: 'flex', cursor: 'pointer',
@@ -1290,6 +1320,20 @@ export default function EventDetailPage() {
                       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                         Cet événement a déjà commencé.
                       </p>
+                    </div>
+                  )}
+
+                  {groupLimitError && (
+                    <div style={{ background: 'rgba(200,169,110,0.07)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 10, padding: '13px 15px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <GroupIcon size={16} color="#c8a96e" />
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 700, color: '#c8a96e', margin: '0 0 3px' }}>
+                          Place de groupe déjà réservée
+                        </p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
+                          {groupLimitError}
+                        </p>
+                      </div>
                     </div>
                   )}
 
@@ -1764,6 +1808,20 @@ export default function EventDetailPage() {
                         </button>
                       )}
                     </>
+                  )}
+
+                  {groupLimitError && (
+                    <div style={{ background: 'rgba(200,169,110,0.07)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 10, padding: '13px 15px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <GroupIcon size={16} color="#c8a96e" />
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 700, color: '#c8a96e', margin: '0 0 3px' }}>
+                          Place de groupe déjà réservée
+                        </p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
+                          {groupLimitError}
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
