@@ -5,25 +5,7 @@
 // - Pas de X trompeur, pas de "tout accepter" surdimensionné
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-
-const STORAGE_KEY = 'lib_cookie_consent'
-const CONSENT_TTL_MS = 6 * 30 * 24 * 60 * 60 * 1000 // 6 mois
-
-function readConsent() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (Date.now() - (parsed.ts || 0) > CONSENT_TTL_MS) return null
-    return parsed
-  } catch { return null }
-}
-
-function writeConsent(value) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ value, ts: Date.now() }))
-  } catch {}
-}
+import { getCookieConsent, saveCookieConsent } from '../utils/cookies'
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false)
@@ -31,7 +13,7 @@ export default function CookieConsent() {
 
   useEffect(() => {
     const t = setTimeout(() => {
-      if (!readConsent()) {
+      if (!getCookieConsent()) {
         setVisible(true)
         // Petit délai pour que le DOM soit monté avant l'animation
         requestAnimationFrame(() => setPhase('visible'))
@@ -43,7 +25,7 @@ export default function CookieConsent() {
   if (!visible) return null
 
   function dismiss(value) {
-    writeConsent(value)
+    saveCookieConsent(value)
     setPhase('leaving')
     setTimeout(() => setVisible(false), 400)
   }
@@ -169,16 +151,16 @@ export default function CookieConsent() {
             Cookies & vie privée
           </p>
           <p className="cc-desc">
-            Nous utilisons uniquement des cookies essentiels, pour ta connexion et tes billets.{' '}
-            <strong>Aucun traçage, aucune publicité.</strong>{' '}
+            Nécessaires au service : connexion, sécurité et billets. Tu peux aussi autoriser la mémorisation de tes préférences d’ambiance.{' '}
+            <strong>Aucun traçage publicitaire ni audience tierce.</strong>{' '}
             <Link to="/cookies">En savoir plus</Link>
           </p>
           <div className="cc-actions">
             <button className="cc-btn cc-btn-refuse" onClick={() => dismiss('refused')}>
-              Refuser
+              Continuer sans préférences
             </button>
             <button className="cc-btn cc-btn-accept" onClick={() => dismiss('accepted')}>
-              Accepter
+              Accepter les préférences
             </button>
           </div>
         </div>

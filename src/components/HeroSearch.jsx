@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAllProviderProfiles, isProviderVisible } from '../utils/services'
+import { getLocalOrganizerProfiles } from '../utils/organizers'
 import { MessagingSearchBar } from './MessagingActions'
 import { getEntityRegionIds, getRegionName, normalizeGeoText } from '../utils/locations'
 import { getProviderCategories } from '../utils/providerCategories'
 
 // Recherche globale de l'accueil : cherche À LA FOIS les événements, les
-// artistes/organisateurs (via les champs des events) et les prestataires
-// (annuaire). Le placeholder s'écrit/s'efface tout seul avec des exemples.
+// organisateurs (annuaire /organisateurs) et les prestataires (annuaire). Le
+// placeholder s'écrit/s'efface tout seul avec des exemples.
 
 const EXAMPLES = [
   'un événement ce soir',
@@ -28,6 +29,7 @@ export default function HeroSearch() {
   const [open, setOpen] = useState(false)
   const [placeholder, setPlaceholder] = useState('Rechercher…')
   const [remoteProviders, setRemoteProviders] = useState([])
+  const [organizers, setOrganizers] = useState(() => getLocalOrganizerProfiles())
   const wrapRef = useRef(null)
   const reduce = useRef(false)
 
@@ -38,6 +40,16 @@ export default function HeroSearch() {
     let unsub = () => {}
     import('../utils/firestore-sync').then(({ listenProviders }) => {
       unsub = listenProviders(setRemoteProviders)
+    }).catch(() => {})
+    return () => { try { unsub() } catch {} }
+  }, [])
+
+  // Organisateurs = annuaire public (organizer_profiles). Même source temps réel
+  // que la page /organisateurs, cache local en attendant le 1er snapshot.
+  useEffect(() => {
+    let unsub = () => {}
+    import('../utils/firestore-sync').then(({ listenOrganizerProfiles }) => {
+      unsub = listenOrganizerProfiles(setOrganizers)
     }).catch(() => {})
     return () => { try { unsub() } catch {} }
   }, [])
@@ -87,6 +99,7 @@ export default function HeroSearch() {
       kind: 'event', id: e.id, title: e.name || 'Événement',
       meta: [e.dateDisplay, e.city].filter(Boolean).join(' · '),
       color: e.accentColor || '#4ee8c8', tag: 'Événement',
+      image: e.imageUrl || e.image || e.cover || '',
     }))
 
     const prMatches = providers.filter(p => {
@@ -103,15 +116,29 @@ export default function HeroSearch() {
         kind: 'provider', id: p.userId, title: p.name || 'Prestataire',
         meta: [label, p.city || p.location, p.country].filter(Boolean).join(' · '),
         color: primary?.color || '#c8a96e', tag: label,
+        image: p.photoUrl || p.coverUrl || '',
       }
     })
 
-    results = [...evMatches, ...prMatches]
+    // Organisateurs : uniquement les pages publiques, ciblées par nom/ville/région.
+    const orgMatches = organizers.filter(o => o.status === 'public').filter(o => {
+      const hay = [o.publicName, o.city, o.country, o.shortDescription,
+        ...getEntityRegionIds(o).map(getRegionName)].map(normalizeGeoText).join(' ')
+      return hay.includes(query)
+    }).slice(0, 5).map(o => ({
+      kind: 'organizer', id: o.slug || o.id, title: o.publicName || 'Organisateur',
+      meta: ['Organisateur', o.city, o.country].filter(Boolean).join(' · '),
+      color: '#8444ff', tag: 'Organisateur',
+      image: o.avatarUrl || o.bannerUrl || '',
+    }))
+
+    results = [...evMatches, ...orgMatches, ...prMatches]
   }
 
   function go(r) {
     setOpen(false); setQ('')
     if (r.kind === 'event') navigate(`/evenements/${r.id}`)
+    else if (r.kind === 'organizer') navigate(`/organisateurs/${encodeURIComponent(r.id)}`)
     else navigate(`/prestataires/${encodeURIComponent(r.id)}`)
   }
 
@@ -149,9 +176,13 @@ export default function HeroSearch() {
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-              <span style={{ width: 36, height: 36, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: r.color + '1a', border: `1px solid ${r.color}40` }}>
-                {r.kind === 'event'
+              <span style={{ width: 36, height: 36, borderRadius: 9, flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: r.color + '1a', border: `1px solid ${r.color}40` }}>
+                {r.image
+                  ? <img src={r.image} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : r.kind === 'event'
                   ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={r.color} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  : r.kind === 'organizer'
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={r.color} strokeWidth="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 10h.01M15 10h.01"/></svg>
                   : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={r.color} strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>}
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>

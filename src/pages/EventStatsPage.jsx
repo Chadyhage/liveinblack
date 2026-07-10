@@ -6,6 +6,7 @@ import {
   EVENT_STATS_DEFINITIONS,
   buildEventInsights,
   canAccessEventStats,
+  computeDemographics,
   computeEventStats,
   eventStatsCsvRows,
   ticketPrice,
@@ -101,12 +102,15 @@ function StatsFunnel({ stats }) {
   const emitted = stats.assignedTickets || 0
   const present = stats.present || 0
   const pct = (n, d) => d > 0 ? Math.max(0, Math.min(100, Math.round(n / d * 100))) : null
-  const fill = cap ? pct(emitted, cap) : null
-  const attend = emitted ? pct(present, emitted) : null
+  // SOURCE UNIQUE des taux : stats.fillRate (stock vendu ÷ capacité, une table = 1)
+  // et stats.attendanceRate — mêmes arrondis partout sur la page (fin des 0 % ici
+  // vs 1 % ailleurs pour la même donnée).
+  const fill = stats.fillRate != null ? Math.round(stats.fillRate) : null
+  const attend = stats.attendanceRate != null ? Math.round(stats.attendanceRate) : null
   const steps = [
-    { key: 'cap', label: 'Capacité totale', val: cap ? number(cap) : '—', sub: 'places dans la salle', bar: 100, tone: 'muted', note: null },
-    { key: 'emit', label: 'Billets émis', val: number(emitted), sub: 'vendus + invitations', bar: cap ? pct(emitted, cap) : (emitted ? 100 : 0), tone: 'teal', note: fill != null ? { rate: `${fill} %`, txt: 'de la capacité — taux de remplissage' } : null },
-    { key: 'pres', label: 'Entrées confirmées', val: number(present), sub: "scannées à l'entrée", bar: cap ? pct(present, cap) : (present ? 100 : 0), tone: 'gold', note: attend != null ? { rate: `${attend} %`, txt: 'des billets émis — taux de présence' } : { rate: '—', txt: 'check-in pas encore commencé' } },
+    { key: 'cap', label: 'Capacité en vente', val: cap ? number(cap) : '—', sub: 'places en vente (une table de groupe = 1)', bar: 100, tone: 'muted', note: fill != null ? { rate: `${fill} %`, txt: 'déjà vendues — taux de remplissage' } : null },
+    { key: 'emit', label: 'Billets émis', val: number(emitted), sub: 'personnes attendues (vendus + invitations)', bar: cap ? Math.min(100, pct(emitted, cap) ?? 0) : (emitted ? 100 : 0), tone: 'teal', note: null },
+    { key: 'pres', label: 'Entrées confirmées', val: number(present), sub: "scannées à l'entrée", bar: emitted ? pct(present, emitted) : 0, tone: 'gold', note: attend != null ? { rate: `${attend} %`, txt: 'des billets émis — taux de présence' } : { rate: '—', txt: 'check-in pas encore commencé' } },
   ]
   return (
     <div className="event-stats-funnel" role="img" aria-label={`Capacité ${cap}, billets émis ${emitted}, entrées ${present}`}>
@@ -211,27 +215,43 @@ function PlaceBreakdown({ rows, total, cur = 'EUR' }) {
 
 const TICKETS_PER_PAGE = 50
 
-function TicketTable({ event, tickets, showBuyer = true }) {
+// Nom du TITULAIRE COURANT du billet : compte lié (users/), sinon nom saisi sur
+// la guestlist, sinon identifiant masqué. Pour un siège de table attribué,
+// ticket.userId = l'invité (le registre est réécrit à l'attribution) — c'est
+// donc bien la personne qui entrera, pas l'acheteur de la table.
+function holderName(ticket, usersById) {
+  if (ticket.userId && usersById[String(ticket.userId)]?.name) return usersById[String(ticket.userId)].name
+  if (ticket.guestName) return ticket.guestName
+  if (ticket.assignedName) return ticket.assignedName
+  if (ticket.userId) return `Compte ••••${String(ticket.userId).slice(-4)}`
+  return 'Non renseigné'
+}
+
+// variant 'checkin' : remplace Prix/Attribution par l'heure d'entrée — l'onglet
+// Check-in répond à « qui est entré, quand » quand Participants répond à
+// « qui a un billet ».
+function TicketTable({ event, tickets, usersById = {}, variant = 'default' }) {
   const [page, setPage] = useState(0)
   const totalPages = Math.max(1, Math.ceil(tickets.length / TICKETS_PER_PAGE))
   // Clamp page if tickets change (ex: filter applied)
   const safePage = Math.min(page, totalPages - 1)
   const pageTickets = tickets.slice(safePage * TICKETS_PER_PAGE, (safePage + 1) * TICKETS_PER_PAGE)
+  const checkin = variant === 'checkin'
 
   if (!tickets.length) return <EmptyState title="Aucun billet" body="Aucune donnée ne correspond aux filtres actifs." />
   return (
     <div className="event-stats-table-wrap">
       <table className="event-stats-table">
-        <thead><tr><th>ID billet</th><th>Catégorie</th><th>Prix estimé</th>{showBuyer && <th>Acheteur</th>}<th>Attribution</th><th>Statut</th></tr></thead>
+        <thead><tr><th>Titulaire</th><th>Catégorie</th>{!checkin && <th>Prix payé</th>}<th>{checkin ? 'Entré à' : 'Réservé le'}</th><th>Billet</th><th>Statut</th></tr></thead>
         <tbody>
           {pageTickets.map(ticket => (
             <tr key={ticket.ticketCode || ticket.id}>
-              <td>{ticket.ticketCode || ticket.id}</td>
+              <td>{holderName(ticket, usersById)}</td>
               <td>{ticket.place || 'Standard'}</td>
-              <td>{ticket.paid === true ? money(ticketPrice(event, ticket), eventCurrency(event)) : 'Gratuit'}</td>
-              {showBuyer && <td>{ticket.userId ? `••••${String(ticket.userId).slice(-4)}` : 'Non renseigné'}</td>}
-              <td>{dateTime(ticket.bookedAt)}</td>
-              <td><span className={`event-stats-status ${ticket.checkedInAt ? 'checked' : ticket.paid === true ? 'paid' : 'free'}`}>{ticket.checkedInAt ? 'Présent' : ticket.paid === true ? 'Émis' : 'Invitation'}</span></td>
+              {!checkin && <td>{ticket.paid === true ? money(ticketPrice(event, ticket), eventCurrency(event)) : 'Gratuit'}</td>}
+              <td>{checkin ? (ticket.checkedInAt ? dateTime(ticket.checkedInAt) : '—') : dateTime(ticket.bookedAt)}</td>
+              <td style={{ fontSize: 11, opacity: .6 }}>{ticket.ticketCode || ticket.id}</td>
+              <td><span className={`event-stats-status ${ticket.checkedInAt ? 'checked' : ticket.paid === true ? 'paid' : 'free'}`}>{ticket.checkedInAt ? 'Entré' : ticket.paid === true ? 'Payé — pas encore entré' : 'Invitation — pas encore entré'}</span></td>
             </tr>
           ))}
         </tbody>
@@ -249,6 +269,63 @@ function TicketTable({ event, tickets, showBuyer = true }) {
 
 function EmptyState({ title, body }) {
   return <div className="event-stats-empty"><strong>{title}</strong><p>{body}</p></div>
+}
+
+// ─── Démographie du public (onglet Données) ───────────────────────────────────
+// Âge et genre des TITULAIRES de billets (déclarés à l'inscription/profil —
+// optionnels, utilisés UNIQUEMENT pour ces stats, jamais pour bloquer un achat).
+// Événement avec limite d'âge : les tranches commencent à l'âge minimum, et un
+// âge déclaré inférieur est compté dans la première tranche (à l'entrée, la
+// personne a forcément l'âge requis).
+function Demographics({ tickets, usersById, minAge = 0 }) {
+  const demo = useMemo(() => computeDemographics(tickets, usersById, minAge), [tickets, usersById, minAge])
+  const bar = (count, total, color) => (
+    <div className="event-stats-progress" style={{ flex: 1 }}><span style={{ width: `${total ? Math.round(count / total * 100) : 0}%`, background: color }} /></div>
+  )
+  const pctTxt = (count, total) => total ? `${Math.round(count / total * 100)} %` : '—'
+  const genderRows = [
+    ['Femmes', demo.gender.femme, '#e05aaa'],
+    ['Hommes', demo.gender.homme, '#4ee8c8'],
+    ['Autre', demo.gender.autre, '#c8a96e'],
+  ]
+  return (
+    <section className="event-stats-lower-grid">
+      <article className="event-stats-panel">
+        <div className="event-stats-panel-heading"><div><h2>Âge du public</h2><p>{minAge > 0 ? `Événement ${minAge}+ : les tranches commencent à ${minAge} ans.` : 'Selon l’année de naissance déclarée par les titulaires.'}</p></div></div>
+        {demo.ageKnown === 0 ? (
+          <EmptyState title="Pas encore de données d'âge" body="L'âge est déclaré par les participants à l'inscription ou dans leur profil — les stats se rempliront au fil des ventes." />
+        ) : (
+          <div className="event-stats-breakdown">
+            {demo.buckets.map(bucket => (
+              <div className="event-stats-breakdown-row" key={bucket.label}>
+                <div><strong>{bucket.label}</strong><span>{number(bucket.count)} participant{bucket.count > 1 ? 's' : ''}</span></div>
+                {bar(bucket.count, demo.ageKnown, '#4ee8c8')}
+                <b>{pctTxt(bucket.count, demo.ageKnown)}</b>
+              </div>
+            ))}
+            <p style={{ margin: '10px 0 0', font: '500 11.5px Inter, sans-serif', color: 'rgba(255,255,255,0.4)' }}>{number(demo.ageKnown)} âge{demo.ageKnown > 1 ? 's' : ''} renseigné{demo.ageKnown > 1 ? 's' : ''} sur {number(demo.total)} billets · {number(demo.ageUnknown)} non renseigné{demo.ageUnknown > 1 ? 's' : ''}{demo.noAccount > 0 ? ` (dont ${number(demo.noAccount)} invitation${demo.noAccount > 1 ? 's' : ''} sans compte)` : ''}</p>
+          </div>
+        )}
+      </article>
+      <article className="event-stats-panel">
+        <div className="event-stats-panel-heading"><div><h2>Genre du public</h2><p>Déclaré librement par les participants — optionnel.</p></div></div>
+        {demo.genderKnown === 0 ? (
+          <EmptyState title="Pas encore de données de genre" body="Le genre est déclaré par les participants à l'inscription ou dans leur profil — les stats se rempliront au fil des ventes." />
+        ) : (
+          <div className="event-stats-breakdown">
+            {genderRows.map(([label, count, color]) => (
+              <div className="event-stats-breakdown-row" key={label}>
+                <div><strong>{label}</strong><span>{number(count)} participant{count > 1 ? 's' : ''}</span></div>
+                {bar(count, demo.genderKnown, color)}
+                <b>{pctTxt(count, demo.genderKnown)}</b>
+              </div>
+            ))}
+            <p style={{ margin: '10px 0 0', font: '500 11.5px Inter, sans-serif', color: 'rgba(255,255,255,0.4)' }}>{number(demo.genderKnown)} genre{demo.genderKnown > 1 ? 's' : ''} renseigné{demo.genderKnown > 1 ? 's' : ''} sur {number(demo.total)} billets · les pourcentages portent sur les réponses renseignées.</p>
+          </div>
+        )}
+      </article>
+    </section>
+  )
 }
 
 function csvEscape(value) {
@@ -269,7 +346,22 @@ export default function EventStatsPage() {
   const [range, setRange] = useState('all')
   const [place, setPlace] = useState('all')
   const [updatedAt, setUpdatedAt] = useState(new Date())
+  // Profils des titulaires (users/{uid} → name, birthYear, gender) : noms dans
+  // les tableaux + démographie de l'onglet Données. Chargés par lots, best-effort.
+  const [usersById, setUsersById] = useState({})
   const statCur = eventCurrency(event) // XOF (FCFA) ou EUR selon la région de l'event
+
+  useEffect(() => {
+    const uids = [...new Set(tickets.map(t => t.userId).filter(Boolean).map(String))]
+    const missing = uids.filter(uid => !(uid in usersById))
+    if (!missing.length) return
+    let cancelled = false
+    import('../utils/firestore-sync').then(async ({ loadUsersByIds }) => {
+      const loaded = await loadUsersByIds(missing)
+      if (!cancelled && Object.keys(loaded).length) setUsersById(current => ({ ...current, ...loaded }))
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [tickets]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let unsubscribe = () => {}
@@ -362,7 +454,7 @@ export default function EventStatsPage() {
         <section className="event-stats-filters" aria-label="Filtres statistiques">
           <label>Période<select value={range} onChange={e => setRange(e.target.value)}><option value="all">Depuis l'ouverture</option><option value="30d">30 derniers jours</option><option value="7d">7 derniers jours</option></select></label>
           <label>Catégorie<select value={place} onChange={e => setPlace(e.target.value)}><option value="all">Toutes les catégories</option>{places.map(name => <option key={name} value={name}>{name}</option>)}</select></label>
-          <p>{number(stats.assignedTickets)} résultat{stats.assignedTickets > 1 ? 's' : ''} · filtres appliqués à toute la page</p>
+          <p>{number(stats.assignedTickets)} billet{stats.assignedTickets > 1 ? 's' : ''} dans la vue · filtres appliqués à toute la page</p>
         </section>
 
         {error && <div className="event-stats-error">{error}</div>}
@@ -383,8 +475,8 @@ export default function EventStatsPage() {
             <section className="event-stats-metrics">
               <MetricCard icon={I.revenue} definition={EVENT_STATS_DEFINITIONS.estimatedRevenue} value={money(stats.estimatedRevenue, statCur)} helper="Hors frais, remises et remboursements" tone="teal" />
               <MetricCard icon={I.ticket} definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.paidTickets)} payant${stats.paidTickets > 1 ? 's' : ''} · ${number(stats.freeTickets)} invitation${stats.freeTickets > 1 ? 's' : ''}`} tone="gold" />
-              <MetricCard icon={I.gauge} definition={EVENT_STATS_DEFINITIONS.fillRate} value={percent(stats.fillRate)} helper={stats.capacity ? `${number(stats.assignedTickets)} / ${number(stats.capacity)} places vendues` : 'Capacité non définie'} tone="teal" />
-              <MetricCard icon={I.seat} definition={EVENT_STATS_DEFINITIONS.remaining} value={stats.remaining == null ? '—' : number(stats.remaining)} helper={stats.capacity ? 'Places encore disponibles' : 'Capacité non définie'} tone="gold" />
+              <MetricCard icon={I.gauge} definition={EVENT_STATS_DEFINITIONS.fillRate} value={percent(stats.fillRate)} helper={stats.capacity ? `${number(stats.soldUnits)} / ${number(stats.capacity)} places vendues` : 'Capacité non définie'} tone="teal" />
+              <MetricCard icon={I.seat} definition={EVENT_STATS_DEFINITIONS.remaining} value={stats.remaining == null ? '—' : number(stats.remaining)} helper={stats.capacity ? 'Encore en vente (une table = 1)' : 'Capacité non définie'} tone="gold" />
               <MetricCard icon={I.present} definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper={`${number(stats.present)} / ${number(stats.assignedTickets)} billets scannés`} tone="teal" />
               <MetricCard icon={I.attend} definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? `${number(stats.present)} entrée${stats.present > 1 ? 's' : ''} sur ${number(stats.assignedTickets)} billets` : 'Check-in pas encore commencé'} tone={stats.checkInReliable ? 'teal' : 'pink'} />
             </section>
@@ -399,7 +491,7 @@ export default function EventStatsPage() {
         {activeTab === 'overview' && (
           <section className="event-stats-lower-grid">
             <article className="event-stats-panel"><h2>Répartition par catégorie</h2><PlaceBreakdown rows={stats.byPlace} total={stats.assignedTickets} cur={statCur} /></article>
-            <article className="event-stats-panel"><h2>Derniers billets</h2><TicketTable event={event} tickets={[...stats.tickets].sort((a, b) => new Date(b.bookedAt) - new Date(a.bookedAt)).slice(0, 6)} /></article>
+            <article className="event-stats-panel"><h2>Derniers billets</h2><TicketTable event={event} usersById={usersById} tickets={[...stats.tickets].sort((a, b) => new Date(b.bookedAt) - new Date(a.bookedAt)).slice(0, 6)} /></article>
           </section>
         )}
 
@@ -410,15 +502,23 @@ export default function EventStatsPage() {
           </section>
         )}
 
+        {/* PARTICIPANTS = « qui a un billet » : la liste nominative complète. */}
         {activeTab === 'participants' && (
-          <section className="event-stats-section-stack"><div className="event-stats-metrics compact"><MetricCard definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.uniqueBuyers)} acheteur${stats.uniqueBuyers > 1 ? 's' : ''} identifié${stats.uniqueBuyers > 1 ? 's' : ''}`} /><MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="présents confirmés" /><MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'taux de présence' : 'en attente du check-in'} /></div><article className="event-stats-panel"><h2>Participants</h2><TicketTable event={event} tickets={stats.tickets} /></article><div className="event-stats-note">Les données démographiques ne sont pas collectées lors de l'achat. L'interface affiche « non disponible » plutôt qu'un faux 0 %.</div></section>
+          <section className="event-stats-section-stack"><div className="event-stats-metrics compact"><MetricCard definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.uniqueBuyers)} compte${stats.uniqueBuyers > 1 ? 's' : ''} titulaire${stats.uniqueBuyers > 1 ? 's' : ''}`} /><MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="déjà entrés" /><MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'taux de présence' : 'en attente du check-in'} /></div><article className="event-stats-panel"><div className="event-stats-panel-heading"><div><h2>Participants</h2><p>Toutes les personnes qui ont un billet — le titulaire affiché est celui qui entrera (un siège de table attribué appartient à l'invité, pas à l'acheteur).</p></div></div><TicketTable event={event} usersById={usersById} tickets={stats.tickets} /></article></section>
         )}
 
+        {/* CHECK-IN = « qui est entré, quand » : entrées en tête, heure de scan. */}
         {activeTab === 'checkin' && (
-          <section className="event-stats-section-stack"><div className="event-stats-metrics compact"><MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="scans uniques valides" /><MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'sur billets attribués' : 'non fiable pour le moment'} /><MetricCard definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(Math.max(0, stats.assignedTickets - stats.present))} helper="billets non scannés" /></div><article className="event-stats-panel"><h2>Journal de présence</h2><TicketTable event={event} tickets={[...stats.tickets].sort((a, b) => Number(Boolean(b.checkedInAt)) - Number(Boolean(a.checkedInAt)))} showBuyer={false} /></article></section>
+          <section className="event-stats-section-stack"><div className="event-stats-metrics compact"><MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="scans uniques valides" /><MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'sur billets émis' : 'non fiable pour le moment'} /><MetricCard definition={EVENT_STATS_DEFINITIONS.toScan} value={number(Math.max(0, stats.assignedTickets - stats.present))} helper="personnes encore attendues" /></div><article className="event-stats-panel"><div className="event-stats-panel-heading"><div><h2>Journal des entrées</h2><p>Les billets scannés d'abord, avec l'heure d'entrée — puis ceux qu'on attend encore.</p></div></div><TicketTable event={event} usersById={usersById} variant="checkin" tickets={[...stats.tickets].sort((a, b) => new Date(b.checkedInAt || 0) - new Date(a.checkedInAt || 0))} /></article></section>
         )}
 
-        {activeTab === 'data' && <section className="event-stats-panel"><div className="event-stats-panel-heading"><div><h2>Données brutes</h2><p>Les identifiants acheteurs sont masqués à l'écran. L'export respecte les filtres actifs.</p></div><button style={ACTION_BTN} onClick={exportCsv}>Exporter CSV</button></div><TicketTable event={event} tickets={stats.tickets} /></section>}
+        {/* DONNÉES = démographie du public + export brut. */}
+        {activeTab === 'data' && (
+          <section className="event-stats-section-stack">
+            <Demographics tickets={stats.tickets} usersById={usersById} minAge={Number(event.minAge) || 0} />
+            <section className="event-stats-panel"><div className="event-stats-panel-heading"><div><h2>Données brutes</h2><p>Tous les billets de la vue courante. L'export CSV respecte les filtres actifs.</p></div><button style={ACTION_BTN} onClick={exportCsv}>Exporter CSV</button></div><TicketTable event={event} usersById={usersById} tickets={stats.tickets} /></section>
+          </section>
+        )}
         </div>
 
         {loading && <div className="event-stats-loading">Actualisation…</div>}

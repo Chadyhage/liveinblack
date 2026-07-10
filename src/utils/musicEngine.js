@@ -8,6 +8,8 @@
 // Le moteur est un SINGLETON module : la musique continue quand on navigue
 // entre les pages (l'UI MusicPlayer est démontée/remontée, pas le son).
 
+import { getFunctionalPreference, setFunctionalPreference } from './cookies'
+
 export const DISCS = [
   { id: 'house',  name: 'House',  bpm: 124, color: '#e05aaa', desc: '4/4 chaud, claps' },
   { id: 'afro',   name: 'Afro',   bpm: 112, color: '#34d399', desc: 'Percu & marimba' },
@@ -32,19 +34,23 @@ let ctx = null, master = null, comp = null, delay = null, delayGain = null
 let crackleSrc = null
 let playing = false, schedulerId = null
 let curDiscIdx = 0, step = 0, bar = 0, nextTime = 0
-let volume = (() => { const v = parseFloat(localStorage.getItem(VOL_KEY)); return Number.isFinite(v) ? v : 0.5 })()
+let volume = (() => { const v = parseFloat(getFunctionalPreference(VOL_KEY, '')); return Number.isFinite(v) ? v : 0.5 })()
 const listeners = new Set()
 
 // Variables pour le lecteur HTML5 connecté au graphe Web Audio
 let audioHtmlElement = null
 let audioSourceNode = null
 
+// Piste custom (recherche iTunes) : descriptor { title, artist, cover, previewUrl }
+// publié dans l'état des subscribers pour que l'UI affiche titre/artiste.
+let customTrack = null
+
 const LOOKAHEAD = 0.025, SCHEDULE_AHEAD = 0.12
 
 function notify() { listeners.forEach(cb => { try { cb(getState()) } catch {} }) }
 export function subscribe(cb) { listeners.add(cb); cb(getState()); return () => listeners.delete(cb) }
 export function getState() {
-  return { playing, disc: DISCS[curDiscIdx], discId: DISCS[curDiscIdx]?.id, volume }
+  return { playing, disc: DISCS[curDiscIdx], discId: DISCS[curDiscIdx]?.id, volume, track: customTrack }
 }
 
 function ensureGraph() {
@@ -78,13 +84,17 @@ function stopAudioFile() {
   }
 }
 
-function playAudioFile(url) {
+function playAudioFile(url, { loop = true, onEnded = null } = {}) {
   stopAudioFile()
-  
+
   audioHtmlElement = new Audio(url)
-  audioHtmlElement.loop = true
+  audioHtmlElement.loop = loop
   audioHtmlElement.volume = volume
-  
+  if (onEnded) {
+    const el = audioHtmlElement
+    el.addEventListener('ended', () => { if (audioHtmlElement === el) onEnded() })
+  }
+
   audioHtmlElement.play().catch((err) => {
     const errName = err ? err.name : 'UnknownError'
     const errMsg = err ? err.message : 'No message'
@@ -243,9 +253,10 @@ export async function play(discId) {
   ensureGraph()
   if (ctx.state === 'suspended') { try { await ctx.resume() } catch {} }
   if (discId) { const i = DISCS.findIndex(d => d.id === discId); if (i >= 0) curDiscIdx = i }
-  try { localStorage.setItem(DISC_KEY, DISCS[curDiscIdx].id) } catch {}
+  setFunctionalPreference(DISC_KEY, DISCS[curDiscIdx].id)
   
   const currentDisc = DISCS[curDiscIdx]
+  customTrack = null
   playing = true
 
   // Reset des canaux audios actifs
@@ -266,6 +277,33 @@ export async function play(discId) {
   notify()
 }
 
+// Joue une piste custom (extrait 30 s, ex. recherche iTunes) via le même
+// pipeline audio/volume que les disques MP3. Coupe le disque en cours,
+// publie le descriptor dans l'état, et s'arrête proprement à la fin (ended).
+export async function playTrack(track) {
+  if (!track || !track.previewUrl) return
+  ensureGraph()
+  if (ctx.state === 'suspended') { try { await ctx.resume() } catch {} }
+
+  // Coupe le disque / la piste en cours
+  if (schedulerId) { clearInterval(schedulerId); schedulerId = null }
+  stopCrackle()
+  stopAudioFile()
+
+  customTrack = {
+    title: track.title || '',
+    artist: track.artist || '',
+    cover: track.cover || null,
+    previewUrl: track.previewUrl,
+  }
+  playing = true
+  playAudioFile(customTrack.previewUrl, {
+    loop: false,
+    onEnded: () => { playing = false; stopAudioFile(); notify() },
+  })
+  notify()
+}
+
 export function stop() {
   playing = false
   if (schedulerId) { clearInterval(schedulerId); schedulerId = null }
@@ -275,7 +313,10 @@ export function stop() {
 }
 
 export function toggle(discId) {
-  if (playing && (!discId || DISCS[curDiscIdx].id === discId)) stop()
+  // Piste custom : toggle() sans id met en pause / relance l'extrait.
+  // Un id de disque explicite reprend le comportement normal (disques).
+  if (playing && (!discId || (!customTrack && DISCS[curDiscIdx].id === discId))) stop()
+  else if (!discId && customTrack) playTrack(customTrack)
   else play(discId)
 }
 
@@ -287,7 +328,7 @@ export function playRandom() {
 
 export function setVolume(v) {
   volume = Math.max(0, Math.min(1, v))
-  try { localStorage.setItem(VOL_KEY, String(volume)) } catch {}
+  setFunctionalPreference(VOL_KEY, String(volume))
   if (master) master.gain.setTargetAtTime(volume, ctx.currentTime, 0.02)
   if (audioHtmlElement) {
     try { audioHtmlElement.volume = volume } catch {}
@@ -296,5 +337,5 @@ export function setVolume(v) {
 }
 
 export function getSavedDiscId() {
-  return localStorage.getItem(DISC_KEY) || DISCS[0].id
+  return getFunctionalPreference(DISC_KEY, DISCS[0].id)
 }

@@ -74,6 +74,13 @@
   @keyframes lib-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.85); } }
   @keyframes lib-pop { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
 
+  /* Point « live » : cœur qui bat + anneau qui se propage (effet direct/temps réel) */
+  .lib-live-dot > span:first-child { animation: lib-live-beat 1.6s ease-in-out infinite; }
+  .lib-live-ring { animation: lib-live-ring 1.6s ease-out infinite; }
+  @keyframes lib-live-beat { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.8); opacity: 0.75; } }
+  @keyframes lib-live-ring { 0% { transform: scale(1); opacity: 0.55; } 70%,100% { transform: scale(2.6); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .lib-live-dot > span:first-child, .lib-live-ring { animation: none; } .lib-live-ring { display: none; } }
+
   /* ── Splash d'intro ── */
   .lib-star-in { animation: lib-star-in 0.8s cubic-bezier(0.2,0.9,0.25,1) both; }
   @keyframes lib-star-in {

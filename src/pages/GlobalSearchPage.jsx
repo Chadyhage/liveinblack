@@ -131,7 +131,7 @@ export default function GlobalSearchPage() {
   )), [providers, user])
   const results = useMemo(() => ({
     events: normalizedQuery ? searchableEvents.filter(event => containsQuery(normalizedQuery, event.name, event.city, event.region, event.category, event.subtitle, event.description)).slice(0, 8) : [],
-    organizers: normalizedQuery ? searchableOrganizers.filter(organizer => containsQuery(normalizedQuery, organizer.publicName, organizer.city, organizer.country, organizer.shortDescription, ...(organizer.vibes || []))).slice(0, 8) : [],
+    organizers: normalizedQuery ? searchableOrganizers.filter(organizer => containsQuery(normalizedQuery, organizer.publicName, organizer.city, organizer.country, organizer.shortDescription, organizer.longDescription)).slice(0, 8) : [],
     providers: normalizedQuery ? searchableProviders.filter(provider => containsQuery(normalizedQuery, provider.name, provider.city, provider.location, provider.country, provider.description, provider.specialitesLibre, ...getProviderCategories(provider).flatMap(category => [category.label, category.singular]), ...getEntityRegionIds(provider).map(getRegionName))).slice(0, 8) : [],
   }), [normalizedQuery, searchableEvents, searchableOrganizers, searchableProviders])
 

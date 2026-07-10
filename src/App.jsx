@@ -9,6 +9,7 @@ import PublicOrganizers from './pages/PublicOrganizers'
 import PublicOrganizerPage from './pages/PublicOrganizerPage'
 import OrganizerPublicStudio from './pages/OrganizerPublicStudio'
 import FollowedOrganizersPage from './pages/FollowedOrganizersPage'
+import InterestedEventsPage from './pages/InterestedEventsPage'
 import OrganizerAdminPage from './pages/OrganizerAdminPage'
 import GlobalSearchPage from './pages/GlobalSearchPage'
 import PublicAbout from './pages/PublicAbout'
@@ -38,6 +39,7 @@ import PolitiqueCookiesPage from './pages/PolitiqueCookiesPage'
 import { AuthContext } from './context/AuthContext'
 import AuthModal from './components/AuthModal'
 import CookieConsent from './components/CookieConsent'
+import RouteLoadingFeedback from './components/RouteLoadingFeedback'
 import IntroOverlay from './components/IntroOverlay'
 import MusicPlayer from './components/MusicPlayer'
 
@@ -331,7 +333,13 @@ function OrganizerNotificationBridge({ user }) {
 // pas les enfants position:fixed / sticky (bottom nav, PublicNav).
 function RouteTransition({ children }) {
   const location = useLocation()
-  return <div key={location.pathname} className="lib-route">{children}</div>
+  const routeKey = `${location.pathname}${location.search}`
+  return (
+    <>
+      <RouteLoadingFeedback routeKey={routeKey} pathname={location.pathname} />
+      <div key={routeKey} className="lib-route">{children}</div>
+    </>
+  )
 }
 
 // Wrapper: /connexion — allow logged-in users when ?mode= is present (creating a 2nd account)
@@ -428,6 +436,9 @@ export default function App() {
             } />
             <Route path="/profil/organisateurs-suivis" element={
               <RequireAuth user={user} to="/profil/organisateurs-suivis"><FollowedOrganizersPage /></RequireAuth>
+            } />
+            <Route path="/profil/evenements-interesses" element={
+              <RequireAuth user={user} to="/profil/evenements-interesses"><InterestedEventsPage /></RequireAuth>
             } />
             {/* /portefeuille retiré — redirige vers /profil pour les anciens liens */}
             <Route path="/portefeuille" element={<Navigate to="/profil" replace />} />

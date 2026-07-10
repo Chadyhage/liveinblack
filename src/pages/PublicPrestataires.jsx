@@ -34,9 +34,12 @@ function firstOfferImage(offers) {
 function CatIcon({ id, color = '#fff', size = 18 }) {
   const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' }
   if (id === 'mic') return <svg {...p}><rect x="9" y="2" width="6" height="11" rx="3" /><path d="M19 10a7 7 0 0 1-14 0" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
-  if (id === 'building') return <svg {...p}><rect x="4" y="3" width="16" height="18" rx="1.5" /><path d="M9 8h1m4 0h1M9 12h1m4 0h1M9 16h1m4 0h1" /></svg>
+  // Salles & lieux → maison (plutôt qu'un immeuble de bureaux)
+  if (id === 'building') return <svg {...p}><path d="M3 11.5 12 4l9 7.5" /><path d="M5 10v10h14V10" /><path d="M10 20v-6h4v6" /></svg>
   if (id === 'speaker') return <svg {...p}><rect x="5" y="2" width="14" height="20" rx="2" /><circle cx="12" cy="14" r="4" /><circle cx="12" cy="6" r="1" /></svg>
   if (id === 'cart') return <svg {...p}><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+  // Photo & vidéo → caméra
+  if (id === 'camera') return <svg {...p}><path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
   return <svg {...p}><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
 }
 

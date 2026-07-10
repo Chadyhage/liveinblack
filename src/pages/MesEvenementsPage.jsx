@@ -5,6 +5,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import BoostModal from '../components/BoostModal'
 import EventStaffModal from '../components/EventStaffModal'
+import PromoCodesPanel from '../components/PromoCodesPanel'
 import EventHoverMedia from '../components/EventHoverMedia'
 import { IconHourglass, IconAlert } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
@@ -13,6 +14,7 @@ import { regions } from '../data/regions'
 import { fmtMoney, eventCurrency, regionToCurrency, currencySymbol, organizerCurrency, payRailLabel } from '../utils/money'
 import { MUSIC_STYLES, EVENT_TYPES, AMBIANCES } from '../utils/recommendations'
 import { getGuestlist, loadGuestlistRemote, addGuestlistEntry, removeGuestlistEntry } from '../utils/guestlist'
+import { ticketPreorderLines, eventStock } from '../utils/eventStats'
 
 function generateCode(len = 8) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -188,6 +190,7 @@ const EVENT_ACTIONS = {
   guests: { label: 'Guestlist', color: '#4ee8c8', icon: <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M19 8v6M16 11h6"/></svg> },
   staff: { label: 'Équipe', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-4M16 3a4 4 0 0 1 0 8"/></svg> },
   codes: { label: 'Codes', color: 'rgba(255,255,255,.65)', icon: <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
+  promo: { label: 'Codes promo', color: '#8b8ff5', icon: <svg viewBox="0 0 24 24"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a2 2 0 0 0-2 2v5.59c0 .53.21 1.04.59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l5.59-5.59a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="8.5" r="1"/></svg> },
   duplicate: { label: 'Dupliquer', color: '#8b8ff5', icon: <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> },
   edit: { label: 'Modifier', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 3 3L12 15l-4 1 1-4Z"/></svg> },
   delete: { label: 'Supprimer', color: '#dc7777', icon: <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> },
@@ -200,7 +203,7 @@ function EventActionButton({ type, onClick }) {
   </button>
 }
 
-function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGuests, onStaff, onCodes, onDuplicate, onEdit, onDelete }) {
+function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGuests, onStaff, onCodes, onPromo, onDuplicate, onEdit, onDelete }) {
   return <article className="event-manage-card">
     <button className="event-manage-main" onClick={onOpen}>
       <div className="event-manage-media" style={{ position: 'relative', ...(event.imageUrl ? {backgroundImage:`linear-gradient(to top,rgba(4,4,11,.72),transparent 65%),url(${event.imageUrl})`} : {}) }}>
@@ -224,7 +227,7 @@ function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGue
     <div className="event-action-grid">
       <EventActionButton type="stats" onClick={onStats}/><EventActionButton type="bookings" onClick={onBookings}/>
       <EventActionButton type="boost" onClick={onBoost}/><EventActionButton type="guests" onClick={onGuests}/>
-      <EventActionButton type="staff" onClick={onStaff}/>{event.isPrivate && <EventActionButton type="codes" onClick={onCodes}/>}
+      <EventActionButton type="staff" onClick={onStaff}/><EventActionButton type="promo" onClick={onPromo}/>{event.isPrivate && <EventActionButton type="codes" onClick={onCodes}/>}
       <EventActionButton type="duplicate" onClick={onDuplicate}/><EventActionButton type="edit" onClick={onEdit}/><EventActionButton type="delete" onClick={onDelete}/>
     </div>
   </article>
@@ -393,6 +396,8 @@ export default function MesEvenementsPage() {
   const [codesQty, setCodesQty] = useState(10)
   const [generatedCodes, setGeneratedCodes] = useState(null)
 
+  // Codes promo : panneau par événement (composant autonome PromoCodesPanel)
+  const [promoTargetEvent, setPromoTargetEvent] = useState(null)
   // Guestlist state
   const [showGuestlistModal, setShowGuestlistModal] = useState(false)
   const [guestlistTargetEvent, setGuestlistTargetEvent] = useState(null)
@@ -844,6 +849,17 @@ export default function MesEvenementsPage() {
         // On continue quand même — l'event est en localStorage au cas où
       } else {
         setSyncErrorBanner(null)
+        // E-mails « nouvel événement » aux abonnés de l'organisateur — SEULEMENT
+        // à la première publication (pas sur une édition) et pour les events
+        // publics. Fire-and-forget : l'échec n'affecte pas la publication.
+        // L'endpoint est idempotent côté serveur (flag event_notifications).
+        if (!editingEventId && !eventData.isPrivate) {
+          import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+            body: JSON.stringify({ type: 'new_event_followers', eventId: eventData.id }),
+          })).catch(() => {})
+        }
       }
       // user_events est non-bloquant — on sanitise les vieilles images base64
       // pour rester sous la limite Firestore de 1 Mo par document
@@ -1484,6 +1500,7 @@ export default function MesEvenementsPage() {
                   onBookings={() => { setBookingsPanelEvent(ev); setShowBookingsPanel(true) }}
                   onBoost={() => { setBoostTargetEvent(ev); setShowBoostModal(true) }}
                   onGuests={() => openGuestlistModal(ev)} onStaff={() => setStaffTargetEvent(ev)}
+                  onPromo={() => setPromoTargetEvent(ev)}
                   onCodes={() => { setCodesTargetEvent(ev); setGeneratedCodes(null); setCodesQty(10); setShowCodesModal(true) }}
                   onDuplicate={() => duplicateEvent(ev)}
                   onEdit={() => startEdit(ev)}
@@ -1881,6 +1898,11 @@ export default function MesEvenementsPage() {
         {/* Modal Équipe / staff de la soirée */}
         {staffTargetEvent && (
           <EventStaffModal event={staffTargetEvent} user={user} onClose={() => setStaffTargetEvent(null)} />
+        )}
+
+        {/* Panneau Codes promo (réductions par billet, modèle Shotgun) */}
+        {promoTargetEvent && (
+          <PromoCodesPanel event={promoTargetEvent} onClose={() => setPromoTargetEvent(null)} />
         )}
       </Layout>
     )
@@ -3245,8 +3267,14 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
 // ─── Analytics organisateur ──────────────────────────────────────────────────
 // Statistiques de ventes RÉELLES, calculées depuis le registre tickets/ Firestore
 // (un billet = une vente, cross-device), joint aux prix des places de l'event.
-function OrganizerAnalytics({ events, tickets, loading }) {
+function OrganizerAnalytics({ events, tickets: rawTickets, loading }) {
+  // Détail au clic : 'revenue' | 'tickets' | null
+  const [detail, setDetail] = useState(null)
   const eventById = Object.fromEntries((events || []).map(e => [String(e.id), e]))
+  // Un billet révoqué (invitation annulée, siège repris) n'est plus « émis » —
+  // il ne compte ni dans les billets ni dans le CA.
+  const tickets = (rawTickets || []).filter(t => t.revoked !== true && t.cancelled !== true)
+  const revokedCount = (rawTickets || []).length - tickets.length
   // « 1 organisateur = 1 zone » : en principe TOUS les events sont dans la même
   // devise. Par sécurité on ne SOMME JAMAIS deux devises : on retient la devise
   // dominante (le plus d'events) et le CA agrégé n'additionne QUE les billets de
@@ -3268,18 +3296,31 @@ function OrganizerAnalytics({ events, tickets, loading }) {
   // gratuit) occupe une place mais ne rapporte rien — il ne doit pas gonfler le CA.
   // L'organisateur garde 100 % du prix du billet : le frais de service LIVEINBLACK
   // est payé par l'ACHETEUR en sus (lib/fees.js) — pas de commission vendeur.
-  const grossRevenue = tickets.reduce((s, t) => s + (t.paid && inStatsCur(t) ? priceOf(t) : 0), 0)
+  // Les remises codes promo sont déjà déduites (placePrice = prix réellement payé).
+  const ticketRevenue = tickets.reduce((s, t) => s + (t.paid && inStatsCur(t) ? priceOf(t) : 0), 0)
+  // Précommandes (consos payées au checkout) : même règle — 100 % organisateur.
+  const preorderRevenue = tickets.reduce((s, t) => {
+    if (!t.paid || !inStatsCur(t)) return s
+    return s + ticketPreorderLines(t).reduce((a, l) => a + l.quantity * l.price, 0)
+  }, 0)
+  const grossRevenue = ticketRevenue + preorderRevenue
   const paidCount = tickets.filter(t => t.paid).length
-  const totalCap = (events || []).reduce((s, e) => s + (e.places || []).reduce((a, p) => a + (Number(p.total) || 0), 0), 0)
-  const fillPct = totalCap > 0 ? Math.round(totalTickets / totalCap * 100) : 0
+  const freeCount = totalTickets - paidCount
+  const scannedCount = tickets.filter(t => t.checkedInAt).length
+  const otherCurrency = (curCounts.XOF || 0) > 0 && (curCounts.EUR || 0) > 0
 
-  // Par événement (avec ventes), trié par revenu décroissant
+  // Par événement (avec ventes), trié par revenu décroissant. Remplissage en
+  // UNITÉS DE STOCK (une table de groupe = 1) — compter les billets-sièges
+  // contre la capacité gonflait artificiellement le remplissage des tables.
   const perEvent = (events || []).map(e => {
     const evTix = tickets.filter(t => String(t.eventId) === String(e.id))
-    const cap = (e.places || []).reduce((a, p) => a + (Number(p.total) || 0), 0)
+    const stock = eventStock(e)
     const rev = evTix.reduce((s, t) => s + (t.paid ? priceOf(t) : 0), 0)
-    return { event: e, sold: evTix.length, cap, rev, fill: cap > 0 ? Math.round(evTix.length / cap * 100) : 0 }
-  }).filter(x => x.sold > 0).sort((a, b) => b.rev - a.rev).slice(0, 6)
+    return { event: e, tix: evTix.length, sold: stock.sold, cap: stock.capacity, rev, fill: stock.capacity > 0 ? Math.round(stock.sold / stock.capacity * 100) : 0 }
+  }).filter(x => x.tix > 0).sort((a, b) => b.rev - a.rev).slice(0, 6)
+
+  // Formule des frais acheteur (transparence du modal Revenus) selon la devise.
+  const feeLabel = statsCur === 'XOF' ? '5 % + 300 FCFA par billet (plafonné à 1 500 FCFA)' : '5 % + 0,49 € par billet (plafonné à 2,50 €)'
 
   const card = { background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }
   const inter = 'Inter, sans-serif'
@@ -3303,24 +3344,82 @@ function OrganizerAnalytics({ events, tickets, loading }) {
           <p style={{ fontFamily: inter, fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Tes ventes apparaîtront ici dès le premier billet.</p>
         </div>
       ) : (<>
-        {/* KPI cards */}
+        {/* KPI cards — cliquables : le détail du calcul s'ouvre en modal. */}
         <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ ...card, flex: 1.4, padding: '16px 18px', borderLeft: '3px solid #c8a96e' }}>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', margin: '0 0 6px' }}>Revenus billetterie</p>
+          <button onClick={() => setDetail('revenue')} style={{ ...card, flex: 1.4, padding: '16px 18px', borderLeft: '3px solid #c8a96e', textAlign: 'left', cursor: 'pointer' }}>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', margin: '0 0 6px' }}>Revenus billetterie + précommandes</p>
             <p style={{ fontFamily: inter, fontSize: statsCur === 'XOF' ? 24 : 30, fontWeight: 600, color: '#c8a96e', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{fmtMoney(grossRevenue, statsCur)}</p>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0' }}>100 % pour toi — frais de service payés par l'acheteur</p>
-          </div>
-          <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px' }}>Billets</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0' }}>Ce que tu gagnes vraiment · voir le calcul →</p>
+          </button>
+          <button onClick={() => setDetail('tickets')} style={{ ...card, flex: 1, padding: '16px 14px', textAlign: 'left', cursor: 'pointer' }}>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px' }}>Billets émis</p>
             <p style={{ fontFamily: inter, fontSize: 28, fontWeight: 600, color: '#4ee8c8', margin: 0, lineHeight: 1 }}>{totalTickets}</p>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0' }}>{paidCount} payé{paidCount > 1 ? 's' : ''}</p>
-          </div>
-          <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px' }}>Remplissage</p>
-            <p style={{ fontFamily: inter, fontSize: 28, fontWeight: 600, color: '#fff', margin: 0, lineHeight: 1 }}>{fillPct}%</p>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0' }}>{totalTickets}/{totalCap} places</p>
-          </div>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0' }}>tous événements, payés ou non · détails →</p>
+          </button>
         </div>
+
+        {/* ── Modal détail Revenus : le calcul expliqué noir sur blanc ── */}
+        {detail === 'revenue' && (
+          <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: 'min(520px,100%)', maxHeight: '86vh', overflowY: 'auto', background: '#12131c', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 20, padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                <h2 style={{ font: '26px Bebas Neue, Impact, sans-serif', letterSpacing: '0.03em', margin: 0 }}>Tes revenus, expliqués</h2>
+                <button onClick={() => setDetail(null)} aria-label="Fermer" style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 18, cursor: 'pointer', flexShrink: 0 }}>×</button>
+              </div>
+              <div style={{ marginTop: 16, padding: 15, borderRadius: 12, background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', display: 'grid', gap: 9 }}>
+                {[['Billetterie (billets payés)', ticketRevenue], ['Précommandes (consos payées)', preorderRevenue]].map(([label, val]) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontFamily: inter, fontSize: 13.5, color: 'rgba(255,255,255,0.75)' }}>
+                    <span>{label}</span><b style={{ color: '#fff' }}>{fmtMoney(val, statsCur)}</b>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, paddingTop: 9, borderTop: '1px solid rgba(255,255,255,0.09)', fontFamily: inter, fontSize: 14.5, fontWeight: 700 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.85)' }}>Total pour toi</span><b style={{ color: '#c8a96e' }}>{fmtMoney(grossRevenue, statsCur)}</b>
+                </div>
+              </div>
+              <div style={{ marginTop: 14, fontFamily: inter, fontSize: 13, lineHeight: 1.7, color: 'rgba(255,255,255,0.62)' }}>
+                <p style={{ margin: '0 0 10px' }}><strong style={{ color: '#fff' }}>Comment c'est calculé.</strong> Sur chaque vente, le client paie le prix de ton billet <em>plus</em> un frais de service LIVEINBLACK de <strong style={{ color: 'rgba(255,255,255,0.85)' }}>{feeLabel}</strong>. Ce frais est payé <strong style={{ color: 'rgba(255,255,255,0.85)' }}>par l'acheteur, en plus</strong> — jamais prélevé sur toi.</p>
+                <p style={{ margin: '0 0 10px' }}><strong style={{ color: '#c8a96e' }}>Ta part : 100 %</strong> du prix affiché de tes billets et de tes précommandes. <strong style={{ color: 'rgba(255,255,255,0.85)' }}>La part LIVEINBLACK :</strong> uniquement le frais de service payé par le client.</p>
+                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Les réductions codes promo sont déjà déduites (on compte le prix réellement payé). Les billets gratuits et invitations ne rapportent rien et ne sont pas comptés. Les remboursements éventuels ne sont pas encore déduits.{otherCurrency ? ' Tes événements dans une autre devise ne sont pas additionnés ici (jamais de mélange de devises).' : ''}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal détail Billets émis ── */}
+        {detail === 'tickets' && (
+          <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: 'min(520px,100%)', maxHeight: '86vh', overflowY: 'auto', background: '#12131c', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 20, padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                <h2 style={{ font: '26px Bebas Neue, Impact, sans-serif', letterSpacing: '0.03em', margin: 0 }}>Billets émis</h2>
+                <button onClick={() => setDetail(null)} aria-label="Fermer" style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 18, cursor: 'pointer', flexShrink: 0 }}>×</button>
+              </div>
+              <div style={{ marginTop: 16, padding: 15, borderRadius: 12, background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', display: 'grid', gap: 9 }}>
+                {[
+                  ['Billets émis (tous événements)', totalTickets],
+                  ['· dont payés', paidCount],
+                  ['· dont gratuits & invitations', freeCount],
+                  ['Déjà scannés à l\'entrée', scannedCount],
+                  ...(revokedCount > 0 ? [['Révoqués (non comptés)', revokedCount]] : []),
+                ].map(([label, val]) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontFamily: inter, fontSize: 13.5, color: String(label).startsWith('·') ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.8)' }}>
+                    <span>{label}</span><b style={{ color: '#fff' }}>{val}</b>
+                  </div>
+                ))}
+              </div>
+              {perEvent.length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: '0 0 8px' }}>Par événement</p>
+                  {perEvent.map(({ event, tix }) => (
+                    <div key={event.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', fontFamily: inter, fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.name}</span><b style={{ color: '#4ee8c8', flexShrink: 0 }}>{tix} billet{tix > 1 ? 's' : ''}</b>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ marginTop: 12, fontFamily: inter, fontSize: 12, lineHeight: 1.6, color: 'rgba(255,255,255,0.45)' }}>Un billet émis = une personne attendue : billets payés, billets gratuits et invitations guestlist. Le détail complet (participants, entrées, démographie) est dans les statistiques de chaque événement.</p>
+            </div>
+          </div>
+        )}
 
         {/* Par événement — seulement à partir de 2 events (avec un seul, ce serait
             une redite des KPI Revenus / Billets / Remplissage ci-dessus). */}

@@ -27,54 +27,6 @@ export function MessagingSearchBar({ value, onChange, placeholder = 'Rechercher 
   )
 }
 
-const QUICK_VARIANTS = {
-  friend: {
-    iconBg: 'group-hover:bg-[#12241f] group-hover:text-[#4ee8c8]',
-    border: 'hover:border-[#4ee8c8]/25',
-    title: 'group-hover:text-white',
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" />
-      </svg>
-    ),
-  },
-  group: {
-    iconBg: 'group-hover:bg-[#231f1a] group-hover:text-[#c8a96e]',
-    border: 'hover:border-[#c8a96e]/25',
-    title: 'group-hover:text-[#e0c690]',
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
-}
-
-// Bouton d'action compact (moitié de ligne). Remplace les grosses cartes.
-function QuickAction({ variant, title, onClick, badge }) {
-  const v = QUICK_VARIANTS[variant]
-  return (
-    <button onClick={onClick}
-      className={`group flex flex-1 items-center gap-2.5 rounded-2xl border border-white/[0.08] bg-[#0e0f16] px-2.5 py-2 transition-colors duration-200 hover:bg-[#14151f] ${v.border}`}
-      style={{ cursor: 'pointer', minWidth: 0 }}>
-      <span className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#1a1a22] text-zinc-400 transition-all duration-300 ${v.iconBg}`}>
-        {v.icon}
-        {badge > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1" style={{ background: '#e05aaa', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 700, border: '2px solid #0b0d12' }}>{badge}</span>
-        )}
-      </span>
-      <span className={`truncate text-[12.5px] font-bold tracking-wide text-zinc-300 transition-colors ${v.title}`} style={{ fontFamily: 'Inter, sans-serif' }}>
-        {title}
-      </span>
-    </button>
-  )
-}
-
-export function MessagingQuickActions({ onAddFriend, onCreateGroup, friendBadge }) {
-  return (
-    <div style={{ display: 'flex', gap: 8 }}>
-      <QuickAction variant="friend" title="Ajouter un ami" onClick={onAddFriend} badge={friendBadge} />
-      <QuickAction variant="group" title="Créer un groupe" onClick={onCreateGroup} />
-    </div>
-  )
-}
+// MessagingQuickActions supprimé (2026-07-10) : l'en-tête de la messagerie
+// utilise désormais un menu ⋮ + bouton nouvelle discussion directement dans
+// MessagingPage — plus de grille de boutons d'action rapide.

@@ -6,7 +6,7 @@ import OrganizerFollowButton from '../components/OrganizerFollowButton'
 import { useAuth } from '../context/AuthContext'
 import { cacheOrganizerProfiles, getLocalOrganizerProfiles } from '../utils/organizers'
 import { regions } from '../data/regions'
-import { matchesEntityRegion, normalizeGeoText } from '../utils/locations'
+import { matchesEntityRegion, normalizeGeoText, normalizeRegionIds, getRegionName } from '../utils/locations'
 
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
 const FONT = 'Inter, system-ui, sans-serif'
@@ -65,7 +65,7 @@ export default function PublicOrganizers() {
       if (!matchesEntityRegion(profile, regionId, ownEvents)) return false
       if (upcomingOnly && !next) return false
       if (!q) return true
-      return [profile.publicName, profile.city, profile.country, profile.shortDescription, ...(profile.eventTypes || []), ...(profile.vibes || [])]
+      return [profile.publicName, profile.city, profile.country, profile.shortDescription]
         .filter(Boolean).map(normalizeGeoText).join(' ').includes(q)
     })
     return list.sort((a, b) => sort === 'recent'
@@ -76,19 +76,19 @@ export default function PublicOrganizers() {
   const content = (
     <div className="org-directory">
       <style>{`
-        .org-directory{min-height:100vh;color:#fff;background:radial-gradient(circle 900px at 0% 4%,rgba(139,92,246,.18),transparent 58%),radial-gradient(circle 760px at 100% 90%,rgba(224,90,170,.12),transparent 58%),${C.obsidian};font-family:${FONT};overflow:hidden}
-        .org-wrap{max-width:1280px;margin:0 auto;padding:64px 30px 96px;position:relative}
-        .org-hero{display:grid;grid-template-columns:minmax(520px,.95fr) minmax(500px,1.05fr);gap:40px;align-items:end;margin-bottom:64px}
-        .org-title{font-family:${DISPLAY};font-size:clamp(68px,6.7vw,104px);line-height:.84;letter-spacing:.015em;margin:0;text-transform:uppercase;white-space:nowrap}
-        .org-title-line{width:68px;height:2px;margin:24px 0;background:linear-gradient(90deg,${C.gold},transparent)}
-        .org-sub{max-width:390px;margin:0;color:rgba(255,255,255,.62);font-size:17px;line-height:1.6}
-        .org-controls{padding:18px;border:1px solid rgba(255,255,255,.1);background:#12131c;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.45)}
-        .org-search{display:flex;align-items:center;gap:13px;padding:0 17px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#0b0c12;height:58px;transition:border-color .2s,box-shadow .2s}
-        .org-search:focus-within{border-color:#8444ff;box-shadow:0 0 0 3px rgba(132,68,255,.12)}
-        .org-search input{flex:1;background:none;border:0;outline:0;color:#fff;font:14px ${FONT}}
-        .org-filters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
-        .org-filter{height:44px;padding:0 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:rgba(255,255,255,.75);font:600 11px ${UI};letter-spacing:.04em;text-transform:uppercase;cursor:pointer;min-width:0}
-        .org-filter.active{color:${C.teal};border-color:rgba(78,232,200,.48);background:rgba(78,232,200,.12)}
+        .org-directory{min-height:100vh;color:#fff;background:radial-gradient(circle 900px at 6% 4%,rgba(139,92,246,.28),transparent 60%),radial-gradient(circle 820px at 96% 30%,rgba(200,169,110,.14),transparent 56%),radial-gradient(circle 950px at 50% 100%,rgba(224,90,170,.15),transparent 60%),${C.obsidian};background-attachment:fixed;font-family:${FONT};overflow-x:hidden}
+        .org-wrap{max-width:1120px;margin:0 auto;padding:48px 22px 72px;position:relative}
+        .org-hero{text-align:center;margin-bottom:8px}
+        .org-eyebrow{font:800 11px ${UI};letter-spacing:.08em;text-transform:uppercase;color:${C.gold};margin:0}
+        .org-title{font:800 clamp(30px,7vw,52px)/1.05 ${UI};letter-spacing:-1.2px;margin:10px 0 0}
+        .org-title span{color:${C.gold}}
+        .org-sub{max-width:540px;margin:16px auto 0;color:rgba(255,255,255,.6);font-size:clamp(14px,4vw,17px);line-height:1.5}
+        .org-searchbar{display:flex;align-items:center;gap:10px;max-width:520px;margin:26px auto 0;padding:4px 4px 4px 16px;border-radius:999px;background:#0b0c12;border:1px solid rgba(255,255,255,.14);transition:border-color .2s}
+        .org-searchbar:focus-within{border-color:rgba(78,232,200,.5)}
+        .org-searchbar input{flex:1;background:none;border:0;outline:0;color:#fff;font:14px ${FONT};padding:11px 0}
+        .org-filters{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin:16px auto 0}
+        .org-pill{height:40px;padding:0 15px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.72);font:600 12.5px ${UI};cursor:pointer;outline:none}
+        .org-pill.active{color:${C.teal};border-color:rgba(78,232,200,.5);background:rgba(78,232,200,.12)}
         .org-results-head{display:flex;align-items:center;gap:18px;margin-bottom:18px;color:${C.gold};font:700 11px ${UI};letter-spacing:.08em;text-transform:uppercase}
         .org-results-head:after{content:'';height:1px;flex:1;background:rgba(255,255,255,.1)}
         .org-grid{display:flex;flex-direction:column;gap:18px}
@@ -105,31 +105,27 @@ export default function PublicOrganizers() {
         .org-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}
         .org-tag{padding:4px 10px;border-radius:8px;background:rgba(200,169,110,.14);border:1px solid rgba(200,169,110,.35);color:${C.gold};font:700 11px ${UI};letter-spacing:.04em;text-transform:uppercase}
         .org-empty{padding:64px 20px;text-align:center;background:#0e0f16;border:1px solid rgba(255,255,255,.08);border-radius:16px;color:rgba(255,255,255,.55);font:500 14px ${UI}}
-        @media(max-width:1120px){.org-hero{grid-template-columns:1fr;gap:30px}.org-title{white-space:normal}.org-card{grid-template-columns:minmax(260px,.8fr) 1fr}.org-cover{border-radius:16px 0 0 0}.org-action-panel{grid-column:1/-1;border-left:0;border-top:1px solid rgba(255,255,255,.09);padding:18px 24px}.org-actions{display:grid;grid-template-columns:1fr auto}.org-avatar{left:-40px}}
-        @media(max-width:640px){.org-wrap{padding:38px 14px 108px}.org-title{font-size:66px}.org-sub{font-size:14px}.org-controls{padding:10px}.org-filters{grid-template-columns:1fr}.org-card{grid-template-columns:1fr}.org-cover{min-height:190px;border-radius:16px 16px 0 0}.org-card-body{padding:48px 18px 24px}.org-avatar{left:18px;top:-41px;bottom:auto}.org-action-panel{grid-column:auto;padding:16px 18px 20px}.org-actions{grid-template-columns:1fr 1fr}}
+        @media(max-width:1120px){.org-card{grid-template-columns:minmax(260px,.8fr) 1fr}.org-cover{border-radius:16px 0 0 0}.org-action-panel{grid-column:1/-1;border-left:0;border-top:1px solid rgba(255,255,255,.09);padding:18px 24px}.org-actions{display:grid;grid-template-columns:1fr auto}.org-avatar{left:-40px}}
+        @media(max-width:640px){.org-wrap{padding:34px 14px 108px}.org-card{grid-template-columns:1fr}.org-cover{min-height:190px;border-radius:16px 16px 0 0}.org-card-body{padding:48px 18px 24px}.org-avatar{left:18px;top:-41px;bottom:auto}.org-action-panel{grid-column:auto;padding:16px 18px 20px}.org-actions{grid-template-columns:1fr 1fr}}
       `}</style>
       {!user && <PublicNav />}
       <main className="org-wrap">
         <section className="org-hero">
-          <div>
-            <h1 className="org-title">Organisateurs</h1>
-            <div className="org-title-line" />
-            <p className="org-sub">Découvre celles et ceux qui donnent vie aux événements.</p>
-          </div>
-          <div className="org-controls">
-            <label className="org-search">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.48)" strokeWidth="1.7"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-              <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher un organisateur ou une ville" />
-            </label>
-            <div className="org-filters">
-              <select className="org-filter" value={regionId} onChange={e => setRegionId(e.target.value)} aria-label="Filtrer par région">
-                <option value="">Toutes les régions</option>{regions.map(region => <option key={region.id} value={region.id}>{region.name}</option>)}
-              </select>
-              <button className={`org-filter ${upcomingOnly ? 'active' : ''}`} onClick={() => setUpcomingOnly(v => !v)}>Événements à venir</button>
-              <select className="org-filter" value={sort} onChange={e => setSort(e.target.value)} aria-label="Trier les organisateurs">
-                <option value="popular">Les plus populaires</option><option value="recent">Les plus récents</option>
-              </select>
-            </div>
+          <p className="org-eyebrow">L'annuaire</p>
+          <h1 className="org-title">Les organisateurs qui font<br /><span>vibrer la nuit.</span></h1>
+          <p className="org-sub">Découvre celles et ceux qui donnent vie aux événements, suis-les et ne rate plus une soirée.</p>
+          <label className="org-searchbar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher un organisateur, une ville…" />
+          </label>
+          <div className="org-filters">
+            <select className="org-pill" value={regionId} onChange={e => setRegionId(e.target.value)} aria-label="Filtrer par région">
+              <option value="">Toutes les régions</option>{regions.map(region => <option key={region.id} value={region.id}>{region.flag} {region.name}</option>)}
+            </select>
+            <button className={`org-pill ${upcomingOnly ? 'active' : ''}`} onClick={() => setUpcomingOnly(v => !v)}>Événements à venir</button>
+            <select className="org-pill" value={sort} onChange={e => setSort(e.target.value)} aria-label="Trier les organisateurs">
+              <option value="popular">Les plus populaires</option><option value="recent">Les plus récents</option>
+            </select>
           </div>
         </section>
 
@@ -142,16 +138,14 @@ export default function PublicOrganizers() {
             {filtered.map(profile => {
               const ownEvents = eventData.byOrganizer[profile.id] || []
               const next = ownEvents.find(e => !e.cancelled && dateValue(e) >= eventData.now)
-              const tags = [...new Set([...(profile.vibes || []), ...(profile.eventTypes || [])])].slice(0, 4)
               return (
                 <article className="org-card" key={profile.id}>
                   <div className="org-cover" style={profile.bannerUrl ? { background: `url(${profile.bannerUrl}) center/cover` } : undefined} />
                   <div className="org-card-body">
                     <div className="org-avatar">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }} /> : (profile.publicName?.[0] || 'O')}</div>
                     <h2 style={{ fontFamily:DISPLAY,fontSize:'clamp(30px,3.3vw,44px)',lineHeight:1,letterSpacing:'.025em',margin:0 }}>{profile.publicName}</h2>
-                    <p style={{ fontFamily:UI,fontSize:11,fontWeight:700,color:C.gold,letterSpacing:'.06em',margin:'9px 0 0',textTransform:'uppercase' }}>{[profile.city, profile.country].filter(Boolean).join(' · ') || 'Live in Black'}</p>
+                    <p style={{ fontFamily:UI,fontSize:11,fontWeight:700,color:C.gold,letterSpacing:'.06em',margin:'9px 0 0',textTransform:'uppercase' }}>{[profile.city, ...normalizeRegionIds(profile.zonesIntervention?.length ? profile.zonesIntervention : [profile.regionId || profile.country]).map(getRegionName)].filter(Boolean).join(' · ') || 'Live in Black'}</p>
                     <p style={{ color:'rgba(255,255,255,.58)',fontSize:13.5,lineHeight:1.65,margin:'15px 0 0' }}>{profile.shortDescription || 'Découvre ses prochains événements et son univers.'}</p>
-                    {tags.length > 0 && <div className="org-tags">{tags.map(tag => <span className="org-tag" key={tag}>{tag}</span>)}</div>}
                     {next && <p style={{ margin:'16px 0 0',paddingTop:14,borderTop:'1px solid rgba(255,255,255,.08)',fontFamily:UI,fontSize:11,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.05em',textTransform:'uppercase' }}>Prochain événement · <span style={{color:'#fff'}}>{next.name}</span></p>}
                   </div>
                   <div className="org-action-panel">

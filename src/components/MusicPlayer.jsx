@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
-import { DISCS, subscribe, play, stop, toggle, playRandom, setVolume, getSavedDiscId } from '../utils/musicEngine'
+import { DISCS, subscribe, play, stop, toggle, playRandom, setVolume, getSavedDiscId, playTrack } from '../utils/musicEngine'
 
 // Mapping des images d'ambiance avec des filtres lumineux ajustés pour une meilleure visibilité
 const DISC_ASSETS = {
@@ -97,14 +97,44 @@ function Vinyl({ size = 30, color = '#e05aaa', spinning, arm = false }) {
 
 const HIDE_ON = ['/messagerie', '/scanner', '/ticket', '/connexion', '/paiement', '/boost-active']
 
+const SEEN_KEY = 'lib_ambiance_seen'
+
 export default function MusicPlayer() {
   const location = useLocation()
   const [open, setOpen] = useState(false)
-  const [st, setSt] = useState({ playing: false, discId: getSavedDiscId(), volume: 0.5 })
+  const [st, setSt] = useState({ playing: false, discId: getSavedDiscId(), volume: 0.5, track: null })
+  // Chip « Ambiance » : visible à l'arrivée tant que le lecteur n'a jamais été
+  // ouvert (flag localStorage), puis se replie tout seul après ~5 s.
+  const [chipIntro, setChipIntro] = useState(() => {
+    try { return !localStorage.getItem(SEEN_KEY) } catch { return true }
+  })
+  const [chipReady, setChipReady] = useState(false)
+  // Recherche iTunes (extraits 30 s)
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [searching, setSearching] = useState(false)
   const panelRef = useRef(null)
   const btnRef = useRef(null)
+  const searchDebRef = useRef(null)
+  const searchReqRef = useRef(0)
 
   useEffect(() => subscribe(setSt), [])
+
+  // Fade d'apparition du chip (simple fade, compatible prefers-reduced-motion)
+  useEffect(() => {
+    const t = setTimeout(() => setChipReady(true), 60)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Repli automatique du chip après ~5 s
+  useEffect(() => {
+    if (!chipIntro) return
+    const t = setTimeout(() => setChipIntro(false), 5000)
+    return () => clearTimeout(t)
+  }, [chipIntro])
+
+  // Nettoyage du debounce de recherche
+  useEffect(() => () => clearTimeout(searchDebRef.current), [])
 
   // Fermer le panneau au clic extérieur
   useEffect(() => {
@@ -121,6 +151,50 @@ export default function MusicPlayer() {
   const current = DISCS.find(d => d.id === st.discId) || DISCS[0]
   const accent = current.color
   const activeAsset = DISC_ASSETS[current.id]
+  const track = st.track
+  const bigCover = track?.cover ? track.cover.replace('100x100', '400x400').replace('60x60', '400x400') : null
+  const chipShown = chipReady && (chipIntro || st.playing)
+  const chipLabel = st.playing ? (track ? track.title : current.name) : 'Ambiance'
+
+  function togglePanel() {
+    if (!open) {
+      try { localStorage.setItem(SEEN_KEY, '1') } catch {}
+      setChipIntro(false)
+    }
+    setOpen(o => !o)
+  }
+
+  function handleSearch(val) {
+    setQuery(val)
+    clearTimeout(searchDebRef.current)
+    if (val.trim().length < 2) { setResults([]); setSearching(false); return }
+    setSearching(true)
+    searchDebRef.current = setTimeout(async () => {
+      const reqId = ++searchReqRef.current
+      try {
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(val)}&media=music&entity=song&limit=8`)
+        const data = await res.json()
+        if (searchReqRef.current !== reqId) return
+        setResults((data.results || []).map(r => ({
+          title: r.trackName,
+          artist: r.artistName,
+          cover: r.artworkUrl100 || r.artworkUrl60 || null,
+          previewUrl: r.previewUrl || null,
+        })).filter(r => r.previewUrl))
+      } catch {
+        if (searchReqRef.current === reqId) setResults([])
+      } finally {
+        if (searchReqRef.current === reqId) setSearching(false)
+      }
+    }, 350)
+  }
+
+  function pickResult(r) {
+    playTrack(r)
+    setQuery('')
+    setResults([])
+    setSearching(false)
+  }
 
   return (
     <div style={{ position: 'fixed', right: 14, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 86px)', zIndex: 45, fontFamily: 'Inter, sans-serif' }}>
@@ -158,15 +232,22 @@ export default function MusicPlayer() {
         .mp-btn-card:hover .mp-btn-bg {
           transform: scale(1.12);
         }
+        .mp-chip { transition: opacity 0.45s ease; }
+        .mp-res { background: transparent; transition: background 0.15s; }
+        .mp-res:hover { background: rgba(255,255,255,0.06); }
+        @media (prefers-reduced-motion: reduce) {
+          .mp-chip { transition: none; }
+        }
       `}</style>
 
       {/* Panneau */}
       {open && (
         <div ref={panelRef} style={{
-          position: 'absolute', bottom: 64, right: 0, width: 288,
+          position: 'absolute', bottom: 74, right: 0, width: 288,
           background: '#12131c', border: '1px solid rgba(255,255,255,0.10)',
           borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
           padding: 14, animation: 'lib-pop 0.2s cubic-bezier(0.22,0.9,0.3,1)',
+          maxHeight: 'calc(100vh - 220px)', overflowY: 'auto',
         }}>
           {/* En-tête */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, padding: '0 2px' }}>
@@ -190,14 +271,14 @@ export default function MusicPlayer() {
             marginBottom: 12,
             overflow: 'hidden',
           }}>
-            {/* Image d'ambiance de fond - affichée de façon nette et classe, identique aux boutons */}
+            {/* Fond : pochette iTunes si une piste custom joue, sinon image d'ambiance du disque */}
             <div style={{
               position: 'absolute',
               inset: 0,
-              backgroundImage: `url(${activeAsset.img})`,
+              backgroundImage: `url(${track && bigCover ? bigCover : activeAsset.img})`,
               backgroundSize: 'cover',
-              backgroundPosition: activeAsset.bgPosition,
-              filter: activeAsset.filter, // Utilise le même filtre propre que le bouton du bas
+              backgroundPosition: track && bigCover ? 'center' : activeAsset.bgPosition,
+              filter: track && bigCover ? 'brightness(0.75)' : activeAsset.filter,
               zIndex: 0,
             }} />
             {/* Voile dégradé sombre de contraste (style Découvrir les événements) */}
@@ -212,10 +293,10 @@ export default function MusicPlayer() {
             <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
               <Vinyl size={42} color={accent} spinning={st.playing} arm />
               <div style={{ flex: 1, minWidth: 0, lineHeight: 1.15 }}>
-                <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: '0.01em' }}>{current.name}</p>
-                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)', fontFamily: 'Inter, sans-serif' }}>{st.playing ? 'En lecture…' : current.desc}</p>
+                <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track ? track.title : current.name}</p>
+                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track ? (track.artist || 'Extrait 30 s') : (st.playing ? 'En lecture…' : current.desc)}</p>
               </div>
-              <button onClick={() => toggle(current.id)} aria-label={st.playing ? 'Pause' : 'Jouer'}
+              <button onClick={() => toggle(track ? undefined : current.id)} aria-label={st.playing ? 'Pause' : 'Jouer'}
                 className="lib-press"
                 style={{
                   width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
@@ -230,6 +311,62 @@ export default function MusicPlayer() {
               </button>
             </div>
           </div>
+
+          {/* Recherche de musique — extraits 30 s (iTunes) */}
+          <div style={{ position: 'relative', marginBottom: 8 }}>
+            <input
+              type="text"
+              value={query}
+              onChange={e => handleSearch(e.target.value)}
+              placeholder="Chercher un titre, un artiste…"
+              aria-label="Chercher un titre ou un artiste"
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 10, padding: '11px 36px 11px 12px',
+                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500,
+                color: 'rgba(255,255,255,0.92)', outline: 'none',
+              }}
+            />
+            {searching && (
+              <span className="lib-spin" style={{
+                position: 'absolute', right: 11, top: '50%', marginTop: -7,
+                width: 14, height: 14, borderRadius: '50%',
+                border: '2px solid rgba(255,255,255,0.25)', borderTopColor: '#fff',
+                display: 'inline-block',
+              }} />
+            )}
+          </div>
+
+          {results.length > 0 && (
+            <div style={{
+              background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 12, marginBottom: 10,
+              maxHeight: 230, overflowY: 'auto', overflowX: 'hidden',
+            }}>
+              {results.map((r, i) => (
+                <button key={r.previewUrl || i} onClick={() => pickResult(r)} className="mp-res" style={{
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                  padding: '7px 10px', minHeight: 46, border: 'none', cursor: 'pointer', textAlign: 'left',
+                  borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                }}>
+                  {r.cover
+                    ? <img src={r.cover} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+                    : <span style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />}
+                  <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.2 }}>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>{r.artist}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {query.trim().length >= 2 && !searching && results.length === 0 && (
+            <p style={{ margin: '0 0 10px', padding: '0 2px', fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,0.45)' }}>
+              Aucun résultat pour cette recherche.
+            </p>
+          )}
 
           {/* Choix des disques — Grille de cartes album premium */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
@@ -285,21 +422,40 @@ export default function MusicPlayer() {
         </div>
       )}
 
-      {/* Bouton flottant (disque) — Ouvre/ferme le panneau d'ambiance */}
-      <button ref={btnRef}
-        onClick={() => setOpen(o => !o)}
-        title="Jouer un disque"
-        style={{
-          position: 'relative', width: 54, height: 54, borderRadius: '50%', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center',
-          background: '#12131c',
-          border: `1px solid ${st.playing ? accent + '66' : 'rgba(255,255,255,0.1)'}`,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-          transition: 'border-color 0.3s, box-shadow 0.3s',
-        }}>
-        <Vinyl size={30} color={accent} spinning={st.playing} arm />
-        {st.playing && <span style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(0,0,0,0.4)' }} />}
-      </button>
+      {/* Chip « Ambiance » + bouton flottant (disque) — Ouvre/ferme le panneau */}
+      <div ref={btnRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+        <button
+          onClick={togglePanel}
+          aria-hidden={!chipShown}
+          tabIndex={chipShown ? 0 : -1}
+          className="mp-chip"
+          style={{
+            opacity: chipShown ? 1 : 0,
+            pointerEvents: chipShown ? 'auto' : 'none',
+            maxWidth: 180, minHeight: 44, padding: '11px 16px', borderRadius: 999,
+            background: '#12131c', border: '1px solid rgba(255,255,255,0.14)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.5)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center',
+          }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {chipLabel}
+          </span>
+        </button>
+        <button
+          onClick={togglePanel}
+          title="Ambiance musicale"
+          style={{
+            position: 'relative', width: 64, height: 64, borderRadius: '50%', cursor: 'pointer', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#12131c',
+            border: `2px solid ${st.playing ? accent : 'rgba(255,255,255,0.22)'}`,
+            boxShadow: '0 10px 28px rgba(0,0,0,0.55)',
+            transition: 'border-color 0.3s, box-shadow 0.3s',
+          }}>
+          <Vinyl size={36} color={accent} spinning={st.playing} arm />
+          {st.playing && <span style={{ position: 'absolute', top: 5, right: 5, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(0,0,0,0.4)' }} />}
+        </button>
+      </div>
     </div>
   )
 }

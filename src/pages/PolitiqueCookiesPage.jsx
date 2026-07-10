@@ -2,12 +2,13 @@
 // Conforme directive ePrivacy + recommandations CNIL sur les cookies
 import LegalPageLayout from '../components/LegalPageLayout'
 import { LEGAL } from '../data/legal'
+import { resetCookieConsent } from '../utils/cookies'
 
 export default function PolitiqueCookiesPage() {
   // Permet à l'utilisateur de réinitialiser son choix de consentement
   function reopenConsent() {
     try {
-      localStorage.removeItem('lib_cookie_consent')
+      resetCookieConsent()
       window.location.reload()
     } catch {}
   }
@@ -35,19 +36,19 @@ Sur ${LEGAL.domain}, nous utilisons à la fois des "cookies" classiques et des t
     {
       n: '03',
       title: "Cookies de fonctionnement",
-      body: `Ces cookies améliorent votre expérience de navigation (préférences, brouillons, etc.). Ils ne contiennent pas de données personnelles identifiantes.`,
+      body: `Ces préférences ne sont mémorisées que si vous les acceptez dans le bandeau. Elles améliorent votre navigation mais ne sont jamais utilisées pour le suivi publicitaire, le profilage ou la mesure d'audience.`,
       list: [
-        { label: 'lib_age_verified', value: 'évite de redemander la vérification d\'âge' },
-        { label: 'lib_selected_region', value: 'région choisie pour filtrer les événements' },
-        { label: 'lib_dismissed_*', value: 'masque les bandeaux que vous avez fermés' },
+        { label: 'lib_music_disc', value: 'mémorise votre ambiance musicale choisie' },
+        { label: 'lib_music_volume', value: 'mémorise le volume du lecteur d’ambiance' },
       ],
     },
     {
       n: '04',
       title: "Cookies de paiement",
-      body: `Lorsque vous effectuez un paiement, vous êtes redirigé vers Stripe (notre prestataire de paiement). Stripe dépose ses propres cookies pour sécuriser la transaction et lutter contre la fraude. Nous ne contrôlons pas ces cookies.
+      body: `Lorsque vous effectuez un paiement, vous êtes redirigé vers le prestataire adapté à la devise : Stripe pour les paiements en euros, ou FedaPay pour les paiements en FCFA. Ces prestataires peuvent déposer leurs propres cookies pour sécuriser la transaction et lutter contre la fraude. Nous ne contrôlons pas ces cookies.
 
-Politique cookies de Stripe : https://stripe.com/cookies-policy/legal`,
+Politique cookies de Stripe : https://stripe.com/cookies-policy/legal
+Politique de confidentialité FedaPay : https://www.fedapay.com/privacy-policies`,
     },
     {
       n: '05',

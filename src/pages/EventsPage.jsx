@@ -528,56 +528,84 @@ export default function EventsPage() {
 }
 
 // ── Rangée horizontale par genre (façon Netflix) ──
+// Défilement 100 % manuel : swipe tactile + flèches ← →. Plus d'auto-défilement
+// (il repartait en sens inverse quand on swipait vers la droite — comportement
+// perçu comme un bug). Les flèches n'apparaissent que du côté où il reste du
+// contenu à faire défiler.
 function EventRow({ title, events, onOpen }) {
   const scrollRef = useRef(null)
-  const pausedRef = useRef(false)
-  // Défilement automatique TRÈS lent (aller-retour). Se met en pause au survol /
-  // au toucher pour laisser l'utilisateur explorer, et respecte « réduire les
-  // animations ». Ne s'active que si le contenu déborde réellement. On relit
-  // scrollRef.current À CHAQUE frame (jamais une réf capturée qui pourrait être
-  // détachée après un re-render React).
-  useEffect(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
-    let dir = 1, raf = 0, last = 0
-    const SPEED = 16 // px/seconde — doux
-    const step = (t) => {
-      const el = scrollRef.current
-      if (el) {
-        if (!last) last = t
-        const dt = Math.min(t - last, 50); last = t
-        const max = el.scrollWidth - el.clientWidth
-        if (!pausedRef.current && max > 4) {
-          el.scrollLeft += dir * SPEED * dt / 1000
-          if (el.scrollLeft >= max - 0.5) dir = -1
-          else if (el.scrollLeft <= 0.5) dir = 1
-        }
-      } else { last = 0 }
-      raf = requestAnimationFrame(step)
-    }
-    raf = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(raf)
-  }, [])
+  const [atStart, setAtStart] = useState(true)
+  const [atEnd, setAtEnd] = useState(false)
+  const [overflow, setOverflow] = useState(false)
 
-  const pause = () => { pausedRef.current = true }
-  const resume = () => { pausedRef.current = false }
+  const refresh = () => {
+    const el = scrollRef.current
+    if (!el) return
+    const max = el.scrollWidth - el.clientWidth
+    setOverflow(max > 4)
+    setAtStart(el.scrollLeft <= 2)
+    setAtEnd(el.scrollLeft >= max - 2)
+  }
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return undefined
+    refresh()
+    // Re-mesure fiable quand la taille du rail change (chargement des cartes,
+    // rotation de l'écran, redimensionnement) — sans dépendre d'un event global.
+    el.addEventListener('scroll', refresh, { passive: true })
+    let ro
+    if (typeof ResizeObserver !== 'undefined') { ro = new ResizeObserver(refresh); ro.observe(el) }
+    else window.addEventListener('resize', refresh)
+    // Filet supplémentaire : re-mesure au frame suivant (layout stabilisé).
+    const raf = requestAnimationFrame(refresh)
+    return () => {
+      el.removeEventListener('scroll', refresh)
+      if (ro) ro.disconnect(); else window.removeEventListener('resize', refresh)
+      cancelAnimationFrame(raf)
+    }
+  }, [events])
+
+  const scrollByCards = (dir) => {
+    const el = scrollRef.current
+    if (!el) return
+    // ~2 posters à la fois (148px + 12px de gap), borné à 80 % de la largeur visible.
+    el.scrollBy({ left: dir * Math.min(el.clientWidth * 0.8, 320), behavior: 'smooth' })
+  }
+
+  const arrow = (side) => (
+    <button onClick={() => scrollByCards(side === 'left' ? -1 : 1)} aria-label={side === 'left' ? 'Précédent' : 'Suivant'} className="lib-press"
+      style={{
+        position: 'absolute', top: '50%', [side]: -4, transform: 'translateY(-50%)', zIndex: 7,
+        width: 40, height: 40, borderRadius: '50%', cursor: 'pointer',
+        background: 'rgba(8,9,14,0.94)', border: '1px solid rgba(255,255,255,0.16)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 22px rgba(0,0,0,0.55)',
+      }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        {side === 'left' ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 18 15 12 9 6" />}
+      </svg>
+    </button>
+  )
+
   return (
     <div>
       <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 18, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 12px' }}>
         {title}
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>{events.length}</span>
       </h3>
-      {/* overflowX:auto force le navigateur à rogner AUSSI hors de l'axe vertical
-          ET aux bords gauche/droit du padding-box. La carte survolée grandit de
-          ~14px en haut/bas et ~10px à gauche/droite (scale 1.14, origine centre) :
-          - vertical : zone invisible de 340px (marges -70) → large marge
-          - horizontal : paddingLeft/Right 16 + marges -16 → la 1re carte n'est
-            plus tranchée à gauche (c'était la « ligne invisible » au survol) ;
-            scrollPaddingLeft aligne les positions de snap sur ce padding. */}
-      <div ref={scrollRef} className="hide-scrollbar"
-        onMouseEnter={pause} onMouseLeave={resume}
-        onTouchStart={pause} onTouchEnd={resume} onPointerDown={pause} onPointerUp={resume}
-        style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', overflowY: 'hidden', height: 340, marginTop: -70, marginBottom: -70, marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16, scrollPaddingLeft: 16, WebkitOverflowScrolling: 'touch' }}>
-        {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
+      <div style={{ position: 'relative' }}>
+        {overflow && !atStart && arrow('left')}
+        {overflow && !atEnd && arrow('right')}
+        {/* overflowX:auto force le navigateur à rogner AUSSI hors de l'axe vertical
+            ET aux bords gauche/droit du padding-box. La carte survolée grandit de
+            ~14px en haut/bas et ~10px à gauche/droite (scale 1.14, origine centre) :
+            - vertical : zone invisible de 340px (marges -70) → large marge
+            - horizontal : paddingLeft/Right 16 + marges -16 → la 1re carte n'est
+              plus tranchée à gauche (c'était la « ligne invisible » au survol) ;
+              scrollPaddingLeft aligne les positions de snap sur ce padding. */}
+        <div ref={scrollRef} className="hide-scrollbar"
+          style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', overflowY: 'hidden', height: 340, marginTop: -70, marginBottom: -70, marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16, scrollPaddingLeft: 16, WebkitOverflowScrolling: 'touch' }}>
+          {events.map(ev => <EventPoster key={ev.id} event={ev} onClick={() => onOpen(ev.id)} />)}
+        </div>
       </div>
     </div>
   )

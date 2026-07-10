@@ -1,4 +1,4 @@
-import { getRegionName, normalizeRegionId } from './locations.js'
+import { getRegionName, normalizeRegionId, normalizeRegionIds } from './locations.js'
 
 // Profils publics organisateurs + abonnements privés par utilisateur.
 // Lecture instantanée via localStorage, persistance cross-device via Firestore.
@@ -82,7 +82,7 @@ export function createOrganizerProfileSeed(user, formData = {}, verified = false
     userId: uid,
     publicName,
     slug: makeUniqueOrganizerSlug(publicName, profiles, uid),
-    shortDescription: (formData.description || '').trim().slice(0, 180),
+    shortDescription: (formData.description || '').trim().slice(0, 500),
     longDescription: '',
     city: (formData.ville || '').trim(),
     country: (formData.pays || '').trim(),
@@ -93,8 +93,10 @@ export function createOrganizerProfileSeed(user, formData = {}, verified = false
     isPublic: false,
     isVerified: !!verified,
     socialLinks: {},
-    eventTypes: [],
-    vibes: [],
+    // Zones d'intervention (pays/régions où l'organisateur opère) — pour la
+    // recherche par pays + l'affichage public. La zone PRINCIPALE reste regionId
+    // (ancre devise/rail de paiement, « 1 org = 1 zone »). Seed = la région de base.
+    zonesIntervention: regionId ? [regionId] : [],
     followersCount: 0,
     totalEventsCount: 0,
     viewsCount: 0,
@@ -123,6 +125,14 @@ export async function saveOrganizerProfile(profile) {
     city: (profile.city || '').trim(),
     country: getRegionName(regionId) || (profile.country || '').trim(),
     regionId,
+    // Zones d'intervention normalisées. On garantit que la zone principale
+    // (regionId, ancre devise) figure toujours dans la liste — sinon un
+    // organisateur pourrait « intervenir » partout sauf dans sa propre zone.
+    zonesIntervention: (() => {
+      const zones = normalizeRegionIds(profile.zonesIntervention)
+      if (zones.includes('international')) return ['international']
+      return regionId && !zones.includes(regionId) ? [regionId, ...zones] : zones
+    })(),
     followersCount: Math.max(0, Number(profile.followersCount) || 0),
     // Compteurs TOUJOURS présents et numériques : les règles Firestore comparent
     // `viewsCount == resource.viewsCount + 1` — si le champ manque sur le doc,
@@ -151,11 +161,40 @@ export function cacheOrganizerFollows(uid, items) {
   if (!uid) return []
   const clean = Array.isArray(items) ? items.filter(Boolean) : []
   writeJson(followsKey(uid), clean)
+  ensureSubscriberIndex(uid, clean)
   return clean
 }
 
 export function isFollowingOrganizer(uid, organizerId) {
   return getOrganizerFollows(uid).some(f => f.organizerId === organizerId && f.status === 'active')
+}
+
+// ── Index inversé des abonnés (pour les e-mails « nouvel événement ») ────────
+// organizer_subscribers/{organizerId}__{uid} : requêtable PAR ORGANISATEUR côté
+// serveur (api/notify-followers) — organizer_follows/{uid} ne l'est pas (1 doc
+// par abonné). Écrit par l'ABONNÉ uniquement (règles) ; l'organisateur ne peut
+// pas lire la liste. L'e-mail du destinataire n'est PAS stocké ici : le serveur
+// le résout depuis Firebase Auth → pas de détournement possible en relais spam.
+function syncSubscriberIndex(uid, follow) {
+  const active = follow.status === 'active'
+  const wantsEmail = active
+    && follow.notificationsEnabled !== false
+    && follow.notificationSettings?.newEvent !== false
+  import('./firestore-sync').then(({ syncDoc, syncDelete }) => {
+    const path = `organizer_subscribers/${follow.organizerId}__${uid}`
+    if (active) syncDoc(path, { organizerId: follow.organizerId, uid, newEventEmail: wantsEmail, updatedAt: Date.now() })
+    else syncDelete(path)
+  }).catch(() => {})
+}
+
+// Rattrapage : les abonnements créés AVANT l'index (ou depuis un autre appareil
+// où l'écriture a échoué) sont réindexés une fois par session au premier
+// snapshot des follows. Fire-and-forget, idempotent (syncDoc merge).
+let _subscriberIndexHealed = false
+export function ensureSubscriberIndex(uid, items) {
+  if (_subscriberIndexHealed || !uid || !Array.isArray(items)) return
+  _subscriberIndexHealed = true
+  items.filter(f => f && f.organizerId).forEach(f => syncSubscriberIndex(uid, f))
 }
 
 export async function followOrganizer(uid, organizerId) {
@@ -183,6 +222,7 @@ export async function followOrganizer(uid, organizerId) {
     throw new Error(result.error || 'Abonnement impossible.')
   }
   syncIncrement(`organizer_profiles/${organizerId}`, 'followersCount', 1)
+  syncSubscriberIndex(uid, item)
   return next
 }
 
@@ -201,6 +241,7 @@ export async function unfollowOrganizer(uid, organizerId) {
     throw new Error(result.error || 'Désabonnement impossible.')
   }
   syncIncrement(`organizer_profiles/${organizerId}`, 'followersCount', -1)
+  syncSubscriberIndex(uid, next.find(f => f.organizerId === organizerId))
   return next
 }
 
@@ -218,6 +259,8 @@ export async function updateOrganizerFollow(uid, organizerId, patch) {
   const { syncDocAwaitable } = await import('./firestore-sync')
   const result = await syncDocAwaitable(`organizer_follows/${uid}`, { items: next, updatedAt: Date.now() })
   if (!result.ok) throw new Error(result.error || 'Préférences non enregistrées.')
+  const updated = next.find(f => f.organizerId === organizerId)
+  if (updated) syncSubscriberIndex(uid, updated)
   return next
 }
 

@@ -72,7 +72,7 @@ export default function OrganizerFollowButton({ organizer, compact = false, appe
         fontFamily: 'Inter, sans-serif', fontSize: compact ? 12 : 13,
         letterSpacing: '0.01em', textTransform: 'none', fontWeight: 700,
       }}>
-        {busy ? <span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'currentColor', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px' }} /> : followed ? <span style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7 }}>Abonné <span aria-hidden="true" style={{ width:6,height:6,borderRadius:'50%',background:'currentColor' }} /></span> : 'S’abonner'}
+        {busy ? <span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'currentColor', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px' }} /> : followed ? <span style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7 }}>Abonné(e) <span aria-hidden="true" style={{ width:6,height:6,borderRadius:'50%',background:'currentColor' }} /></span> : 'S’abonner'}
       </button>
       {menu && (
         <div style={{ position: 'absolute', zIndex: 80, right: 0, bottom: 'calc(100% + 8px)', width: 'min(210px, calc(100vw - 52px))', padding: 6, borderRadius: 12, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>

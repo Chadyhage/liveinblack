@@ -567,32 +567,36 @@ export default function Layout({ children, hideNav, chatMode }) {
                 { label: 'Cookies', path: '/cookies' },
                 { label: 'CGU', path: '/cgu' },
                 { label: 'Contact', path: 'mailto:hagechady@liveinblack.com', external: true },
-              ].map((link) =>
-                link.external ? (
-                  <a key={link.path} href={link.path}
-                    style={{
-                      fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                      color: 'rgba(255,255,255,0.45)', textDecoration: 'none',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#c8a96e'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}>
-                    {link.label}
-                  </a>
-                ) : (
-                  <button key={link.path} onClick={() => navigate(link.path)}
-                    style={{
-                      background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                      fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                      color: 'rgba(255,255,255,0.45)',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#c8a96e'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}>
-                    {link.label}
-                  </button>
-                )
-              )}
+              ].map((link, i) => (
+                <span key={link.path} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px 14px' }}>
+                  {/* Petit trait de séparation entre chaque lien (sauf avant le premier). */}
+                  {i > 0 && <span aria-hidden="true" style={{ width: 12, height: 1, background: 'rgba(255,255,255,0.22)', display: 'inline-block' }} />}
+                  {link.external ? (
+                    <a href={link.path}
+                      style={{
+                        fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.45)', textDecoration: 'none',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#c8a96e'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}>
+                      {link.label}
+                    </a>
+                  ) : (
+                    <button onClick={() => navigate(link.path)}
+                      style={{
+                        background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                        fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.45)',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#c8a96e'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}>
+                      {link.label}
+                    </button>
+                  )}
+                </span>
+              ))}
             </div>
 
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.38)', margin: 0 }}>

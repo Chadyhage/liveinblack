@@ -148,13 +148,17 @@ export default function PublicLanding() {
             Les meilleures soirées,<br /><span style={{ color: C.teal }}>au bout des doigts.</span>
           </h1>
           <p style={{ fontFamily: FONT, fontSize: 'clamp(15px,4vw,19px)', color: 'rgba(255,255,255,.66)', margin: '18px auto 0', maxWidth: 520, lineHeight: 1.5 }}>
-            Réserve, découvre, profite. Ta prochaine sortie commence ici — billets, événements privés et prestataires réunis au même endroit.
+            Réserve, découvre, profite. Ta prochaine sortie commence ici. Billets, événements privés et prestataires réunis au même endroit.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 30 }}>
             <button className="lb-cta-primary" onClick={register} style={btnPrimary}>Créer mon compte</button>
             <button onClick={() => navigate('/evenements')} style={btnGhost}>Découvrir les événements</button>
           </div>
-          <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.35)', marginTop: 16 }}>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.5)', marginTop: 18 }}>
+            Déjà un compte ?{' '}
+            <button onClick={() => navigate('/connexion')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,.85)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Se connecter</button>
+          </p>
+          <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.35)', marginTop: 14 }}>
             Gratuit · Ton billet QR dans ta poche · Aucune app à installer
           </p>
           <Ambiance />

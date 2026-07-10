@@ -118,7 +118,7 @@ async function doEmailLogin(email, password, role = null) {
 }
 
 async function doEmailRegister(data) {
-  const { email, password, name, phone, role, prestataireType } = data
+  const { email, password, name, phone, role, prestataireType, birthYear, gender } = data
   const isSuperAdmin = isSuperAdminEmail(email)
 
   // Each role creates a DEDICATED account — no upgrades.
@@ -259,6 +259,12 @@ async function doEmailRegister(data) {
     enabledRoles: [baseRole],
     prestataireType: isDedicated && baseRole === 'prestataire' ? (prestataireType || null) : null,
     prestataireTypes: [],
+    // Année de naissance + genre : OPTIONNELS, déclaratifs. Servent UNIQUEMENT
+    // aux statistiques démographiques des organisateurs (jamais affichés
+    // publiquement, jamais utilisés pour autoriser/bloquer un achat 18+ —
+    // donnée modifiable à tout moment, donc non fiable comme contrôle).
+    birthYear: Number(birthYear) || null,
+    gender: gender || null,
     status: initialStatus,
     emailVerified: false,
     createdAt: Date.now(),
@@ -389,6 +395,9 @@ export default function LoginPage() {
   const [regPwd, setRegPwd] = useState('')
   const [regPwdConfirm, setRegPwdConfirm] = useState('')
   const [showRegPwd, setShowRegPwd] = useState(false)
+  // Année de naissance + genre : optionnels, stats démographiques uniquement.
+  const [regBirthYear, setRegBirthYear] = useState('')
+  const [regGender, setRegGender] = useState('')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -515,6 +524,8 @@ export default function LoginPage() {
         name: regName.trim(),
         phone: isDedicatedRole ? (regDialCode + regPhone.trim()).replace(/\s/g, '') : '',
         role: regRole,
+        birthYear: regBirthYear || null,
+        gender: regGender || null,
       })
       if (userData._pendingOrgOnboarding) {
         // Org/prest : connecté directement, redirigé vers le formulaire d'onboarding
@@ -1053,6 +1064,29 @@ export default function LoginPage() {
               <div>
                 <label style={S.label}>Adresse email</label>
                 <FocusInput type="email" placeholder="ton@email.com" required value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+              </div>
+
+              {/* Année de naissance + genre — OPTIONNELS. Stats démographiques
+                  des organisateurs uniquement : jamais affichés publiquement,
+                  jamais utilisés pour bloquer un achat 18+ (donnée déclarative). */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <label style={S.label}>Année de naissance</label>
+                  <select value={regBirthYear} onChange={e => setRegBirthYear(e.target.value)} style={{ ...S.input, cursor: 'pointer' }}>
+                    <option value="">—</option>
+                    {Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - 13 - i).map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={S.label}>Genre</label>
+                  <select value={regGender} onChange={e => setRegGender(e.target.value)} style={{ ...S.input, cursor: 'pointer' }}>
+                    <option value="">—</option>
+                    <option value="femme">Femme</option>
+                    <option value="homme">Homme</option>
+                    <option value="autre">Autre</option>
+                  </select>
+                </div>
+                <p style={{ gridColumn: '1 / -1', margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: 'rgba(255,255,255,0.38)', lineHeight: 1.5 }}>Optionnel — sert uniquement aux statistiques anonymes des organisateurs, jamais affiché sur ton profil.</p>
               </div>
 
               {/* Phone — org/prest only */}

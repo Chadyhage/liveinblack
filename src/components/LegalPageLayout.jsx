@@ -1,6 +1,7 @@
 // src/components/LegalPageLayout.jsx — Layout réutilisable pour pages légales
 // (mentions légales, politique de confidentialité, cookies, CGU, etc.)
 import { useNavigate } from 'react-router-dom'
+import FiligraneRoseBg from './FiligraneRoseBg'
 
 const CARD = {
   background: '#0e0f16',
@@ -38,17 +39,23 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
       minHeight: '100vh', position: 'relative', zIndex: 1,
       padding: '20px 16px 48px',
     }}>
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      {/* Fond « Filigrane rose » (handoff 4a) — esprit papier officiel, réservé
+          à la famille des pages légales ; les cartes sombres opaques restent
+          lisibles par-dessus. */}
+      <FiligraneRoseBg />
+      <div style={{ maxWidth: 720, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+          {/* Encre (#0B0B12) et non blanc : l'en-tête est posé directement sur
+              le papier rose du filigrane, pas sur une carte sombre. */}
           <button
             onClick={() => navigate(-1)}
             aria-label="Retour"
             style={{
               width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
+              background: 'rgba(11,11,18,0.06)', border: '1px solid rgba(11,11,18,0.18)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: COLORS.muted,
+              cursor: 'pointer', color: 'rgba(11,11,18,0.65)',
             }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6"/>
@@ -57,12 +64,12 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
           <div>
             <h1 style={{
               fontFamily: FONTS.display, fontWeight: 800,
-              fontSize: 24, color: 'rgba(255,255,255,0.93)', margin: 0,
+              fontSize: 24, color: '#0B0B12', margin: 0,
               lineHeight: 1.2,
             }}>
               {title}
             </h1>
-            <p style={{ fontFamily: FONTS.body, fontSize: 12, color: COLORS.dim, margin: '4px 0 0' }}>
+            <p style={{ fontFamily: FONTS.body, fontSize: 12, color: 'rgba(11,11,18,0.55)', margin: '4px 0 0' }}>
               Dernière mise à jour : {lastUpdate}
             </p>
           </div>

@@ -2,13 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import PublicNav from '../components/PublicNav'
 import Layout from '../components/Layout'
+import Breadcrumb from '../components/Breadcrumb'
 import { useAuth } from '../context/AuthContext'
 import { getCatalog, getAllProviderProfiles, isProviderVisible } from '../utils/services'
 import { createDirectConversation, getUserId, sendMessage } from '../utils/messaging'
 import { getProviderCategories, getProviderCategory } from '../utils/providerCategories'
 import ShareToChatModal from '../components/ShareToChatModal'
+import ProviderReviews from '../components/ProviderReviews'
 import { getRegionName, normalizeRegionIds } from '../utils/locations'
 import { shareOrCopy } from '../utils/share'
+import { SOCIAL_NETWORKS, socialUrl } from '../utils/social'
+import { fmtMoney, regionToCurrency } from '../utils/money'
 
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e' }
@@ -189,10 +193,15 @@ export default function PublicPrestatairePage() {
     )
   }
 
-  const website = externalUrl(profile.website)
+  const socialLinks = SOCIAL_NETWORKS.map(network => ({
+    ...network,
+    url: socialUrl(network.key, profile.socialLinks?.[network.key] || (network.key === 'website' ? profile.website : '')),
+  })).filter(network => network.url)
+  const website = socialLinks.find(network => network.key === 'website')?.url || externalUrl(profile.website)
   const zones = normalizeRegionIds(profile.zonesIntervention).map(getRegionName).filter(Boolean)
   const locationLabel = [profile.city || profile.location, profile.country].filter(Boolean)
     .filter((value, index, all) => all.indexOf(value) === index).join(' · ')
+  const catalogDefaultCurrency = regionToCurrency(profile.regionId || profile.country)
 
   return (
     <PageChrome user={user}>
@@ -214,7 +223,14 @@ export default function PublicPrestatairePage() {
       {!user && <PublicNav />}
 
       <main className="provider-public-shell">
-        <button onClick={() => navigate('/prestataires')} style={{ ...linkButton, marginBottom: 14 }}><Icon name="back" size={16} /> Tous les prestataires</button>
+        <Breadcrumb
+          style={{ marginBottom: 8 }}
+          items={[
+            { label: 'Accueil', to: '/accueil' },
+            { label: 'Prestataires', to: '/prestataires' },
+            { label: profile.name || 'Prestataire' },
+          ]}
+        />
 
         <section className="provider-hero" style={{ position: 'relative', borderRadius: 22, overflow: 'hidden', border: '1px solid rgba(255,255,255,.1)', background: profile.coverUrl ? `url(${profile.coverUrl}) center/cover` : `linear-gradient(130deg, ${category.color}55, rgba(8,10,20,.92) 68%)` }}>
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.96), rgba(4,4,11,.12) 70%)' }} />
@@ -228,10 +244,17 @@ export default function PublicPrestatairePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <h1 style={{ fontFamily: FONT, fontSize: 'clamp(27px,5vw,40px)', lineHeight: 1, letterSpacing: '-1px', margin: 0 }}>{profile.name}</h1>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 9 }}>
+            {profile.headline && <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: 'rgba(255,255,255,.82)', lineHeight: 1.45, margin: '8px 0 0' }}>{profile.headline}</p>}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 7, marginTop: 9 }}>
               {categories.map(item => (
                 <span key={item.id} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: item.color, border: `1px solid ${item.color}55`, background: `${item.color}1f`, borderRadius: 999, padding: '5px 10px' }}>{item.singular}</span>
               ))}
+              {Number(profile.ratingCount) > 0 && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: C.gold, border: '1px solid rgba(200,169,110,.4)', background: 'rgba(200,169,110,.10)', borderRadius: 999, padding: '5px 10px' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.58 1.1 6.47L12 17.44 6.2 20.5l1.1-6.47L2.6 9.45l6.5-.95z" fill={C.gold} /></svg>
+                  {String(profile.ratingAvg ?? 0).replace('.', ',')} ({profile.ratingCount} avis)
+                </span>
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -281,11 +304,20 @@ export default function PublicPrestatairePage() {
             <section style={sectionStyle}>
               <h2 style={sectionTitle}>À propos</h2>
               <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.68)', lineHeight: 1.75, whiteSpace: 'pre-wrap', margin: 0 }}>{profile.description || 'Ce prestataire n’a pas encore ajouté de présentation.'}</p>
+              {socialLinks.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginTop: 18 }}>
+                  {socialLinks.map(network => (
+                    <a key={network.key} href={network.url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '7px 13px', borderRadius: 999, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.05)', color: network.key === 'website' ? C.teal : 'rgba(255,255,255,.82)', fontFamily: FONT, fontSize: 11.5, fontWeight: 700, textDecoration: 'none' }}>
+                      {network.label}
+                    </a>
+                  ))}
+                </div>
+              )}
               {(locationLabel || zones.length > 0 || website || profile.phone) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 18 }}>
                   {locationLabel && <span style={detailLine}><Icon name="location" size={16} /> {locationLabel}</span>}
                   {zones.length > 0 && <span style={detailLine}><Icon name="location" size={16} /> Intervient dans : {zones.join(', ')}</span>}
-                  {website && <a href={website} target="_blank" rel="noreferrer" style={{ ...detailLine, color: C.teal, textDecoration: 'none' }}><Icon name="link" size={16} /> Voir son site ou réseau social</a>}
+                  {website && <a href={website} target="_blank" rel="noreferrer" style={{ ...detailLine, color: C.teal, textDecoration: 'none' }}><Icon name="link" size={16} /> Voir son site web</a>}
                   {/* Numéro PRO = contact business, public (pas d'opt-in). Clic = appel. */}
                   {profile.phone && (
                     <a href={`tel:${String(profile.phone).replace(/[^\d+]/g, '')}`} style={{ ...detailLine, color: C.gold, textDecoration: 'none' }}>
@@ -321,7 +353,7 @@ export default function PublicPrestatairePage() {
                         <h3 style={{ fontFamily: FONT, fontSize: 18, margin: 0 }}>{item.name}</h3>
                         {item.description && <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', lineHeight: 1.6, margin: '9px 0 0' }}>{item.description}</p>}
                         <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: C.gold, margin: '16px 0 0' }}>
-                          {Number(item.price) > 0 ? `${Number(item.price).toLocaleString('fr-FR')} €${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
+                          {Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
                         </p>
                         {Number(item.price) > 0 && <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '4px 0 0' }}>Tarif indicatif</p>}
                         <div style={{ display: 'flex', gap: 9, marginTop: 15, flexWrap: 'wrap' }}>
@@ -342,6 +374,15 @@ export default function PublicPrestatairePage() {
                 </div>
               )}
             </section>
+
+            <ProviderReviews
+              providerId={decodedId}
+              providerName={profile.name}
+              uid={user ? getUserId(user) : null}
+              user={user}
+              openAuthModal={openAuthModal}
+              isSelf={isSelf}
+            />
           </div>
 
           <aside className="provider-sticky-contact" style={{ ...sectionStyle, borderColor: `${category.color}44` }}>
@@ -371,7 +412,7 @@ export default function PublicPrestatairePage() {
                 {inquiryItem.category && <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: C.teal, margin: '0 0 5px' }}>{inquiryItem.category}</p>}
                 <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2 }}>{inquiryItem.name}</p>
                 <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 800, color: C.gold, margin: '8px 0 0' }}>
-                  {Number(inquiryItem.price) > 0 ? `${Number(inquiryItem.price).toLocaleString('fr-FR')} €${inquiryItem.unit ? ` / ${inquiryItem.unit}` : ''}` : 'Tarif sur demande'}
+                  {Number(inquiryItem.price) > 0 ? `${fmtMoney(Number(inquiryItem.price), inquiryItem.currency || catalogDefaultCurrency)}${inquiryItem.unit ? ` / ${inquiryItem.unit}` : ''}` : 'Tarif sur demande'}
                 </p>
               </div>
             </div>
@@ -412,7 +453,6 @@ const sectionTitle = { fontFamily: FONT, fontSize: 20, fontWeight: 700, letterSp
 const detailLine = { display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.58)' }
 const primaryButton = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9, minHeight: 46, padding: '12px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, boxShadow: '0 6px 20px rgba(122,59,242,.35)' }
 const secondaryButton = { minHeight: 44, padding: '11px 17px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }
-const linkButton = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 40, padding: 0, border: 0, background: 'none', color: 'rgba(255,255,255,.65)', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }
 const serviceInquiryButton = { flex: '1 1 160px', minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(122,59,242,.35)' }
 const shareButton = { minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }
 const disabledButton = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }

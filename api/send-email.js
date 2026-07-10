@@ -13,6 +13,10 @@
 //   application_needs_changes → corrections demandées (inclut le message agent)
 //   application_rejected      → dossier non retenu (inclut le motif)
 //
+// type 'new_event_followers' { eventId } : e-mails « nouvel événement » aux
+// abonnés de l'organisateur (modèle Shotgun — consentement affiché au moment
+// de l'abonnement, désabonnement à tout moment). Voir notifyFollowers() plus bas.
+//
 // Config requise (variables d'env Vercel) :
 //   RESEND_API_KEY   — clé API Resend (https://resend.com)
 //   EMAIL_FROM       — ex : "LIVEINBLACK <noreply@liveinblack.com>" (domaine vérifié chez Resend)
@@ -51,6 +55,9 @@ export default async function handler(req, res) {
   const { requireAuth } = await import('../lib/verifyAuth.js')
   const caller = await requireAuth(req, res)
   if (!caller) return
+  // E-mails « nouvel événement » aux abonnés — flux séparé (pas de dossier).
+  if (req.body?.type === 'new_event_followers') return notifyFollowers(req, res, caller)
+
   try {
     const { appId, type } = req.body || {}
     if (!appId || !type) return res.status(400).json({ error: 'appId et type requis' })
@@ -114,6 +121,109 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true })
   } catch (err) {
     console.error('[/api/send-email] error:', err)
+    return res.status(500).json({ error: err.message || 'Internal error' })
+  }
+}
+
+// ─── E-mails « nouvel événement » aux abonnés d'un organisateur ───────────────
+// POST /api/send-email { type:'new_event_followers', eventId }
+// Appelé (fire-and-forget) par MesEvenementsPage à la première publication.
+//
+// Sécurité / vie privée :
+//  - seul l'ORGANISATEUR de l'événement peut déclencher l'envoi ;
+//  - destinataires = index organizer_subscribers/{orgId}__{uid} (écrit par
+//    chaque abonné, jamais lisible par l'organisateur — règles Firestore) ;
+//  - l'adresse e-mail est résolue depuis Firebase AUTH côté serveur (jamais un
+//    champ écrit par le client) → pas de relais de spam possible ;
+//  - un e-mail PAR destinataire (jamais de liste en copie) ;
+//  - idempotent : flag event_notifications/{eventId} posé en transaction AVANT
+//    l'envoi — un double appel n'envoie jamais deux fois (on préfère « e-mail
+//    manqué » à « e-mail en double »).
+//
+// Limite V1 assumée : un événement programmé (publishAt futur) n'envoie rien à
+// l'heure de la publication différée — e-mails sur publication immédiate only.
+async function notifyFollowers(req, res, caller) {
+  const eventId = String(req.body?.eventId || '')
+  if (!eventId) return res.status(400).json({ error: 'eventId requis' })
+  try {
+    const db = getDb()
+    const evSnap = await db.collection('events').doc(eventId).get()
+    if (!evSnap.exists) return res.status(404).json({ error: 'Événement introuvable' })
+    const event = evSnap.data()
+    if (event.organizerId !== caller.uid && event.createdBy !== caller.uid) {
+      return res.status(403).json({ error: "Seul l'organisateur de cet événement peut notifier ses abonnés." })
+    }
+    if (event.isPrivate) return res.status(200).json({ ok: true, skipped: 'private-event' })
+    if (event.cancelled) return res.status(200).json({ ok: true, skipped: 'cancelled' })
+    if (event.publishAt && new Date(event.publishAt).getTime() > Date.now()) {
+      return res.status(200).json({ ok: true, skipped: 'scheduled' })
+    }
+    if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
+      return res.status(200).json({ ok: false, skipped: 'email-not-configured' })
+    }
+
+    const { FieldValue } = await import('firebase-admin/firestore')
+    const flagRef = db.collection('event_notifications').doc(eventId)
+    let firstCall = false
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(flagRef)
+      if (snap.exists && snap.data().emailedAt) return
+      tx.set(flagRef, { eventId, organizerId: caller.uid, emailedAt: FieldValue.serverTimestamp() }, { merge: true })
+      firstCall = true
+    })
+    if (!firstCall) return res.status(200).json({ ok: true, already: true })
+
+    const subsSnap = await db.collection('organizer_subscribers')
+      .where('organizerId', '==', caller.uid)
+      .where('newEventEmail', '==', true)
+      .get()
+    const uids = [...new Set(subsSnap.docs.map(d => String(d.data().uid || '')).filter(u => u && u !== caller.uid))]
+    if (!uids.length) {
+      await flagRef.set({ sentCount: 0 }, { merge: true })
+      return res.status(200).json({ ok: true, sent: 0 })
+    }
+
+    const { getAuth } = await import('firebase-admin/auth')
+    const auth = getAuth()
+    const emails = []
+    for (let i = 0; i < uids.length; i += 100) {
+      const result = await auth.getUsers(uids.slice(i, i + 100).map(uid => ({ uid })))
+      for (const u of result.users) {
+        if (u.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u.email)) emails.push(u.email)
+      }
+    }
+    if (!emails.length) {
+      await flagRef.set({ sentCount: 0 }, { merge: true })
+      return res.status(200).json({ ok: true, sent: 0 })
+    }
+
+    const { newEventEmail } = await import('../lib/email-templates.js')
+    const organizerName = event.organizerName || 'Un organisateur que tu suis'
+    const email = newEventEmail({ ...event, id: eventId }, organizerName, SITE)
+    let sent = 0
+    for (let i = 0; i < emails.length; i += 100) {
+      const payload = emails.slice(i, i + 100).map(to => ({
+        from: process.env.EMAIL_FROM,
+        to: [to],
+        subject: email.subject,
+        html: email.html,
+      }))
+      const r = await fetch('https://api.resend.com/emails/batch', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (r.ok) sent += payload.length
+      else {
+        const detail = await r.text().catch(() => '')
+        console.error('[/api/send-email followers] Resend batch error:', r.status, detail.slice(0, 300))
+      }
+    }
+
+    await flagRef.set({ sentCount: sent, subscriberCount: uids.length }, { merge: true })
+    return res.status(200).json({ ok: true, sent, subscribers: uids.length })
+  } catch (err) {
+    console.error('[/api/send-email followers] error:', err)
     return res.status(500).json({ error: err.message || 'Internal error' })
   }
 }

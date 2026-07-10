@@ -46,9 +46,13 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
     <div style={{ marginTop: 8, marginBottom: 12 }}>
       {/* En-tête */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.35)' }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#e05aaa' }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#e05aaa' }}>
+        {/* Plus d'encadré : juste le point « live » qui pulse + le texte bien lisible. */}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span className="lib-live-dot" style={{ position: 'relative', width: 9, height: 9, flexShrink: 0 }}>
+            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#e05aaa' }} />
+            <span className="lib-live-ring" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#e05aaa' }} />
+          </span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#ff7ec2' }}>
             Réservez pour ce soir
           </span>
         </span>
