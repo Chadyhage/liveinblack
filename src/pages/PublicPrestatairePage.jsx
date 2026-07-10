@@ -45,6 +45,7 @@ export default function PublicPrestatairePage() {
   const [loading, setLoading] = useState(true)
   const [shareItem, setShareItem] = useState(null) // offre en cours de partage
   const [shareMsg, setShareMsg] = useState('')
+  const [storyBusy, setStoryBusy] = useState(false)
   const [inquiryItem, setInquiryItem] = useState(null)
   const [inquiryText, setInquiryText] = useState('')
   const [inquirySending, setInquirySending] = useState(false)
@@ -165,7 +166,7 @@ export default function PublicPrestatairePage() {
       <PageChrome user={user}>
         <div style={{ minHeight: '100vh', background: C.obsidian, color: '#fff' }}>
           {!user && <PublicNav />}
-          <div style={{ maxWidth: 980, margin: '0 auto', padding: '80px 22px', fontFamily: FONT, color: 'rgba(255,255,255,.55)' }}>Chargement de la page…</div>
+          <div style={{ maxWidth: 980, margin: '0 auto', padding: '80px 22px', fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,.55)', display: 'flex', alignItems: 'center', gap: 10 }}><span className="lib-spin" style={spinner} /> Chargement de la page…</div>
         </div>
       </PageChrome>
     )
@@ -195,7 +196,7 @@ export default function PublicPrestatairePage() {
 
   return (
     <PageChrome user={user}>
-      <div style={{ minHeight: '100vh', color: '#fff', background: `radial-gradient(circle 850px at 12% 5%, ${category.color}22, transparent 58%), ${C.obsidian}` }}>
+      <div style={{ minHeight: '100vh', color: '#fff', background: C.obsidian }}>
       <style>{`
         .provider-public-shell{max-width:980px;margin:0 auto;padding:26px 22px 80px}
         .provider-hero{min-height:220px}
@@ -229,7 +230,7 @@ export default function PublicPrestatairePage() {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 9 }}>
               {categories.map(item => (
-                <span key={item.id} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: item.color, border: `1px solid ${item.color}55`, background: `${item.color}12`, borderRadius: 999, padding: '5px 9px' }}>{item.singular}</span>
+                <span key={item.id} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: item.color, border: `1px solid ${item.color}55`, background: `${item.color}1f`, borderRadius: 999, padding: '5px 10px' }}>{item.singular}</span>
               ))}
             </div>
           </div>
@@ -238,12 +239,37 @@ export default function PublicPrestatairePage() {
             <button
               onClick={async () => {
                 const res = await shareOrCopy({ title: profile?.name || 'Prestataire', text: `${profile?.name || 'Ce prestataire'} sur Live in Black`, url: window.location.href })
-                if (res.method !== 'share') { setShareMsg(res.method === 'copy' ? 'Lien copié ✓' : 'Indisponible'); setTimeout(() => setShareMsg(''), 1600) }
+                if (res.method !== 'share') { setShareMsg(res.method === 'copy' ? 'Lien copié' : 'Indisponible'); setTimeout(() => setShareMsg(''), 1600) }
               }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 16px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
               {shareMsg || 'Partager'}
+            </button>
+            {/* Story 1080×1920 de la vitrine — pas de coordonnées sensibles,
+                juste le nom, la spécialité, la ville et la photo. */}
+            <button
+              onClick={async () => {
+                if (storyBusy) return
+                setStoryBusy(true)
+                try {
+                  const { shareStory } = await import('../utils/storyImage')
+                  const res = await shareStory({
+                    kicker: 'Prestataire événementiel',
+                    title: profile.name || 'Prestataire',
+                    chips: [categories[0]?.singular || null, locationLabel || null].filter(Boolean),
+                    tagline: 'Découvre son travail ✨',
+                    imageUrl: profile.coverUrl || profile.photoUrl || null,
+                  })
+                  if (res.method === 'download') { setShareMsg('Story téléchargée ✓'); setTimeout(() => setShareMsg(''), 2200) }
+                  else if (res.method === 'none') { setShareMsg('Génération impossible'); setTimeout(() => setShareMsg(''), 1600) }
+                } catch { setShareMsg('Génération impossible'); setTimeout(() => setShareMsg(''), 1600) }
+                setStoryBusy(false)
+              }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, cursor: 'pointer', background: 'linear-gradient(135deg, rgba(224,90,170,0.14), rgba(139,92,246,0.14))', border: '1px solid rgba(224,90,170,0.45)', color: '#e05aaa', fontFamily: FONT, fontSize: 13.5, fontWeight: 600, opacity: storyBusy ? 0.6 : 1 }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>
+              {storyBusy ? 'Création…' : 'Partager en story'}
             </button>
           </div>
         </div>
@@ -278,7 +304,7 @@ export default function PublicPrestatairePage() {
               ) : (
                 <div className="provider-catalog-grid">
                   {visibleCatalog.map(item => (
-                    <article key={item.id} style={{ overflow: 'hidden', borderRadius: 16, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.09)' }}>
+                    <article key={item.id} style={{ overflow: 'hidden', borderRadius: 16, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
                       {getOfferMedia(item).length > 0 && (
                         <div aria-label={`Médias de ${item.name}`} style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'thin', background: '#05060b' }}>
                           {getOfferMedia(item).map((media, index) => (
@@ -289,13 +315,13 @@ export default function PublicPrestatairePage() {
                         </div>
                       )}
                       <div style={{ padding: 18 }}>
-                        {item.category && <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.12em', color: category.color, margin: '0 0 8px' }}>{item.category}</p>}
+                        {item.category && <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: category.color, margin: '0 0 8px' }}>{item.category}</p>}
                         <h3 style={{ fontFamily: FONT, fontSize: 18, margin: 0 }}>{item.name}</h3>
                         {item.description && <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', lineHeight: 1.6, margin: '9px 0 0' }}>{item.description}</p>}
                         <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: C.gold, margin: '16px 0 0' }}>
                           {Number(item.price) > 0 ? `${Number(item.price).toLocaleString('fr-FR')} €${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
                         </p>
-                        {Number(item.price) > 0 && <p style={{ fontFamily: FONT, fontSize: 10, color: 'rgba(255,255,255,.35)', margin: '4px 0 0' }}>Tarif indicatif</p>}
+                        {Number(item.price) > 0 && <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '4px 0 0' }}>Tarif indicatif</p>}
                         <div style={{ display: 'flex', gap: 9, marginTop: 15, flexWrap: 'wrap' }}>
                           {!isSelf && (
                             <button onClick={() => openServiceInquiry(item)} style={serviceInquiryButton}>
@@ -320,49 +346,49 @@ export default function PublicPrestatairePage() {
             <h2 style={{ ...sectionTitle, fontSize: 21 }}>Un projet à lui proposer ?</h2>
             <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', lineHeight: 1.6, margin: '0 0 18px' }}>Échangez directement dans la messagerie LIVE IN BLACK pour discuter de la date, du tarif et des conditions.</p>
             {(canManage || !isSelf) && <button onClick={handleContact} style={{ ...primaryButton, width: '100%', justifyContent: 'center' }}><Icon name="message" /> {canManage ? 'Gérer ma page' : 'Envoyer un message'}</button>}
-            {!isSelf && <p style={{ fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,.32)', lineHeight: 1.5, margin: '14px 0 0' }}>LIVE IN BLACK facilite la mise en relation. La réservation et le règlement sont convenus directement avec le prestataire.</p>}
+            {!isSelf && <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.45)', lineHeight: 1.5, margin: '14px 0 0' }}>LIVE IN BLACK facilite la mise en relation. La réservation et le règlement sont convenus directement avec le prestataire.</p>}
           </aside>
         </div>
       </main>
       </div>
       {inquiryItem && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.78)', backdropFilter: 'blur(5px)' }} onClick={() => { setInquiryItem(null); setInquiryText('') }} />
-          <div style={{ position: 'relative', width: 'min(100%, 520px)', maxHeight: '88vh', overflowY: 'auto', borderRadius: '22px 22px 0 0', background: 'linear-gradient(180deg, rgba(12,14,24,.98), rgba(4,4,11,.99))', border: '1px solid rgba(255,255,255,.12)', boxShadow: '0 -26px 80px rgba(0,0,0,.65)', padding: '18px 18px 24px' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,.72)', backdropFilter: 'blur(8px)' }} onClick={() => { setInquiryItem(null); setInquiryText('') }} />
+          <div style={{ position: 'relative', width: 'min(100%, 520px)', maxHeight: '88vh', overflowY: 'auto', borderRadius: '20px 20px 0 0', background: '#12131c', border: '1px solid rgba(255,255,255,.10)', boxShadow: '0 -26px 80px rgba(0,0,0,.65)', padding: '18px 18px 24px' }}>
             <div style={{ width: 44, height: 4, borderRadius: 999, background: 'rgba(255,255,255,.18)', margin: '0 auto 16px' }} />
-            <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 850, letterSpacing: '.18em', textTransform: 'uppercase', color: C.gold, margin: '0 0 7px' }}>Demande au prestataire</p>
+            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: C.gold, margin: '0 0 7px' }}>Demande au prestataire</p>
             <h3 style={{ fontFamily: FONT, fontSize: 25, lineHeight: 1.08, letterSpacing: '-.7px', margin: '0 0 14px', color: '#fff' }}>Envoyer ce service à {profile.name}</h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: '82px 1fr', gap: 13, padding: 12, borderRadius: 16, background: 'rgba(255,255,255,.045)', border: '1px solid rgba(255,255,255,.10)', marginBottom: 14 }}>
-              <div style={{ width: 82, height: 82, borderRadius: 13, overflow: 'hidden', background: 'linear-gradient(135deg, rgba(200,169,110,.18), rgba(78,232,200,.12))', display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 82, height: 82, borderRadius: 13, overflow: 'hidden', background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center' }}>
                 {buildServicePayload(inquiryItem).image
                   ? <img src={buildServicePayload(inquiryItem).image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" strokeWidth="1.5"><path d="M20.59 13.41 12 22l-9-9V4a1 1 0 0 1 1-1h9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>}
               </div>
               <div style={{ minWidth: 0 }}>
-                {inquiryItem.category && <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: C.teal, margin: '0 0 5px' }}>{inquiryItem.category}</p>}
-                <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 850, color: '#fff', margin: 0, lineHeight: 1.2 }}>{inquiryItem.name}</p>
+                {inquiryItem.category && <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: C.teal, margin: '0 0 5px' }}>{inquiryItem.category}</p>}
+                <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2 }}>{inquiryItem.name}</p>
                 <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 800, color: C.gold, margin: '8px 0 0' }}>
                   {Number(inquiryItem.price) > 0 ? `${Number(inquiryItem.price).toLocaleString('fr-FR')} €${inquiryItem.unit ? ` / ${inquiryItem.unit}` : ''}` : 'Tarif sur demande'}
                 </p>
               </div>
             </div>
 
-            <label style={{ display: 'block', fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.48)', marginBottom: 8 }}>Message</label>
+            <label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 8 }}>Message</label>
             <textarea
               value={inquiryText}
               onChange={e => setInquiryText(e.target.value)}
               rows={4}
-              placeholder="Ajoute ta date, ton lieu, ton budget ou ta question..."
-              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 112, borderRadius: 15, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.065)', color: '#fff', outline: 'none', padding: 14, fontFamily: FONT, fontSize: 14, lineHeight: 1.55 }}
+              placeholder="Ajoute ta date, ton lieu, ton budget ou ta question…"
+              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 112, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', outline: 'none', padding: 14, fontFamily: FONT, fontSize: 14, lineHeight: 1.55 }}
             />
             <p style={{ fontFamily: FONT, fontSize: 11, lineHeight: 1.55, color: 'rgba(255,255,255,.42)', margin: '9px 0 16px' }}>
               Le prestataire recevra la fiche du service dans la conversation, puis ton message. Vous gérez ensuite les conditions et le paiement entre vous.
             </p>
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setInquiryItem(null); setInquiryText('') }} style={{ flex: 1, minHeight: 48, borderRadius: 14, border: '1px solid rgba(255,255,255,.13)', background: 'rgba(255,255,255,.055)', color: 'rgba(255,255,255,.72)', fontFamily: FONT, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Annuler</button>
-              <button onClick={sendServiceInquiry} disabled={inquirySending} style={{ flex: 1.6, minHeight: 48, borderRadius: 14, border: 0, background: `linear-gradient(135deg, ${C.gold}, #ecd396)`, color: C.obsidian, fontFamily: FONT, fontSize: 13, fontWeight: 900, cursor: inquirySending ? 'wait' : 'pointer' }}>{inquirySending ? 'Envoi...' : 'Envoyer la demande'}</button>
+              <button onClick={() => { setInquiryItem(null); setInquiryText('') }} style={{ flex: 1, minHeight: 48, borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
+              <button onClick={sendServiceInquiry} disabled={inquirySending} style={{ ...primaryButton, flex: 1.6, minHeight: 48, fontSize: 13, ...(inquirySending ? disabledButton : null) }}>{inquirySending ? <><span className="lib-spin" style={spinner} /> Envoi…</> : 'Envoyer la demande'}</button>
             </div>
           </div>
         </div>
@@ -379,11 +405,13 @@ export default function PublicPrestatairePage() {
   )
 }
 
-const sectionStyle = { padding: 20, borderRadius: 18, background: 'rgba(9,11,20,.62)', border: '1px solid rgba(255,255,255,.09)', backdropFilter: 'blur(18px)' }
-const sectionTitle = { fontFamily: FONT, fontSize: 24, letterSpacing: '-.4px', margin: '0 0 13px' }
+const sectionStyle = { padding: 20, borderRadius: 16, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
+const sectionTitle = { fontFamily: FONT, fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', margin: '0 0 13px' }
 const detailLine = { display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.58)' }
-const primaryButton = { display: 'inline-flex', alignItems: 'center', gap: 9, minHeight: 46, padding: '12px 18px', borderRadius: 13, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${C.gold},#e0c48a)`, color: C.obsidian, fontFamily: FONT, fontSize: 13.5, fontWeight: 800 }
-const secondaryButton = { minHeight: 44, padding: '11px 17px', borderRadius: 12, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.05)', color: '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer' }
-const linkButton = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 40, padding: 0, border: 0, background: 'none', color: 'rgba(255,255,255,.58)', fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer' }
-const serviceInquiryButton = { flex: '1 1 160px', minHeight: 42, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(200,169,110,.45)', background: 'linear-gradient(135deg, rgba(200,169,110,.95), rgba(232,207,154,.88))', color: C.obsidian, fontFamily: FONT, fontSize: 12.5, fontWeight: 850, cursor: 'pointer', boxShadow: '0 12px 24px -18px rgba(200,169,110,.85)' }
-const shareButton = { minHeight: 42, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 13px', borderRadius: 12, border: '1px solid rgba(78,232,200,.32)', background: 'rgba(78,232,200,.11)', color: '#4ee8c8', fontFamily: FONT, fontSize: 12, fontWeight: 750, cursor: 'pointer' }
+const primaryButton = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9, minHeight: 46, padding: '12px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, boxShadow: '0 6px 20px rgba(122,59,242,.35)' }
+const secondaryButton = { minHeight: 44, padding: '11px 17px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }
+const linkButton = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 40, padding: 0, border: 0, background: 'none', color: 'rgba(255,255,255,.65)', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }
+const serviceInquiryButton = { flex: '1 1 160px', minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(122,59,242,.35)' }
+const shareButton = { minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }
+const disabledButton = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
+const spinner = { width: 14, height: 14, display: 'inline-block', borderRadius: '50%', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', flexShrink: 0 }

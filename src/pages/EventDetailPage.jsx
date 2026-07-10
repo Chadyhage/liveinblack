@@ -13,7 +13,7 @@ import { shareOrCopy } from '../utils/share'
 import { eventCurrency, fmtMoney } from '../utils/money'
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
 import AgeVerificationModal from '../components/AgeVerificationModal'
-import { IconLock } from '../components/icons'
+import { IconLock, IconTicket, IconCheck } from '../components/icons'
 
 // Cache séparé pour les events fetchés depuis Firestore par les visiteurs.
 // Important : NE PAS confondre avec 'lib_created_events' qui est réservé aux
@@ -163,80 +163,84 @@ function SparkleIcon({ size = 12, color = '#c8a96e' }) {
 
 const S = {
   card: {
-    background: 'rgba(8,10,20,0.55)',
-    backdropFilter: 'blur(22px) saturate(1.6)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 12,
+    background: '#0e0f16',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 16,
     padding: '16px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
   },
   btnPrimary: {
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(78,232,200,0.12))',
-    border: '1px solid rgba(255,255,255,0.28)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 11,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: 'white',
+    padding: '13px 20px',
+    background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: 12,
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#fff',
     cursor: 'pointer',
     width: '100%',
+    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
   },
   btnGold: {
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-    border: '1px solid rgba(200,169,110,0.45)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 11,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: '#c8a96e',
+    padding: '13px 20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    background: 'linear-gradient(180deg, #e0c48a, #c8a96e)',
+    border: 'none',
+    borderRadius: 12,
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#1a1206',
     cursor: 'pointer',
     width: '100%',
+    boxShadow: '0 6px 20px rgba(200,169,110,0.3)',
   },
   btnGhost: {
-    padding: '10px 20px',
-    background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.18)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 11,
-    letterSpacing: '0.15em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.5)',
+    padding: '11px 18px',
+    background: 'rgba(255,255,255,0.08)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: 12,
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.85)',
     cursor: 'pointer',
   },
   btnDanger: {
-    padding: '10px 20px',
-    background: 'rgba(220,50,50,0.10)',
-    border: '1px solid rgba(220,50,50,0.35)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 11,
-    letterSpacing: '0.15em',
-    textTransform: 'uppercase',
-    color: 'rgba(220,100,100,0.9)',
+    padding: '11px 18px',
+    background: '#c2347f',
+    border: 'none',
+    borderRadius: 12,
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 13,
+    fontWeight: 700,
+    color: '#fff',
     cursor: 'pointer',
   },
   input: {
-    background: 'rgba(6,8,16,0.6)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 4,
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 13,
-    color: 'white',
-    padding: '10px 12px',
+    background: '#0b0c12',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 10,
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.92)',
+    padding: '12px 14px',
     width: '100%',
     outline: 'none',
     boxSizing: 'border-box',
   },
   label: {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 9,
-    letterSpacing: '0.25em',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.06em',
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.42)',
+    color: 'rgba(255,255,255,0.55)',
   },
   price: {
     fontFamily: 'Inter, sans-serif',
@@ -245,9 +249,10 @@ const S = {
     color: '#c8a96e',
   },
   muted: {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.42)',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 12,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.5)',
   },
   // Libellé de ligne (récap réservation) — Inter, fini le mono « pixélisé »
   rowLabel: {
@@ -267,7 +272,7 @@ const S = {
     fontFamily: 'Inter, sans-serif',
     fontSize: 11,
     fontWeight: 700,
-    letterSpacing: '0.14em',
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
     color: '#c8a96e',
   },
@@ -426,9 +431,10 @@ export default function EventDetailPage() {
   const [allBookedThisSession, setAllBookedThisSession] = useState([]) // { place, tickets, preorderSummary, totalPrice }
   const [showShareModal, setShowShareModal] = useState(false)
   const [extShareMsg, setExtShareMsg] = useState('')
+  const [storyGenerating, setStoryGenerating] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   // Garde de réentrance pour la réservation gratuite (anti double-clic / multi-onglet,
-  // sinon double création de billets + double points). Le chemin payant est déjà
+  // sinon double création de billets). Le chemin payant est déjà
   // protégé par stripeRedirecting.
   const freeBookingLockRef = useRef(false)
   const [stripeRedirecting, setStripeRedirecting] = useState(false)
@@ -439,7 +445,6 @@ export default function EventDetailPage() {
   const [conflictProceedFn, setConflictProceedFn] = useState(null)
   const [eventStartedError, setEventStartedError] = useState(false)
   const [groupLimitError, setGroupLimitError] = useState('') // règle « 1 place de groupe par compte »
-  const [showPointsToast, setShowPointsToast] = useState(false)
   const [showAgeModal, setShowAgeModal] = useState(false)
   const [ageVerified, setAgeVerified] = useState(false)
   const [playlistTabBlink, setPlaylistTabBlink] = useState(false)
@@ -455,7 +460,7 @@ export default function EventDetailPage() {
             borderTopColor: '#4ee8c8',
             animation: 'spin 0.9s linear infinite',
           }} />
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.42)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
             Chargement de l'événement…
           </p>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
@@ -468,8 +473,10 @@ export default function EventDetailPage() {
     return (
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 12 }}>
-          <LockIcon size={36} color="rgba(255,255,255,0.15)" />
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'rgba(255,255,255,0.42)', letterSpacing: '0.1em' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LockIcon size={30} color="rgba(255,255,255,0.4)" />
+          </div>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
             Événement introuvable
           </p>
           <button onClick={() => navigate('/evenements')} style={{ ...S.btnGhost, marginTop: 8 }}>
@@ -730,7 +737,7 @@ export default function EventDetailPage() {
 
     // ─── ÉVÉNEMENT GRATUIT — création directe (pas de paiement) ──────────
     // Garde anti double-exécution : un 2e clic rapide créerait des billets
-    // et des points en double.
+    // en double.
     if (freeBookingLockRef.current) return
     freeBookingLockRef.current = true
 
@@ -844,20 +851,8 @@ export default function EventDetailPage() {
       }).catch(() => {})
 
       setBookedTickets(newTickets)
-      if (user && uid) {
-        const newPoints = (user.points || 0) + ticketQty
-        setUser({ ...user, points: newPoints })
-        // Incrément ATOMIQUE côté serveur (et non écriture d'une valeur fixe) :
-        // évite la perte de points en cas de double-clic / multi-onglet.
-        import('../utils/firestore-sync').then(({ syncIncrement }) => {
-          syncIncrement(`users/${uid}`, 'points', ticketQty)
-        }).catch(() => {})
-        import('../utils/accounts').then(({ updateAccount }) => {
-          updateAccount(uid, { points: newPoints })
-        }).catch(() => {})
-        setShowPointsToast(true)
-        setTimeout(() => setShowPointsToast(false), 2500)
-      }
+      // Points de fidélité : AUCUN à la réservation. Le point (+1/billet) se
+      // gagne au scan à l'entrée — action 'checkin' d'api/tickets.js.
       // Notifier l'organisateur de la réservation gratuite (engagement).
       // Passe par un endpoint serveur car les règles Firestore interdisent à un
       // client d'écrire dans notifications/{organizerUid} (anti-spam). Les ventes
@@ -1028,16 +1023,16 @@ export default function EventDetailPage() {
                 <span
                   key={t}
                   style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: 9,
-                    letterSpacing: '0.2em',
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
                     textTransform: 'uppercase',
-                    padding: '3px 8px',
-                    borderRadius: 3,
+                    padding: '4px 10px',
+                    borderRadius: 8,
                     color: event.accentColor,
-                    borderColor: event.color + '55',
-                    border: `1px solid ${event.color}55`,
-                    background: event.color + '11',
+                    border: `1px solid ${event.color}59`,
+                    background: event.color + '22',
                   }}
                 >
                   {t}
@@ -1045,14 +1040,15 @@ export default function EventDetailPage() {
               ))}
               {(event.minAge || 0) >= 16 && (
                 <span style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 9,
-                  letterSpacing: '0.2em',
-                  padding: '3px 8px',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  padding: '4px 10px',
                   border: '1px solid rgba(200,169,110,0.5)',
-                  borderRadius: 3,
+                  borderRadius: 8,
                   color: '#c8a96e',
-                  background: 'rgba(200,169,110,0.08)',
+                  background: 'rgba(200,169,110,0.14)',
                 }}>
                   {event.minAge}+
                 </span>
@@ -1071,24 +1067,24 @@ export default function EventDetailPage() {
               {event.name}
             </h1>
             {event.subtitle && (
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, letterSpacing: '0.1em' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 500, color: 'rgba(255,255,255,0.55)', marginTop: 4 }}>
                 {event.subtitle}
               </p>
             )}
             {/* ── Badges de statut ── */}
             {isEventCancelled && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(220,50,50,0.15)', border: '1px solid rgba(220,50,50,0.4)', borderRadius: 4, padding: '4px 10px', marginTop: 8 }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(220,100,100,0.95)', textTransform: 'uppercase' }}>● ÉVÉNEMENT ANNULÉ</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(220,50,50,0.15)', border: '1px solid rgba(220,50,50,0.4)', borderRadius: 8, padding: '4px 10px', marginTop: 8 }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(220,110,110,0.95)', textTransform: 'uppercase' }}>● Événement annulé</span>
               </div>
             )}
             {!isEventCancelled && isEventSoldOut && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)', borderRadius: 4, padding: '4px 10px', marginTop: 8 }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(220,120,120,0.95)', textTransform: 'uppercase' }}>● COMPLET</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)', borderRadius: 8, padding: '4px 10px', marginTop: 8 }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(220,120,120,0.95)', textTransform: 'uppercase' }}>● Complet</span>
               </div>
             )}
             {!isEventCancelled && !isEventSoldOut && isEventClosed && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '4px 10px', marginTop: 8 }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>● RÉSERVATIONS CLOSES</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '4px 10px', marginTop: 8 }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>● Réservations closes</span>
               </div>
             )}
           </div>
@@ -1103,7 +1099,7 @@ export default function EventDetailPage() {
         }}>
           {countdownLabel && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, padding: '6px 11px', borderRadius: 999, background: countdownUrgent ? 'rgba(224,90,170,0.14)' : 'rgba(78,232,200,0.12)', border: `1px solid ${countdownUrgent ? 'rgba(224,90,170,0.4)' : 'rgba(78,232,200,0.35)'}` }}>
-              <span className="animate-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: countdownUrgent ? '#e05aaa' : '#4ee8c8', boxShadow: `0 0 8px ${countdownUrgent ? '#e05aaa' : '#4ee8c8'}` }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: countdownUrgent ? '#e05aaa' : '#4ee8c8' }} />
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: countdownUrgent ? '#e05aaa' : '#4ee8c8', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>{countdownLabel}</span>
             </div>
           )}
@@ -1140,8 +1136,8 @@ export default function EventDetailPage() {
           {/* Keyframe pour le clignotement de l'onglet Playlist */}
           <style>{`
             @keyframes playlistTabBlink {
-              0%, 100% { color: rgba(255,255,255,0.3); border-bottom-color: transparent; text-shadow: none; }
-              50% { color: #e05aaa; border-bottom-color: #e05aaa; text-shadow: 0 0 8px rgba(224,90,170,0.6); }
+              0%, 100% { color: rgba(255,255,255,0.3); border-bottom-color: transparent; }
+              50% { color: #e05aaa; border-bottom-color: #e05aaa; }
             }
           `}</style>
 
@@ -1160,10 +1156,10 @@ export default function EventDetailPage() {
                 fontSize: 13,
                 fontWeight: 700,
                 letterSpacing: '0.02em',
-                background: activeTab === tab ? 'linear-gradient(135deg, rgba(78,232,200,0.18), rgba(78,232,200,0.06))' : 'transparent',
-                border: activeTab === tab ? '1px solid rgba(78,232,200,0.4)' : '1px solid transparent',
-                borderRadius: 9,
-                color: activeTab === tab ? '#4ee8c8' : 'rgba(255,255,255,0.6)',
+                background: activeTab === tab ? 'rgba(255,255,255,0.10)' : 'transparent',
+                border: activeTab === tab ? '1px solid rgba(255,255,255,0.14)' : '1px solid transparent',
+                borderRadius: 10,
+                color: activeTab === tab ? '#fff' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 animation: isPlaylistBlink ? 'playlistTabBlink 0.7s ease-in-out infinite' : 'none',
@@ -1193,12 +1189,12 @@ export default function EventDetailPage() {
                     <div style={{ margin: '2px 0 4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
                         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#4ee8c8', letterSpacing: '0.01em' }}>
-                          🔥 {soldCount} {soldCount > 1 ? 'personnes y vont' : 'personne y va'}
+                          {soldCount} {soldCount > 1 ? 'personnes y vont' : 'personne y va'}
                         </span>
                         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.4)' }}>{fillPct}% rempli</span>
                       </div>
                       <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', borderRadius: 99, width: `${fillPct}%`, background: fillPct >= 80 ? 'linear-gradient(90deg,#c8a96e,#e05aaa)' : 'linear-gradient(90deg,#4ee8c8,#c8a96e)', transition: 'width 0.5s' }} />
+                        <div style={{ height: '100%', borderRadius: 99, width: `${fillPct}%`, background: fillPct >= 80 ? '#c8a96e' : '#4ee8c8', transition: 'width 0.5s' }} />
                       </div>
                     </div>
                   )}
@@ -1238,8 +1234,8 @@ export default function EventDetailPage() {
                           position: 'relative', display: 'flex', cursor: 'pointer',
                           borderRadius: 16, overflow: 'hidden',
                           border: `1px solid ${isSelected ? 'rgba(200,169,110,0.6)' : 'rgba(255,255,255,0.10)'}`,
-                          background: isSelected ? 'rgba(200,169,110,0.07)' : 'rgba(11,13,20,0.7)',
-                          boxShadow: isSelected ? '0 10px 30px -10px rgba(200,169,110,0.4)' : 'none',
+                          background: '#0e0f16',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                           transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
                         }}
                       >
@@ -1315,11 +1311,11 @@ export default function EventDetailPage() {
                   })}
 
                   {eventStartedError && (
-                    <div style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.30)', borderRadius: 8, padding: '12px 14px' }}>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: '0 0 2px', letterSpacing: '0.08em' }}>
+                    <div style={{ background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', borderRadius: 12, padding: '12px 14px' }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: 'rgba(255,150,150,0.95)', margin: '0 0 2px' }}>
                         Réservation impossible
                       </p>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0 }}>
                         Cet événement a déjà commencé.
                       </p>
                     </div>
@@ -1359,11 +1355,11 @@ export default function EventDetailPage() {
                                 onClick={() => setTicketQty(q => Math.max(1, q - 1))}
                                 disabled={ticketQty <= 1}
                                 style={{
-                                  width: 26, height: 26, borderRadius: 4,
-                                  background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
+                                  width: 28, height: 28, borderRadius: 8,
+                                  background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontFamily: "'DM Mono', monospace", fontSize: 13, color: 'rgba(255,255,255,0.5)',
-                                  cursor: ticketQty <= 1 ? 'not-allowed' : 'pointer', opacity: ticketQty <= 1 ? 0.3 : 1,
+                                  fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.7)',
+                                  cursor: ticketQty <= 1 ? 'not-allowed' : 'pointer', opacity: ticketQty <= 1 ? 0.4 : 1,
                                 }}
                               >−</button>
                               <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 15, color: '#c8a96e', width: 18, textAlign: 'center' }}>
@@ -1373,13 +1369,13 @@ export default function EventDetailPage() {
                                 onClick={() => setTicketQty(q => Math.min(maxQtyForSelectedPlace, q + 1))}
                                 disabled={ticketQty >= maxQtyForSelectedPlace}
                                 style={{
-                                  width: 26, height: 26, borderRadius: 4,
-                                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                                  border: '1px solid rgba(200,169,110,0.45)',
+                                  width: 28, height: 28, borderRadius: 8,
+                                  background: ticketQty >= maxQtyForSelectedPlace ? 'rgba(255,255,255,0.07)' : '#c8a96e',
+                                  border: 'none',
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontFamily: "'DM Mono', monospace", fontSize: 15, color: '#c8a96e',
+                                  fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700,
+                                  color: ticketQty >= maxQtyForSelectedPlace ? 'rgba(255,255,255,0.35)' : '#1a1206',
                                   cursor: ticketQty >= maxQtyForSelectedPlace ? 'not-allowed' : 'pointer',
-                                  opacity: ticketQty >= maxQtyForSelectedPlace ? 0.3 : 1,
                                 }}
                               >+</button>
                             </div>
@@ -1398,8 +1394,8 @@ export default function EventDetailPage() {
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={S.rowLabel}>Points gagnés</span>
-                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#c8a96e' }}>+{ticketQty} point{ticketQty > 1 ? 's' : ''}</span>
+                          <span style={S.rowLabel}>Points fidélité</span>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#c8a96e' }}>+1 par billet scanné à l'entrée</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8 }}>
                           <span style={S.rowLabel}>Paiement</span>
@@ -1415,7 +1411,7 @@ export default function EventDetailPage() {
                         <button
                           style={{
                             ...S.btnGold,
-                            opacity: (user && !userCanBook) ? 0.4 : 1,
+                            ...((user && !userCanBook) ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', boxShadow: 'none' } : {}),
                             cursor: (user && !userCanBook) ? 'not-allowed' : 'pointer',
                             pointerEvents: (user && !userCanBook) ? 'none' : 'auto',
                           }}
@@ -1432,7 +1428,7 @@ export default function EventDetailPage() {
                         <button
                           style={{
                             ...S.btnCheckout,
-                            opacity: (user && !userCanBook) || bookingDisabled ? 0.4 : 1,
+                            ...((user && !userCanBook) || bookingDisabled ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', boxShadow: 'none' } : {}),
                             cursor: (user && !userCanBook) || bookingDisabled ? 'not-allowed' : 'pointer',
                             pointerEvents: (user && !userCanBook) || bookingDisabled ? 'none' : 'auto',
                           }}
@@ -1452,7 +1448,7 @@ export default function EventDetailPage() {
                         <button
                           style={{
                             ...S.btnCheckout,
-                            opacity: (user && !userCanBook) || bookingDisabled ? 0.4 : 1,
+                            ...((user && !userCanBook) || bookingDisabled ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', boxShadow: 'none' } : {}),
                             cursor: (user && !userCanBook) || bookingDisabled ? 'not-allowed' : 'pointer',
                             pointerEvents: (user && !userCanBook) || bookingDisabled ? 'none' : 'auto',
                           }}
@@ -1488,13 +1484,13 @@ export default function EventDetailPage() {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: '10px 12px',
-                            background: 'rgba(78,232,200,0.05)',
-                            border: '1px solid rgba(78,232,200,0.18)',
-                            borderRadius: 6,
+                            background: 'rgba(78,232,200,0.07)',
+                            border: '1px solid rgba(78,232,200,0.25)',
+                            borderRadius: 10,
                           }}
                         >
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white' }}>{b.place}</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8' }}>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'white' }}>{b.place}</span>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#4ee8c8' }}>
                             {b.tickets.length} billet{b.tickets.length > 1 ? 's' : ''} · {fmtMoney(b.totalPrice, evCur)}
                           </span>
                         </div>
@@ -1547,15 +1543,14 @@ export default function EventDetailPage() {
                           key={i}
                           onClick={() => setActivePreorderTicket(i)}
                           style={{
-                            padding: '6px 14px',
-                            borderRadius: 4,
-                            border: activePreorderTicket === i ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                            background: activePreorderTicket === i ? 'rgba(200,169,110,0.14)' : 'transparent',
-                            fontFamily: "'DM Mono', monospace",
-                            fontSize: 9,
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            color: activePreorderTicket === i ? '#c8a96e' : 'rgba(255,255,255,0.4)',
+                            padding: '7px 14px',
+                            borderRadius: 10,
+                            border: activePreorderTicket === i ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.12)',
+                            background: activePreorderTicket === i ? 'rgba(200,169,110,0.16)' : 'rgba(255,255,255,0.05)',
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: activePreorderTicket === i ? '#c8a96e' : 'rgba(255,255,255,0.55)',
                             cursor: 'pointer',
                           }}
                         >
@@ -1596,14 +1591,14 @@ export default function EventDetailPage() {
                                   justifyContent: 'center',
                                   flexShrink: 0,
                                 }}>
-                                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.05em' }}>
+                                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>
                                     {item.name.slice(0, 2).toUpperCase()}
                                   </span>
                                 </div>
                               )}
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: 'white', margin: 0 }}>
+                                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: 'white', margin: 0 }}>
                                     {item.name}
                                   </p>
                                   {item.description && (
@@ -1613,11 +1608,12 @@ export default function EventDetailPage() {
                                         width: 16,
                                         height: 16,
                                         borderRadius: '50%',
-                                        background: 'rgba(255,255,255,0.04)',
-                                        border: '1px solid rgba(255,255,255,0.12)',
-                                        fontFamily: "'DM Mono', monospace",
-                                        fontSize: 9,
-                                        color: 'rgba(255,255,255,0.4)',
+                                        background: 'rgba(255,255,255,0.06)',
+                                        border: '1px solid rgba(255,255,255,0.14)',
+                                        fontFamily: 'Inter, sans-serif',
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        color: 'rgba(255,255,255,0.55)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -1629,9 +1625,9 @@ export default function EventDetailPage() {
                                     </button>
                                   )}
                                   {item.hasShow && item.showOptions?.length > 0 && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', borderRadius: 3, background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.20)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 8, background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.35)' }}>
                                       <SparkleIcon size={9} color="#e05aaa" />
-                                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, color: '#e05aaa', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Show</span>
+                                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: '#e05aaa', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Show</span>
                                     </div>
                                   )}
                                 </div>
@@ -2176,6 +2172,33 @@ export default function EventDetailPage() {
                   <ShareIcon size={15} color="#4ee8c8" />
                   {extShareMsg || 'Partager le lien (WhatsApp, Insta…)'}
                 </button>
+                {/* Story 1080×1920 aux couleurs de l'événement — SANS QR ni info
+                    sensible : juste l'affiche, la date et la hype (médiatisation). */}
+                <button
+                  onClick={async () => {
+                    if (storyGenerating) return
+                    setStoryGenerating(true)
+                    try {
+                      const { shareStory } = await import('../utils/storyImage')
+                      const minP = event.places?.length > 0 ? Math.min(...event.places.map(p => p.price)) : null
+                      const res = await shareStory({
+                        kicker: 'Événement',
+                        title: event.name,
+                        chips: [event.dateDisplay, event.city || event.location, minP > 0 ? `dès ${fmtMoney(minP, evCur)}` : (minP === 0 ? 'Gratuit' : null)],
+                        tagline: 'Rejoins-moi à cette soirée 🔥',
+                        imageUrl: event.imageUrl || null,
+                      })
+                      if (res.method === 'share') { setShowShareModal(false) }
+                      else if (res.method === 'download') { setExtShareMsg('Story téléchargée ✓ — publie-la !'); setTimeout(() => setExtShareMsg(''), 2500) }
+                      else { setExtShareMsg('Génération impossible'); setTimeout(() => setExtShareMsg(''), 1800) }
+                    } catch { setExtShareMsg('Génération impossible'); setTimeout(() => setExtShareMsg(''), 1800) }
+                    setStoryGenerating(false)
+                  }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '13px 16px', borderRadius: 12, marginTop: 10, border: '1px solid rgba(224,90,170,0.45)', background: 'linear-gradient(135deg, rgba(224,90,170,0.14), rgba(139,92,246,0.14))', color: '#e05aaa', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: storyGenerating ? 0.6 : 1 }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="#e05aaa"/></svg>
+                  {storyGenerating ? 'Création de la story…' : 'Partager en story'}
+                </button>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.32)', textAlign: 'center', margin: '12px 0 2px' }}>
                   ou envoyer dans une conversation
                 </p>
@@ -2517,33 +2540,6 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      {/* ── Points toast ─────────────────────────────────────────────────────── */}
-      {showPointsToast && (
-        <div style={{
-          position: 'fixed',
-          top: 80,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 50,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-          border: '1px solid rgba(200,169,110,0.45)',
-          borderRadius: 4,
-          padding: '10px 20px',
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 11,
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
-          color: '#c8a96e',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.40)',
-          whiteSpace: 'nowrap',
-        }}>
-          <SparkleIcon size={12} color="#c8a96e" />
-          +1 point gagné
-        </div>
-      )}
     </Layout>
   )
 }

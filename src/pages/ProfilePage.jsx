@@ -14,7 +14,7 @@ import { isEventEnded } from '../utils/event-time'
 import { shareOrCopy, downloadICS, combineDateTime } from '../utils/share'
 import PlaylistSystem from '../components/PlaylistSystem'
 import { PreferencesModal, summarizePreferences } from '../components/PreferencesEditor'
-import { IconMail, IconIdBadge } from '../components/icons'
+import { IconMail, IconIdBadge, IconHourglass } from '../components/icons'
 import { events as staticEvents } from '../data/events'
 import { getProviderCategories, getPrimaryProviderType } from '../utils/providerCategories'
 import { includedForPlace, getTicketOrders, ORDER_SOURCE } from '../utils/eventOrders'
@@ -73,9 +73,9 @@ function openCredentialPDF(app, role) {
     ...(fd.siret ? [['SIRET', fd.siret]] : []),
     ['Zones d\'intervention', Array.isArray(fd.zonesIntervention) && fd.zonesIntervention.length
       ? fd.zonesIntervention.map(id => ({
-          'international': '🌍 International', 'france': '🇫🇷 France',
+          'international': 'International', 'france': '🇫🇷 France',
           'cote-divoire': "🇨🇮 Côte d'Ivoire", 'ghana': '🇬🇭 Ghana',
-          'togo': '🇹🇬 Togo', 'benin': '🇧🇯 Bénin', 'amerique': '🌎 Amérique',
+          'togo': '🇹🇬 Togo', 'benin': '🇧🇯 Bénin', 'amerique': 'Amérique',
         }[id] || id)).join('  ·  ')
       : '—'],
     ['Date de validation',  approvedDate],
@@ -89,9 +89,9 @@ function openCredentialPDF(app, role) {
   <meta charset="UTF-8">
   <title>Carte d'accréditation — ${displayName}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,600&family=DM+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,600&family=Inter:wght@400;500;600;700&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'DM Mono',monospace; background:#fff; color:#0a0a18; padding:64px 80px; max-width:760px; margin:0 auto; line-height:1.6; }
+    body { font-family:'Inter',Arial,sans-serif; background:#fff; color:#0a0a18; padding:64px 80px; max-width:760px; margin:0 auto; line-height:1.6; }
     .header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:48px; padding-bottom:24px; border-bottom:2px solid #0a0a18; }
     .logo { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:300; letter-spacing:0.12em; }
     .logo span { font-style:italic; font-weight:600; }
@@ -117,7 +117,7 @@ function openCredentialPDF(app, role) {
     .footer-left { font-size:9px; color:#bbb; letter-spacing:0.06em; line-height:1.8; }
     .sig-name { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300; font-style:italic; color:#c8a96e; }
     .sig-title { font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#aaa; margin-top:2px; }
-    .print-btn { position:fixed; bottom:32px; right:32px; background:#0a0a18; color:#fff; border:none; border-radius:6px; padding:12px 24px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+    .print-btn { position:fixed; bottom:32px; right:32px; background:#0a0a18; color:#fff; border:none; border-radius:8px; padding:12px 24px; font-family:'Inter',Arial,sans-serif; font-weight:600; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
     @media print { body{padding:40px 48px;} .print-btn{display:none;} }
   </style>
 </head>
@@ -126,7 +126,7 @@ function openCredentialPDF(app, role) {
   <div class="header">
     <div class="logo">L<span style="font-style:normal;font-weight:400">|</span>VE IN <span>BLACK</span></div>
     <div class="ref">
-      <div class="badge">✓ ${roleLabel}</div>
+      <div class="badge">${roleLabel}</div>
       <div style="margin-top:8px">Réf. ${refId}</div>
       <div>Émis le ${new Date().toLocaleDateString('fr-FR')}</div>
     </div>
@@ -142,7 +142,7 @@ function openCredentialPDF(app, role) {
   </div>
 
   <div class="seal">
-    <div class="seal-icon">✓</div>
+    <div class="seal-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
     <div class="seal-text">${roleDesc}</div>
   </div>
 
@@ -251,11 +251,10 @@ const S = {
     gap: '20px',
   },
   card: {
-    background: 'rgba(8,10,20,0.55)',
-    backdropFilter: 'blur(22px) saturate(1.6)',
-    WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: '12px',
+    background: '#0e0f16',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '16px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
     padding: '16px',
   },
   label: {
@@ -285,7 +284,7 @@ const S = {
   sectionTitle: {
     fontFamily: 'Inter, sans-serif',
     fontWeight: 800,
-    fontSize: '28px',
+    fontSize: '24px',
     letterSpacing: '-0.5px',
     color: '#fff',
   },
@@ -297,9 +296,9 @@ const S = {
   },
   input: {
     width: '100%',
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: '12px',
+    background: '#0b0c12',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '10px',
     fontFamily: 'Inter, sans-serif',
     fontSize: '14px',
     color: 'rgba(255,255,255,0.92)',
@@ -309,63 +308,66 @@ const S = {
     transition: 'border-color 0.18s',
   },
   inputFocus: {
-    borderColor: '#4ee8c8',
-    boxShadow: '0 0 0 3px rgba(78,232,200,0.06)',
+    borderColor: '#8444ff',
+    boxShadow: '0 0 0 3px rgba(132,68,255,0.08)',
   },
   inputError: {
     borderColor: 'rgba(239,68,68,0.6)',
   },
   inputLabel: {
     fontFamily: 'Inter, sans-serif',
-    fontSize: '10px',
-    fontWeight: 700,
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.4)',
+    fontSize: '12px',
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.6)',
     display: 'block',
     marginBottom: '8px',
   },
   btnPrimary: {
     width: '100%',
-    padding: '14px 28px',
-    background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)',
-    border: 'none',
-    borderRadius: '999px',
+    padding: '13px 20px',
+    background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: '12px',
     fontFamily: 'Inter, sans-serif',
-    fontSize: '13px',
+    fontSize: '14px',
     fontWeight: 700,
-    letterSpacing: '0.01em',
-    color: '#04040b',
+    color: '#fff',
     cursor: 'pointer',
     transition: 'opacity 0.18s, transform 0.18s',
-    boxShadow: '0 8px 24px -8px rgba(78,232,200,0.5)',
+    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
   },
   btnGold: {
     width: '100%',
-    padding: '14px 28px',
-    background: 'linear-gradient(135deg, #c8a96e, #e0c690)',
-    border: 'none',
-    borderRadius: '999px',
+    padding: '13px 20px',
+    background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: '12px',
     fontFamily: 'Inter, sans-serif',
-    fontSize: '13px',
+    fontSize: '14px',
     fontWeight: 700,
-    letterSpacing: '0.01em',
-    color: '#04040b',
+    color: '#fff',
     cursor: 'pointer',
     transition: 'opacity 0.18s, transform 0.18s',
-    boxShadow: '0 8px 24px -8px rgba(200,169,110,0.5)',
+    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
+  },
+  btnDisabled: {
+    background: 'rgba(255,255,255,0.07)',
+    color: 'rgba(255,255,255,0.35)',
+    border: '1px solid rgba(255,255,255,0.06)',
+    cursor: 'not-allowed',
+    boxShadow: 'none',
   },
   btnGhost: {
     flex: 1,
     padding: '12px',
-    background: 'rgba(255,255,255,0.05)',
+    background: 'rgba(255,255,255,0.08)',
     border: '1px solid rgba(255,255,255,0.14)',
-    borderRadius: '999px',
+    borderRadius: '12px',
     fontFamily: 'Inter, sans-serif',
     fontSize: '13px',
     fontWeight: 600,
     letterSpacing: '0.01em',
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.9)',
     cursor: 'pointer',
   },
   backBtn: {
@@ -386,11 +388,11 @@ const S = {
     margin: '8px 0',
   },
   emptyIcon: {
-    width: '44px',
-    height: '44px',
-    borderRadius: '12px',
+    width: '56px',
+    height: '56px',
+    borderRadius: '50%',
     border: '1px solid rgba(255,255,255,0.08)',
-    background: 'rgba(255,255,255,0.03)',
+    background: 'rgba(255,255,255,0.05)',
     margin: '0 auto 12px',
     display: 'flex',
     alignItems: 'center',
@@ -398,14 +400,14 @@ const S = {
   },
   emptyText: {
     fontFamily: 'Inter, sans-serif',
-    fontSize: '13px',
-    fontWeight: 600,
-    color: 'rgba(255,255,255,0.4)',
+    fontSize: '15px',
+    fontWeight: 700,
+    color: 'rgba(255,255,255,0.9)',
   },
   emptySubText: {
     fontFamily: 'Inter, sans-serif',
-    fontSize: '12px',
-    color: 'rgba(255,255,255,0.25)',
+    fontSize: '13px',
+    color: 'rgba(255,255,255,0.5)',
     marginTop: '6px',
   },
 }
@@ -992,8 +994,8 @@ export default function ProfilePage() {
     const hintStyle = { fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.38)', margin: '6px 0 0', lineHeight: 1.5 }
     const msgBox = msg => msg && (
       <div style={{
-        padding: '10px 14px', borderRadius: 4,
-        fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.05em', lineHeight: 1.5,
+        padding: '10px 14px', borderRadius: 10,
+        fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, lineHeight: 1.5,
         ...(msg.type === 'success'
           ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
           : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
@@ -1011,7 +1013,7 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
             {/* ── Interface active : périmètre des réglages ── */}
-            <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.22)' }}>
+            <div style={{ padding: '12px 16px', borderRadius: 12, background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderLeft: '3px solid #c8a96e' }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6 }}>
                 Interface active : <strong style={{ color: '#c8a96e' }}>{roleLabel}</strong>.
                 {user?.role === 'prestataire' ? ' Tu peux modifier ici ton compte ET les infos publiques de ton interface prestataire.'
@@ -1034,15 +1036,15 @@ export default function ProfilePage() {
                     style={nameOnCooldown ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   />
                   {nameOnCooldown && (
-                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: 9, letterSpacing: '0.12em', color: 'rgba(200,169,110,0.7)', marginTop: 6 }}>
-                      ⏳ Prochain changement possible le {formatNextDate(nextNameChange)}
+                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: 11, fontWeight: 500, color: 'rgba(200,169,110,0.8)', marginTop: 6 }}>
+                      Prochain changement possible le {formatNextDate(nextNameChange)}
                     </p>
                   )}
                 </div>
                 {settingsMsg && (
                   <div style={{
-                    padding: '10px 14px', borderRadius: 4,
-                    fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.05em',
+                    padding: '10px 14px', borderRadius: 10,
+                    fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
                     ...(settingsMsg.type === 'success'
                       ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
                       : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
@@ -1051,9 +1053,9 @@ export default function ProfilePage() {
                 <button
                   onClick={saveName}
                   disabled={saving || !nameChanged}
-                  style={{ ...S.btnGold, opacity: (saving || !nameChanged) ? 0.45 : 1, cursor: (saving || !nameChanged) ? 'not-allowed' : 'pointer' }}
+                  style={{ ...S.btnGold, ...((saving || !nameChanged) ? S.btnDisabled : {}) }}
                 >
-                  {saving ? 'Enregistrement...' : 'Enregistrer le nom'}
+                  {saving ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Enregistrement…</> : 'Enregistrer le nom'}
                 </button>
 
                 <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
@@ -1073,9 +1075,9 @@ export default function ProfilePage() {
                 <button
                   onClick={savePhonePerso}
                   disabled={savingPhone || phoneForm.trim() === (user?.phone || '')}
-                  style={{ ...S.btnGold, opacity: (savingPhone || phoneForm.trim() === (user?.phone || '')) ? 0.45 : 1, cursor: (savingPhone || phoneForm.trim() === (user?.phone || '')) ? 'not-allowed' : 'pointer' }}
+                  style={{ ...S.btnGold, ...((savingPhone || phoneForm.trim() === (user?.phone || '')) ? S.btnDisabled : {}) }}
                 >
-                  {savingPhone ? 'Enregistrement...' : 'Enregistrer le téléphone'}
+                  {savingPhone ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Enregistrement…</> : 'Enregistrer le téléphone'}
                 </button>
               </div>
             </div>
@@ -1111,9 +1113,9 @@ export default function ProfilePage() {
                     <button
                       onClick={saveProviderSettings}
                       disabled={savingProvider}
-                      style={{ ...S.btnGold, opacity: savingProvider ? 0.45 : 1, cursor: savingProvider ? 'not-allowed' : 'pointer' }}
+                      style={{ ...S.btnGold, ...(savingProvider ? S.btnDisabled : {}) }}
                     >
-                      {savingProvider ? 'Enregistrement...' : 'Enregistrer les infos prestataire'}
+                      {savingProvider ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Enregistrement…</> : 'Enregistrer les infos prestataire'}
                     </button>
                     <button onClick={() => navigate('/proposer')} style={{ ...S.btnGhost, width: '100%' }}>
                       Gérer ma page complète — photos, présentation, catalogue
@@ -1154,9 +1156,9 @@ export default function ProfilePage() {
                     <button
                       onClick={saveOrgSettings}
                       disabled={savingOrg}
-                      style={{ ...S.btnGold, opacity: savingOrg ? 0.45 : 1, cursor: savingOrg ? 'not-allowed' : 'pointer' }}
+                      style={{ ...S.btnGold, ...(savingOrg ? S.btnDisabled : {}) }}
                     >
-                      {savingOrg ? 'Enregistrement...' : 'Enregistrer le nom public'}
+                      {savingOrg ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Enregistrement…</> : 'Enregistrer le nom public'}
                     </button>
                     <button onClick={() => navigate('/ma-page-organisateur')} style={{ ...S.btnGhost, width: '100%' }}>
                       Gérer ma page organisateur — photos, description, médias
@@ -1181,7 +1183,7 @@ export default function ProfilePage() {
                   <div key={i} style={{ padding: '10px 0', borderTop: i ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600, color: '#fff' }}>{row.what}</span>
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c8a96e', background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.25)', padding: '2px 7px', borderRadius: 999 }}>{row.tag}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#c8a96e', background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.35)', padding: '2px 8px', borderRadius: 8 }}>{row.tag}</span>
                     </div>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,0.45)', margin: '4px 0 0', lineHeight: 1.5 }}>{row.where}</p>
                   </div>
@@ -1208,7 +1210,7 @@ export default function ProfilePage() {
                   ) : (
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.35)', margin: '0 0 16px' }}>Tu n’as pas encore renseigné tes goûts.</p>
                   )}
-                  <button onClick={() => setPrefsModalOpen(true)} style={{ ...S.btnGold, background: 'linear-gradient(135deg, #8444ff, #a56bff)', color: '#fff' }}>
+                  <button onClick={() => setPrefsModalOpen(true)} style={S.btnGold}>
                     {summary.length > 0 ? 'Modifier mes goûts' : 'Renseigner mes goûts'}
                   </button>
                 </div>
@@ -1242,26 +1244,26 @@ export default function ProfilePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
                 {/* E-mail actuel affiché */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.03em' }}>{user?.email}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(78,232,200,0.7)', textTransform: 'uppercase' }}>Actuel</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{user?.email}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: '#4ee8c8', textTransform: 'uppercase' }}>Actuel</span>
                 </div>
 
                 {/* Bannière en attente */}
                 {emailPending && (
-                  <div style={{ padding: '10px 14px', borderRadius: 4, background: 'rgba(251,146,60,0.07)', border: '1px solid rgba(251,146,60,0.3)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <span style={{ fontSize: 14, marginTop: 1 }}>⏳</span>
+                  <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(251,146,60,0.07)', border: '1px solid rgba(251,146,60,0.3)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ marginTop: 1, display: 'flex', color: 'rgba(251,146,60,0.9)' }}><IconHourglass size={15} /></span>
                     <div>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(251,146,60,0.9)', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: 'rgba(251,146,60,0.9)', marginBottom: 3 }}>
                         Vérification en attente
                       </p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.03em' }}>
-                        Un lien a été envoyé à <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{emailPending}</strong>. Ouvre-le pour confirmer le changement.
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+                        Un lien a été envoyé à <strong style={{ color: 'rgba(255,255,255,0.8)' }}>{emailPending}</strong>. Ouvre-le pour confirmer le changement.
                       </p>
                       <button
                         onClick={() => setEmailPending(null)}
-                        style={{ marginTop: 8, background: 'none', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(251,146,60,0.6)', cursor: 'pointer', padding: 0 }}
+                        style={{ marginTop: 8, background: 'none', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(251,146,60,0.75)', cursor: 'pointer', padding: 0 }}
                       >
                         Annuler la demande
                       </button>
@@ -1287,7 +1289,7 @@ export default function ProfilePage() {
                       onChange={e => setEmailForm(f => ({ ...f, password: e.target.value }))}
                     />
                     {user?.role === 'organisateur' && (
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.1em', color: 'rgba(78,232,200,0.55)', lineHeight: 1.6 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(78,232,200,0.75)', lineHeight: 1.6 }}>
                         Cet e-mail est aussi utilisé comme e-mail professionnel de ton dossier.
                       </p>
                     )}
@@ -1296,8 +1298,8 @@ export default function ProfilePage() {
 
                 {emailMsg && (
                   <div style={{
-                    padding: '10px 14px', borderRadius: 4,
-                    fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.05em', lineHeight: 1.5,
+                    padding: '10px 14px', borderRadius: 10,
+                    fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, lineHeight: 1.5,
                     ...(emailMsg.type === 'success'
                       ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
                       : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
@@ -1310,11 +1312,10 @@ export default function ProfilePage() {
                     disabled={sendingEmailVerif || !emailForm.newEmail || !emailForm.password}
                     style={{
                       ...S.btnGold,
-                      opacity: (sendingEmailVerif || !emailForm.newEmail || !emailForm.password) ? 0.45 : 1,
-                      cursor: (sendingEmailVerif || !emailForm.newEmail || !emailForm.password) ? 'not-allowed' : 'pointer',
+                      ...((sendingEmailVerif || !emailForm.newEmail || !emailForm.password) ? S.btnDisabled : {}),
                     }}
                   >
-                    {sendingEmailVerif ? 'Envoi en cours...' : 'Envoyer le lien de vérification'}
+                    {sendingEmailVerif ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Envoi…</> : 'Envoyer le lien de vérification'}
                   </button>
                 )}
               </div>
@@ -1347,7 +1348,7 @@ export default function ProfilePage() {
                         <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: 2, transition: 'width 0.3s ease, background 0.3s ease' }} />
                         </div>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: s.color, marginTop: 4 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: s.color, marginTop: 4 }}>
                           FORCE : {s.label}
                         </p>
                       </div>
@@ -1365,8 +1366,8 @@ export default function ProfilePage() {
 
                 {passwordMsg && (
                   <div style={{
-                    padding: '10px 14px', borderRadius: 4,
-                    fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.05em',
+                    padding: '10px 14px', borderRadius: 10,
+                    fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
                     ...(passwordMsg.type === 'success'
                       ? { background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.22)', color: '#4ee8c8' }
                       : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
@@ -1378,11 +1379,10 @@ export default function ProfilePage() {
                   disabled={savingPassword || !passwordForm.current || !passwordForm.new || !passwordForm.confirm}
                   style={{
                     ...S.btnGold,
-                    opacity: (savingPassword || !passwordForm.current || !passwordForm.new || !passwordForm.confirm) ? 0.45 : 1,
-                    cursor: (savingPassword || !passwordForm.current || !passwordForm.new || !passwordForm.confirm) ? 'not-allowed' : 'pointer',
+                    ...((savingPassword || !passwordForm.current || !passwordForm.new || !passwordForm.confirm) ? S.btnDisabled : {}),
                   }}
                 >
-                  {savingPassword ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
+                  {savingPassword ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Mise à jour…</> : 'Mettre à jour le mot de passe'}
                 </button>
 
                 {/* Mot de passe oublié */}
@@ -1391,15 +1391,15 @@ export default function ProfilePage() {
                   disabled={sendingReset}
                   style={{
                     background: 'none', border: 'none', padding: '4px 0',
-                    fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em',
-                    textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)',
+                    fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
+                    color: 'rgba(255,255,255,0.55)',
                     cursor: sendingReset ? 'wait' : 'pointer', textDecoration: 'underline',
-                    textDecorationColor: 'rgba(255,255,255,0.15)',
+                    textDecorationColor: 'rgba(255,255,255,0.25)',
                     opacity: sendingReset ? 0.5 : 1,
                     textAlign: 'left',
                   }}
                 >
-                  {sendingReset ? 'Envoi...' : 'Mot de passe oublié ? Recevoir un lien de réinitialisation'}
+                  {sendingReset ? 'Envoi…' : 'Mot de passe oublié ? Recevoir un lien de réinitialisation'}
                 </button>
               </div>
             </div>
@@ -1407,16 +1407,16 @@ export default function ProfilePage() {
             {/* ── Zone danger ── */}
             <div style={{ marginTop: 8 }}>
               <hr style={S.divider} />
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.18)', margin: '16px 0 10px' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '16px 0 10px' }}>
                 Zone de danger
               </p>
               <button
                 onClick={() => { setShowDeleteConfirm(true); setDeletePassword(''); setDeleteError('') }}
                 style={{
-                  width: '100%', padding: '12px 28px', borderRadius: 4,
-                  background: 'rgba(220,50,50,0.07)', border: '1px solid rgba(220,50,50,0.28)',
-                  fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.2em',
-                  textTransform: 'uppercase', color: 'rgba(220,100,100,0.75)', cursor: 'pointer',
+                  width: '100%', padding: '13px 20px', borderRadius: 12,
+                  background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)',
+                  fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+                  color: '#fff', cursor: 'pointer',
                 }}
               >
                 Supprimer mon compte
@@ -1432,24 +1432,24 @@ export default function ProfilePage() {
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(10px)' }} onClick={() => setShowDeleteConfirm(false)} />
           <div style={{
             position: 'relative', width: '100%', maxWidth: 340,
-            background: 'rgba(8,10,20,0.97)', border: '1px solid rgba(220,50,50,0.35)',
-            borderRadius: 10, padding: '28px 24px',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+            background: '#12131c', border: '1px solid rgba(224,90,170,0.35)',
+            borderRadius: 20, padding: '28px 24px',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
           }}>
             {/* Icon */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.32)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
                 </svg>
               </div>
             </div>
 
-            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 22, color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: 8 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 20, color: 'rgba(255,255,255,0.93)', textAlign: 'center', marginBottom: 8 }}>
               Supprimer mon compte
             </p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', textAlign: 'center', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 20 }}>
-              Cette action est <span style={{ color: 'rgba(220,100,100,0.8)' }}>irréversible</span>. Toutes tes données, billets et solde seront définitivement supprimés.
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 1.6, marginBottom: 20 }}>
+              Cette action est <span style={{ color: '#e05aaa', fontWeight: 600 }}>irréversible</span>. Toutes tes données, billets et solde seront définitivement supprimés.
             </p>
 
             <label style={S.inputLabel}>Confirme avec ton mot de passe</label>
@@ -1461,14 +1461,14 @@ export default function ProfilePage() {
                 onChange={e => { setDeletePassword(e.target.value); setDeleteError('') }}
                 style={{
                   ...S.input,
-                  borderColor: deleteError ? 'rgba(220,50,50,0.5)' : 'rgba(255,255,255,0.10)',
+                  borderColor: deleteError ? 'rgba(224,90,170,0.6)' : 'rgba(255,255,255,0.12)',
                 }}
                 autoFocus
               />
             </div>
 
             {deleteError && (
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginBottom: 12 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: '#e87bb9', marginBottom: 12 }}>
                 {deleteError}
               </p>
             )}
@@ -1484,14 +1484,15 @@ export default function ProfilePage() {
                 onClick={handleDeleteAccount}
                 disabled={!deletePassword || deleting}
                 style={{
-                  flex: 1, padding: '12px', borderRadius: 4,
-                  background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.40)',
-                  fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.15em',
-                  textTransform: 'uppercase', color: 'rgba(220,100,100,0.9)', cursor: !deletePassword || deleting ? 'not-allowed' : 'pointer',
-                  opacity: !deletePassword || deleting ? 0.5 : 1, transition: 'opacity 0.2s',
+                  flex: 1, padding: '12px', borderRadius: 12,
+                  fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700,
+                  transition: 'background 0.2s',
+                  ...((!deletePassword || deleting)
+                    ? S.btnDisabled
+                    : { background: '#c2347f', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', cursor: 'pointer' }),
                 }}
               >
-                {deleting ? 'Suppression...' : 'Confirmer'}
+                {deleting ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Suppression…</> : 'Supprimer'}
               </button>
             </div>
           </div>
@@ -1544,35 +1545,35 @@ export default function ProfilePage() {
           <style>{`
             .ticket-wallet-page{max-width:1180px!important}
             .ticket-wallet-list{display:flex;flex-direction:column;gap:18px}
-            .ticket-event-group{background:rgba(8,9,17,.78);border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;box-shadow:0 22px 60px rgba(0,0,0,.22)}
-            .ticket-event-head{min-height:112px;position:relative;padding:20px 22px!important;background:linear-gradient(105deg,rgba(18,14,30,.94),rgba(8,9,17,.82));display:flex;align-items:center}
+            .ticket-event-group{background:#0e0f16;border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+            .ticket-event-head{min-height:112px;position:relative;padding:20px 22px!important;background:#12131c;display:flex;align-items:center}
             .ticket-event-thumb{width:76px!important;height:76px!important;border-radius:14px!important}
             .ticket-event-actions{border-top:1px solid rgba(255,255,255,.07);display:flex;background:rgba(0,0,0,.12)}
-            .ticket-playlist-action{min-width:250px;min-height:62px;padding:0 20px;border:0;border-left:1px solid rgba(255,255,255,.08);background:linear-gradient(135deg,rgba(200,169,110,.12),rgba(132,68,255,.08));color:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;transition:background .2s ease,border-color .2s ease}
-            .ticket-playlist-action:hover{background:linear-gradient(135deg,rgba(200,169,110,.2),rgba(132,68,255,.13));border-color:rgba(200,169,110,.32)}
+            .ticket-playlist-action{min-width:250px;min-height:62px;padding:0 20px;border:0;border-left:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;transition:background .2s ease,border-color .2s ease}
+            .ticket-playlist-action:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)}
             .ticket-playlist-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;color:#d9bd82;background:rgba(200,169,110,.1);border:1px solid rgba(200,169,110,.28)}
             .ticket-playlist-copy{flex:1;min-width:0}.ticket-playlist-copy strong{display:block;font:700 12px Inter,sans-serif;color:#fff}.ticket-playlist-copy small{display:block;font:500 9px Inter,sans-serif;color:rgba(255,255,255,.42);margin-top:3px}.ticket-playlist-chevron{color:#c8a96e;font-size:18px}
-            .ticket-stack{padding:18px!important;gap:16px!important;background:radial-gradient(circle at 20% 0%,rgba(78,232,200,.055),transparent 42%)}
+            .ticket-stack{padding:18px!important;gap:16px!important}
             .digital-ticket{position:relative;border:1px solid rgba(255,255,255,.13);border-radius:20px;background:linear-gradient(145deg,#141322,#090a12 68%);overflow:hidden;box-shadow:0 20px 55px rgba(0,0,0,.35)}
-            .digital-ticket:before,.digital-ticket:after{content:'';position:absolute;z-index:3;width:24px;height:24px;border-radius:50%;background:#080912;top:calc(62% - 12px)}
+            .digital-ticket:before,.digital-ticket:after{content:'';position:absolute;z-index:3;width:24px;height:24px;border-radius:50%;background:#0e0f16;top:calc(62% - 12px)}
             .digital-ticket:before{left:-13px}.digital-ticket:after{right:-13px}
             .ticket-pass-top{display:grid;grid-template-columns:minmax(0,1fr) 184px;min-height:210px}
-            .ticket-pass-main{position:relative;padding:28px 30px;overflow:hidden;background:radial-gradient(circle at 0% 0%,rgba(132,68,255,.24),transparent 48%),linear-gradient(120deg,rgba(224,90,170,.11),transparent 60%)}
+            .ticket-pass-main{position:relative;padding:28px 30px;overflow:hidden;background:radial-gradient(circle at 0% 0%,rgba(132,68,255,.14),transparent 48%)}
             .ticket-pass-main:after{content:'LIVE IN BLACK';position:absolute;right:-32px;bottom:-15px;font:800 66px Inter,sans-serif;letter-spacing:-.06em;color:rgba(255,255,255,.025);white-space:nowrap}
-            .ticket-brand{font:800 10px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#4ee8c8}
+            .ticket-brand{font:800 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#4ee8c8}
             .ticket-event-name{max-width:570px;font:800 clamp(24px,3vw,38px)/1.05 Inter,sans-serif;letter-spacing:-.045em;color:#fff;margin:18px 0 24px}
             .ticket-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;position:relative;z-index:1}
-            .ticket-meta-grid span{display:block;font:700 8px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.34);margin-bottom:5px}.ticket-meta-grid strong{font:700 13px Inter,sans-serif;color:rgba(255,255,255,.88);word-break:break-word}
+            .ticket-meta-grid span{display:block;font:700 10px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:5px}.ticket-meta-grid strong{font:700 13px Inter,sans-serif;color:rgba(255,255,255,.88);word-break:break-word}
             .ticket-stub{position:relative;border-left:1px dashed rgba(255,255,255,.22);padding:22px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.025)}
-            .ticket-stub:before,.ticket-stub:after{content:'';position:absolute;left:-10px;width:20px;height:20px;border-radius:50%;background:#080912}.ticket-stub:before{top:-10px}.ticket-stub:after{bottom:-10px}
+            .ticket-stub:before,.ticket-stub:after{content:'';position:absolute;left:-10px;width:20px;height:20px;border-radius:50%;background:#0e0f16}.ticket-stub:before{top:-10px}.ticket-stub:after{bottom:-10px}
             .ticket-qr{padding:9px;background:#fff;border-radius:12px;line-height:0;box-shadow:0 8px 24px rgba(0,0,0,.28)}
-            .ticket-code{font:600 9px Inter,sans-serif;letter-spacing:.08em;color:rgba(255,255,255,.48);margin-top:12px;text-align:center;word-break:break-all}
+            .ticket-code{font:600 10px Inter,sans-serif;letter-spacing:.06em;color:rgba(255,255,255,.48);margin-top:12px;text-align:center;word-break:break-all}
             .ticket-pass-bottom{border-top:1px dashed rgba(255,255,255,.15);padding:15px 22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
             .ticket-pass-action{min-height:42px;padding:0 16px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);font:700 11px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
             .ticket-pass-action.primary{margin-left:auto;background:#4ee8c8;border-color:#4ee8c8;color:#04040b}
-            .ticket-preorders{padding:16px 22px;border-top:1px solid rgba(255,255,255,.07);display:grid;gap:8px}.ticket-preorders-title{font:800 9px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#c8a96e}.ticket-preorder-row{display:flex;justify-content:space-between;gap:16px;font:500 12px Inter,sans-serif;color:rgba(255,255,255,.65)}
+            .ticket-preorders{padding:16px 22px;border-top:1px solid rgba(255,255,255,.07);display:grid;gap:8px}.ticket-preorders-title{font:800 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#c8a96e}.ticket-preorder-row{display:flex;justify-content:space-between;gap:16px;font:500 12px Inter,sans-serif;color:rgba(255,255,255,.65)}
             .ticket-expanded-qr{padding:22px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;gap:13px;background:rgba(0,0,0,.2)}
-            .digital-ticket.is-inactive{border-color:rgba(255,255,255,.06);box-shadow:none;opacity:.9}.digital-ticket.is-inactive .ticket-pass-main{filter:grayscale(.85) saturate(.15);opacity:.55}.ticket-inactive-stub{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}.ticket-inactive-stub svg{color:rgba(255,255,255,.34)}.ticket-inactive-stub strong{font:800 12px Inter,sans-serif;color:rgba(255,255,255,.7)}.ticket-inactive-stub small{font:600 9px Inter,sans-serif;color:rgba(255,255,255,.34);text-transform:uppercase;letter-spacing:.1em}.ticket-pass-expired{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font:700 11px Inter,sans-serif;color:rgba(255,255,255,.45)}
+            .digital-ticket.is-inactive{border-color:rgba(255,255,255,.06);box-shadow:none;opacity:.9}.digital-ticket.is-inactive .ticket-pass-main{filter:grayscale(.85) saturate(.15);opacity:.55}.ticket-inactive-stub{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}.ticket-inactive-stub svg{color:rgba(255,255,255,.34)}.ticket-inactive-stub strong{font:800 12px Inter,sans-serif;color:rgba(255,255,255,.7)}.ticket-inactive-stub small{font:600 10px Inter,sans-serif;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em}.ticket-pass-expired{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font:700 11px Inter,sans-serif;color:rgba(255,255,255,.45)}
             @media(max-width:700px){.ticket-wallet-page{padding-left:12px!important;padding-right:12px!important}.ticket-event-head{min-height:92px;padding:14px!important}.ticket-event-thumb{width:58px!important;height:58px!important}.ticket-event-actions{flex-wrap:wrap}.ticket-playlist-action{width:100%;min-width:0;border-left:0;border-top:1px solid rgba(255,255,255,.07);padding:0 16px}.ticket-pass-top{grid-template-columns:1fr}.ticket-pass-main{padding:24px 22px}.ticket-stub{border-left:0;border-top:1px dashed rgba(255,255,255,.2);padding:20px}.ticket-stub:before,.ticket-stub:after{top:-10px;bottom:auto}.ticket-stub:before{left:-10px}.ticket-stub:after{left:auto;right:-10px}.ticket-meta-grid{grid-template-columns:1fr 1fr}.ticket-event-name{font-size:28px}.ticket-pass-action{flex:1}.ticket-pass-action.primary{margin-left:0;flex-basis:100%}}
           `}</style>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1588,6 +1589,7 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <p style={S.emptyText}>Aucun billet pour l&apos;instant</p>
+              <p style={S.emptySubText}>Tes billets achetés apparaîtront ici, avec leur QR code.</p>
               <button
                 onClick={() => navigate('/evenements')}
                 style={{ ...S.btnGold, width: 'auto', marginTop: '16px', display: 'inline-block' }}
@@ -1643,9 +1645,9 @@ export default function ProfilePage() {
                   >
                     <p style={{
                       fontFamily: 'Inter, sans-serif',
-                      fontWeight: 400,
-                      fontSize: '15px',
-                      color: 'rgba(255,255,255,0.82)',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      color: 'rgba(255,255,255,0.88)',
                       paddingRight: '16px',
                       flex: 1,
                     }}>{item.q}</p>
@@ -1694,7 +1696,7 @@ export default function ProfilePage() {
                 border: 'none', cursor: 'pointer', width: '100%',
               }}
             >
-              {supportCopied ? '✓ Adresse copiée' : 'Copier l’adresse email'}
+              {supportCopied ? 'Adresse copiée' : 'Copier l’adresse e-mail'}
             </button>
             <p style={{ ...S.label, textAlign: 'center', marginTop: '10px', letterSpacing: '0.04em' }}>
               hagechady@liveinblack.com
@@ -1722,11 +1724,11 @@ export default function ProfilePage() {
           <AvatarUpload user={user} setUser={setUser} />
           <h2 style={{
             fontFamily: 'Inter, sans-serif',
-            fontWeight: 300,
-            fontSize: '26px',
-            color: 'rgba(255,255,255,0.92)',
+            fontWeight: 700,
+            fontSize: '24px',
+            color: 'rgba(255,255,255,0.93)',
             marginTop: '14px',
-            letterSpacing: '0.04em',
+            letterSpacing: '-0.3px',
           }}>{(user?.role === 'organisateur' && orgName) ? orgName : user?.name}</h2>
           <p style={{ ...S.label, marginTop: '6px' }}>{user?.email}</p>
           {user?.phone && (
@@ -1736,13 +1738,14 @@ export default function ProfilePage() {
             {user?.role && ROLES[user.role] && (
               <span style={{
                 fontFamily: 'Inter, sans-serif',
-                fontSize: '9px',
-                letterSpacing: '0.2em',
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                padding: '4px 12px',
-                borderRadius: '4px',
-                border: `1px solid ${ROLES[user.role].color}44`,
-                background: `${ROLES[user.role].color}11`,
+                padding: '4px 10px',
+                borderRadius: '8px',
+                border: `1px solid ${ROLES[user.role].color}59`,
+                background: `${ROLES[user.role].color}22`,
                 color: ROLES[user.role].color,
               }}>
                 {ROLES[user.role].label}
@@ -1751,13 +1754,14 @@ export default function ProfilePage() {
             {user?.role !== 'organisateur' && (
               <span style={{
                 fontFamily: 'Inter, sans-serif',
-                fontSize: '9px',
-                letterSpacing: '0.2em',
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                padding: '4px 12px',
-                borderRadius: '4px',
-                border: '1px solid rgba(200,169,110,0.25)',
-                background: 'rgba(200,169,110,0.08)',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(200,169,110,0.35)',
+                background: 'rgba(200,169,110,0.14)',
                 color: '#c8a96e',
               }}>
                 {user?.points || 0} pts
@@ -1769,7 +1773,7 @@ export default function ProfilePage() {
         {/* Stats — organisateur uniquement (nombre d'événements créés) */}
         {user?.role === 'organisateur' && (
           <div style={{ ...S.card, textAlign: 'center', padding: '14px 8px' }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: '28px', color: 'rgba(255,255,255,0.9)', lineHeight: 1 }}>{createdCount}</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '26px', color: 'rgba(255,255,255,0.93)', lineHeight: 1 }}>{createdCount}</p>
             <p style={{ ...S.label, marginTop: '6px' }}>Événements</p>
           </div>
         )}
@@ -1817,14 +1821,13 @@ export default function ProfilePage() {
           style={{
             width: '100%',
             padding: '13px',
-            borderRadius: '4px',
-            border: '1px solid rgba(239,68,68,0.2)',
+            borderRadius: '12px',
+            border: '1px solid rgba(239,68,68,0.3)',
             background: 'transparent',
             fontFamily: 'Inter, sans-serif',
-            fontSize: '11px',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
-            color: 'rgba(239,68,68,0.7)',
+            fontSize: '13px',
+            fontWeight: 600,
+            color: 'rgba(239,68,68,0.85)',
             cursor: 'pointer',
             transition: 'background 0.18s, border-color 0.18s',
           }}
@@ -1863,10 +1866,10 @@ export default function ProfilePage() {
           }}>
             <p style={{
               fontFamily: 'Inter, sans-serif',
-              fontWeight: 300,
-              fontSize: '22px',
+              fontWeight: 700,
+              fontSize: '19px',
               textAlign: 'center',
-              color: 'rgba(255,255,255,0.88)',
+              color: 'rgba(255,255,255,0.93)',
               marginBottom: '10px',
             }}>Se déconnecter ?</p>
             <p style={{ ...S.bodyText, textAlign: 'center', marginBottom: '20px' }}>
@@ -1893,15 +1896,14 @@ export default function ProfilePage() {
                 }}
                 style={{
                   flex: 1,
-                  padding: '11px',
-                  borderRadius: '4px',
-                  background: 'rgba(239,68,68,0.15)',
-                  border: '1px solid rgba(239,68,68,0.3)',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: '#c2347f',
+                  border: '1px solid rgba(255,255,255,0.12)',
                   fontFamily: 'Inter, sans-serif',
-                  fontSize: '11px',
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(239,68,68,0.9)',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#fff',
                   cursor: 'pointer',
                 }}
               >
@@ -1929,14 +1931,12 @@ function MenuRow({ label, onClick, gold = false, icon = null }) {
         justifyContent: 'space-between',
         padding: '14px 16px',
         background: gold
-          ? hovered ? 'rgba(200,169,110,0.12)' : 'rgba(200,169,110,0.07)'
-          : hovered ? 'rgba(255,255,255,0.03)' : 'rgba(8,10,20,0.55)',
-        backdropFilter: 'blur(22px) saturate(1.6)',
-        WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
+          ? hovered ? '#241d12' : '#1a1610'
+          : hovered ? '#14151f' : '#0e0f16',
         border: `1px solid ${gold
           ? hovered ? 'rgba(200,169,110,0.5)' : 'rgba(200,169,110,0.28)'
           : hovered ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.08)'}`,
-        borderRadius: '8px',
+        borderRadius: '12px',
         cursor: 'pointer',
         textAlign: 'left',
         transition: 'background 0.15s, border-color 0.15s',
@@ -1952,10 +1952,11 @@ function MenuRow({ label, onClick, gold = false, icon = null }) {
         )}
         <span style={{
           fontFamily: 'Inter, sans-serif',
-          fontSize: '11px',
-          letterSpacing: '0.12em',
+          fontSize: '12px',
+          fontWeight: 600,
+          letterSpacing: '0.06em',
           textTransform: 'uppercase',
-          color: gold ? '#c8a96e' : hovered ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.52)',
+          color: gold ? '#c8a96e' : hovered ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)',
         }}>{label}</span>
       </span>
       <span style={{ color: gold ? 'rgba(200,169,110,0.6)' : hovered ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.18)', fontSize: '18px' }}>›</span>
@@ -1971,17 +1972,17 @@ function FocusInput({ label, value, onChange, type = 'text', placeholder, hasErr
       <input
         style={{
           width: '100%',
-          background: 'rgba(6,8,16,0.6)',
-          border: `1px solid ${hasError ? 'rgba(239,68,68,0.6)' : focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)'}`,
-          borderRadius: '4px',
+          background: '#0b0c12',
+          border: `1px solid ${hasError ? 'rgba(239,68,68,0.6)' : focused ? '#8444ff' : 'rgba(255,255,255,0.12)'}`,
+          borderRadius: '10px',
           fontFamily: 'Inter, sans-serif',
-          fontSize: '13px',
-          color: 'rgba(255,255,255,0.9)',
-          padding: '11px 14px',
+          fontSize: '14px',
+          color: 'rgba(255,255,255,0.92)',
+          padding: '12px 14px',
           outline: 'none',
           boxSizing: 'border-box',
           transition: 'border-color 0.18s',
-          ...(focused && !hasError ? { boxShadow: '0 0 0 3px rgba(78,232,200,0.06)' } : {}),
+          ...(focused && !hasError ? { boxShadow: '0 0 0 3px rgba(132,68,255,0.08)' } : {}),
         }}
         type={type}
         placeholder={placeholder}
@@ -2528,6 +2529,7 @@ function EventTicketGroup({ group }) {
 function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel = 'Billet expiré', eventDateFallback = '' }) {
   const [showLargeQr, setShowLargeQr] = useState(false)
   const [downloadStatus, setDownloadStatus] = useState('idle')
+  const [storyBusy, setStoryBusy] = useState(false)
   const navigate = useNavigate()
   const token = inactive ? '' : (b.token || (b.ticketCode ? generateTicketToken(b) : ''))
   const qrUrl = token ? `${window.location.origin}/ticket/${token}` : ''
@@ -2583,6 +2585,26 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
     })
     if (res.method === 'copy') flashShare('Lien copié ✓')
     else if (res.method === 'none') flashShare('Partage indisponible sur ce navigateur')
+  }
+
+  // Story 1080×1920 « j'ai ma place » — SANS le QR code (un screenshot suffirait
+  // à voler l'entrée) : uniquement l'affiche, l'événement, la date et la hype.
+  async function shareTicketStory() {
+    if (storyBusy) return
+    setStoryBusy(true)
+    try {
+      const { shareStory } = await import('../utils/storyImage')
+      const res = await shareStory({
+        kicker: 'Billet officiel',
+        title: b.eventName || 'Live in Black',
+        chips: [displayEventDate, b.place || 'Standard', eventForTicket?.city || null],
+        tagline: "J'ai ma place 🎟️",
+        imageUrl: eventForTicket?.imageUrl || null,
+      })
+      if (res.method === 'download') flashShare('Story téléchargée — publie-la depuis ta galerie ✓')
+      else if (res.method === 'none') flashShare('Génération impossible — réessaie.')
+    } catch { flashShare('Génération impossible — réessaie.') }
+    setStoryBusy(false)
   }
 
   function addToCalendar() {
@@ -2763,6 +2785,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
         {includedDef.length > 0 && <button className="ticket-pass-action" onClick={toggleIncluded} style={showIncluded ? {borderColor:'rgba(78,232,200,.45)',color:'#4ee8c8'} : undefined}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 12v8H4v-8"/><path d="M2 7h20v5H2z"/><path d="M12 7v13"/></svg>{showIncluded ? 'Masquer les options' : 'Voir les options incluses'}</button>}
         {b.eventId && b.ticketCode && <button className="ticket-pass-action primary" onClick={() => navigate(`/commander/${b.eventId}/${b.ticketCode}`)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 9h16l-1 11H5L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>Commander sur place</button>}
         <button className="ticket-pass-action" onClick={shareEvent}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
+        <button className="ticket-pass-action" onClick={shareTicketStory} disabled={storyBusy} style={{ borderColor: 'rgba(224,90,170,.4)', color: '#e05aaa', opacity: storyBusy ? 0.6 : 1 }} title="Une belle image 9:16 pour Instagram — sans le QR code"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>{storyBusy ? 'Création…' : 'Partager en story'}</button>
         <button className="ticket-pass-action" onClick={addToCalendar}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</button>
       </>}
     </div>
