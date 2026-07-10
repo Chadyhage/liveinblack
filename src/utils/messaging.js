@@ -322,11 +322,15 @@ export function hideConversationForUser(myId, convId) {
     const muted = JSON.parse(localStorage.getItem('lib_muted_convs') || '{}')
     muted[myId] = (muted[myId] || []).filter(value => String(value) !== id)
     localStorage.setItem('lib_muted_convs', JSON.stringify(muted))
+    const pinned = JSON.parse(localStorage.getItem('lib_pinned_convs') || '{}')
+    pinned[myId] = (pinned[myId] || []).filter(value => String(value) !== id)
+    localStorage.setItem('lib_pinned_convs', JSON.stringify(pinned))
 
     import('./firestore-sync').then(({ syncDoc }) => syncDoc(`user_social/${myId}`, {
       hiddenConversations: all[myId],
       starred: starred[myId],
       mutedConvs: muted[myId],
+      pinnedConvs: pinned[myId],
     })).catch(() => {})
     return all[myId]
   } catch { return [] }
@@ -362,12 +366,22 @@ export function getConversationById(id) {
 
 export function saveConversation(conv) {
   try {
+    // Les groupes historiques n'avaient pas de liste d'admins dédiée. On la
+    // dérive à chaque écriture afin que les nouvelles règles de modération
+    // restent compatibles avec eux, sans perdre les rôles déjà attribués.
+    const nextConv = conv?.type === 'group'
+      ? {
+          ...conv,
+          participantIds: [...new Set((conv.members || []).map(member => member.userId).filter(Boolean))],
+          adminIds: [...new Set((conv.members || []).filter(member => member.role === 'admin').map(member => member.userId).filter(Boolean))],
+        }
+      : conv
     const all = JSON.parse(localStorage.getItem('lib_conversations') || '[]')
-    const idx = all.findIndex(c => c.id === conv.id)
-    if (idx >= 0) all[idx] = conv; else all.push(conv)
+    const idx = all.findIndex(c => c.id === nextConv.id)
+    if (idx >= 0) all[idx] = nextConv; else all.push(nextConv)
     localStorage.setItem('lib_conversations', JSON.stringify(all))
     // Fire-and-forget Firestore sync
-    import('./firestore-sync').then(({ syncDoc }) => syncDoc(`conversations/${conv.id}`, conv)).catch(() => {})
+    import('./firestore-sync').then(({ syncDoc }) => syncDoc(`conversations/${nextConv.id}`, conversationForRemoteSync(nextConv))).catch(() => {})
   } catch {}
 }
 
@@ -407,6 +421,10 @@ export function createGroup(name, creatorId, creatorName, memberIds, memberNames
     avatar: null,
     members,
     participantIds: memberIds, // used by Firestore queries
+    adminIds: [creatorId],
+    // { [memberId]: { untilAtMs, mutedById, mutedByName, createdAt } }
+    // Une date plutôt qu'un booléen rend la sanction automatique et vérifiable.
+    memberMutes: {},
     updatedAt: new Date().toISOString(),
     lastMessage: `Groupe créé par ${creatorName}`,
     pinnedMessageId: null,
@@ -432,7 +450,12 @@ export function leaveGroup(convId, userId, userName) {
       if (wasAdmin && !remaining.some(m => m.role === 'admin')) {
         remaining[0].role = 'admin'
       }
-      all[idx] = { ...conv, members: remaining }
+      all[idx] = {
+        ...conv,
+        members: remaining,
+        participantIds: remaining.map(member => member.userId),
+        adminIds: remaining.filter(member => member.role === 'admin').map(member => member.userId),
+      }
     }
     // Capture reference before any mutation changes its meaning
     const updatedConv = remaining.length > 0 ? all[idx] : null
@@ -441,7 +464,7 @@ export function leaveGroup(convId, userId, userName) {
     if (remaining.length > 0) {
       sendMessage(convId, userId, userName, 'system', `${userName} a quitté le groupe`)
       import('./firestore-sync').then(({ syncDoc }) => {
-        syncDoc(`conversations/${convId}`, updatedConv)
+        syncDoc(`conversations/${convId}`, conversationForRemoteSync(updatedConv))
       }).catch(() => {})
     } else {
       import('./firestore-sync').then(({ syncDelete }) => {
@@ -473,6 +496,115 @@ export function updateGroupInfo(convId, updates) {
     if (!conv) return
     saveConversation({ ...conv, ...updates })
   } catch {}
+}
+
+// ─── Modération de groupe : sourdine temporaire ──────────────────────────────
+// `untilAtMs` reste un nombre pour pouvoir être relu sans ambiguïté depuis le
+// cache local, Firestore et les anciens navigateurs. Les entrées expirées sont
+// considérées inactives immédiatement (même avant le nettoyage du document).
+function toMuteTimestamp(value) {
+  if (Number.isFinite(value)) return Number(value)
+  if (value && Number.isFinite(value.seconds)) return Number(value.seconds) * 1000
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
+
+// localStorage transforme les Date en chaînes ISO. À chaque écriture Firestore,
+// on les recompose donc en Timestamp (via Date) ; sinon une écriture de dernier
+// message pourrait écraser l'échéance serveur et rendre la règle de sourdine
+// inopérante.
+function conversationForRemoteSync(conv) {
+  if (!conv || conv.type !== 'group' || !conv.memberMutes) return conv
+  const memberMutes = Object.fromEntries(Object.entries(conv.memberMutes).map(([memberId, mute]) => {
+    const untilAtMs = toMuteTimestamp(mute?.untilAtMs ?? mute?.untilAt)
+    return [memberId, untilAtMs
+      ? { ...mute, untilAtMs, untilAt: new Date(untilAtMs) }
+      : mute]
+  }))
+  return { ...conv, memberMutes }
+}
+
+export function getGroupMemberMute(convOrId, memberId, now = Date.now()) {
+  const conv = typeof convOrId === 'string' ? getConversationById(convOrId) : convOrId
+  if (!conv || conv.type !== 'group' || !memberId) return null
+  const raw = conv.memberMutes?.[memberId]
+  if (!raw) return null
+  const untilAtMs = toMuteTimestamp(raw.untilAtMs ?? raw.untilAt)
+  if (!untilAtMs || untilAtMs <= now) return null
+  return { ...raw, untilAtMs }
+}
+
+export function isGroupMemberMuted(convOrId, memberId, now = Date.now()) {
+  return !!getGroupMemberMute(convOrId, memberId, now)
+}
+
+// « Jusqu'à réactivation » = échéance à +100 ans (pas d'expiration naturelle).
+// Au-delà de ce seuil d'affichage, l'UI montre « jusqu'à réactivation ».
+export const MEMBER_MUTE_INDEFINITE_MS = 100 * 365 * 24 * 60 * 60 * 1000
+export const MEMBER_MUTE_INDEFINITE_THRESHOLD_MS = 5 * 365 * 24 * 60 * 60 * 1000
+
+export function setGroupMemberMute(convId, adminId, adminName, memberId, durationMs, now = Date.now()) {
+  const conv = getConversationById(convId)
+  if (!conv || conv.type !== 'group') return { ok: false, reason: 'not_group' }
+  const admin = (conv.members || []).find(member => member.userId === adminId)
+  const target = (conv.members || []).find(member => member.userId === memberId)
+  if (!admin || admin.role !== 'admin') return { ok: false, reason: 'not_admin' }
+  if (!target) return { ok: false, reason: 'unknown_member' }
+  // Un administrateur ne peut pas réduire au silence un autre administrateur.
+  // Cette règle évite les conflits de pouvoir et les mises à l'écart abusives.
+  if (target.role === 'admin') return { ok: false, reason: 'target_is_admin' }
+  // durationMs peut valoir MEMBER_MUTE_INDEFINITE_MS pour « jusqu'à réactivation »
+  // (échéance très lointaine → le membre reste muet tant qu'un admin ne lève pas
+  // la sourdine ; la règle serveur compare untilAt > request.time, donc une date
+  // à +100 ans fonctionne sans changement de règle).
+  const safeDuration = Number(durationMs)
+  if (!Number.isFinite(safeDuration) || safeDuration < 60_000 || safeDuration > MEMBER_MUTE_INDEFINITE_MS) {
+    return { ok: false, reason: 'invalid_duration' }
+  }
+
+  const memberMutes = { ...(conv.memberMutes || {}) }
+  Object.keys(memberMutes).forEach(id => {
+    const until = toMuteTimestamp(memberMutes[id]?.untilAtMs ?? memberMutes[id]?.untilAt)
+    if (!until || until <= now) delete memberMutes[id]
+  })
+  const mute = {
+    untilAtMs: now + safeDuration,
+    // Date est sérialisée en Timestamp par Firestore. Elle permet aux règles
+    // serveur de comparer directement l'échéance avec request.time.
+    untilAt: new Date(now + safeDuration),
+    mutedById: adminId,
+    mutedByName: adminName || admin.name || 'Un administrateur',
+    createdAt: new Date(now).toISOString(),
+  }
+  memberMutes[memberId] = mute
+  saveConversation({ ...conv, memberMutes })
+  return { ok: true, mute: { ...mute, memberId, memberName: target.name } }
+}
+
+export function clearGroupMemberMute(convId, adminId, memberId) {
+  const conv = getConversationById(convId)
+  if (!conv || conv.type !== 'group') return { ok: false, reason: 'not_group' }
+  const admin = (conv.members || []).find(member => member.userId === adminId)
+  if (!admin || admin.role !== 'admin') return { ok: false, reason: 'not_admin' }
+  if (!(conv.memberMutes || {})[memberId]) return { ok: true, changed: false }
+  const memberMutes = { ...(conv.memberMutes || {}) }
+  delete memberMutes[memberId]
+  saveConversation({ ...conv, memberMutes })
+  return { ok: true, changed: true }
+}
+
+export function canSendInConversation(convId, senderId, type = 'text', now = Date.now()) {
+  const conv = getConversationById(convId)
+  if (!conv) return { ok: false, reason: 'unknown_conversation' }
+  // Les messages système sont nécessaires pour quitter un groupe ou tracer une
+  // action de modération. Tous les contenus utilisateur restent bloqués.
+  if (type !== 'system' && isGroupMemberMuted(conv, senderId, now)) {
+    return { ok: false, reason: 'muted', mute: getGroupMemberMute(conv, senderId, now) }
+  }
+  return { ok: true }
 }
 
 export function pinMessage(convId, msgId) {
@@ -526,6 +658,8 @@ function syncMessagesToFirestore(convId, msgs) {
 
 // extra: { replyTo: { id, senderName, preview }, forwardedFrom: { senderName, convName } }
 export function sendMessage(convId, senderId, senderName, type, content, extra = {}) {
+  const permission = canSendInConversation(convId, senderId, type)
+  if (!permission.ok) return { blocked: true, reason: permission.reason, mute: permission.mute || null }
   const msgs = getMessages(convId)
   const msg = {
     id: Date.now().toString() + Math.random().toString(36).slice(2),
@@ -566,7 +700,7 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
       // Sync conv + messages to Firestore
       const updatedConv = all[idx]
       import('./firestore-sync').then(({ syncDoc }) => {
-        syncDoc(`conversations/${convId}`, updatedConv)
+        syncDoc(`conversations/${convId}`, conversationForRemoteSync(updatedConv))
       }).catch(() => {})
       syncMessagesToFirestore(convId, updatedMsgs)
     }
@@ -812,27 +946,110 @@ export function getBlockedUsers(myId) {
   try { return JSON.parse(localStorage.getItem('lib_blocked') || '{}')[myId] || [] } catch { return [] }
 }
 
-// ── Mute de conversation (par user) ─────────────────────────────────────────
-// Stocké comme lib_muted_convs = { [userId]: [convId] }, synchronisé dans
-// user_social/{uid}.mutedConvs. Une conv mutée ne compte plus dans le badge
-// non-lus et n'émet pas de notification.
-export function getMutedConvs(myId) {
-  try { return JSON.parse(localStorage.getItem('lib_muted_convs') || '{}')[myId] || [] } catch { return [] }
+// ── Sourdine des NOTIFICATIONS d'une conversation (pour MOI) ──────────────────
+// À ne PAS confondre avec la sourdine d'un MEMBRE (setGroupMemberMute, qui
+// EMPÊCHE ce membre d'écrire). Ici c'est purement personnel : je ne veux plus
+// être notifié par cette conv, éventuellement pour une durée limitée.
+//
+// Modèle : lib_muted_convs = { [userId]: { [convId]: untilMs } }
+//   untilMs === 0  → sourdine « jusqu'à réactivation » (permanente)
+//   untilMs  > now → sourdine temporaire (expire toute seule)
+// Rétrocompat : l'ancien format (tableau de convId) est migré en {convId:0}.
+// Sync : user_social.mutedConvsUntil (map) + mutedConvs (tableau des convs
+// actuellement en sourdine, conservé pour la rétrocompat + le badge).
+export const CONV_MUTE_FOREVER = 0
+
+function readConvMuteMap(myId) {
+  try {
+    const raw = JSON.parse(localStorage.getItem('lib_muted_convs') || '{}')[myId]
+    if (Array.isArray(raw)) { const m = {}; raw.forEach(id => { m[id] = CONV_MUTE_FOREVER }); return m }
+    return raw && typeof raw === 'object' ? raw : {}
+  } catch { return {} }
 }
-export function isConvMuted(myId, convId) {
-  return getMutedConvs(myId).includes(convId)
-}
-export function toggleMuteConv(myId, convId) {
+function writeConvMuteMap(myId, map) {
   try {
     const all = JSON.parse(localStorage.getItem('lib_muted_convs') || '{}')
-    const cur = new Set(all[myId] || [])
-    if (cur.has(convId)) cur.delete(convId); else cur.add(convId)
-    all[myId] = [...cur]
+    all[myId] = map
     localStorage.setItem('lib_muted_convs', JSON.stringify(all))
+  } catch {}
+  // Le tableau dérivé (convs actuellement en sourdine) reste synchronisé pour
+  // le badge et les anciens clients ; la map porte les échéances.
+  const activeList = getMutedConvs(myId)
+  import('./firestore-sync').then(({ syncDoc }) => {
+    syncDoc(`user_social/${myId}`, { mutedConvsUntil: map, mutedConvs: activeList })
+  }).catch(() => {})
+}
+
+// convId → untilMs si en sourdine ACTIVE, sinon null. Nettoie les échéances passées.
+export function getConvMuteUntil(myId, convId, now = Date.now()) {
+  const map = readConvMuteMap(myId)
+  if (!(convId in map)) return null
+  const until = Number(map[convId]) || CONV_MUTE_FOREVER
+  if (until !== CONV_MUTE_FOREVER && until <= now) return null // expirée
+  return until
+}
+// Liste des convs actuellement en sourdine (permanente ou non expirée).
+export function getMutedConvs(myId, now = Date.now()) {
+  const map = readConvMuteMap(myId)
+  let changed = false
+  const out = []
+  for (const [id, v] of Object.entries(map)) {
+    const until = Number(v) || CONV_MUTE_FOREVER
+    if (until === CONV_MUTE_FOREVER || until > now) out.push(id)
+    else { delete map[id]; changed = true } // purge des échéances passées
+  }
+  if (changed) { try {
+    const all = JSON.parse(localStorage.getItem('lib_muted_convs') || '{}'); all[myId] = map
+    localStorage.setItem('lib_muted_convs', JSON.stringify(all))
+  } catch {} }
+  return out
+}
+export function isConvMuted(myId, convId, now = Date.now()) {
+  return getConvMuteUntil(myId, convId, now) !== null
+}
+// durationMs : null/0 = jusqu'à réactivation ; sinon expire après ce délai.
+export function setConvMute(myId, convId, durationMs = null, now = Date.now()) {
+  const map = readConvMuteMap(myId)
+  map[convId] = (!durationMs || durationMs <= 0) ? CONV_MUTE_FOREVER : now + Number(durationMs)
+  writeConvMuteMap(myId, map)
+  return map[convId]
+}
+export function clearConvMute(myId, convId) {
+  const map = readConvMuteMap(myId)
+  if (!(convId in map)) return false
+  delete map[convId]
+  writeConvMuteMap(myId, map)
+  return true
+}
+// Rétrocompat : bascule permanente (muet ⇄ actif).
+export function toggleMuteConv(myId, convId) {
+  if (isConvMuted(myId, convId)) { clearConvMute(myId, convId); return false }
+  setConvMute(myId, convId, null); return true
+}
+
+// ── Épinglage de conversation (par user) ─────────────────────────────────────
+// Stocké comme lib_pinned_convs = { [userId]: [convId] }, synchronisé dans
+// user_social/{uid}.pinnedConvs. Les conversations épinglées remontent en tête
+// de liste (tri stable, ordre habituel conservé entre elles).
+export function getPinnedConvs(myId) {
+  if (!myId) return []
+  try { return JSON.parse(localStorage.getItem('lib_pinned_convs') || '{}')[myId] || [] } catch { return [] }
+}
+export function isConvPinned(myId, convId) {
+  return getPinnedConvs(myId).map(String).includes(String(convId))
+}
+export function togglePinConv(myId, convId) {
+  try {
+    const id = String(convId)
+    const all = JSON.parse(localStorage.getItem('lib_pinned_convs') || '{}')
+    const cur = new Set((all[myId] || []).map(String))
+    if (cur.has(id)) cur.delete(id); else cur.add(id)
+    all[myId] = [...cur]
+    localStorage.setItem('lib_pinned_convs', JSON.stringify(all))
     import('./firestore-sync').then(({ syncDoc }) => {
-      syncDoc(`user_social/${myId}`, { mutedConvs: all[myId] })
+      syncDoc(`user_social/${myId}`, { pinnedConvs: all[myId] })
     }).catch(() => {})
-    return cur.has(convId)
+    return cur.has(id)
   } catch { return false }
 }
 

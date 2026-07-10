@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Layout from '../components/Layout'
 import EmptyState from '../components/EmptyState'
-import { MessagingSearchBar, MessagingQuickActions } from '../components/MessagingActions'
 import {
   getUserId, initUsers, getAllUsers, getUserById, getUserByUsername, searchUsers,
   getInitials, formatTime, formatMsgTime, formatDateSeparator, isSameDay,
@@ -18,7 +17,10 @@ import {
   seedDemoData, DEMO_USERS,
   blockUser, unblockUser, isBlocked, getBlockedUsers, reportUser, deleteConversationHistory, deleteConversationCompletely,
   hideConversationForUser, getHiddenConversationIds, isConversationHidden,
-  editMessage, isConvMuted, toggleMuteConv,
+  editMessage, isConvMuted, toggleMuteConv, setConvMute, clearConvMute, getConvMuteUntil,
+  getGroupMemberMute, isGroupMemberMuted, setGroupMemberMute, clearGroupMemberMute, canSendInConversation,
+  MEMBER_MUTE_INDEFINITE_MS, MEMBER_MUTE_INDEFINITE_THRESHOLD_MS,
+  getPinnedConvs, isConvPinned, togglePinConv,
   toggleStarMessage, isMessageStarred, getStarredMessages,
   getMyPrivacy, userShowsPhoto,
 } from '../utils/messaging'
@@ -38,6 +40,39 @@ const T = {
 }
 const CARD = { background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }
 const INPUT_S = { background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: 'rgba(255,255,255,0.92)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, padding: '12px 14px', outline: 'none', width: '100%', boxSizing: 'border-box' }
+
+// Réduire un MEMBRE au silence (admin) : il ne peut plus écrire dans le groupe.
+const GROUP_MUTE_DURATIONS = [
+  { id: '15m', label: '15 min', ms: 15 * 60 * 1000 },
+  { id: '1h', label: '1 heure', ms: 60 * 60 * 1000 },
+  { id: '8h', label: '8 heures', ms: 8 * 60 * 60 * 1000 },
+  { id: '24h', label: '24 heures', ms: 24 * 60 * 60 * 1000 },
+  { id: '7d', label: '7 jours', ms: 7 * 24 * 60 * 60 * 1000 },
+  { id: 'forever', label: 'Jusqu’à réactivation', ms: MEMBER_MUTE_INDEFINITE_MS },
+]
+
+// Sourdine des NOTIFICATIONS d'un groupe (pour moi) — ms:null = permanent.
+const CONV_MUTE_DURATIONS = [
+  { id: '1h', label: '1 heure', ms: 60 * 60 * 1000 },
+  { id: '8h', label: '8 heures', ms: 8 * 60 * 60 * 1000 },
+  { id: '24h', label: '24 heures', ms: 24 * 60 * 60 * 1000 },
+  { id: 'forever', label: 'Jusqu’à réactivation', ms: null },
+]
+
+function formatMuteUntil(untilAtMs) {
+  if (!Number.isFinite(untilAtMs)) return ''
+  try {
+    return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(untilAtMs))
+  } catch {
+    return new Date(untilAtMs).toLocaleString('fr-FR')
+  }
+}
+// Clause complète : « jusqu'à réactivation » (indéfini) ou « jusqu'au 12 mars 22:00 ».
+function muteUntilClause(untilAtMs) {
+  if (!Number.isFinite(untilAtMs)) return ''
+  if (untilAtMs - Date.now() > MEMBER_MUTE_INDEFINITE_THRESHOLD_MS) return 'jusqu’à réactivation'
+  return `jusqu’au ${formatMuteUntil(untilAtMs)}`
+}
 
 const EMOJIS = ['❤️','😂','😮','😢','😡','👍','👎','🔥','🎉','💀','🤣','😍','😭','🙏','💯','✅']
 
@@ -570,6 +605,8 @@ export default function MessagingPage() {
   const [replyTo, setReplyTo]       = useState(null)     // { id, senderName, preview }
   const [editingMsg, setEditingMsg] = useState(null)     // { id } — édition d'un message texte
   const [muteTick, setMuteTick]     = useState(0)        // force le re-render au toggle mute
+  const [groupMuteTick, setGroupMuteTick] = useState(0)
+  const [convMuteMenuOpen, setConvMuteMenuOpen] = useState(false) // picker de durée sourdine-notifs
   const [highlightedMsgId, setHighlightedMsgId] = useState(null) // message glow on reply-preview click
   const [forwardMsg, setForwardMsg] = useState(null)     // message to forward
 
@@ -582,11 +619,17 @@ export default function MessagingPage() {
   const [showCamera, setShowCamera]               = useState(false) // capture webcam (desktop)
   const [showForwardPicker, setShowForwardPicker] = useState(false)
   const [confirmDialog, setConfirmDialog]         = useState(null)
+  const [groupMuteDialog, setGroupMuteDialog]     = useState(null)
   const [toast, setToast]                         = useState(null)
   const [photoViewer, setPhotoViewer]             = useState(null) // null | { src }
   const [photoPreview, setPhotoPreview]           = useState(null) // null | { dataUrl, blob, viewOnce }
   const [listPhoto, setListPhoto]                 = useState(null) // photo capturée depuis la liste → choix du destinataire
   const listCameraRef                             = useRef(null)
+  const [convMenu, setConvMenu]                   = useState(null) // { convId, x, y, isGroup, otherId, name, deleted } — menu contextuel d'une conversation
+  const [convConfirm, setConvConfirm]             = useState(null) // { label, onConfirm } — confirmation depuis la liste
+  const [showListMenu, setShowListMenu]           = useState(false) // menu ⋮ de l'en-tête de la liste
+  const convPressTimerRef                         = useRef(null)   // timer d'appui long sur une rangée de conversation
+  const convLongPressRef                          = useRef(false)  // true = appui long déclenché → annule le clic d'ouverture
   // Split-view PC (façon WhatsApp) : liste à gauche + conversation à droite.
   const [isDesktop, setIsDesktop]                 = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 768px)')?.matches)
   useEffect(() => {
@@ -595,6 +638,15 @@ export default function MessagingPage() {
     mq.addEventListener?.('change', on)
     return () => mq.removeEventListener?.('change', on)
   }, [])
+
+  // Une sourdine n'a pas besoin d'un nouvel envoi ou d'un rechargement pour se
+  // terminer. Ce léger tick rend immédiatement la zone de saisie au membre.
+  useEffect(() => {
+    const timer = window.setInterval(() => setGroupMuteTick(value => value + 1), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  // Referme le picker de durée quand on change de conversation.
+  useEffect(() => { setConvMuteMenuOpen(false) }, [activeConvId])
 
   // ── New DM search ──
   const [userSearch, setUserSearch]         = useState('')
@@ -981,6 +1033,11 @@ export default function MessagingPage() {
 
   const activeConv  = conversations.find(c => c.id === activeConvId) || getConversationById(activeConvId)
   const amAdmin     = activeConv?.type === 'group' && activeConv?.members?.find(m => m.userId === myId)?.role === 'admin'
+  // Référence explicite au tick : une sourdine arrivée à échéance doit être
+  // retirée de l'interface, même sans nouvelle activité dans le groupe.
+  void groupMuteTick
+  const myGroupMute = activeConv?.type === 'group' ? getGroupMemberMute(activeConv, myId) : null
+  const isMutedInActiveGroup = !!myGroupMute
   const pinnedMsg   = activeConv?.pinnedMessageId ? messages.find(m => m.id === activeConv.pinnedMessageId) : null
 
   // Téléphone de l'interlocuteur (conv directe) — fetché à la demande depuis Firestore
@@ -1014,9 +1071,21 @@ export default function MessagingPage() {
   }, [directOtherId])
 
   // ── Send text ──
+  function ensureCanSend(convId = activeConvId, type = 'text') {
+    const permission = canSendInConversation(convId, myId, type)
+    if (permission.ok) return true
+    if (permission.reason === 'muted') {
+      showToast(`Tu es en sourdine dans ce groupe ${muteUntilClause(permission.mute?.untilAtMs)} — tu ne peux pas écrire.`, 'error')
+    } else {
+      showToast('Cette conversation n’est plus disponible.', 'error')
+    }
+    return false
+  }
+
   function handleSend() {
     const text = inputText.trim()
     if (!text || !activeConvId) return
+    if (!ensureCanSend()) return
     // Mode édition : on modifie le message existant au lieu d'en envoyer un nouveau
     if (editingMsg) {
       editMessage(activeConvId, editingMsg.id, myId, text)
@@ -1134,6 +1203,7 @@ export default function MessagingPage() {
   // « appareil photo » depuis la liste des conversations).
   async function sendPhotoTo(convId, photo, extra = {}) {
     if (!photo || !convId) return
+    if (!ensureCanSend(convId, 'image')) return
     const { dataUrl, file } = photo
     let blob = file
     try { blob = await compressImage(file) } catch {}
@@ -1164,6 +1234,7 @@ export default function MessagingPage() {
   // ── Voice recording core ──
   async function startRecordingCore(isTap = false) {
     if (mediaRecorderRef.current?.state === 'recording') return
+    if (!ensureCanSend(activeConvId, 'voice')) return
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       // Choisir le bon format selon le navigateur (webm sur Chrome, mp4 sur Safari/iOS)
@@ -1197,7 +1268,7 @@ export default function MessagingPage() {
     const mr = mediaRecorderRef.current
     if (!mr || mr.state !== 'recording') return
     mr.onstop = async () => {
-      if (mr._shouldSend && audioChunksRef.current.length > 0) {
+      if (mr._shouldSend && audioChunksRef.current.length > 0 && ensureCanSend(activeConvId, 'voice')) {
         // Utiliser le vrai mimeType du recorder (webm sur Chrome, mp4 sur Safari)
         const actualMime = mr.mimeType || 'audio/webm'
         const ext = actualMime.includes('mp4') ? 'mp4' : actualMime.includes('ogg') ? 'ogg' : 'webm'
@@ -1306,6 +1377,7 @@ export default function MessagingPage() {
   // ── Send poll ──
   function handleSendPoll() {
     if (!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2 || !activeConvId) return
+    if (!ensureCanSend(activeConvId, 'poll')) return
     const poll = {
       question: pollQuestion.trim(),
       options: pollOptions.filter(o => o.trim()).map((text, i) => ({ id: String(i), text, votes: {} })),
@@ -1319,6 +1391,7 @@ export default function MessagingPage() {
   // ── Send story ──
   function handleSendStory() {
     if (!storyTitle.trim() || !activeConvId) return
+    if (!ensureCanSend(activeConvId, 'story')) return
     const story = { title: storyTitle.trim(), text: storyText.trim(), imageUrl: storyImage }
     const extra = replyTo ? { replyTo } : {}
     sendMessage(activeConvId, myId, myName, 'story', JSON.stringify(story), extra)
@@ -1331,6 +1404,7 @@ export default function MessagingPage() {
   // ── Send event poll (partager l'info, sondage oui/non) ──
   function handleSendEventPoll(event) {
     if (!activeConvId) return
+    if (!ensureCanSend(activeConvId, 'event_poll')) return
     const poll = {
       question: 'On y va ?',
       event: { id: event.id, name: event.name, date: event.date, price: event.price, currency: eventCurrency(event), image: event.image || null },
@@ -1394,6 +1468,7 @@ export default function MessagingPage() {
 
   function handleForwardTo(convId) {
     if (!forwardMsg || !convId) return
+    if (!ensureCanSend(convId, forwardMsg.type)) return
     const fwd = getConversationById(convId)
     const fwdName = fwd?.name || getConvDisplay(fwd)?.name || '?'
     const extra = { forwardedFrom: { senderName: forwardMsg.senderName, convName: getConvDisplay(activeConv)?.name || activeConv?.name || '?' } }
@@ -1496,7 +1571,10 @@ export default function MessagingPage() {
     reportUser(myId, myName, userId, userName, reportReason.trim())
     setShowReportModal(null)
     setReportReason('')
-    setConfirmDialog({ action: 'block_after_report', label: `Bloquer aussi ${userName} ?`, userId, userName })
+    // Le confirmDialog n'est rendu que dans le panneau conversation : depuis la
+    // liste ou les contacts, la relance « Bloquer aussi ? » passe par convConfirm.
+    if (view === 'chat') setConfirmDialog({ action: 'block_after_report', label: `Bloquer aussi ${userName} ?`, userId, userName })
+    else setConvConfirm({ label: `Bloquer aussi ${userName} ?`, onConfirm: () => handleBlockUser(userId, userName) })
   }
 
   // ── Group management ──
@@ -1522,6 +1600,21 @@ export default function MessagingPage() {
     setChatSubView('messages')
     setView('list')
     showToast('Conversation retirée de ta messagerie')
+  }
+  // Masquage depuis la liste (appui long / clic droit) : personnel, ne supprime
+  // rien côté autres participants (cf. hideConversationForUser).
+  function handleHideConversation(convId) {
+    if (!convId || !myId) return
+    hideConversationForUser(myId, convId)
+    removeConversationNotifications(myId, convId)
+    setConversations(getConversations(myId))
+    if (activeConvId === convId) {
+      setMessages([])
+      setActiveConvId(null)
+      setChatSubView('messages')
+      setView('list')
+    }
+    showToast('Conversation masquée')
   }
   function handleRenameGroup() {
     const newName = editGroupName.trim()
@@ -1556,6 +1649,49 @@ export default function MessagingPage() {
       }
     })
   }
+  function openGroupMuteDialog(member) {
+    if (!activeConv || !amAdmin || member?.role === 'admin') return
+    setGroupMuteDialog({ memberId: member.userId, memberName: member.name, durationMs: GROUP_MUTE_DURATIONS[1].ms })
+  }
+  function handleApplyGroupMute() {
+    if (!groupMuteDialog || !activeConvId) return
+    const result = setGroupMemberMute(
+      activeConvId,
+      myId,
+      myName,
+      groupMuteDialog.memberId,
+      groupMuteDialog.durationMs,
+    )
+    if (!result.ok) {
+      const copy = result.reason === 'target_is_admin'
+        ? 'Un administrateur ne peut pas être mis en sourdine.'
+        : 'Impossible de modifier cette sourdine.'
+      showToast(copy, 'error')
+      return
+    }
+    sendMessage(
+      activeConvId,
+      myId,
+      myName,
+      'system',
+      `${groupMuteDialog.memberName} est en sourdine ${muteUntilClause(result.mute.untilAtMs)}.`,
+    )
+    setGroupMuteDialog(null)
+    setGroupMuteTick(value => value + 1)
+    refresh()
+    showToast(`${groupMuteDialog.memberName} ne peut plus envoyer de message ${muteUntilClause(result.mute.untilAtMs)}.`)
+  }
+  function handleClearGroupMute(member) {
+    if (!member || !activeConvId) return
+    const result = clearGroupMemberMute(activeConvId, myId, member.userId)
+    if (!result.ok) { showToast('Impossible de réactiver ce membre.', 'error'); return }
+    if (result.changed) {
+      sendMessage(activeConvId, myId, myName, 'system', `${member.name} peut de nouveau envoyer des messages.`)
+    }
+    setGroupMuteTick(value => value + 1)
+    refresh()
+    showToast(`${member.name} peut de nouveau écrire dans le groupe.`)
+  }
   function handleAddMember(userId) {
     if (!activeConv) return
     const u = getUserById(userId) || allUsers.find(x => x.id === userId)
@@ -1579,7 +1715,9 @@ export default function MessagingPage() {
       action: 'remove_member', label: `Retirer ${removed?.name} du groupe ?`,
       onConfirm: () => {
         const remaining = activeConv.members.filter(m => m.userId !== memberId)
-        saveConversation({ ...activeConv, members: remaining })
+        const memberMutes = { ...(activeConv.memberMutes || {}) }
+        delete memberMutes[memberId]
+        saveConversation({ ...activeConv, members: remaining, memberMutes })
         if (removed) sendMessage(activeConvId, myId, myName, 'system', `${removed.name} a été retiré du groupe`)
         refresh()
       }
@@ -1758,55 +1896,132 @@ export default function MessagingPage() {
   // VIEWS
   // ─────────────────────────────────────────────────────────────────────────────
 
+  // ── Modal de signalement (partagée : liste, contacts, conversation) ──
+  function renderReportModal() {
+    if (!showReportModal) return null
+    return (
+      <>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setShowReportModal(null)} />
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: 24, width: '90%', maxWidth: 320 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 6px' }}>Signaler {showReportModal.userName}</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: T.muted, margin: '0 0 14px' }}>Précise la raison du signalement.</p>
+          <textarea style={{ ...INPUT_S, resize: 'vertical', minHeight: 80, marginBottom: 14, lineHeight: 1.5 }} placeholder="Comportement inapproprié, spam, harcèlement…" value={reportReason} onChange={e => setReportReason(e.target.value)} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => { setShowReportModal(null); setReportReason('') }} style={{ flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Annuler</button>
+            <button onClick={() => handleReport(showReportModal.userId, showReportModal.userName)} disabled={!reportReason.trim()} style={{ flex: 2, padding: '11px', borderRadius: 10, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, ...(!reportReason.trim()
+              ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed' }
+              : { background: '#c2347f', border: 'none', color: '#fff', cursor: 'pointer' }) }}>Signaler</button>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // ── Confirmation générique hors panneau conversation (liste, contacts) ──
+  // Le confirmDialog historique n'est rendu que dans renderChatPane : toute
+  // confirmation déclenchée depuis la liste ou les contacts passe par ici.
+  function renderConvConfirm() {
+    if (!convConfirm) return null
+    return (
+      <>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(0,0,0,0.8)' }} onClick={() => setConvConfirm(null)} />
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: 24, textAlign: 'center', maxWidth: 300, width: '90%' }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15, lineHeight: 1.5, color: 'rgba(255,255,255,0.92)', margin: '0 0 20px' }}>{convConfirm.label}</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setConvConfirm(null)} style={{ flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Annuler</button>
+            <button onClick={() => { convConfirm.onConfirm(); setConvConfirm(null) }} style={{ flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer', background: '#c2347f', border: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700 }}>Valider</button>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   // ── List view ──
   function renderListPane() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: isDesktop ? '100%' : 'auto', minHeight: 0 }}>
-        {/* Header — recherche + actions */}
-        <div style={{ padding: '14px 16px 10px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <MessagingSearchBar value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
+        {/* Header — titre + actions rondes + recherche */}
+        <div style={{ padding: '16px 16px 10px', flexShrink: 0 }}>
+          <style>{`
+            .lib-msg-search::placeholder { color: rgba(255,255,255,0.4); }
+            .lib-round-icon { transition: background 0.15s ease; }
+            .lib-round-icon:hover { background: rgba(255,255,255,0.12) !important; }
+          `}</style>
+          {/* Rangée titre « Messages » + icônes rondes */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>Messages</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              {/* Appareil photo → capture puis choix du destinataire */}
+              <button onClick={() => listCameraRef.current?.click()} aria-label="Appareil photo" className="lib-press lib-round-icon"
+                style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.75)', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </button>
+              {/* Nouvelle discussion (ex « Ajouter un ami ») */}
+              <button onClick={() => { setView('contacts'); setFriends(getFriends(myId)); setRequests(getFriendRequests(myId)); setContactSearch('') }} aria-label="Nouvelle discussion" className="lib-press lib-round-icon"
+                style={{ position: 'relative', width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.75)', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+                {pendingRequests > 0 && (
+                  <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 99, background: '#e05aaa', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', border: '2px solid #0e0f16', boxSizing: 'border-box' }}>{pendingRequests}</span>
+                )}
+              </button>
+              {/* Menu ⋮ */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <button onClick={() => setShowListMenu(v => !v)} aria-label="Plus d'options" className="lib-press lib-round-icon"
+                  style={{ width: 40, height: 40, borderRadius: '50%', background: showListMenu ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.75)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+                </button>
+                {showListMenu && (
+                  <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setShowListMenu(false)} onWheel={() => setShowListMenu(false)} onTouchMove={() => setShowListMenu(false)} />
+                    <div style={{ position: 'absolute', top: 46, right: 0, zIndex: 50, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: 6, minWidth: 214, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
+                      <button onClick={() => { setShowListMenu(false); setView('contacts'); setFriends(getFriends(myId)); setRequests(getFriendRequests(myId)); setContactSearch('') }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, textAlign: 'left', borderRadius: 8 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                        Ajouter un ami
+                        {pendingRequests > 0 && <span style={{ marginLeft: 'auto', minWidth: 18, borderRadius: 9, background: '#e05aaa', color: '#fff', fontSize: 10, fontWeight: 700, textAlign: 'center', padding: '1px 6px' }}>{pendingRequests}</span>}
+                      </button>
+                      <button onClick={() => { setShowListMenu(false); setView('new-group'); setNewGroupStep(1); setNewGroupMembers([]); setNewGroupName(''); setNewGroupAvatar(null) }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, textAlign: 'left', borderRadius: 8 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Créer un groupe
+                      </button>
+                      <button onClick={() => { setShowListMenu(false); setView('starred') }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, textAlign: 'left', borderRadius: 8 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#e0c690" stroke="#e0c690" strokeWidth="1" style={{ flexShrink: 0 }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+                        Importants
+                      </button>
+                      <button onClick={() => { setShowListMenu(false); setView('blocked'); setBlockedUsers(getBlockedUsers(myId)) }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, textAlign: 'left', borderRadius: 8 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Bloqués & signalés
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-            {/* Appareil photo → capture puis choix du destinataire */}
-            <button onClick={() => listCameraRef.current?.click()} aria-label="Appareil photo" className="lib-press"
-              style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 18, background: '#3ed6b5', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#04120e' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            </button>
-            <input ref={listCameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
-              onChange={e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setListPhoto({ dataUrl: ev.target.result, file: f }); r.readAsDataURL(f); e.target.value = '' }} />
           </div>
-          {/* Quick actions — compactes, côte à côte */}
-          <div style={{ marginTop: 8 }}>
-            <MessagingQuickActions
-              friendBadge={pendingRequests}
-              onAddFriend={() => { setView('contacts'); setFriends(getFriends(myId)); setRequests(getFriendRequests(myId)); setContactSearch('') }}
-              onCreateGroup={() => { setView('new-group'); setNewGroupStep(1); setNewGroupMembers([]); setNewGroupName(''); setNewGroupAvatar(null) }}
-            />
+          {/* Barre de recherche — opaque, bien visible */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 46, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, padding: '0 14px', boxSizing: 'border-box' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" value={contactSearch} onChange={e => setContactSearch(e.target.value)} placeholder="Rechercher une conversation…" className="lib-msg-search"
+              style={{ flex: 1, minWidth: 0, height: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500 }} />
           </div>
-          {/* Accès : messages importants + confidentialité (bloqués / signalés) */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button onClick={() => setView('starred')} className="lib-press"
-              style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 14, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.2)', cursor: 'pointer', color: '#e0c690', fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="#e0c690" stroke="#e0c690" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
-              Importants
-            </button>
-            <button onClick={() => { setView('blocked'); setBlockedUsers(getBlockedUsers(myId)) }} className="lib-press"
-              style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Bloqués & signalés
-            </button>
-          </div>
+          <input ref={listCameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setListPhoto({ dataUrl: ev.target.result, file: f }); r.readAsDataURL(f); e.target.value = '' }} />
         </div>
 
         {/* Conversation list (scrollable sur desktop) */}
         <div style={{ flex: isDesktop ? '1 1 0' : 'none', minHeight: 0, overflowY: isDesktop ? 'auto' : 'visible' }}>
         {(() => {
+          const pinnedSet = new Set(getPinnedConvs(myId).map(String))
           const filtered = conversations.filter(conv => {
             if (!contactSearch.trim()) return true
             const d = getConvDisplay(conv)
             return d.name.toLowerCase().includes(contactSearch.toLowerCase()) || conv.lastMessage?.toLowerCase().includes(contactSearch.toLowerCase())
           })
+          // Épinglées en premier — tri stable : ordre habituel conservé au sein de chaque groupe
+          const ordered = [...filtered.filter(c => pinnedSet.has(String(c.id))), ...filtered.filter(c => !pinnedSet.has(String(c.id)))]
           if (filtered.length === 0) return (
             <div style={{ padding: '0 16px' }}>
               <EmptyState
@@ -1822,15 +2037,31 @@ export default function MessagingPage() {
                 Conversations
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {filtered.map(conv => {
+                {ordered.map(conv => {
                   const d = getConvDisplay(conv)
                   const unread = getUnreadCount(conv.id, myId)
                   const muted = isConvMuted(myId, conv.id)
+                  const pinned = pinnedSet.has(String(conv.id))
                   const blockedConv = !d.isGroup && d.otherId ? isBlocked(myId, d.otherId) : false
+                  const openMenuAt = (x, y) => setConvMenu({ convId: conv.id, x, y, isGroup: !!d.isGroup, otherId: d.isGroup ? null : d.otherId, name: d.name, deleted: !!d.deleted })
                   return (
-                    <button key={conv.id} onClick={() => openConv(conv.id)}
+                    <button key={conv.id}
+                      onClick={() => { if (convLongPressRef.current) { convLongPressRef.current = false; return } openConv(conv.id) }}
+                      onContextMenu={e => { e.preventDefault(); openMenuAt(e.clientX, e.clientY) }}
+                      onTouchStart={e => {
+                        const t = e.touches[0]
+                        convLongPressRef.current = false
+                        clearTimeout(convPressTimerRef.current)
+                        convPressTimerRef.current = setTimeout(() => {
+                          convLongPressRef.current = true
+                          try { navigator.vibrate?.(18) } catch {}
+                          openMenuAt(t.clientX, t.clientY)
+                        }, 450)
+                      }}
+                      onTouchMove={() => clearTimeout(convPressTimerRef.current)}
+                      onTouchEnd={e => { clearTimeout(convPressTimerRef.current); if (convLongPressRef.current) e.preventDefault() }}
                       className="group transition-all duration-200 hover:bg-white/[0.04]"
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 16, background: unread > 0 ? 'rgba(122,59,242,0.10)' : 'rgba(255,255,255,0.03)', border: `1px solid ${unread > 0 ? 'rgba(122,59,242,0.28)' : 'rgba(255,255,255,0.06)'}`, cursor: 'pointer', textAlign: 'left', opacity: blockedConv ? 0.55 : 1 }}>
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 16, background: unread > 0 ? 'rgba(122,59,242,0.10)' : 'rgba(255,255,255,0.03)', border: `1px solid ${unread > 0 ? 'rgba(122,59,242,0.28)' : 'rgba(255,255,255,0.06)'}`, cursor: 'pointer', textAlign: 'left', opacity: blockedConv ? 0.55 : 1, WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}>
                       {d.isGroup ? <GroupAvatar conv={conv} size={46} /> : <Avatar user={d.user} size={46} showOnline />}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1842,6 +2073,7 @@ export default function MessagingPage() {
                             {unread > 0 && (muted
                               ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.dim }} />
                               : <span style={{ background: '#7a3bf2', color: '#fff', borderRadius: 10, minWidth: 18, textAlign: 'center', padding: '1px 6px', fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800 }}>{unread}</span>)}
+                            {pinned && <span style={{ display: 'flex', flexShrink: 0 }}><IconPin size={12} color="rgba(255,255,255,0.45)" /></span>}
                             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: T.dim }}>{formatTime(conv.updatedAt)}</span>
                           </div>
                         </div>
@@ -1857,6 +2089,69 @@ export default function MessagingPage() {
           )
         })()}
         </div>
+
+      {/* ── Menu contextuel d'une conversation (appui long / clic droit) ── */}
+      {convMenu && (() => {
+        const pinned = isConvPinned(myId, convMenu.convId)
+        const blocked = !convMenu.isGroup && convMenu.otherId ? isBlocked(myId, convMenu.otherId) : false
+        const items = [
+          {
+            label: pinned ? 'Désépingler' : 'Épingler',
+            icon: <IconPin size={15} color="rgba(255,255,255,0.6)" />,
+            fn: () => { togglePinConv(myId, convMenu.convId); setConversations(getConversations(myId)); showToast(pinned ? 'Conversation désépinglée' : 'Conversation épinglée') },
+          },
+          {
+            label: 'Masquer la conversation',
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>,
+            fn: () => setConvConfirm({ label: 'Masquer cette conversation ? Elle disparaîtra de ta liste mais restera visible pour les autres participants.', onConfirm: () => handleHideConversation(convMenu.convId) }),
+          },
+        ]
+        if (!convMenu.isGroup && convMenu.otherId && !convMenu.deleted) {
+          items.push(blocked
+            ? {
+                label: 'Débloquer',
+                icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>,
+                fn: () => handleUnblockUser(convMenu.otherId, convMenu.name),
+              }
+            : {
+                label: 'Bloquer',
+                danger: true,
+                icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>,
+                fn: () => setConvConfirm({ label: `Bloquer ${convMenu.name} ? Tu ne recevras plus ses messages.`, onConfirm: () => handleBlockUser(convMenu.otherId, convMenu.name) }),
+              })
+          items.push({
+            label: 'Signaler',
+            danger: true,
+            icon: <IconAlert size={15} />,
+            fn: () => setShowReportModal({ userId: convMenu.otherId, userName: convMenu.name }),
+          })
+        }
+        return (
+          <>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setConvMenu(null)} onWheel={() => setConvMenu(null)} onTouchMove={() => setConvMenu(null)} onContextMenu={e => { e.preventDefault(); setConvMenu(null) }} />
+            <div style={{ position: 'fixed', zIndex: 50, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: 6, minWidth: 200, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', left: Math.min(convMenu.x, window.innerWidth - 216), top: Math.min(convMenu.y, window.innerHeight - 60 - items.length * 40) }}>
+              {items.map(item => (
+                <button key={item.label} onClick={() => { item.fn(); setConvMenu(null) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: item.danger ? '#ff9ed2' : 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, textAlign: 'left', borderRadius: 8 }}>
+                  <span style={{ display: 'flex', flexShrink: 0 }}>{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )
+      })()}
+
+      {/* ── Confirmation depuis la liste (masquer / bloquer) ── */}
+      {renderConvConfirm()}
+
+      {/* Signalement + toast — uniquement en vue liste (le panneau conversation a les siens) */}
+      {view === 'list' && renderReportModal()}
+      {view === 'list' && toast && (
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 70, padding: '10px 18px', borderRadius: 12, fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600, color: '#fff', background: 'rgba(12,12,22,0.96)', boxShadow: '0 8px 24px rgba(0,0,0,0.45)', ...(toast.type === 'error' ? { border: '1px solid rgba(224,90,170,0.5)' } : { border: '1px solid rgba(78,232,200,0.5)' }) }}>
+          {toast.msg}
+        </div>
+      )}
 
       {/* ── Appareil photo : choix du destinataire (bottom sheet) ── */}
       {listPhoto && (
@@ -2229,23 +2524,9 @@ export default function MessagingPage() {
           </div>
         )}
 
-        {/* Report modal */}
-        {showReportModal && (
-          <>
-            <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setShowReportModal(null)} />
-            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: 24, width: '90%', maxWidth: 320 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 6px' }}>Signaler {showReportModal.userName}</p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: T.muted, margin: '0 0 14px' }}>Précise la raison du signalement.</p>
-              <textarea style={{ ...INPUT_S, resize: 'vertical', minHeight: 80, marginBottom: 14, lineHeight: 1.5 }} placeholder="Comportement inapproprié, spam, harcèlement…" value={reportReason} onChange={e => setReportReason(e.target.value)} />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => { setShowReportModal(null); setReportReason('') }} style={{ flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Annuler</button>
-                <button onClick={() => handleReport(showReportModal.userId, showReportModal.userName)} disabled={!reportReason.trim()} style={{ flex: 2, padding: '11px', borderRadius: 10, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, ...(!reportReason.trim()
-                  ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed' }
-                  : { background: '#c2347f', border: 'none', color: '#fff', cursor: 'pointer' }) }}>Signaler</button>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Report modal + confirmation (ex : « Bloquer aussi ? » après signalement) */}
+        {renderReportModal()}
+        {renderConvConfirm()}
       </div>
     </Layout>
   )
@@ -2277,43 +2558,74 @@ export default function MessagingPage() {
             </p>
           </div>
           {chatSubView === 'messages' && (
-            <button onClick={() => { setShowMsgSearch(v => !v); setMsgSearch('') }} aria-label="Rechercher" style={{ background: 'none', border: 'none', cursor: 'pointer', color: showMsgSearch ? T.teal : T.dim, padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-            </button>
-          )}
-          {chatSubView === 'messages' && (
-            <button onClick={() => setChatSubView('settings')} aria-label="Paramètres" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <button onClick={() => { setShowMsgSearch(v => !v); setMsgSearch('') }} aria-label="Rechercher" className="lib-round-icon"
+                style={{ width: 40, height: 40, borderRadius: '50%', background: showMsgSearch ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', color: showMsgSearch ? T.teal : 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+              <button onClick={() => setChatSubView('settings')} aria-label="Paramètres" className="lib-round-icon"
+                style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
+            </div>
           )}
           {chatSubView === 'settings' && (
-            <button onClick={() => setChatSubView('messages')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 16, padding: '4px' }}>✕</button>
+            <button onClick={() => setChatSubView('messages')} aria-label="Fermer les paramètres" className="lib-round-icon"
+              style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', color: 'rgba(255,255,255,0.75)', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
           )}
         </div>
 
         {chatSubView === 'settings' ? (
           // ── Settings panel ──
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-            {/* Notifications (mute) — vaut pour groupe ET conversation directe */}
+            {/* Sourdine des NOTIFICATIONS de cette conversation (personnel, avec
+                durée) — À NE PAS confondre avec « réduire un membre au silence »
+                (plus bas, réservé aux admins de groupe, qui EMPÊCHE d'écrire). */}
             {activeConvId && (() => {
-              const convMuted = isConvMuted(myId, activeConvId)
               void muteTick // dépendance pour re-render
+              const until = getConvMuteUntil(myId, activeConvId)
+              const convMuted = until !== null
+              const applyMute = (durationMs) => {
+                setConvMute(myId, activeConvId, durationMs)
+                setConvMuteMenuOpen(false); setMuteTick(t => t + 1); setConversations(getConversations(myId))
+                showToast(durationMs ? `Notifications coupées ${muteUntilClause(Date.now() + durationMs)}` : 'Notifications coupées jusqu’à réactivation')
+              }
               return (
-                <button
-                  onClick={() => { toggleMuteConv(myId, activeConvId); setMuteTick(t => t + 1); setConversations(getConversations(myId)); showToast(isConvMuted(myId, activeConvId) ? 'Conversation en sourdine' : 'Notifications réactivées') }}
-                  style={{ width: '100%', marginBottom: 16, padding: '12px 14px', borderRadius: 10, cursor: 'pointer', background: convMuted ? 'rgba(200,169,110,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${convMuted ? 'rgba(200,169,110,0.25)' : 'rgba(255,255,255,0.08)'}`, color: convMuted ? T.gold : 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    {convMuted
-                      ? <><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></>
-                      : <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>}
-                  </svg>
-                  {convMuted ? 'Réactiver les notifications' : 'Mettre en sourdine'}
-                </button>
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.dim, margin: '0 0 8px' }}>Notifications de cette conversation</p>
+                  {convMuted ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.25)', fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: T.gold }}>
+                        En sourdine {muteUntilClause(until)} — tu ne reçois plus de notification de cette conversation.
+                      </div>
+                      <button onClick={() => { clearConvMute(myId, activeConvId); setMuteTick(t => t + 1); setConversations(getConversations(myId)); showToast('Notifications réactivées') }}
+                        style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.30)', color: T.teal, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700 }}>
+                        Réactiver les notifications
+                      </button>
+                    </div>
+                  ) : convMuteMenuOpen ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {CONV_MUTE_DURATIONS.map(d => (
+                        <button key={d.id} onClick={() => applyMute(d.ms)}
+                          style={{ width: '100%', padding: '11px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left' }}>
+                          Couper les notifications · {d.label}
+                        </button>
+                      ))}
+                      <button onClick={() => setConvMuteMenuOpen(false)} style={{ alignSelf: 'flex-start', background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 0' }}>Annuler</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConvMuteMenuOpen(true)}
+                      style={{ width: '100%', padding: '12px 14px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                      Mettre les notifications en sourdine
+                    </button>
+                  )}
+                </div>
               )
             })()}
             {activeConv?.type === 'group' && (<>
@@ -2377,7 +2689,12 @@ export default function MessagingPage() {
                   <div style={{ flex: 1 }}>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: '#fff', margin: 0 }}>{m.name}</p>
                     <p style={{ fontFamily: T.dmMono, fontSize: 10.5, fontWeight: 600, color: m.role === 'admin' ? T.gold : T.dim, margin: 0 }}>{m.role === 'admin' ? 'Admin' : 'Membre'}</p>
+                    {isGroupMemberMuted(activeConv, m.userId) && <p style={{ fontFamily: T.dmMono, fontSize: 10, fontWeight: 700, color: '#f4b2d8', margin: '3px 0 0' }}>Ne peut pas écrire · {muteUntilClause(getGroupMemberMute(activeConv, m.userId)?.untilAtMs)}</p>}
                   </div>
+                  {amAdmin && m.userId !== myId && m.role !== 'admin' && (isGroupMemberMuted(activeConv, m.userId)
+                    ? <button onClick={() => handleClearGroupMute(m)} style={{ background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.30)', borderRadius: 8, padding: '4px 9px', cursor: 'pointer', color: T.teal, fontFamily: 'Inter, sans-serif', fontSize: 10.5, fontWeight: 700 }}>Réactiver</button>
+                    : <button onClick={() => openGroupMuteDialog(m)} style={{ background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.30)', borderRadius: 8, padding: '4px 9px', cursor: 'pointer', color: '#f4b2d8', fontFamily: 'Inter, sans-serif', fontSize: 10.5, fontWeight: 700 }}>Sourdine</button>
+                  )}
                   {amAdmin && m.userId !== myId && (<>
                     <button onClick={() => handleSetAdmin(m.userId)} style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${m.role === 'admin' ? 'rgba(224,90,170,0.35)' : 'rgba(200,169,110,0.35)'}`, borderRadius: 8, padding: '4px 9px', cursor: 'pointer', color: m.role === 'admin' ? '#ff9ed2' : T.gold, fontFamily: 'Inter, sans-serif', fontSize: 10.5, fontWeight: 600 }}>
                       {m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}
@@ -2603,7 +2920,14 @@ export default function MessagingPage() {
               </div>
             )}
 
-            {!otherBlocked && !convDeleted && (<>
+            {!otherBlocked && !convDeleted && isMutedInActiveGroup && (
+              <div style={{ background: 'linear-gradient(135deg, rgba(224,90,170,0.12), rgba(18,19,28,0.98))', borderTop: '1px solid rgba(224,90,170,0.30)', padding: '15px 16px', display: 'flex', alignItems: 'center', gap: 11 }}>
+                <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(224,90,170,0.16)', color: '#f4b2d8', fontSize: 15 }}>⌁</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.86)', lineHeight: 1.45 }}>Un administrateur t’a mis en sourdine <strong style={{ color: '#f4b2d8' }}>{muteUntilClause(myGroupMute?.untilAtMs)}</strong> : tu peux lire mais pas écrire.</span>
+              </div>
+            )}
+
+            {!otherBlocked && !convDeleted && !isMutedInActiveGroup && (<>
             {/* ── Edit bar ── */}
             {editingMsg && (
               <div style={{ background: 'rgba(200,169,110,0.07)', borderTop: '1px solid rgba(200,169,110,0.18)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2633,7 +2957,10 @@ export default function MessagingPage() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={showAttachMenu ? '#4ee8c8' : 'rgba(255,255,255,0.82)'} strokeWidth="2.4" strokeLinecap="round" style={{ transform: showAttachMenu ? 'rotate(45deg)' : 'none', transition: 'transform 0.25s cubic-bezier(0.22,0.9,0.3,1)' }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
                 {showAttachMenu && (
-                  <div style={{ position: 'absolute', bottom: 48, left: 0, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: 6, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 214, zIndex: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
+                  <div style={{ position: 'absolute', bottom: 48, left: 0, overflow: 'hidden', background: 'linear-gradient(145deg, rgba(18,19,28,0.98), rgba(7,8,15,0.98))', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: 6, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 214, zIndex: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.58), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                    <span aria-hidden="true" style={{ position: 'absolute', right: -18, bottom: -12, pointerEvents: 'none', fontFamily: "'Playfair Display', Georgia, serif", fontSize: 55, fontStyle: 'italic', fontWeight: 800, lineHeight: 0.9, letterSpacing: '-0.04em', color: 'rgba(200,169,110,0.075)', transform: 'rotate(-8deg)' }}>BLACK</span>
+                    <span aria-hidden="true" style={{ position: 'absolute', right: 16, top: 12, pointerEvents: 'none', fontFamily: "'Bebas Neue', Inter, sans-serif", fontSize: 34, fontWeight: 400, letterSpacing: '0.12em', color: 'rgba(78,232,200,0.055)', transform: 'rotate(-8deg)' }}>L|VE IN</span>
+                    <span aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(circle at 88% 15%, rgba(78,232,200,0.12), transparent 30%), radial-gradient(circle at 14% 92%, rgba(200,169,110,0.10), transparent 36%)' }} />
                     {[
                       { label: 'Appareil photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>, action: () => { setShowAttachMenu(false); const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches; if (!coarse && navigator.mediaDevices?.getUserMedia) setShowCamera(true); else cameraInputRef.current?.click() } },
                       { label: 'Photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>, action: () => { photoInputRef.current?.click(); setShowAttachMenu(false) } },
@@ -2641,7 +2968,7 @@ export default function MessagingPage() {
                       { label: 'Partager un événement', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/></svg>, action: () => { setShowEventPicker(true); setShowAttachMenu(false) } },
                     ].map(item => (
                       <button key={item.label} onClick={item.action}
-                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600, textAlign: 'left', borderRadius: 11, width: '100%', transition: 'background 0.15s' }}
+                        style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600, textAlign: 'left', borderRadius: 11, width: '100%', transition: 'background 0.15s' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                         <span style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
@@ -2850,6 +3177,32 @@ export default function MessagingPage() {
         )}
 
         {/* ── Confirm dialog ── */}
+        {groupMuteDialog && (
+          <>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 64, background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(5px)' }} onClick={() => setGroupMuteDialog(null)} />
+            <section role="dialog" aria-modal="true" aria-labelledby="group-mute-title" style={{ position: 'fixed', zIndex: 65, left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 'min(430px, calc(100vw - 32px))', borderRadius: 18, overflow: 'hidden', background: 'linear-gradient(155deg, #19131c 0%, #0d0e15 100%)', border: '1px solid rgba(224,90,170,0.34)', boxShadow: '0 28px 76px rgba(0,0,0,0.68)' }}>
+              <div style={{ padding: '20px 20px 17px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <p style={{ fontFamily: T.dmMono, fontSize: 10, letterSpacing: '0.13em', textTransform: 'uppercase', color: '#f4b2d8', fontWeight: 800, margin: '0 0 8px' }}>Modération du groupe</p>
+                <h2 id="group-mute-title" style={{ fontFamily: 'Inter, sans-serif', color: '#fff', fontSize: 19, lineHeight: 1.25, margin: 0 }}>Mettre {groupMuteDialog.memberName} en sourdine</h2>
+                <p style={{ fontFamily: 'Inter, sans-serif', color: 'rgba(255,255,255,0.55)', fontSize: 12.5, lineHeight: 1.5, margin: '9px 0 0' }}>La personne pourra lire le groupe, mais ne pourra plus envoyer de messages pendant la durée choisie.</p>
+              </div>
+              <div style={{ padding: 20 }}>
+                <p style={{ fontFamily: T.dmMono, color: 'rgba(255,255,255,0.42)', fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>Durée</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                  {GROUP_MUTE_DURATIONS.map(duration => {
+                    const selected = groupMuteDialog.durationMs === duration.ms
+                    return <button key={duration.id} onClick={() => setGroupMuteDialog(current => ({ ...current, durationMs: duration.ms }))} style={{ minHeight: 42, borderRadius: 10, cursor: 'pointer', border: `1px solid ${selected ? 'rgba(224,90,170,0.68)' : 'rgba(255,255,255,0.12)'}`, background: selected ? 'rgba(224,90,170,0.17)' : 'rgba(255,255,255,0.045)', color: selected ? '#ffd2e9' : 'rgba(255,255,255,0.72)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700 }}>{duration.label}</button>
+                  })}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, padding: '0 20px 20px' }}>
+                <button onClick={() => setGroupMuteDialog(null)} style={{ flex: 1, minHeight: 44, borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.86)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700 }}>Annuler</button>
+                <button onClick={handleApplyGroupMute} style={{ flex: 1.28, minHeight: 44, borderRadius: 10, cursor: 'pointer', background: '#e05aaa', border: '1px solid #f388c3', color: '#230817', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, boxShadow: '0 10px 22px rgba(224,90,170,0.24)' }}>Confirmer la sourdine</button>
+              </div>
+            </section>
+          </>
+        )}
+
         {confirmDialog && (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setConfirmDialog(null)} />
@@ -2879,6 +3232,9 @@ export default function MessagingPage() {
           </>
         )}
 
+        {/* ── Report modal (depuis les réglages de la conversation) ── */}
+        {renderReportModal()}
+
         {/* ── Toast ── */}
         {toast && (
           <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 70, padding: '10px 18px', borderRadius: 12, fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600, color: '#fff', background: 'rgba(12,12,22,0.96)', boxShadow: '0 8px 24px rgba(0,0,0,0.45)', ...(toast.type === 'error' ? { border: '1px solid rgba(224,90,170,0.5)' } : { border: '1px solid rgba(78,232,200,0.5)' }) }}>
@@ -2891,6 +3247,8 @@ export default function MessagingPage() {
             0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
             30% { transform: translateY(-4px); opacity: 1; }
           }
+          .lib-round-icon { transition: background 0.15s ease; }
+          .lib-round-icon:hover { background: rgba(255,255,255,0.12) !important; }
         `}</style>
       </div>
 

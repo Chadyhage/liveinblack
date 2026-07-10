@@ -175,6 +175,32 @@ export async function loadTicketsForEvents(eventIds) {
   }
 }
 
+// Charge les profils users/{uid} d'une liste d'uids (lots de 10 — limite du
+// where documentId in). Utilisé par les stats démographiques d'EventStatsPage :
+// titulaire d'un billet → { birthYear, gender, name }. users/ est lisible par
+// tout connecté (règles) ; on ne renvoie que les champs utiles aux stats.
+export async function loadUsersByIds(uids) {
+  const ids = [...new Set((uids || []).map(String))].filter(Boolean)
+  if (!ids.length) return {}
+  try {
+    const { documentId } = await import('firebase/firestore')
+    const out = {}
+    for (let i = 0; i < ids.length; i += 10) {
+      const chunk = ids.slice(i, i + 10)
+      const q = query(collection(db, 'users'), where(documentId(), 'in', chunk))
+      const snap = await getDocs(q)
+      snap.forEach(d => {
+        const u = d.data()
+        out[d.id] = { name: u.name || u.displayName || '', birthYear: u.birthYear ?? null, gender: u.gender ?? null }
+      })
+    }
+    return out
+  } catch (e) {
+    console.warn('[sync] loadUsersByIds failed:', e.message)
+    return {}
+  }
+}
+
 // Listen to ALL prestataire catalogs (collection catalogs/{userId}). Comme les
 // boosts, un catalogue doit être visible par les ACHETEURS (organisateurs/agents)
 // sur n'importe quel device — or getCatalog() ne lit que le localStorage du user
@@ -603,6 +629,10 @@ export async function syncOnLogin(uid, opts = {}) {
           if (userProfile.avatar != null) safeMeta.avatar = userProfile.avatar
           if (userProfile.username) safeMeta.username = userProfile.username
           if (userProfile.nameChangedAt != null) safeMeta.nameChangedAt = userProfile.nameChangedAt
+          // Démographie (stats organisateurs) : rapatriée pour que le profil
+          // s'affiche rempli cross-device. Champs déclaratifs, jamais publics.
+          if (userProfile.birthYear !== undefined) safeMeta.birthYear = userProfile.birthYear
+          if (userProfile.gender !== undefined) safeMeta.gender = userProfile.gender
           // Préférences de goûts (recommandations) : rapatriées SEULEMENT si plus
           // récentes que le local (updatedAt) — sinon un sync en vol écraserait
           // des goûts fraîchement enregistrés sur cet appareil.
@@ -706,9 +736,16 @@ export async function syncOnLogin(uid, opts = {}) {
         b[uid] = social.blocked
         localStorage.setItem('lib_blocked', JSON.stringify(b))
       }
-      if (social.mutedConvs) {
+      // Sourdine des notifs : la MAP avec échéances (mutedConvsUntil) fait
+      // autorité ; on retombe sur le tableau (ancien format) sinon.
+      if (social.mutedConvsUntil && typeof social.mutedConvsUntil === 'object') {
         const m = safeParseObj('lib_muted_convs')
-        m[uid] = social.mutedConvs
+        m[uid] = social.mutedConvsUntil
+        localStorage.setItem('lib_muted_convs', JSON.stringify(m))
+      } else if (social.mutedConvs) {
+        const m = safeParseObj('lib_muted_convs')
+        const map = {}; ;(Array.isArray(social.mutedConvs) ? social.mutedConvs : []).forEach(id => { map[id] = 0 })
+        m[uid] = map
         localStorage.setItem('lib_muted_convs', JSON.stringify(m))
       }
       if (social.pinnedConvs) {
@@ -720,6 +757,9 @@ export async function syncOnLogin(uid, opts = {}) {
         const starred = safeParseObj('lib_starred')
         starred[uid] = social.starred
         localStorage.setItem('lib_starred', JSON.stringify(starred))
+      }
+      if (social.interestedEvents) {
+        localStorage.setItem(`lib_event_interests_${uid}`, JSON.stringify(social.interestedEvents))
       }
     }
 
@@ -915,13 +955,27 @@ export async function pushLocalToFirestore(uid) {
     const hidden = safeParseObj('lib_hidden_conversations')
     const starred = safeParseObj('lib_starred')
     const pinned = safeParseObj('lib_pinned_convs')
+    const interestedEvents = safeParseArray(`lib_event_interests_${uid}`)
+    // muted[uid] est désormais une MAP { convId: untilMs } (ancien format =
+    // tableau, migré). On pousse la map (autorité) + le tableau des convs
+    // actuellement en sourdine (rétrocompat / badge).
+    const muteMapRaw = muted[uid]
+    const muteMap = Array.isArray(muteMapRaw)
+      ? Object.fromEntries(muteMapRaw.map(id => [id, 0]))
+      : (muteMapRaw && typeof muteMapRaw === 'object' ? muteMapRaw : {})
+    const now = Date.now()
+    const activeMuted = Object.entries(muteMap)
+      .filter(([, v]) => Number(v) === 0 || Number(v) > now)
+      .map(([id]) => id)
     syncDoc(`user_social/${uid}`, {
       friends: friends[uid] || [],
       blocked: blocked[uid] || [],
-      mutedConvs: muted[uid] || [],
+      mutedConvs: activeMuted,
+      mutedConvsUntil: muteMap,
       hiddenConversations: hidden[uid] || [],
       starred: starred[uid] || [],
       pinnedConvs: pinned[uid] || [],
+      interestedEvents,
     })
 
     // Friend requests (sent by me)
