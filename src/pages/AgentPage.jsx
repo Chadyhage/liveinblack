@@ -18,7 +18,7 @@ import {
   resolveDeletionRequest,
 } from '../utils/accountDeletion'
 // Source unique des taux (mêmes valeurs que le back-end api/checkout.js)
-import { computeTicketFeeCents } from '../../lib/fees.js'
+import { computeTicketFeeCents, computeTicketFeeXOF } from '../../lib/fees.js'
 import { getProviderCategories, getProviderTypes } from '../utils/providerCategories'
 import { IconCheck, IconEdit } from '../components/icons'
 
@@ -95,7 +95,7 @@ function StatusBadge({ status }) {
     pending:  { label: 'EN ATTENTE', color: '#c8a96e' },
     rejected: { label: 'REFUSÉ',     color: '#e05aaa' },
     banned:   { label: 'BANNI',      color: '#8b8f9c' },
-  }[status] || { label: status.toUpperCase(), color: '#8b8f9c' }
+  }[status] || { label: String(status || 'incomplet').toUpperCase(), color: '#8b8f9c' }
   return (
     <span style={{
       fontFamily: FONTS.mono, fontSize: 11, padding: '2px 8px',
@@ -109,50 +109,16 @@ function StatusBadge({ status }) {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
-// ── Local storage keys à vider lors d'un reset total ──────────────────────
-const LIB_KEYS = [
-  'lib_user', 'lib_users', 'lib_registered_users',
-  'lib_bookings', 'lib_events', 'lib_created_events',
-  'lib_conversations', 'lib_messages', 'lib_wallet', 'lib_social',
-  'lib_pending_validations', 'lib_role_requests', 'lib_applications',
-  'lib_catalog', 'lib_service_orders', 'lib_notifications',
-  'lib_boosts', 'lib_used_tickets', 'lib_deletion_requests',
-  'lib_provider_profiles', 'lib_group_bookings', 'lib_last_read',
-  'lib_friend_requests', 'lib_friends', 'lib_blocked', 'lib_online',
-  'lib_new_contacts', 'lib_event_codes', 'lib_reports', 'lib_typing',
-  'lib_photo_cache',
-]
-
-async function resetAllData() {
-  // 1. Vider localStorage
-  LIB_KEYS.forEach(k => localStorage.removeItem(k))
-
-  // 2. Vider les collections Firestore (sauf users/admin)
-  try {
-    const { db } = await import('../firebase')
-    const { collection, getDocs, deleteDoc, doc } = await import('firebase/firestore')
-    const toDelete = [
-      'users', 'user_social', 'user_bookings', 'user_events', 'wallets',
-      'conversations', 'conv_messages', 'friend_requests',
-      'pending_validations', 'catalogs', 'providers', 'service_orders',
-      'group_bookings', 'applications',
-    ]
-    await Promise.all(toDelete.map(async col => {
-      const snap = await getDocs(collection(db, col))
-      await Promise.all(snap.docs.map(d => deleteDoc(doc(db, col, d.id))))
-    }))
-  } catch (e) {
-    console.error('Reset Firestore partiel :', e)
-  }
-}
+// [retiré] resetAllData / LIB_KEYS : « reset total » orphelin (aucun bouton ne
+// l'appelait) qui aurait supprimé la collection users ENTIÈRE — y compris le
+// doc admin — côté client, sans jamais toucher Firebase Auth (emails verrouillés
+// à vie). Une remise à zéro d'environnement doit passer par un script serveur.
 
 export default function AgentPage() {
   const isAgent = useAgentGuard()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState('dashboard')
-  const [showResetConfirm, setShowResetConfirm] = useState(false)
-  const [resetting, setResetting] = useState(false)
   const [accounts, setAccounts] = useState([])
   const [pending, setPending] = useState([])
   const [roleRequests, setRoleRequests] = useState([])
@@ -189,7 +155,10 @@ export default function AgentPage() {
   }, [])
   const [toast, setToast] = useState(null)
   const [deletionRequests, setDeletionRequests] = useState([])
-  const [delResNote, setDelResNote]             = useState('')  // note admin pour résolution
+  // Notes admin de résolution — indexées PAR demande (un state unique partagé
+  // attachait la note tapée pour B au dossier de A).
+  const [delResNotes, setDelResNotes]           = useState({})
+  const [serverBookings, setServerBookings]     = useState([])  // ventes RÉELLES (webhooks) — jamais lib_bookings (per-device)
   const [sellerBalances, setSellerBalances]     = useState([])  // soldes vendeurs à reverser (ledger)
   const [payoutRequests, setPayoutRequests]     = useState([])  // demandes de virement en attente
   const [reports, setReports]                   = useState([])  // signalements d'utilisateurs
@@ -217,15 +186,19 @@ export default function AgentPage() {
     } catch {}
   }
 
-  async function resolvePaymentAlert(id) {
+  // `docId` = _docId Firestore (les webhooks n'écrivent PAS de champ `id` dans
+  // les docs payment_alerts — utiliser alert.id donnait payment_alerts/undefined
+  // et la clôture échouait systématiquement).
+  async function resolvePaymentAlert(docId) {
     const resolvedAt = new Date().toISOString()
     try {
+      if (!docId) throw new Error('missing_doc_id')
       const { syncDocAwaitable } = await import('../utils/firestore-sync')
-      const result = await syncDocAwaitable(`payment_alerts/${id}`, {
+      const result = await syncDocAwaitable(`payment_alerts/${docId}`, {
         status: 'resolved', resolvedAt, resolvedBy: user?.uid || null,
       })
       if (!result.ok) throw new Error(result.error)
-      setPaymentAlerts(items => items.filter(item => item.id !== id))
+      setPaymentAlerts(items => items.filter(item => item._docId !== docId))
       showToast('Alerte financière clôturée')
     } catch {
       showToast("Impossible de clôturer l'alerte", 'error')
@@ -241,91 +214,169 @@ export default function AgentPage() {
     return u?.name || '—'
   }
 
+  // Sections dont la lecture Firestore a ÉCHOUÉ (permission, hors-ligne…).
+  // Sans ça, un échec s'affichait comme « rien à traiter » — faux all-clear
+  // dangereux sur des obligations financières (reversements, alertes).
+  const [loadErrors, setLoadErrors] = useState([])
+
   useEffect(() => {
     refresh() // immediate local data
     // Then pull fresh data from Firestore
     async function fetchFromFirestore() {
+      const errors = []
       try {
-        const { loadCollection } = await import('../utils/firestore-sync')
+        const { loadCollectionStrict } = await import('../utils/firestore-sync')
         const { fetchApplicationsFromFirestore } = await import('../utils/applications')
-        const [apps, pendingSnap, usersSnap] = await Promise.all([
-          fetchApplicationsFromFirestore(),
-          loadCollection('pending_validations'),
-          loadCollection('users'),
+        const [apps, pendingRes, usersRes] = await Promise.all([
+          fetchApplicationsFromFirestore().catch(() => { errors.push('dossiers'); return null }),
+          loadCollectionStrict('pending_validations'),
+          loadCollectionStrict('users'),
         ])
 
-        // Sync users from Firestore → localStorage so the Comptes tab is populated
-        const existing = getAllAccounts()
-        const merged = [...existing]
-
-        // Always include the current admin account (even if Firestore read fails)
-        try {
-          const currentUser = JSON.parse(localStorage.getItem('lib_user') || 'null')
-          if (currentUser?.uid && !merged.find(a => a.uid === currentUser.uid)) {
-            merged.push(currentUser)
-          }
-        } catch {}
-
-        if (usersSnap.length) {
-          usersSnap.forEach(u => {
-            // Ignorer les docs Firestore fantômes (sans email ni nom — inscriptions abandonnées)
-            if (!u.uid || (!u.email && !u.name)) return
-            const idx = merged.findIndex(a => a.uid === u.uid)
-            if (idx >= 0) merged[idx] = { ...merged[idx], ...u }
-            else merged.push(u)
-          })
+        // ── Comptes : le snapshot Firestore EST la liste (pas de merge-union). ──
+        // L'ancien merge additif gardait à vie les comptes supprimés ailleurs
+        // (fantômes → stats fausses, faux « doublons » qui alimentaient des
+        // suppressions de vrais comptes). On ne conserve en plus que les comptes
+        // purement locaux (uid local-*, mode sans Firebase) et l'admin courant.
+        if (usersRes.ok) {
+          const serverAccounts = usersRes.items.filter(u => u.uid && (u.email || u.name))
+          const serverUids = new Set(serverAccounts.map(u => u.uid))
+          const localOnly = getAllAccounts().filter(a =>
+            a.uid && String(a.uid).startsWith('local-') && !serverUids.has(a.uid)
+          )
+          const reconciled = [...serverAccounts, ...localOnly]
+          try {
+            const currentUser = JSON.parse(localStorage.getItem('lib_user') || 'null')
+            if (currentUser?.uid && !reconciled.find(a => a.uid === currentUser.uid)) {
+              reconciled.push(currentUser)
+            }
+          } catch {}
+          localStorage.setItem('lib_registered_users', JSON.stringify(reconciled))
+        } else {
+          errors.push('comptes')
         }
-        // Filtrer les entrées invalides avant de sauvegarder
-        const cleanMerged = merged.filter(u => u.uid && (u.email || u.name))
-        localStorage.setItem('lib_registered_users', JSON.stringify(cleanMerged))
 
-        if (pendingSnap.length) {
-          const validations = pendingSnap.filter(p => p.type !== 'role_request')
-          const roleReqs = pendingSnap.filter(p => p.type === 'role_request')
-          if (validations.length) localStorage.setItem('lib_pending_validations', JSON.stringify(validations))
-          if (roleReqs.length) {
-            const existing = JSON.parse(localStorage.getItem('lib_role_requests') || '[]')
-            const merged = [...roleReqs, ...existing.filter(e => !roleReqs.find(r => r.id === e.id))]
-            localStorage.setItem('lib_role_requests', JSON.stringify(merged))
-          }
+        // ── Validations / demandes de rôle : le snapshot écrase TOUJOURS le ──
+        // cache (y compris vide), filtré sur status pending — sinon les entrées
+        // traitées sur un autre device ressuscitaient ici indéfiniment.
+        if (pendingRes.ok) {
+          const pendingOnly = pendingRes.items.filter(p => (p.status || 'pending') === 'pending')
+          // Un doc pending_validations est créable par TOUT connecté : on écarte
+          // toute demande visant 'agent' (ou un rôle inconnu) — une carte forgée
+          // « Activer l'espace Admin » validée d'un clic = escalade totale.
+          const validations = pendingOnly.filter(p => p.type !== 'role_request'
+            && (p.role || p.requestedRole) !== 'agent')
+          const roleReqs = pendingOnly.filter(p => p.type === 'role_request'
+            && ['organisateur', 'prestataire'].includes(p.requestedRole))
+          localStorage.setItem('lib_pending_validations', JSON.stringify(validations))
+          localStorage.setItem('lib_role_requests', JSON.stringify(roleReqs))
+        } else {
+          errors.push('validations')
         }
-        setApplications(apps)
+        if (apps) setApplications(apps)
         setPending(getPendingValidations())
         setRoleRequests(getPendingRoleRequests().filter(r => r.status === 'pending'))
         setAccounts(getAllAccounts())
 
         // Demandes de suppression depuis Firestore
-        const delReqs = await fetchDeletionRequestsFromFirestore()
-        setDeletionRequests(delReqs)
+        try {
+          const delReqs = await fetchDeletionRequestsFromFirestore()
+          setDeletionRequests(delReqs)
+        } catch { errors.push('demandes de suppression') }
 
         // Reversements vendeurs : soldes dus + demandes de virement en attente
         // + boosts vendus (surveillance des créneaux Top 3 et des conflits)
-        const [balances, payouts, boosts, alerts] = await Promise.all([
-          loadCollection('seller_balances'),
-          loadCollection('payout_requests'),
-          loadCollection('boosts'),
-          loadCollection('payment_alerts'),
+        const [balances, payouts, boosts, alerts, paidBookings] = await Promise.all([
+          loadCollectionStrict('seller_balances'),
+          loadCollectionStrict('payout_requests'),
+          loadCollectionStrict('boosts'),
+          loadCollectionStrict('payment_alerts'),
+          loadCollectionStrict('bookings'),
         ])
-        setSellerBalances((balances || []).filter(b => Number(b.amountDueCents) > 0))
-        setPayoutRequests((payouts || []).filter(p => p.status === 'pending'))
-        setAdminBoosts((boosts || []).sort((a, b) => new Date(b.purchasedAt || 0) - new Date(a.purchasedAt || 0)))
-        setPaymentAlerts((alerts || []).filter(a => a.status === 'manual_review'))
-      } catch {}
+        // Ventes réelles de la PLATEFORME (docs écrits par les webhooks Stripe/
+        // FedaPay). lib_bookings (localStorage) ne contient que les achats faits
+        // sur CE device — l'utiliser pour les KPI mentait au fondateur.
+        if (paidBookings.ok) setServerBookings(paidBookings.items.filter(b => b.paid === true))
+        else errors.push('ventes (bookings)')
+        // Soldes dus dans LES DEUX devises (le ledger FedaPay crédite amountDueXOF,
+        // jamais amountDueCents — le filtrer sur les seuls cents rendait l'argent
+        // dû aux vendeurs Togo/Bénin invisible).
+        if (balances.ok) setSellerBalances(balances.items.filter(b => Number(b.amountDueCents) > 0 || Number(b.amountDueXOF) > 0))
+        else errors.push('reversements')
+        if (payouts.ok) setPayoutRequests(payouts.items.filter(p => p.status === 'pending'))
+        else errors.push('demandes de virement')
+        if (boosts.ok) setAdminBoosts(boosts.items.sort((a, b) => new Date(b.purchasedAt || 0) - new Date(a.purchasedAt || 0)))
+        else errors.push('boosts')
+        if (alerts.ok) setPaymentAlerts(alerts.items.filter(a => a.status === 'manual_review'))
+        else errors.push('alertes de paiement')
+      } catch {
+        errors.push('données générales')
+      }
+      setLoadErrors(errors)
     }
     fetchFromFirestore()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Vérité Firebase Auth du compte ouvert (email vérifié ? désactivé ?) ──
+  // Firestore/localStorage peuvent MENTIR (ex : emailVerified:true côté doc
+  // alors qu'Auth bloque la connexion). Le panneau affiche donc l'état Auth réel.
+  const [authInfo, setAuthInfo] = useState(null) // { uid, emailVerified, disabled, ... } | { uid, missing } | { uid, error }
+  const [authBusy, setAuthBusy] = useState(false)
+  useEffect(() => {
+    const uid = selectedUser?.uid
+    setAuthInfo(null)
+    if (!uid) return
+    let cancelled = false
+    adminAccountsApi('auth_status', { uids: [uid] }).then(res => {
+      if (cancelled) return
+      if (res.ok && res.data.localMode) setAuthInfo({ uid, localMode: true })
+      else if (res.ok) setAuthInfo(res.data.statuses?.[uid] || { uid, missing: true })
+      else setAuthInfo({ uid, error: res.message })
+    })
+    return () => { cancelled = true }
+  }, [selectedUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3000)
   }
 
+  // Appel unifié aux actions admin serveur (la SEULE voie qui touche Firebase
+  // Auth). Retourne { ok, data?, message? } — jamais de throw.
+  async function adminAccountsApi(action, payload = {}) {
+    try {
+      // Mode démo sans Firebase : pas de couche Auth à gérer — on laisse les
+      // handlers appliquer leurs écritures locales (comportement historique).
+      const { USE_REAL_FIREBASE } = await import('../firebase')
+      if (!USE_REAL_FIREBASE) {
+        return { ok: true, data: { localMode: true, statuses: {}, sentTo: payload?.email || '' } }
+      }
+      const { authHeaders } = await import('../utils/apiAuth')
+      const headers = await authHeaders()
+      if (!headers.Authorization) {
+        return { ok: false, message: 'Session Firebase absente — recharge la page ou reconnecte-toi.' }
+      }
+      const res = await fetch('/api/admin-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ action, ...payload }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) return { ok: false, message: data.message || `Erreur serveur (${res.status})`, error: data.error }
+      return { ok: true, data }
+    } catch {
+      return { ok: false, message: 'Serveur injoignable — réessaie.' }
+    }
+  }
+
   if (!isAgent) return null
 
-  // ── Presence helper — true if lastSeen within 5 min ──
+  // ── Presence helper — en ligne = isOnline true ET vu il y a < 5 min ──
+  // (setOffline écrit isOnline:false + lastSeen : sans le test isOnline, un
+  // utilisateur qui vient de fermer l'app — ou qui masque son statut — était
+  // compté « Connecté » pendant 5 minutes.)
   function isUserOnline(acc) {
-    if (acc?.isOnline && acc?.lastSeen && (Date.now() - acc.lastSeen) < 5 * 60 * 1000) return true
-    return !!(acc?.lastSeen && (Date.now() - acc.lastSeen) < 5 * 60 * 1000)
+    return acc?.isOnline === true && !!acc?.lastSeen && (Date.now() - acc.lastSeen) < 5 * 60 * 1000
   }
 
   // Exclure les comptes avec email non vérifié des stats principales
@@ -350,37 +401,55 @@ export default function AgentPage() {
   accounts.forEach(a => { if (a.email) { emailGroups[a.email] = [...(emailGroups[a.email] || []), a] } })
   const duplicateGroups = Object.entries(emailGroups).filter(([, group]) => group.length > 1)
   const totalRoleReqs     = roleRequests.length
-  const totalAppsSubmitted = applications.filter(a => a.status === 'submitted' || a.status === 'under_review').length
+  // 'resubmitted' = dossier corrigé et re-soumis par le candidat : il ATTEND une
+  // décision au même titre qu'un 'submitted' (sinon aucun badge ne prévenait
+  // l'admin et les dossiers corrigés moisissaient).
+  const totalAppsSubmitted = applications.filter(a =>
+    a.status === 'submitted' || a.status === 'under_review' || a.status === 'resubmitted'
+  ).length
   // Count only applications + role requests to avoid double-counting the same dossier.
   const totalAllPending   = totalAppsSubmitted + totalRoleReqs
 
   // ── Métriques business (revenus plateforme, billets, GMV) ──────────────────
-  const allBookings = (() => {
-    try { return JSON.parse(localStorage.getItem('lib_bookings') || '[]') } catch { return [] }
-  })()
-  // Activité 30 derniers jours
+  // Source : collection `bookings/` (webhooks Stripe + FedaPay, paid:true) —
+  // la SEULE vérité cross-device. Agrégats séparés PAR DEVISE : additionner
+  // EUR et FCFA (ou appliquer le barème de frais EUR à un billet FCFA) produit
+  // des chiffres qui n'existent pas.
   const thirtyDaysAgo = Date.now() - 30 * 24 * 3600 * 1000
-  const recentBookings = allBookings.filter(b => {
-    const ts = new Date(b.bookedAt || 0).getTime()
-    return ts > thirtyDaysAgo
-  })
-  // GMV (Gross Merchandise Value) — somme totale transactions
-  const gmvTickets = allBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0)
+  const bookingTime = (b) => {
+    const t = b.finalizedAt?.toMillis ? b.finalizedAt.toMillis() : b.finalizedAt
+    return Number(t) || new Date(b.bookedAt || 0).getTime() || 0
+  }
+  const eurBookings = serverBookings.filter(b => String(b.currency || 'eur').toLowerCase() === 'eur')
+  const xofBookings = serverBookings.filter(b => String(b.currency || '').toLowerCase() === 'xof')
+  const ticketCountOf = (b) => Array.isArray(b.tickets) && b.tickets.length ? b.tickets.length : Math.max(1, Number(b.qty) || 1)
+  // GMV = volume encaissé (billets + précommandes + frais, tel que débité)
+  const gmvTicketsEUR = eurBookings.reduce((sum, b) => sum + (Number(b.amountTotalCents) || 0), 0) / 100
+  const gmvTicketsXOF = xofBookings.reduce((sum, b) => sum + (Number(b.amountTotal) || 0), 0)
   const paidBoosts = adminBoosts.filter(boost => !['refunded_conflict', 'cancelled'].includes(boost.status))
-  const gmvBoosts = paidBoosts.reduce((sum, b) => sum + (Number(b.price) || 0), 0)
-  const totalGMV = gmvTickets + gmvBoosts
+  const gmvBoosts = paidBoosts.reduce((sum, b) => sum + (Number(b.price) || 0), 0) // boosts vendus en EUR
   // Revenus plateforme RÉELS (encaissés) :
-  // - frais de service billets = 5%+0,49€/billet plafonné 2,50€ (computeTicketFeeCents), sur le prix de la place
+  // - frais de service par billet : 5%+0,49 € cap 2,50 € (EUR) / 5%+300 cap 1500 (XOF)
+  //   recalculés sur le prix de place figé de chaque billet émis
   // - boosts = 100% plateforme
   // Les prestations sont réglées directement entre les utilisateurs et ne font
   // donc partie ni du GMV ni des revenus de la plateforme.
-  const ticketFeeRevenue = allBookings.reduce(
-    (sum, b) => sum + computeTicketFeeCents(Math.round((Number(b.placePrice) || 0) * 100), 1) / 100,
-    0
-  )
-  const platformRevenue = ticketFeeRevenue + gmvBoosts // boost = 100% pour la plateforme
+  const feesOf = (bookings, isXOF) => bookings.reduce((sum, b) => {
+    const tickets = Array.isArray(b.tickets) ? b.tickets : []
+    if (tickets.length) {
+      return sum + tickets.reduce((s, t) => {
+        const p = Number(t.placePrice) || 0
+        return s + (isXOF ? computeTicketFeeXOF(p, 1) : computeTicketFeeCents(Math.round(p * 100), 1) / 100)
+      }, 0)
+    }
+    return sum
+  }, 0)
+  const ticketFeeRevenueEUR = feesOf(eurBookings, false)
+  const ticketFeeRevenueXOF = feesOf(xofBookings, true)
+  const platformRevenueEUR = ticketFeeRevenueEUR + gmvBoosts // boost = 100% pour la plateforme
   // Activité événementielle
-  const totalTicketsSold = allBookings.length
+  const totalTicketsSold = serverBookings.reduce((sum, b) => sum + ticketCountOf(b), 0)
+  const recentBookings = serverBookings.filter(b => bookingTime(b) > thirtyDaysAgo)
   const totalEventsPublished = allEvents.length
   const upcomingEventsCount = allEvents.filter(ev => {
     if (ev.cancelled) return false
@@ -438,23 +507,32 @@ export default function AgentPage() {
   }
 
   async function handleReject(uid) {
-    await rejectValidation(uid, rejectReason)
-    setRejectReason('')
-    refresh()
-    showToast('Compte refusé', 'error')
+    try {
+      await rejectValidation(uid, rejectReason)
+      setRejectReason('')
+      refresh()
+      showToast('Compte refusé', 'error')
+    } catch (e) {
+      // rejectValidation écrit désormais le serveur EN PREMIER et throw si échec
+      showToast('Échec serveur — le refus n\'a pas été enregistré. Réessaie.', 'error')
+    }
     setConfirmAction(null)
   }
 
   async function handleBan(uid) {
+    // Serveur d'abord : la suspension doit désactiver la CONNEXION (Firebase
+    // Auth disabled + sessions révoquées), pas seulement poser un statut Firestore
+    // que rien n'applique. Si le serveur échoue → on ne ment pas à l'admin.
+    const res = await adminAccountsApi('set_disabled', { uid, disabled: true })
+    if (!res.ok) {
+      showToast(`Suspension impossible : ${res.message}`, 'error')
+      setConfirmAction(null)
+      return
+    }
     const bannedAt = Date.now()
     updateAccount(uid, { status: 'banned', bannedAt })
-    try {
-      const { db } = await import('../firebase')
-      const { doc, setDoc } = await import('firebase/firestore')
-      await setDoc(doc(db, 'users', uid), { status: 'banned', bannedAt }, { merge: true })
-    } catch {}
     refresh()
-    showToast('Compte suspendu')
+    showToast('Compte suspendu — connexion désactivée')
     setConfirmAction(null)
     setSelectedUser(null)
   }
@@ -490,6 +568,18 @@ export default function AgentPage() {
       showToast(result.message, 'error')
       return
     }
+    // Purge aussi les files locales (le serveur a nettoyé pending_validations
+    // et applications/) : sans ça, l'entrée fantôme restait « validable »,
+    // recréait un users/{uid}, et le dossier supprimé gonflait le badge admin.
+    try {
+      const { removePendingValidation } = await import('../utils/accounts')
+      removePendingValidation(uid)
+      const rr = JSON.parse(localStorage.getItem('lib_role_requests') || '[]')
+      localStorage.setItem('lib_role_requests', JSON.stringify(rr.filter(r => r.uid !== uid)))
+      const apps = JSON.parse(localStorage.getItem('lib_applications') || '[]')
+      localStorage.setItem('lib_applications', JSON.stringify(apps.filter(a => a.uid !== uid)))
+      setApplications(a => a.filter(x => x.uid !== uid))
+    } catch {}
     refresh()
     showToast(result.authDeleted
       ? `Compte supprimé — email ${result.deletedEmail || ''} libéré pour ré-inscription`.trim()
@@ -499,50 +589,136 @@ export default function AgentPage() {
   }
 
   async function handleVerifyEmail(uid) {
-    // Marque emailVerified:true + status:active dans localStorage et Firestore
-    updateAccount(uid, { emailVerified: true, status: 'active' })
+    // Serveur d'abord : la connexion vérifie cred.user.emailVerified (Firebase
+    // AUTH). Écrire Firestore/localStorage sans toucher Auth laissait le compte
+    // bloqué à « Vérifie ton email » tout en l'affichant ACTIF dans le panneau.
+    setAuthBusy(true)
+    const res = await adminAccountsApi('verify_email', { uid })
+    setAuthBusy(false)
+    if (!res.ok) {
+      showToast(`Vérification impossible : ${res.message}`, 'error')
+      return
+    }
+    // status:'active' seulement pour un CLIENT non suspendu : vérifier l'email
+    // ne doit ni court-circuiter la validation d'un dossier pro, ni dé-bannir.
+    const acc = accounts.find(a => a.uid === uid)
+    const activate = acc?.status !== 'banned'
+      && (!acc || acc.role === 'client' || acc.role === 'user' || acc.status === 'active')
+    const patch = activate ? { emailVerified: true, status: 'active' } : { emailVerified: true }
+    updateAccount(uid, patch)
     try {
       const { db } = await import('../firebase')
       const { doc, setDoc } = await import('firebase/firestore')
-      await setDoc(doc(db, 'users', uid), { emailVerified: true, status: 'active' }, { merge: true })
+      await setDoc(doc(db, 'users', uid), patch, { merge: true })
     } catch {}
+    setAuthInfo(info => info?.uid === uid ? { ...info, emailVerified: true } : info)
     refresh()
-    showToast('Email vérifié manuellement')
+    showToast('Email vérifié — le compte peut maintenant se connecter')
+  }
+
+  async function handleSendVerification(uid) {
+    setAuthBusy(true)
+    const res = await adminAccountsApi('send_verification', { uid })
+    setAuthBusy(false)
+    if (!res.ok) {
+      showToast(`Envoi impossible : ${res.message}`, 'error')
+      return
+    }
+    if (res.data.alreadyVerified) {
+      setAuthInfo(info => info?.uid === uid ? { ...info, emailVerified: true } : info)
+      showToast('Cet email est déjà vérifié côté connexion')
+      return
+    }
+    showToast(`Email de vérification renvoyé à ${res.data.sentTo}`)
   }
 
   async function handleDeleteUnverified(uid) {
     const result = await deleteAccountFull(uid)
     if (!result.ok) {
       showToast(result.message, 'error')
-      return
+      return false
     }
     refresh()
-    showToast('Compte non vérifié supprimé (email libéré)')
+    showToast(result.authDeleted
+      ? `Compte supprimé — email ${result.deletedEmail || ''} libéré`.trim()
+      : 'Fiche supprimée (aucun compte de connexion associé)')
+    return true
   }
 
+  // Nettoyage +7 j : la suppression est IRRÉVERSIBLE et le flag emailVerified du
+  // cache peut être EN RETARD sur Firebase Auth (l'utilisateur a cliqué le lien
+  // mais ne s'est pas reconnecté). On re-vérifie donc chaque compte auprès
+  // d'Auth : on ne supprime que si Auth confirme « non vérifié » (ou inexistant).
   async function handleCleanupExpired() {
-    const expired = accounts.filter(a =>
+    const candidates = accounts.filter(a =>
       a.emailVerified === false && (a.role === 'client' || a.role === 'user') &&
       a.createdAt && (Date.now() - a.createdAt) > 7 * 24 * 60 * 60 * 1000
     )
-    for (const a of expired) await handleDeleteUnverified(a.uid)
-    showToast(`${expired.length} compte(s) expiré(s) supprimé(s)`)
+    if (!candidates.length) { showToast('Aucun compte expiré à supprimer'); return }
+    const res = await adminAccountsApi('auth_status', { uids: candidates.map(a => a.uid) })
+    if (!res.ok) {
+      showToast(`Vérification Auth impossible — aucun compte supprimé. ${res.message}`, 'error')
+      return
+    }
+    const statuses = res.data.statuses || {}
+    let deleted = 0, skipped = 0, failed = 0
+    for (const a of candidates) {
+      const st = statuses[a.uid]
+      // Statut ABSENT de la réponse = inconnu → on CONSERVE (jamais supprimer
+      // sur une absence d'information : c'est peut-être un vrai compte).
+      if (!st) { failed++; continue }
+      if (!st.missing && st.emailVerified) { skipped++; continue } // vérifié côté Auth → compte légitime
+      const ok = await deleteAccountFull(a.uid)
+      if (ok.ok) deleted++
+      else failed++
+    }
+    refresh()
+    showToast(
+      `${deleted} compte(s) supprimé(s)` +
+      (skipped ? ` · ${skipped} conservé(s) (email en réalité vérifié)` : '') +
+      (failed ? ` · ${failed} échec(s)` : ''),
+      failed ? 'error' : 'success'
+    )
   }
 
+  // Doublons : les groupes viennent du cache — la seule vérité est Firebase
+  // Auth. On ne supprime QUE les entrées qui n'existent PAS dans Auth (fiches
+  // fantômes) ; jamais un uid Auth réel sur la seule foi d'un createdAt.
   async function handleCleanupDuplicates() {
-    // Pour chaque groupe de doublons : garder le plus récent, supprimer les autres
     const emailMap = {}
-    accounts.forEach(a => { if (a.email) emailMap[a.email] = [...(emailMap[a.email] || []), a] })
+    accounts.forEach(a => {
+      const key = String(a.email || '').trim().toLowerCase()
+      if (key) emailMap[key] = [...(emailMap[key] || []), a]
+    })
     const dupes = Object.values(emailMap).filter(g => g.length > 1)
-    let count = 0
+    if (!dupes.length) { showToast('Aucun doublon'); return }
+    const uids = dupes.flat().map(a => a.uid)
+    const res = await adminAccountsApi('auth_status', { uids })
+    if (!res.ok) {
+      showToast(`Vérification Auth impossible — aucun doublon supprimé. ${res.message}`, 'error')
+      return
+    }
+    const statuses = res.data.statuses || {}
+    let deleted = 0, kept = 0, failed = 0
     for (const group of dupes) {
-      const sorted = [...group].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-      for (const old of sorted.slice(1)) { // garder le [0] (plus récent), supprimer le reste
-        await handleDeleteUnverified(old.uid)
-        count++
+      for (const a of group) {
+        const st = statuses[a.uid]
+        // Statut absent = inconnu → CONSERVER. Seul un `missing:true` explicite
+        // (Auth a répondu « n'existe pas ») autorise la purge de la fiche.
+        if (!st) { failed++; continue }
+        if (!st.missing) { kept++; continue } // vrai compte de connexion : intouchable ici
+        const ok = await deleteAccountFull(a.uid)
+        if (ok.ok) deleted++
+        else failed++
       }
     }
-    showToast(`${count} doublon(s) supprimé(s)`)
+    refresh()
+    showToast(
+      deleted || failed
+        ? `${deleted} fiche(s) fantôme(s) supprimée(s)` + (failed ? ` · ${failed} échec(s)` : '')
+        : `Rien à nettoyer automatiquement : les ${kept} entrées sont de vrais comptes — supprime à la main celle en trop.`,
+      failed ? 'error' : 'success'
+    )
   }
 
   async function handleApproveRoleRequest(requestId) {
@@ -551,39 +727,72 @@ export default function AgentPage() {
       refresh()
       showToast('Accès activé')
     } catch (e) {
-      showToast('Échec serveur — le rôle n\'a pas été accordé. Réessaie.', 'error')
+      showToast(e?.message || 'Échec serveur — le rôle n\'a pas été accordé. Réessaie.', 'error')
     }
     setConfirmAction(null)
   }
 
   async function handleRejectRoleRequest(requestId) {
-    await rejectRoleRequest(requestId, roleRejectReason)
-    setRoleRejectReason('')
-    refresh()
-    showToast('Demande refusée', 'error')
+    try {
+      await rejectRoleRequest(requestId, roleRejectReason)
+      setRoleRejectReason('')
+      refresh()
+      showToast('Demande refusée', 'error')
+    } catch (e) {
+      // rejectRoleRequest écrit désormais le serveur EN PREMIER et throw si échec
+      showToast('Échec serveur — le refus n\'a pas été enregistré. Réessaie.', 'error')
+    }
     setConfirmAction(null)
   }
 
   async function handleReactivate(uid) {
+    // Serveur d'abord : réactive la CONNEXION (Auth disabled=false) en plus du statut.
+    const res = await adminAccountsApi('set_disabled', { uid, disabled: false })
+    if (!res.ok) {
+      showToast(`Réactivation impossible : ${res.message}`, 'error')
+      return
+    }
     updateAccount(uid, { status: 'active' })
-    try {
-      const { db } = await import('../firebase')
-      const { doc, setDoc } = await import('firebase/firestore')
-      await setDoc(doc(db, 'users', uid), { status: 'active', reactivatedAt: Date.now() }, { merge: true })
-    } catch {}
     refresh()
-    showToast('Compte réactivé')
+    showToast('Compte réactivé — connexion rétablie')
+    setAuthInfo(info => info?.uid === uid ? { ...info, disabled: false } : info)
     setSelectedUser(u => u?.uid === uid ? { ...u, status: 'active' } : u)
   }
 
   async function handleSaveEdit() {
     if (!editField) return
-    updateAccount(editField.uid, { [editField.field]: editField.value })
+    // L'email est l'IDENTIFIANT DE CONNEXION : il vit dans Firebase Auth. Le
+    // modifier seulement dans Firestore affichait un email avec lequel
+    // l'utilisateur ne pouvait PAS se connecter. → passage serveur obligatoire.
+    if (editField.field === 'email') {
+      const newEmail = String(editField.value || '').trim().toLowerCase()
+      const res = await adminAccountsApi('update_email', { uid: editField.uid, email: newEmail })
+      if (!res.ok) {
+        showToast(`Email non modifié : ${res.message}`, 'error')
+        return
+      }
+      updateAccount(editField.uid, { email: newEmail, emailVerified: false })
+      refresh()
+      setSelectedUser(u => u?.uid === editField.uid ? { ...u, email: newEmail } : u)
+      setAuthInfo(info => info?.uid === editField.uid ? { ...info, email: newEmail, emailVerified: false } : info)
+      setEditField(null)
+      showToast('Email de connexion modifié — repasse-le en « vérifié » ou renvoie le lien')
+      return
+    }
+    // Firestore d'abord, échec REMONTÉ : « Mis à jour » ne s'affiche que si le
+    // serveur a réellement enregistré (l'ancien catch vide masquait les
+    // permission-denied et l'admin croyait la modification faite).
     try {
-      const { db } = await import('../firebase')
-      const { doc, setDoc } = await import('firebase/firestore')
-      await setDoc(doc(db, 'users', editField.uid), { [editField.field]: editField.value }, { merge: true })
-    } catch {}
+      const { USE_REAL_FIREBASE, db } = await import('../firebase')
+      if (USE_REAL_FIREBASE) {
+        const { doc, setDoc } = await import('firebase/firestore')
+        await setDoc(doc(db, 'users', editField.uid), { [editField.field]: editField.value }, { merge: true })
+      }
+    } catch (e) {
+      showToast('Échec serveur — rien n\'a été modifié. Réessaie.', 'error')
+      return
+    }
+    updateAccount(editField.uid, { [editField.field]: editField.value })
     refresh()
     setSelectedUser(u => u?.uid === editField.uid ? { ...u, [editField.field]: editField.value } : u)
     setEditField(null)
@@ -594,36 +803,88 @@ export default function AgentPage() {
   // a été remplacé par Stripe. Les remboursements se font côté Stripe Dashboard.
 
   // ── Reversement manuel : marquer un solde vendeur comme payé ──
-  // Décrémente seller_balances/{uid} (l'agent peut écrire — règle isAgent), journalise
-  // dans payout_logs, et résout la demande payout_requests si elle existe.
-  async function handleMarkPaid(sellerUid, amountCents, requestId) {
-    const amt = Math.abs(Number(amountCents) || 0)
-    if (!sellerUid || amt <= 0) return
+  // TRANSACTION Firestore (jamais 3 écritures séquentielles) :
+  //  - le montant payé est PLAFONNÉ au solde réel du ledger (une demande de
+  //    virement est écrite par le vendeur → montant non fiable) ;
+  //  - journal payout_logs à id DÉTERMINISTE (retry idempotent : pas de double
+  //    décrément si l'admin re-clique après une erreur réseau) ;
+  //  - devise explicite : 'EUR' décrémente amountDueCents, 'XOF' amountDueXOF
+  //    (le ledger FedaPay ne vit QUE dans amountDueXOF).
+  async function handleMarkPaid(sellerUid, amount, requestId, currency = 'EUR') {
+    const amt = Math.abs(Number(amount) || 0)
+    if (!sellerUid) return
+    // Demande de virement au solde déjà nul : on clôt la demande sans toucher au ledger.
+    if (amt <= 0) {
+      if (!requestId) return
+      try {
+        const { db } = await import('../firebase')
+        const { doc, setDoc } = await import('firebase/firestore')
+        await setDoc(doc(db, 'payout_requests', requestId), {
+          status: 'paid', paidAt: Date.now(), paidBy: user?.uid || '', paidAmount: 0, paidCurrency: currency,
+        }, { merge: true })
+        setPayoutRequests(prev => prev.filter(p => p.id !== requestId))
+        showToast('Demande close (solde déjà à zéro)')
+      } catch {
+        showToast('Échec — la demande reste ouverte. Réessaie.', 'error')
+      }
+      return
+    }
+    const field = currency === 'XOF' ? 'amountDueXOF' : 'amountDueCents'
+    // Id de journal : PAR demande ET PAR devise (une demande bi-devise a deux
+    // règlements distincts). Sans demande : id unique par clic — le double-clic
+    // est déjà inoffensif car le montant est plafonné au solde restant du
+    // ledger lu DANS la transaction (2e passage → solde 0 → rien).
+    const logId = requestId
+      ? `pl_${requestId}_${currency}`
+      : `pl_${sellerUid}_${currency}_${Date.now()}`
     try {
       const { db } = await import('../firebase')
-      const { doc, setDoc, increment, serverTimestamp } = await import('firebase/firestore')
-      await setDoc(doc(db, 'seller_balances', sellerUid), {
-        amountDueCents: increment(-amt),
-        updatedAt: serverTimestamp(),
-      }, { merge: true })
-      await setDoc(doc(db, 'payout_logs', `pl_${sellerUid}_${Date.now()}`), {
-        sellerUid, amountCents: amt, by: user?.uid || '', byName: user?.name || 'Agent', at: Date.now(),
+      const { doc, runTransaction, serverTimestamp } = await import('firebase/firestore')
+      const outcome = await runTransaction(db, async (tx) => {
+        const logRef = doc(db, 'payout_logs', logId)
+        const logSnap = await tx.get(logRef)
+        // Journal déjà présent = ce règlement précis a DÉJÀ été enregistré
+        // (autre onglet/appareil). Ce n'est PAS un succès du clic courant :
+        // ne rien décrémenter et le dire clairement.
+        if (logSnap.exists()) return { already: true, paid: 0 }
+        const balRef = doc(db, 'seller_balances', sellerUid)
+        const balSnap = await tx.get(balRef)
+        const due = Math.max(0, Number(balSnap.exists() ? balSnap.data()[field] : 0) || 0)
+        const toPay = Math.min(amt, due)
+        if (toPay <= 0) return { already: false, paid: 0 }
+        tx.set(balRef, { [field]: due - toPay, updatedAt: serverTimestamp() }, { merge: true })
+        tx.set(logRef, {
+          sellerUid, amount: toPay, currency, requestId: requestId || null,
+          by: user?.uid || '', byName: user?.name || 'Agent', at: Date.now(),
+        })
+        if (requestId) {
+          tx.set(doc(db, 'payout_requests', requestId), {
+            status: 'paid', paidAt: Date.now(), paidBy: user?.uid || '', paidAmount: toPay, paidCurrency: currency,
+          }, { merge: true })
+        }
+        return { already: false, paid: toPay }
       })
-      if (requestId) {
-        await setDoc(doc(db, 'payout_requests', requestId), {
-          status: 'paid', paidAt: Date.now(), paidBy: user?.uid || '',
-        }, { merge: true })
+      if (outcome.already) {
+        showToast('Ce règlement a déjà été enregistré (autre onglet ou appareil) — recharge pour voir l\'état à jour.', 'error')
+        return
+      }
+      const paid = outcome.paid
+      if (paid <= 0) {
+        showToast('Aucun solde à reverser dans cette devise — le ledger est déjà à zéro.', 'error')
+        setPayoutRequests(prev => prev.filter(p => p.id !== requestId))
+        return
       }
       // MAJ locale
       setSellerBalances(prev => prev
-        .map(b => ((b.sellerUid || b.id) === sellerUid)
-          ? { ...b, amountDueCents: Math.max(0, Number(b.amountDueCents) - amt) }
+        .map(b => ((b.sellerUid || b.id || b._docId) === sellerUid)
+          ? { ...b, [field]: Math.max(0, Number(b[field] || 0) - paid) }
           : b)
-        .filter(b => Number(b.amountDueCents) > 0))
+        .filter(b => Number(b.amountDueCents) > 0 || Number(b.amountDueXOF) > 0))
       setPayoutRequests(prev => prev.filter(p => p.id !== requestId))
-      showToast('Reversement marqué payé')
+      const label = currency === 'XOF' ? `${paid} FCFA` : `${(paid / 100).toFixed(2)} €`
+      showToast(paid < amt ? `Reversement de ${label} (plafonné au solde réel)` : `Reversement de ${label} marqué payé`)
     } catch (e) {
-      showToast('Échec du marquage — réessaie', 'error')
+      showToast('Échec du marquage — rien n\'a été décrémenté. Réessaie.', 'error')
     }
   }
 
@@ -643,6 +904,13 @@ export default function AgentPage() {
 
     // Fire in-app notification to the applicant
     const applicantUid = updatedApp?.uid
+    // Validation humaine du dossier = email de confiance : on vérifie aussi
+    // côté Firebase AUTH (la couche que la connexion consulte réellement).
+    // Best-effort — le flag Firestore emailVerificationRequired:false suffit
+    // déjà à débloquer la connexion des pros.
+    if (applicantUid && status === 'approved') {
+      adminAccountsApi('verify_email', { uid: applicantUid }).catch(() => {})
+    }
     if (applicantUid) {
       try {
         const { createNotification } = await import('../utils/notifications')
@@ -765,7 +1033,7 @@ export default function AgentPage() {
             { key: 'users',        label: 'Comptes' },
             { key: 'events',       label: 'Événements',    count: allEvents.length },
             { key: 'dossiers',     label: 'Dossiers',      count: totalAppsSubmitted, alert: totalAppsSubmitted > 0 },
-            { key: 'boosts',       label: 'Boosts',        count: adminBoosts.filter(b => new Date(b.expiresAt).getTime() > Date.now()).length, alert: adminBoosts.some(b => b.conflict && new Date(b.expiresAt).getTime() > Date.now()) },
+            { key: 'boosts',       label: 'Boosts',        count: adminBoosts.filter(b => !['refunded_conflict', 'cancelled'].includes(b.status) && new Date(b.expiresAt).getTime() > Date.now()).length, alert: adminBoosts.some(b => b.conflict && b.status !== 'refunded_conflict' && b.status !== 'cancelled' && new Date(b.expiresAt).getTime() > Date.now()) },
             { key: 'reversements', label: 'Reversements',  count: payoutRequests.length, alert: payoutRequests.length > 0 },
             { key: 'paiements',     label: 'Paiements',      count: paymentAlerts.length, alert: paymentAlerts.length > 0 },
             { key: 'suppressions', label: 'Suppressions',  count: deletionRequests.length, alert: deletionRequests.length > 0 },
@@ -801,6 +1069,29 @@ export default function AgentPage() {
 
       <div key={tab} className="lib-tab-content" style={{ padding: '16px 16px 8px', maxWidth: 760, margin: '0 auto' }}>
 
+        {/* Un échec de lecture N'EST PAS un état vide : sans ce bandeau, une
+            permission refusée affichait « Aucun reversement / Aucune alerte »
+            — faux all-clear sur des obligations financières. */}
+        {loadErrors.length > 0 && (
+          <div style={{
+            ...CARD, padding: '12px 16px', marginTop: 8,
+            borderColor: 'rgba(224,90,170,0.4)', borderLeft: '3px solid rgba(224,90,170,0.7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
+          }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#fff', margin: 0, lineHeight: 1.5 }}>
+              Lecture impossible : {loadErrors.join(', ')}. Les chiffres de ces sections sont incomplets —
+              recharge la page ; si ça persiste, reconnecte-toi (droits admin).
+            </p>
+            <button onClick={() => window.location.reload()} style={{
+              flexShrink: 0, padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
+              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+              color: '#fff', fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700,
+            }}>
+              Recharger
+            </button>
+          </div>
+        )}
+
         {/* ══════════════════════════════════════════════
             DASHBOARD
         ══════════════════════════════════════════════ */}
@@ -822,16 +1113,21 @@ export default function AgentPage() {
                 marginBottom: 10,
               }}>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
-                  Revenus plateforme — Total
+                  Revenus plateforme
                 </p>
                 <p style={{ fontFamily: FONTS.display, fontSize: 42, fontWeight: 300, color: COLORS.gold, margin: '6px 0 0', lineHeight: 1 }}>
-                  {platformRevenue.toFixed(2)} €
+                  {platformRevenueEUR.toFixed(2)} €
                 </p>
+                {ticketFeeRevenueXOF > 0 && (
+                  <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 300, color: COLORS.teal, margin: '6px 0 0', lineHeight: 1 }}>
+                    + {Math.round(ticketFeeRevenueXOF).toLocaleString('fr-FR')} FCFA
+                  </p>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
                   <div>
                     <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Frais billets</p>
                     <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
-                      {ticketFeeRevenue.toFixed(2)} €
+                      {ticketFeeRevenueEUR.toFixed(2)} €{ticketFeeRevenueXOF > 0 ? ` · ${Math.round(ticketFeeRevenueXOF).toLocaleString('fr-FR')} FCFA` : ''}
                     </p>
                   </div>
                   <div>
@@ -846,18 +1142,23 @@ export default function AgentPage() {
               {/* GMV + activité */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 <div style={{ ...CARD, padding: 12 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>GMV total</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Volume encaissé</p>
                   <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>
-                    {totalGMV.toFixed(0)} €
+                    {(gmvTicketsEUR + gmvBoosts).toFixed(0)} €
                   </p>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '3px 0 0' }}>Volume transactions</p>
+                  {gmvTicketsXOF > 0 && (
+                    <p style={{ fontFamily: FONTS.display, fontSize: 15, fontWeight: 300, color: COLORS.teal, margin: '3px 0 0', lineHeight: 1 }}>
+                      + {Math.round(gmvTicketsXOF).toLocaleString('fr-FR')} FCFA
+                    </p>
+                  )}
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '3px 0 0' }}>Ventes en ligne (webhooks)</p>
                 </div>
                 <div style={{ ...CARD, padding: 12 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Billets vendus</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Billets payés</p>
                   <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: '#4ee8c8', margin: '3px 0 0', lineHeight: 1 }}>
                     {totalTicketsSold}
                   </p>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '3px 0 0' }}>{recentBookings.length} ces 30j</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '3px 0 0' }}>{recentBookings.length} vente{recentBookings.length !== 1 ? 's' : ''} ces 30j</p>
                 </div>
                 <div style={{ ...CARD, padding: 12 }}>
                   <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Events publiés</p>
@@ -1019,7 +1320,7 @@ export default function AgentPage() {
                   Emails non vérifiés ({unverifiedAccounts.length})
                 </p>
                 {expiredUnverified.length > 0 && (
-                  <button onClick={handleCleanupExpired} style={{
+                  <button onClick={() => setConfirmAction({ type: 'cleanupExpired', count: expiredUnverified.length })} style={{
                     fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700,
                     background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
                     color: '#fff', borderRadius: 8, padding: '5px 10px', cursor: 'pointer',
@@ -1081,7 +1382,7 @@ export default function AgentPage() {
                           }}>
                             Vérifier manuellement
                           </button>
-                          <button onClick={() => handleDeleteUnverified(u.uid)} style={{
+                          <button onClick={() => setConfirmAction({ type: 'deleteUnverified', uid: u.uid, name: getDisplayName(u) })} style={{
                             flex: 1, padding: '9px 0',
                             fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
                             background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
@@ -1104,12 +1405,12 @@ export default function AgentPage() {
                   Doublons ({duplicateGroups.length})
                 </p>
                 {duplicateGroups.length > 0 && (
-                  <button onClick={handleCleanupDuplicates} style={{
+                  <button onClick={() => setConfirmAction({ type: 'cleanupDuplicates', count: duplicateGroups.length })} style={{
                     fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700,
                     background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
                     color: '#fff', borderRadius: 8, padding: '5px 10px', cursor: 'pointer',
                   }}>
-                    Tout nettoyer
+                    Nettoyer les fantômes
                   </button>
                 )}
               </div>
@@ -1520,23 +1821,16 @@ export default function AgentPage() {
         )}
 
         {/* ══════════════════════════════════════════════
-            ROLE REQUESTS (legacy — tab removed)
+            DEMANDES DE RÔLE — affichées dans l'onglet Dossiers.
+            (Elles étaient comptées dans « en attente » mais leur UI de
+            traitement était désactivée : intraitables pour toujours.)
         ══════════════════════════════════════════════ */}
-        {false && tab === 'role-requests' && (
+        {tab === 'dossiers' && roleRequests.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
-            {roleRequests.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p style={{ fontFamily: FONTS.display, fontWeight: 600, fontSize: 16, color: '#fff', margin: 0 }}>
-                  Aucune demande de rôle
-                </p>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>
-                  Les demandes d'accès organisateur/prestataire apparaissent ici.
-                </p>
-              </div>
-            ) : roleRequests.map(req => {
+            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+              Demandes de rôle ({roleRequests.length})
+            </p>
+            {roleRequests.map(req => {
               const roleCfg = ROLES[req.requestedRole] || { label: req.requestedRole, color: '#fff', icon: '' }
               return (
                 <div key={req.id} style={{ ...CARD, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1895,6 +2189,63 @@ export default function AgentPage() {
                 )}
               </Section>
 
+              {/* Connexion — état RÉEL Firebase Auth (ce que vit l'utilisateur au login),
+                  pas le miroir Firestore qui peut être en avance/retard. */}
+              <Section title="Connexion">
+                {!authInfo ? (
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Lecture de l'état de connexion…</p>
+                ) : authInfo.localMode ? (
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Mode local (sans Firebase) — pas de couche Auth.</p>
+                ) : authInfo.error ? (
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#e05aaa', margin: 0 }}>État de connexion indisponible : {authInfo.error}</p>
+                ) : authInfo.missing ? (
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#e05aaa', margin: 0, lineHeight: 1.5 }}>
+                    Ce compte n'existe pas dans Firebase Auth — l'utilisateur ne peut pas se connecter.
+                    Supprime cette fiche et laisse la personne se réinscrire.
+                  </p>
+                ) : (
+                  <>
+                    {authInfo.email && authInfo.email !== (selectedUser.email || '').toLowerCase() && (
+                      <p style={{
+                        fontFamily: FONTS.mono, fontSize: 11, color: '#f59e0b', margin: '0 0 8px', lineHeight: 1.5,
+                        padding: '8px 10px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8,
+                      }}>
+                        L'email de CONNEXION est {authInfo.email} — différent de la fiche. C'est avec celui-là que la personne se connecte.
+                      </p>
+                    )}
+                    <InfoRow label="Email vérifié" value={authInfo.emailVerified ? 'Oui' : 'NON — connexion bloquée'} />
+                    <InfoRow label="Connexion" value={authInfo.disabled ? 'DÉSACTIVÉE (suspendu)' : 'Autorisée'} />
+                    <InfoRow label="Dernière connexion" value={authInfo.lastLoginAt ? new Date(authInfo.lastLoginAt).toLocaleDateString('fr-FR') : 'Jamais'} />
+                    {!authInfo.emailVerified && (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <button
+                          disabled={authBusy}
+                          onClick={() => handleVerifyEmail(selectedUser.uid)}
+                          style={{
+                            flex: 1, padding: '10px 0', borderRadius: 10, cursor: authBusy ? 'wait' : 'pointer',
+                            background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)',
+                            color: '#04120e', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
+                            opacity: authBusy ? 0.6 : 1,
+                          }}>
+                          Marquer l'email vérifié
+                        </button>
+                        <button
+                          disabled={authBusy}
+                          onClick={() => handleSendVerification(selectedUser.uid)}
+                          style={{
+                            flex: 1, padding: '10px 0', borderRadius: 10, cursor: authBusy ? 'wait' : 'pointer',
+                            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                            color: 'rgba(255,255,255,0.85)', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
+                            opacity: authBusy ? 0.6 : 1,
+                          }}>
+                          Renvoyer le lien
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </Section>
+
               {/* Coordonnées — numéros & adresses de toutes les interfaces, clairement distingués */}
               {(() => {
                 const roles = selectedUser.enabledRoles || [selectedUser.role]
@@ -1990,22 +2341,32 @@ export default function AgentPage() {
                   <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted }}>Générer un nouveau mot de passe</span>
                   <button
                     onClick={async () => {
-                      const newPwd = 'LIB' + Math.random().toString(36).slice(2, 8).toUpperCase()
-                      // Local-auth mode: store in localStorage
-                      updateAccount(selectedUser.uid, { password: newPwd })
-                      // Firebase Auth mode: send a password reset email (Firebase doesn't allow
-                      // setting passwords directly from client SDK without re-auth)
                       try {
                         const { USE_REAL_FIREBASE, auth } = await import('../firebase')
                         if (USE_REAL_FIREBASE && selectedUser.email) {
-                          const { sendPasswordResetEmail } = await import('firebase/auth')
-                          await sendPasswordResetEmail(auth, selectedUser.email)
-                          showToast(`Lien de réinitialisation envoyé à ${selectedUser.email}`)
+                          // L'email de connexion RÉEL peut différer de la fiche Firestore —
+                          // le lien doit partir vers celui avec lequel la personne se connecte.
+                          const target = authInfo?.email || selectedUser.email
+                          // Endpoint brandé (noreply@liveinblack.com via Resend) : l'email
+                          // Firebase par défaut part de firebaseapp.com et finit en spam.
+                          const r = await fetch('/api/send-password-reset', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: target }),
+                          })
+                          if (!r.ok) {
+                            const { sendPasswordResetEmail } = await import('firebase/auth')
+                            await sendPasswordResetEmail(auth, target)
+                          }
+                          showToast(`Lien de réinitialisation envoyé à ${target}`)
                         } else {
+                          // Mode local (sans Firebase) : mot de passe régénéré dans le cache.
+                          const newPwd = 'LIB' + Math.random().toString(36).slice(2, 8).toUpperCase()
+                          updateAccount(selectedUser.uid, { password: newPwd })
                           showToast(`Nouveau mot de passe (local) : ${newPwd}`)
                         }
                       } catch {
-                        showToast(`Nouveau mot de passe : ${newPwd}`)
+                        showToast('Envoi du lien impossible — réessaie.', 'error')
                       }
                       refresh()
                     }}
@@ -2018,7 +2379,7 @@ export default function AgentPage() {
                   </button>
                 </div>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 6 }}>
-                  Le nouveau mot de passe s'affichera dans la notification.
+                  Envoie un lien de réinitialisation à l'email de connexion du compte.
                 </p>
               </Section>
 
@@ -2800,7 +3161,10 @@ export default function AgentPage() {
               {confirmAction.type === 'appChanges'  && `Demander des corrections pour le dossier de ${confirmAction.name} ?`}
               {confirmAction.type === 'appReject'   && `Refuser le dossier de ${confirmAction.name} ?`}
               {confirmAction.type === 'appSuspend'  && `Suspendre le dossier de ${confirmAction.name} ?`}
-              {confirmAction.type === 'markPaid'    && `Confirmer le reversement de ${((confirmAction.amountCents || 0) / 100).toFixed(2)} € à ${confirmAction.name} ? (à faire APRÈS avoir envoyé l'argent)`}
+              {confirmAction.type === 'markPaid'    && `Confirmer le reversement de ${confirmAction.label || '—'} à ${confirmAction.name} ? (à faire APRÈS avoir envoyé l'argent)`}
+              {confirmAction.type === 'deleteUnverified' && `Supprimer définitivement le compte non vérifié de ${confirmAction.name} ?`}
+              {confirmAction.type === 'cleanupExpired' && `Supprimer les ${confirmAction.count} compte(s) non vérifié(s) depuis plus de 7 jours ? (chaque compte sera re-vérifié auprès de Firebase Auth avant suppression)`}
+              {confirmAction.type === 'cleanupDuplicates' && `Nettoyer les fiches fantômes des ${confirmAction.count} groupe(s) de doublons ? (seules les entrées SANS compte de connexion Firebase seront supprimées)`}
             </p>
 
             <div style={{ display: 'flex', gap: 8 }}>
@@ -2821,7 +3185,10 @@ export default function AgentPage() {
                   if (confirmAction.type === 'appChanges')  handleAppAction(confirmAction.appId, 'needs_changes', appNote)
                   if (confirmAction.type === 'appReject')   handleAppAction(confirmAction.appId, 'rejected', appNote)
                   if (confirmAction.type === 'appSuspend')  handleAppAction(confirmAction.appId, 'suspended', appNote)
-                  if (confirmAction.type === 'markPaid')    { handleMarkPaid(confirmAction.uid, confirmAction.amountCents, confirmAction.requestId); setConfirmAction(null) }
+                  if (confirmAction.type === 'markPaid')    { handleMarkPaid(confirmAction.uid, confirmAction.amount, confirmAction.requestId, confirmAction.currency); setConfirmAction(null) }
+                  if (confirmAction.type === 'deleteUnverified') { handleDeleteUnverified(confirmAction.uid); setConfirmAction(null) }
+                  if (confirmAction.type === 'cleanupExpired') { handleCleanupExpired(); setConfirmAction(null) }
+                  if (confirmAction.type === 'cleanupDuplicates') { handleCleanupDuplicates(); setConfirmAction(null) }
                 }}
                 style={{
                   flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
@@ -2845,11 +3212,16 @@ export default function AgentPage() {
       ══════════════════════════════════════════════ */}
       {tab === 'boosts' && (() => {
         const now = Date.now()
-        const isActive = b => { try { return new Date(b.expiresAt).getTime() > now } catch { return false } }
+        // Actif = non expiré ET non remboursé/annulé (aligné sur lib/boosts.js :
+        // un boost refunded_conflict n'occupe plus de créneau public).
+        const isRefunded = b => ['refunded_conflict', 'cancelled'].includes(b.status)
+        const isActive = b => { try { return !isRefunded(b) && new Date(b.expiresAt).getTime() > now } catch { return false } }
         const active = adminBoosts.filter(isActive)
         const expired = adminBoosts.filter(b => !isActive(b))
         const conflicts = active.filter(b => b.conflict)
-        const totalRevenue = adminBoosts.reduce((s, b) => s + (Number(b.price) || 0), 0)
+        // Revenu = encaissé NET : les boosts remboursés (conflit de créneau) et
+        // annulés ne sont pas de l'argent que la plateforme possède.
+        const totalRevenue = adminBoosts.filter(b => !isRefunded(b)).reduce((s, b) => s + (Number(b.price) || 0), 0)
         const eventName = id => allEvents.find(e => String(e.id) === String(id))?.name || `Event ${id}`
         const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) } catch { return '—' } }
         const BoostCard = (b) => (
@@ -2866,9 +3238,11 @@ export default function AgentPage() {
             <p style={{ fontFamily: FONTS.display, fontSize: 11.5, color: COLORS.muted, margin: 0 }}>
               Acheté le {fmtDate(b.purchasedAt)} · expire le {fmtDate(b.expiresAt)} · {b.days} jour{b.days > 1 ? 's' : ''}
             </p>
-            {b.conflict && isActive(b) && (
+            {b.conflict && (
               <p style={{ fontFamily: FONTS.display, fontSize: 11.5, color: 'rgba(255,140,140,0.9)', margin: 0, lineHeight: 1.5 }}>
-                Deux organisateurs ont payé ce créneau (conflit avec {b.conflictWith || '?'}). Rembourser l'un des deux ou re-négocier la position — un seul boost est affiché publiquement.
+                {b.status === 'refunded_conflict'
+                  ? 'Conflit de créneau : ce boost a été remboursé AUTOMATIQUEMENT par le webhook. Rien à faire — ne pas re-rembourser dans Stripe.'
+                  : 'Deux organisateurs ont payé ce créneau. Vérifie dans Stripe si le remboursement automatique est passé avant toute action manuelle.'}
               </p>
             )}
           </div>
@@ -2968,11 +3342,22 @@ export default function AgentPage() {
                   account_deleted_after_payment: 'Paiement reçu après suppression du compte',
                   amount_mismatch: 'Montant payé différent du montant attendu',
                   missing_server_metadata: 'Paiement sans dossier serveur vérifiable',
+                  sub_amount_mismatch: 'Abonnement : montant payé différent du tarif',
+                  event_deleted_before_fulfillment: 'Paiement reçu pour un événement supprimé',
                 }[alert.reason] || alert.reason || 'Anomalie de paiement'
-                const reference = alert.stripeSessionId || alert.transactionId || alert.bookingId || alert.id
+                const reference = alert.stripeSessionId || alert.transactionId || alert.bookingId || alert._docId
                 const created = alert.createdAt?.toMillis ? alert.createdAt.toMillis() : alert.createdAt
+                // Montants : FedaPay écrit paidAmount/expectedAmount (XOF entiers),
+                // Stripe écrit amountTotal (centimes) + currency.
+                const amountLine = alert.paidAmount != null
+                  ? `Payé : ${alert.paidAmount} FCFA${alert.expectedAmount != null ? ` · Attendu : ${alert.expectedAmount} FCFA` : ''}`
+                  : alert.amountTotal != null
+                    ? `Montant : ${String(alert.currency || '').toUpperCase() === 'XOF'
+                        ? `${alert.amountTotal} FCFA`
+                        : `${(Number(alert.amountTotal) / 100).toFixed(2)} ${String(alert.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : String(alert.currency || '').toUpperCase()}`}`
+                    : null
                 return (
-                  <div key={alert.id} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,.32)', borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
+                  <div key={alert._docId} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,.32)', borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                       <div>
                         <p style={{ fontFamily: FONTS.display, fontWeight: 750, fontSize: 15, color: '#fff', margin: '0 0 5px' }}>{reason}</p>
@@ -2982,9 +3367,9 @@ export default function AgentPage() {
                     </div>
                     <div style={{ marginTop: 13, padding: '10px 12px', borderRadius: 9, background: 'rgba(255,255,255,.035)' }}>
                       <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, overflowWrap: 'anywhere' }}>Référence : {reference}</p>
-                      {alert.paidAmount != null && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '5px 0 0' }}>Payé : {alert.paidAmount} FCFA · Attendu : {alert.expectedAmount} FCFA</p>}
+                      {amountLine && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '5px 0 0' }}>{amountLine}</p>}
                     </div>
-                    <button onClick={() => resolvePaymentAlert(alert.id)} style={{ marginTop: 13, padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontFamily: FONTS.display, fontWeight: 700, fontSize: 12 }}>Marquer comme examiné</button>
+                    <button onClick={() => resolvePaymentAlert(alert._docId)} style={{ marginTop: 13, padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontFamily: FONTS.display, fontWeight: 700, fontSize: 12 }}>Marquer comme examiné</button>
                   </div>
                 )
               })}
@@ -3083,8 +3468,8 @@ export default function AgentPage() {
                   <textarea
                     placeholder="Ex : demande refusée car événement en cours…"
                     rows={2}
-                    value={delResNote}
-                    onChange={e => setDelResNote(e.target.value)}
+                    value={delResNotes[req.id] || ''}
+                    onChange={e => setDelResNotes(n => ({ ...n, [req.id]: e.target.value }))}
                     style={{
                       width: '100%', boxSizing: 'border-box',
                       background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)',
@@ -3098,9 +3483,9 @@ export default function AgentPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={async () => {
-                        await resolveDeletionRequest(req.id, 'approved', user.uid, user.name || 'Admin', delResNote)
+                        await resolveDeletionRequest(req.id, 'approved', user.uid, user.name || 'Admin', delResNotes[req.id] || '')
                         setDeletionRequests(getAllDeletionRequests())
-                        setDelResNote('')
+                        setDelResNotes(n => ({ ...n, [req.id]: '' }))
                         showToast('Suppression approuvée — compte anonymisé.')
                       }}
                       style={{
@@ -3112,9 +3497,9 @@ export default function AgentPage() {
                     </button>
                     <button
                       onClick={async () => {
-                        await resolveDeletionRequest(req.id, 'rejected', user.uid, user.name || 'Admin', delResNote)
+                        await resolveDeletionRequest(req.id, 'rejected', user.uid, user.name || 'Admin', delResNotes[req.id] || '')
                         setDeletionRequests(getAllDeletionRequests())
-                        setDelResNote('')
+                        setDelResNotes(n => ({ ...n, [req.id]: '' }))
                         showToast('Demande refusée.')
                       }}
                       style={{
@@ -3136,37 +3521,105 @@ export default function AgentPage() {
           REVERSEMENTS — soldes vendeurs à régler à la main (ledger)
       ══════════════════════════════════════════════ */}
       {tab === 'reversements' && (() => {
-        const fmt = (c) => (Number(c || 0) / 100).toFixed(2) + ' €'
+        const fmtEUR = (c) => (Number(c || 0) / 100).toFixed(2) + ' €'
+        const fmtXOF = (n) => `${Math.round(Number(n || 0)).toLocaleString('fr-FR')} FCFA`
+        // Ledger illisible → AUCUNE action possible : sinon toutes les demandes
+        // afficheraient « Solde à zéro — clore la demande » et l'admin clôturait
+        // à tort des demandes dont l'argent est réellement dû.
+        const ledgerOk = !loadErrors.includes('reversements')
+        if (!ledgerOk) {
+          return (
+            <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
+              <div style={{ ...CARD, padding: 24, borderColor: 'rgba(224,90,170,0.4)', borderLeft: '3px solid rgba(224,90,170,0.7)' }}>
+                <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>
+                  Ledger des reversements illisible
+                </p>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>
+                  Impossible de lire les soldes vendeurs (permissions ou réseau). Aucune action de
+                  reversement n'est proposée tant que les montants réels ne sont pas connus —
+                  recharge la page ou reconnecte-toi.
+                </p>
+              </div>
+            </div>
+          )
+        }
         const acctOf = (uid) => accounts.find(x => (x.uid || x.id) === uid)
         const nameOf = (uid) => { const a = acctOf(uid); return a ? getDisplayName(a) : (uid || '—') }
         const emailOf = (uid) => acctOf(uid)?.email || ''
         const reqSellerIds = new Set(payoutRequests.map(p => p.sellerId))
         const balancesNoReq = sellerBalances.filter(b => !reqSellerIds.has(b.sellerUid || b.id))
+        // Deux devises = deux totaux SÉPARÉS (jamais d'addition inter-devises).
         const totalDueCents = sellerBalances.reduce((s, b) => s + Number(b.amountDueCents || 0), 0)
+        const totalDueXOF = sellerBalances.reduce((s, b) => s + Number(b.amountDueXOF || 0), 0)
         const empty = payoutRequests.length === 0 && sellerBalances.length === 0
+        // Solde RÉEL du ledger (source de vérité webhook) — le montant d'une
+        // demande de virement est écrit par le vendeur, donc jamais fiable seul.
+        const ledgerOf = (uid) => sellerBalances.find(b => (b.sellerUid || b.id || b._docId) === uid)
 
-        const PayoutCard = ({ uid, amountCents, requestId, date }) => (
-          <div style={{ ...CARD, padding: 16, borderColor: requestId ? 'rgba(200,169,110,0.30)' : 'rgba(255,255,255,0.10)' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-              <div style={{ minWidth: 0 }}>
-                <p style={{ fontFamily: FONTS.display, fontSize: 17, fontWeight: 300, color: '#fff', margin: '0 0 2px' }}>{nameOf(uid)}</p>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {emailOf(uid) || uid}{date ? ` · demandé le ${formatDate(date)}` : ''}
-                </p>
+        // Une ligne « Marquer payé » PAR devise due, plafonnée au ledger.
+        const PayoutCard = ({ uid, requestedCents, requestedXOF, requestId, date }) => {
+          const ledger = ledgerOf(uid)
+          const dueCents = Math.max(0, Number(ledger?.amountDueCents || 0))
+          const dueXOF = Math.max(0, Number(ledger?.amountDueXOF || 0))
+          const payCents = requestId ? Math.min(Math.max(0, Number(requestedCents || 0)) || dueCents, dueCents) : dueCents
+          const payXOF = requestId ? Math.min(Math.max(0, Number(requestedXOF || 0)) || dueXOF, dueXOF) : dueXOF
+          const mismatch = requestId && (Number(requestedCents || 0) > dueCents || Number(requestedXOF || 0) > dueXOF)
+          return (
+            <div style={{ ...CARD, padding: 16, borderColor: requestId ? 'rgba(200,169,110,0.30)' : 'rgba(255,255,255,0.10)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontFamily: FONTS.display, fontSize: 17, fontWeight: 300, color: '#fff', margin: '0 0 2px' }}>{nameOf(uid)}</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {emailOf(uid) || uid}{date ? ` · demandé le ${formatDate(date)}` : ''}
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  {dueCents > 0 && <p style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 300, color: COLORS.gold, margin: 0 }}>{fmtEUR(dueCents)}</p>}
+                  {dueXOF > 0 && <p style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 300, color: COLORS.teal, margin: 0 }}>{fmtXOF(dueXOF)}</p>}
+                  {dueCents <= 0 && dueXOF <= 0 && <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Solde à zéro</p>}
+                </div>
               </div>
-              <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: COLORS.gold, margin: 0, flexShrink: 0 }}>{fmt(amountCents)}</p>
+              {mismatch && (
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: '8px 0 0', lineHeight: 1.5 }}>
+                  Le montant demandé dépasse le solde réel du ledger — seul le solde réel sera réglé.
+                </p>
+              )}
+              {payCents > 0 && (
+                <button
+                  onClick={() => setConfirmAction({ type: 'markPaid', uid, amount: payCents, currency: 'EUR', requestId, name: nameOf(uid), label: fmtEUR(payCents) })}
+                  style={{
+                    width: '100%', marginTop: 12, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                    background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)',
+                    color: '#04120e', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
+                  }}>
+                  Marquer payé ({fmtEUR(payCents)})
+                </button>
+              )}
+              {payXOF > 0 && (
+                <button
+                  onClick={() => setConfirmAction({ type: 'markPaid', uid, amount: payXOF, currency: 'XOF', requestId, name: nameOf(uid), label: fmtXOF(payXOF) })}
+                  style={{
+                    width: '100%', marginTop: payCents > 0 ? 8 : 12, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                    background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.5)',
+                    color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
+                  }}>
+                  Marquer payé ({fmtXOF(payXOF)})
+                </button>
+              )}
+              {requestId && payCents <= 0 && payXOF <= 0 && (
+                <button
+                  onClick={() => setConfirmAction({ type: 'markPaid', uid, amount: 0, currency: 'EUR', requestId, name: nameOf(uid), label: '0 (clore la demande)' })}
+                  style={{
+                    width: '100%', marginTop: 12, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                    color: 'rgba(255,255,255,0.7)', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
+                  }}>
+                  Solde à zéro — clore la demande
+                </button>
+              )}
             </div>
-            <button
-              onClick={() => setConfirmAction({ type: 'markPaid', uid, amountCents, requestId, name: nameOf(uid) })}
-              style={{
-                width: '100%', marginTop: 12, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
-                background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)',
-                color: '#04120e', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
-              }}>
-              Marquer payé ({fmt(amountCents)})
-            </button>
-          </div>
-        )
+          )
+        }
 
         return (
           <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
@@ -3179,9 +3632,21 @@ export default function AgentPage() {
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
                   Total à reverser
                 </p>
-                <p style={{ fontFamily: FONTS.display, fontSize: 34, fontWeight: 300, color: COLORS.gold, margin: '4px 0 0', lineHeight: 1 }}>
-                  {fmt(totalDueCents)}
-                </p>
+                {totalDueCents > 0 && (
+                  <p style={{ fontFamily: FONTS.display, fontSize: 34, fontWeight: 300, color: COLORS.gold, margin: '4px 0 0', lineHeight: 1 }}>
+                    {fmtEUR(totalDueCents)}
+                  </p>
+                )}
+                {totalDueXOF > 0 && (
+                  <p style={{ fontFamily: FONTS.display, fontSize: totalDueCents > 0 ? 26 : 34, fontWeight: 300, color: COLORS.teal, margin: '6px 0 0', lineHeight: 1 }}>
+                    {fmtXOF(totalDueXOF)}
+                  </p>
+                )}
+                {totalDueCents <= 0 && totalDueXOF <= 0 && (
+                  <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 300, color: COLORS.muted, margin: '4px 0 0', lineHeight: 1 }}>
+                    0
+                  </p>
+                )}
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '8px 0 0', lineHeight: 1.6 }}>
                   Vendeurs hors zone Stripe (Afrique) ou sans Connect — à régler par virement / Wave / Orange Money, puis marquer payé ici.
                 </p>
@@ -3206,7 +3671,7 @@ export default function AgentPage() {
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {payoutRequests.map(p => (
-                        <PayoutCard key={p.id} uid={p.sellerId} amountCents={p.amountDueCents} requestId={p.id} date={p.createdAt} />
+                        <PayoutCard key={p.id} uid={p.sellerId} requestedCents={p.amountDueCents} requestedXOF={p.amountDueXOF} requestId={p.id} date={p.createdAt} />
                       ))}
                     </div>
                   </div>
@@ -3219,7 +3684,7 @@ export default function AgentPage() {
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {balancesNoReq.map(b => (
-                        <PayoutCard key={b.sellerUid || b.id} uid={b.sellerUid || b.id} amountCents={b.amountDueCents} />
+                        <PayoutCard key={b.sellerUid || b.id || b._docId} uid={b.sellerUid || b.id || b._docId} />
                       ))}
                     </div>
                   </div>

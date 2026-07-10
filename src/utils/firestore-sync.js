@@ -432,6 +432,21 @@ export async function loadCollection(collPath, conditions = []) {
   } catch (e) { console.warn('[sync] query:', collPath, e.message); return [] }
 }
 
+// Variante honnête : distingue « collection vide » d'« échec de lecture »
+// (permission-denied, hors-ligne…). Indispensable pour les panneaux admin :
+// afficher « rien à traiter » sur un échec de lecture est un mensonge.
+export async function loadCollectionStrict(collPath, conditions = []) {
+  try {
+    const ref = collection(db, collPath)
+    const q = conditions.length ? query(ref, ...conditions) : ref
+    const snap = await getDocs(q)
+    return { ok: true, items: snap.docs.map(d => ({ ...d.data(), _docId: d.id })) }
+  } catch (e) {
+    console.warn('[sync] query:', collPath, e.message)
+    return { ok: false, items: [], error: e.code || e.message }
+  }
+}
+
 // ── Merge helper: remote items win on ID conflict ─────────────────────────────
 function mergeById(local, remote, idField = 'id') {
   const remoteIds = new Set(remote.map(r => r[idField]))
@@ -696,6 +711,11 @@ export async function syncOnLogin(uid, opts = {}) {
         m[uid] = social.mutedConvs
         localStorage.setItem('lib_muted_convs', JSON.stringify(m))
       }
+      if (social.pinnedConvs) {
+        const p = safeParseObj('lib_pinned_convs')
+        p[uid] = social.pinnedConvs
+        localStorage.setItem('lib_pinned_convs', JSON.stringify(p))
+      }
       if (social.starred) {
         const starred = safeParseObj('lib_starred')
         starred[uid] = social.starred
@@ -815,8 +835,12 @@ export async function syncOnLogin(uid, opts = {}) {
     // ne tente même plus la requête pour un client/organisateur.
     const pendingSnap = (!light && (myRole === 'agent' || myRole === 'admin')) ? await loadCollection('pending_validations') : []
     if (pendingSnap.length) {
-      const validations = pendingSnap.filter(p => p.type !== 'role_request' && p.status === 'pending')
-      const roleReqs = pendingSnap.filter(p => p.type === 'role_request' && p.status === 'pending')
+      // Docs créables par tout connecté : jamais laisser passer une demande
+      // visant 'agent' (escalade via l'UI admin — voir GRANTABLE_ROLES).
+      const validations = pendingSnap.filter(p => p.type !== 'role_request' && p.status === 'pending'
+        && (p.role || p.requestedRole) !== 'agent')
+      const roleReqs = pendingSnap.filter(p => p.type === 'role_request' && p.status === 'pending'
+        && ['organisateur', 'prestataire'].includes(p.requestedRole))
       // Always overwrite local with the filtered Firestore list (removes approved/rejected items)
       const local = safeParseArray('lib_pending_validations')
       const filtered = local.filter(p => p.status === 'pending')
@@ -890,12 +914,14 @@ export async function pushLocalToFirestore(uid) {
     const muted = safeParseObj('lib_muted_convs')
     const hidden = safeParseObj('lib_hidden_conversations')
     const starred = safeParseObj('lib_starred')
+    const pinned = safeParseObj('lib_pinned_convs')
     syncDoc(`user_social/${uid}`, {
       friends: friends[uid] || [],
       blocked: blocked[uid] || [],
       mutedConvs: muted[uid] || [],
       hiddenConversations: hidden[uid] || [],
       starred: starred[uid] || [],
+      pinnedConvs: pinned[uid] || [],
     })
 
     // Friend requests (sent by me)

@@ -407,8 +407,10 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
   if (status === 'suspended')      { patch.adminNote = note }
   if (adminNoteStr)                { patch.adminNote = adminNoteStr }
 
+  // Mutation en MÉMOIRE seulement — _saveAll intervient après le succès des
+  // écritures serveur. Sinon un échec serveur laissait le dossier « Validé »
+  // dans le cache local alors que le candidat n'a reçu aucun rôle.
   all[idx] = { ...all[idx], ...patch }
-  _saveAll(all)
 
   // Clear pending_validations to avoid showing same user in both Validations + Dossiers tabs
   if (status === 'approved' || status === 'rejected') {
@@ -433,16 +435,20 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
     // client — lu en LIVE depuis Firestore (pas le cache local de l'admin,
     // potentiellement périmé) pour ne pas écraser des rôles déjà accordés.
     let enabledRoles = ['client']
+    let liveDoc = null
     try {
-      const liveDoc = await loadDoc(`users/${app.uid}`)
+      liveDoc = await loadDoc(`users/${app.uid}`)
       enabledRoles = getEnabledRoles(liveDoc || { role: 'client' })
     } catch {}
     if (!enabledRoles.includes(newRole)) enabledRoles = [...enabledRoles, newRole]
 
+    // Jamais rétrograder un AGENT : écraser role:'agent' lui ferait perdre ses
+    // droits admin (firestore.rules isAgent()).
+    const isAgentAccount = liveDoc?.role === 'agent' || enabledRoles.includes('agent')
+
     // Permissions dérivées du formulaire
     const perms = {
-      role: newRole,
-      activeRole: newRole,
+      ...(isAgentAccount ? {} : { role: newRole, activeRole: newRole }),
       enabledRoles,
       status: 'active',
       // CRITIQUE : orgStatus/prestStatus à 'active' — c'est CE champ que
@@ -451,7 +457,11 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
       // restait affiché indéfiniment même après approbation (le compte avait
       // bien le rôle, mais l'UI ne le savait pas).
       ...(newRole === 'organisateur' ? { orgStatus: 'active' } : { prestStatus: 'active' }),
-      emailVerified: true,   // validé par l'admin = email vérifié
+      emailVerified: true,   // validé par l'admin = email vérifié (miroir Firestore)
+      // La porte de connexion (LoginPage) exige la vérification Auth tant que
+      // emailVerificationRequired est true : un candidat approuvé ne doit plus
+      // rester bloqué à « Vérifie ton email » après validation humaine.
+      emailVerificationRequired: false,
       canSellAlcohol:   !!(app.formData?.alcool),
       approvedAt:       now,
       approvedBy:       adminName,
@@ -562,6 +572,26 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
     } catch {} // non-bloquant
   }
 
+  // ── Refus / suspension : le COMPTE redevient un client normal ────────────
+  // submitApplication avait posé users.status:'pending' ; sans cette écriture,
+  // un candidat refusé restait « EN ATTENTE » à vie dans l'onglet Comptes.
+  if (status === 'rejected' || status === 'suspended') {
+    try {
+      const { updateAccount } = await import('./accounts')
+      const { syncDoc, loadDoc } = await import('./firestore-sync')
+      // status → 'active' UNIQUEMENT si le compte était 'pending' (posé par
+      // submitApplication) : ne jamais écraser un 'banned'/'rejected' existant
+      // — refuser le dossier d'un compte suspendu le dé-bannissait.
+      const live = await loadDoc(`users/${all[idx].uid}`).catch(() => null)
+      const stPatch = {
+        ...((live?.status || 'pending') === 'pending' ? { status: 'active' } : {}),
+        ...(all[idx].type === 'organisateur' ? { orgStatus: 'rejected' } : { prestStatus: 'rejected' }),
+      }
+      syncDoc(`users/${all[idx].uid}`, stPatch)
+      updateAccount(all[idx].uid, stPatch)
+    } catch {}
+  }
+
   // Sync Firestore application (important mais secondaire — le rôle est déjà
   // accordé ci-dessus ; on l'attend quand même pour cohérence de l'audit trail)
   {
@@ -571,6 +601,10 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
       await setDoc(doc(db, 'applications', id), patch, { merge: true })
     }
   }
+
+  // Cache local en DERNIER : le dossier n'affiche « Validé »/« Refusé » que si
+  // le serveur a réellement enregistré la décision.
+  _saveAll(all)
 
   return all[idx]
 }

@@ -106,6 +106,11 @@ export async function approveValidation(uid) {
 
   // Derive the real role — Firebase-path pending docs use `requestedRole`, local ones use `role`
   const resolvedRole = pending.role || pending.requestedRole
+  // Un doc pending_validations est créable par tout connecté : ne JAMAIS
+  // accorder 'agent' (ou un rôle inconnu) depuis une validation.
+  if (!['client', 'user', 'organisateur', 'prestataire'].includes(resolvedRole)) {
+    throw new Error(`Rôle « ${resolvedRole} » non accordable via une validation.`)
+  }
   const approved = {
     ...pending,
     role: resolvedRole,
@@ -153,20 +158,23 @@ export async function rejectValidation(uid, reason = '') {
   const pending = getPendingValidations().find(u => u.uid === uid)
   if (!pending) return
   const rejected = { ...pending, status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason }
+
+  // ── Firestore EN PREMIER (même pattern qu'approveValidation) ─────────────
+  // Sinon un refus qui échoue côté serveur n'existait que sur le device de
+  // l'admin : l'utilisateur restait « pending » partout ailleurs et la
+  // validation ressuscitait au prochain chargement.
+  const { USE_REAL_FIREBASE, db } = await import('../firebase')
+  if (USE_REAL_FIREBASE) {
+    const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
+    await setDoc(doc(db, 'users', uid), { status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason }, { merge: true }) // throw si échec
+    const pendingDocId = pending._docId || pending.id || uid
+    try { await setDoc(doc(db, 'pending_validations', pendingDocId), { status: 'rejected' }, { merge: true }) } catch {}
+    try { await deleteDoc(doc(db, 'pending_validations', pendingDocId)) } catch {}
+  }
+
+  // Local seulement après succès serveur
   saveAccount(rejected)
   removePendingValidation(uid)
-
-  // Sync to Firestore
-  try {
-    const { USE_REAL_FIREBASE, db } = await import('../firebase')
-    if (USE_REAL_FIREBASE) {
-      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
-      await setDoc(doc(db, 'users', uid), { status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason }, { merge: true })
-      const pendingDocId = pending._docId || pending.id || uid
-      try { await setDoc(doc(db, 'pending_validations', pendingDocId), { status: 'rejected' }, { merge: true }) } catch {}
-      await deleteDoc(doc(db, 'pending_validations', pendingDocId))
-    }
-  } catch {}
 }
 
 // ─── Multi-role architecture ───────────────────────────────────────────────
@@ -183,10 +191,13 @@ export function getEnabledRoles(user) {
   if (Array.isArray(user.enabledRoles) && user.enabledRoles.length > 0) {
     return [...user.enabledRoles] // copie : jamais renvoyer la référence (évite les mutations en place)
   }
-  // Backwards compat: derive from role field
+  // Backwards compat: derive from role field. Un doc {role:'agent'} sans
+  // tableau enabledRoles doit garder 'agent' — sinon toute écriture dérivée
+  // de ce fallback (approbation de rôle, etc.) faisait disparaître le rôle
+  // admin des deux champs à la fois.
   const base = ['client']
   const r = user.role
-  if (r && r !== 'client' && r !== 'user' && r !== 'agent') {
+  if (r && r !== 'client' && r !== 'user') {
     if (!base.includes(r)) base.push(r)
   }
   return base
@@ -259,14 +270,23 @@ export function getAllRoleRequests() {
  * Admin approves a role request.
  * Adds role to enabledRoles, sets status to 'active'.
  */
+// Seuls rôles accordables via une demande. JAMAIS 'agent' : un doc
+// pending_validations est créable par tout connecté (règles) — sans cette
+// whitelist, une demande forgée { requestedRole:'agent' } affichée à l'admin
+// et validée d'un clic donnait les pleins pouvoirs à l'attaquant.
+export const GRANTABLE_ROLES = ['organisateur', 'prestataire']
+
 export async function approveRoleRequest(requestId) {
   const requests = getPendingRoleRequests()
   const req = requests.find(r => r.id === requestId)
-  if (!req) return null
+  if (!req) throw new Error('Demande introuvable — recharge la page.')
+  if (!GRANTABLE_ROLES.includes(req.requestedRole)) {
+    throw new Error(`Rôle « ${req.requestedRole} » non accordable via une demande.`)
+  }
 
   // Update user account
   const account = getAccountById(req.uid)
-  if (!account) return null
+  if (!account) throw new Error('Compte introuvable — recharge la page (lecture Firestore des comptes requise).')
 
   const enabledRoles = getEnabledRoles(account)
   const nextRoles = enabledRoles.includes(req.requestedRole) ? enabledRoles : [...enabledRoles, req.requestedRole]
@@ -274,10 +294,12 @@ export async function approveRoleRequest(requestId) {
   // Cohérence avec updateApplicationStatus (chemin « dossier ») : on bascule le
   // compte sur le nouveau rôle et on l'active — sinon l'interface débloquée
   // n'apparaissait pas active tant que l'utilisateur ne switchait pas à la main.
+  // EXCEPTION : jamais rétrograder un AGENT — écraser role:'agent' lui ferait
+  // perdre ses droits admin (firestore.rules isAgent()).
+  const isAgentAccount = account.role === 'agent' || enabledRoles.includes('agent')
   const patch = {
     enabledRoles: nextRoles,
-    role: req.requestedRole,
-    activeRole: req.requestedRole,
+    ...(isAgentAccount ? {} : { role: req.requestedRole, activeRole: req.requestedRole }),
     status: 'active',
     ...(req.requestedRole === 'organisateur'
       ? { orgStatus: 'active', orgValidatedAt: Date.now() }
@@ -321,25 +343,26 @@ export async function rejectRoleRequest(requestId, reason = '') {
   const req = requests.find(r => r.id === requestId)
   if (!req) return
 
+  const patch = req.requestedRole === 'organisateur'
+    ? { orgStatus: 'rejected' }
+    : { prestStatus: 'rejected' }
+
+  // ── Firestore EN PREMIER (même pattern qu'approveRoleRequest) ────────────
+  // Un refus avalé laissait la demande « pending » côté serveur : elle
+  // ressuscitait sur tous les devices admin au prochain chargement.
+  const { USE_REAL_FIREBASE, db } = await import('../firebase')
+  if (USE_REAL_FIREBASE) {
+    const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
+    await setDoc(doc(db, 'users', req.uid), patch, { merge: true }) // throw si échec
+    try { await deleteDoc(doc(db, 'pending_validations', requestId)) } catch {}
+  }
+
+  // Local seulement après succès serveur
   const updatedRequests = requests.map(r =>
     r.id === requestId ? { ...r, status: 'rejected', rejectedAt: Date.now(), rejectionReason: reason } : r
   )
   localStorage.setItem(ROLE_REQ_KEY, JSON.stringify(updatedRequests))
-
-  const patch = req.requestedRole === 'organisateur'
-    ? { orgStatus: 'rejected' }
-    : { prestStatus: 'rejected' }
   updateAccount(req.uid, patch)
-
-  // Sync Firestore
-  try {
-    const { USE_REAL_FIREBASE, db } = await import('../firebase')
-    if (USE_REAL_FIREBASE) {
-      const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
-      await setDoc(doc(db, 'users', req.uid), patch, { merge: true })
-      await deleteDoc(doc(db, 'pending_validations', requestId))
-    }
-  } catch {}
 }
 
 /**
@@ -414,10 +437,22 @@ export async function switchActiveRole(user, newRole) {
 }
 
 /**
- * Count total pending validations (accounts + role requests).
+ * Count total pending validations (accounts + role requests + DOSSIERS).
+ * Les candidatures organisateur/prestataire n'écrivent plus dans
+ * pending_validations : sans les compter ici, le badge « Interface Admin (N) »
+ * restait à 0 alors que des dossiers attendaient une décision.
  */
 export function getTotalPendingCount() {
-  return getPendingValidations().length + getPendingRoleRequests().filter(r => r.status === 'pending').length
+  let pendingApps = []
+  try {
+    pendingApps = JSON.parse(localStorage.getItem('lib_applications') || '[]')
+      .filter(a => a.status === 'submitted' || a.status === 'under_review' || a.status === 'resubmitted')
+  } catch {}
+  // Un candidat historique peut avoir À LA FOIS une pending_validation (ancien
+  // flux) et un dossier : ne pas le compter deux fois (même règle qu'AgentPage).
+  const appUids = new Set(pendingApps.map(a => a.uid))
+  const validations = getPendingValidations().filter(v => !appUids.has(v.uid))
+  return pendingApps.length + validations.length + getPendingRoleRequests().filter(r => r.status === 'pending').length
 }
 
 // ─── Password helpers ─────────────────────────────────────────────────────

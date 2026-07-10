@@ -7,9 +7,19 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Agent = rôle 'agent' sous N'IMPORTE QUELLE forme. switchActiveRole réécrit
+    // `role` quand l'admin change d'interface : limiter ce check à `role` rendait
+    // les droits admin intermittents (permission-denied jusqu'à re-connexion).
+    // enabledRoles est sûr : le propriétaire ne peut pas s'y ajouter 'agent'
+    // (voir la règle update de users/{uid} plus bas).
     function isAgent() {
-      return isSignedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'agent';
+      let me = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isSignedIn() && (
+        isSuperAdmin() ||
+        me.get('role', '') == 'agent' ||
+        me.get('activeRole', '') == 'agent' ||
+        'agent' in me.get('enabledRoles', [])
+      );
     }
 
     function isOwner(uid) {
@@ -39,13 +49,18 @@ service cloud.firestore {
     // pouvait sinon écrire lui-même).
     match /users/{uid} {
       allow read:   if isSignedIn();
-      allow create: if isSuperAdmin() || (isOwner(uid) && request.resource.data.get('role', 'client') != 'agent');
+      allow create: if isSuperAdmin() || (isOwner(uid)
+        && request.resource.data.get('role', 'client') != 'agent'
+        && request.resource.data.get('activeRole', 'client') != 'agent'
+        && !('agent' in request.resource.data.get('enabledRoles', [])));
       // Le propriétaire édite son profil MAIS ne peut pas s'octroyer de privilèges :
       //  - jamais role/activeRole = 'agent' (escalade admin) ;
       //  - jamais s'auto-valider (status → 'active' réservé aux agents) ;
       //  - jamais s'auto-accorder un rôle : role ne peut changer QUE vers un rôle
       //    déjà présent dans enabledRoles (ou rester inchangé), et enabledRoles
       //    lui-même n'est pas modifiable. (.get() tolère les vieux docs.)
+      //  - jamais 'agent' dans enabledRoles s'il n'y était pas déjà : isAgent()
+      //    lit ce champ, un vieux doc sans enabledRoles pouvait sinon se le poser.
       allow update: if isAgent() || isSuperAdmin()
         || (isOwner(uid)
             && request.resource.data.get('role', 'client') != 'agent'
@@ -53,7 +68,8 @@ service cloud.firestore {
             && (request.resource.data.get('status', '') != 'active' || resource.data.get('status', '') == 'active')
             && (request.resource.data.get('role', 'client') == resource.data.get('role', 'client')
                 || request.resource.data.get('role', 'client') in resource.data.get('enabledRoles', [request.resource.data.get('role', 'client')]))
-            && (!('enabledRoles' in resource.data) || request.resource.data.enabledRoles == resource.data.enabledRoles));
+            && (!('enabledRoles' in resource.data) || request.resource.data.enabledRoles == resource.data.enabledRoles)
+            && ('agent' in resource.data.get('enabledRoles', []) || !('agent' in request.resource.data.get('enabledRoles', []))));
       allow delete: if isAgent();
     }
 
@@ -67,9 +83,19 @@ service cloud.firestore {
     }
 
     // ── Pending validations ────────────────────────────────────────────────────
+    // Un utilisateur ne crée/modifie QUE ses propres demandes, et ne peut JAMAIS
+    // y inscrire le rôle 'agent' : l'UI admin affiche ces docs avec un bouton
+    // « Activer » — une demande forgée { requestedRole:'agent' } validée d'un
+    // clic serait une escalade totale (défense en profondeur avec la whitelist
+    // GRANTABLE_ROLES côté code).
     match /pending_validations/{id} {
       allow read: if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
-      allow write: if isAgent() || (isSignedIn() && (resource == null || resource.data.uid == request.auth.uid));
+      allow write: if isAgent() || (isSignedIn()
+        && (resource == null || resource.data.uid == request.auth.uid)
+        && request.resource.data.get('uid', '') == request.auth.uid
+        && request.resource.data.get('requestedRole', '') != 'agent'
+        && request.resource.data.get('role', '') != 'agent');
+      allow delete: if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
     }
 
     // ── Wallets ────────────────────────────────────────────────────────────────

@@ -9,17 +9,15 @@ import { getAuth } from 'firebase-admin/auth'
 import { requireAuth } from '../lib/verifyAuth.js'
 import { getDb } from '../lib/firebaseAdmin.js'
 import { cancelProviderBillingBeforeDeletion } from '../lib/providerBilling.js'
+import { isAdminCaller, isSuperAdminEmail } from '../lib/adminGuard.js'
 
 // Collections Firestore indexées par uid à purger avec le compte.
 const UID_COLLECTIONS = [
   'users', 'wallets', 'user_bookings', 'user_events', 'user_social',
   'catalogs', 'providers', 'organizer_profiles',
+  'user_boosts', 'used_tickets', 'notifications', 'user_read_status',
+  'organizer_follows', 'user_private_access',
 ]
-
-function superAdminEmails() {
-  return (process.env.VITE_SUPER_ADMIN_EMAILS || process.env.SUPER_ADMIN_EMAILS || '')
-    .split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' })
@@ -34,17 +32,9 @@ export default async function handler(req, res) {
   }
 
   // ── Autorisation : super-admin (email env) OU rôle agent (Firestore) ──
-  const isSuper = superAdminEmails().includes((caller.email || '').toLowerCase())
-  let isAgent = false
-  if (!isSuper) {
-    try {
-      const snap = await db.doc(`users/${caller.uid}`).get()
-      const u = snap.exists ? snap.data() : null
-      isAgent = u?.role === 'agent' || (Array.isArray(u?.enabledRoles) && u.enabledRoles.includes('agent'))
-    } catch {}
-  }
+  // Définition partagée (lib/adminGuard.js) : role OU activeRole OU enabledRoles.
   const isSelfDeletion = selfDelete === true && uid === caller.uid
-  if (!isSuper && !isAgent && !isSelfDeletion) {
+  if (!isSelfDeletion && !(await isAdminCaller(db, caller))) {
     return res.status(403).json({ error: 'forbidden', message: 'Réservé aux administrateurs.' })
   }
 
@@ -67,7 +57,7 @@ export default async function handler(req, res) {
     const authUser = await getAuth().getUser(uid)
     deletedEmail = authUser.email || null
     // Garde-fou : un admin ne supprime pas un autre super-admin
-    if (deletedEmail && superAdminEmails().includes(deletedEmail.toLowerCase())) {
+    if (deletedEmail && isSuperAdminEmail(deletedEmail)) {
       return res.status(403).json({ error: 'protected_account', message: 'Ce compte super-admin est protégé.' })
     }
   } catch (e) {
@@ -119,6 +109,17 @@ export default async function handler(req, res) {
     const apps = await db.collection('applications').where('uid', '==', uid).get()
     await Promise.allSettled(apps.docs.map(d => d.ref.delete()))
     applicationsDeleted = apps.size
+  } catch {}
+
+  // ── 6. Firestore — validations / demandes de rôle en attente ──
+  // Sans cette purge, l'entrée fantôme restait dans l'onglet Validations et
+  // « Valider » recréait un users/{uid} orphelin (sans compte Auth).
+  try {
+    await db.doc(`pending_validations/${uid}`).delete()
+  } catch {}
+  try {
+    const pendings = await db.collection('pending_validations').where('uid', '==', uid).get()
+    await Promise.allSettled(pendings.docs.map(d => d.ref.delete()))
   } catch {}
 
   console.log(`[admin-delete-account] ${caller.email} a supprimé ${uid} (${deletedEmail || 'email inconnu'}) — auth:${authDeleted} firestore:${firestoreDeleted} apps:${applicationsDeleted}`)

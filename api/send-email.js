@@ -55,6 +55,20 @@ export default async function handler(req, res) {
     const { appId, type } = req.body || {}
     if (!appId || !type) return res.status(400).json({ error: 'appId et type requis' })
 
+    // Les emails de DÉCISION (« validé », « refusé », « corrections ») sont des
+    // communications officielles : seuls les admins peuvent les déclencher —
+    // sinon n'importe quel connecté pouvait envoyer une fausse décision signée
+    // noreply@liveinblack.com à n'importe quel candidat. L'accusé de réception
+    // (« application_received ») reste ouvert : c'est le CANDIDAT lui-même qui
+    // le déclenche en soumettant son dossier (vérifié propriétaire plus bas).
+    const DECISION_TYPES = new Set(['application_approved', 'application_needs_changes', 'application_rejected'])
+    const { isAdminCaller } = await import('../lib/adminGuard.js')
+    const dbGuard = getDb()
+    const callerIsAdmin = await isAdminCaller(dbGuard, caller)
+    if (DECISION_TYPES.has(String(type)) && !callerIsAdmin) {
+      return res.status(403).json({ error: 'forbidden', message: 'Réservé aux administrateurs.' })
+    }
+
     // Email non configuré → on dégrade proprement (l'action agent ne doit pas échouer)
     if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
       return res.status(200).json({ ok: false, skipped: 'email-not-configured' })
@@ -65,6 +79,10 @@ export default async function handler(req, res) {
     const snap = await db.collection('applications').doc(String(appId)).get()
     if (!snap.exists) return res.status(404).json({ error: 'Dossier introuvable' })
     const app = snap.data()
+    // Non-admin (accusé de réception) : uniquement pour SON propre dossier.
+    if (!callerIsAdmin && String(app.uid || '') !== String(caller.uid)) {
+      return res.status(403).json({ error: 'forbidden', message: 'Ce dossier ne t\'appartient pas.' })
+    }
     const to = app.email
     if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
       return res.status(200).json({ ok: false, skipped: 'no-valid-recipient' })

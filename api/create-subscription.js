@@ -94,7 +94,12 @@ export default async function handler(req, res) {
 
     // Un paiement peut avoir réussi avant que le webhook n'écrive Firestore.
     // On retrouve alors la session payée et on l'active au lieu de refacturer.
-    const previous = await stripe.checkout.sessions.list({ client_reference_id: uid, limit: 10 })
+    // checkout.sessions.list ne sait PAS filtrer par client_reference_id
+    // (« Received unknown parameter ») → on filtre par email de l'acheteur ;
+    // persistVerifiedSubscription re-vérifie ensuite metadata.uid === uid.
+    const previous = email
+      ? await stripe.checkout.sessions.list({ customer_details: { email }, limit: 10 })
+      : { data: [] }
     for (const oldSession of previous.data) {
       const verified = await persistVerifiedSubscription(db, uid, oldSession).catch(() => null)
       if (verified) return res.status(200).json({ alreadyActive: true, status: verified.status })
@@ -106,6 +111,10 @@ export default async function handler(req, res) {
       session.mode === 'subscription'
       && session.status === 'open'
       && (session.metadata?.type === 'prestataire_subscription')
+      // La liste est filtrée par EMAIL : une session ouverte peut appartenir à
+      // un ANCIEN uid du même email (compte supprimé puis recréé). La réutiliser
+      // ferait payer un abonnement rattaché au mauvais compte.
+      && String(session.metadata?.uid || session.client_reference_id || '') === String(uid)
       && session.url
     )
     if (openSession) return res.status(200).json({ url: openSession.url, reused: true })

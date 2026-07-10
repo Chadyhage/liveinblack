@@ -56,11 +56,18 @@ export default async function handler(req, res) {
       if (!organizerUid || organizerUid === caller.uid || organizerUid === req.body?.buyerId) {
         return res.status(200).json({ ok: true, skipped: 'no-organizer-or-self' })
       }
+      // Libellé de place reconstruit depuis l'EVENT (jamais le texte libre du
+      // client : sinon n'importe quel connecté injectait un contenu arbitraire
+      // dans la cloche de l'organisateur).
+      const requested = String(placeType || req.body?.place || '').trim().toLowerCase()
+      const knownPlace = (Array.isArray(ev.places) ? ev.places : [])
+        .find(p => String(p?.type || p?.name || '').trim().toLowerCase() === requested)
+      const placeLabel = knownPlace ? (knownPlace.type || knownPlace.name) : 'place'
       const notif = {
         id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
         type: 'new_order',
         title: 'Nouvelle réservation',
-        body: `${Math.max(1, Number(qty) || 1)} × ${placeType || req.body?.place || 'place'} — ${ev.name || 'ton événement'}`,
+        body: `${Math.max(1, Math.min(50, Number(qty) || 1))} × ${placeLabel} — ${ev.name || 'ton événement'}`,
         data: { eventId: String(eventId) },
         read: false,
         createdAt: Date.now(),

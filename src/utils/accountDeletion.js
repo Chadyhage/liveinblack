@@ -51,13 +51,13 @@ export function auditAccountForDeletion(uid, userRole) {
         } else if (isFuture) {
           warnings.push({
             type:  'future_event_no_bookings',
-            label: `Événement à venir "${title}" — aucune réservation (sera annulé)`,
+            label: `Événement à venir "${title}" — aucune réservation (pense à le supprimer/annuler avant d'approuver)`,
             eventId: ev.id,
           })
         } else {
           warnings.push({
             type:  'past_event_archived',
-            label: `Événement passé "${title}" — sera archivé (billets conservés pour les acheteurs)`,
+            label: `Événement passé "${title}" — restera visible tel quel (billets conservés pour les acheteurs)`,
             eventId: ev.id,
           })
         }
@@ -287,5 +287,18 @@ async function _anonymizeAccount(req) {
         })
       }
     }
+  } catch {}
+
+  // 4. Retirer les vitrines PUBLIQUES (RGPD : nom, téléphone, photos lisibles
+  //    par tous). Sans cette étape, l'annuaire continuait d'afficher les
+  //    données personnelles d'un compte « supprimé ».
+  try {
+    const { db } = await import('../firebase')
+    const { doc, deleteDoc } = await import('firebase/firestore')
+    await Promise.allSettled([
+      deleteDoc(doc(db, 'providers', uid)),
+      deleteDoc(doc(db, 'catalogs', uid)),
+      deleteDoc(doc(db, 'organizer_profiles', uid)),
+    ])
   } catch {}
 }

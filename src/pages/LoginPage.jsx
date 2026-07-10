@@ -36,6 +36,7 @@ async function doEmailLogin(email, password, role = null) {
     if (!saved) throw { code: 'auth/user-not-found' }
     // Check status before password
     if (saved.status === 'rejected') throw { code: 'auth/account-rejected' }
+    if (saved.status === 'banned') throw { code: 'auth/account-banned' }
     // pending → allow login, the app will redirect to /mon-dossier via OnboardingGuard
     if (saved.status !== 'pending' && saved.password !== password) throw { code: 'auth/wrong-password' }
     if (saved.status === 'pending' && saved.password && saved.password !== password) throw { code: 'auth/wrong-password' }
@@ -62,17 +63,23 @@ async function doEmailLogin(email, password, role = null) {
     const mustVerifyEmail = !isOrgOrPrest || profile.emailVerificationRequired === true
     if (!isSuperAdmin) {
       if (profile.status === 'rejected') throw { code: 'auth/account-rejected' }
+      // Comptes suspendus AVANT que la suspension ne désactive Firebase Auth
+      // (les nouveaux passent par api/admin-accounts qui coupe Auth directement).
+      if (profile.status === 'banned') throw { code: 'auth/account-banned' }
       if (mustVerifyEmail && !cred.user.emailVerified) {
         const { sendEmailVerification } = await import('firebase/auth')
         await sendEmailVerification(cred.user).catch(() => {})
         throw { code: 'auth/email-not-verified' }
       }
     }
-    // Force agent role for super admin — override any corrupted data in Firestore
+    // Force agent role for super admin — override any corrupted data in Firestore.
+    // enabledRoles : on AJOUTE 'agent' sans écraser les autres interfaces
+    // débloquées (sinon chaque login supprimait client/organisateur/prestataire).
     if (isSuperAdmin) {
       const { setDoc: setUserDoc } = await import('firebase/firestore')
+      const mergedRoles = [...new Set([...(Array.isArray(profile.enabledRoles) ? profile.enabledRoles : []), 'agent'])]
       const agentPatch = {
-        role: 'agent', activeRole: 'agent', enabledRoles: ['agent'],
+        role: 'agent', activeRole: 'agent', enabledRoles: mergedRoles,
         email: cred.user.email,
         name: profile.name || cred.user.displayName || 'Admin',
         emailVerified: true, status: 'active',
@@ -778,6 +785,16 @@ export default function LoginPage() {
       <div className="relative z-10 w-full" style={{ maxWidth: 448 }}>
         <div style={{ ...S.card, padding: '38px 32px' }}>
 
+          {/* ── Nudge inscription — pointe l'onglet Inscription depuis l'onglet Connexion ── */}
+          {mode === 'login' && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, paddingRight: 14 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>
+                Toujours pas de compte ?
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+              </span>
+            </div>
+          )}
+
           {/* ── Mode tabs ── */}
           <div style={{ display: 'flex', gap: 6, padding: '5px', background: 'rgba(255,255,255,0.04)', borderRadius: '14px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.07)' }}>
             {[['login', 'Connexion'], ['register', 'Inscription']].map(([m, label]) => (
@@ -1297,6 +1314,8 @@ function getFirebaseError(code) {
     'auth/too-many-requests': 'Trop de tentatives. Réessaie dans quelques minutes.',
     'auth/network-request-failed': 'Erreur réseau. Vérifie ta connexion.',
     'auth/account-rejected': 'Ton compte a été refusé. Contacte le support.',
+    'auth/account-banned': 'Ton compte a été suspendu. Contacte le support.',
+    'auth/user-disabled': 'Ton compte a été suspendu. Contacte le support.',
     'auth/email-not-verified': 'Email non vérifié. Consulte ta boîte mail.',
   }
   if (messages[code]) return messages[code]
