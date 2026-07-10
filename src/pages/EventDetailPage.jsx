@@ -820,9 +820,11 @@ export default function EventDetailPage() {
 
       const allBookings = [...prev, ...newBookings]
       localStorage.setItem('lib_bookings', JSON.stringify(allBookings))
-      import('../utils/firestore-sync').then(({ syncDoc }) => {
+      import('../utils/firestore-sync').then(({ syncDoc, syncMyBookings }) => {
         const myBookings = allBookings.filter(b => b.userId === uid)
-        if (myBookings.length) syncDoc(`user_bookings/${uid}`, { items: myBookings })
+        // syncMyBookings (transactionnel) — JAMAIS d'overwrite brut du carnet :
+        // les sièges de table côté serveur (webhook/api-tickets) sont préservés.
+        if (myBookings.length) syncMyBookings(uid, myBookings)
         // Registre anti-fraude tickets/{code} — le scanner vérifie l'existence
         // réelle du billet ici (les règles n'autorisent que paid:false côté client)
         for (const b of newBookings) {

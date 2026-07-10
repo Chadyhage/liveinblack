@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
@@ -413,8 +413,22 @@ const S = {
 export default function ProfilePage() {
   const { user, setUser } = useAuth()
   const navigate = useNavigate()
-  const [panel, setPanel] = useState(null) // null | 'settings' | 'billets' | 'support'
+  const location = useLocation()
+  // Une notification « billet attribué » navigue vers /profil avec state.panel
+  // pour ouvrir directement « Mes billets »
+  const [panel, setPanel] = useState(location.state?.panel || null) // null | 'settings' | 'billets' | 'support'
+  useEffect(() => {
+    if (location.state?.panel) setPanel(location.state.panel)
+  }, [location.state])
   const [supportCopied, setSupportCopied] = useState(false)
+  // « Mes billets » lit lib_bookings à chaque rendu : re-rendre quand la sync
+  // (purge des billets fantômes incluse) vient de mettre à jour le localStorage.
+  const [, setSyncTick] = useState(0)
+  useEffect(() => {
+    const onSync = () => setSyncTick(t => t + 1)
+    window.addEventListener('lib:sync-complete', onSync)
+    return () => window.removeEventListener('lib:sync-complete', onSync)
+  }, [])
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
@@ -1995,21 +2009,94 @@ function patchLocalBooking(ticketCode, fields) {
 function TableHostPanel({ tickets, inactive }) {
   const { user } = useAuth()
   const myId = getUserId(user)
-  const seats = (tickets || [])
-    .filter(t => t.tableId && String(t.hostUid) === String(myId))
+  const [recovered, setRecovered] = useState([]) // sièges récupérés depuis le registre
+  const localSeats = (tickets || []).filter(t => t.tableId && String(t.hostUid) === String(myId))
+  const localCodes = new Set(localSeats.map(t => t.ticketCode))
+  const seats = [...localSeats, ...recovered.filter(r => !localCodes.has(r.ticketCode))]
     .sort((a, b) => (a.seatIndex || 0) - (b.seatIndex || 0))
   const [ov, setOv] = useState({})            // ticketCode -> { assignedTo, assignedName } (optimiste)
   const [openAssign, setOpenAssign] = useState(null)
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState('')
-  const [msg, setMsg] = useState('')
+  const [toast, setToast] = useState(null)    // { type: 'error' | 'success', text }
+  const toastTimer = useRef(null)
+  const repairTriedRef = useRef(new Set())    // 1 tentative de réparation par table
+  useEffect(() => () => clearTimeout(toastTimer.current), [])
+
+  // ── AUTO-RÉPARATION (bug « 4 places sur 6 ») ──────────────────────────────
+  // Le cache local peut être en retard sur le carnet serveur (attributions
+  // faites ailleurs, historique d'écrasement). Si le panel voit moins de
+  // sièges que la capacité de la table, on recharge les manquants depuis le
+  // REGISTRE tickets/ (source de vérité anti-fraude, écrite par l'Admin SDK)
+  // et on les fusionne — ajout uniquement, jamais d'écrasement.
+  const tableId = localSeats[0]?.tableId || null
+  const expectedSeats = Number(localSeats[0]?.tableSeats) || 0
+  const deficit = tableId && expectedSeats > 0 && localSeats.length + recovered.length < expectedSeats
+  useEffect(() => {
+    if (!deficit || !myId || repairTriedRef.current.has(tableId)) return
+    repairTriedRef.current.add(tableId)
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { db } = await import('../firebase')
+        const { collection, query, where, getDocs } = await import('firebase/firestore')
+        const snap = await getDocs(query(
+          collection(db, 'tickets'),
+          where('tableId', '==', String(tableId)),
+          where('hostUid', '==', String(myId)),
+        ))
+        if (cancelled) return
+        const regSeats = snap.docs.map(d => d.data()).filter(t => t.paid === true && t.revoked !== true)
+        const have = new Set(localSeats.map(t => t.ticketCode))
+        const sample = localSeats[0] || {}
+        const missing = regSeats.filter(t => !have.has(t.ticketCode)).map(t => {
+          const assigned = String(t.userId) !== String(myId)
+          return {
+            id: String(t.ticketCode).split('-').pop(),
+            ticketCode: t.ticketCode, eventId: t.eventId, eventName: t.eventName,
+            place: t.place, placePrice: t.placePrice != null ? Number(t.placePrice) : 0,
+            currency: t.currency || sample.currency || 'EUR',
+            eventDate: sample.eventDate, eventDateISO: sample.eventDateISO,
+            eventStartTime: sample.eventStartTime, eventEndTime: sample.eventEndTime,
+            bookedAt: t.bookedAt || new Date().toISOString(), paid: true, userId: myId,
+            tableId: t.tableId, seatIndex: t.seatIndex, hostUid: t.hostUid, tableSeats: t.tableSeats,
+            assignedTo: assigned ? String(t.userId) : null,
+            assignedName: assigned ? (t.assignedName || 'Invité') : null,
+            assignedAt: assigned ? (t.assignedAt || null) : null,
+          }
+        })
+        if (!missing.length) return
+        setRecovered(missing)
+        // Répare aussi le cache local + le carnet serveur (écriture SÛRE).
+        try {
+          const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
+          const known = new Set(all.filter(b => b.userId === myId).map(b => b.ticketCode))
+          const fresh = missing.filter(m => !known.has(m.ticketCode))
+          if (fresh.length) {
+            const next = [...all, ...fresh]
+            localStorage.setItem('lib_bookings', JSON.stringify(next))
+            const { syncMyBookings } = await import('../utils/firestore-sync')
+            syncMyBookings(myId, next.filter(b => b.userId === myId))
+          }
+        } catch {}
+      } catch { /* hors-ligne / règles : le panel affiche ce qu'il a */ }
+    })()
+    return () => { cancelled = true }
+  }, [deficit, tableId, myId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!seats.length) return null
   const totalSeats = seats[0].tableSeats || seats.length
   const holderOf = (t) => (t.ticketCode in ov) ? ov[t.ticketCode] : { assignedTo: t.assignedTo || null, assignedName: t.assignedName || null }
   const assignedCount = seats.filter(t => holderOf(t).assignedTo).length
 
+  function showToast(type, text) {
+    clearTimeout(toastTimer.current)
+    setToast({ type, text })
+    toastTimer.current = setTimeout(() => setToast(null), type === 'error' ? 4200 : 2600)
+  }
+
   async function call(action, ticketCode, extra) {
-    setBusy(ticketCode); setMsg('')
+    setBusy(ticketCode)
     try {
       const { authHeaders } = await import('../utils/apiAuth')
       const res = await fetch('/api/tickets', {
@@ -2018,14 +2105,15 @@ function TableHostPanel({ tickets, inactive }) {
         body: JSON.stringify({ action, ticketCode, ...extra }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setMsg(data.error || 'Erreur — réessaie.'); setBusy(''); return }
+      if (!res.ok) { showToast('error', data.error || 'Erreur — réessaie.'); setBusy(''); return }
       const patch = action === 'assign'
         ? { assignedTo: data.holder, assignedName: data.holderName || 'Invité' }
         : { assignedTo: null, assignedName: null }
       setOv(s => ({ ...s, [ticketCode]: patch }))
       patchLocalBooking(ticketCode, patch)
-      setOpenAssign(null); setEmail(''); setMsg(action === 'assign' ? 'Place attribuée ✓' : 'Place reprise ✓')
-    } catch { setMsg('Erreur réseau — réessaie.') }
+      setOpenAssign(null); setEmail('')
+      showToast('success', action === 'assign' ? 'Place attribuée' : 'Place reprise')
+    } catch { showToast('error', 'Erreur réseau — réessaie.') }
     setBusy('')
   }
 
@@ -2060,7 +2148,7 @@ function TableHostPanel({ tickets, inactive }) {
                     {isBusy ? '…' : 'Reprendre'}
                   </button>
                 ) : (
-                  <button disabled={isBusy} onClick={() => { setOpenAssign(openAssign === t.ticketCode ? null : t.ticketCode); setEmail(''); setMsg('') }}
+                  <button disabled={isBusy} onClick={() => { setOpenAssign(openAssign === t.ticketCode ? null : t.ticketCode); setEmail('') }}
                     style={{ flexShrink: 0, padding: '7px 13px', borderRadius: 999, cursor: 'pointer', font: '700 11px Inter,sans-serif', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: '#4ee8c8' }}>
                     Attribuer
                   </button>
@@ -2080,7 +2168,40 @@ function TableHostPanel({ tickets, inactive }) {
           )
         })}
       </div>
-      {msg && <p style={{ margin: '10px 0 0', font: '600 11px Inter,sans-serif', color: 'rgba(78,232,200,0.9)' }}>{msg}</p>}
+      {/* Toast flottant — erreur en rose (cohérent avec le contexte), succès en teal */}
+      {toast && createPortal(
+        <div role="status" aria-live="polite" style={{
+          position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 1200, display: 'flex', alignItems: 'center', gap: 10,
+          maxWidth: 'min(440px, calc(100vw - 32px))',
+          background: 'rgba(12,12,22,0.96)',
+          border: `1px solid ${toast.type === 'error' ? 'rgba(224,90,170,0.5)' : 'rgba(78,232,200,0.5)'}`,
+          borderRadius: 12, padding: '11px 16px',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          animation: 'lib-pop 0.22s ease both',
+        }}>
+          <span aria-hidden="true" style={{
+            flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: toast.type === 'error' ? 'rgba(224,90,170,0.16)' : 'rgba(78,232,200,0.16)',
+          }}>
+            {toast.type === 'error' ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="2.6" strokeLinecap="round">
+                <line x1="12" y1="6" x2="12" y2="13.5" /><circle cx="12" cy="18" r="0.6" fill="#e05aaa" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="4.5 12.5 10 18 19.5 7" />
+              </svg>
+            )}
+          </span>
+          <p style={{ margin: 0, font: '600 12.5px Inter,sans-serif', color: 'rgba(255,255,255,0.92)', lineHeight: 1.45 }}>
+            {toast.text}
+          </p>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

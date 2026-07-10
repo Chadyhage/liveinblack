@@ -234,9 +234,11 @@ export default function PaiementReussiPage() {
           const all = [...prev, ...adoptedBookings]
           localStorage.setItem('lib_bookings', JSON.stringify(all))
           if (pending.userId) {
-            import('../utils/firestore-sync').then(({ syncDoc }) => {
+            import('../utils/firestore-sync').then(({ syncMyBookings }) => {
               const mine = all.filter(b => b.userId === pending.userId)
-              if (mine.length) syncDoc(`user_bookings/${pending.userId}`, { items: mine })
+              // Transactionnel : préserve les sièges de table du carnet serveur
+              // (un cache local rassis ne peut plus les écraser).
+              if (mine.length) syncMyBookings(pending.userId, mine)
             }).catch(() => {})
           }
           try { localStorage.removeItem(PENDING_KEY(bookingId)) } catch {}
@@ -316,9 +318,10 @@ export default function PaiementReussiPage() {
         localStorage.setItem('lib_bookings', JSON.stringify(allBookings))
 
         if (pending.userId) {
-          import('../utils/firestore-sync').then(({ syncDoc }) => {
+          import('../utils/firestore-sync').then(({ syncDoc, syncMyBookings }) => {
             const myBookings = allBookings.filter(b => b.userId === pending.userId)
-            if (myBookings.length) syncDoc(`user_bookings/${pending.userId}`, { items: myBookings })
+            // Transactionnel : préserve les sièges de table du carnet serveur.
+            if (myBookings.length) syncMyBookings(pending.userId, myBookings)
             // Registre anti-fraude tickets/{code} — filet si le webhook (Stripe
             // ou FedaPay) n'a pas encore tourné. Les règles n'autorisent que
             // paid:false côté client ; le webhook (Admin SDK) écrasera avec paid:true.

@@ -438,6 +438,60 @@ function mergeById(local, remote, idField = 'id') {
   return [...remote, ...onlyLocal]
 }
 
+// Clé de fusion des BILLETS dans le cache local. ⚠️ PAS seulement `id` : la
+// copie de gestion de l'HÔTE d'une table et la copie personnelle de l'INVITÉ
+// portent le MÊME id/ticketCode (modèle double-copie d'api/tickets) mais des
+// userId différents. Sur un appareil partagé entre comptes (lib_bookings est
+// global au device), fusionner par `id` seul faisait s'écraser les deux copies
+// — puis un push du carnet éjectait les sièges perdus côté serveur (bug des
+// « 4 places sur 6 »). Clé composite = à qui appartient la copie + le billet.
+const bookingMergeKey = (b) => `${b?.userId || ''}__${b?.ticketCode || b?.id || ''}`
+function mergeBookings(local, remote) {
+  const remoteKeys = new Set(remote.map(bookingMergeKey))
+  const onlyLocal = local.filter(l => !remoteKeys.has(bookingMergeKey(l)))
+  return [...remote, ...onlyLocal]
+}
+
+// ── Écriture SÛRE du carnet user_bookings/{uid} ───────────────────────────────
+// RÈGLE (bug « sièges de table perdus », 2026-07-10) : les billets de TABLE
+// (tableId) appartiennent au SERVEUR — émis par les webhooks, déplacés par
+// api/tickets (attribution/révocation). Le client ne doit JAMAIS pouvoir les
+// retirer, les modifier ni en ressusciter d'anciens en poussant son cache
+// local : un appareil au cache rassis écrasait le carnet serveur (sièges
+// perdus chez l'hôte, copies fantômes scannables chez un invité révoqué).
+// Transaction : sièges de table = version SERVEUR conservée telle quelle
+// (dédoublonnée par ticketCode) ; billets classiques = version LOCALE (le
+// client est l'autorité de ses propres achats).
+export async function syncMyBookings(uid, localItems) {
+  if (!uid) return false
+  const list = Array.isArray(localItems) ? localItems : []
+  try {
+    const ref = doc(db, 'user_bookings', uid)
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref)
+      const serverItems = snap.exists() && Array.isArray(snap.data().items) ? snap.data().items : []
+      // Autorité serveur : tous les sièges de table. Dédoublonnage par ticketCode
+      // (un retry de webhook peut avoir ajouté un doublon via arrayUnion) — en
+      // cas de doublon on préfère la copie appartenant au propriétaire du carnet.
+      const seatByCode = new Map()
+      for (const it of serverItems) {
+        if (!it || !it.tableId) continue
+        const key = String(it.ticketCode || it.id)
+        const prev = seatByCode.get(key)
+        if (!prev || (String(it.userId) === String(uid) && String(prev.userId) !== String(uid))) {
+          seatByCode.set(key, it)
+        }
+      }
+      const clientItems = list.filter(it => it && !it.tableId)
+      tx.set(ref, { items: [...seatByCode.values(), ...clientItems], updatedAt: new Date().toISOString() }, { merge: true })
+    })
+    return true
+  } catch (e) {
+    console.warn('[sync] syncMyBookings failed:', e?.message)
+    return false
+  }
+}
+
 // Réconcilie la liste locale des events créés avec un instantané COMPLET de
 // Firestore (collection publique `events/`). Corrige le bug « un event supprimé
 // ne disparaît jamais du cache local » : avant, tout event local absent de
@@ -455,6 +509,28 @@ export function reconcileCreatedEvents(prevList, incoming) {
     e => e && e._pendingSync === true && !incomingIds.has(String(e.id))
   )
   return [...inc, ...pendingLocal]
+}
+
+// Purge, dans user_bookings/{uid}, les billets dont l'événement n'existe plus.
+// Corrige le bug « billets fantômes » : un event supprimé laissait ses billets
+// orphelins dans le carnet Firestore, et le mergeById (union) du login les
+// ressuscitait indéfiniment dans « Mes billets » — même après nettoyage local.
+// validEventIds = ids issus d'un instantané COMPLET de events/ + créations
+// locales _pendingSync. Transaction sur l'état SERVEUR : un billet ajouté
+// concurremment (arrayUnion du webhook pendant un achat) n'est jamais perdu.
+export async function purgeGhostBookings(uid, validEventIds) {
+  try {
+    if (!uid || !(validEventIds instanceof Set) || validEventIds.size === 0) return
+    const ref = doc(db, 'user_bookings', uid)
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref)
+      if (!snap.exists()) return
+      const items = Array.isArray(snap.data().items) ? snap.data().items : []
+      const kept = items.filter(it => validEventIds.has(String(it.eventId)))
+      if (kept.length === items.length) return
+      tx.set(ref, { items: kept, updatedAt: new Date().toISOString() }, { merge: true })
+    })
+  } catch (e) { console.warn('[sync] purgeGhostBookings failed:', e?.message) }
 }
 
 // ── Master sync: pull all Firestore data → localStorage on login ──────────────
@@ -506,7 +582,9 @@ export async function syncOnLogin(uid, opts = {}) {
     const bookingsDoc = await loadDoc(`user_bookings/${uid}`)
     if (bookingsDoc?.items?.length) {
       const local = safeParseArray('lib_bookings')
-      localStorage.setItem('lib_bookings', JSON.stringify(mergeById(local, bookingsDoc.items)))
+      // mergeBookings (clé userId+ticketCode) — jamais mergeById : sur un
+      // appareil partagé, la copie invité écrasait la copie hôte du même siège.
+      localStorage.setItem('lib_bookings', JSON.stringify(mergeBookings(local, bookingsDoc.items)))
     }
 
     // ── 2b. Events privés débloqués (codes d'accès) ──
@@ -685,7 +763,25 @@ export async function syncOnLogin(uid, opts = {}) {
       const localEvents = safeParseArray('lib_created_events')
       // reconcile (pas mergeById) : retire les events supprimés côté Firestore,
       // garde uniquement les créations locales encore _pendingSync.
-      localStorage.setItem('lib_created_events', JSON.stringify(reconcileCreatedEvents(localEvents, publicEvents)))
+      const reconciled = reconcileCreatedEvents(localEvents, publicEvents)
+      localStorage.setItem('lib_created_events', JSON.stringify(reconciled))
+
+      // ── 15b. Purge des billets fantômes ──
+      // Un billet dont l'événement a été supprimé ne doit plus apparaître dans
+      // « Mes billets ». Sans cette purge, le mergeById de l'étape 2 (union
+      // local+serveur) le ressuscitait à chaque sync. On ne purge que sur un
+      // instantané COMPLET et non vide de events/ ; les créations locales
+      // _pendingSync comptent comme valides (un orga peut réserver son propre
+      // event pas encore synché). Les events annulés gardent leur doc events/
+      // → les billets annulés (avec message) ne sont PAS purgés.
+      const validEventIds = new Set(publicEvents.map(e => String(e.id)))
+      reconciled.forEach(e => { if (e._pendingSync) validEventIds.add(String(e.id)) })
+      const allBookings = safeParseArray('lib_bookings')
+      const keptBookings = allBookings.filter(b => validEventIds.has(String(b.eventId)))
+      if (keptBookings.length !== allBookings.length) {
+        localStorage.setItem('lib_bookings', JSON.stringify(keptBookings))
+      }
+      await purgeGhostBookings(uid, validEventIds)
     }
 
     // ── 16. Pending validations + role requests — AGENTS uniquement ──
@@ -736,9 +832,10 @@ export async function pushLocalToFirestore(uid) {
   try {
     // (Wallet retiré — paiements via Stripe)
 
-    // Bookings
+    // Bookings — via syncMyBookings (JAMAIS un overwrite brut : les sièges de
+    // table côté serveur sont préservés, seuls mes billets classiques sont poussés)
     const bookings = safeParseArray('lib_bookings').filter(b => b.userId === uid)
-    if (bookings.length) syncDoc(`user_bookings/${uid}`, { items: bookings })
+    if (bookings.length) syncMyBookings(uid, bookings)
 
     // Created events
     const events = safeParseArray('lib_created_events').filter(e => e.createdBy === uid || e.organizerId === uid)
