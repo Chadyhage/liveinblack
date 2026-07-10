@@ -910,7 +910,7 @@ export default function EventDetailPage() {
   // Redirige vers l'auth si non connecté, sinon exécute l'action
   function requireUserThenDo(action) {
     if (!user) {
-      openAuthModal('Crée ton compte pour réserver ta place 🎟️', action)
+      openAuthModal('Crée ton compte pour réserver ta place', action)
       return
     }
     action()
@@ -1304,7 +1304,7 @@ export default function EventDetailPage() {
                           <p style={{ ...S.price, fontSize: 26, margin: 0, lineHeight: 1 }}>{fmtMoney(place.price, evCur)}</p>
                           {isSelected
                             ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: '#c8a96e' }}><CheckIcon size={11} color="#c8a96e" /> Choisi</span>
-                            : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}>Choisir →</span>}
+                            : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>Choisir</span>}
                         </div>
                       </div>
                     )
@@ -1422,7 +1422,7 @@ export default function EventDetailPage() {
                             setBookingStep('preorder')
                           }))}
                         >
-                          Continuer →
+                          Continuer
                         </button>
                       ) : isGroupPlace ? (
                         <button
@@ -1643,20 +1643,21 @@ export default function EventDetailPage() {
                                 style={{
                                   width: 28,
                                   height: 28,
-                                  borderRadius: 4,
-                                  background: 'transparent',
-                                  border: '1px solid rgba(255,255,255,0.15)',
+                                  borderRadius: 8,
+                                  background: 'rgba(255,255,255,0.08)',
+                                  border: '1px solid rgba(255,255,255,0.14)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  fontFamily: "'DM Mono', monospace",
-                                  fontSize: 14,
-                                  color: 'rgba(255,255,255,0.5)',
+                                  fontFamily: 'Inter, sans-serif',
+                                  fontSize: 15,
+                                  fontWeight: 700,
+                                  color: 'rgba(255,255,255,0.7)',
                                   cursor: qty === 0 ? 'not-allowed' : 'pointer',
-                                  opacity: qty === 0 ? 0.3 : 1,
+                                  opacity: qty === 0 ? 0.4 : 1,
                                 }}
                               >−</button>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: qty > 0 ? '#c8a96e' : 'rgba(255,255,255,0.3)', width: 16, textAlign: 'center' }}>
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: qty > 0 ? '#c8a96e' : 'rgba(255,255,255,0.4)', width: 16, textAlign: 'center' }}>
                                 {qty}
                               </span>
                               <button
@@ -1664,15 +1665,16 @@ export default function EventDetailPage() {
                                 style={{
                                   width: 28,
                                   height: 28,
-                                  borderRadius: 4,
-                                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                                  border: '1px solid rgba(200,169,110,0.45)',
+                                  borderRadius: 8,
+                                  background: '#c8a96e',
+                                  border: 'none',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  fontFamily: "'DM Mono', monospace",
-                                  fontSize: 16,
-                                  color: '#c8a96e',
+                                  fontFamily: 'Inter, sans-serif',
+                                  fontSize: 15,
+                                  fontWeight: 700,
+                                  color: '#1a1206',
                                   cursor: 'pointer',
                                 }}
                               >+</button>
@@ -1695,25 +1697,24 @@ export default function EventDetailPage() {
                                     key={opt.id}
                                     onClick={() => selectShowOption(item.name, opt)}
                                     style={{
-                                      padding: '4px 10px',
-                                      borderRadius: 4,
+                                      padding: '7px 12px',
+                                      borderRadius: 10,
                                       border: showSel?.showOptionId === opt.id
                                         ? '1px solid rgba(200,169,110,0.55)'
-                                        : '1px solid rgba(200,169,110,0.20)',
+                                        : '1px solid rgba(255,255,255,0.14)',
                                       background: showSel?.showOptionId === opt.id
-                                        ? 'rgba(200,169,110,0.18)'
-                                        : 'transparent',
-                                      fontFamily: "'DM Mono', monospace",
-                                      fontSize: 9,
-                                      letterSpacing: '0.1em',
-                                      textTransform: 'uppercase',
-                                      color: showSel?.showOptionId === opt.id ? '#c8a96e' : 'rgba(200,169,110,0.55)',
+                                        ? 'rgba(200,169,110,0.16)'
+                                        : 'rgba(255,255,255,0.06)',
+                                      fontFamily: 'Inter, sans-serif',
+                                      fontSize: 12,
+                                      fontWeight: 600,
+                                      color: showSel?.showOptionId === opt.id ? '#c8a96e' : 'rgba(255,255,255,0.65)',
                                       cursor: 'pointer',
                                       transition: 'all 0.2s',
                                     }}
                                   >
                                     {opt.label}
-                                    {opt.requiresInfo && showSel?.showOptionId !== opt.id ? ' ✎' : ''}
+                                    {opt.requiresInfo && showSel?.showOptionId !== opt.id ? ' · à préciser' : ''}
                                   </button>
                                 ))}
                                 {showSel && (
@@ -1723,24 +1724,23 @@ export default function EventDetailPage() {
                                       const s = { ...t.shows }; delete s[item.name]; return { ...t, shows: s }
                                     }))}
                                     style={{
-                                      padding: '4px 10px',
-                                      borderRadius: 4,
-                                      border: '1px solid rgba(220,50,50,0.25)',
-                                      background: 'transparent',
-                                      fontFamily: "'DM Mono', monospace",
-                                      fontSize: 9,
-                                      letterSpacing: '0.1em',
-                                      textTransform: 'uppercase',
-                                      color: 'rgba(220,100,100,0.7)',
+                                      padding: '7px 12px',
+                                      borderRadius: 10,
+                                      border: '1px solid rgba(224,90,170,0.4)',
+                                      background: 'rgba(224,90,170,0.12)',
+                                      fontFamily: 'Inter, sans-serif',
+                                      fontSize: 12,
+                                      fontWeight: 600,
+                                      color: '#e88bc4',
                                       cursor: 'pointer',
                                     }}
                                   >
-                                    ✕ Sans show
+                                    Sans show
                                   </button>
                                 )}
                               </div>
                               {showSel?.showInfo && (
-                                <p style={{ ...S.muted, fontSize: 9, paddingLeft: 4 }}>↳ {showSel.showInfo}</p>
+                                <p style={{ ...S.muted, fontSize: 11.5, paddingLeft: 4 }}>Info transmise : {showSel.showInfo}</p>
                               )}
                             </div>
                           )}
@@ -1753,7 +1753,7 @@ export default function EventDetailPage() {
                   <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={S.muted}>Place · {selectedPlace}{ticketQty > 1 ? ` ×${ticketQty}` : ''}</span>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white' }}>{fmtMoney(placePrice * ticketQty, evCur)}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'white' }}>{fmtMoney(placePrice * ticketQty, evCur)}</span>
                     </div>
                     {perTicketOrders.map((t, n) => {
                       const ticketItems = activeMenu.filter(i => (t.items[i.name] || 0) > 0)
@@ -1761,36 +1761,36 @@ export default function EventDetailPage() {
                       return (
                         <div key={n} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           {perTicketOrders.length > 1 && (
-                            <span style={{ ...S.muted, fontSize: 9, color: '#c8a96e' }}>Billet {n + 1}</span>
+                            <span style={{ ...S.muted, fontSize: 11, fontWeight: 700, color: '#c8a96e' }}>Billet {n + 1}</span>
                           )}
                           {ticketItems.map(i => (
                             <div key={i.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={S.muted}>{i.name} ×{t.items[i.name]}</span>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{fmtMoney(i.price * t.items[i.name], evCur)}</span>
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.6)' }}>{fmtMoney(i.price * t.items[i.name], evCur)}</span>
                             </div>
                           ))}
                         </div>
                       )
                     })}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 8, marginTop: 4 }}>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'white', letterSpacing: '0.1em' }}>Total</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 700, color: 'white' }}>Total</span>
                       <span style={{ ...S.price, fontSize: 22 }}>{fmtMoney(grandTotal, evCur)}</span>
                     </div>
                   </div>
 
                   {isGroupPlace ? (
                     <button
-                      style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
+                      style={{ ...S.btnGold, ...(!userCanBook ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', boxShadow: 'none' } : {}), cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                       disabled={!userCanBook}
                       onClick={() => openConfirm()}
                     >
-                      <GroupIcon size={16} color="#1a1206" />
+                      <GroupIcon size={16} color={!userCanBook ? 'rgba(255,255,255,0.35)' : '#1a1206'} />
                       {`Réserver la table — ${fmtMoney(grandTotal, evCur)}`}
                     </button>
                   ) : (
                     <>
                       <button
-                        style={{ ...S.btnGold, opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
+                        style={{ ...S.btnGold, ...(!userCanBook ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', boxShadow: 'none' } : {}), cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                         disabled={!userCanBook}
                         onClick={() => openConfirm()}
                       >
@@ -1800,7 +1800,7 @@ export default function EventDetailPage() {
                         <button
                           onClick={() => openConfirm()}
                           disabled={!userCanBook}
-                          style={{ ...S.btnGhost, width: '100%', padding: '10px', opacity: !userCanBook ? 0.4 : 1, cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
+                          style={{ ...S.btnGhost, width: '100%', padding: '12px', ...(!userCanBook ? { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)' } : {}), cursor: !userCanBook ? 'not-allowed' : 'pointer', pointerEvents: !userCanBook ? 'none' : 'auto' }}
                         >
                           Réserver sans précommande
                         </button>
@@ -1886,14 +1886,14 @@ export default function EventDetailPage() {
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <span style={{
                             fontFamily: 'Inter, sans-serif',
-                            fontSize: 9,
+                            fontSize: 11,
                             fontWeight: 700,
-                            letterSpacing: '0.12em',
+                            letterSpacing: '0.04em',
                             textTransform: 'uppercase',
                             padding: '3px 9px',
                             borderRadius: 999,
-                            background: 'rgba(200,169,110,0.10)',
-                            border: '1px solid rgba(200,169,110,0.3)',
+                            background: 'rgba(200,169,110,0.12)',
+                            border: '1px solid rgba(200,169,110,0.35)',
                             color: '#c8a96e',
                           }}>
                             {a.role}
@@ -1953,7 +1953,7 @@ export default function EventDetailPage() {
                       {organizerProfile?.publicName || event.organizerName || event.organizer || 'Organisateur'}
                     </p>
                   </div>
-                  {organizerProfile && <button onClick={() => navigate(`/organisateurs/${organizerProfile.slug}`)} style={{ flexShrink: 0, padding: '9px 11px', borderRadius: 4, border: '1px solid rgba(78,232,200,.35)', background: 'rgba(78,232,200,.07)', color: '#4ee8c8', fontFamily: 'DM Mono, monospace', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Voir la page</button>}
+                  {organizerProfile && <button onClick={() => navigate(`/organisateurs/${organizerProfile.slug}`)} style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, border: 'none', background: '#3ed6b5', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Voir la page</button>}
                 </div>
               </div>
               <div>
@@ -1992,7 +1992,7 @@ export default function EventDetailPage() {
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4ee8c8', margin: 0 }}>À quoi ressemble ta place</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#4ee8c8', margin: 0 }}>À quoi ressemble ta place</p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 19, fontWeight: 800, color: '#fff', margin: '2px 0 0' }}>{photoGallery.type}</p>
               </div>
               <button onClick={() => setPhotoGallery(null)} aria-label="Fermer" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}>×</button>
@@ -2042,10 +2042,10 @@ export default function EventDetailPage() {
           onClick={() => setIncludedModal(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}
         >
-          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'linear-gradient(160deg, #14121f, #0a0b12)', border: '1px solid rgba(200,169,110,0.30)', borderRadius: 18, padding: 22, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 30px 80px rgba(0,0,0,0.55)' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, padding: 22, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Inclus dans ce billet</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Inclus dans ce billet</p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 19, fontWeight: 800, color: '#fff', margin: '2px 0 0' }}>{includedModal.type}</p>
               </div>
               <button onClick={() => setIncludedModal(null)} aria-label="Fermer" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}>×</button>
@@ -2053,27 +2053,29 @@ export default function EventDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {/* L'entrée elle-même, toujours incluse */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: '1px solid rgba(78,232,200,0.22)', background: 'rgba(78,232,200,0.05)' }}>
-                <span style={{ fontSize: 17, flexShrink: 0 }}>🎟️</span>
+                <IconTicket size={17} color="#4ee8c8" />
                 <span style={{ flex: 1, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>1 entrée à la soirée</span>
-                <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.05em', color: '#4ee8c8', padding: '4px 9px', borderRadius: 999, background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.32)' }}>INCLUS</span>
+                <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: '#4ee8c8', padding: '4px 10px', borderRadius: 8, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.35)' }}>INCLUS</span>
               </div>
               {includedModal.items.map((inc, k) => {
                 const menuItem = (event.menu || []).find(m => m?.name === inc.name)
                 return (
                   <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: '1px solid rgba(78,232,200,0.22)', background: 'rgba(78,232,200,0.05)' }}>
-                    <span style={{ fontSize: 17, flexShrink: 0 }}>{menuItem?.emoji || '🍾'}</span>
+                    {menuItem?.emoji
+                      ? <span style={{ fontSize: 17, flexShrink: 0 }}>{menuItem.emoji}</span>
+                      : <IconCheck size={16} color="#4ee8c8" />}
                     <span style={{ flex: 1, minWidth: 0, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
                       {inc.qty > 1 ? `${inc.qty}× ` : '1× '}{inc.name}
                     </span>
-                    <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.05em', padding: '4px 9px', borderRadius: 999, color: '#4ee8c8', background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.32)' }}>
+                    <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', padding: '4px 10px', borderRadius: 8, color: '#4ee8c8', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.35)' }}>
                       INCLUS
                     </span>
                   </div>
                 )
               })}
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: 'rgba(255,255,255,0.38)', lineHeight: 1.5, margin: 0 }}>
-              Tes options t'attendent sur place : le staff les coche sur ton billet au moment où il te les sert. Elles apparaissent aussi dans « Mes billets » après l'achat.
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.55, margin: 0 }}>
+              Tes options te seront servies sur place : le staff les valide sur ton billet. Tu les retrouveras aussi dans « Mes billets » après l'achat.
             </p>
           </div>
         </div>
@@ -2105,21 +2107,22 @@ export default function EventDetailPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontFamily: "'DM Mono', monospace",
+                  fontFamily: 'Inter, sans-serif',
                   fontSize: 11,
-                  color: 'rgba(255,255,255,0.3)',
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.4)',
                 }}>
                   {descModal.name.slice(0, 2).toUpperCase()}
                 </div>
               )}
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 20, color: 'white', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 18, color: 'white', margin: 0 }}>
                   {descModal.name}
                 </p>
                 <p style={{ ...S.price, fontSize: 16 }}>{fmtMoney(descModal.price, evCur)}</p>
               </div>
             </div>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, letterSpacing: '0.03em' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.65)', lineHeight: 1.65 }}>
               {descModal.description}
             </p>
             <button onClick={() => setDescModal(null)} style={S.btnGold}>Fermer</button>
@@ -2140,9 +2143,10 @@ export default function EventDetailPage() {
               position: 'relative',
               width: '100%',
               maxWidth: 448,
-              background: 'rgba(4,5,12,0.97)',
+              background: '#12131c',
               border: '1px solid rgba(255,255,255,0.10)',
               borderRadius: '16px 16px 0 0',
+              boxShadow: '0 -24px 64px rgba(0,0,0,0.55)',
               maxHeight: '60vh',
               display: 'flex',
               flexDirection: 'column',
@@ -2150,7 +2154,7 @@ export default function EventDetailPage() {
             }}>
               <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,0.15)', borderRadius: 2, margin: '0 auto 12px' }} />
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>
                   Partager l'événement
                 </p>
               </div>
@@ -2164,12 +2168,12 @@ export default function EventDetailPage() {
                       url: `${window.location.origin}/evenements/${event.id}`,
                     })
                     if (res.method === 'share') { setShowShareModal(false); return }
-                    setExtShareMsg(res.method === 'copy' ? 'Lien copié ✓' : 'Indisponible sur ce navigateur')
+                    setExtShareMsg(res.method === 'copy' ? 'Lien copié' : 'Indisponible sur ce navigateur')
                     setTimeout(() => setExtShareMsg(''), 1800)
                   }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '13px 16px', borderRadius: 12, border: '1px solid rgba(78,232,200,0.4)', background: 'rgba(78,232,200,0.10)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '13px 16px', borderRadius: 12, border: 'none', background: '#3ed6b5', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
                 >
-                  <ShareIcon size={15} color="#4ee8c8" />
+                  <ShareIcon size={15} color="#04120e" />
                   {extShareMsg || 'Partager le lien (WhatsApp, Insta…)'}
                 </button>
                 {/* Story 1080×1920 aux couleurs de l'événement — SANS QR ni info
@@ -2185,18 +2189,20 @@ export default function EventDetailPage() {
                         kicker: 'Événement',
                         title: event.name,
                         chips: [event.dateDisplay, event.city || event.location, minP > 0 ? `dès ${fmtMoney(minP, evCur)}` : (minP === 0 ? 'Gratuit' : null)],
-                        tagline: 'Rejoins-moi à cette soirée 🔥',
+                        tagline: 'Rejoins-moi à cette soirée',
                         imageUrl: event.imageUrl || null,
                       })
                       if (res.method === 'share') { setShowShareModal(false) }
-                      else if (res.method === 'download') { setExtShareMsg('Story téléchargée ✓ — publie-la !'); setTimeout(() => setExtShareMsg(''), 2500) }
+                      else if (res.method === 'download') { setExtShareMsg('Story téléchargée — prête à publier'); setTimeout(() => setExtShareMsg(''), 2500) }
                       else { setExtShareMsg('Génération impossible'); setTimeout(() => setExtShareMsg(''), 1800) }
                     } catch { setExtShareMsg('Génération impossible'); setTimeout(() => setExtShareMsg(''), 1800) }
                     setStoryGenerating(false)
                   }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '13px 16px', borderRadius: 12, marginTop: 10, border: '1px solid rgba(224,90,170,0.45)', background: 'linear-gradient(135deg, rgba(224,90,170,0.14), rgba(139,92,246,0.14))', color: '#e05aaa', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: storyGenerating ? 0.6 : 1 }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '13px 16px', borderRadius: 12, marginTop: 10, border: '1px solid rgba(224,90,170,0.45)', background: 'rgba(224,90,170,0.14)', color: '#e88bc4', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, cursor: storyGenerating ? 'wait' : 'pointer' }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e05aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="#e05aaa"/></svg>
+                  {storyGenerating
+                    ? <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(224,90,170,0.3)', borderTopColor: '#e88bc4', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />
+                    : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e88bc4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="#e88bc4"/></svg>}
                   {storyGenerating ? 'Création de la story…' : 'Partager en story'}
                 </button>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.32)', textAlign: 'center', margin: '12px 0 2px' }}>
@@ -2205,8 +2211,8 @@ export default function EventDetailPage() {
               </div>
               <div style={{ flex: 1, overflowY: 'auto' }}>
                 {convs.length === 0 ? (
-                  <p style={{ textAlign: 'center', fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.25)', padding: '40px 0' }}>
-                    Aucune conversation
+                  <p style={{ textAlign: 'center', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.5)', padding: '40px 0' }}>
+                    Aucune conversation pour l'instant
                   </p>
                 ) : convs.map(conv => {
                   const isGroup = conv.type === 'group'
@@ -2247,21 +2253,22 @@ export default function EventDetailPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 10,
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: 11,
+                        fontWeight: 700,
                         color: '#c8a96e',
                       }}>
                         {isGroup ? <GroupIcon size={14} color="#c8a96e" /> : getInitials(otherName)}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600, color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {otherName}
                         </p>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.28)', margin: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
                           {formatTime(conv.updatedAt)}
                         </p>
                       </div>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#c8a96e' }}>↗</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 600, color: '#c8a96e', lineHeight: 1 }}>›</span>
                     </button>
                   )
                 })}
@@ -2278,9 +2285,10 @@ export default function EventDetailPage() {
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)' }} onClick={() => setShowConflictModal(false)} />
           <div style={{
             position: 'relative', width: '100%', maxWidth: 448,
-            background: 'rgba(4,5,12,0.98)',
+            background: '#12131c',
             border: '1px solid rgba(245,158,11,0.35)',
             borderRadius: '16px 16px 0 0',
+            boxShadow: '0 -24px 64px rgba(0,0,0,0.55)',
             padding: '20px 20px 40px',
             display: 'flex', flexDirection: 'column', gap: 18,
           }}>
@@ -2298,10 +2306,10 @@ export default function EventDetailPage() {
                   <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
                 </svg>
               </div>
-              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 24, color: 'white', margin: 0 }}>
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 21, letterSpacing: '-0.4px', color: 'white', margin: 0 }}>
                 Conflit de créneau
               </h3>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, letterSpacing: '0.04em', margin: 0 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
                 Tu as déjà une réservation pour{' '}
                 <span style={{ color: '#f59e0b', fontWeight: 600 }}>{conflictBooking.eventName}</span>
                 {' '}le <span style={{ color: 'white' }}>{conflictBooking.eventDate}</span> sur un créneau qui se chevauche avec cet événement.
@@ -2325,16 +2333,16 @@ export default function EventDetailPage() {
                 </svg>
               </div>
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
                   {conflictBooking.eventName}
                 </p>
-                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0', letterSpacing: '0.1em' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>
                   {conflictBooking.eventDate} · {conflictBooking.eventStartTime} → {conflictBooking.eventEndTime}
                 </p>
               </div>
             </div>
 
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.35)', textAlign: 'center', margin: 0, letterSpacing: '0.06em' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)', textAlign: 'center', margin: 0 }}>
               Tu peux quand même réserver — la décision t'appartient.
             </p>
 
@@ -2346,22 +2354,22 @@ export default function EventDetailPage() {
                   if (conflictProceedFn) conflictProceedFn()
                 }}
                 style={{
-                  padding: '14px', borderRadius: 4, cursor: 'pointer',
-                  background: 'linear-gradient(135deg, rgba(245,158,11,0.22), rgba(245,158,11,0.07))',
-                  border: '1px solid rgba(245,158,11,0.45)',
-                  fontFamily: "'DM Mono', monospace", fontSize: 11,
-                  letterSpacing: '0.2em', textTransform: 'uppercase', color: '#f59e0b',
+                  padding: '14px', borderRadius: 12, cursor: 'pointer',
+                  background: '#f59e0b',
+                  border: 'none',
+                  fontFamily: 'Inter, sans-serif', fontSize: 14,
+                  fontWeight: 700, color: '#1a1206',
                 }}
               >
-                Continuer quand même →
+                Continuer quand même
               </button>
               <button
                 onClick={() => setShowConflictModal(false)}
                 style={{
-                  padding: '12px', borderRadius: 4, cursor: 'pointer',
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                  fontFamily: "'DM Mono', monospace", fontSize: 11,
-                  letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)',
+                  padding: '12px', borderRadius: 12, cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                  fontFamily: 'Inter, sans-serif', fontSize: 13,
+                  fontWeight: 600, color: 'rgba(255,255,255,0.75)',
                 }}
               >
                 Annuler
@@ -2378,9 +2386,10 @@ export default function EventDetailPage() {
             position: 'relative',
             width: '100%',
             maxWidth: 448,
-            background: 'rgba(4,5,12,0.97)',
+            background: '#12131c',
             border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: '16px 16px 0 0',
+            boxShadow: '0 -24px 64px rgba(0,0,0,0.55)',
             padding: '20px 20px 36px',
             display: 'flex',
             flexDirection: 'column',
@@ -2426,7 +2435,7 @@ export default function EventDetailPage() {
                 payer (l'avertissement détaillé a déjà été acquitté en amont). */}
             {(event.minAge || 0) >= 18 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(200,169,110,0.07)', border: '1px solid rgba(200,169,110,0.22)', borderRadius: 12, padding: '11px 14px' }}>
-                <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(200,169,110,0.4)', background: 'rgba(200,169,110,0.10)', fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 600, color: '#c8a96e' }}>
+                <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(200,169,110,0.4)', background: 'rgba(200,169,110,0.10)', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#c8a96e' }}>
                   {event.minAge}+
                 </span>
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
@@ -2461,11 +2470,13 @@ export default function EventDetailPage() {
                 onClick={() => { setStripeError(''); confirmBooking() }}
                 style={{
                   padding: '16px', borderRadius: 14, border: 'none', width: '100%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                   fontFamily: 'Inter, sans-serif', fontSize: 15.5, fontWeight: 700, color: '#04040b',
                   background: 'linear-gradient(135deg,#c8a96e,#e0c48a)', boxShadow: '0 8px 26px rgba(200,169,110,0.32)',
-                  opacity: stripeRedirecting ? 0.6 : 1, cursor: stripeRedirecting ? 'wait' : 'pointer',
+                  opacity: stripeRedirecting ? 0.75 : 1, cursor: stripeRedirecting ? 'wait' : 'pointer',
                 }}
               >
+                {stripeRedirecting && <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(4,4,11,0.25)', borderTopColor: '#04040b', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />}
                 {stripeRedirecting ? 'Redirection vers le paiement…' : grandTotal > 0 ? `Payer ${fmtMoney(grandTotal, evCur)}` : 'Oui, confirmer'}
               </button>
               <button
@@ -2512,7 +2523,7 @@ export default function EventDetailPage() {
           }}>
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <SparkleIcon size={22} color="#c8a96e" />
-              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 22, color: 'white', margin: 0 }}>
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 20, letterSpacing: '-0.3px', color: 'white', margin: 0 }}>
                 {showInfoModal.opt.label}
               </h3>
               <p style={{ ...S.label }}>Pour {showInfoModal.itemName}</p>
@@ -2527,14 +2538,14 @@ export default function EventDetailPage() {
                 value={showInfoInput}
                 onChange={e => setShowInfoInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && confirmShowInfo()}
-                onFocus={e => (e.target.style.borderColor = '#4ee8c8')}
-                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.10)')}
+                onFocus={e => (e.target.style.borderColor = '#8444ff')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
                 autoFocus
               />
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setShowInfoModal(null)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
-              <button onClick={confirmShowInfo} style={{ ...S.btnGold, flex: 1, width: 'auto' }}>Confirmer →</button>
+              <button onClick={confirmShowInfo} style={{ ...S.btnGold, flex: 1, width: 'auto' }}>Confirmer</button>
             </div>
           </div>
         </div>
@@ -2555,11 +2566,11 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
 
   const S2 = {
     card: {
-      background: 'rgba(8,10,20,0.55)',
-      backdropFilter: 'blur(22px) saturate(1.6)',
-      border: '1px solid rgba(78,232,200,0.18)',
-      borderRadius: 12,
+      background: '#0e0f16',
+      border: '1px solid rgba(78,232,200,0.22)',
+      borderRadius: 16,
       padding: '20px 16px',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -2567,11 +2578,12 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
       textAlign: 'center',
     },
     label: {
-      fontFamily: "'DM Mono', monospace",
-      fontSize: 9,
-      letterSpacing: '0.25em',
+      fontFamily: 'Inter, sans-serif',
+      fontSize: 11,
+      fontWeight: 600,
+      letterSpacing: '0.06em',
       textTransform: 'uppercase',
-      color: 'rgba(255,255,255,0.42)',
+      color: 'rgba(255,255,255,0.5)',
     },
   }
 
@@ -2582,14 +2594,14 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
           <polyline points="20 6 9 17 4 12"/>
         </svg>
         <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 20, letterSpacing: '-0.4px', color: 'white', margin: 0 }}>
-          Réservation confirmée !
+          Réservation confirmée
         </p>
       </div>
-      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)', margin: 0 }}>
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 500, color: 'rgba(255,255,255,0.55)', margin: 0 }}>
         {selectedPlace} · {event.name}
       </p>
-      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#4ee8c8', margin: 0 }}>
-        +{bookedTickets.length} point{bookedTickets.length > 1 ? 's' : ''} ajouté{bookedTickets.length > 1 ? 's' : ''}
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#4ee8c8', margin: 0 }}>
+        +{bookedTickets.length} point{bookedTickets.length > 1 ? 's' : ''} fidélité au scan de {bookedTickets.length > 1 ? 'tes billets' : 'ton billet'} à l'entrée
       </p>
 
       {/* Multiple ticket tabs */}
@@ -2600,15 +2612,14 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
               key={i}
               onClick={() => setVisibleQr(i)}
               style={{
-                padding: '4px 12px',
-                borderRadius: 4,
-                border: visibleQr === i ? '1px solid rgba(200,169,110,0.45)' : '1px solid rgba(255,255,255,0.10)',
-                background: visibleQr === i ? 'rgba(200,169,110,0.12)' : 'transparent',
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 9,
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: visibleQr === i ? '#c8a96e' : 'rgba(255,255,255,0.3)',
+                padding: '6px 14px',
+                borderRadius: 10,
+                border: visibleQr === i ? '1px solid rgba(200,169,110,0.5)' : '1px solid rgba(255,255,255,0.12)',
+                background: visibleQr === i ? 'rgba(200,169,110,0.16)' : 'rgba(255,255,255,0.05)',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 12,
+                fontWeight: 600,
+                color: visibleQr === i ? '#c8a96e' : 'rgba(255,255,255,0.55)',
                 cursor: 'pointer',
               }}
             >
@@ -2624,18 +2635,18 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
           <QRCodeSVG value={qrUrl} size={128} level="H" />
         ) : (
           <div style={{ width: 128, height: 128, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: 12, color: '#999' }}>QR...</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#999' }}>QR…</span>
           </div>
         )}
       </div>
 
-      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
-        Scanne ce QR code à l'entrée
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 500, color: 'rgba(255,255,255,0.55)', margin: 0 }}>
+        Présente ce QR code à l'entrée
       </p>
-      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.18)', margin: 0, letterSpacing: '0.05em' }}>
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0, letterSpacing: '0.04em' }}>
         {ticket.ticketCode}
       </p>
-      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, color: 'rgba(255,255,255,0.15)', margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', margin: 0, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
         Billet sécurisé · non duplicable
       </p>
 
@@ -2655,18 +2666,18 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
           <p style={{ ...S2.label, color: '#c8a96e', marginBottom: 4 }}>Précommande incluse</p>
           {preorderSummary.map((item) => (
             <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>{item.name}</span>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>×{preorderItems[item.name]}</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 500, color: 'rgba(255,255,255,0.65)' }}>{item.name}</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 500, color: 'rgba(255,255,255,0.45)' }}>×{preorderItems[item.name]}</span>
             </div>
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 6, marginTop: 2 }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Total payé</span>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: '#c8a96e' }}>{fmtMoney(totalPrice, evCur)}</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>Total payé</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 16, color: '#c8a96e' }}>{fmtMoney(totalPrice, evCur)}</span>
           </div>
         </div>
       )}
 
-      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
         Retrouve tous tes billets dans{' '}
         <span style={{ color: '#c8a96e' }}>Mes billets</span>
       </p>
@@ -2676,19 +2687,18 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
           onClick={onBookAnother}
           style={{
             width: '100%',
-            padding: '10px',
-            background: 'transparent',
-            border: '1px solid rgba(200,169,110,0.25)',
-            borderRadius: 4,
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 10,
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: '#c8a96e',
+            padding: '12px',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            borderRadius: 12,
+            fontFamily: 'Inter, sans-serif',
+            fontSize: 13,
+            fontWeight: 600,
+            color: 'rgba(255,255,255,0.9)',
             cursor: 'pointer',
           }}
         >
-          + Réserver une autre place
+          Réserver une autre place
         </button>
       )}
 
@@ -2697,15 +2707,15 @@ function BookedCard({ event, selectedPlace, preorderSummary = [], preorderItems 
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          padding: '6px 14px',
-          borderRadius: 4,
-          background: 'rgba(224,90,170,0.07)',
-          border: '1px solid rgba(224,90,170,0.22)',
+          padding: '5px 12px',
+          borderRadius: 8,
+          background: 'rgba(224,90,170,0.12)',
+          border: '1px solid rgba(224,90,170,0.35)',
         }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="#e05aaa">
             <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
           </svg>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#e05aaa' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#e05aaa' }}>
             Playlist interactive débloquée
           </span>
         </div>

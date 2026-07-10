@@ -12,7 +12,7 @@ import { IconBell } from './icons'
 
 // ── Nav icons ──────────────────────────────────────────────────────────────────
 function NavIcon({ id, active, activeColor = 'var(--violet)' }) {
-  const color = active ? activeColor : 'rgba(255,255,255,0.28)'
+  const color = active ? activeColor : 'rgba(255,255,255,0.45)'
   const s = active ? 1.6 : 1.3
   const props = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: s, strokeLinecap: 'round', strokeLinejoin: 'round' }
   if (id === '/accueil') return <svg {...props}><path d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
@@ -31,40 +31,40 @@ function NavIcon({ id, active, activeColor = 'var(--violet)' }) {
 function getNavItems(role) {
   // Guest
   if (!role) return [
-    { path: '/accueil',    icon: '⬜', label: 'Accueil' },
-    { path: '/evenements', icon: '🎟', label: 'Événements' },
+    { path: '/accueil',    label: 'Accueil' },
+    { path: '/evenements', label: 'Événements' },
   ]
   // Admin (agent) — view everything
   if (role === 'agent') return [
-    { path: '/accueil',        icon: '⬜', label: 'Accueil' },
-    { path: '/evenements',     icon: '🎟', label: 'Événements' },
-    { path: '/messagerie',     icon: '💬', label: 'Messages' },
-    { path: '/prestataires',   icon: '◈',  label: 'Prestataires' },
+    { path: '/accueil',        label: 'Accueil' },
+    { path: '/evenements',     label: 'Événements' },
+    { path: '/messagerie',     label: 'Messages' },
+    { path: '/prestataires',   label: 'Prestataires' },
   ]
   // Organisateur — event creation + hiring prestataires
   if (role === 'organisateur') return [
-    { path: '/accueil',        icon: '⬜', label: 'Accueil' },
-    { path: '/evenements',     icon: '🎟', label: 'Événements' },
-    { path: '/messagerie',     icon: '💬', label: 'Messages' },
-    { path: '/mes-evenements', icon: '✦',  label: 'Mes Events' },
-    { path: '/organisateurs', icon: '✦', label: 'Organisateurs' },
-    { path: '/prestataires',   icon: '◈',  label: 'Prestataires' },
-    { path: '/ma-page-organisateur', icon: '◎', label: 'Ma Page' },
+    { path: '/accueil',        label: 'Accueil' },
+    { path: '/evenements',     label: 'Événements' },
+    { path: '/messagerie',     label: 'Messages' },
+    { path: '/mes-evenements', label: 'Mes Events' },
+    { path: '/organisateurs',  label: 'Organisateurs' },
+    { path: '/prestataires',   label: 'Prestataires' },
+    { path: '/ma-page-organisateur', label: 'Ma Page' },
   ]
   // Prestataire — their space + browse
   if (role === 'prestataire') return [
-    { path: '/accueil',    icon: '⬜', label: 'Accueil' },
-    { path: '/evenements', icon: '🎟', label: 'Événements' },
-    { path: '/messagerie', icon: '💬', label: 'Messages' },
-    { path: '/proposer',   icon: '◈',  label: 'Mon Espace' },
+    { path: '/accueil',    label: 'Accueil' },
+    { path: '/evenements', label: 'Événements' },
+    { path: '/messagerie', label: 'Messages' },
+    { path: '/proposer',   label: 'Mon Espace' },
   ]
   // Client (user/client) — browse + book only
   return [
-    { path: '/accueil',    icon: '⬜', label: 'Accueil' },
-    { path: '/evenements', icon: '🎟', label: 'Événements' },
-    { path: '/organisateurs', icon: '✦', label: 'Organisateurs' },
-    { path: '/prestataires', icon: '◈', label: 'Prestataires' },
-    { path: '/messagerie', icon: '💬', label: 'Messages' },
+    { path: '/accueil',    label: 'Accueil' },
+    { path: '/evenements', label: 'Événements' },
+    { path: '/organisateurs', label: 'Organisateurs' },
+    { path: '/prestataires', label: 'Prestataires' },
+    { path: '/messagerie', label: 'Messages' },
   ]
 }
 
@@ -86,7 +86,7 @@ export default function Layout({ children, hideNav, chatMode }) {
   })
   const baseNavItems = getNavItems(activeRole)
   const navItems = (uid && staffEvents.length > 0 && !baseNavItems.some(i => i.path === '/mes-soirees'))
-    ? [...baseNavItems, { path: '/mes-soirees', icon: '🎫', label: 'Mes soirées' }]
+    ? [...baseNavItems, { path: '/mes-soirees', label: 'Mes soirées' }]
     : baseNavItems
   const [unreadMsgCount, setUnreadMsgCount] = useState(0)
   const [notifOpen, setNotifOpen] = useState(false)
@@ -227,7 +227,7 @@ export default function Layout({ children, hideNav, chatMode }) {
               const body = a.role === 'scan'
                 ? `Tu contrôles les entrées de « ${a.eventName || 'un événement'} ». Va dans « Mes soirées » pour accéder au scan.`
                 : `Tu es serveur pour « ${a.eventName || 'un événement'} ». Va dans « Mes soirées » pour prendre les commandes.`
-              createNotification(uid, 'staff_invited', 'Tu fais partie de l\'équipe 🎉', body, { eventId: k, role: a.role })
+              createNotification(uid, 'staff_invited', 'Tu fais partie de l\'équipe', body, { eventId: k, role: a.role })
             }
           })
           // Affectations disparues → notif de retrait (dédup identique)
@@ -365,12 +365,12 @@ export default function Layout({ children, hideNav, chatMode }) {
             maxWidth: denseDesktopNav ? 1540 : 1320, margin: '0 auto', pointerEvents: 'all',
             display: 'flex', alignItems: 'center', gap: denseDesktopNav ? 7 : 12,
             padding: denseDesktopNav ? '9px 12px' : '10px 16px',
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04))',
-            backdropFilter: 'blur(24px) saturate(1.6)',
-            WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+            background: 'rgba(11,12,18,0.92)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: 28,
-            boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06) inset',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
           }}>
             {/* Logo */}
             <div style={{ flexShrink: 0, marginRight: denseDesktopNav ? 2 : 8 }}>
@@ -385,26 +385,20 @@ export default function Layout({ children, hideNav, chatMode }) {
                 return (
                   <button key={item.path} onClick={() => navigate(item.path)}
                     title={item.label}
-                    className={`desktop-nav-button group relative flex items-center gap-1.5 rounded-xl border transition-all duration-300 ${active ? 'border-fuchsia-500/35 bg-fuchsia-500/[0.1] shadow-[0_0_22px_rgba(217,70,239,0.2)]' : 'border-transparent hover:bg-white/[0.05]'}`}
+                    className={`desktop-nav-button group relative flex items-center gap-1.5 rounded-xl border transition-all duration-300 ${active ? 'border-white/10 bg-white/10' : 'border-transparent hover:bg-white/[0.05]'}`}
                     style={{ padding: denseDesktopNav ? '7px 8px' : '7px 12px', cursor: 'pointer' }}>
-                    {/* Équerres émeraude (apparaissent au survol, fixes si actif) */}
-                    <span className={`pointer-events-none absolute top-1.5 left-2 h-2 w-2 rounded-tl-sm border-t-2 border-l-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
-                    <span className={`pointer-events-none absolute bottom-1.5 right-2 h-2 w-2 rounded-br-sm border-b-2 border-r-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
-                    <div className="relative transition-transform duration-300 group-hover:scale-110">
-                      <NavIcon id={item.path} active={active} activeColor="#e879f9" />
+                    <div className="relative">
+                      <NavIcon id={item.path} active={active} activeColor="#fff" />
                       {isMsgItem && unreadMsgCount > 0 && (
-                        <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                        <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 15, height: 15, borderRadius: 8, background: '#8444ff', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
                           {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
                         </span>
                       )}
                     </div>
-                    <span className={`desktop-nav-label uppercase transition-colors duration-300 ${active ? 'text-fuchsia-400' : 'text-white/45 group-hover:text-white'}`}
-                      style={{ fontFamily: "'Syne', sans-serif", fontSize: denseDesktopNav ? 10.5 : 12.5, fontWeight: active ? 800 : 600, letterSpacing: denseDesktopNav ? '0' : '0.02em', whiteSpace: 'nowrap' }}>
+                    <span className={`desktop-nav-label uppercase transition-colors duration-300 ${active ? 'text-white' : 'text-white/55 group-hover:text-white'}`}
+                      style={{ fontFamily: 'Inter, sans-serif', fontSize: denseDesktopNav ? 10.5 : 12, fontWeight: active ? 700 : 600, letterSpacing: denseDesktopNav ? '0' : '0.02em', whiteSpace: 'nowrap' }}>
                       {item.label}
                     </span>
-                    {/* Trait laser (pousse depuis le centre au survol, large si actif) */}
-                    <span className={`pointer-events-none absolute bottom-[3px] left-1/2 h-[1.5px] -translate-x-1/2 rounded-full transition-all duration-300 ${active ? 'w-[55%] opacity-100' : 'w-0 opacity-0 group-hover:w-[65%] group-hover:opacity-100'}`}
-                      style={{ background: 'linear-gradient(90deg, rgba(52,211,153,0.4), #34d399, rgba(52,211,153,0.4))', boxShadow: '0 0 10px rgba(52,211,153,0.7)' }} />
                   </button>
                 )
               })}
@@ -414,15 +408,15 @@ export default function Layout({ children, hideNav, chatMode }) {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 7,
                     padding: '7px 16px',
-                    background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.22)',
+                    background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.35)',
                     borderRadius: 999, cursor: 'pointer',
                   }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
                   </svg>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'var(--gold)' }}>Admin</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'var(--gold)' }}>Admin</span>
                   {pendingCount > 0 && (
-                    <span style={{ fontSize: 9, fontFamily: 'Inter, sans-serif', padding: '2px 6px', borderRadius: 999, background: 'rgba(200,169,110,0.18)', color: 'var(--gold)' }}>{pendingCount}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'Inter, sans-serif', padding: '2px 7px', borderRadius: 999, background: 'rgba(200,169,110,0.18)', border: '1px solid rgba(200,169,110,0.35)', color: 'var(--gold)' }}>{pendingCount}</span>
                   )}
                 </button>
               )}
@@ -446,7 +440,7 @@ export default function Layout({ children, hideNav, chatMode }) {
                 </>
               ) : (
                 <button onClick={() => navigate('/connexion')}
-                  style={{ padding: '8px 18px', borderRadius: 999, background: 'linear-gradient(135deg, rgba(132,68,255,0.96), rgba(255,77,166,0.92))', border: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 20px rgba(132,68,255,0.3)' }}>
+                  style={{ padding: '8px 18px', borderRadius: 999, background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
                   Se connecter
                 </button>
               )}
@@ -472,9 +466,9 @@ export default function Layout({ children, hideNav, chatMode }) {
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '10px 14px',
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04))',
-            backdropFilter: 'blur(20px) saturate(1.5)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
+            background: 'rgba(11,12,18,0.92)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: 26,
             boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
@@ -503,7 +497,7 @@ export default function Layout({ children, hideNav, chatMode }) {
                 </>
               ) : (
                 <button onClick={() => navigate('/connexion')}
-                  style={{ padding: '7px 14px', borderRadius: 999, background: 'linear-gradient(135deg, rgba(132,68,255,0.92), rgba(255,77,166,0.88))', border: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ padding: '7px 14px', borderRadius: 999, background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   Connexion
                 </button>
               )}
@@ -516,9 +510,12 @@ export default function Layout({ children, hideNav, chatMode }) {
       {isAgent && !chatMode && (
         <button onClick={() => navigate('/agent')}
           className="md:hidden w-full flex items-center justify-center gap-2 py-1.5 transition-all"
-          style={{ background: 'rgba(200,169,110,0.07)', borderBottom: '1px solid rgba(200,169,110,0.12)', position: 'fixed', top: 70, left: 0, right: 0, zIndex: 39 }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.08em' }}>
-            🔑 Interface Admin
+          style={{ background: '#16130c', borderBottom: '1px solid rgba(200,169,110,0.25)', position: 'fixed', top: 70, left: 0, right: 0, zIndex: 39 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+          </svg>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.06em' }}>
+            Interface Admin
           </span>
           {pendingCount > 0 && (
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: 'rgba(200,169,110,0.18)', color: 'var(--gold)' }}>
@@ -544,7 +541,7 @@ export default function Layout({ children, hideNav, chatMode }) {
           padding: '32px 24px 28px',
           borderTop: '1px solid rgba(255,255,255,0.06)',
           textAlign: 'center',
-          fontFamily: "'DM Mono', monospace",
+          fontFamily: 'Inter, sans-serif',
         }}
         className="md:pl-[260px] pb-28 md:pb-8">
           <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -569,30 +566,31 @@ export default function Layout({ children, hideNav, chatMode }) {
                 link.external ? (
                   <a key={link.path} href={link.path}
                     style={{
-                      fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase',
-                      color: 'rgba(255,255,255,0.32)', textDecoration: 'none',
+                      fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
+                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                      color: 'rgba(255,255,255,0.45)', textDecoration: 'none',
                     }}
                     onMouseEnter={e => e.currentTarget.style.color = '#c8a96e'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.32)'}>
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}>
                     {link.label}
                   </a>
                 ) : (
                   <button key={link.path} onClick={() => navigate(link.path)}
                     style={{
                       background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                      fontFamily: "'DM Mono', monospace", fontSize: 9,
-                      letterSpacing: '0.2em', textTransform: 'uppercase',
-                      color: 'rgba(255,255,255,0.32)',
+                      fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
+                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                      color: 'rgba(255,255,255,0.45)',
                     }}
                     onMouseEnter={e => e.currentTarget.style.color = '#c8a96e'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.32)'}>
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}>
                     {link.label}
                   </button>
                 )
               )}
             </div>
 
-            <p style={{ fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.20)', margin: 0 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.38)', margin: 0 }}>
               © {new Date().getFullYear()} LIVEINBLACK · Tous droits réservés
             </p>
           </div>
@@ -604,9 +602,9 @@ export default function Layout({ children, hideNav, chatMode }) {
         style={{ padding: '0 12px 12px', pointerEvents: 'none' }}>
         <div style={{
           display: 'flex',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04))',
-          backdropFilter: 'blur(20px) saturate(1.5)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
+          background: 'rgba(11,12,18,0.92)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           border: '1px solid rgba(255,255,255,0.10)',
           borderRadius: 26,
           boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
@@ -618,30 +616,24 @@ export default function Layout({ children, hideNav, chatMode }) {
             const isMsgItem = item.path === '/messagerie'
             return (
               <button key={item.path} onClick={() => navigate(item.path)}
-                className={`group flex-1 relative flex flex-col items-center gap-1 cursor-pointer rounded-2xl border transition-all duration-300 ${active ? 'border-fuchsia-500/35 bg-fuchsia-500/[0.07] shadow-[0_4px_20px_rgba(139,92,246,0.15)]' : 'border-transparent hover:bg-white/[0.04]'}`}
+                className={`group flex-1 relative flex flex-col items-center gap-1 cursor-pointer rounded-2xl border transition-all duration-300 ${active ? 'border-white/10 bg-white/10' : 'border-transparent hover:bg-white/[0.04]'}`}
                 style={{ padding: navItems.length >= 5 ? '11px 2px 9px' : '11px 4px 9px', margin: navItems.length >= 5 ? '4px 1px' : '4px 3px', minWidth: 0 }}>
-                {/* Équerres émeraude (coins) — glissent à l'apparition au survol, fixes si actif */}
-                <span className={`pointer-events-none absolute top-1.5 left-2 h-2 w-2 rounded-tl-sm border-t-2 border-l-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
-                <span className={`pointer-events-none absolute bottom-1.5 right-2 h-2 w-2 rounded-br-sm border-b-2 border-r-2 border-emerald-400 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
-                <div className="relative transition-transform duration-300 group-hover:scale-110 group-active:scale-95" style={active ? { transform: 'scale(1.06)' } : undefined}>
-                  <NavIcon id={item.path} active={active} activeColor="#e879f9" />
+                <div className="relative group-active:scale-95 transition-transform duration-300">
+                  <NavIcon id={item.path} active={active} activeColor="#fff" />
                   {isMsgItem && unreadMsgCount > 0 && (
-                    <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 14, height: 14, borderRadius: 7, background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                    <span style={{ position: 'absolute', top: -5, right: -7, minWidth: 15, height: 15, borderRadius: 8, background: '#8444ff', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
                       {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
                     </span>
                   )}
                 </div>
-                <span className={`uppercase transition-colors duration-300 ${active ? 'text-fuchsia-400' : 'text-white/30 group-hover:text-white'}`}
+                <span className={`uppercase transition-colors duration-300 ${active ? 'text-white' : 'text-white/55 group-hover:text-white'}`}
                   style={{
-                    fontFamily: "'Syne', sans-serif", fontWeight: active ? 800 : 600, letterSpacing: '0.02em',
-                    fontSize: navItems.length >= 5 ? 8 : 9,
+                    fontFamily: 'Inter, sans-serif', fontWeight: active ? 700 : 600, letterSpacing: '0.02em',
+                    fontSize: navItems.length >= 5 ? 9 : 10,
                     maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                   {item.label}
                 </span>
-                {/* Trait laser — pousse depuis le centre au survol, large si actif */}
-                <span className={`pointer-events-none absolute bottom-[3px] left-1/2 h-[1.5px] -translate-x-1/2 rounded-full transition-all duration-300 ${active ? 'w-[60%] opacity-100' : 'w-0 opacity-0 group-hover:w-[70%] group-hover:opacity-100'}`}
-                  style={{ background: 'linear-gradient(90deg, rgba(52,211,153,0.4), #34d399, rgba(52,211,153,0.4))', boxShadow: '0 0 10px rgba(52,211,153,0.7)' }} />
               </button>
             )
           })}
@@ -654,7 +646,7 @@ export default function Layout({ children, hideNav, chatMode }) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
               </svg>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'var(--violet)' }}>Se connecter</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: 'var(--violet)' }}>Se connecter</span>
             </button>
           )}
         </div>
@@ -663,19 +655,18 @@ export default function Layout({ children, hideNav, chatMode }) {
   )
 }
 
-// ── Cloche de notification animée (Refonte LIB) ───────────────────────────────
-// Laser fuchsia qui sillonne le haut + tintement de la cloche au survol.
+// ── Cloche de notification ─────────────────────────────────────────────────────
+// Tintement discret de la cloche au survol.
 function NotifBell({ open, unread, onClick, size = 34 }) {
   return (
     <button onClick={onClick} aria-label="Notifications"
-      className="group relative flex items-center justify-center overflow-hidden rounded-xl border bg-[#121216] transition-all duration-300 hover:border-fuchsia-500/40 hover:text-fuchsia-400 hover:shadow-[0_0_20px_rgba(217,70,239,0.15)] active:scale-95"
-      style={{ width: size, height: size, flexShrink: 0, borderColor: open ? 'rgba(217,70,239,0.45)' : 'rgba(255,255,255,0.08)', color: open ? '#e879f9' : 'rgba(255,255,255,0.55)' }}>
-      <span className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-fuchsia-500 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:animate-laser-sweep" />
+      className="group relative flex items-center justify-center overflow-hidden rounded-xl border bg-[#121216] transition-all duration-300 hover:border-white/20 hover:text-white active:scale-95"
+      style={{ width: size, height: size, flexShrink: 0, borderColor: open ? 'rgba(132,68,255,0.5)' : 'rgba(255,255,255,0.08)', color: open ? '#c9b0ff' : 'rgba(255,255,255,0.55)' }}>
       <svg className="group-hover:animate-bell-ring" width={Math.round(size * 0.47)} height={Math.round(size * 0.47)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
       {unread > 0 && (
-        <span className="absolute" style={{ top: size * 0.22, right: size * 0.22, width: 7, height: 7, borderRadius: '50%', background: '#d946ef', boxShadow: '0 0 8px rgba(217,70,239,0.9)' }} />
+        <span className="absolute" style={{ top: size * 0.22, right: size * 0.22, width: 7, height: 7, borderRadius: '50%', background: '#8444ff', border: '1px solid rgba(255,255,255,0.3)' }} />
       )}
     </button>
   )
@@ -754,21 +745,20 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
       width: mobile ? 'min(330px, calc(100vw - 24px))' : 340,
       maxHeight: 'calc(100vh - 110px)',
       display: 'flex', flexDirection: 'column',
-      background: '#101014',
-      border: '1px solid rgba(255,255,255,0.04)',
-      borderRadius: 20,
-      boxShadow: '0 30px 60px -15px rgba(0,0,0,0.8)',
-      backdropFilter: 'blur(24px)',
+      background: '#12131c',
+      border: '1px solid rgba(255,255,255,0.10)',
+      borderRadius: 16,
+      boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
       zIndex: 999,
       padding: 10,
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 12px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)' }}>
           Notifications
         </span>
         {notifications.length > 0 && (
-          <button onClick={() => { if (uid) clearAllNotifications(uid); onClose?.() }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(217,70,239,0.8)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <button onClick={() => { if (uid) clearAllNotifications(uid); onClose?.() }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#c9b0ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             Tout effacer
           </button>
         )}
@@ -779,9 +769,11 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
         {recent.length === 0 ? (
           <div style={{ padding: '24px 16px', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-              <IconBell size={26} color="rgba(255,255,255,0.18)" />
+              <span style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconBell size={22} color="rgba(255,255,255,0.4)" />
+              </span>
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.28)', margin: 0 }}>Aucune notification</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Aucune notification pour le moment</p>
           </div>
         ) : (
           recent.map(n => {
@@ -791,7 +783,7 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
             return (
               <div key={n.id}
                 onClick={clickable ? () => handleClickNotif(n) : undefined}
-                className="group flex items-start gap-3 rounded-xl p-2.5 transition-all duration-200 hover:bg-white/[0.025]"
+                className="group flex items-start gap-3 rounded-xl p-2.5 transition-all duration-200 hover:bg-white/[0.06]"
                 style={{ cursor: clickable ? 'pointer' : 'default' }}>
                 <NotifIcon n={n} uid={uid} accent={accent} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -807,10 +799,10 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
                       )}
                       {!n.read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: accent, flexShrink: 0 }} />}
                     </div>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{timeAgo(n.createdAt)}</span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{timeAgo(n.createdAt)}</span>
                   </div>
                   {n.body && (
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {n.body}
                     </p>
                   )}
@@ -823,14 +815,14 @@ function NotifDropdown({ notifications, onClose, uid, mobile }) {
 
       {!showAll && grouped.length > recent.length && (
         <button onClick={() => setShowAll(true)}
-          className="mt-2 flex w-full items-center justify-center rounded-xl border border-white/[0.02] bg-[#16161c] py-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 transition-all duration-200 hover:bg-[#1c1c24] hover:text-zinc-200 active:scale-[0.99]"
+          className="mt-2 flex w-full items-center justify-center rounded-xl border border-white/10 bg-[#16161c] py-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 transition-all duration-200 hover:bg-[#1c1c24] hover:text-zinc-200 active:scale-[0.99]"
           style={{ fontFamily: 'Inter, sans-serif' }}>
           Voir les {grouped.length - recent.length} autres
         </button>
       )}
       {showAll && grouped.length > 6 && (
         <button onClick={() => setShowAll(false)}
-          className="mt-2 flex w-full items-center justify-center rounded-xl border border-white/[0.02] bg-[#16161c] py-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 transition-all duration-200 hover:bg-[#1c1c24] hover:text-zinc-200 active:scale-[0.99]"
+          className="mt-2 flex w-full items-center justify-center rounded-xl border border-white/10 bg-[#16161c] py-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 transition-all duration-200 hover:bg-[#1c1c24] hover:text-zinc-200 active:scale-[0.99]"
           style={{ fontFamily: 'Inter, sans-serif' }}>
           Réduire
         </button>
@@ -893,7 +885,7 @@ function NotifIcon({ n, uid, accent }) {
           </div>
         )}
         {/* Mini-badge de type de contenu */}
-        <span style={{ position: 'absolute', bottom: -2, right: -2, width: 17, height: 17, borderRadius: '50%', background: badgeBg, border: '2px solid #101014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ position: 'absolute', bottom: -2, right: -2, width: 17, height: 17, borderRadius: '50%', background: badgeBg, border: '2px solid #12131c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {badge}
         </span>
       </div>
@@ -903,7 +895,7 @@ function NotifIcon({ n, uid, accent }) {
   // Types non-message : picto dédié dans une pastille carrée arrondie
   return (
     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-all"
-      style={{ background: '#1a1a22', border: '1px solid rgba(255,255,255,0.03)', color: accent }}>
+      style={{ background: '#1a1a22', border: '1px solid rgba(255,255,255,0.08)', color: accent }}>
       <NotifGlyph type={n.type} />
     </div>
   )

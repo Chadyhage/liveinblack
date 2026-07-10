@@ -2,6 +2,10 @@
 // Endpoint : POST /api/tickets
 //   { action:'assign', ticketCode, toUid | toEmail }  → donne un siège à un ami
 //   { action:'revoke', ticketCode }                   → reprend un siège attribué
+//   { action:'checkin', ticketCode }                  → scan à l'entrée : marque le
+//     billet utilisé ET crédite +1 point de fidélité au TITULAIRE courant. Le
+//     point se gagne AU SCAN (pas à l'achat) : un siège révoqué avant l'entrée
+//     n'a jamais donné de point, donc rien à reprendre.
 //
 // Modèle « double copie » : l'HÔTE garde TOUS les sièges de sa table dans son
 // carnet (chacun marqué « attribué à X » ou libre) → il peut toujours révoquer /
@@ -28,8 +32,15 @@ export default async function handler(req, res) {
   if (!caller) return
 
   const { action, ticketCode } = req.body || {}
+
+  // Suppression d'événement en CASCADE — voir deleteEventCascade plus bas.
+  if (action === 'delete_event') return deleteEventCascade(req, res, caller)
+
+  // Check-in au scanner (+1 point au titulaire) — voir checkinTicket plus bas.
+  if (action === 'checkin') return checkinTicket(req, res, caller)
+
   if (!ticketCode || (action !== 'assign' && action !== 'revoke')) {
-    return res.status(400).json({ error: "Paramètres invalides (action 'assign' | 'revoke' + ticketCode)" })
+    return res.status(400).json({ error: "Paramètres invalides (action 'assign' | 'revoke' | 'checkin' | 'delete_event')" })
   }
 
   try {
@@ -181,7 +192,7 @@ export default async function handler(req, res) {
         const notif = {
           id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
           type: 'ticket_assigned',
-          title: "🎟 Un billet t'a été attribué",
+          title: "Un billet t'a été attribué",
           body: `${hostName} t'a donné une place — ${ticket.eventName || 'un événement'}`,
           data: { eventId: String(ticket.eventId || '') },
           read: false,
@@ -199,6 +210,162 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, ticketCode, holder: target, holderName: targetName })
   } catch (err) {
     console.error('[/api/tickets] error:', err)
+    return res.status(500).json({ error: err.message || 'Internal error' })
+  }
+}
+
+// ── Suppression d'événement en CASCADE ────────────────────────────────────────
+// POST /api/tickets { action:'delete_event', eventId }
+//
+// Corrige le bug des « billets fantômes » : supprimer un event côté client
+// (syncDelete de events/{id}) laissait ses billets orphelins dans le registre
+// tickets/ ET dans les carnets user_bookings/{uid} des acheteurs — que le
+// client ne peut pas nettoyer lui-même (règles Firestore). Ces billets
+// ressuscitaient dans « Mes billets » à chaque syncOnLogin.
+//
+// Règles :
+//  - seul l'organisateur de l'event (createdBy/organizerId) peut supprimer ;
+//  - s'il existe des billets PAYÉS non révoqués → 409 : l'event ne doit pas
+//    être supprimé mais ANNULÉ (flux cancelEventWithMessage, remboursements).
+//    Comble aussi l'angle mort « ventes faites depuis un autre appareil » que
+//    le compteur local lib_bookings de l'organisateur ne voyait pas ;
+//  - sinon : purge des carnets des détenteurs (transaction par carnet — un
+//    billet concurrent d'un AUTRE event n'est jamais perdu), puis suppression
+//    du registre tickets/ et du doc events/{id}.
+async function deleteEventCascade(req, res, caller) {
+  const eventId = String(req.body?.eventId || '')
+  if (!eventId) return res.status(400).json({ error: 'eventId requis' })
+  try {
+    const db = getDb()
+    const evRef = db.collection('events').doc(eventId)
+    const evSnap = await evRef.get()
+    if (!evSnap.exists) return res.status(404).json({ error: 'Événement introuvable (déjà supprimé ?)' })
+    const ev = evSnap.data()
+    if (ev.createdBy !== caller.uid && ev.organizerId !== caller.uid) {
+      return res.status(403).json({ error: "Seul l'organisateur de cet événement peut le supprimer." })
+    }
+
+    const tSnap = await db.collection('tickets').where('eventId', '==', eventId).get()
+    const tickets = tSnap.docs.map(d => ({ ref: d.ref, ...d.data() }))
+    // Réservation BLOQUANTE = tout billet non révoqué d'un AUTRE compte que
+    // l'organisateur, hors invitations guestlist. Payé OU gratuit : la règle
+    // produit promet un message d'annulation à tout détenteur (le compteur
+    // local de l'orga ne voit pas les réservations faites ailleurs). Les
+    // billets de test de l'organisateur lui-même ne bloquent pas sa suppression.
+    const blocking = tickets.filter(t =>
+      !t.revoked && t.source !== 'guestlist' &&
+      t.userId && String(t.userId) !== caller.uid
+    )
+    if (blocking.length > 0) {
+      const paidCount = blocking.filter(t => t.paid === true).length
+      return res.status(409).json({
+        error: `${blocking.length} réservation${blocking.length > 1 ? 's' : ''} existe${blocking.length > 1 ? 'nt' : ''} pour cet événement — il doit être annulé, pas supprimé.`,
+        bookingCount: blocking.length,
+        paidCount,
+      })
+    }
+
+    // Carnets des détenteurs (titulaire + hôte de table le cas échéant).
+    // Par paquets de 10 en parallèle : une boucle strictement séquentielle
+    // dépassait le timeout Vercel dès quelques dizaines de carnets.
+    const uids = [...new Set(tickets.flatMap(t => [t.userId, t.hostUid]).filter(Boolean).map(String))]
+    for (let i = 0; i < uids.length; i += 10) {
+      await Promise.all(uids.slice(i, i + 10).map(uid => {
+        const bRef = db.collection('user_bookings').doc(uid)
+        return db.runTransaction(async (tx) => {
+          const snap = await tx.get(bRef)
+          if (!snap.exists) return
+          const items = Array.isArray(snap.data().items) ? snap.data().items : []
+          const kept = items.filter(it => String(it.eventId) !== eventId)
+          if (kept.length === items.length) return
+          tx.set(bRef, { items: kept, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+        })
+      }))
+    }
+
+    // Registre tickets/ + doc events/ — par lots (limite batch Firestore).
+    const refs = [...tickets.map(t => t.ref), evRef]
+    for (let i = 0; i < refs.length; i += 450) {
+      const batch = db.batch()
+      refs.slice(i, i + 450).forEach(r => batch.delete(r))
+      await batch.commit()
+    }
+
+    return res.status(200).json({ ok: true, purgedTickets: tickets.length, cleanedUsers: uids.length })
+  } catch (err) {
+    console.error('[/api/tickets] delete_event error:', err)
+    return res.status(500).json({ error: err.message || 'Internal error' })
+  }
+}
+
+// ── Check-in à l'entrée + point de fidélité ───────────────────────────────────
+// POST /api/tickets { action:'checkin', ticketCode }
+//
+// Règle points : 1 billet scanné = +1 point pour le compte qui DÉTIENT le
+// billet au moment du scan (tickets/{code}.userId). L'acheteur d'une table ne
+// gagne donc qu'un point pour SON siège ; chaque invité gagne le sien en
+// entrant. Aucun point n'est attribué à l'achat → assign/revoke n'ont jamais
+// de point à reprendre (pas de farming attribution/révocation).
+//
+// Passe par l'Admin SDK car les règles Firestore interdisent au scanner
+// d'écrire users/{titulaire}. Transaction idempotente : seul le PREMIER scan
+// pose checkedInAt et crédite — un re-scan (2e porte, retry réseau) ne double
+// jamais le point.
+//
+// Autorisation : agent plateforme, organisateur de l'événement (createdBy /
+// organizerId, comme isEventOwnerOf des règles), OU membre du roster
+// event_staff/{eventId} (rôle 'scan' et plus — le videur est du staff).
+async function checkinTicket(req, res, caller) {
+  const ticketCode = String(req.body?.ticketCode || '')
+  if (!ticketCode) return res.status(400).json({ error: 'ticketCode requis' })
+  try {
+    const db = getDb()
+    const tRef = db.collection('tickets').doc(ticketCode)
+    const tSnap = await tRef.get()
+    if (!tSnap.exists) return res.status(404).json({ error: 'Billet introuvable' })
+    const ticket = tSnap.data()
+    if (ticket.revoked) return res.status(409).json({ error: 'Billet révoqué — entrée refusée.' })
+
+    let allowed = false
+    const uSnap = await db.collection('users').doc(caller.uid).get()
+    const u = uSnap.exists ? uSnap.data() : null
+    if (u && (u.role === 'agent' || u.activeRole === 'agent' || (Array.isArray(u.enabledRoles) && u.enabledRoles.includes('agent')))) {
+      allowed = true
+    }
+    const eventId = String(ticket.eventId || '')
+    if (!allowed && eventId) {
+      const evSnap = await db.collection('events').doc(eventId).get()
+      const ev = evSnap.exists ? evSnap.data() : null
+      if (ev && (ev.createdBy === caller.uid || ev.organizerId === caller.uid)) allowed = true
+      if (!allowed) {
+        const sSnap = await db.collection('event_staff').doc(eventId).get()
+        const roster = sSnap.exists ? (sSnap.data().roster || {}) : {}
+        if (roster[caller.uid]) allowed = true
+      }
+    }
+    if (!allowed) {
+      return res.status(403).json({ error: "Seul un agent, l'organisateur ou un membre du staff de l'événement peut valider une entrée." })
+    }
+
+    let first = false
+    let holder = null
+    await db.runTransaction(async (tx) => {
+      const fresh = await tx.get(tRef)
+      if (!fresh.exists) return
+      const t = fresh.data()
+      if (t.checkedInAt) return // déjà scanné (autre porte / retry) → no-op
+      holder = t.userId ? String(t.userId) : null
+      tx.set(tRef, { checkedInAt: new Date().toISOString(), checkedInBy: caller.uid }, { merge: true })
+      // Titulaire sans compte (ex: invitation guestlist non réclamée) → pas de point.
+      if (holder) {
+        tx.set(db.collection('users').doc(holder), { points: FieldValue.increment(1) }, { merge: true })
+      }
+      first = true
+    })
+
+    return res.status(200).json({ ok: true, ticketCode, alreadyCheckedIn: !first, pointAwardedTo: first ? holder : null })
+  } catch (err) {
+    console.error('[/api/tickets] checkin error:', err)
     return res.status(500).json({ error: err.message || 'Internal error' })
   }
 }

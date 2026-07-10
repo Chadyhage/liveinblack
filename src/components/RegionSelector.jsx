@@ -8,14 +8,14 @@ const COLORS = {
   teal: '#4ee8c8',
   gold: '#c8a96e',
   muted: 'rgba(255,255,255,0.5)',
-  dim: 'rgba(255,255,255,0.32)',
+  dim: 'rgba(255,255,255,0.45)',
 }
 
 // Petite identité couleur par pays (badge) — donne de la vie à la liste.
 const CODE_STYLE = {
-  FR: { grad: 'linear-gradient(135deg, #4f7cff, #8b5cf6)', ring: 'rgba(99,140,255,0.5)' },
-  TG: { grad: 'linear-gradient(135deg, #4ee8c8, #2fb89a)', ring: 'rgba(78,232,200,0.5)' },
-  BJ: { grad: 'linear-gradient(135deg, #c8a96e, #e05aaa)', ring: 'rgba(200,169,110,0.5)' },
+  FR: { color: '#7c9aff' },
+  TG: { color: '#4ee8c8' },
+  BJ: { color: '#c8a96e' },
 }
 
 export default function RegionSelector({ isOpen, onClose, onSelect, currentRegion }) {
@@ -48,17 +48,13 @@ export default function RegionSelector({ isOpen, onClose, onSelect, currentRegio
       <div style={{
         position: 'relative', width: '100%', maxWidth: 480,
         maxHeight: '82vh',
-        background: 'linear-gradient(180deg, rgba(18,16,30,0.98) 0%, rgba(8,9,16,0.98) 100%)',
-        backdropFilter: 'blur(28px) saturate(1.6)',
+        background: '#12131c',
         border: '1px solid rgba(255,255,255,0.10)',
         borderRadius: '22px 22px 0 0',
         overflow: 'hidden',
         boxShadow: '0 -20px 60px rgba(0,0,0,0.6)',
         animation: 'slideUp 0.24s cubic-bezier(0.22,0.9,0.3,1)',
       }}>
-        {/* Lueur d'ambiance en haut */}
-        <div style={{ position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)', width: 300, height: 160, background: 'radial-gradient(ellipse, rgba(78,232,200,0.12), transparent 70%)', pointerEvents: 'none' }} />
-
         {/* Header */}
         <div style={{ position: 'relative', padding: '14px 18px 14px' }}>
           <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.14)', borderRadius: 99, margin: '0 auto 16px' }} />
@@ -100,15 +96,15 @@ export default function RegionSelector({ isOpen, onClose, onSelect, currentRegio
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: '100%', boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.05)',
+                background: '#0b0c12',
                 border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 12,
+                borderRadius: 10,
                 padding: '12px 14px 12px 42px',
-                fontFamily: FONT, fontSize: 14, color: '#fff', outline: 'none',
-                transition: 'border-color 0.2s, background 0.2s',
+                fontFamily: FONT, fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.92)', outline: 'none',
+                transition: 'border-color 0.2s',
               }}
-              onFocus={e => { e.target.style.borderColor = 'rgba(78,232,200,0.5)'; e.target.style.background = 'rgba(78,232,200,0.05)' }}
-              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.12)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+              onFocus={e => { e.target.style.borderColor = '#8444ff' }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.12)' }}
             />
           </div>
         </div>
@@ -124,8 +120,8 @@ export default function RegionSelector({ isOpen, onClose, onSelect, currentRegio
               width: '100%', display: 'flex', alignItems: 'center', gap: 13,
               padding: 13, borderRadius: 14, cursor: 'pointer', textAlign: 'left',
               transition: 'all 0.15s',
-              background: !currentRegion ? 'rgba(78,232,200,0.09)' : 'rgba(255,255,255,0.03)',
-              border: !currentRegion ? '1px solid rgba(78,232,200,0.4)' : '1px solid rgba(255,255,255,0.08)',
+              background: !currentRegion ? 'rgba(78,232,200,0.09)' : 'rgba(255,255,255,0.04)',
+              border: !currentRegion ? '1px solid rgba(78,232,200,0.4)' : '1px solid rgba(255,255,255,0.07)',
             }}>
             <div style={{
               width: 46, height: 46, borderRadius: 12, flexShrink: 0,
@@ -144,7 +140,7 @@ export default function RegionSelector({ isOpen, onClose, onSelect, currentRegio
           </button>
 
           {filtered.length > 0 && (
-            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.14em', padding: '10px 4px 2px', margin: 0 }}>
+            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '10px 4px 2px', margin: 0 }}>
               Pays disponibles
             </p>
           )}
@@ -161,18 +157,16 @@ export default function RegionSelector({ isOpen, onClose, onSelect, currentRegio
                   width: '100%', display: 'flex', alignItems: 'center', gap: 14,
                   padding: '12px 14px', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
                   transition: 'all 0.18s',
-                  background: isActive ? 'rgba(78,232,200,0.09)' : 'rgba(255,255,255,0.03)',
-                  border: isActive ? '1px solid rgba(78,232,200,0.45)' : '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: isActive ? '0 6px 22px rgba(78,232,200,0.10)' : 'none',
+                  background: isActive ? 'rgba(78,232,200,0.09)' : 'rgba(255,255,255,0.04)',
+                  border: isActive ? '1px solid rgba(78,232,200,0.45)' : '1px solid rgba(255,255,255,0.07)',
                 }}>
                 {/* Badge pays coloré */}
                 <div style={{
                   width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-                  background: cs.grad,
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: `0 4px 14px -4px ${cs.ring}`,
                 }}>
-                  <span style={{ fontFamily: FONT, fontWeight: 800, fontSize: 15, letterSpacing: '0.02em', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>{region.code}</span>
+                  <span style={{ fontFamily: FONT, fontWeight: 800, fontSize: 15, letterSpacing: '0.02em', color: cs.color }}>{region.code}</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 18, letterSpacing: '-0.2px', color: isActive ? '#fff' : 'rgba(255,255,255,0.9)', margin: 0 }}>
@@ -185,7 +179,7 @@ export default function RegionSelector({ isOpen, onClose, onSelect, currentRegio
                 {isActive
                   ? <Check />
                   : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.38)" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
                   )}

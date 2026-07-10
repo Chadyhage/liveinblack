@@ -259,7 +259,7 @@ const S = {
   },
   label: {
     fontFamily: 'Inter, sans-serif',
-    fontSize: '10px',
+    fontSize: '11px',
     fontWeight: 700,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
@@ -267,7 +267,7 @@ const S = {
   },
   labelGold: {
     fontFamily: 'Inter, sans-serif',
-    fontSize: '10px',
+    fontSize: '11px',
     fontWeight: 700,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
@@ -275,7 +275,7 @@ const S = {
   },
   labelOrange: {
     fontFamily: 'Inter, sans-serif',
-    fontSize: '10px',
+    fontSize: '11px',
     fontWeight: 700,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
@@ -1552,7 +1552,7 @@ export default function ProfilePage() {
             .ticket-playlist-action{min-width:250px;min-height:62px;padding:0 20px;border:0;border-left:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;transition:background .2s ease,border-color .2s ease}
             .ticket-playlist-action:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)}
             .ticket-playlist-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;color:#d9bd82;background:rgba(200,169,110,.1);border:1px solid rgba(200,169,110,.28)}
-            .ticket-playlist-copy{flex:1;min-width:0}.ticket-playlist-copy strong{display:block;font:700 12px Inter,sans-serif;color:#fff}.ticket-playlist-copy small{display:block;font:500 9px Inter,sans-serif;color:rgba(255,255,255,.42);margin-top:3px}.ticket-playlist-chevron{color:#c8a96e;font-size:18px}
+            .ticket-playlist-copy{flex:1;min-width:0}.ticket-playlist-copy strong{display:block;font:700 12px Inter,sans-serif;color:#fff}.ticket-playlist-copy small{display:block;font:500 11px Inter,sans-serif;color:rgba(255,255,255,.5);margin-top:3px}.ticket-playlist-chevron{color:#c8a96e;font-size:18px}
             .ticket-stack{padding:18px!important;gap:16px!important}
             .digital-ticket{position:relative;border:1px solid rgba(255,255,255,.13);border-radius:20px;background:linear-gradient(145deg,#141322,#090a12 68%);overflow:hidden;box-shadow:0 20px 55px rgba(0,0,0,.35)}
             .digital-ticket:before,.digital-ticket:after{content:'';position:absolute;z-index:3;width:24px;height:24px;border-radius:50%;background:#0e0f16;top:calc(62% - 12px)}
@@ -1569,11 +1569,11 @@ export default function ProfilePage() {
             .ticket-qr{padding:9px;background:#fff;border-radius:12px;line-height:0;box-shadow:0 8px 24px rgba(0,0,0,.28)}
             .ticket-code{font:600 10px Inter,sans-serif;letter-spacing:.06em;color:rgba(255,255,255,.48);margin-top:12px;text-align:center;word-break:break-all}
             .ticket-pass-bottom{border-top:1px dashed rgba(255,255,255,.15);padding:15px 22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-            .ticket-pass-action{min-height:42px;padding:0 16px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);font:700 11px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-            .ticket-pass-action.primary{margin-left:auto;background:#4ee8c8;border-color:#4ee8c8;color:#04040b}
+            .ticket-pass-action{min-height:42px;padding:0 16px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);font:700 11px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+            .ticket-pass-action.primary{margin-left:auto;background:#3ed6b5;border-color:#3ed6b5;color:#04120e}
             .ticket-preorders{padding:16px 22px;border-top:1px solid rgba(255,255,255,.07);display:grid;gap:8px}.ticket-preorders-title{font:800 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#c8a96e}.ticket-preorder-row{display:flex;justify-content:space-between;gap:16px;font:500 12px Inter,sans-serif;color:rgba(255,255,255,.65)}
             .ticket-expanded-qr{padding:22px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;gap:13px;background:rgba(0,0,0,.2)}
-            .digital-ticket.is-inactive{border-color:rgba(255,255,255,.06);box-shadow:none;opacity:.9}.digital-ticket.is-inactive .ticket-pass-main{filter:grayscale(.85) saturate(.15);opacity:.55}.ticket-inactive-stub{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}.ticket-inactive-stub svg{color:rgba(255,255,255,.34)}.ticket-inactive-stub strong{font:800 12px Inter,sans-serif;color:rgba(255,255,255,.7)}.ticket-inactive-stub small{font:600 10px Inter,sans-serif;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em}.ticket-pass-expired{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font:700 11px Inter,sans-serif;color:rgba(255,255,255,.45)}
+            .digital-ticket.is-inactive{border-color:rgba(255,255,255,.06);box-shadow:none;opacity:.9}.digital-ticket.is-inactive .ticket-pass-main{filter:grayscale(.85) saturate(.15);opacity:.55}.ticket-inactive-stub{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}.ticket-inactive-stub svg{color:rgba(255,255,255,.34)}.ticket-inactive-stub strong{font:800 12px Inter,sans-serif;color:rgba(255,255,255,.7)}.ticket-inactive-stub small{font:600 11px Inter,sans-serif;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}.ticket-pass-expired{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font:700 11px Inter,sans-serif;color:rgba(255,255,255,.45)}
             @media(max-width:700px){.ticket-wallet-page{padding-left:12px!important;padding-right:12px!important}.ticket-event-head{min-height:92px;padding:14px!important}.ticket-event-thumb{width:58px!important;height:58px!important}.ticket-event-actions{flex-wrap:wrap}.ticket-playlist-action{width:100%;min-width:0;border-left:0;border-top:1px solid rgba(255,255,255,.07);padding:0 16px}.ticket-pass-top{grid-template-columns:1fr}.ticket-pass-main{padding:24px 22px}.ticket-stub{border-left:0;border-top:1px dashed rgba(255,255,255,.2);padding:20px}.ticket-stub:before,.ticket-stub:after{top:-10px;bottom:auto}.ticket-stub:before{left:-10px}.ticket-stub:after{left:auto;right:-10px}.ticket-meta-grid{grid-template-columns:1fr 1fr}.ticket-event-name{font-size:28px}.ticket-pass-action{flex:1}.ticket-pass-action.primary{margin-left:0;flex-basis:100%}}
           `}</style>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -2119,14 +2119,14 @@ function TableHostPanel({ tickets, inactive }) {
   }
 
   return (
-    <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.07)', background: 'rgba(200,169,110,0.04)' }}>
+    <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-        <p style={{ margin: 0, font: '800 11px Inter,sans-serif', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c8a96e' }}>Ma table · {totalSeats} places</p>
-        <span style={{ font: '600 10px Inter,sans-serif', color: 'rgba(255,255,255,0.4)' }}>{assignedCount}/{totalSeats} attribuées</span>
+        <p style={{ margin: 0, font: '800 11px Inter,sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e' }}>Ma table · {totalSeats} places</p>
+        <span style={{ font: '600 11px Inter,sans-serif', color: 'rgba(255,255,255,0.45)' }}>{assignedCount}/{totalSeats} attribuées</span>
       </div>
       {!inactive && (
-        <p style={{ margin: '0 0 12px', font: '500 11px Inter,sans-serif', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-          Attribue chaque place à un ami (par email de son compte) : le billet arrive dans son compte avec son propre QR. Tu peux la reprendre tant qu'il n'est pas entré.
+        <p style={{ margin: '0 0 12px', font: '500 12px Inter,sans-serif', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+          Attribue chaque place à un ami via l'e-mail de son compte : il reçoit le billet avec son propre QR code. Tu peux reprendre une place tant que ton invité n'est pas entré.
         </p>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -2135,7 +2135,7 @@ function TableHostPanel({ tickets, inactive }) {
           const assigned = !!h.assignedTo
           const isBusy = busy === t.ticketCode
           return (
-            <div key={t.ticketCode} style={{ background: 'rgba(6,8,16,0.55)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 12px' }}>
+            <div key={t.ticketCode} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '10px 12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, font: '700 12px Inter,sans-serif', color: '#fff' }}>Place {i + 1}</p>
@@ -2145,23 +2145,29 @@ function TableHostPanel({ tickets, inactive }) {
                 </div>
                 {!inactive && (assigned ? (
                   <button disabled={isBusy} onClick={() => call('revoke', t.ticketCode)}
-                    style={{ flexShrink: 0, padding: '7px 13px', borderRadius: 999, cursor: 'pointer', font: '700 11px Inter,sans-serif', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', color: '#e05aaa' }}>
-                    {isBusy ? '…' : 'Reprendre'}
+                    style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, font: '700 12px Inter,sans-serif', ...(isBusy
+                      ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed' }
+                      : { background: '#c2347f', border: 'none', color: '#fff', cursor: 'pointer' }) }}>
+                    {isBusy ? <><span className="lib-spin" style={{ width: 11, height: 11, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 6 }} />Reprise…</> : 'Reprendre'}
                   </button>
                 ) : (
                   <button disabled={isBusy} onClick={() => { setOpenAssign(openAssign === t.ticketCode ? null : t.ticketCode); setEmail('') }}
-                    style={{ flexShrink: 0, padding: '7px 13px', borderRadius: 999, cursor: 'pointer', font: '700 11px Inter,sans-serif', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: '#4ee8c8' }}>
+                    style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, font: '700 12px Inter,sans-serif', ...(isBusy
+                      ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed' }
+                      : { background: '#3ed6b5', border: 'none', color: '#04120e', cursor: 'pointer' }) }}>
                     Attribuer
                   </button>
                 ))}
               </div>
               {openAssign === t.ticketCode && !assigned && (
                 <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                  <input value={email} onChange={e => setEmail(e.target.value)} placeholder="email de l'ami" type="email"
-                    style={{ flex: 1, background: 'rgba(6,8,16,0.8)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 8, color: '#fff', font: '500 12px Inter,sans-serif', padding: '8px 10px' }} />
+                  <input value={email} onChange={e => setEmail(e.target.value)} placeholder="E-mail du compte de l'ami" type="email"
+                    style={{ flex: 1, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: 'rgba(255,255,255,0.92)', font: '500 13px Inter,sans-serif', padding: '9px 12px' }} />
                   <button disabled={isBusy || !email.trim()} onClick={() => call('assign', t.ticketCode, { toEmail: email.trim() })}
-                    style={{ padding: '8px 14px', borderRadius: 8, cursor: email.trim() ? 'pointer' : 'default', font: '700 12px Inter,sans-serif', background: '#4ee8c8', border: 'none', color: '#04040b', opacity: email.trim() ? 1 : 0.4 }}>
-                    {isBusy ? '…' : 'Donner'}
+                    style={{ padding: '8px 14px', borderRadius: 10, font: '700 12px Inter,sans-serif', ...((isBusy || !email.trim())
+                      ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed' }
+                      : { background: '#3ed6b5', border: 'none', color: '#04120e', cursor: 'pointer' }) }}>
+                    {isBusy ? <><span className="lib-spin" style={{ width: 11, height: 11, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 6 }} />Envoi…</> : 'Donner'}
                   </button>
                 </div>
               )}
@@ -2268,11 +2274,10 @@ function EventTicketGroup({ group }) {
   return (
     <>
     <div className="ticket-event-group" style={{
-      background: 'rgba(8,10,20,0.55)',
-      backdropFilter: 'blur(22px) saturate(1.6)',
-      WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
-      border: '1px solid rgba(255,255,255,0.10)',
-      borderRadius: '12px',
+      background: '#0e0f16',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: '16px',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
       overflow: 'hidden',
     }}>
       {/* Event header */}
@@ -2310,12 +2315,12 @@ function EventTicketGroup({ group }) {
                   margin: 0,
                 }}>{displayGroupDate || 'Date à confirmer'}</p>
                 {showCancellationBanner && (
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#ff8a8a', background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.35)', borderRadius: 999, padding: '2px 8px' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#ff8a8a', background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.35)', borderRadius: 999, padding: '2px 8px' }}>
                     Annulé
                   </span>
                 )}
                 {isPast && (
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.48)', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 999, padding: '2px 8px' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.48)', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 999, padding: '2px 8px' }}>
                     Terminé
                   </span>
                 )}
@@ -2480,11 +2485,12 @@ function EventTicketGroup({ group }) {
           position: 'relative',
           width: '100%',
           maxWidth: 520,
-          background: 'rgba(4,5,12,0.97)',
+          background: '#12131c',
           borderTop: '1px solid rgba(255,255,255,0.10)',
           borderLeft: '1px solid rgba(255,255,255,0.07)',
           borderRight: '1px solid rgba(255,255,255,0.07)',
           borderRadius: '16px 16px 0 0',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
           maxHeight: '88vh',
           overflowY: 'auto',
         }}>
@@ -2496,10 +2502,10 @@ function EventTicketGroup({ group }) {
           {/* Header */}
           <div style={{ padding: '4px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <div>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
                 Playlist interactive
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 18, color: 'white', margin: '2px 0 0' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 18, color: 'white', margin: '2px 0 0' }}>
                 {group.eventName}
               </p>
             </div>
@@ -2580,10 +2586,10 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
     const url = b.eventId ? `${window.location.origin}/evenements/${b.eventId}` : window.location.href
     const res = await shareOrCopy({
       title: b.eventName || 'Live in Black',
-      text: `Rejoins-moi à ${b.eventName || 'cette soirée'} 🎉`,
+      text: `Rejoins-moi à ${b.eventName || 'cette soirée'}`,
       url,
     })
-    if (res.method === 'copy') flashShare('Lien copié ✓')
+    if (res.method === 'copy') flashShare('Lien copié')
     else if (res.method === 'none') flashShare('Partage indisponible sur ce navigateur')
   }
 
@@ -2598,10 +2604,10 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
         kicker: 'Billet officiel',
         title: b.eventName || 'Live in Black',
         chips: [displayEventDate, b.place || 'Standard', eventForTicket?.city || null],
-        tagline: "J'ai ma place 🎟️",
+        tagline: "J'ai ma place",
         imageUrl: eventForTicket?.imageUrl || null,
       })
-      if (res.method === 'download') flashShare('Story téléchargée — publie-la depuis ta galerie ✓')
+      if (res.method === 'download') flashShare('Story téléchargée — publie-la depuis ta galerie')
       else if (res.method === 'none') flashShare('Génération impossible — réessaie.')
     } catch { flashShare('Génération impossible — réessaie.') }
     setStoryBusy(false)
@@ -2617,7 +2623,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
       start,
       end: combineDateTime(b.eventDateISO, b.eventEndTime),
     })
-    flashShare(ok ? 'Ajouté au calendrier ✓' : 'Ajout au calendrier impossible')
+    flashShare(ok ? 'Ajouté au calendrier' : 'Ajout au calendrier impossible')
   }
 
   async function downloadTicket() {
@@ -2741,8 +2747,8 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
         <span className="ticket-brand">Live in Black · Billet officiel</span>
         <h3 className="ticket-event-name">{b.eventName || 'Événement Live in Black'}</h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-          {countdownLabel && <span style={{ display: 'inline-block', padding: '3px 11px', borderRadius: 999, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.42)', color: '#4ee8c8', font: '700 10px Inter, sans-serif', letterSpacing: '0.05em' }}>{countdownLabel}</span>}
-          {(eventForTicket?.minAge || 0) >= 18 && <span title="Pièce d'identité pouvant être demandée à l'entrée" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.42)', color: '#c8a96e', font: '700 10px Inter, sans-serif', letterSpacing: '0.05em' }}>🪪 {eventForTicket.minAge}+</span>}
+          {countdownLabel && <span style={{ display: 'inline-block', padding: '3px 11px', borderRadius: 999, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.42)', color: '#4ee8c8', font: '700 11px Inter, sans-serif', letterSpacing: '0.05em' }}>{countdownLabel}</span>}
+          {(eventForTicket?.minAge || 0) >= 18 && <span title="Pièce d'identité pouvant être demandée à l'entrée" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.42)', color: '#c8a96e', font: '700 11px Inter, sans-serif', letterSpacing: '0.05em' }}><IconIdBadge size={12} /> {eventForTicket.minAge}+</span>}
         </div>
         <div className="ticket-meta-grid">
           <div><span>Place</span><strong>{b.place || 'Standard'}</strong></div>
@@ -2770,7 +2776,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
         const served = !!line && line.status === 'served'
         return <div className="ticket-preorder-row" key={inc.name}>
           <span>{inc.emoji ? `${inc.emoji} ` : ''}{inc.qty}× {inc.name}</span>
-          <strong style={{color: served ? '#22c55e' : '#c8a96e'}}>{served ? 'Servi ✓' : 'À récupérer'}</strong>
+          <strong style={{color: served ? '#22c55e' : '#c8a96e'}}>{served ? 'Servi' : 'À récupérer'}</strong>
         </div>
       })}
       <p style={{margin:0,font:'500 10px Inter,sans-serif',color:'rgba(255,255,255,.38)',lineHeight:1.5}}>
@@ -2793,7 +2799,7 @@ function PremiumTicketCard({ booking: b, index, inactive = false, inactiveLabel 
     {downloadStatus === 'error' && <p role="alert" style={{margin:'0 20px 16px',font:'600 12px Inter,sans-serif',color:'#ff8585'}}>Le téléchargement n’a pas pu démarrer. Réessaie dans quelques secondes.</p>}
     {shareMsg && <p role="status" style={{margin:'0 20px 16px',font:'600 12px Inter,sans-serif',color:'#4ee8c8'}}>{shareMsg}</p>}
 
-    {showLargeQr && qrUrl && <div className="ticket-expanded-qr"><div className="ticket-qr"><QRCodeSVG value={qrUrl} size={210} level="H"/></div><span style={{font:'600 9px Inter,sans-serif',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(255,255,255,.35)'}}>Présente ce code à l’entrée · usage unique</span></div>}
+    {showLargeQr && qrUrl && <div className="ticket-expanded-qr"><div className="ticket-qr"><QRCodeSVG value={qrUrl} size={210} level="H"/></div><span style={{font:'600 11px Inter,sans-serif',letterSpacing:'.06em',textTransform:'uppercase',color:'rgba(255,255,255,.5)'}}>Présente ce code à l’entrée · usage unique</span></div>}
   </article>
 }
 
@@ -2868,9 +2874,9 @@ function SingleTicketCard({ booking: b, index }) {
 
   return (
     <div style={{
-      background: 'rgba(6,8,16,0.7)',
-      border: '1px solid rgba(255,255,255,0.07)',
-      borderRadius: '8px',
+      background: '#0e0f16',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: '12px',
       overflow: 'hidden',
     }}>
       <div style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -2920,8 +2926,8 @@ function SingleTicketCard({ booking: b, index }) {
                 fontSize: '11px',
                 fontWeight: 600,
                 color: '#e0c690',
-                background: 'rgba(200,169,110,0.1)',
-                border: '1px solid rgba(200,169,110,0.28)',
+                background: 'rgba(200,169,110,0.14)',
+                border: '1px solid rgba(200,169,110,0.38)',
                 cursor: 'pointer',
               }}
             >
@@ -2936,11 +2942,11 @@ function SingleTicketCard({ booking: b, index }) {
         <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
           <p style={{
             fontFamily: 'Inter, sans-serif',
-            fontSize: '9px',
+            fontSize: '11px',
             fontWeight: 700,
-            letterSpacing: '0.15em',
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            color: 'rgba(200,169,110,0.55)',
+            color: '#c8a96e',
             margin: '0 0 2px',
           }}>Précommande</p>
           {b.preorderSummary.map(item => (
@@ -2969,11 +2975,11 @@ function SingleTicketCard({ booking: b, index }) {
             onClick={() => navigate(`/commander/${b.eventId}/${b.ticketCode}`)}
             className="lib-press"
             style={{
-              width: '100%', padding: '11px 0', borderRadius: '10px', cursor: 'pointer',
+              width: '100%', padding: '12px 0', borderRadius: '10px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
               fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '.01em',
-              color: '#04040b', background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)',
-              border: 'none', boxShadow: '0 6px 18px -8px rgba(78,232,200,0.55)',
+              color: '#04120e', background: '#3ed6b5',
+              border: 'none',
             }}
           >
             Commander sur place
@@ -3003,28 +3009,28 @@ function SingleTicketCard({ booking: b, index }) {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '9px 20px',
-              borderRadius: '4px',
-              background: 'rgba(200,169,110,0.08)',
-              border: '1px solid rgba(200,169,110,0.25)',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.14)',
               fontFamily: 'Inter, sans-serif',
-              fontSize: '9px',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: '#c8a96e',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: 'rgba(255,255,255,0.9)',
               cursor: 'pointer',
               transition: 'background 0.18s',
             }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,169,110,0.16)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(200,169,110,0.08)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
           >
             Télécharger le QR code
           </button>
           <p style={{
             fontFamily: 'Inter, sans-serif',
-            fontSize: '8px',
-            letterSpacing: '0.2em',
-            color: 'rgba(255,255,255,0.15)',
+            fontSize: '11px',
+            fontWeight: 500,
+            letterSpacing: '0.04em',
+            color: 'rgba(255,255,255,0.38)',
           }}>Signature anti-fraude · LIVEINBLACK</p>
         </div>
       )}
@@ -3186,9 +3192,10 @@ function AvatarUpload({ user, setUser }) {
           />
           <div style={{
             position: 'relative',
-            background: 'rgba(8,10,20,0.95)',
+            background: '#12131c',
             border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: '12px',
+            borderRadius: '20px',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
             padding: '24px',
             width: '100%',
             maxWidth: '340px',
@@ -3200,16 +3207,17 @@ function AvatarUpload({ user, setUser }) {
             <div style={{ textAlign: 'center' }}>
               <p style={{
                 fontFamily: 'Inter, sans-serif',
-                fontWeight: 300,
+                fontWeight: 700,
                 fontSize: '20px',
-                color: 'rgba(255,255,255,0.88)',
+                color: 'rgba(255,255,255,0.93)',
               }}>Recadrer la photo</p>
               <p style={{
                 fontFamily: 'Inter, sans-serif',
-                fontSize: '9px',
-                letterSpacing: '0.25em',
+                fontSize: '11px',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.28)',
+                color: 'rgba(255,255,255,0.45)',
                 marginTop: '6px',
               }}>Glisse pour repositionner</p>
             </div>
@@ -3250,10 +3258,11 @@ function AvatarUpload({ user, setUser }) {
             <div>
               <p style={{
                 fontFamily: 'Inter, sans-serif',
-                fontSize: '9px',
-                letterSpacing: '0.3em',
+                fontSize: '11px',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.28)',
+                color: 'rgba(255,255,255,0.45)',
                 textAlign: 'center',
                 marginBottom: '8px',
               }}>Zoom</p>
@@ -3279,16 +3288,16 @@ function AvatarUpload({ user, setUser }) {
                 onClick={saveAvatar}
                 style={{
                   flex: 1,
-                  padding: '11px',
-                  borderRadius: '4px',
-                  background: 'linear-gradient(135deg, rgba(200,169,110,0.35), rgba(200,169,110,0.15))',
-                  border: '1px solid rgba(200,169,110,0.55)',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+                  border: '1px solid rgba(255,255,255,0.14)',
                   fontFamily: 'Inter, sans-serif',
-                  fontSize: '11px',
-                  letterSpacing: '0.2em',
-                  textTransform: 'uppercase',
-                  color: '#c8a96e',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: '#fff',
                   cursor: 'pointer',
+                  boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
                 }}
               >
                 Valider

@@ -117,7 +117,7 @@ export default function PublicPrestatairePage() {
 
   function openServiceInquiry(item) {
     if (isSelf) return
-    const defaultMessage = `Bonjour ${profile?.name || ''}, je suis intéressé par « ${item.name} ». Est-ce que tu peux me donner plus d'infos ?`
+    const defaultMessage = `Bonjour ${profile?.name || ''}, je suis intéressé par « ${item.name} ». Peux-tu me donner plus d'informations ?`
     if (!user) {
       openAuthModal('Connecte-toi pour envoyer une demande au prestataire.', () => {
         setInquiryItem(item)
@@ -258,17 +258,19 @@ export default function PublicPrestatairePage() {
                     kicker: 'Prestataire événementiel',
                     title: profile.name || 'Prestataire',
                     chips: [categories[0]?.singular || null, locationLabel || null].filter(Boolean),
-                    tagline: 'Découvre son travail ✨',
+                    tagline: 'Découvre son travail',
                     imageUrl: profile.coverUrl || profile.photoUrl || null,
                   })
-                  if (res.method === 'download') { setShareMsg('Story téléchargée ✓'); setTimeout(() => setShareMsg(''), 2200) }
+                  if (res.method === 'download') { setShareMsg('Story téléchargée'); setTimeout(() => setShareMsg(''), 2200) }
                   else if (res.method === 'none') { setShareMsg('Génération impossible'); setTimeout(() => setShareMsg(''), 1600) }
                 } catch { setShareMsg('Génération impossible'); setTimeout(() => setShareMsg(''), 1600) }
                 setStoryBusy(false)
               }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, cursor: 'pointer', background: 'linear-gradient(135deg, rgba(224,90,170,0.14), rgba(139,92,246,0.14))', border: '1px solid rgba(224,90,170,0.45)', color: '#e05aaa', fontFamily: FONT, fontSize: 13.5, fontWeight: 600, opacity: storyBusy ? 0.6 : 1 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, cursor: storyBusy ? 'wait' : 'pointer', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.5)', color: '#ff9ed2', fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>
+              {storyBusy
+                ? <span className="lib-spin" style={{ ...spinner, border: '2px solid rgba(255,158,210,.3)', borderTopColor: '#ff9ed2' }} />
+                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>}
               {storyBusy ? 'Création…' : 'Partager en story'}
             </button>
           </div>
@@ -300,7 +302,7 @@ export default function PublicPrestatairePage() {
                 <span style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.4)' }}>{visibleCatalog.length} offre{visibleCatalog.length > 1 ? 's' : ''}</span>
               </div>
               {visibleCatalog.length === 0 ? (
-                <div style={{ ...sectionStyle, color: 'rgba(255,255,255,.5)', fontFamily: FONT, fontSize: 14 }}>Le catalogue sera bientôt complété.</div>
+                <div style={{ ...sectionStyle, color: 'rgba(255,255,255,.5)', fontFamily: FONT, fontSize: 14 }}>Ce prestataire n’a pas encore publié d’offre dans son catalogue.</div>
               ) : (
                 <div className="provider-catalog-grid">
                   {visibleCatalog.map(item => (

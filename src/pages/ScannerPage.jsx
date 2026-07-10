@@ -6,6 +6,7 @@ import { fmtMoney, eventCurrency } from '../utils/money'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import { isEventEnded } from '../utils/event-time'
+import { IconLock, IconTicket, IconHourglass } from '../components/icons'
 import {
   listenOrders, getOrders, ensurePreordersMaterialized, ensureIncludedMaterialized, includedForPlace, addOnsiteItem, serveItem,
   cancelItem, markTicketPaid, getStaffRole, canServe, canManage,
@@ -43,10 +44,10 @@ async function fetchEventForScan(eventId) {
 
 // ─── Design tokens ────────────────────────────────────────────────────────
 const CARD = {
-  background: 'rgba(8,10,20,0.55)',
-  backdropFilter: 'blur(22px) saturate(1.6)',
-  border: '1px solid rgba(255,255,255,0.10)',
+  background: '#0e0f16',
+  border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: 12,
+  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
 }
 
 const FONTS = {
@@ -60,17 +61,18 @@ const COLORS = {
   teal: '#4ee8c8',
   pink: '#e05aaa',
   gold: '#c8a96e',
-  muted: 'rgba(255,255,255,0.42)',
-  dim: 'rgba(255,255,255,0.22)',
+  muted: 'rgba(255,255,255,0.55)',
+  dim: 'rgba(255,255,255,0.4)',
 }
 
+// Fonds OPAQUES très contrastés : le verdict doit se lire d'un coup d'œil, de nuit.
 const STATUS = {
-  valid:          { borderColor: 'rgba(78,232,200,0.40)',  bg: 'rgba(78,232,200,0.07)',  iconColor: COLORS.teal, label: 'VALIDE',         sub: 'Accès autorisé' },
-  just_validated: { borderColor: 'rgba(78,232,200,0.40)',  bg: 'rgba(78,232,200,0.07)',  iconColor: COLORS.teal, label: 'VALIDÉ',         sub: 'Billet marqué comme utilisé' },
-  used:           { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'DÉJÀ UTILISÉ',   sub: 'Ce billet a déjà été scanné' },
-  invalid:        { borderColor: 'rgba(224,90,170,0.40)',  bg: 'rgba(224,90,170,0.07)',  iconColor: COLORS.pink, label: 'INVALIDE',       sub: 'QR code non reconnu' },
-  offline:        { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'HORS-LIGNE',      sub: 'Vérification impossible — reconnecte-toi' },
-  wrong_event:    { borderColor: 'rgba(200,169,110,0.40)', bg: 'rgba(200,169,110,0.07)', iconColor: COLORS.gold, label: 'BILLET REFUSÉ',   sub: 'Ce billet ne concerne pas cet événement' },
+  valid:          { borderColor: 'rgba(78,232,200,0.60)',  bg: '#0b241d', iconColor: COLORS.teal, label: 'VALIDE',         sub: 'Accès autorisé' },
+  just_validated: { borderColor: 'rgba(78,232,200,0.60)',  bg: '#0b241d', iconColor: COLORS.teal, label: 'VALIDÉ',         sub: 'Billet marqué comme utilisé' },
+  used:           { borderColor: 'rgba(200,169,110,0.60)', bg: '#241c0d', iconColor: COLORS.gold, label: 'DÉJÀ UTILISÉ',   sub: 'Ce billet a déjà été scanné' },
+  invalid:        { borderColor: 'rgba(224,90,170,0.60)',  bg: '#260d1b', iconColor: COLORS.pink, label: 'INVALIDE',       sub: 'QR code non reconnu' },
+  offline:        { borderColor: 'rgba(200,169,110,0.60)', bg: '#241c0d', iconColor: COLORS.gold, label: 'HORS-LIGNE',      sub: 'Vérification impossible — reconnecte-toi' },
+  wrong_event:    { borderColor: 'rgba(200,169,110,0.60)', bg: '#241c0d', iconColor: COLORS.gold, label: 'BILLET REFUSÉ',   sub: 'Ce billet ne concerne pas cet événement' },
 }
 
 // ── Camera component ────────────────────────────────────────────────
@@ -162,13 +164,15 @@ function CameraScanner({ active, onScan, onError }) {
           }} />
         </div>
       </div>
-      <p style={{
-        position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center',
-        fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal,
-        letterSpacing: '0.12em', textTransform: 'uppercase',
-        animation: 'pulse 2s infinite',
-      }}>
-        Lecture en cours...
+      <p style={{ position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center', margin: 0 }}>
+        <span style={{
+          display: 'inline-block', padding: '6px 12px', borderRadius: 999,
+          background: 'rgba(4,4,11,0.8)', border: '1px solid rgba(78,232,200,0.4)',
+          fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.teal,
+          letterSpacing: '0.06em', textTransform: 'uppercase',
+        }}>
+          Lecture en cours…
+        </span>
       </p>
     </>
   )
@@ -201,9 +205,11 @@ export default function ScannerPage() {
   if (user && userRole !== 'agent' && userRole !== 'organisateur' && !isStaffMember) {
     return (
       <div style={{ minHeight: '100dvh', background: '#04040b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
-        <span style={{ fontSize: 40 }}>🚫</span>
-        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, textAlign: 'center' }}>Cette page est réservée aux agents, organisateurs et à l'équipe d'un événement.</p>
-        <button onClick={() => navigate('/')} style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, background: 'none', border: '1px solid rgba(78,232,200,0.3)', borderRadius: 6, padding: '8px 20px', cursor: 'pointer' }}>Retour</button>
+        <span style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <IconLock size={28} color="rgba(255,255,255,0.6)" />
+        </span>
+        <p style={{ fontFamily: FONTS.mono, fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.6)', textAlign: 'center', maxWidth: 300, lineHeight: 1.5, margin: 0 }}>Cette page est réservée aux agents, aux organisateurs et à l'équipe d'un événement.</p>
+        <button onClick={() => navigate('/')} style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 12, padding: '11px 24px', cursor: 'pointer' }}>Retour à l'accueil</button>
       </div>
     )
   }
@@ -309,11 +315,26 @@ function ScannerInner() {
     if (myId) {
       import('../utils/firestore-sync').then(({ syncDoc }) => {
         syncDoc(`used_tickets/${myId}`, { items: arr, updatedAt: new Date().toISOString() })
-        // Marque aussi le check-in directement sur le billet — utilisé par la
-        // guestlist de l'organisateur pour afficher « ✓ Arrivé » sans dépendre
-        // du registre per-agent ci-dessus (qui ne se croise pas entre scanners).
-        syncDoc(`tickets/${code}`, { checkedInAt: new Date().toISOString(), checkedInBy: myId })
       }).catch(() => {})
+      // Check-in + point de fidélité : côté SERVEUR (Admin SDK). Le point (+1)
+      // va au TITULAIRE courant du billet — règle « le point se gagne au scan » ;
+      // les règles Firestore interdisent au scanner d'écrire users/{titulaire}.
+      // Transaction idempotente : un re-scan ne crédite jamais deux fois.
+      import('../utils/apiAuth').then(async ({ authHeaders }) => {
+        const r = await fetch('/api/tickets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+          body: JSON.stringify({ action: 'checkin', ticketCode: code }),
+        })
+        if (!r.ok) throw new Error('checkin ' + r.status)
+      }).catch(() => {
+        // Repli (API injoignable) : marque au moins le check-in sur le billet —
+        // utilisé par la guestlist (« ✓ Arrivé ») et l'anti double-entrée
+        // cross-device. Le point sera perdu, mais l'entrée reste correcte.
+        import('../utils/firestore-sync').then(({ syncDoc }) => {
+          syncDoc(`tickets/${code}`, { checkedInAt: new Date().toISOString(), checkedInBy: myId })
+        }).catch(() => {})
+      })
     }
   }
 
@@ -667,9 +688,9 @@ function ScannerInner() {
   // Shared input style
   const inputStyle = {
     width: '100%', boxSizing: 'border-box',
-    background: 'rgba(8,10,20,0.70)',
+    background: '#0b0c12',
     border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: 12, color: '#fff',
+    borderRadius: 12, color: 'rgba(255,255,255,0.92)',
     fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600,
     padding: '12px 14px', outline: 'none',
   }
@@ -700,13 +721,13 @@ function ScannerInner() {
             {scanMode === 'entry' ? 'Contrôle d’entrée' : 'Service commandes'}
           </p>
         </div>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.teal, boxShadow: `0 0 6px ${COLORS.teal}`, animation: 'pulse 2s infinite' }} />
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.teal }} />
       </div>
 
       {/* Mode toggle — segmented control */}
       <div style={{
         display: 'flex', margin: '14px 16px 0',
-        background: 'rgba(8,10,20,0.6)', backdropFilter: 'blur(16px)',
+        background: '#0e0f16',
         border: '1px solid rgba(255,255,255,0.08)', borderRadius: 999, padding: 4, gap: 4,
       }}>
         {[['entry', 'Contrôle entrée', COLORS.teal, '78,232,200'], ['service', 'Service commandes', COLORS.gold, '200,169,110']].map(([m, label, accent, rgb]) => {
@@ -760,7 +781,7 @@ function ScannerInner() {
                           </svg>
                         </div>
                       </div>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
                         Appuie sur le bouton pour ouvrir la caméra
                       </p>
                     </div>
@@ -769,32 +790,30 @@ function ScannerInner() {
 
                 {cameraError && (
                   <div style={{
-                    background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.30)',
-                    borderRadius: 8, padding: '12px 14px', textAlign: 'center',
+                    background: '#1e0f18', border: '1px solid rgba(224,90,170,0.45)',
+                    borderRadius: 12, padding: '12px 14px', textAlign: 'center',
                   }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(220,100,100,0.9)', margin: '0 0 3px', fontWeight: 600 }}>Caméra inaccessible</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0 }}>{cameraError}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.pink, margin: '0 0 3px', fontWeight: 700 }}>Caméra inaccessible</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.5 }}>{cameraError}</p>
                   </div>
                 )}
 
                 <button
                   onClick={() => { setCameraError(''); setCameraActive(v => !v) }}
                   style={{
-                    width: '100%', padding: '14px 0', borderRadius: 12, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-                    transition: 'all 0.2s', border: 'none',
-                    background: cameraActive
-                      ? 'rgba(255,255,255,0.08)'
-                      : 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
-                    color: cameraActive ? COLORS.muted : COLORS.teal,
-                    outline: cameraActive ? '1px solid rgba(255,255,255,0.15)' : `1px solid rgba(78,232,200,0.35)`,
+                    width: '100%', padding: '14px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer',
+                    fontFamily: FONTS.mono, fontSize: 14, fontWeight: 700, letterSpacing: '0.02em',
+                    transition: 'all 0.2s',
+                    background: cameraActive ? 'rgba(255,255,255,0.08)' : '#3ed6b5',
+                    color: cameraActive ? 'rgba(255,255,255,0.9)' : '#04120e',
+                    border: cameraActive ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.14)',
                   }}>
                   {cameraActive ? 'Arrêter la caméra' : 'Ouvrir la caméra'}
                 </button>
 
                 {/* Manual entry */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  <label style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: 'normal' }}>
                     Saisie manuelle du code
                   </label>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -809,16 +828,17 @@ function ScannerInner() {
                       onClick={() => manualCode && processCode(manualCode)}
                       disabled={!manualCode}
                       style={{
-                        padding: '0 16px', borderRadius: 12, cursor: manualCode ? 'pointer' : 'default',
-                        background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                        border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold,
-                        fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em',
-                        opacity: manualCode ? 1 : 0.4, transition: 'opacity 0.2s',
+                        padding: '0 18px', borderRadius: 12, cursor: manualCode ? 'pointer' : 'not-allowed',
+                        background: manualCode ? '#c8a96e' : 'rgba(255,255,255,0.07)',
+                        border: manualCode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)',
+                        color: manualCode ? '#171106' : 'rgba(255,255,255,0.35)',
+                        fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, letterSpacing: '0.02em',
+                        transition: 'all 0.2s',
                       }}>
                       Valider
                     </button>
                   </div>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)' }}>Format : LIB-XXX-XXXXXX</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Format : LIB-XXX-XXXXXX</p>
                 </div>
               </>
             )}
@@ -832,15 +852,15 @@ function ScannerInner() {
 
               return (
                 <div style={{
-                  borderRadius: 12, border: `1px solid ${cfg.borderColor}`,
-                  background: cfg.bg, backdropFilter: 'blur(22px)',
+                  borderRadius: 16, border: `1px solid ${cfg.borderColor}`,
+                  background: cfg.bg, boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
                   padding: 20, display: 'flex', flexDirection: 'column', gap: 16,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{
                       width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
-                      background: 'rgba(0,0,0,0.30)',
-                      border: `2px solid ${cfg.iconColor}44`,
+                      background: 'rgba(0,0,0,0.35)',
+                      border: `2px solid ${cfg.iconColor}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       {isTeal && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>}
@@ -850,24 +870,24 @@ function ScannerInner() {
                       {result.status === 'wrong_event' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>}
                     </div>
                     <div>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 20, fontWeight: 700, color: cfg.iconColor, margin: 0, letterSpacing: '0.06em' }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 26, fontWeight: 800, color: cfg.iconColor, margin: 0, letterSpacing: '0.04em' }}>
                         {cfg.label}
                       </p>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '3px 0 0' }}>{result.sub || cfg.sub}</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.7)', margin: '3px 0 0', lineHeight: 1.4 }}>{result.sub || cfg.sub}</p>
                       {result.paidConfirmed === true && (
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ PAIEMENT CONFIRMÉ</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.teal, margin: '4px 0 0', letterSpacing: '0.04em' }}>PAIEMENT CONFIRMÉ</p>
                       )}
                       {result.paidConfirmed === false && result.isGuestlist && (
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ INVITÉ — GUESTLIST</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.teal, margin: '4px 0 0', letterSpacing: '0.04em' }}>INVITÉ — GUESTLIST</p>
                       )}
                       {result.paidConfirmed === false && result.freeTicket && !result.isGuestlist && (
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, margin: '3px 0 0', letterSpacing: '0.1em' }}>✓ BILLET GRATUIT — ENTRÉE LIBRE</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.teal, margin: '4px 0 0', letterSpacing: '0.04em' }}>BILLET GRATUIT — ENTRÉE LIBRE</p>
                       )}
                       {result.paidConfirmed === false && !result.freeTicket && !result.isGuestlist && (
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, margin: '3px 0 0', letterSpacing: '0.1em' }}>⚠ PAIEMENT NON CONFIRMÉ (en attente Stripe)</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.gold, margin: '4px 0 0', letterSpacing: '0.04em' }}>PAIEMENT NON CONFIRMÉ — CONFIRMATION BANCAIRE EN ATTENTE</p>
                       )}
                       {result.offline && (
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.muted, margin: '3px 0 0', letterSpacing: '0.1em' }}>VÉRIFICATION HORS-LIGNE — registre injoignable</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', margin: '4px 0 0', letterSpacing: '0.04em' }}>VÉRIFICATION HORS-LIGNE — REGISTRE INJOIGNABLE</p>
                       )}
                     </div>
                   </div>
@@ -883,11 +903,11 @@ function ScannerInner() {
                         { label: 'Code billet',   val: result.code, mono: true },
                       ].map(row => (
                         <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>{row.label}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{row.label}</span>
                           <span style={{
                             fontFamily: row.mono ? FONTS.mono : FONTS.display,
-                            fontWeight: row.mono ? 400 : 300,
-                            fontSize: row.mono ? 11 : 14,
+                            fontWeight: row.mono ? 600 : 500,
+                            fontSize: row.mono ? 12 : 14,
                             color: row.mono ? COLORS.gold : '#fff',
                             letterSpacing: row.mono ? '0.06em' : 0,
                           }}>{row.val}</span>
@@ -899,13 +919,13 @@ function ScannerInner() {
                   {/* Preorders */}
                   {result.preorders?.length > 0 && (
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
                         Précommandes
                       </p>
                       {result.preorders.map((p, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>{p.n} ×{p.q}</span>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold }}>{fmtMoney(p.p * p.q, result.cur)}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>{p.n} ×{p.q}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, color: COLORS.gold }}>{fmtMoney(p.p * p.q, result.cur)}</span>
                         </div>
                       ))}
                     </div>
@@ -914,16 +934,16 @@ function ScannerInner() {
                   {/* Options incluses dans le type de place (à servir au bar) */}
                   {result.included?.length > 0 && (
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.teal, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
                         Inclus dans le billet · à servir
                       </p>
                       {result.included.map((inc, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>{inc.emoji ? `${inc.emoji} ` : ''}{inc.name} ×{inc.qty}</span>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal }}>Gratuit</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>{inc.emoji ? `${inc.emoji} ` : ''}{inc.name} ×{inc.qty}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.teal }}>Gratuit</span>
                         </div>
                       ))}
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 8.5, color: COLORS.dim, margin: '2px 0 0', letterSpacing: '0.06em' }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0', letterSpacing: 'normal' }}>
                         Passe en mode Service pour marquer chaque option servie.
                       </p>
                     </div>
@@ -932,22 +952,22 @@ function ScannerInner() {
                   <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
                     {isValid && (
                       <button onClick={validateEntry} style={{
-                        flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer',
-                        background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
-                        border: '1px solid rgba(78,232,200,0.35)', color: COLORS.teal,
-                        fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+                        flex: 1, padding: '13px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer',
+                        background: '#3ed6b5',
+                        border: '1px solid rgba(255,255,255,0.14)', color: '#04120e',
+                        fontFamily: FONTS.mono, fontSize: 14, fontWeight: 700, letterSpacing: '0.02em',
                         transition: 'all 0.2s',
                       }}>
                         Valider l'entrée
                       </button>
                     )}
                     <button onClick={reset} style={{
-                      width: isValid ? 44 : '100%', padding: '12px 0', borderRadius: 12, cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
-                      color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
+                      width: isValid ? 44 : '100%', padding: '13px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                      color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600,
                       transition: 'all 0.2s',
                     }}>
-                      {isValid ? '✕' : 'Billet suivant'}
+                      {isValid ? '×' : 'Billet suivant'}
                     </button>
                   </div>
                 </div>
@@ -961,8 +981,8 @@ function ScannerInner() {
                   { label: 'Billets validés (cet appareil)', val: validatedCount, color: COLORS.teal },
                 ].map(s => (
                   <div key={s.label} style={{ ...CARD, padding: 12, textAlign: 'center' }}>
-                    <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 28, color: s.color, margin: 0 }}>{s.val}</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>{s.label}</p>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 28, color: s.color, margin: 0 }}>{s.val}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -999,8 +1019,8 @@ function ScannerInner() {
                     return (
                       <div key={t.code} onClick={() => { setActiveCode(t.code); setPosScanning(false); setAddPicker(false); setShowHistory(false) }}
                         style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 8px 8px 13px', borderRadius: 999, cursor: 'pointer',
-                          background: on ? 'rgba(78,232,200,0.14)' : 'rgba(255,255,255,0.04)',
-                          border: `1px solid ${on ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.1)'}` }}>
+                          background: on ? 'rgba(78,232,200,0.16)' : '#12131c',
+                          border: `1px solid ${on ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.10)'}` }}>
                         <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: on ? COLORS.teal : 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>{t.holder}</span>
                         {n > 0 && <span style={{ minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999, background: COLORS.gold, color: '#04040b', fontFamily: FONTS.mono, fontSize: 10, fontWeight: 800, display: 'grid', placeItems: 'center' }}>{n}</span>}
                         <span onClick={e => { e.stopPropagation(); requestClose(t.code) }} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, lineHeight: 1, fontWeight: 700, padding: '0 3px' }}>×</span>
@@ -1008,26 +1028,26 @@ function ScannerInner() {
                     )
                   })}
                   <button onClick={() => { setPosScanning(true); setShowHistory(false); setAddPicker(false); setScanReject(null) }}
-                    style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', color: COLORS.muted }}>+ Scanner</button>
+                    style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>+ Scanner</button>
                   {canManage(role) && (
                     <button onClick={() => { setShowHistory(v => !v); setPosScanning(false) }}
-                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: showHistory ? 'rgba(200,169,110,0.16)' : 'rgba(255,255,255,0.05)', border: `1px solid ${showHistory ? 'rgba(200,169,110,0.5)' : 'rgba(255,255,255,0.12)'}`, color: showHistory ? COLORS.gold : COLORS.muted }}>Historique</button>
+                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: showHistory ? 'rgba(200,169,110,0.16)' : 'rgba(255,255,255,0.08)', border: `1px solid ${showHistory ? 'rgba(200,169,110,0.5)' : 'rgba(255,255,255,0.14)'}`, color: showHistory ? COLORS.gold : 'rgba(255,255,255,0.9)' }}>Historique</button>
                   )}
                 </div>
               )}
 
               {showScanner ? (
                 <>
-                  <div style={{ ...CARD, borderColor: 'rgba(200,169,110,0.22)', padding: '12px 14px' }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Mode serveur</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0, lineHeight: 1.55 }}>Scanne le billet d'un client : il s'ouvre en onglet. Sers ses consos, ajoute-en, encaisse — sans le rescanner.</p>
+                  <div style={{ ...CARD, borderColor: 'rgba(200,169,110,0.35)', padding: '12px 14px' }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Mode serveur</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>Scanne le billet d'un client : il s'ouvre en onglet. Sers ses consommations, ajoutes-en, encaisse — sans le rescanner.</p>
                   </div>
 
                   {scanReject && (
-                    <div style={{ ...CARD, borderColor: 'rgba(224,90,170,0.4)', background: 'rgba(224,90,170,0.07)', padding: 18, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <div style={{ ...CARD, borderColor: 'rgba(224,90,170,0.6)', background: '#260d1b', padding: 18, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                       <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                      <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 18, color: COLORS.pink, margin: 0 }}>{scanReject.title}</p>
-                      <p style={{ fontFamily: FONTS.display, fontSize: 13, color: COLORS.muted, margin: 0, lineHeight: 1.45, maxWidth: 280 }}>{scanReject.sub}</p>
+                      <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 20, color: COLORS.pink, margin: 0 }}>{scanReject.title}</p>
+                      <p style={{ fontFamily: FONTS.display, fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.45, maxWidth: 280 }}>{scanReject.sub}</p>
                     </div>
                   )}
 
@@ -1037,44 +1057,44 @@ function ScannerInner() {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, textAlign: 'center' }}>
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim }}>Scanne le QR du client</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Scanne le QR code du client</p>
                       </div>
                     )}
                   </div>
 
                   {cameraError && (
-                    <div style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.30)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: 'rgba(220,100,100,0.9)', margin: '0 0 3px' }}>Caméra inaccessible</p>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>{cameraError}</p>
+                    <div style={{ background: '#1e0f18', border: '1px solid rgba(224,90,170,0.45)', borderRadius: 12, padding: '12px 14px', textAlign: 'center' }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: COLORS.pink, margin: '0 0 3px' }}>Caméra inaccessible</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.5 }}>{cameraError}</p>
                     </div>
                   )}
 
                   <button onClick={() => { setCameraError(''); setCameraActive(v => !v) }}
-                    style={{ width: '100%', padding: '13px 0', borderRadius: 12, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: 'none',
-                      background: cameraActive ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
-                      color: cameraActive ? COLORS.muted : COLORS.teal,
-                      outline: cameraActive ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(78,232,200,0.35)' }}>
-                    {cameraActive ? 'Arrêter la caméra' : 'Scanner le QR client'}
+                    style={{ width: '100%', padding: '13px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 14, fontWeight: 700, letterSpacing: '0.02em',
+                      background: cameraActive ? 'rgba(255,255,255,0.08)' : '#3ed6b5',
+                      color: cameraActive ? 'rgba(255,255,255,0.9)' : '#04120e',
+                      border: '1px solid rgba(255,255,255,0.14)' }}>
+                    {cameraActive ? 'Arrêter la caméra' : 'Scanner le QR du client'}
                   </button>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <label style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ou saisir le code</label>
+                    <label style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: 'normal' }}>Ou saisir le code du billet</label>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <input style={{ ...inputStyle, flex: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }} placeholder="LIB-001-XXXXXX" value={serviceCode} onChange={e => setServiceCode(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && serviceCode && lookupOrder(serviceCode)} />
                       <button onClick={() => serviceCode && lookupOrder(serviceCode)} disabled={!serviceCode}
-                        style={{ padding: '0 16px', borderRadius: 12, cursor: serviceCode ? 'pointer' : 'default', background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.45)', color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, opacity: serviceCode ? 1 : 0.4 }}>Ouvrir</button>
+                        style={{ padding: '0 18px', borderRadius: 12, cursor: serviceCode ? 'pointer' : 'not-allowed', background: serviceCode ? '#c8a96e' : 'rgba(255,255,255,0.07)', border: serviceCode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)', color: serviceCode ? '#171106' : 'rgba(255,255,255,0.35)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, transition: 'all 0.2s' }}>Ouvrir</button>
                     </div>
                   </div>
 
                   {openTickets.length > 0 && (
-                    <button onClick={() => setPosScanning(false)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>← Revenir aux billets ouverts</button>
+                    <button onClick={() => setPosScanning(false)} style={{ width: '100%', padding: '12px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600 }}>Revenir aux billets ouverts</button>
                   )}
                 </>
               ) : showHistory ? (
                 <>
                   <div style={{ ...CARD, padding: '12px 14px' }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Historique de la soirée</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: '3px 0 0' }}>{active?.eventName || '—'} · tout ce qui a été fait, par qui et quand</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Historique de la soirée</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: '3px 0 0' }}>{active?.eventName || '—'} · chaque action, avec son auteur et l'heure</p>
                   </div>
                   {(() => {
                     const log = (evId && logByEvent[evId]) || []
@@ -1084,7 +1104,7 @@ function ScannerInner() {
                     const fmt = e => {
                       switch (e.action) {
                         case 'add': return { verb: 'a ajouté', detail: e.newValue, c: COLORS.teal }
-                        case 'serve': return { verb: 'a servi', detail: e.itemName || e.newValue, c: '#22c55e' }
+                        case 'serve': return { verb: 'a servi', detail: e.itemName || e.newValue, c: COLORS.teal }
                         case 'cancel': return { verb: 'a annulé', detail: e.itemName || '', c: COLORS.pink }
                         case 'remove': return { verb: 'a retiré', detail: e.oldValue, c: COLORS.gold }
                         case 'pay': return { verb: 'a encaissé', detail: e.newValue, c: COLORS.gold }
@@ -1095,17 +1115,20 @@ function ScannerInner() {
                     }
                     if (!log.length) return (
                       <div style={{ ...CARD, padding: 24, textAlign: 'center' }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.muted, margin: 0 }}>Aucune action pour l'instant</p>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '4px 0 0' }}>Ajouts, services, annulations et encaissements apparaîtront ici, avec l'auteur.</p>
+                        <span style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                          <IconHourglass size={24} color="rgba(255,255,255,0.5)" />
+                        </span>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: 0 }}>Aucune action pour l'instant</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', lineHeight: 1.5 }}>Ajouts, services, annulations et encaissements apparaîtront ici, avec leur auteur.</p>
                       </div>
                     )
                     const totalPaid = Math.round(log.filter(e => e.action === 'pay').reduce((s, e) => s + (Number(e.amount) || 0), 0) * 100) / 100
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {totalPaid > 0 && (
-                          <div style={{ ...CARD, padding: '13px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderColor: 'rgba(34,197,94,0.28)' }}>
+                          <div style={{ ...CARD, padding: '13px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderColor: 'rgba(78,232,200,0.28)' }}>
                             <span style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total encaissé ce soir</span>
-                            <span style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 800, color: '#22c55e', letterSpacing: '-0.5px' }}>{fmtMoney(totalPaid, posCur)}</span>
+                            <span style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 800, color: COLORS.teal, letterSpacing: '-0.5px' }}>{fmtMoney(totalPaid, posCur)}</span>
                           </div>
                         )}
                         {log.map(e => {
@@ -1119,12 +1142,12 @@ function ScannerInner() {
                                 <p style={{ fontFamily: FONTS.mono, fontSize: 12.5, color: '#fff', margin: 0, lineHeight: 1.4 }}>
                                   <b style={{ color: f.c }}>{e.actorName || 'Staff'}</b> <span style={{ color: COLORS.muted }}>{f.verb}</span> {f.detail}
                                 </p>
-                                <p style={{ fontFamily: FONTS.mono, fontSize: 10.5, color: COLORS.dim, margin: '3px 0 0' }}>
+                                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>
                                   {time} · <span style={{ color: roleColor(e.actorRole) }}>{roleLabel(e.actorRole)}</span> · billet {holderOf(e.ticketId)}{e.action === 'cancel' && e.note ? ` · motif : ${e.note}` : ''}
                                 </p>
                               </div>
                               {typeof e.amount === 'number' && e.amount !== 0 && (
-                                <span style={{ flexShrink: 0, fontFamily: FONTS.mono, fontSize: 13.5, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: e.action === 'pay' ? '#22c55e' : e.amount < 0 ? COLORS.pink : COLORS.gold }}>
+                                <span style={{ flexShrink: 0, fontFamily: FONTS.mono, fontSize: 13.5, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: e.action === 'pay' ? COLORS.teal : e.amount < 0 ? COLORS.pink : COLORS.gold }}>
                                   {e.amount > 0 && e.action !== 'pay' ? '+' : ''}{fmtMoney(e.amount, posCur)}
                                 </span>
                               )}
@@ -1134,7 +1157,7 @@ function ScannerInner() {
                       </div>
                     )
                   })()}
-                  <button onClick={() => setShowHistory(false)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>← Revenir au service</button>
+                  <button onClick={() => setShowHistory(false)} style={{ width: '100%', padding: '12px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600 }}>Revenir au service</button>
                 </>
               ) : active ? (
                 <>
@@ -1142,42 +1165,45 @@ function ScannerInner() {
                   <div style={{ ...CARD, padding: 15, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <p style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 18, color: '#fff', margin: 0 }}>{active.holder}</p>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: '3px 0 0' }}>{active.place} · {active.eventName}</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: '3px 0 0' }}>{active.place} · {active.eventName}</p>
                     </div>
-                    <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.gold }}>{active.code}</span>
+                    <span style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.gold }}>{active.code}</span>
                   </div>
 
                   {/* Lignes de commande (précos + sur place, temps réel) */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {activeItems.length === 0 ? (
                       <div style={{ ...CARD, padding: 20, textAlign: 'center' }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.muted, margin: 0 }}>Aucune commande</p>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '4px 0 0' }}>Ajoute une conso, ou laisse le client commander depuis son billet.</p>
+                        <span style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                          <IconTicket size={24} color="rgba(255,255,255,0.5)" />
+                        </span>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: 0 }}>Aucune commande</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', lineHeight: 1.5 }}>Ajoute une consommation, ou laisse le client commander depuis son billet.</p>
                       </div>
                     ) : activeItems.map(item => {
                       const served = isServed(item)
                       const isPre = item.source === ORDER_SOURCE.PREORDER
                       const isInc = item.source === ORDER_SOURCE.INCLUDED
-                      const chip = served ? { t: 'Servi', c: '#22c55e' }
+                      const chip = served ? { t: 'Servi', c: COLORS.teal }
                         : isInc ? { t: 'Inclus billet', c: COLORS.teal }
                         : item.paid_at ? { t: 'Payé', c: COLORS.teal }
                         : isPre ? { t: 'Précommande', c: COLORS.gold }
                         : { t: ONSITE_STATUS_LABEL[item.status] || 'Envoyée', c: ONSITE_STATUS_COLOR[item.status] || COLORS.teal }
                       return (
                         <div key={item.id} style={{ ...CARD, padding: '11px 12px', display: 'flex', alignItems: 'center', gap: 11, opacity: served ? 0.72 : 1 }}>
-                          <span style={{ fontSize: 20, width: 24, textAlign: 'center' }}>{item.emoji || '🍸'}</span>
+                          {item.emoji ? <span style={{ fontSize: 20, width: 24, textAlign: 'center' }}>{item.emoji}</span> : null}
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, textDecoration: served ? 'line-through' : 'none' }}>{item.name} <span style={{ color: COLORS.muted, fontWeight: 500 }}>×{item.quantity}</span></p>
-                            <span style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: chip.c }}>{chip.t}{served && item.served_by_name ? ` par ${item.served_by_name}` : ''}{!served && item.addedByRole === 'client' ? ' · par le client' : ''}</span>
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, textDecoration: served ? 'line-through' : 'none' }}>{item.name} <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>×{item.quantity}</span></p>
+                            <span style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: chip.c }}>{chip.t}{served && item.served_by_name ? ` par ${item.served_by_name}` : ''}{!served && item.addedByRole === 'client' ? ' · par le client' : ''}</span>
                           </div>
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: (isPre || isInc) ? COLORS.muted : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : isInc ? 'inclus' : fmtMoney(Math.round(item.unitPrice * item.quantity), posCur)}</span>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: (isPre || isInc) ? 'rgba(255,255,255,0.55)' : COLORS.gold, flexShrink: 0 }}>{isPre ? 'payé' : isInc ? 'inclus' : fmtMoney(Math.round(item.unitPrice * item.quantity), posCur)}</span>
                           {!served && (
                             <button onClick={() => posServe(evId, item.id)} disabled={!canServe(role)}
-                              style={{ flexShrink: 0, padding: '7px 11px', borderRadius: 10, cursor: canServe(role) ? 'pointer' : 'default', fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, opacity: canServe(role) ? 1 : 0.4 }}>Servir</button>
+                              style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, cursor: canServe(role) ? 'pointer' : 'not-allowed', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: canServe(role) ? '#3ed6b5' : 'rgba(255,255,255,0.07)', border: canServe(role) ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)', color: canServe(role) ? '#04120e' : 'rgba(255,255,255,0.35)' }}>Servir</button>
                           )}
                           {canManage(role) && !served && !item.paid_at && (
                             <button onClick={() => { setCancelFor({ eventId: evId, itemId: item.id, name: item.name }); setCancelReason('') }}
-                              style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 8, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(224,90,170,0.3)', color: COLORS.pink, fontSize: 14, lineHeight: 1 }}>×</button>
+                              style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 8, cursor: 'pointer', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.45)', color: COLORS.pink, fontSize: 14, lineHeight: 1 }}>×</button>
                           )}
                         </div>
                       )
@@ -1188,57 +1214,57 @@ function ScannerInner() {
                   {canServe(role) && (addPicker ? (
                     <div style={{ ...CARD, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Ajouter au billet</p>
-                        <button onClick={() => setAddPicker(false)} style={{ background: 'none', border: 'none', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Fermer</button>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Ajouter au billet</p>
+                        <button onClick={() => setAddPicker(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.65)', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Fermer</button>
                       </div>
                       {menu.length === 0 ? (
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, margin: 0 }}>Aucun menu défini pour cet événement.</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Aucun menu défini pour cet événement.</p>
                       ) : menu.map(m => (
                         <div key={String(m.id || m.name)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                          <span style={{ fontSize: 18, width: 22, textAlign: 'center' }}>{m.emoji || '🍸'}</span>
+                          {m.emoji ? <span style={{ fontSize: 18, width: 22, textAlign: 'center' }}>{m.emoji}</span> : null}
                           <span style={{ flex: 1, fontFamily: FONTS.mono, fontSize: 13, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
                           <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: COLORS.gold }}>{fmtMoney(Math.round(Number(m.price) || 0), posCur)}</span>
-                          <button onClick={() => posAddItem(evId, active.code, m)} style={{ padding: '6px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal }}>+ Ajouter</button>
+                          <button onClick={() => posAddItem(evId, active.code, m)} style={{ padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e' }}>Ajouter</button>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <button onClick={() => setAddPicker(true)} style={{ width: '100%', padding: '12px 0', borderRadius: 12, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.2)', color: COLORS.muted }}>+ Ajouter une conso</button>
+                    <button onClick={() => setAddPicker(true)} style={{ width: '100%', padding: '12px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>Ajouter une consommation</button>
                   ))}
 
                   {/* Addition + encaissement */}
                   <div style={{ ...CARD, padding: 15, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <div>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 700, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>À encaisser</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>À encaisser</p>
                       <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 800, color: '#fff', margin: '2px 0 0', letterSpacing: '-0.5px' }}>{fmtMoney(dueTotal, posCur)}</p>
                     </div>
                     {dueTotal > 0 ? (
                       <button onClick={() => posCollect(evId, active.code)} disabled={!canServe(role)}
-                        style={{ padding: '12px 18px', borderRadius: 12, cursor: canServe(role) ? 'pointer' : 'default', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: '#04040b', background: 'linear-gradient(135deg, #c8a96e, #e0c690)', border: 'none', opacity: canServe(role) ? 1 : 0.4 }}>Encaisser</button>
+                        style={{ padding: '13px 20px', minHeight: 44, borderRadius: 12, cursor: canServe(role) ? 'pointer' : 'not-allowed', fontFamily: FONTS.mono, fontSize: 14, fontWeight: 700, color: canServe(role) ? '#171106' : 'rgba(255,255,255,0.35)', background: canServe(role) ? '#c8a96e' : 'rgba(255,255,255,0.07)', border: canServe(role) ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)' }}>Encaisser</button>
                     ) : (
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: '#22c55e' }}>Rien à encaisser ✓</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: COLORS.teal }}>Rien à encaisser</span>
                     )}
                   </div>
 
-                  <button onClick={() => requestClose(active.code)} style={{ width: '100%', padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Clôturer cet onglet</button>
+                  <button onClick={() => requestClose(active.code)} style={{ width: '100%', padding: '12px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600 }}>Clôturer cet onglet</button>
                 </>
               ) : null}
 
               {/* Toast feedback */}
               {posMsg && (
-                <div style={{ position: 'fixed', left: '50%', bottom: 24, transform: 'translateX(-50%)', zIndex: 30, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 12.5, fontWeight: 600, padding: '9px 16px', borderRadius: 999, backdropFilter: 'blur(12px)' }}>{posMsg}</div>
+                <div style={{ position: 'fixed', left: '50%', bottom: 24, transform: 'translateX(-50%)', zIndex: 30, background: 'rgba(12,12,22,0.96)', border: '1px solid rgba(255,255,255,0.18)', color: '#fff', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, padding: '10px 16px', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{posMsg}</div>
               )}
 
               {/* Modal annulation (manager + motif obligatoire) */}
               {cancelFor && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} onClick={() => setCancelFor(null)}>
-                  <div onClick={e => e.stopPropagation()} style={{ ...CARD, padding: 18, width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 16, color: '#fff', margin: 0 }}>Annuler « {cancelFor.name} »</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>Un motif est obligatoire (tracé dans l'historique).</p>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={() => setCancelFor(null)}>
+                  <div onClick={e => e.stopPropagation()} style={{ background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: 18, width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 17, color: '#fff', margin: 0 }}>Annuler « {cancelFor.name} »</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.5 }}>Un motif est obligatoire : il sera tracé dans l'historique.</p>
                     <textarea value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="Motif de l'annulation…" rows={2} style={{ ...inputStyle, resize: 'none', letterSpacing: 'normal', textTransform: 'none' }} />
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setCancelFor(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>Retour</button>
-                      <button onClick={posDoCancel} disabled={!cancelReason.trim()} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: cancelReason.trim() ? 'pointer' : 'default', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.45)', color: COLORS.pink, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, opacity: cancelReason.trim() ? 1 : 0.4 }}>Annuler l'article</button>
+                      <button onClick={() => setCancelFor(null)} style={{ flex: 1, padding: '11px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600 }}>Retour</button>
+                      <button onClick={posDoCancel} disabled={!cancelReason.trim()} style={{ flex: 1, padding: '11px 0', minHeight: 44, borderRadius: 12, cursor: cancelReason.trim() ? 'pointer' : 'not-allowed', background: cancelReason.trim() ? '#c2347f' : 'rgba(255,255,255,0.07)', border: cancelReason.trim() ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)', color: cancelReason.trim() ? '#fff' : 'rgba(255,255,255,0.35)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700 }}>Annuler l'article</button>
                     </div>
                   </div>
                 </div>
@@ -1246,21 +1272,21 @@ function ScannerInner() {
 
               {/* Confirmation de clôture d'onglet (argent/service en jeu) */}
               {closeConfirm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} onClick={() => setCloseConfirm(null)}>
-                  <div onClick={e => e.stopPropagation()} style={{ ...CARD, padding: 20, width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 16, color: '#fff', margin: 0 }}>Clôturer l'onglet de {closeConfirm.holder} ?</p>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={() => setCloseConfirm(null)}>
+                  <div onClick={e => e.stopPropagation()} style={{ background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: 20, width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 17, color: '#fff', margin: 0 }}>Clôturer l'onglet de {closeConfirm.holder} ?</p>
                     {closeConfirm.due > 0 && (
-                      <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.35)' }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: COLORS.gold, margin: 0 }}>⚠ Il reste {fmtMoney(closeConfirm.due, posCur)} à encaisser</p>
+                      <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.4)' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color: COLORS.gold, margin: 0 }}>Il reste {fmtMoney(closeConfirm.due, posCur)} à encaisser</p>
                       </div>
                     )}
                     {closeConfirm.unserved > 0 && (
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>{closeConfirm.unserved} article{closeConfirm.unserved > 1 ? 's' : ''} pas encore servi{closeConfirm.unserved > 1 ? 's' : ''}.</p>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: 'rgba(255,255,255,0.65)', margin: 0 }}>{closeConfirm.unserved} article{closeConfirm.unserved > 1 ? 's' : ''} pas encore servi{closeConfirm.unserved > 1 ? 's' : ''}.</p>
                     )}
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 11.5, color: COLORS.dim, margin: 0, lineHeight: 1.5 }}>Rien n'est perdu : la commande reste enregistrée. Re-scanne le billet pour rouvrir l'onglet avec tout son contenu.</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.5 }}>Rien n'est perdu : la commande reste enregistrée. Re-scanne le billet pour rouvrir l'onglet avec tout son contenu.</p>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setCloseConfirm(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700 }}>Garder ouvert</button>
-                      <button onClick={() => closeTab(closeConfirm.code)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600 }}>Clôturer</button>
+                      <button onClick={() => setCloseConfirm(null)} style={{ flex: 1, padding: '11px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer', background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700 }}>Garder ouvert</button>
+                      <button onClick={() => closeTab(closeConfirm.code)} style={{ flex: 1, padding: '11px 0', minHeight: 44, borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600 }}>Clôturer</button>
                     </div>
                   </div>
                 </div>
@@ -1275,10 +1301,6 @@ function ScannerInner() {
           0%   { top: 10%; }
           50%  { top: 85%; }
           100% { top: 10%; }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
         }
       `}</style>
     </div>

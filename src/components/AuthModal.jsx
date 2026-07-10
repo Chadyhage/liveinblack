@@ -12,8 +12,8 @@ const ROLE_COLORS = { client: '#22c55e', user: '#22c55e', organisateur: '#3b82f6
 // Retire les emojis d'un texte (les raisons d'ouverture du modal en contenaient)
 const stripEmoji = (s) => (s || '').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️]/gu, '').trim()
 
-const labelStyle = { fontFamily: FONT, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.55)', display: 'block', marginBottom: 8 }
-const inputStyle = { width: '100%', padding: '15px 16px', borderRadius: 13, boxSizing: 'border-box', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.92)', fontFamily: FONT, fontSize: 15.5, outline: 'none' }
+const labelStyle = { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 8 }
+const inputStyle = { width: '100%', padding: '14px 16px', borderRadius: 12, boxSizing: 'border-box', background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.92)', fontFamily: FONT, fontSize: 15, outline: 'none' }
 
 export default function AuthModal({ open, reason, onSuccess, onClose }) {
   const navigate = useNavigate()
@@ -149,16 +149,15 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
       padding: 20,
     }}>
       {/* Backdrop */}
-      <div onClick={close} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }} />
+      <div onClick={close} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }} />
 
       {/* Card */}
       <div style={{
         position: 'relative', width: '100%', maxWidth: 420,
-        background: 'linear-gradient(180deg, rgba(18,10,32,0.96), rgba(10,8,20,0.98))',
-        backdropFilter: 'blur(28px) saturate(1.5)', WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
+        background: '#12131c',
         border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 24, padding: '34px 30px',
-        boxShadow: '0 30px 90px rgba(0,0,0,0.65)',
+        borderRadius: 20, padding: '34px 30px',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
       }}>
         {/* Close */}
         <button onClick={close} aria-label="Fermer" style={{
@@ -186,14 +185,14 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
         {showRolePicker ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', margin: '0 0 2px' }}>
-              Plusieurs espaces détectés — choisis&nbsp;:
+              Plusieurs espaces sont liés à cet email. Choisis celui à ouvrir&nbsp;:
             </p>
             {roleChoices.map(r => {
               const c = ROLE_COLORS[r.role] || '#8b5cf6'
               return (
                 <button key={r.uid} onClick={() => setSelectedUid(r.uid)} style={{
-                  padding: '15px 16px', borderRadius: 14, textAlign: 'left', cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.025)', border: `1px solid ${c}55`,
+                  padding: '15px 16px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
                   display: 'flex', alignItems: 'center', gap: 13,
                 }}>
                   <span style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: c, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 16, color: '#04040b' }}>
@@ -270,13 +269,15 @@ export default function AuthModal({ open, reason, onSuccess, onClose }) {
             )}
 
             <button type="submit" disabled={loading} style={{
-              padding: '16px', borderRadius: 14,
-              border: 'none',
-              background: 'linear-gradient(135deg,#c8a96e,#e0c48a)', color: '#04040b',
+              padding: '15px 20px', borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.14)',
+              background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff',
               fontFamily: FONT, fontSize: 15, fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1,
-              boxShadow: '0 8px 26px rgba(200,169,110,0.32)',
+              cursor: loading ? 'wait' : 'pointer',
+              boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
             }}>
+              {loading && <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />}
               {loading ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>

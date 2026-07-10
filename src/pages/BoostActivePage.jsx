@@ -10,18 +10,17 @@ import { IconMail } from '../components/icons'
 
 const FONTS = {
   display: "Inter, sans-serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
+  mono: "Inter, sans-serif",
 }
 const COLORS = {
   teal: '#4ee8c8', pink: '#e05aaa', gold: '#c8a96e',
   muted: 'rgba(255,255,255,0.42)', dim: 'rgba(255,255,255,0.22)',
 }
 const CARD = {
-  background: 'rgba(8,10,20,0.55)',
-  backdropFilter: 'blur(22px) saturate(1.6)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
+  background: '#12131c',
   border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 12,
+  borderRadius: 20,
+  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
 
 const PENDING_KEY = (id) => `lib_pending_boost_${id}`
@@ -58,7 +57,7 @@ export default function BoostActivePage() {
         setState('error')
         setErrorMsg(result?.paymentStatus
           ? `Paiement non confirmé (${result.paymentStatus}).`
-          : 'Impossible de vérifier le paiement. Si tu as été débité, écris-nous à support@liveinblack.com — on régularise ton boost.')
+          : 'Impossible de vérifier le paiement. Si tu as été débité, écris-nous à hagechady@liveinblack.com — on régularise ton boost.')
         return
       }
       if (result.boostStatus === 'refunded_conflict') {
@@ -114,7 +113,7 @@ export default function BoostActivePage() {
                 border: `2px solid ${COLORS.dim}`, borderTopColor: COLORS.pink,
                 animation: 'spin 0.9s linear infinite',
               }} />
-              <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 300, color: 'rgba(255,255,255,0.92)', margin: 0 }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
                 Activation du boost…
               </p>
               <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
@@ -133,11 +132,11 @@ export default function BoostActivePage() {
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                 </svg>
               </div>
-              <p style={{ fontFamily: FONTS.display, fontSize: 28, fontWeight: 300, color: COLORS.pink, margin: '0 0 8px' }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 8px' }}>
                 Boost activé
               </p>
               {boostInfo && (
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', margin: 0, lineHeight: 1.7 }}>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', margin: 0, lineHeight: 1.6 }}>
                   Ton événement {boostInfo.eventName ? `« ${boostInfo.eventName} »` : ''} apparaît
                   désormais en <strong style={{ color: COLORS.pink }}>Top {boostInfo.position}</strong>{' '}
                   pour les {boostInfo.days} prochain{boostInfo.days > 1 ? 's' : ''} jour{boostInfo.days > 1 ? 's' : ''}.
@@ -147,18 +146,19 @@ export default function BoostActivePage() {
                 <button
                   onClick={() => navigate('/mes-evenements')}
                   style={{
-                    padding: '12px 18px', borderRadius: 4, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    background: 'rgba(224,90,170,0.10)', border: `1px solid ${COLORS.pink}`, color: COLORS.pink,
+                    padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
+                    fontFamily: FONTS.display, fontSize: 14.5, fontWeight: 700,
+                    background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff',
+                    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
                   }}>
-                  Voir mes événements →
+                  Voir mes événements
                 </button>
                 <button
                   onClick={() => navigate('/accueil')}
                   style={{
-                    padding: '12px 18px', borderRadius: 4, cursor: 'pointer',
-                    fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)',
+                    padding: '13px 20px', borderRadius: 12, cursor: 'pointer',
+                    fontFamily: FONTS.display, fontSize: 14, fontWeight: 600,
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)',
                   }}>
                   Voir le Top 3
                 </button>
@@ -179,22 +179,22 @@ export default function BoostActivePage() {
                   <circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} />
                 </svg>
               </div>
-              <p style={{ fontFamily: FONTS.display, fontSize: 26, fontWeight: 300, color: COLORS.pink, margin: '0 0 10px' }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 800, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
                 Erreur d'activation
               </p>
-              <p style={{ fontSize: 12, color: COLORS.muted, margin: 0, lineHeight: 1.7 }}>
+              <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
                 {errorMsg}
               </p>
               <a
                 href="mailto:hagechady@liveinblack.com?subject=Probl%C3%A8me%20de%20boost"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 24,
-                  padding: '12px 18px', borderRadius: 4,
-                  fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
-                  background: 'rgba(200,169,110,0.10)', border: `1px solid ${COLORS.gold}`, color: COLORS.gold,
+                  padding: '13px 20px', borderRadius: 12,
+                  fontFamily: FONTS.display, fontSize: 14, fontWeight: 700,
+                  background: '#c8a96e', border: 'none', color: '#141007',
                   textDecoration: 'none',
                 }}>
-                <IconMail size={13} color={COLORS.gold} />
+                <IconMail size={15} color="#141007" />
                 Contacter le support
               </a>
             </>

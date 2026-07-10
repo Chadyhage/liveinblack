@@ -41,10 +41,10 @@ export function slugifyOrganizer(value = '') {
 
 export function validateOrganizerSlug(value, profiles = [], currentId = null) {
   const slug = slugifyOrganizer(value)
-  if (slug.length < 3) return { ok: false, slug, error: 'Le slug doit contenir au moins 3 caractères.' }
-  if (RESERVED_ORGANIZER_SLUGS.has(slug)) return { ok: false, slug, error: 'Ce slug est réservé.' }
+  if (slug.length < 3) return { ok: false, slug, error: 'L’adresse personnalisée doit contenir au moins 3 caractères.' }
+  if (RESERVED_ORGANIZER_SLUGS.has(slug)) return { ok: false, slug, error: 'Cette adresse personnalisée est réservée.' }
   const duplicate = profiles.some(p => p.id !== currentId && p.slug === slug)
-  if (duplicate) return { ok: false, slug, error: 'Ce slug est déjà utilisé.' }
+  if (duplicate) return { ok: false, slug, error: 'Cette adresse personnalisée est déjà prise. Choisis-en une autre.' }
   return { ok: true, slug, error: '' }
 }
 

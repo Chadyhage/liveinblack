@@ -11,8 +11,8 @@ import { normalizeRegionId, inferRegionIdFromCity } from '../utils/locations'
 
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
-const card = { background: 'rgba(8,10,20,.62)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16, backdropFilter: 'blur(20px)' }
-const primaryButton = { minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 20px', border: 'none', borderRadius: 11, cursor: 'pointer', background: `linear-gradient(135deg,${C.gold},#e0c48a)`, color: C.obsidian, fontFamily: FONT, fontSize: 13, fontWeight: 800 }
+const card = { background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }
+const primaryButton = { minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 20px', border: 'none', borderRadius: 12, cursor: 'pointer', background: C.gold, color: C.obsidian, fontFamily: FONT, fontSize: 14, fontWeight: 700 }
 
 function fmtDate(ms) {
   if (!ms) return '—'
@@ -101,9 +101,9 @@ export default function MonAbonnementPage() {
   }
 
   const info = (label, value, accent) => (
-    <div style={{ flex: '1 1 140px', minWidth: 140, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)' }}>
-      <p style={{ fontFamily: FONT, fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', margin: 0 }}>{label}</p>
-      <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: accent || '#fff', margin: '5px 0 0' }}>{value}</p>
+    <div style={{ flex: '1 1 140px', minWidth: 140, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
+      <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)', margin: 0 }}>{label}</p>
+      <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: accent || '#fff', margin: '5px 0 0' }}>{value}</p>
     </div>
   )
 
@@ -111,16 +111,16 @@ export default function MonAbonnementPage() {
     <Layout>
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '22px 16px 110px' }}>
         <button onClick={() => navigate('/proposer')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'rgba(255,255,255,.5)', fontFamily: FONT, fontSize: 12.5, cursor: 'pointer', padding: 0, marginBottom: 14 }}>← Mon espace</button>
-        <h1 style={{ fontFamily: FONT, fontSize: 26, letterSpacing: '-.5px', margin: '0 0 4px' }}>Mon abonnement</h1>
-        <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.45)', margin: 0 }}>Ce qui rend ton profil visible sur LIVEINBLACK.</p>
+        <h1 style={{ fontFamily: FONT, fontSize: 26, fontWeight: 800, letterSpacing: '-.5px', margin: '0 0 4px' }}>Mon abonnement</h1>
+        <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: 0 }}>Ce qui rend ton profil visible sur LIVEINBLACK.</p>
 
         {/* Statut */}
-        <section style={{ ...card, padding: 18, marginTop: 20, borderColor: `${p.color}44` }}>
+        <section style={{ ...card, padding: 18, marginTop: 20, borderColor: (typeof p.color === 'string' && p.color.startsWith('#')) ? `${p.color}44` : 'rgba(255,255,255,0.10)', borderLeft: `3px solid ${p.color}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color }} />
             <h2 style={{ fontFamily: FONT, fontSize: 17, fontWeight: 800, margin: 0, color: p.color }}>{p.title}</h2>
-            <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: p.color, background: `${p.color}1e`, border: `1px solid ${p.color}55`, borderRadius: 999, padding: '2px 8px' }}>
-              {p.status === 'active' ? 'Actif' : p.status === 'expiring_soon' ? 'Expire bientôt' : p.status === 'grace' ? 'Grâce' : p.status === 'expired' ? 'Expiré' : 'Inactif'}
+            <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: p.color, background: (typeof p.color === 'string' && p.color.startsWith('#')) ? `${p.color}24` : 'rgba(255,255,255,0.08)', border: `1px solid ${(typeof p.color === 'string' && p.color.startsWith('#')) ? p.color + '59' : 'rgba(255,255,255,0.25)'}`, borderRadius: 8, padding: '4px 10px' }}>
+              {p.status === 'active' ? 'Actif' : p.status === 'expiring_soon' ? 'Expire bientôt' : p.status === 'grace' ? 'Période de grâce' : p.status === 'expired' ? 'Expiré' : 'Inactif'}
             </span>
           </div>
           <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.6)', margin: '10px 0 0', lineHeight: 1.5 }}>{p.message}</p>
@@ -132,7 +132,7 @@ export default function MonAbonnementPage() {
             {info('Tarif', currency === 'XOF' ? subPriceLabel() : '9,99 € / mois')}
           </div>
 
-          <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.4)', margin: '12px 0 0' }}>
+          <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '12px 0 0' }}>
             {currency === 'XOF'
               ? 'Paiement Mobile Money / carte (FedaPay) · renouvellement manuel · aucun prélèvement automatique'
               : 'Carte bancaire (Stripe) · renouvellement automatique chaque mois'}
@@ -142,34 +142,42 @@ export default function MonAbonnementPage() {
 
           {/* En EUR actif : renouvellement auto, pas de bouton. Sinon CTA. */}
           {!(currency === 'EUR' && p.status === 'active') && (
-            <button onClick={handleRenew} disabled={renewing} style={{ ...primaryButton, marginTop: 16, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer' }}>
-              {renewing ? 'Redirection…' : p.cta}
+            <button onClick={handleRenew} disabled={renewing} style={{ ...primaryButton, marginTop: 16, cursor: renewing ? 'wait' : 'pointer' }}>
+              {renewing ? (
+                <>
+                  <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(4,4,11,0.3)', borderTopColor: '#04040b', borderRadius: '50%', display: 'inline-block' }} />
+                  Redirection…
+                </>
+              ) : p.cta}
             </button>
           )}
         </section>
 
         {/* Historique des paiements */}
         <section style={{ ...card, padding: 18, marginTop: 16 }}>
-          <h2 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, margin: '0 0 4px' }}>Historique des paiements</h2>
-          <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.4)', margin: '0 0 14px' }}>Tes reçus d'abonnement.</p>
+          <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, margin: '0 0 4px' }}>Historique des paiements</h2>
+          <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '0 0 14px' }}>Tes reçus d'abonnement.</p>
 
           {loadingPayments ? (
-            <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.35)' }}>Chargement…</p>
+            <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+              <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.25)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />
+              Chargement de l'historique…
+            </p>
           ) : payments.length === 0 ? (
-            <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.35)' }}>Aucun paiement pour le moment.</p>
+            <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)' }}>Aucun paiement pour le moment.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {payments.map(pay => (
-                <div key={pay._docId || pay.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)' }}>
+                <div key={pay._docId || pay.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '11px 14px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
                   <div style={{ minWidth: 0 }}>
                     <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{fmtMoney(pay.amount, (pay.currency || 'XOF').toUpperCase())}</p>
-                    <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.4)', margin: '3px 0 0' }}>
+                    <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.5)', margin: '3px 0 0' }}>
                       {fmtDate(pay.periodStart)} → {fmtDate(pay.periodEnd)}
                     </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: C.teal, background: 'rgba(78,232,200,.1)', border: '1px solid rgba(78,232,200,.3)', borderRadius: 999, padding: '2px 8px' }}>Payé</span>
-                    <p style={{ fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,.35)', margin: '5px 0 0' }}>{fmtDate(pay.paidAt)} · {pay.paymentMethod || 'fedapay'}</p>
+                    <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: C.teal, background: 'rgba(78,232,200,.14)', border: '1px solid rgba(78,232,200,.35)', borderRadius: 8, padding: '4px 10px' }}>Payé</span>
+                    <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.5)', margin: '5px 0 0' }}>{fmtDate(pay.paidAt)} · {pay.paymentMethod || 'FedaPay'}</p>
                   </div>
                 </div>
               ))}

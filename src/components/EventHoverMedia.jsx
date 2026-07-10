@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 const DEFAULT_BG = 'radial-gradient(circle at 30% 25%, rgba(132,68,255,.38), transparent 58%), linear-gradient(150deg,#191323,#080910)'
 
+// Zone média des cartes événement : affiche + trailer vidéo au survol prolongé
+// (façon Netflix). Fonctionnalité produit VOULUE — ne pas retirer.
 export default function EventHoverMedia({
   event,
   imageUrl,
@@ -135,14 +137,13 @@ export default function EventHoverMedia({
             padding: '4px 9px',
             borderRadius: 999,
             fontFamily: 'Inter, system-ui, sans-serif',
-            fontSize: 9,
-            fontWeight: 800,
-            letterSpacing: '.08em',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '.04em',
             textTransform: 'uppercase',
             color: playing ? '#04040b' : '#4ee8c8',
-            background: playing ? '#4ee8c8' : 'rgba(5,6,10,.68)',
+            background: playing ? '#4ee8c8' : 'rgba(5,6,10,.85)',
             border: `1px solid ${playing ? 'rgba(78,232,200,.4)' : 'rgba(78,232,200,.35)'}`,
-            backdropFilter: 'blur(8px)',
             pointerEvents: 'none',
             zIndex: 2,
           }}

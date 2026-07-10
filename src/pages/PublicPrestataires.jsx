@@ -128,27 +128,25 @@ export default function PublicPrestataires() {
           .provider-category-rail{margin:16px -22px 0;padding:0 70px 7px 22px;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:none}
           .provider-category-rail::-webkit-scrollbar{display:none}
           .provider-category-rail button{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap}
-          .provider-scroll-hint{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:2px 0 0;color:rgba(255,255,255,.46);font:700 8px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
-          .provider-scroll-hint svg{width:17px;height:17px;border:1px solid rgba(78,232,200,.28);border-radius:50%;padding:3px;color:#4ee8c8;animation:provider-hint 1.4s ease-in-out infinite}
+          .provider-scroll-hint{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:2px 0 0;color:rgba(255,255,255,.5);font:700 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+          .provider-scroll-hint svg{width:17px;height:17px;border:1px solid rgba(78,232,200,.28);border-radius:50%;padding:3px;color:#4ee8c8}
         }
-        @keyframes provider-hint{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
-        @media(prefers-reduced-motion:reduce){.provider-scroll-hint svg{animation:none}}
       `}</style>
 
       {!user && <PublicNav />}
 
       {/* ══ HERO ══ */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 22px 8px', textAlign: 'center' }}>
-        <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>L'annuaire</p>
+        <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>L'annuaire</p>
         <h1 style={{ fontFamily: FONT, fontSize: 'clamp(30px,7vw,52px)', fontWeight: 800, letterSpacing: '-1.2px', lineHeight: 1.05, margin: '10px 0 0' }}>
-          Les prestataires qui font<br /><span style={{ background: `linear-gradient(90deg,${C.gold},${C.pink},${C.violet})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>vivre la nuit.</span>
+          Les prestataires qui font<br /><span style={{ color: C.gold }}>vivre la nuit.</span>
         </h1>
         <p style={{ fontFamily: FONT, fontSize: 'clamp(14px,4vw,17px)', color: 'rgba(255,255,255,.6)', margin: '16px auto 0', maxWidth: 540, lineHeight: 1.5 }}>
           DJ, salles, sono, boissons… Trouve le bon prestataire pour ta soirée et contacte-le en un clic.
         </p>
 
         {/* Recherche */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, maxWidth: 520, margin: '26px auto 0', padding: '4px 4px 4px 16px', borderRadius: 999, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.14)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, maxWidth: 520, margin: '26px auto 0', padding: '4px 4px 4px 16px', borderRadius: 999, background: '#0b0c12', border: '1px solid rgba(255,255,255,.14)' }}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher un prestataire, une ville…"
             style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontFamily: FONT, fontSize: 14, padding: '10px 0' }} />
@@ -166,7 +164,7 @@ export default function PublicPrestataires() {
           </div>
           <div className="provider-scroll-hint" aria-hidden="true">Glisse pour voir la suite <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M14 7l5 5-5 5"/></svg></div>
         </div>
-        <select value={regionId} onChange={event => setRegionId(event.target.value)} aria-label="Filtrer les prestataires par région" style={{ marginTop: 14, minWidth: 210, padding: '10px 13px', borderRadius: 999, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.14)', color: '#fff', fontFamily: FONT, fontSize: 12.5, outline: 'none' }}>
+        <select value={regionId} onChange={event => setRegionId(event.target.value)} aria-label="Filtrer les prestataires par région" style={{ marginTop: 14, minWidth: 210, padding: '10px 13px', borderRadius: 999, background: '#0b0c12', border: '1px solid rgba(255,255,255,.14)', color: '#fff', fontFamily: FONT, fontSize: 12.5, outline: 'none' }}>
           <option value="">Toutes les régions</option>
           {regions.map(region => <option key={region.id} value={region.id}>{region.flag} {region.name}</option>)}
         </select>
@@ -198,7 +196,7 @@ export default function PublicPrestataires() {
                       <CatIcon id={c.icon} color="#fff" size={12} /> {c.label}{categories.length > 1 ? ` +${categories.length - 1}` : ''}
                     </span>
                     {/* Avatar */}
-                    <div style={{ position: 'absolute', left: 14, bottom: -22, width: 52, height: 52, borderRadius: '50%', border: '2px solid #0b0d16', overflow: 'hidden', background: c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 20, color: C.obsidian }}>
+                    <div style={{ position: 'absolute', left: 14, bottom: -22, width: 52, height: 52, borderRadius: '50%', border: '2px solid #0e0f16', overflow: 'hidden', background: c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 20, color: C.obsidian }}>
                       {p.photoUrl ? <img src={p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (p.name?.[0]?.toUpperCase() || '?')}
                     </div>
                   </div>
@@ -222,7 +220,7 @@ export default function PublicPrestataires() {
 
       {user?.role !== 'prestataire' && (
         <section style={{ padding: '10px 22px 70px' }}>
-          <div style={{ maxWidth: 820, margin: '0 auto', padding: '38px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid rgba(200,169,110,.22)', background: `radial-gradient(ellipse at 50% 0%, rgba(200,169,110,.16), transparent 60%), linear-gradient(160deg, rgba(24,20,12,.7), rgba(6,8,15,.7))`, backdropFilter: 'blur(16px)' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', padding: '38px 26px', borderRadius: 20, textAlign: 'center', border: '1px solid rgba(200,169,110,.3)', background: '#12131c', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
             <h2 style={{ fontFamily: FONT, fontSize: 'clamp(24px,6vw,36px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>Tu es prestataire ?</h2>
             <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 460, lineHeight: 1.5 }}>Crée ta vitrine, présente ton catalogue et échange directement avec les organisateurs.</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 24 }}>
@@ -239,9 +237,9 @@ export default function PublicPrestataires() {
 }
 
 // ── Styles ──
-const card = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16 }
-const btnGold = { padding: '11px 18px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.gold},#e0c48a)`, border: 'none' }
-const btnGhost = { padding: '11px 20px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.18)' }
+const card = { background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
+const btnGold = { padding: '12px 18px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: C.obsidian, background: C.gold, border: 'none' }
+const btnGhost = { padding: '12px 20px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.9)', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)' }
 const chip = (active, color) => ({
   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 999, cursor: 'pointer',
   fontFamily: FONT, fontSize: 12.5, fontWeight: 700, transition: 'all .2s ease',

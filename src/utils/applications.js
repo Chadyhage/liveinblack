@@ -12,7 +12,7 @@ const APPS_KEY = 'lib_applications'
 export const APPLICATION_STATUSES = {
   draft:          { label: 'Brouillon',             color: 'rgba(255,255,255,0.35)', bg: 'rgba(255,255,255,0.04)' },
   submitted:      { label: 'Soumis',                color: '#4ee8c8',               bg: 'rgba(78,232,200,0.06)' },
-  under_review:   { label: 'En cours de révision',  color: '#3b82f6',               bg: 'rgba(59,130,246,0.06)' },
+  under_review:   { label: 'En cours d\'examen',    color: '#3b82f6',               bg: 'rgba(59,130,246,0.06)' },
   needs_changes:  { label: 'Corrections requises',  color: '#f59e0b',               bg: 'rgba(245,158,11,0.06)' },
   resubmitted:    { label: 'Re-soumis',             color: '#a78bfa',               bg: 'rgba(167,139,250,0.06)' },
   approved:       { label: 'Approuvé',              color: '#22c55e',               bg: 'rgba(34,197,94,0.06)'  },
@@ -287,7 +287,7 @@ export async function uploadDocument(appId, docKey, file) {
         // exige request.auth.uid == uid, donc un user ne peut déposer de
         // documents que dans SON propre dossier (pas sabotage d'un tiers).
         const uid = auth?.currentUser?.uid
-        if (!uid) throw new Error('Non authentifié — impossible d\'uploader le document')
+        if (!uid) throw new Error('Connexion requise : impossible d\'envoyer le document.')
         const path = `applications/${uid}/${appId}/${docKey}/${Date.now()}_${file.name}`
         const storageRef = ref(storage, path)
 

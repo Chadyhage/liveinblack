@@ -26,17 +26,18 @@ import { startTicketCheckout } from '../utils/stripe'
 import { fmtMoney, eventCurrency } from '../utils/money'
 import { playNotifSound } from '../utils/notifSound'
 import { upsertMessageNotification, removeConversationNotifications } from '../utils/notifications'
+import { IconPin, IconEdit, IconHourglass, IconTicket, IconCheck, IconChat, IconAlert } from '../components/icons'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
   teal: '#4ee8c8', pink: '#e05aaa', gold: '#c8a96e',
   violet: '#8444ff', violetEnd: '#ff4da6',
-  muted: 'rgba(255,255,255,0.42)', dim: 'rgba(255,255,255,0.22)',
+  muted: 'rgba(255,255,255,0.55)', dim: 'rgba(255,255,255,0.38)',
   // Keep old aliases for compat — all pointing to Inter now
   dmMono: "'Inter', system-ui, sans-serif", cormorant: "'Inter', system-ui, sans-serif",
 }
-const CARD = { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }
-const INPUT_S = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 10, color: 'rgba(255,255,255,0.9)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, padding: '10px 14px', outline: 'none', width: '100%', boxSizing: 'border-box' }
+const CARD = { background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }
+const INPUT_S = { background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: 'rgba(255,255,255,0.92)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, padding: '12px 14px', outline: 'none', width: '100%', boxSizing: 'border-box' }
 
 const EMOJIS = ['❤️','😂','😮','😢','😡','👍','👎','🔥','🎉','💀','🤣','😍','😭','🙏','💯','✅']
 
@@ -85,7 +86,7 @@ function PollCard({ msg, myId, convId, onVote }) {
   const myVote = poll.options.find(o => o.votes?.[myId])?.id
   return (
     <div style={{ minWidth: 220, maxWidth: 280 }}>
-      <p style={{ fontFamily: T.dmMono, fontSize: 11, color: '#fff', margin: '0 0 10px', fontWeight: 600 }}>{poll.question}</p>
+      <p style={{ fontFamily: T.dmMono, fontSize: 13, color: '#fff', margin: '0 0 10px', fontWeight: 600 }}>{poll.question}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {poll.options.map(opt => {
           const votes = Object.keys(opt.votes || {}).length
@@ -101,14 +102,14 @@ function PollCard({ msg, myId, convId, onVote }) {
               }}>
               <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: isChosen ? 'rgba(78,232,200,0.10)' : 'rgba(255,255,255,0.05)', transition: 'width 0.4s', borderRadius: 5 }} />
               <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: T.dmMono, fontSize: 11, color: isChosen ? T.teal : 'rgba(255,255,255,0.75)' }}>{opt.text}</span>
-                <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.muted }}>{pct}%</span>
+                <span style={{ fontFamily: T.dmMono, fontSize: 12.5, color: isChosen ? T.teal : 'rgba(255,255,255,0.8)' }}>{opt.text}</span>
+                <span style={{ fontFamily: T.dmMono, fontSize: 10.5, color: T.muted }}>{pct}%</span>
               </div>
             </button>
           )
         })}
       </div>
-      <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '6px 0 0' }}>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</p>
+      <p style={{ fontFamily: T.dmMono, fontSize: 10.5, color: T.dim, margin: '6px 0 0' }}>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</p>
     </div>
   )
 }
@@ -121,7 +122,7 @@ function StoryCard({ content }) {
     <div style={{ minWidth: 220, maxWidth: 280 }}>
       {story.imageUrl && <img src={story.imageUrl} alt={story.title} style={{ width: '100%', borderRadius: 6, maxHeight: 140, objectFit: 'cover', marginBottom: 8 }} />}
       <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 16, color: '#fff', margin: '0 0 5px' }}>{story.title}</p>
-      {story.text && <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted, margin: 0, lineHeight: 1.5 }}>{story.text}</p>}
+      {story.text && <p style={{ fontFamily: T.dmMono, fontSize: 12, color: T.muted, margin: 0, lineHeight: 1.5 }}>{story.text}</p>}
     </div>
   )
 }
@@ -230,14 +231,14 @@ function VoiceBubble({ content, isMe }) {
     const seed = (content?.charCodeAt(i * 3 % (content?.length || 1)) || 80) + i * 17
     return 0.2 + (seed % 80) / 100
   })
-  const activeColor = isMe ? T.teal : '#fff'
-  const dimColor = isMe ? 'rgba(78,232,200,0.25)' : 'rgba(255,255,255,0.18)'
+  const activeColor = '#fff'
+  const dimColor = isMe ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.22)'
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 200, maxWidth: 260 }}>
       <button onClick={handlePlay}
-        style={{ width: 32, height: 32, borderRadius: '50%', background: isMe ? 'rgba(78,232,200,0.18)' : 'rgba(255,255,255,0.10)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {playing
           ? <svg width="12" height="12" viewBox="0 0 24 24" fill={activeColor}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
           : <svg width="12" height="12" viewBox="0 0 24 24" fill={activeColor}><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -252,7 +253,7 @@ function VoiceBubble({ content, isMe }) {
           )
         })}
       </div>
-      <span style={{ fontFamily: T.dmMono, fontSize: 8, color: T.dim, flexShrink: 0, minWidth: 28, textAlign: 'right' }}>{duration > 0 ? fmt(duration) : playing ? '…' : ''}</span>
+      <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim, flexShrink: 0, minWidth: 28, textAlign: 'right' }}>{duration > 0 ? fmt(duration) : playing ? '…' : ''}</span>
     </div>
   )
 }
@@ -261,7 +262,7 @@ function VoiceBubble({ content, isMe }) {
 function EventCard({ content }) {
   const navigate = useNavigate()
   let ev
-  try { ev = typeof content === 'string' ? JSON.parse(content) : content } catch { return <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.gold }}>🎟 Événement</span> }
+  try { ev = typeof content === 'string' ? JSON.parse(content) : content } catch { return <span style={{ fontFamily: T.dmMono, fontSize: 12, color: T.gold }}>Événement</span> }
   const clickable = ev.id != null && ev.id !== ''
   const go = (e) => { e.stopPropagation(); if (clickable) navigate(`/evenements/${ev.id}`) }
   const priceLabel = ev.price == null ? null : (Number(ev.price) <= 0 ? 'Gratuit' : `dès ${fmtMoney(ev.price, ev.currency)}`)
@@ -269,15 +270,15 @@ function EventCard({ content }) {
     <div onClick={go} style={{
       width: 252, borderRadius: 12, overflow: 'hidden',
       cursor: clickable ? 'pointer' : 'default',
-      background: 'rgba(4,4,14,0.55)',
+      background: '#12131c',
       border: '1px solid rgba(255,255,255,0.10)',
-      boxShadow: '0 8px 28px rgba(0,0,0,0.30)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
     }}>
       {/* Affiche / placeholder */}
       <div style={{ position: 'relative' }}>
         {ev.image
           ? <img src={ev.image} alt={ev.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
-          : <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg, rgba(200,169,110,0.20), rgba(78,232,200,0.10))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          : <div style={{ width: '100%', aspectRatio: '16/9', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V9z"/><line x1="13" y1="7" x2="13" y2="17" strokeDasharray="2 2"/>
               </svg>
@@ -286,19 +287,19 @@ function EventCard({ content }) {
         {/* Gradient overlay bas pour lisibilité */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,14,0.65), transparent 55%)' }} />
         {/* Eyebrow */}
-        <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: T.dmMono, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#fff', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 7px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.15)' }}>Événement</span>
+        <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: T.dmMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#fff', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)' }}>Événement</span>
         {/* Badge prix */}
         {priceLabel && (
-          <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.08em', color: T.gold, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 8px', borderRadius: 4, border: '1px solid rgba(200,169,110,0.35)' }}>{priceLabel}</span>
+          <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: T.dmMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: T.gold, background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(200,169,110,0.35)' }}>{priceLabel}</span>
         )}
       </div>
       {/* Infos + CTA */}
       <div style={{ padding: '11px 13px 13px' }}>
         <p style={{ fontFamily: T.cormorant, fontWeight: 500, fontSize: 16, color: '#fff', margin: '0 0 3px', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name || 'Événement'}</p>
-        <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 11px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{ev.date || ''}</p>
+        <p style={{ fontFamily: T.dmMono, fontSize: 10.5, color: T.dim, margin: '0 0 11px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{ev.date || ''}</p>
         {clickable && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 7, background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.32)' }}>
-            <span style={{ fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: T.gold }}>Voir l'événement →</span>
+            <span style={{ fontFamily: T.dmMono, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.gold }}>Voir l'événement →</span>
           </div>
         )}
       </div>
@@ -319,24 +320,24 @@ function CatalogItemCard({ content }) {
     ? `${Number(it.price).toLocaleString('fr-FR')}€${it.unit ? ` / ${it.unit}` : ''}`
     : 'Sur demande'
   return (
-    <div onClick={go} style={{ width: 252, borderRadius: 12, overflow: 'hidden', cursor: clickable ? 'pointer' : 'default', background: 'rgba(4,4,14,0.55)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 8px 28px rgba(0,0,0,0.30)' }}>
+    <div onClick={go} style={{ width: 252, borderRadius: 12, overflow: 'hidden', cursor: clickable ? 'pointer' : 'default', background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
       <div style={{ position: 'relative' }}>
         {it.image
           ? <img src={it.image} alt={it.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
-          : <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg, rgba(200,169,110,0.20), rgba(78,232,200,0.10))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          : <div style={{ width: '100%', aspectRatio: '16/9', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 12 22l-9-9V4a1 1 0 0 1 1-1h9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
             </div>}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,14,0.65), transparent 55%)' }} />
-        <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: T.dmMono, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#fff', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 7px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.15)' }}>Offre{it.providerName ? ` · ${it.providerName}` : ''}</span>
-        <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.08em', color: T.gold, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 8px', borderRadius: 4, border: '1px solid rgba(200,169,110,0.35)' }}>{priceLabel}</span>
+        <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: T.dmMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#fff', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)' }}>Offre{it.providerName ? ` · ${it.providerName}` : ''}</span>
+        <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: T.dmMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: T.gold, background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(200,169,110,0.35)' }}>{priceLabel}</span>
       </div>
       <div style={{ padding: '11px 13px 13px' }}>
         <p style={{ fontFamily: T.cormorant, fontWeight: 500, fontSize: 16, color: '#fff', margin: '0 0 3px', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name || 'Offre'}</p>
-        {it.category && <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 11px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{it.category}</p>}
+        {it.category && <p style={{ fontFamily: T.dmMono, fontSize: 10.5, color: T.dim, margin: '0 0 11px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{it.category}</p>}
         {it.description && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,0.58)', margin: '0 0 11px', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{it.description}</p>}
         {clickable && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 7, background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.32)' }}>
-            <span style={{ fontFamily: T.dmMono, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: T.gold }}>Voir le prestataire →</span>
+            <span style={{ fontFamily: T.dmMono, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.gold }}>Voir le prestataire →</span>
           </div>
         )}
       </div>
@@ -360,27 +361,27 @@ function EventPollCard({ msg, myId, convId, onVote }) {
       {/* Affiche plein format */}
       {ev.image
         ? <img src={ev.image} alt={ev.name} style={{ width: '100%', borderRadius: '8px 8px 0 0', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
-        : <div style={{ width: '100%', aspectRatio: '4/3', borderRadius: '8px 8px 0 0', background: 'linear-gradient(135deg, rgba(200,169,110,0.18), rgba(78,232,200,0.10))', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
-            🎟
-            {ev.name && <span style={{ fontFamily: T.cormorant, fontSize: 18, color: '#fff', marginTop: 8, textAlign: 'center', padding: '0 12px' }}>{ev.name}</span>}
+        : <div style={{ width: '100%', aspectRatio: '4/3', borderRadius: '8px 8px 0 0', background: 'rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V9z"/><line x1="13" y1="7" x2="13" y2="17" strokeDasharray="2 2"/></svg>
+            {ev.name && <span style={{ fontFamily: T.cormorant, fontSize: 17, fontWeight: 600, color: '#fff', marginTop: 8, textAlign: 'center', padding: '0 12px' }}>{ev.name}</span>}
           </div>
       }
       {/* Infos + vote */}
-      <div style={{ padding: '10px 12px 12px', background: 'rgba(4,4,14,0.85)', borderRadius: '0 0 8px 8px', border: '1px solid rgba(255,255,255,0.08)', borderTop: 'none' }}>
+      <div style={{ padding: '10px 12px 12px', background: '#12131c', borderRadius: '0 0 8px 8px', border: '1px solid rgba(255,255,255,0.08)', borderTop: 'none' }}>
         {ev.image && <p style={{ fontFamily: T.cormorant, fontWeight: 500, fontSize: 15, color: '#fff', margin: '0 0 2px' }}>{ev.name}</p>}
-        <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{ev.date}{ev.price ? ` · ${fmtMoney(ev.price, ev.currency)}` : ''}</p>
-        <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted, margin: '0 0 8px', fontWeight: 600 }}>{poll.question || 'On y va ?'}</p>
+        <p style={{ fontFamily: T.dmMono, fontSize: 10.5, color: T.dim, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{ev.date}{ev.price ? ` · ${fmtMoney(ev.price, ev.currency)}` : ''}</p>
+        <p style={{ fontFamily: T.dmMono, fontSize: 12.5, color: 'rgba(255,255,255,0.8)', margin: '0 0 8px', fontWeight: 600 }}>{poll.question || 'On y va ?'}</p>
         <div style={{ display: 'flex', gap: 6 }}>
           <button onClick={() => onVote(msg.id, 'yes')}
-            style={{ flex: 1, padding: '8px 6px', borderRadius: 5, cursor: 'pointer', border: `1px solid ${myVote === 'yes' ? 'rgba(34,197,94,0.5)' : 'rgba(255,255,255,0.10)'}`, background: myVote === 'yes' ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.04)', color: myVote === 'yes' ? '#22c55e' : T.muted, fontFamily: T.dmMono, fontSize: 10 }}>
-            ✓ Oui {yesCount > 0 && <span>({yesCount})</span>}
+            style={{ flex: 1, padding: '9px 6px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${myVote === 'yes' ? 'rgba(34,197,94,0.5)' : 'rgba(255,255,255,0.10)'}`, background: myVote === 'yes' ? 'rgba(34,197,94,0.14)' : 'rgba(255,255,255,0.05)', color: myVote === 'yes' ? '#22c55e' : T.muted, fontFamily: T.dmMono, fontSize: 12, fontWeight: 600 }}>
+            Oui {yesCount > 0 && <span>({yesCount})</span>}
           </button>
           <button onClick={() => onVote(msg.id, 'no')}
-            style={{ flex: 1, padding: '8px 6px', borderRadius: 5, cursor: 'pointer', border: `1px solid ${myVote === 'no' ? 'rgba(220,50,50,0.5)' : 'rgba(255,255,255,0.10)'}`, background: myVote === 'no' ? 'rgba(220,50,50,0.12)' : 'rgba(255,255,255,0.04)', color: myVote === 'no' ? 'rgba(220,100,100,0.9)' : T.muted, fontFamily: T.dmMono, fontSize: 10 }}>
-            ✕ Non {noCount > 0 && <span>({noCount})</span>}
+            style={{ flex: 1, padding: '9px 6px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${myVote === 'no' ? 'rgba(220,50,50,0.5)' : 'rgba(255,255,255,0.10)'}`, background: myVote === 'no' ? 'rgba(220,50,50,0.14)' : 'rgba(255,255,255,0.05)', color: myVote === 'no' ? 'rgba(220,100,100,0.9)' : T.muted, fontFamily: T.dmMono, fontSize: 12, fontWeight: 600 }}>
+            Non {noCount > 0 && <span>({noCount})</span>}
           </button>
         </div>
-        <p style={{ fontFamily: T.dmMono, fontSize: 8, color: T.dim, margin: '6px 0 0' }}>{totalVotes} réponse{totalVotes !== 1 ? 's' : ''}</p>
+        <p style={{ fontFamily: T.dmMono, fontSize: 10.5, color: T.dim, margin: '6px 0 0' }}>{totalVotes} réponse{totalVotes !== 1 ? 's' : ''}</p>
       </div>
     </div>
   )
@@ -503,18 +504,18 @@ function ImageBubble({ msg, myId, setPhotoViewer }) {
     }
   }, [content])
 
-  if (isMissing) return <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim }}>📷 Photo</span>
+  if (isMissing) return <span style={{ fontFamily: T.dmMono, fontSize: 12, color: T.dim }}>Photo</span>
 
   if (isExpired) return (
-    <div style={{ width: 180, height: 90, borderRadius: 8, background: 'rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-      <span style={{ fontSize: 18 }}>⏱</span>
-      <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>Photo expirée</span>
+    <div style={{ width: 180, height: 90, borderRadius: 12, background: 'rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+      <IconHourglass size={18} color="rgba(255,255,255,0.45)" />
+      <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim }}>Photo expirée</span>
     </div>
   )
 
   if (loading && !imgSrc) return (
-    <div style={{ width: 180, height: 100, borderRadius: 8, background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>Chargement…</span>
+    <div style={{ width: 180, height: 100, borderRadius: 12, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span className="lib-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.25)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />
     </div>
   )
 
@@ -522,11 +523,11 @@ function ImageBubble({ msg, myId, setPhotoViewer }) {
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <img src={imgSrc} alt="photo"
         onClick={() => imgSrc && setPhotoViewer({ src: imgSrc })}
-        style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, display: 'block', cursor: imgSrc ? 'zoom-in' : 'default' }} />
+        style={{ maxWidth: 220, maxHeight: 220, borderRadius: 12, display: 'block', cursor: imgSrc ? 'zoom-in' : 'default' }} />
       {/* Expiry badge */}
       {hoursLeft <= 23 && (
-        <span style={{ position: 'absolute', top: 5, left: 5, background: 'rgba(0,0,0,0.55)', borderRadius: 4, padding: '2px 5px', fontFamily: T.dmMono, fontSize: 8, color: 'rgba(255,255,255,0.7)' }}>
-          ⏱ {hoursLeft}h
+        <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(0,0,0,0.65)', borderRadius: 6, padding: '2px 6px', fontFamily: T.dmMono, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
+          {hoursLeft} h
         </span>
       )}
       {/* Download button — recipient only */}
@@ -727,7 +728,7 @@ export default function MessagingPage() {
         notifSound()
         const latestReq = newReqs[newReqs.length - 1]
         const senderLabel = latestReq?.fromUsername ? `@${latestReq.fromUsername}` : (latestReq?.fromName || 'quelqu\'un')
-        showToast(`📩 Nouvelle demande de contact de ${senderLabel}`)
+        showToast(`Nouvelle demande de contact de ${senderLabel}`)
       }
       setPrevRequestCount(newReqs.length)
       if (activeConvIdRef.current) {
@@ -1356,7 +1357,7 @@ export default function MessagingPage() {
   }
 
   function handleReply(msg) {
-    const preview = msg.type === 'text' ? msg.content.slice(0, 60) : msg.type === 'image' ? '📷 Photo' : msg.type === 'voice' ? '🎤 Vocal' : msg.type === 'poll' ? '📊 Sondage' : '📎'
+    const preview = msg.type === 'text' ? msg.content.slice(0, 60) : msg.type === 'image' ? 'Photo' : msg.type === 'voice' ? 'Message vocal' : msg.type === 'poll' ? 'Sondage' : 'Pièce jointe'
     setReplyTo({ id: msg.id, senderName: msg.senderName, preview })
     setContextMenu(null)
   }
@@ -1617,7 +1618,7 @@ export default function MessagingPage() {
         {showDateSep && (
           <div style={{ textAlign: 'center', padding: '12px 0 4px', position: 'relative' }}>
             <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 1, background: 'rgba(255,255,255,0.05)' }} />
-            <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, background: '#04040b', padding: '0 10px', position: 'relative', letterSpacing: '0.08em' }}>
+            <span style={{ fontFamily: T.dmMono, fontSize: 10.5, fontWeight: 600, color: T.dim, background: '#04040b', padding: '0 10px', position: 'relative', letterSpacing: '0.06em' }}>
               {formatDateSeparator(msg.timestamp)}
             </span>
           </div>
@@ -1625,13 +1626,13 @@ export default function MessagingPage() {
 
         {isSystem ? (
           <div style={{ textAlign: 'center', padding: '4px 0' }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: T.dim, background: 'rgba(255,255,255,0.04)', borderRadius: 20, padding: '4px 12px' }}>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: T.muted, background: 'rgba(255,255,255,0.06)', borderRadius: 20, padding: '4px 12px' }}>
               {sysContent(msg.content)}
             </span>
           </div>
         ) : (
           <SwipeableMessage onReply={() => handleReply(msg)}>
-          <div style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6, marginBottom: 2, padding: '0 2px' }}>
+          <div style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6, marginBottom: 7, padding: '0 2px' }}>
             {/* Avatar (others only) */}
             <div style={{ width: 28, flexShrink: 0, display: 'flex', alignItems: 'flex-end' }}>
               {showAvatar && <Avatar user={getUserById(msg.senderId) || { id: msg.senderId, name: msg.senderName }} size={26} showOnline />}
@@ -1639,11 +1640,11 @@ export default function MessagingPage() {
 
             <div style={{ maxWidth: '72%', display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', gap: 2 }}>
               {/* Sender name */}
-              {showName && <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.muted, paddingLeft: 4 }}>{msg.senderName}</span>}
+              {showName && <span style={{ fontFamily: T.dmMono, fontSize: 11, fontWeight: 600, color: T.muted, paddingLeft: 4 }}>{msg.senderName}</span>}
 
               {/* Forwarded label */}
               {msg.forwardedFrom && (
-                <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, paddingLeft: isMe ? 0 : 4 }}>
+                <span style={{ fontFamily: T.dmMono, fontSize: 10.5, color: T.dim, paddingLeft: isMe ? 0 : 4 }}>
                   ↗ Transféré de {msg.forwardedFrom.senderName}
                 </span>
               )}
@@ -1659,12 +1660,12 @@ export default function MessagingPage() {
                     setTimeout(() => setHighlightedMsgId(null), 2000)
                   }}
                   style={{
-                    background: 'rgba(255,255,255,0.05)', borderRadius: 4, padding: '4px 8px',
-                    borderLeft: `2px solid ${isMe ? T.teal : T.gold}`,
+                    background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '5px 9px',
+                    borderLeft: '3px solid #8f56ff',
                     maxWidth: 220, cursor: 'pointer',
                   }}>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.muted, margin: 0 }}>{msg.replyTo.senderName}</p>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.replyTo.preview}</p>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 10.5, fontWeight: 600, color: T.muted, margin: 0 }}>{msg.replyTo.senderName}</p>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 10.5, color: T.dim, margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.replyTo.preview}</p>
                 </div>
               )}
 
@@ -1674,26 +1675,24 @@ export default function MessagingPage() {
                 style={{
                   padding: isDeleted ? '8px 14px' : msg.type === 'image' || msg.type === 'poll' || msg.type === 'story' ? '6px' : '10px 14px',
                   borderRadius: isMe ? '18px 18px 5px 18px' : '18px 18px 18px 5px',
-                  background: isMe
-                    ? 'linear-gradient(135deg, rgba(78,232,200,0.34), rgba(78,232,200,0.18))'
-                    : 'linear-gradient(135deg, rgba(255,255,255,0.115), rgba(255,255,255,0.075))',
-                  border: `1px solid ${isMe ? 'rgba(78,232,200,0.42)' : 'rgba(255,255,255,0.14)'}`,
+                  background: isMe ? '#7a3bf2' : '#1a1b26',
+                  border: `1px solid ${isMe ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.08)'}`,
                   maxWidth: '100%',
                   cursor: 'context-menu',
                   position: 'relative',
                   transition: 'box-shadow 0.3s',
                   boxShadow: highlightedMsgId === msg.id
-                    ? '0 0 0 2px rgba(255,255,255,0.75), 0 0 18px rgba(255,255,255,0.25)'
+                    ? '0 0 0 2px rgba(255,255,255,0.85)'
                     : 'none',
                 }}>
                 {isDeleted ? (
-                  <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim, fontStyle: 'italic' }}>
-                    🚫 Ce message a été supprimé
+                  <span style={{ fontFamily: T.dmMono, fontSize: 12, color: T.dim, fontStyle: 'italic' }}>
+                    Message supprimé
                   </span>
                 ) : msg.type === 'text' ? (
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: isMe ? '#eafff9' : 'rgba(255,255,255,0.92)', margin: 0, wordBreak: 'break-word', lineHeight: 1.45 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#fff', margin: 0, wordBreak: 'break-word', lineHeight: 1.45 }}>
                     <MentionText content={msg.content} members={activeConv?.members} />
-                    {msg.editedAt && <span style={{ fontSize: 8.5, color: T.dim, marginLeft: 5, fontStyle: 'italic' }}>(modifié)</span>}
+                    {msg.editedAt && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', marginLeft: 5, fontStyle: 'italic' }}>(modifié)</span>}
                   </p>
                 ) : msg.type === 'image' ? (
                   <ImageBubble msg={msg} myId={myId} setPhotoViewer={setPhotoViewer} />
@@ -1708,13 +1707,13 @@ export default function MessagingPage() {
                 ) : msg.type === 'group_booking' ? (
                   // Ancien flux « part par part » retiré — compat d'affichage des
                   // anciens messages (remplacé par « Réserver la table »).
-                  <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.muted, fontStyle: 'italic' }}>👥 Réservation de groupe clôturée</span>
+                  <span style={{ fontFamily: T.dmMono, fontSize: 12, color: T.muted, fontStyle: 'italic' }}>Réservation de groupe clôturée</span>
                 ) : msg.type === 'event' ? (
                   <EventCard content={msg.content} />
                 ) : msg.type === 'catalog_item' ? (
                   <CatalogItemCard content={msg.content} />
                 ) : (
-                  <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.muted }}>{msg.content}</span>
+                  <span style={{ fontFamily: T.dmMono, fontSize: 12.5, color: T.muted }}>{msg.content}</span>
                 )}
               </div>
 
@@ -1744,7 +1743,7 @@ export default function MessagingPage() {
                 {isMessageStarred(myId, activeConvId, msg.id) && (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="#e0c690" stroke="#e0c690" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
                 )}
-                <span style={{ fontFamily: T.dmMono, fontSize: 8, color: T.dim }}>{formatMsgTime(msg.timestamp)}</span>
+                <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim }}>{formatMsgTime(msg.timestamp)}</span>
                 {isMe && <ReadReceipt msg={msg} myId={myId} conv={activeConv} />}
               </div>
             </div>
@@ -1771,7 +1770,7 @@ export default function MessagingPage() {
             </div>
             {/* Appareil photo → capture puis choix du destinataire */}
             <button onClick={() => listCameraRef.current?.click()} aria-label="Appareil photo" className="lib-press"
-              style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 18, background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4ee8c8' }}>
+              style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 18, background: '#3ed6b5', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#04120e' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </button>
             <input ref={listCameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
@@ -1819,7 +1818,7 @@ export default function MessagingPage() {
           )
           return (
             <div style={{ padding: '6px 12px 0' }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: '6px 4px 8px' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '6px 4px 8px' }}>
                 Conversations
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1827,25 +1826,26 @@ export default function MessagingPage() {
                   const d = getConvDisplay(conv)
                   const unread = getUnreadCount(conv.id, myId)
                   const muted = isConvMuted(myId, conv.id)
+                  const blockedConv = !d.isGroup && d.otherId ? isBlocked(myId, d.otherId) : false
                   return (
                     <button key={conv.id} onClick={() => openConv(conv.id)}
                       className="group transition-all duration-200 hover:bg-white/[0.04]"
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 16, background: unread > 0 ? 'rgba(217,70,239,0.05)' : 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', textAlign: 'left' }}>
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 16, background: unread > 0 ? 'rgba(122,59,242,0.10)' : 'rgba(255,255,255,0.03)', border: `1px solid ${unread > 0 ? 'rgba(122,59,242,0.28)' : 'rgba(255,255,255,0.06)'}`, cursor: 'pointer', textAlign: 'left', opacity: blockedConv ? 0.55 : 1 }}>
                       {d.isGroup ? <GroupAvatar conv={conv} size={46} /> : <Avatar user={d.user} size={46} showOnline />}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14.5, color: d.deleted ? 'rgba(255,255,255,0.4)' : '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</p>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: unread > 0 ? 700 : 600, fontSize: 14.5, color: (d.deleted || blockedConv) ? 'rgba(255,255,255,0.4)' : (unread > 0 ? '#fff' : 'rgba(255,255,255,0.85)'), margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</p>
                             {muted && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.dim} strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                             {unread > 0 && (muted
                               ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.dim }} />
-                              : <span style={{ background: '#d946ef', color: '#fff', borderRadius: 10, minWidth: 18, textAlign: 'center', padding: '1px 6px', fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800 }}>{unread}</span>)}
+                              : <span style={{ background: '#7a3bf2', color: '#fff', borderRadius: 10, minWidth: 18, textAlign: 'center', padding: '1px 6px', fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800 }}>{unread}</span>)}
                             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: T.dim }}>{formatTime(conv.updatedAt)}</span>
                           </div>
                         </div>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: d.deleted ? 'rgba(255,255,255,0.3)' : (unread > 0 ? 'rgba(255,255,255,0.6)' : T.dim), fontStyle: d.deleted ? 'italic' : 'normal', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: unread > 0 ? 600 : 400, color: d.deleted ? 'rgba(255,255,255,0.35)' : (unread > 0 ? 'rgba(255,255,255,0.75)' : T.dim), fontStyle: d.deleted ? 'italic' : 'normal', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {d.deleted ? 'Compte supprimé' : `${d.isGroup && conv.type === 'group' ? `${d.memberCount} membres · ` : ''}${conv.lastMessage}`}
                         </p>
                       </div>
@@ -1862,7 +1862,7 @@ export default function MessagingPage() {
       {listPhoto && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)' }} onClick={() => setListPhoto(null)} />
-          <div style={{ position: 'relative', width: '100%', maxWidth: 520, background: 'rgba(8,10,20,0.98)', borderTop: '1px solid rgba(255,255,255,0.1)', borderRadius: '18px 18px 0 0', maxHeight: '86vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 520, background: '#12131c', borderTop: '1px solid rgba(255,255,255,0.10)', borderRadius: '18px 18px 0 0', maxHeight: '86vh', display: 'flex', flexDirection: 'column', boxShadow: '0 -24px 64px rgba(0,0,0,0.55)' }}>
             <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
               <div style={{ width: 40, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.15)' }} />
             </div>
@@ -1937,7 +1937,7 @@ export default function MessagingPage() {
                       <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                       <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: T.dim, flexShrink: 0 }}>{formatMsgTime(msg.timestamp)}</span>
                     </div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.6)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.type === 'text' ? msg.content : `📎 ${msg.type}`}</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.6)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.type === 'text' ? msg.content : 'Pièce jointe'}</p>
                   </div>
                   <span onClick={(e) => { e.stopPropagation(); toggleStarMessage(myId, convId, msg.id); setMessages(getMessages(activeConvId || convId)); setView('list'); setTimeout(() => setView('starred'), 0) }}
                     style={{ flexShrink: 0, color: T.dim, fontSize: 16, padding: 2 }} title="Retirer">✕</span>
@@ -1975,7 +1975,7 @@ export default function MessagingPage() {
                     <Avatar user={u} size={38} />
                     <span style={{ flex: 1, minWidth: 0, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</span>
                     <button onClick={() => { handleUnblockUser(bid, u.name); setBlockedUsers(getBlockedUsers(myId)) }} className="lib-press"
-                      style={{ flexShrink: 0, padding: '7px 14px', borderRadius: 999, background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.28)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Débloquer</button>
+                      style={{ flexShrink: 0, padding: '7px 14px', borderRadius: 999, background: '#3ed6b5', border: 'none', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Débloquer</button>
                   </div>
                 )
               })}
@@ -1994,7 +1994,7 @@ export default function MessagingPage() {
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: T.dim, flexShrink: 0 }}>{r.reportedAt ? new Date(r.reportedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : ''}</span>
                   </div>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.6)', margin: '4px 0 0', lineHeight: 1.5 }}>{r.reason}</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: r.handled ? '#22c55e' : '#e0a060', margin: '6px 0 0', fontWeight: 600 }}>{r.handled ? '✓ Traité par l\'équipe' : 'En cours de traitement'}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: r.handled ? '#22c55e' : '#e0a060', margin: '6px 0 0', fontWeight: 600 }}>{r.handled ? 'Traité par l\'équipe' : 'En cours de traitement'}</p>
                 </div>
               ))}
             </div>
@@ -2009,7 +2009,7 @@ export default function MessagingPage() {
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <button onClick={() => setView('list')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0 }}>←</button>
-          <h2 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0 }}>Nouveau message</h2>
+          <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>Nouveau message</h2>
         </div>
         <input style={{ ...INPUT_S, marginBottom: 12 }} placeholder="Rechercher par nom ou @nomdecompte" value={userSearch} onChange={e => setUserSearch(e.target.value)} autoFocus />
         {searchResults.length > 0 ? searchResults.map(u => (
@@ -2017,17 +2017,17 @@ export default function MessagingPage() {
             style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 0', background: 'none', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <Avatar user={u} size={40} showOnline />
             <div style={{ flex: 1, textAlign: 'left' }}>
-              <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 16, color: '#fff', margin: 0 }}>{u.name}</p>
-              <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: '1px 0 0' }}>@{u.username}</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
+              <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, margin: '1px 0 0' }}>@{u.username}</p>
             </div>
-            {isOnline(u.id) && <span style={{ fontFamily: T.dmMono, fontSize: 8, color: '#22c55e' }}>En ligne</span>}
+            {isOnline(u.id) && <span style={{ fontFamily: T.dmMono, fontSize: 10, fontWeight: 600, color: '#22c55e' }}>En ligne</span>}
           </button>
         )) : userSearch && (
-          <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, textAlign: 'center', padding: '32px 0' }}>Personne ne correspond à "{userSearch}"</p>
+          <p style={{ fontFamily: T.dmMono, fontSize: 12.5, color: T.muted, textAlign: 'center', padding: '32px 0' }}>Aucun résultat pour « {userSearch} »</p>
         )}
         {!userSearch && (
           <div style={{ marginTop: 8 }}>
-            <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Amis</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Amis</p>
             {friends.map(fid => {
               const u = getUserById(fid) || allUsers.find(x => x.id === fid)
               if (!u) return null
@@ -2036,8 +2036,8 @@ export default function MessagingPage() {
                   style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 0', background: 'none', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <Avatar user={u} size={38} showOnline />
                   <div style={{ flex: 1, textAlign: 'left' }}>
-                    <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 16, color: '#fff', margin: 0 }}>{u.name}</p>
-                    <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
+                    <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, margin: 0 }}>@{u.username}</p>
                   </div>
                 </button>
               )
@@ -2054,7 +2054,7 @@ export default function MessagingPage() {
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => newGroupStep === 1 ? setView('list') : setNewGroupStep(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0 }}>←</button>
-          <h2 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0 }}>
+          <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
             {newGroupStep === 1 ? 'Nouveau groupe' : 'Confirmer le groupe'}
           </h2>
         </div>
@@ -2070,7 +2070,7 @@ export default function MessagingPage() {
                 return (
                   <span key={id} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 20, padding: '3px 8px 3px 4px' }}>
                     <Avatar user={u} size={18} />
-                    <span style={{ fontFamily: T.dmMono, fontSize: 10, color: T.teal }}>{u?.name}</span>
+                    <span style={{ fontFamily: T.dmMono, fontSize: 11, fontWeight: 600, color: T.teal }}>{u?.name}</span>
                     <button onClick={() => setNewGroupMembers(p => p.filter(x => x !== id))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 12, padding: 0, lineHeight: 1 }}>✕</button>
                   </span>
                 )
@@ -2086,28 +2086,30 @@ export default function MessagingPage() {
                 style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 8px', background: selected ? 'rgba(78,232,200,0.06)' : 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: 2 }}>
                 <Avatar user={u} size={36} />
                 <div style={{ flex: 1, textAlign: 'left' }}>
-                  <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, margin: 0 }}>@{u.username}</p>
                 </div>
                 <div style={{ width: 20, height: 20, borderRadius: '50%', border: `1.5px solid ${selected ? T.teal : 'rgba(255,255,255,0.2)'}`, background: selected ? T.teal : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {selected && <span style={{ color: '#000', fontSize: 11, lineHeight: 1 }}>✓</span>}
+                  {selected && <IconCheck size={12} color="#04120e" />}
                 </div>
               </button>
             )
           })}
           <button onClick={handleCreateGroup} disabled={!newGroupName.trim() || newGroupMembers.length === 0}
-            style={{ marginTop: 20, width: '100%', padding: '12px', borderRadius: 6, cursor: 'pointer', background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))', border: '1px solid rgba(78,232,200,0.35)', color: T.teal, fontFamily: T.dmMono, fontSize: 11, letterSpacing: '0.1em', opacity: (!newGroupName.trim() || newGroupMembers.length === 0) ? 0.4 : 1 }}>
-            Continuer →
+            style={{ marginTop: 20, width: '100%', padding: '13px', borderRadius: 12, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, ...((!newGroupName.trim() || newGroupMembers.length === 0)
+              ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed', boxShadow: 'none' }
+              : { background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }) }}>
+            Continuer
           </button>
         </>)}
 
         {newGroupStep === 2 && (<>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <p style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0 }}>{newGroupName}</p>
-            <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim, margin: 0 }}>{newGroupMembers.length + 1} membres</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 22, color: '#fff', margin: 0 }}>{newGroupName}</p>
+            <p style={{ fontFamily: T.dmMono, fontSize: 12, color: T.muted, margin: 0 }}>{newGroupMembers.length + 1} membres</p>
           </div>
           <button onClick={handleCreateGroup}
-            style={{ width: '100%', padding: '12px', borderRadius: 6, cursor: 'pointer', background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))', border: '1px solid rgba(78,232,200,0.35)', color: T.teal, fontFamily: T.dmMono, fontSize: 11, letterSpacing: '0.1em' }}>
+            style={{ width: '100%', padding: '13px', borderRadius: 12, cursor: 'pointer', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
             Créer le groupe
           </button>
         </>)}
@@ -2121,22 +2123,22 @@ export default function MessagingPage() {
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <button onClick={() => setView('list')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 20, padding: 0 }}>←</button>
-          <h2 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0, flex: 1 }}>Contacts</h2>
+          <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: '#fff', margin: 0, flex: 1 }}>Contacts</h2>
         </div>
 
         {/* Pending requests */}
         {requests.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.pink, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>🔔 Demandes reçues ({requests.length})</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: T.pink, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Demandes reçues ({requests.length})</p>
             {requests.map(r => (
               <div key={r.id} style={{ ...CARD, padding: '12px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                 <Avatar user={{ id: r.fromId, name: r.fromName }} size={36} />
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{r.fromName}</p>
-                  {r.fromUsername && <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.muted, margin: 0, letterSpacing: '0.05em' }}>@{r.fromUsername}</p>}
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15, color: '#fff', margin: 0 }}>{r.fromName}</p>
+                  {r.fromUsername && <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.muted, margin: 0 }}>@{r.fromUsername}</p>}
                 </div>
-                <button onClick={() => handleDecline(r.id)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.muted, fontFamily: T.dmMono, fontSize: 9 }}>✕</button>
-                <button onClick={() => handleAccept(r.id)} style={{ background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.30)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>Accepter</button>
+                <button onClick={() => handleDecline(r.id)} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600 }}>Refuser</button>
+                <button onClick={() => handleAccept(r.id)} style={{ background: '#3ed6b5', border: 'none', borderRadius: 10, padding: '7px 14px', cursor: 'pointer', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700 }}>Accepter</button>
               </div>
             ))}
           </div>
@@ -2144,7 +2146,7 @@ export default function MessagingPage() {
 
         {/* Search / Add */}
         <div style={{ marginBottom: 20 }}>
-          <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Ajouter un contact</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Ajouter un contact</p>
           <input style={{ ...INPUT_S, marginBottom: 8 }} placeholder="Nom ou @nomdecompte" value={userSearch} onChange={e => setUserSearch(e.target.value)} autoFocus />
           {searchResults.length > 0 && (() => {
             const sentReqs = (() => { try { return JSON.parse(localStorage.getItem('lib_friend_requests') || '[]') } catch { return [] } })()
@@ -2157,17 +2159,17 @@ export default function MessagingPage() {
                   <Avatar user={u} size={36} showOnline />
                   <div style={{ flex: 1 }}>
                     <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
-                    <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
+                    <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, margin: 0 }}>@{u.username}</p>
                   </div>
                   {isBlockedUser ? (
-                    <button onClick={() => handleUnblockUser(u.id, u.name)} style={{ background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.25)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 9 }}>Débloquer</button>
+                    <button onClick={() => handleUnblockUser(u.id, u.name)} style={{ background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700 }}>Débloquer</button>
                   ) : isFriend ? (
-                    <span style={{ fontFamily: T.dmMono, fontSize: 9, color: '#22c55e', padding: '5px 10px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 4 }}>✓ Ami</span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: T.teal, padding: '4px 10px', background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', borderRadius: 8 }}>Ami</span>
                   ) : hasPendingRequest ? (
-                    <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.gold, padding: '5px 10px', background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.25)', borderRadius: 4, letterSpacing: '0.05em' }}>⏳ En attente</span>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: T.gold, padding: '4px 10px', background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 8 }}>En attente</span>
                   ) : (
-                    <button onClick={() => handleSendRequest(u.id)} style={{ background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.35)', borderRadius: 4, padding: '5px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9, fontWeight: 600, letterSpacing: '0.05em' }}>
-                      + Ajouter
+                    <button onClick={() => handleSendRequest(u.id)} style={{ background: '#3ed6b5', border: 'none', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700 }}>
+                      Ajouter
                     </button>
                   )}
                 </div>
@@ -2178,7 +2180,7 @@ export default function MessagingPage() {
 
         {/* Friends list */}
         <div>
-          <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Mes amis ({friends.length})</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Mes amis ({friends.length})</p>
           {friends.map(fid => {
             const u = getUserById(fid) || allUsers.find(x => x.id === fid)
             if (!u) return null
@@ -2190,17 +2192,21 @@ export default function MessagingPage() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{u.name}</p>
-                    {isNew && <span style={{ fontFamily: T.dmMono, fontSize: 8, color: T.teal, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.3)', borderRadius: 10, padding: '1px 6px', letterSpacing: '0.05em' }}>Nouveau</span>}
+                    {isNew && <span style={{ fontFamily: T.dmMono, fontSize: 10, fontWeight: 700, color: T.teal, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', borderRadius: 10, padding: '1px 7px', letterSpacing: '0.04em' }}>Nouveau</span>}
                   </div>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, margin: 0 }}>@{u.username}</p>
                 </div>
-                <button onClick={() => startDM(fid)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '5px 8px', cursor: 'pointer', color: T.muted, fontFamily: T.dmMono, fontSize: 9 }}>💬</button>
+                <button onClick={() => startDM(fid)} aria-label="Envoyer un message" title="Envoyer un message" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center' }}><IconChat size={14} /></button>
                 <button onClick={() => setConfirmDialog({ action: 'remove_friend', label: `Supprimer ${u.name} ? L'historique sera effacé.`, onConfirm: () => handleRemoveFriend(fid) })}
-                  style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '5px 8px', cursor: 'pointer', color: T.dim, fontFamily: T.dmMono, fontSize: 9 }}>✕</button>
+                  aria-label="Retirer des amis" title="Retirer des amis" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 8, padding: '6px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                </button>
                 <button onClick={() => { setShowReportModal({ userId: u.id, userName: u.name }) }}
-                  style={{ background: 'rgba(220,50,50,0.06)', border: '1px solid rgba(220,50,50,0.15)', borderRadius: 4, padding: '5px 8px', cursor: 'pointer', color: 'rgba(220,100,100,0.7)', fontFamily: T.dmMono, fontSize: 9 }}>⚑</button>
+                  aria-label="Signaler" title="Signaler" style={{ background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.30)', borderRadius: 8, padding: '6px 8px', cursor: 'pointer', color: '#ff9ed2', display: 'flex', alignItems: 'center' }}><IconAlert size={14} /></button>
                 <button onClick={() => setConfirmDialog({ action: 'block', label: `Bloquer ${u.name} ?`, onConfirm: () => handleBlockUser(u.id, u.name) })}
-                  style={{ background: 'rgba(220,50,50,0.06)', border: '1px solid rgba(220,50,50,0.15)', borderRadius: 4, padding: '5px 8px', cursor: 'pointer', color: 'rgba(220,100,100,0.7)', fontFamily: T.dmMono, fontSize: 9 }}>🚫</button>
+                  aria-label="Bloquer" title="Bloquer" style={{ background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.30)', borderRadius: 8, padding: '6px 8px', cursor: 'pointer', color: '#ff9ed2', display: 'flex', alignItems: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                </button>
               </div>
             )
           })}
@@ -2209,14 +2215,14 @@ export default function MessagingPage() {
         {/* Blocked users */}
         {blockedUsers.length > 0 && (
           <div style={{ marginTop: 24 }}>
-            <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Bloqué·es ({blockedUsers.length})</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Bloqué·es ({blockedUsers.length})</p>
             {blockedUsers.map(bid => {
               const u = getUserById(bid) || allUsers.find(x => x.id === bid)
               return (
                 <div key={bid} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', opacity: 0.6 }}>
                   <Avatar user={u || { id: bid, name: bid }} size={30} />
-                  <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 14, color: T.muted, flex: 1, margin: 0 }}>{u?.name || bid}</p>
-                  <button onClick={() => handleUnblockUser(bid, u?.name || bid)} style={{ background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.2)', borderRadius: 4, padding: '4px 8px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>Débloquer</button>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: 14, color: T.muted, flex: 1, margin: 0 }}>{u?.name || bid}</p>
+                  <button onClick={() => handleUnblockUser(bid, u?.name || bid)} style={{ background: '#3ed6b5', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700 }}>Débloquer</button>
                 </div>
               )
             })}
@@ -2227,13 +2233,15 @@ export default function MessagingPage() {
         {showReportModal && (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setShowReportModal(null)} />
-            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 60, background: 'rgba(8,10,20,0.98)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: 24, width: '90%', maxWidth: 320 }}>
-              <p style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 18, color: '#fff', margin: '0 0 6px' }}>Signaler {showReportModal.userName}</p>
-              <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim, margin: '0 0 14px' }}>Précise la raison du signalement</p>
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: 24, width: '90%', maxWidth: 320 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 6px' }}>Signaler {showReportModal.userName}</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: T.muted, margin: '0 0 14px' }}>Précise la raison du signalement.</p>
               <textarea style={{ ...INPUT_S, resize: 'vertical', minHeight: 80, marginBottom: 14, lineHeight: 1.5 }} placeholder="Comportement inapproprié, spam, harcèlement…" value={reportReason} onChange={e => setReportReason(e.target.value)} />
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => { setShowReportModal(null); setReportReason('') }} style={{ flex: 1, padding: '10px', borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: T.muted, fontFamily: T.dmMono, fontSize: 10 }}>Annuler</button>
-                <button onClick={() => handleReport(showReportModal.userId, showReportModal.userName)} disabled={!reportReason.trim()} style={{ flex: 2, padding: '10px', borderRadius: 6, cursor: 'pointer', background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.35)', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 10, opacity: !reportReason.trim() ? 0.4 : 1 }}>Signaler</button>
+                <button onClick={() => { setShowReportModal(null); setReportReason('') }} style={{ flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Annuler</button>
+                <button onClick={() => handleReport(showReportModal.userId, showReportModal.userName)} disabled={!reportReason.trim()} style={{ flex: 2, padding: '11px', borderRadius: 10, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, ...(!reportReason.trim()
+                  ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed' }
+                  : { background: '#c2347f', border: 'none', color: '#fff', cursor: 'pointer' }) }}>Signaler</button>
               </div>
             </div>
           </>
@@ -2322,20 +2330,20 @@ export default function MessagingPage() {
               {/* Rename */}
               {amAdmin && (
                 <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Nom du groupe</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Nom du groupe</p>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input style={{ ...INPUT_S }} placeholder={activeConv?.name} value={editGroupName} onChange={e => setEditGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRenameGroup()} />
-                    <button onClick={handleRenameGroup} style={{ background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 6, padding: '0 12px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 10 }}>OK</button>
+                    <button onClick={handleRenameGroup} style={{ background: '#3ed6b5', border: 'none', borderRadius: 10, padding: '0 16px', cursor: 'pointer', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700 }}>OK</button>
                   </div>
                 </div>
               )}
               {/* Members */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Membres ({activeConv?.members?.length || 0})</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Membres ({activeConv?.members?.length || 0})</p>
                 {amAdmin && (
                   <button onClick={() => { setShowAddMember(v => !v); setAddMemberSearch('') }}
-                    style={{ background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4, padding: '3px 10px', cursor: 'pointer', color: T.teal, fontFamily: T.dmMono, fontSize: 9 }}>
-                    + Ajouter
+                    style={{ background: '#3ed6b5', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700 }}>
+                    Ajouter
                   </button>
                 )}
               </div>
@@ -2351,15 +2359,15 @@ export default function MessagingPage() {
                         style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 4px', background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                         <Avatar user={u} size={28} />
                         <div style={{ flex: 1, textAlign: 'left' }}>
-                          <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 14, color: '#fff', margin: 0 }}>{u.name}</p>
-                          <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim, margin: 0 }}>@{u.username}</p>
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: '#fff', margin: 0 }}>{u.name}</p>
+                          <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, margin: 0 }}>@{u.username}</p>
                         </div>
-                        <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.teal }}>+ Ajouter</span>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: T.teal }}>Ajouter</span>
                       </button>
                     ))}
                   {(addMemberSearch.trim() ? searchUsers(addMemberSearch) : friends.map(id => getUserById(id) || allUsers.find(u => u.id === id)).filter(Boolean))
                     .filter(u => u && !activeConv?.members?.some(m => m.userId === u.id)).length === 0 && (
-                    <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.dim, textAlign: 'center', margin: '8px 0 0' }}>Tous tes amis sont déjà dans ce groupe</p>
+                    <p style={{ fontFamily: T.dmMono, fontSize: 12, color: T.muted, textAlign: 'center', margin: '8px 0 0' }}>Tous tes amis sont déjà dans ce groupe.</p>
                   )}
                 </div>
               )}
@@ -2367,14 +2375,14 @@ export default function MessagingPage() {
                 <div key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <Avatar user={getUserById(m.userId) || { id: m.userId, name: m.name }} size={34} showOnline />
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 14, color: '#fff', margin: 0 }}>{m.name}</p>
-                    <p style={{ fontFamily: T.dmMono, fontSize: 9, color: m.role === 'admin' ? T.gold : T.dim, margin: 0 }}>{m.role === 'admin' ? '👑 Admin' : 'Membre'}</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: '#fff', margin: 0 }}>{m.name}</p>
+                    <p style={{ fontFamily: T.dmMono, fontSize: 10.5, fontWeight: 600, color: m.role === 'admin' ? T.gold : T.dim, margin: 0 }}>{m.role === 'admin' ? 'Admin' : 'Membre'}</p>
                   </div>
                   {amAdmin && m.userId !== myId && (<>
-                    <button onClick={() => handleSetAdmin(m.userId)} style={{ background: 'none', border: `1px solid ${m.role === 'admin' ? 'rgba(220,50,50,0.25)' : 'rgba(200,169,110,0.25)'}`, borderRadius: 4, padding: '3px 7px', cursor: 'pointer', color: m.role === 'admin' ? 'rgba(220,100,100,0.8)' : T.gold, fontFamily: T.dmMono, fontSize: 8 }}>
-                      {m.role === 'admin' ? '− Admin' : '+ Admin'}
+                    <button onClick={() => handleSetAdmin(m.userId)} style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${m.role === 'admin' ? 'rgba(224,90,170,0.35)' : 'rgba(200,169,110,0.35)'}`, borderRadius: 8, padding: '4px 9px', cursor: 'pointer', color: m.role === 'admin' ? '#ff9ed2' : T.gold, fontFamily: 'Inter, sans-serif', fontSize: 10.5, fontWeight: 600 }}>
+                      {m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}
                     </button>
-                    <button onClick={() => handleRemoveMember(m.userId)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '3px 7px', cursor: 'pointer', color: T.dim, fontFamily: T.dmMono, fontSize: 8 }}>✕</button>
+                    <button onClick={() => handleRemoveMember(m.userId)} aria-label="Retirer du groupe" title="Retirer du groupe" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 8, padding: '4px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontFamily: 'Inter, sans-serif', fontSize: 11 }}>✕</button>
                   </>)}
                 </div>
               ))}
@@ -2382,12 +2390,12 @@ export default function MessagingPage() {
               {/* Leave / delete */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 24 }}>
                 <button onClick={() => setConfirmDialog({ action: 'leave', label: 'Quitter le groupe ?' })}
-                  style={{ padding: '10px', borderRadius: 6, cursor: 'pointer', background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.25)', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 10 }}>
+                  style={{ padding: '12px', borderRadius: 10, cursor: 'pointer', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>
                   Quitter le groupe
                 </button>
                 {amAdmin && (
                   <button onClick={() => setConfirmDialog({ action: 'delete', label: 'Supprimer le groupe définitivement ?' })}
-                    style={{ padding: '10px', borderRadius: 6, cursor: 'pointer', background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.35)', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 10 }}>
+                    style={{ padding: '12px', borderRadius: 10, cursor: 'pointer', background: '#c2347f', border: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700 }}>
                     Supprimer le groupe
                   </button>
                 )}
@@ -2489,11 +2497,11 @@ export default function MessagingPage() {
             {/* ── Pinned message ── */}
             {pinnedMsg && !pinnedMsg.deletedForAll && (
               <div style={{ background: 'rgba(200,169,110,0.06)', borderBottom: '1px solid rgba(200,169,110,0.15)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 12 }}>📌</span>
+                <IconPin size={13} color={T.gold} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 8, color: T.gold, margin: '0 0 1px', letterSpacing: '0.06em' }}>ÉPINGLÉ</p>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {pinnedMsg.type === 'text' ? pinnedMsg.content.slice(0, 60) : '📎 Pièce jointe'}
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: T.gold, margin: '0 0 1px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Épinglé</p>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 12, color: T.muted, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {pinnedMsg.type === 'text' ? pinnedMsg.content.slice(0, 60) : 'Pièce jointe'}
                   </p>
                 </div>
                 {amAdmin && <button onClick={() => unpinMessage(activeConvId)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 14, padding: 0 }}>✕</button>}
@@ -2514,7 +2522,7 @@ export default function MessagingPage() {
                     placeholder="Rechercher dans la conversation…"
                     style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13 }}
                   />
-                  {q && <span style={{ fontFamily: T.dmMono, fontSize: 10, color: matchCount ? T.teal : T.dim, flexShrink: 0 }}>{matchCount} résultat{matchCount > 1 ? 's' : ''}</span>}
+                  {q && <span style={{ fontFamily: T.dmMono, fontSize: 11, fontWeight: 600, color: matchCount ? T.teal : T.dim, flexShrink: 0 }}>{matchCount} résultat{matchCount > 1 ? 's' : ''}</span>}
                   <button onClick={() => { setShowMsgSearch(false); setMsgSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 15, padding: 0, flexShrink: 0 }}>✕</button>
                 </div>
               )
@@ -2536,7 +2544,7 @@ export default function MessagingPage() {
                   ? base.filter(m => !m.deletedForAll && m.type === 'text' && (m.content || '').toLowerCase().includes(q))
                   : base
                 if (showMsgSearch && q && shown.length === 0) {
-                  return <p style={{ fontFamily: T.dmMono, fontSize: 11, color: T.dim, textAlign: 'center', padding: '24px 0' }}>Aucun message trouvé</p>
+                  return <p style={{ fontFamily: T.dmMono, fontSize: 12.5, color: T.muted, textAlign: 'center', padding: '24px 0' }}>Aucun message trouvé.</p>
                 }
                 return shown.map((msg, idx) => renderMessageBubble(msg, idx))
               })()}
@@ -2547,7 +2555,7 @@ export default function MessagingPage() {
                   <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                     {[0, 1, 2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: T.muted, animation: `typing-dot 1.2s ${i * 0.2}s ease-in-out infinite` }} />)}
                   </div>
-                  <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.dim }}>
+                  <span style={{ fontFamily: T.dmMono, fontSize: 11, color: T.muted }}>
                     {typingUsers.map(id => getUserById(id)?.name || id).join(', ')} écrit…
                   </span>
                 </div>
@@ -2558,8 +2566,8 @@ export default function MessagingPage() {
             {/* ── Scroll-to-bottom button ── */}
             {showScrollBtn && (
               <button onClick={scrollToBottom}
-                style={{ position: 'absolute', bottom: 80, right: 14, zIndex: 25, width: 36, height: 36, borderRadius: '50%', background: 'rgba(8,10,20,0.92)', border: '1px solid rgba(78,232,200,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.teal} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                style={{ position: 'absolute', bottom: 80, right: 14, zIndex: 25, width: 36, height: 36, borderRadius: '50%', background: '#12131c', border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -2567,13 +2575,13 @@ export default function MessagingPage() {
 
             {/* ── @mention autocomplete ── */}
             {mentionMatches.length > 0 && (
-              <div style={{ background: 'rgba(8,10,20,0.97)', borderTop: '1px solid rgba(78,232,200,0.15)', maxHeight: 160, overflowY: 'auto' }}>
+              <div style={{ background: '#12131c', borderTop: '1px solid rgba(255,255,255,0.10)', maxHeight: 160, overflowY: 'auto', boxShadow: '0 -8px 24px rgba(0,0,0,0.35)' }}>
                 {mentionMatches.map(m => (
                   <button key={m.userId} onClick={() => applyMention(m)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                    <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(78,232,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.dmMono, fontSize: 11, color: T.teal, flexShrink: 0 }}>{(m.name || '?').charAt(0).toUpperCase()}</span>
-                    <span style={{ fontFamily: T.dmMono, fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>{m.name}</span>
-                    <span style={{ marginLeft: 'auto', fontFamily: T.dmMono, fontSize: 9, color: T.teal }}>@</span>
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(78,232,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.dmMono, fontSize: 11, fontWeight: 700, color: T.teal, flexShrink: 0 }}>{(m.name || '?').charAt(0).toUpperCase()}</span>
+                    <span style={{ fontFamily: T.dmMono, fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.85)' }}>{m.name}</span>
+                    <span style={{ marginLeft: 'auto', fontFamily: T.dmMono, fontSize: 11, color: T.teal }}>@</span>
                   </button>
                 ))}
               </div>
@@ -2584,7 +2592,7 @@ export default function MessagingPage() {
               <div style={{ background: 'rgba(220,50,50,0.06)', borderTop: '1px solid rgba(220,50,50,0.18)', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,160,160,0.92)', lineHeight: 1.4 }}>Tu as bloqué ce contact — vous ne pouvez plus échanger.</span>
                 <button onClick={() => { unblockUser(myId, directOtherId); setBlockedUsers(getBlockedUsers(myId)); sendMessage(activeConvId, 'system', 'Système', 'system', `SYS::${JSON.stringify({ kind: 'unblock', by: myId, byName: myName, target: directOtherId })}`); setMessages(getMessages(activeConvId)); showToast('Débloqué·e') }}
-                  className="lib-press" style={{ flexShrink: 0, padding: '9px 16px', borderRadius: 999, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.3)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Débloquer</button>
+                  className="lib-press" style={{ flexShrink: 0, padding: '9px 16px', borderRadius: 999, background: '#3ed6b5', border: 'none', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Débloquer</button>
               </div>
             )}
 
@@ -2599,8 +2607,8 @@ export default function MessagingPage() {
             {/* ── Edit bar ── */}
             {editingMsg && (
               <div style={{ background: 'rgba(200,169,110,0.07)', borderTop: '1px solid rgba(200,169,110,0.18)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 12 }}>✏️</span>
-                <p style={{ flex: 1, fontFamily: T.dmMono, fontSize: 10, color: T.gold, margin: 0 }}>Modifier le message</p>
+                <IconEdit size={13} color={T.gold} />
+                <p style={{ flex: 1, fontFamily: T.dmMono, fontSize: 12, fontWeight: 600, color: T.gold, margin: 0 }}>Modifier le message</p>
                 <button onClick={handleEditCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 14, padding: 0 }}>✕</button>
               </div>
             )}
@@ -2609,8 +2617,8 @@ export default function MessagingPage() {
             {replyTo && !editingMsg && (
               <div style={{ background: 'rgba(78,232,200,0.06)', borderTop: '1px solid rgba(78,232,200,0.15)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 9, color: T.teal, margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
-                  <p style={{ fontFamily: T.dmMono, fontSize: 10, color: T.muted, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{replyTo.preview}</p>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 11, fontWeight: 600, color: T.teal, margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
+                  <p style={{ fontFamily: T.dmMono, fontSize: 12, color: T.muted, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{replyTo.preview}</p>
                 </div>
                 <button onClick={() => setReplyTo(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 14, padding: 0 }}>✕</button>
               </div>
@@ -2621,11 +2629,11 @@ export default function MessagingPage() {
               {/* Attach button */}
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setShowAttachMenu(v => !v)} aria-label="Ajouter"
-                  style={{ width: 38, height: 38, borderRadius: '50%', background: showAttachMenu ? 'linear-gradient(135deg, rgba(78,232,200,0.28), rgba(78,232,200,0.16))' : 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08))', border: `1px solid ${showAttachMenu ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.18)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: showAttachMenu ? '0 0 18px rgba(78,232,200,0.16)' : '0 8px 22px rgba(0,0,0,0.22)' }}>
+                  style={{ width: 38, height: 38, borderRadius: '50%', background: showAttachMenu ? 'rgba(78,232,200,0.16)' : 'rgba(255,255,255,0.10)', border: `1px solid ${showAttachMenu ? 'rgba(78,232,200,0.5)' : 'rgba(255,255,255,0.14)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={showAttachMenu ? '#4ee8c8' : 'rgba(255,255,255,0.82)'} strokeWidth="2.4" strokeLinecap="round" style={{ transform: showAttachMenu ? 'rotate(45deg)' : 'none', transition: 'transform 0.25s cubic-bezier(0.22,0.9,0.3,1)' }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
                 {showAttachMenu && (
-                  <div style={{ position: 'absolute', bottom: 48, left: 0, background: 'rgba(10,12,22,0.98)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 6, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 214, zIndex: 20, boxShadow: '0 16px 40px -8px rgba(0,0,0,0.7)' }}>
+                  <div style={{ position: 'absolute', bottom: 48, left: 0, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: 6, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 214, zIndex: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
                     {[
                       { label: 'Appareil photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>, action: () => { setShowAttachMenu(false); const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches; if (!coarse && navigator.mediaDevices?.getUserMedia) setShowCamera(true); else cameraInputRef.current?.click() } },
                       { label: 'Photo', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>, action: () => { photoInputRef.current?.click(); setShowAttachMenu(false) } },
@@ -2653,16 +2661,19 @@ export default function MessagingPage() {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 placeholder="Message…"
                 rows={1}
-                style={{ ...INPUT_S, flex: 1, resize: 'none', maxHeight: 100, lineHeight: 1.5, borderRadius: 22, background: 'rgba(255,255,255,0.075)', border: '1px solid rgba(255,255,255,0.15)', fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 16px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}
+                style={{ ...INPUT_S, flex: 1, resize: 'none', maxHeight: 100, lineHeight: 1.5, borderRadius: 22, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 16px' }}
               />
 
               {/* Voice button — tap une fois ou maintenir (glisser vers le haut pour verrouiller) */}
               {isRecording && voiceLocked ? (
                 // Mode verrouillé : annuler ou envoyer
                 <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                  <button onClick={cancelRecording} style={{ background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.3)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'rgba(220,100,100,0.9)', fontFamily: T.dmMono, fontSize: 9 }}>✕</button>
-                  <span style={{ fontFamily: T.dmMono, fontSize: 9, color: T.pink }}>🔴 {recDuration}s</span>
-                  <button onClick={stopAndSendRecording} style={{ background: 'rgba(224,90,170,0.18)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: T.pink, fontFamily: T.dmMono, fontSize: 10 }}>Envoyer</button>
+                  <button onClick={cancelRecording} aria-label="Annuler" style={{ background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600 }}>✕</button>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: T.pink }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#e05aaa', display: 'inline-block' }} />
+                    {recDuration}s
+                  </span>
+                  <button onClick={stopAndSendRecording} style={{ background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, padding: '7px 14px', cursor: 'pointer', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700 }}>Envoyer</button>
                 </div>
               ) : (
                 <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -2671,22 +2682,22 @@ export default function MessagingPage() {
                     onPointerDown={handleVoicePointerDown}
                     onPointerMove={handleVoicePointerMove}
                     onPointerUp={handleVoicePointerUp}
-                    style={{ width: 38, height: 38, borderRadius: '50%', background: isRecording ? 'linear-gradient(135deg, rgba(224,90,170,0.34), rgba(224,90,170,0.18))' : 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08))', border: `1px solid ${isRecording ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.18)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: isRecording ? T.pink : 'rgba(255,255,255,0.82)', transition: 'all 0.2s', touchAction: 'none', boxShadow: isRecording ? '0 0 18px rgba(224,90,170,0.42)' : '0 8px 22px rgba(0,0,0,0.22)' }}>
+                    style={{ width: 38, height: 38, borderRadius: '50%', background: isRecording ? 'rgba(224,90,170,0.22)' : 'rgba(255,255,255,0.10)', border: `1px solid ${isRecording ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.14)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: isRecording ? T.pink : 'rgba(255,255,255,0.82)', transition: 'all 0.2s', touchAction: 'none' }}>
                     <MicIcon color={isRecording ? T.pink : 'rgba(255,255,255,0.82)'} size={17} />
                   </button>
                   {isRecording && !tapMode && !voiceLocked && (
-                    <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.dim, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>↑ verrouiller</span>
+                    <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: T.muted, whiteSpace: 'nowrap', background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', padding: '3px 7px', borderRadius: 6 }}>Glisse ↑ pour verrouiller</span>
                   )}
                   {isRecording && tapMode && !voiceLocked && (
-                    <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: T.dmMono, fontSize: 8, color: T.pink, whiteSpace: 'nowrap', background: 'rgba(4,4,14,0.9)', padding: '2px 5px', borderRadius: 4 }}>appuie = stop</span>
+                    <span style={{ position: 'absolute', bottom: 38, right: -20, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: T.pink, whiteSpace: 'nowrap', background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', padding: '3px 7px', borderRadius: 6 }}>Appuie pour arrêter</span>
                   )}
-                  {isRecording && <span style={{ position: 'absolute', bottom: -16, fontFamily: T.dmMono, fontSize: 8, color: T.pink }}>{recDuration}s</span>}
+                  {isRecording && <span style={{ position: 'absolute', bottom: -16, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: T.pink }}>{recDuration}s</span>}
                 </div>
               )}
 
               {/* Send button */}
               <button onClick={handleSend} disabled={!inputText.trim()}
-                style={{ width: 38, height: 38, borderRadius: '50%', background: inputText.trim() ? 'linear-gradient(135deg, #4ee8c8, #8b5cf6)' : 'linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.065))', border: inputText.trim() ? '1px solid rgba(78,232,200,0.42)' : '1px solid rgba(255,255,255,0.16)', cursor: inputText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: inputText.trim() ? '#04040b' : 'rgba(255,255,255,0.42)', transition: 'all 0.2s', boxShadow: inputText.trim() ? '0 8px 22px -6px rgba(78,232,200,0.5)' : '0 8px 22px rgba(0,0,0,0.18)', transform: inputText.trim() ? 'scale(1)' : 'scale(0.96)' }}>
+                style={{ width: 38, height: 38, borderRadius: '50%', background: inputText.trim() ? 'linear-gradient(180deg, #8f56ff, #7a3bf2)' : 'rgba(255,255,255,0.07)', border: inputText.trim() ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)', cursor: inputText.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: inputText.trim() ? '#fff' : 'rgba(255,255,255,0.35)', transition: 'all 0.2s', boxShadow: inputText.trim() ? '0 6px 20px rgba(122,59,242,0.35)' : 'none', transform: inputText.trim() ? 'scale(1)' : 'scale(0.96)' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
@@ -2707,7 +2718,7 @@ export default function MessagingPage() {
         {contextMenu && (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setContextMenu(null)} />
-            <div style={{ position: 'fixed', zIndex: 50, background: 'rgba(8,10,20,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: 6, minWidth: 180, boxShadow: '0 8px 32px rgba(0,0,0,0.6)', left: Math.min(contextMenu.x, window.innerWidth - 190), top: Math.min(contextMenu.y, window.innerHeight - 300) }}>
+            <div style={{ position: 'fixed', zIndex: 50, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: 6, minWidth: 190, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', left: Math.min(contextMenu.x, window.innerWidth - 200), top: Math.min(contextMenu.y, window.innerHeight - 300) }}>
               {/* Quick reactions */}
               {!contextMenu.msg.deletedForAll && (
                 <div style={{ display: 'flex', gap: 4, padding: '4px 6px 8px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap' }}>
@@ -2721,16 +2732,16 @@ export default function MessagingPage() {
               )}
               {/* Actions */}
               {[
-                !contextMenu.msg.deletedForAll && { label: '↩ Répondre', fn: () => handleReply(contextMenu.msg) },
-                !contextMenu.msg.deletedForAll && contextMenu.msg.senderId === myId && contextMenu.msg.type === 'text' && { label: '✏️ Éditer', fn: () => handleEditStart(contextMenu.msg) },
-                !contextMenu.msg.deletedForAll && { label: isMessageStarred(myId, activeConvId, contextMenu.msg.id) ? '★ Retirer des importants' : '☆ Marquer important', fn: () => { toggleStarMessage(myId, activeConvId, contextMenu.msg.id); setMessages(getMessages(activeConvId)) } },
-                !contextMenu.msg.deletedForAll && { label: '↗ Transférer', fn: () => handleForward(contextMenu.msg) },
-                !contextMenu.msg.deletedForAll && amAdmin && { label: activeConv?.pinnedMessageId === contextMenu.msg.id ? '📌 Désépingler' : '📌 Épingler', fn: () => handlePin(contextMenu.msg) },
-                !contextMenu.msg.deletedForAll && { label: '🗑 Supprimer pour moi', fn: () => handleDeleteForSelf(contextMenu.msg) },
-                !contextMenu.msg.deletedForAll && contextMenu.msg.senderId === myId && { label: '🗑 Supprimer pour tous', fn: () => handleDeleteForAll(contextMenu.msg) },
+                !contextMenu.msg.deletedForAll && { label: 'Répondre', fn: () => handleReply(contextMenu.msg) },
+                !contextMenu.msg.deletedForAll && contextMenu.msg.senderId === myId && contextMenu.msg.type === 'text' && { label: 'Modifier', fn: () => handleEditStart(contextMenu.msg) },
+                !contextMenu.msg.deletedForAll && { label: isMessageStarred(myId, activeConvId, contextMenu.msg.id) ? 'Retirer des importants' : 'Marquer important', fn: () => { toggleStarMessage(myId, activeConvId, contextMenu.msg.id); setMessages(getMessages(activeConvId)) } },
+                !contextMenu.msg.deletedForAll && { label: 'Transférer', fn: () => handleForward(contextMenu.msg) },
+                !contextMenu.msg.deletedForAll && amAdmin && { label: activeConv?.pinnedMessageId === contextMenu.msg.id ? 'Désépingler' : 'Épingler', fn: () => handlePin(contextMenu.msg) },
+                !contextMenu.msg.deletedForAll && { label: 'Supprimer pour moi', fn: () => handleDeleteForSelf(contextMenu.msg) },
+                !contextMenu.msg.deletedForAll && contextMenu.msg.senderId === myId && { label: 'Supprimer pour tous', fn: () => handleDeleteForAll(contextMenu.msg) },
               ].filter(Boolean).map(item => (
                 <button key={item.label} onClick={() => { item.fn(); setContextMenu(null) }}
-                  style={{ display: 'block', width: '100%', padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer', color: item.label.includes('tous') ? 'rgba(220,100,100,0.9)' : 'rgba(255,255,255,0.8)', fontFamily: T.dmMono, fontSize: 11, textAlign: 'left', borderRadius: 6 }}>
+                  style={{ display: 'block', width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: item.label.includes('tous') ? '#ff9ed2' : 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, textAlign: 'left', borderRadius: 8 }}>
                   {item.label}
                 </button>
               ))}
@@ -2742,7 +2753,7 @@ export default function MessagingPage() {
         {emojiPicker && (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 50 }} onClick={() => setEmojiPicker(null)} />
-            <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 60, background: 'rgba(8,10,20,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px', display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 300 }}>
+            <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '12px', display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 300, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
               {EMOJIS.map(e => (
                 <button key={e} onClick={() => { reactToMessage(activeConvId, emojiPicker.msgId, myId, e); setMessages(getMessages(activeConvId)); setEmojiPicker(null) }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, padding: 4, borderRadius: 6 }}>{e}</button>
@@ -2755,9 +2766,9 @@ export default function MessagingPage() {
         {showPollCreator && (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setShowPollCreator(false)} />
-            <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: 'rgba(4,4,14,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '14px 14px 0 0', padding: '20px 20px 36px' }}>
-              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 99, margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 16px' }}>Créer un sondage</h3>
+            <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '20px 20px 0 0', padding: '20px 20px 36px', boxShadow: '0 -24px 64px rgba(0,0,0,0.55)' }}>
+              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.12)', borderRadius: 99, margin: '0 auto 16px' }} />
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 18, color: '#fff', margin: '0 0 16px' }}>Créer un sondage</h3>
               <input style={{ ...INPUT_S, marginBottom: 10 }} placeholder="Question du sondage…" value={pollQuestion} onChange={e => setPollQuestion(e.target.value)} />
               {pollOptions.map((opt, i) => (
                 <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
@@ -2766,14 +2777,16 @@ export default function MessagingPage() {
                 </div>
               ))}
               {pollOptions.length < 6 && (
-                <button onClick={() => setPollOptions(p => [...p, ''])} style={{ background: 'transparent', border: '1px dashed rgba(255,255,255,0.15)', borderRadius: 6, padding: '8px', cursor: 'pointer', color: T.dim, fontFamily: T.dmMono, fontSize: 10, width: '100%', marginBottom: 14 }}>
+                <button onClick={() => setPollOptions(p => [...p, ''])} style={{ background: 'transparent', border: '1px dashed rgba(255,255,255,0.18)', borderRadius: 10, padding: '9px', cursor: 'pointer', color: T.muted, fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, width: '100%', marginBottom: 14 }}>
                   + Ajouter une option
                 </button>
               )}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setShowPollCreator(false)} style={{ flex: 1, padding: '11px', borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: T.muted, fontFamily: T.dmMono, fontSize: 10 }}>Annuler</button>
+                <button onClick={() => setShowPollCreator(false)} style={{ flex: 1, padding: '12px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Annuler</button>
                 <button onClick={handleSendPoll} disabled={!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2}
-                  style={{ flex: 2, padding: '11px', borderRadius: 6, cursor: 'pointer', background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))', border: '1px solid rgba(78,232,200,0.35)', color: T.teal, fontFamily: T.dmMono, fontSize: 10 }}>
+                  style={{ flex: 2, padding: '12px', borderRadius: 10, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, ...((!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2)
+                    ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed', boxShadow: 'none' }
+                    : { background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }) }}>
                   Envoyer le sondage
                 </button>
               </div>
@@ -2785,20 +2798,22 @@ export default function MessagingPage() {
         {showStoryCreator && (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setShowStoryCreator(false)} />
-            <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: 'rgba(4,4,14,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '14px 14px 0 0', padding: '20px 20px 36px' }}>
-              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 99, margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 16px' }}>Partager un article</h3>
-              {storyImage && <img src={storyImage} alt="" style={{ width: '100%', borderRadius: 8, maxHeight: 160, objectFit: 'cover', marginBottom: 10 }} />}
-              <button onClick={() => storyImgRef.current?.click()} style={{ background: 'transparent', border: '1px dashed rgba(255,255,255,0.15)', borderRadius: 6, padding: '8px', cursor: 'pointer', color: T.dim, fontFamily: T.dmMono, fontSize: 10, width: '100%', marginBottom: 10 }}>
-                {storyImage ? '🖼 Changer l\'image' : '📷 Ajouter une image (optionnel)'}
+            <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '20px 20px 0 0', padding: '20px 20px 36px', boxShadow: '0 -24px 64px rgba(0,0,0,0.55)' }}>
+              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.12)', borderRadius: 99, margin: '0 auto 16px' }} />
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 18, color: '#fff', margin: '0 0 16px' }}>Partager un article</h3>
+              {storyImage && <img src={storyImage} alt="" style={{ width: '100%', borderRadius: 12, maxHeight: 160, objectFit: 'cover', marginBottom: 10 }} />}
+              <button onClick={() => storyImgRef.current?.click()} style={{ background: 'transparent', border: '1px dashed rgba(255,255,255,0.18)', borderRadius: 10, padding: '9px', cursor: 'pointer', color: T.muted, fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, width: '100%', marginBottom: 10 }}>
+                {storyImage ? 'Changer l\'image' : 'Ajouter une image (optionnel)'}
               </button>
               <input ref={storyImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setStoryImage(ev.target.result); r.readAsDataURL(f) }} />
               <input style={{ ...INPUT_S, marginBottom: 8 }} placeholder="Titre de l'article" value={storyTitle} onChange={e => setStoryTitle(e.target.value)} />
               <textarea style={{ ...INPUT_S, resize: 'vertical', minHeight: 60, marginBottom: 14, lineHeight: 1.5 }} placeholder="Contenu (optionnel)" value={storyText} onChange={e => setStoryText(e.target.value)} />
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setShowStoryCreator(false)} style={{ flex: 1, padding: '11px', borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: T.muted, fontFamily: T.dmMono, fontSize: 10 }}>Annuler</button>
+                <button onClick={() => setShowStoryCreator(false)} style={{ flex: 1, padding: '12px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Annuler</button>
                 <button onClick={handleSendStory} disabled={!storyTitle.trim()}
-                  style={{ flex: 2, padding: '11px', borderRadius: 6, cursor: 'pointer', background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))', border: '1px solid rgba(200,169,110,0.35)', color: T.gold, fontFamily: T.dmMono, fontSize: 10, opacity: !storyTitle.trim() ? 0.4 : 1 }}>
+                  style={{ flex: 2, padding: '12px', borderRadius: 10, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, ...(!storyTitle.trim()
+                    ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed', boxShadow: 'none' }
+                    : { background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }) }}>
                   Partager l&apos;article
                 </button>
               </div>
@@ -2815,9 +2830,9 @@ export default function MessagingPage() {
         {showForwardPicker && (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setShowForwardPicker(false)} />
-            <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: 'rgba(4,4,14,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '14px 14px 0 0', padding: '20px 20px 36px', maxHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 99, margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 12px' }}>Transférer vers…</h3>
+            <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '20px 20px 0 0', padding: '20px 20px 36px', maxHeight: '60vh', display: 'flex', flexDirection: 'column', boxShadow: '0 -24px 64px rgba(0,0,0,0.55)' }}>
+              <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.12)', borderRadius: 99, margin: '0 auto 16px' }} />
+              <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 18, color: '#fff', margin: '0 0 12px' }}>Transférer vers…</h3>
               <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {conversations.filter(c => c.id !== activeConvId).map(c => {
                   const d = getConvDisplay(c)
@@ -2825,7 +2840,7 @@ export default function MessagingPage() {
                     <button key={c.id} onClick={() => handleForwardTo(c.id)}
                       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                       {d.isGroup ? <GroupAvatar conv={c} size={36} /> : <Avatar user={d.user} size={36} />}
-                      <p style={{ fontFamily: T.cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0 }}>{d.name}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14.5, color: '#fff', margin: 0 }}>{d.name}</p>
                     </button>
                   )
                 })}
@@ -2838,10 +2853,10 @@ export default function MessagingPage() {
         {confirmDialog && (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={() => setConfirmDialog(null)} />
-            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 60, background: 'rgba(8,10,20,0.98)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: 24, textAlign: 'center', maxWidth: 300, width: '90%' }}>
-              <p style={{ fontFamily: T.cormorant, fontWeight: 300, fontSize: 18, color: '#fff', margin: '0 0 20px' }}>{confirmDialog.label}</p>
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: 24, textAlign: 'center', maxWidth: 300, width: '90%' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15, lineHeight: 1.5, color: 'rgba(255,255,255,0.92)', margin: '0 0 20px' }}>{confirmDialog.label}</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setConfirmDialog(null)} style={{ flex: 1, padding: '10px', borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: T.muted, fontFamily: T.dmMono, fontSize: 10 }}>Annuler</button>
+                <button onClick={() => setConfirmDialog(null)} style={{ flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Annuler</button>
                 <button onClick={() => {
                   if (confirmDialog.action === 'leave') handleLeaveGroup()
                   if (confirmDialog.action === 'delete') handleDeleteGroup()
@@ -2852,11 +2867,11 @@ export default function MessagingPage() {
                   if (confirmDialog.action === 'hide_deleted_conversation') handleHideDeletedConversation()
                   setConfirmDialog(null)
                 }}
-                  style={{ flex: 1, padding: '10px', borderRadius: 6, cursor: 'pointer',
-                    background: confirmDialog.variant === 'safe' ? 'rgba(78,232,200,0.12)' : 'rgba(220,50,50,0.14)',
-                    border: `1px solid ${confirmDialog.variant === 'safe' ? 'rgba(78,232,200,0.40)' : 'rgba(220,50,50,0.40)'}`,
-                    color: confirmDialog.variant === 'safe' ? T.teal : 'rgba(220,100,100,0.9)',
-                    fontFamily: T.dmMono, fontSize: 10 }}>
+                  style={{ flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer',
+                    background: confirmDialog.variant === 'safe' ? '#3ed6b5' : '#c2347f',
+                    border: 'none',
+                    color: confirmDialog.variant === 'safe' ? '#04120e' : '#fff',
+                    fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700 }}>
                   Valider
                 </button>
               </div>
@@ -2866,7 +2881,7 @@ export default function MessagingPage() {
 
         {/* ── Toast ── */}
         {toast && (
-          <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 70, padding: '9px 18px', borderRadius: 6, fontFamily: T.dmMono, fontSize: 10, backdropFilter: 'blur(16px)', ...(toast.type === 'error' ? { background: 'rgba(220,50,50,0.16)', border: '1px solid rgba(220,50,50,0.35)', color: 'rgba(220,100,100,0.95)' } : { background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.35)', color: T.teal }) }}>
+          <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 70, padding: '10px 18px', borderRadius: 12, fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600, color: '#fff', background: 'rgba(12,12,22,0.96)', boxShadow: '0 8px 24px rgba(0,0,0,0.45)', ...(toast.type === 'error' ? { border: '1px solid rgba(224,90,170,0.5)' } : { border: '1px solid rgba(78,232,200,0.5)' }) }}>
             {toast.msg}
           </div>
         )}
@@ -2884,14 +2899,14 @@ export default function MessagingPage() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(0,0,0,0.94)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
           <img src={photoPreview.dataUrl} alt="preview"
             style={{ maxWidth: '88vw', maxHeight: '65vh', borderRadius: 10, objectFit: 'contain' }} />
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em' }}>⏱ EXPIRE DANS 24H — LE DESTINATAIRE PEUT LA TÉLÉCHARGER</span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>Expire dans 24 h — le destinataire peut la télécharger</span>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={() => setPhotoPreview(null)}
-              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', fontFamily: "'DM Mono', monospace", fontSize: 11 }}>
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, padding: '11px 24px', cursor: 'pointer', color: 'rgba(255,255,255,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>
               Annuler
             </button>
             <button onClick={handleSendPhoto}
-              style={{ background: 'rgba(78,232,200,0.15)', border: '1px solid rgba(78,232,200,0.4)', borderRadius: 8, padding: '10px 28px', cursor: 'pointer', color: T.teal, fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: '0.05em' }}>
+              style={{ background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, padding: '11px 28px', cursor: 'pointer', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
               Envoyer
             </button>
           </div>
@@ -2908,8 +2923,8 @@ export default function MessagingPage() {
             style={{ position: 'absolute', top: 16, right: 16, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 36, height: 36, color: '#fff', fontSize: 20, cursor: 'pointer', lineHeight: '36px', textAlign: 'center' }}>×</button>
           <a href={photoViewer.src} download="photo.jpg"
             onClick={e => e.stopPropagation()}
-            style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', letterSpacing: '0.15em' }}>
-            ↓ TÉLÉCHARGER
+            style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
+            Télécharger
           </a>
         </div>
       )}
@@ -2934,7 +2949,7 @@ export default function MessagingPage() {
   function renderDesktopSplit(rightNode) {
     return (
       <Layout>
-        <div style={{ display: 'flex', height: 'calc(100dvh - 120px)', maxWidth: 1180, margin: '8px auto 0', borderRadius: 22, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(8,10,20,0.4)' }}>
+        <div style={{ display: 'flex', height: 'calc(100dvh - 120px)', maxWidth: 1180, margin: '8px auto 0', borderRadius: 22, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0e0f16', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
           <aside style={{ width: 360, flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {renderListPane()}
           </aside>
@@ -2959,7 +2974,7 @@ export default function MessagingPage() {
 // ─── Event Picker Modal ───────────────────────────────────────────────────────
 function EventPickerModal({ onSelectPoll, onClose }) {
   const [search, setSearch] = useState('')
-  const dmMono = "'DM Mono', monospace"
+  const dmMono = "'Inter', system-ui, sans-serif"
   const cormorant = "Inter, sans-serif"
 
   // Load events from all available sources
@@ -2996,14 +3011,14 @@ function EventPickerModal({ onSelectPoll, onClose }) {
   return (
     <>
       <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)' }} onClick={onClose} />
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: 'rgba(4,4,14,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '14px 14px 0 0', padding: '20px 20px 36px', maxHeight: '75vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 99, margin: '0 auto 16px' }} />
-        <h3 style={{ fontFamily: cormorant, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 4px' }}>Envoyer un événement</h3>
-        <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Partager l'info ou proposer une réservation de groupe</p>
-        <input style={{ background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 6, color: 'rgba(255,255,255,0.9)', fontFamily: dmMono, fontSize: 12, padding: '9px 12px', outline: 'none', width: '100%', boxSizing: 'border-box', marginBottom: 12 }} placeholder="Rechercher un événement…" value={search} onChange={e => setSearch(e.target.value)} />
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, zIndex: 60, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '20px 20px 0 0', padding: '20px 20px 36px', maxHeight: '75vh', display: 'flex', flexDirection: 'column', boxShadow: '0 -24px 64px rgba(0,0,0,0.55)' }}>
+        <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.12)', borderRadius: 99, margin: '0 auto 16px' }} />
+        <h3 style={{ fontFamily: cormorant, fontWeight: 700, fontSize: 18, color: '#fff', margin: '0 0 4px' }}>Envoyer un événement</h3>
+        <p style={{ fontFamily: dmMono, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' }}>Partager l'info ou proposer une réservation de groupe</p>
+        <input style={{ background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: 'rgba(255,255,255,0.92)', fontFamily: dmMono, fontSize: 13, padding: '11px 13px', outline: 'none', width: '100%', boxSizing: 'border-box', marginBottom: 12 }} placeholder="Rechercher un événement…" value={search} onChange={e => setSearch(e.target.value)} />
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtered.length === 0 && (
-            <p style={{ fontFamily: dmMono, fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '32px 0', lineHeight: 1.8 }}>
+            <p style={{ fontFamily: dmMono, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '32px 0', lineHeight: 1.8 }}>
               {events.length === 0 ? "Aucun événement disponible.\nAchète un billet ou crée un événement pour pouvoir le partager ici." : "Aucun événement correspondant."}
             </p>
           )}
@@ -3011,19 +3026,19 @@ function EventPickerModal({ onSelectPoll, onClose }) {
             <div key={ev.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, overflow: 'hidden' }}>
               {/* Event header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 6, background: 'linear-gradient(135deg, rgba(200,169,110,0.18), rgba(78,232,200,0.10))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                  {ev.image ? <img src={ev.image} alt={ev.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} /> : '🎟'}
+                <div style={{ width: 44, height: 44, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {ev.image ? <img src={ev.image} alt={ev.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : <IconTicket size={18} color="rgba(255,255,255,0.45)" />}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: cormorant, fontWeight: 400, fontSize: 15, color: '#fff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</p>
-                  <p style={{ fontFamily: dmMono, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{ev.date}{ev.price ? ` · ${fmtMoney(ev.price, eventCurrency(ev))}/pers.` : ''}</p>
+                  <p style={{ fontFamily: cormorant, fontWeight: 600, fontSize: 14.5, color: '#fff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</p>
+                  <p style={{ fontFamily: dmMono, fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: 0 }}>{ev.date}{ev.price ? ` · ${fmtMoney(ev.price, eventCurrency(ev))}/pers.` : ''}</p>
                 </div>
               </div>
               {/* Action button */}
               <div style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <button onClick={() => onSelectPoll(ev)}
-                  style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: dmMono, fontSize: 10, color: 'rgba(78,232,200,0.85)', letterSpacing: '0.04em' }}>
-                  📢 Partager dans la conversation
+                  style={{ flex: 1, padding: '10px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: dmMono, fontSize: 12, fontWeight: 600, color: '#4ee8c8' }}>
+                  Partager dans la conversation
                 </button>
               </div>
             </div>
@@ -3104,8 +3119,8 @@ function CameraCapture({ onClose, onCapture, onFallback }) {
           {!ready && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Activation de la caméra…</div>}
         </div>
         <button onClick={snap} disabled={!ready} className="lib-press"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: 14, borderRadius: 14, background: ready ? 'linear-gradient(135deg,#8b5cf6,#e05aaa)' : 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 15, cursor: ready ? 'pointer' : 'default' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: 14, borderRadius: 12, background: ready ? 'linear-gradient(180deg, #8f56ff, #7a3bf2)' : 'rgba(255,255,255,0.07)', border: ready ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)', color: ready ? '#fff' : 'rgba(255,255,255,0.35)', fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 15, cursor: ready ? 'pointer' : 'not-allowed', boxShadow: ready ? '0 6px 20px rgba(122,59,242,0.35)' : 'none' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           Capturer
         </button>
       </div>

@@ -21,7 +21,6 @@ export default function AmbianceFab({ inline = false, vinylSize = inline ? 128 :
     <style>{`
       @keyframes lbSpin { to { transform:rotate(360deg) } }
       @keyframes lbEq { 0%,100%{ transform:scaleY(.28) } 50%{ transform:scaleY(1) } }
-      @keyframes lbPulse { 0%,100%{ box-shadow:0 8px 30px -8px rgba(224,90,170,.5) } 50%{ box-shadow:0 10px 40px -6px rgba(224,90,170,.8) } }
       @media(min-width:768px){ .lb-amb-fab{ bottom:24px !important } }
     `}</style>
   )
@@ -33,13 +32,13 @@ export default function AmbianceFab({ inline = false, vinylSize = inline ? 128 :
         padding: inline ? '13px 24px' : '11px 18px', borderRadius: 999, cursor: 'pointer',
         fontFamily: FONT, fontSize: inline ? 15 : 13.5, fontWeight: 700, transition: 'all .25s ease',
         color: on ? C.pink : '#fff',
-        background: on ? 'rgba(224,90,170,.14)' : 'linear-gradient(135deg, rgba(139,92,246,.95), rgba(224,90,170,.92))',
+        background: on ? '#1a1220' : 'linear-gradient(135deg, #8b5cf6, #e05aaa)',
         border: `1px solid ${on ? 'rgba(224,90,170,.55)' : 'rgba(255,255,255,.18)'}`,
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        boxShadow: on ? '0 8px 30px -8px rgba(224,90,170,.5)' : '0 8px 30px -8px rgba(139,92,246,.6)',
-        animation: on ? 'none' : 'lbPulse 3.4s ease-in-out infinite',
+        boxShadow: on ? '0 6px 20px rgba(0,0,0,0.4)' : '0 6px 20px rgba(139,92,246,0.35)',
       }}>
-      {on ? <><Equalizer /> Ambiance en cours</> : <><span style={{ fontSize: 15 }}>♪</span> Mettre l'ambiance</>}
+      {on
+        ? <><Equalizer /> Ambiance en cours</>
+        : <><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg> Mettre l'ambiance</>}
     </button>
   )
 
@@ -55,8 +54,8 @@ export default function AmbianceFab({ inline = false, vinylSize = inline ? 128 :
           <Vinyl playing={on} size={vinylSize} />
         </div>
         {button}
-        <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.4)', margin: 0 }}>
-          {on ? 'Ferme les yeux, tu y es déjà.' : 'Mets-toi dans le mood.'}
+        <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.45)', margin: 0 }}>
+          {on ? 'Ferme les yeux, tu y es déjà.' : 'Un avant-goût sonore de tes soirées.'}
         </p>
       </div>
     )
@@ -94,7 +93,7 @@ function Equalizer() {
 
 function Vinyl({ playing, size = 72 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={{ animation: playing ? 'lbSpin 3.4s linear infinite' : 'none', filter: 'drop-shadow(0 10px 26px rgba(224,90,170,.5))' }}>
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ animation: playing ? 'lbSpin 3.4s linear infinite' : 'none', filter: 'drop-shadow(0 10px 26px rgba(0,0,0,0.5))' }}>
       <defs><radialGradient id="lbFabLabel" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#e05aaa" /><stop offset="100%" stopColor="#8b5cf6" /></radialGradient></defs>
       <circle cx="50" cy="50" r="48" fill="#08080f" stroke="rgba(255,255,255,.14)" strokeWidth="0.8" />
       {[42, 36, 30, 24].map(r => <circle key={r} cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="0.6" />)}

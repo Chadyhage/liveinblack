@@ -49,7 +49,7 @@ export default function PublicAbout() {
   return (
     <div style={{
       color: '#fff', overflowX: 'hidden', minHeight: '100vh',
-      background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.28), transparent 60%), radial-gradient(circle 820px at 96% 34%, rgba(78,232,200,.14), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.16), transparent 60%), ${C.obsidian}`,
+      background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.15), transparent 60%), radial-gradient(circle 820px at 96% 34%, rgba(78,232,200,.08), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.08), transparent 60%), ${C.obsidian}`,
       backgroundAttachment: 'fixed',
     }}>
       <style>{`
@@ -57,7 +57,6 @@ export default function PublicAbout() {
         @media(min-width:720px){ .lb-navlink{ display:inline-block } }
         .lb-card{ transition:transform .25s cubic-bezier(.22,.9,.3,1), border-color .25s ease }
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4) }
-        @keyframes lib-flow { from { transform:translateX(-110%); } to { transform:translateX(310%); } }
         @keyframes lib-node-in { from { opacity:.35; transform:translateY(7px); } to { opacity:1; transform:none; } }
         @keyframes lib-tick { 0% { transform:scale(1.28); filter:brightness(1.35); } 100% { transform:scale(1); filter:brightness(1); } }
         .lb-fade-in {
@@ -70,32 +69,31 @@ export default function PublicAbout() {
           transform: translateY(0);
         }
         .lb-tab {
-          font-family: 'Bebas Neue', sans-serif;
-          font-size: 21px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
+          font-family: Inter, sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.02em;
           cursor: pointer;
-          padding: 8px 22px;
+          padding: 10px 20px;
           border-radius: 99px;
           border: 1px solid transparent;
           background: transparent;
-          color: rgba(255,255,255,0.45);
+          color: rgba(255,255,255,0.5);
           transition: all 0.25s ease;
         }
         .lb-tab:hover {
           color: #fff;
         }
-        .lb-journey{position:relative;padding:24px 20px;border-radius:18px;background:linear-gradient(150deg,rgba(255,255,255,.045),rgba(255,255,255,.018));border:1px solid rgba(255,255,255,.09);overflow:hidden;min-height:210px;display:flex;flex-direction:column;justify-content:center}
+        .lb-journey{position:relative;padding:24px 20px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);overflow:hidden;min-height:210px;display:flex;flex-direction:column;justify-content:center}
         .lb-journey-line{position:absolute;left:16%;right:16%;top:82px;height:1px;background:rgba(255,255,255,.12);overflow:hidden}
-        .lb-journey-line:after{content:'';display:block;width:34%;height:100%;background:linear-gradient(90deg,transparent,var(--journey-color),transparent);animation:lib-flow 2.8s linear infinite}
         .lb-journey-steps{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
         .lb-journey-step{text-align:center;min-width:0;transition:opacity .35s ease,transform .35s ease}
-        .lb-journey-dot{width:42px;height:42px;margin:0 auto 13px;border-radius:50%;display:grid;place-items:center;background:#090b13;border:1px solid rgba(255,255,255,.16);font:700 13px 'DM Mono',monospace;transition:all .35s ease}
+        .lb-journey-dot{width:42px;height:42px;margin:0 auto 13px;border-radius:50%;display:grid;place-items:center;background:#090b13;border:1px solid rgba(255,255,255,.16);font:700 13px Inter,sans-serif;transition:all .35s ease}
         .lb-journey-step.active{animation:lib-node-in .4s ease both}
-        .lb-journey-step.active .lb-journey-dot{color:#04040b;background:var(--journey-color);border-color:var(--journey-color);box-shadow:0 0 28px color-mix(in srgb,var(--journey-color) 34%,transparent)}
+        .lb-journey-step.active .lb-journey-dot{color:#04040b;background:var(--journey-color);border-color:var(--journey-color)}
         .lb-journey-step p{font-family:${FONT};font-size:12px;font-weight:700;margin:0;color:rgba(255,255,255,.72)}
-        .lb-journey-step span{display:block;font-family:${FONT};font-size:10.5px;line-height:1.45;color:rgba(255,255,255,.38);margin-top:5px}
-        @media(max-width:560px){.lb-journey{padding:20px 12px;min-height:195px}.lb-journey-line{left:18%;right:18%;top:72px}.lb-journey-dot{width:36px;height:36px}.lb-journey-step p{font-size:11px}.lb-journey-step span{font-size:9.5px}}
+        .lb-journey-step span{display:block;font-family:${FONT};font-size:11px;line-height:1.45;color:rgba(255,255,255,.42);margin-top:5px}
+        @media(max-width:560px){.lb-journey{padding:20px 12px;min-height:195px}.lb-journey-line{left:18%;right:18%;top:72px}.lb-journey-dot{width:36px;height:36px}.lb-journey-step p{font-size:11px}.lb-journey-step span{font-size:10.5px}}
       `}</style>
 
       <PublicNav />
@@ -103,10 +101,10 @@ export default function PublicAbout() {
       {/* ══ HERO ══ */}
       <section style={{ maxWidth: 820, margin: '0 auto', padding: '60px 22px 20px', textAlign: 'center' }}>
         <p style={{ fontFamily: FONT, fontSize: 26, fontWeight: 300, letterSpacing: '.14em', margin: 0 }}>
-          L<span style={{ color: C.pink }}>|</span>VE&nbsp;IN&nbsp;<span style={{ fontStyle: 'italic', fontWeight: 700, background: `linear-gradient(90deg,${C.pink},${C.violet})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>BLACK</span>
+          L<span style={{ color: '#fff' }}>|</span>VE&nbsp;IN&nbsp;<span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700, color: '#fff' }}>BLACK</span>
         </p>
         <h1 style={{ fontFamily: FONT, fontSize: 'clamp(32px,7vw,54px)', fontWeight: 800, letterSpacing: '-1.4px', lineHeight: 1.04, margin: '18px 0 0' }}>
-          Toute la nuit,<br /><span style={{ background: `linear-gradient(90deg,${C.teal},${C.violet},${C.pink})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>au même endroit.</span>
+          Toute la nuit,<br /><span style={{ color: C.teal }}>au même endroit.</span>
         </h1>
         <p style={{ fontFamily: FONT, fontSize: 'clamp(15px,4vw,18px)', color: 'rgba(255,255,255,.65)', margin: '20px auto 0', maxWidth: 600, lineHeight: 1.6 }}>
           Live in Black est la marketplace de la nuit et de l'événementiel. On réunit ceux qui font la fête, ceux qui l'organisent et ceux qui la rendent inoubliable — sur une seule plateforme, simple et sécurisée.
@@ -115,7 +113,7 @@ export default function PublicAbout() {
 
       {/* ══ LA PROMESSE ══ */}
       <ScrollFadeIn>
-        <Section eyebrow="La promesse" title="LIB, quand créer ta soirée devient une partie de plaisir">
+        <Section eyebrow="La promesse" title="La fête, sans les frictions">
           <p style={txt}>
             Trouver la bonne soirée, réserver sans stress, garder son billet dans sa poche, contacter un DJ ou une salle en un message : tout devrait être simple. Live in Black enlève les frictions entre l'envie de sortir et le moment où la musique démarre.
           </p>
@@ -133,10 +131,9 @@ export default function PublicAbout() {
                 onClick={() => setActiveTab(t.id)}
                 className="lb-tab"
                 style={{
-                  color: activeTab === t.id ? '#fff' : 'rgba(255,255,255,0.45)',
+                  color: activeTab === t.id ? '#fff' : 'rgba(255,255,255,0.5)',
                   background: activeTab === t.id ? `${t.color}22` : 'transparent',
-                  border: `1px solid ${activeTab === t.id ? `${t.color}66` : 'rgba(255,255,255,0.06)'}`,
-                  boxShadow: activeTab === t.id ? `0 0 20px ${t.color}12` : 'none'
+                  border: `1px solid ${activeTab === t.id ? `${t.color}66` : 'rgba(255,255,255,0.08)'}`,
                 }}
               >
                 {t.label}
@@ -147,7 +144,7 @@ export default function PublicAbout() {
           {/* Interactive active tab content card */}
           <div className="lb-card" style={{ ...card, padding: '36px 30px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 32, alignItems: 'center', textAlign: 'left', minHeight: 280 }}>
             <div>
-              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: currentTab.color }}>{currentTab.roleName}</span>
+              <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: currentTab.color }}>{currentTab.roleName}</span>
               <h3 style={{ fontFamily: FONT, fontSize: 28, fontWeight: 800, color: '#fff', margin: '6px 0 12px', letterSpacing: '-0.6px' }}>{currentTab.label}</h3>
               <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 24px' }}>{currentTab.d}</p>
               <button onClick={currentTab.fn} style={btnSolid(currentTab.color)}>{currentTab.cta}</button>
@@ -200,12 +197,10 @@ export default function PublicAbout() {
       {/* ══ CTA FINAL ══ */}
       <ScrollFadeIn>
         <section ref={ctaRef} style={{ padding: '20px 22px 70px' }}>
-          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid rgba(255,255,255,.1)', background: `radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.2), transparent 60%), linear-gradient(160deg, rgba(20,14,32,.7), rgba(6,8,15,.7))`, backdropFilter: 'blur(16px)' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid rgba(255,255,255,.1)', background: `radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.14), transparent 60%), #12131c`, boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
             <h2 style={{ fontFamily: FONT, fontSize: 'clamp(26px,6vw,40px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>Prêt à vivre la nuit ?</h2>
             <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 500, lineHeight: 1.5 }}>
-              Crée ton compte et découvre tout ce que Live in Black peut simplifier pour toi en{' '}
-              <span key={seconds} style={{ display: 'inline-block', minWidth: 20, color: seconds <= 5 ? C.pink : C.teal, fontWeight: 900, animation: isCounting && seconds > 0 ? 'lib-tick .35s ease-out' : 'none' }}>{seconds}</span>{' '}
-              secondes.
+              Crée ton compte en moins d'une minute et découvre tout ce que Live in Black peut simplifier pour toi.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
               <button onClick={register} style={btnPrimary}>Créer mon compte</button>
@@ -222,7 +217,7 @@ function Section({ eyebrow, title, children }) {
   return (
     <section style={{ padding: '46px 22px', maxWidth: 1120, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 26 }}>
-        <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: C.teal, margin: 0 }}>{eyebrow}</p>
+        <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: C.teal, margin: 0 }}>{eyebrow}</p>
         <h2 style={{ fontFamily: FONT, fontSize: 'clamp(23px,5.5vw,34px)', fontWeight: 800, letterSpacing: '-.7px', margin: '8px 0 0' }}>{title}</h2>
       </div>
       {children}
@@ -230,11 +225,11 @@ function Section({ eyebrow, title, children }) {
   )
 }
 
-const card = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16 }
+const card = { background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
 const txt = { fontFamily: FONT, fontSize: 'clamp(15px,4vw,18px)', color: 'rgba(255,255,255,.7)', lineHeight: 1.7, textAlign: 'center', maxWidth: 640, margin: '0 auto' }
-const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none' }
-const btnGhost = { padding: '13px 24px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.18)' }
-const btnSolid = (c) => ({ padding: '11px 18px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: C.obsidian, background: c, border: 'none' })
+const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: '#04120e', background: '#3ed6b5', border: 'none', boxShadow: '0 6px 20px rgba(62,214,181,.25)' }
+const btnGhost = { padding: '13px 24px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.18)' }
+const btnSolid = (c) => ({ padding: '12px 18px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: c === C.violet ? '#fff' : '#04120e', background: c === C.violet ? 'linear-gradient(180deg, #8f56ff, #7a3bf2)' : c, border: '1px solid rgba(255,255,255,.14)', boxShadow: c === C.violet ? '0 6px 20px rgba(122,59,242,.35)' : 'none' })
 
 function ScrollFadeIn({ children, delay = 0 }) {
   const ref = useRef(null)

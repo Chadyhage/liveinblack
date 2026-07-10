@@ -46,7 +46,7 @@ export default function PublicNav() {
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45, pointerEvents: 'none' }}>
         <source src="/nav-ambience.mp4" type="video/mp4" />
       </video>
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(4,4,11,.85) 0%, rgba(4,4,11,.45) 45%, rgba(4,4,11,.86) 100%)', backdropFilter: 'blur(1.5px)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(4,4,11,.93) 0%, rgba(4,4,11,.88) 45%, rgba(4,4,11,.93) 100%)', backdropFilter: 'blur(8px)' }} />
 
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '9px 18px' }}>
         <div className="lb-pubnav-logo"><AnimatedLogo size={26} textScale={0.44} onClick={() => navigate('/accueil')} /></div>
@@ -68,8 +68,7 @@ export default function PublicNav() {
                   position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)',
                   height: 2, borderRadius: 2, transition: 'width .28s cubic-bezier(.22,.9,.3,1)',
                   width: active ? '62%' : 0,
-                  background: 'linear-gradient(90deg, rgba(52,211,153,.4), #34d399, rgba(52,211,153,.4))',
-                  boxShadow: '0 0 10px rgba(52,211,153,.7)',
+                  background: '#34d399',
                 }} />
               </button>
             )
@@ -82,13 +81,13 @@ export default function PublicNav() {
               <button className="lb-pubnav-cta" onClick={() => navigate('/connexion?mode=register')} style={ctaBtn}>Créer un compte</button>
             </>
           )}
-          <button onClick={() => navigate('/recherche')} aria-label="Recherche globale" style={{width:35,height:35,borderRadius:'50%',background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.1)',color:'rgba(255,255,255,.65)',display:'grid',placeItems:'center',cursor:'pointer'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
-          <button className="lb-pubnav-menu" aria-label="Ouvrir le menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(v => !v)} style={{width:38,height:38,alignItems:'center',justifyContent:'center',background:'rgba(4,4,11,.55)',border:'1px solid rgba(255,255,255,.14)',color:'#fff',borderRadius:4,cursor:'pointer',fontSize:20}}>☰</button>
+          <button onClick={() => navigate('/recherche')} aria-label="Recherche globale" style={{width:35,height:35,borderRadius:'50%',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.14)',color:'rgba(255,255,255,.75)',display:'grid',placeItems:'center',cursor:'pointer'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
+          <button className="lb-pubnav-menu" aria-label="Ouvrir le menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(v => !v)} style={{width:38,height:38,alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.14)',color:'#fff',borderRadius:10,cursor:'pointer'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
         </div>
       </div>
-      {mobileOpen && <div className="lb-pubnav-mobile" style={{position:'relative',flexDirection:'column',gap:3,padding:'8px 14px 16px',background:'rgba(4,4,11,.94)',borderTop:'1px solid rgba(255,255,255,.08)'}}>{LINKS.map(([label,path], index)=><button key={`${label}-${index}`} onClick={()=>{navigate(path);setMobileOpen(false)}} style={{padding:'11px 12px',background:isActive(path)?'rgba(78,232,200,.08)':'none',border:0,borderLeft:`2px solid ${isActive(path)?C.teal:'transparent'}`,color:isActive(path)?C.teal:'rgba(255,255,255,.68)',textAlign:'left',fontFamily:'DM Mono, monospace',fontSize:10,letterSpacing:'.1em',textTransform:'uppercase',cursor:'pointer'}}>{label}</button>)}</div>}
+      {mobileOpen && <div className="lb-pubnav-mobile" style={{position:'relative',flexDirection:'column',gap:3,padding:'8px 14px 16px',background:'#0a0b12',borderTop:'1px solid rgba(255,255,255,.08)',boxShadow:'0 24px 64px rgba(0,0,0,.55)'}}>{LINKS.map(([label,path], index)=><button key={`${label}-${index}`} onClick={()=>{navigate(path);setMobileOpen(false)}} style={{padding:'12px 12px',background:isActive(path)?'rgba(78,232,200,.08)':'none',border:0,borderLeft:`2px solid ${isActive(path)?C.teal:'transparent'}`,color:isActive(path)?C.teal:'rgba(255,255,255,.75)',textAlign:'left',fontFamily:FONT,fontSize:13,fontWeight:600,cursor:'pointer'}}>{label}</button>)}</div>}
     </nav>
   )
 }
 
-const ctaBtn = { padding: '8px 15px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none', whiteSpace: 'nowrap' }
+const ctaBtn = { padding: '9px 16px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: '#04120e', background: '#3ed6b5', border: 'none', whiteSpace: 'nowrap' }

@@ -26,13 +26,14 @@ const PURPLE = '#8b5cf6'
 
 const S = {
   page:    { position: 'relative', zIndex: 1, padding: '32px 18px 16px', maxWidth: 600, margin: '0 auto' },
-  card:    { background: 'rgba(10,12,22,0.6)', backdropFilter: 'blur(24px) saturate(1.4)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '28px 26px', boxShadow: '0 24px 64px rgba(0,0,0,0.38)' },
+  card:    { background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: '28px 26px', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' },
   label:   { fontFamily: DM, fontSize: 13, fontWeight: 600, letterSpacing: '0.01em', color: 'rgba(255,255,255,0.62)', display: 'block', marginBottom: 8, overflowWrap: 'break-word', wordBreak: 'break-word' },
-  input:   { width: '100%', background: 'rgba(6,8,16,0.85)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 13, fontFamily: DM, fontSize: 15.5, color: '#fff', padding: '15px 16px', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' },
-  select:  { width: '100%', background: 'rgba(6,8,16,0.85)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 13, fontFamily: DM, fontSize: 15.5, color: '#fff', padding: '15px 16px', outline: 'none', boxSizing: 'border-box', appearance: 'none' },
-  section: { fontFamily: DM, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 22, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.08)', overflowWrap: 'break-word', wordBreak: 'break-word' },
-  btnGold: { width: '100%', padding: '17px', background: 'linear-gradient(135deg,rgba(200,169,110,0.26),rgba(200,169,110,0.08))', border: '1px solid rgba(200,169,110,0.5)', borderRadius: 14, fontFamily: DM, fontSize: 15, fontWeight: 700, letterSpacing: '0.01em', color: GOLD, cursor: 'pointer' },
-  btnGhost:{ width: '100%', padding: '17px', background: 'transparent', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 14, fontFamily: DM, fontSize: 15, fontWeight: 600, letterSpacing: '0.01em', color: 'rgba(255,255,255,0.55)', cursor: 'pointer' },
+  input:   { width: '100%', background: '#0b0c12', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, fontFamily: DM, fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.92)', padding: '13px 14px', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' },
+  select:  { width: '100%', background: '#0b0c12', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, fontFamily: DM, fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.92)', padding: '13px 14px', outline: 'none', boxSizing: 'border-box', appearance: 'none' },
+  section: { fontFamily: DM, fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 22, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.08)', overflowWrap: 'break-word', wordBreak: 'break-word' },
+  btnGold: { width: '100%', padding: '15px 20px', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 12, fontFamily: DM, fontSize: 15, fontWeight: 700, letterSpacing: '0.01em', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' },
+  btnGhost:{ width: '100%', padding: '15px 20px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 12, fontFamily: DM, fontSize: 14, fontWeight: 600, letterSpacing: '0.01em', color: 'rgba(255,255,255,0.9)', cursor: 'pointer' },
+  btnDisabled: { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)', cursor: 'not-allowed', boxShadow: 'none' },
   error:   { fontFamily: DM, fontSize: 12, color: '#e05aaa', letterSpacing: '0.01em', marginTop: 6 },
 }
 
@@ -46,9 +47,9 @@ function PhoneInput({ codeField, numberField, formState, onUpdate, inputStyle, e
         onChange={e => onUpdate(codeField, e.target.value)}
         style={{
           flexShrink: 0, width: 115,
-          background: 'rgba(6,8,16,0.7)',
-          border: `1px solid ${error ? '#e05aaa' : 'rgba(255,255,255,0.10)'}`,
-          borderRadius: 4, fontFamily: DM, fontSize: 12,
+          background: '#0b0c12',
+          border: `1px solid ${error ? '#e05aaa' : 'rgba(255,255,255,0.12)'}`,
+          borderRadius: 10, fontFamily: DM, fontSize: 13, fontWeight: 500,
           color: 'rgba(255,255,255,0.9)', padding: '10px 8px',
           outline: 'none', appearance: 'none', cursor: 'pointer',
         }}>
@@ -77,7 +78,7 @@ const FLEXIBLE_TYPES = PROVIDER_CATEGORIES.map(category => ({
 const STEPS = [
   { label: 'Compte' },
   { label: 'Activités' },
-  { label: 'Spécifique' },
+  { label: 'Détails' },
   { label: 'Fonctionnement' },
   { label: 'Documents' },
   { label: 'Finaliser' },
@@ -126,7 +127,7 @@ function Toggle({ value, onChange, label }) {
       <div style={{ width: 36, height: 20, borderRadius: 99, position: 'relative', transition: 'background 0.2s', background: value ? 'rgba(78,232,200,0.6)' : 'rgba(255,255,255,0.1)', border: `1px solid ${value ? '#4ee8c8' : 'rgba(255,255,255,0.12)'}` }}>
         <div style={{ position: 'absolute', top: 2, left: value ? 18 : 2, width: 14, height: 14, borderRadius: '50%', background: value ? '#4ee8c8' : 'rgba(255,255,255,0.4)', transition: 'left 0.2s' }} />
       </div>
-      <span style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>{label}</span>
+      <span style={{ fontFamily: DM, fontSize: 12.5, fontWeight: 500, color: 'rgba(255,255,255,0.65)' }}>{label}</span>
     </button>
   )
 }
@@ -151,8 +152,8 @@ function hydrateProviderForm(previous, incoming = {}) {
 // ── TarifBlock ────────────────────────────────────────────────────────────────
 function TarifBlock({ f, update }) {
   return (
-    <div style={{ marginTop: 8, padding: '14px', background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.14)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <p style={{ fontFamily: DM, fontSize: 8, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(139,92,246,0.6)', margin: 0 }}>
+    <div style={{ marginTop: 8, padding: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${PURPLE}`, borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <p style={{ fontFamily: DM, fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', margin: 0 }}>
         Tarifs indicatifs
       </p>
       <Toggle value={f.tarifDevis} onChange={v => update('tarifDevis', v)} label="Sur devis uniquement" />
@@ -188,7 +189,7 @@ function TarifBlock({ f, update }) {
           </div>
           <Field label="Type de tarification">
             <select style={S.select} value={f.tarifType} onChange={e => update('tarifType', e.target.value)}>
-              <option value="">Choisir...</option>
+              <option value="">Choisir…</option>
               <option value="soiree">Par soirée / événement</option>
               <option value="heure">Par heure</option>
               <option value="journee">Par journée</option>
@@ -198,8 +199,8 @@ function TarifBlock({ f, update }) {
           </Field>
         </>
       )}
-      <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: 0, letterSpacing: '0.04em', lineHeight: 1.6 }}>
-        Ces tarifs sont indicatifs et seront affichés sur ton profil
+      <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
+        Ces tarifs sont indicatifs et seront affichés sur ton profil.
       </p>
     </div>
   )
@@ -227,12 +228,12 @@ function RegionPicker({ value = [], onChange }) {
         const sel = value.includes(r.id)
         return (
           <button key={r.id} type="button" onClick={() => toggle(r.id)} style={{
-            padding: '6px 14px', borderRadius: 20,
-            border: `1px solid ${sel ? '#4ee8c8' : 'rgba(255,255,255,0.12)'}`,
-            background: sel ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
-            color: sel ? '#4ee8c8' : 'rgba(255,255,255,0.4)',
-            fontFamily: "Inter, sans-serif", fontSize: 11,
-            cursor: 'pointer', letterSpacing: '0.03em', transition: 'all 0.15s',
+            padding: '7px 14px', borderRadius: 20,
+            border: `1px solid ${sel ? '#4ee8c8' : 'rgba(255,255,255,0.14)'}`,
+            background: sel ? 'rgba(78,232,200,0.14)' : 'rgba(255,255,255,0.06)',
+            color: sel ? '#4ee8c8' : 'rgba(255,255,255,0.6)',
+            fontFamily: "Inter, sans-serif", fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', letterSpacing: '0.02em', transition: 'all 0.15s',
           }}>
             {r.flag} {r.name}
           </button>
@@ -596,7 +597,7 @@ export default function OnboardingPrestataire() {
       showToast(
         notAuth
           ? 'Session expirée — clique sur « Recommencer une nouvelle demande » en haut pour repartir à zéro.'
-          : 'Erreur lors de l\'ajout',
+          : 'L\'ajout du fichier a échoué. Réessaie.',
         'error'
       )
     }
@@ -638,7 +639,7 @@ export default function OnboardingPrestataire() {
       }
       if (failedDocs.length > 0) {
         setSubmitting(false)
-        showToast(`Retire et rajoute ces fichiers : ${failedDocs.join(', ')}`, 'error')
+        showToast(`Retire puis ajoute à nouveau ces fichiers : ${failedDocs.join(', ')}`, 'error')
         return
       }
 
@@ -689,11 +690,11 @@ export default function OnboardingPrestataire() {
         localStorage.removeItem(ANON_DRAFT_KEY)
         setSuccessScreen(true)
       } else {
-        showToast('Dossier soumis !')
+        showToast('Dossier envoyé')
         setTimeout(() => navigate('/mon-dossier'), 1500)
       }
     } catch {
-      showToast('Erreur lors de la soumission', 'error')
+      showToast("L'envoi du dossier a échoué. Réessaie.", 'error')
     } finally {
       setSubmitting(false)
     }
@@ -710,17 +711,17 @@ export default function OnboardingPrestataire() {
             <div style={{ width: 68, height: 68, borderRadius: '50%', margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)' }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <h2 style={{ fontFamily: CG, fontWeight: 300, fontSize: '2rem', color: 'rgba(255,255,255,0.92)', margin: '0 0 16px' }}>
-              Demande envoyée !
+            <h2 style={{ fontFamily: CG, fontWeight: 700, fontSize: 24, color: 'rgba(255,255,255,0.93)', margin: '0 0 16px' }}>
+              Demande envoyée
             </h2>
-            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.8, marginBottom: 8 }}>
+            <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: 8 }}>
               Ton dossier a été transmis à l'équipe LIVEINBLACK.
             </p>
-            <p style={{ fontFamily: DM, fontSize: 12, color: GOLD, lineHeight: 1.8, marginBottom: 32 }}>
+            <p style={{ fontFamily: DM, fontSize: 14, color: GOLD, lineHeight: 1.7, marginBottom: 24 }}>
               Tu seras contacté à <strong>{regEmail}</strong> une fois ton compte validé.
             </p>
-            <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.7, marginBottom: 32 }}>
-              La validation prend généralement moins de 24h. Tu recevras un email dès que ton espace est activé.
+            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, marginBottom: 32 }}>
+              La validation prend généralement moins de 24 h. Tu recevras un email dès que ton espace est activé.
             </p>
             <button onClick={() => navigate('/accueil')} style={{ ...S.btnGold, maxWidth: 240, margin: '0 auto' }}>
               Retour à l'accueil
@@ -752,12 +753,12 @@ export default function OnboardingPrestataire() {
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <span style={{ width: 28, height: 2, borderRadius: 2, background: PURPLE, flexShrink: 0, display: 'block' }} />
-            <span style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: PURPLE }}>
+            <span style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: PURPLE }}>
               Demande d'espace
             </span>
           </div>
           <h1 style={{ fontFamily: CG, fontWeight: 800, fontSize: 'clamp(2rem,8vw,3rem)', letterSpacing: '-1px', color: '#fff', margin: 0, lineHeight: 1.05 }}>
-            Compte Prestataire
+            Compte prestataire
           </h1>
           <p style={{ fontFamily: DM, fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 10, lineHeight: 1.6 }}>
             Crée ton compte et envoie ton dossier — c'est gratuit. Une fois validé, tu actives ton abonnement pour être visible.
@@ -771,7 +772,7 @@ export default function OnboardingPrestataire() {
                   window.location.reload()
                 }
               }}
-              style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: DM, fontSize: 10, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.35)', textDecoration: 'underline' }}
+              style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: DM, fontSize: 12, letterSpacing: '0.02em', color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}
             >
               Recommencer une nouvelle demande
             </button>
@@ -780,11 +781,11 @@ export default function OnboardingPrestataire() {
 
         {/* Rappel transparent du parcours — inscription gratuite, abonnement APRÈS validation */}
         {step < LAST_STEP && (
-          <div style={{ marginBottom: 24, padding: '14px 16px', background: 'rgba(200,169,110,0.06)', border: `1px solid ${GOLD}33`, borderRadius: 12 }}>
+          <div style={{ marginBottom: 24, padding: '14px 16px', background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `3px solid ${GOLD}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
             <p style={{ fontFamily: DM, fontSize: 13.5, color: '#fff', margin: 0, fontWeight: 600 }}>
               Inscription <span style={{ color: GOLD }}>gratuite</span> · abonnement seulement une fois validé
             </p>
-            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '5px 0 0', lineHeight: 1.55 }}>
+            <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: '5px 0 0', lineHeight: 1.55 }}>
               1. Crée ton compte · 2. Remplis ton dossier · 3. <span style={{ color: 'rgba(255,255,255,0.72)' }}>Envoie-le (gratuit)</span> · 4. On valide → tu actives ton abonnement pour être visible. Aucune commission sur tes prestations.
             </p>
           </div>
@@ -804,18 +805,18 @@ export default function OnboardingPrestataire() {
                   <div style={{
                     width: 36, height: 36, borderRadius: '50%', fontSize: 14, fontFamily: DM, fontWeight: 600,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: active ? typeColor : done ? '#4ee8c8' : 'rgba(255,255,255,0.35)',
-                    background: active ? `${typeColor}22` : done ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
+                    color: active ? typeColor : done ? '#4ee8c8' : 'rgba(255,255,255,0.4)',
+                    background: active ? `${typeColor}22` : done ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.05)',
                     border: active ? `1px solid ${typeColor}90` : done ? '1px solid rgba(78,232,200,0.45)' : '1px solid rgba(255,255,255,0.10)',
-                    transition: 'all 0.25s', boxShadow: active ? `0 0 0 4px ${typeColor}14` : 'none',
+                    transition: 'all 0.25s',
                   }}>
                     {done ? (
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                     ) : i + 1}
                   </div>
                   <span style={{
-                    fontFamily: DM, fontSize: 8.5, letterSpacing: '0.04em',
-                    color: active ? typeColor : done ? 'rgba(78,232,200,0.8)' : 'rgba(255,255,255,0.3)',
+                    fontFamily: DM, fontSize: 10, fontWeight: 600, letterSpacing: '0.02em',
+                    color: active ? typeColor : done ? 'rgba(78,232,200,0.85)' : 'rgba(255,255,255,0.45)',
                     textAlign: 'center', whiteSpace: 'nowrap',
                   }}>
                     {s.label}
@@ -825,17 +826,17 @@ export default function OnboardingPrestataire() {
             })}
           </div>
           <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(to right,${typeColor},${typeColor}66)`, width: `${(step / (STEPS.length - 1)) * 100}%`, transition: 'width 0.4s' }} />
+            <div style={{ height: '100%', borderRadius: 99, background: typeColor, width: `${(step / (STEPS.length - 1)) * 100}%`, transition: 'width 0.4s' }} />
           </div>
         </div>
 
         {/* ── STEP 1: Activités du prestataire (facultatives et modifiables) ── */}
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontFamily: DM, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>
+            <p style={{ fontFamily: DM, fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.93)', marginBottom: 2 }}>
               Quelles activités proposes-tu ?
             </p>
-            <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, margin: '0 0 8px' }}>
+            <p style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 8px' }}>
               Choisis une ou plusieurs catégories. Tu pourras les modifier plus tard depuis ton espace, ou continuer sans choisir pour le moment.
             </p>
             <div className="lib-provider-type-grid">
@@ -844,8 +845,9 @@ export default function OnboardingPrestataire() {
               return (
                 <button type="button" key={t.key} onClick={() => toggleProviderType(t.key)} className="lib-onb-card" style={{
                   padding: '14px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
-                  background: sel ? t.color + '14' : 'rgba(255,255,255,0.025)',
+                  background: sel ? `linear-gradient(0deg, ${t.color}14, ${t.color}14), #0e0f16` : '#0e0f16',
                   border: sel ? `1px solid ${t.color}66` : '1px solid rgba(255,255,255,0.09)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                   display: 'flex', alignItems: 'center', gap: 15, transition: 'all 0.2s',
                 }}>
                   <span style={{
@@ -857,7 +859,7 @@ export default function OnboardingPrestataire() {
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontFamily: DM, fontSize: 14, fontWeight: 700, letterSpacing: '-0.2px', color: '#fff', margin: '0 0 3px' }}>{t.label}</p>
-                    <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.4 }}>{t.desc}</p>
+                    <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.4 }}>{t.desc}</p>
                   </div>
                   {sel
                     ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
@@ -866,8 +868,8 @@ export default function OnboardingPrestataire() {
               )
             })}
             </div>
-            <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(78,232,200,0.18)', background: 'rgba(78,232,200,0.04)' }}>
-              <p style={{ fontFamily: DM, fontSize: 10.5, color: 'rgba(78,232,200,0.7)', margin: 0, lineHeight: 1.6 }}>
+            <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', borderLeft: '3px solid #4ee8c8', background: 'rgba(255,255,255,0.04)' }}>
+              <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
                 {selectedTypes.length
                   ? `${selectedTypes.length} activité${selectedTypes.length > 1 ? 's' : ''} sélectionnée${selectedTypes.length > 1 ? 's' : ''}. La première devient ta catégorie principale.`
                   : 'Aucune catégorie choisie : ton profil sera classé provisoirement dans « Autres services ».'}
@@ -965,7 +967,7 @@ export default function OnboardingPrestataire() {
                   />
                   {errors.nomScene
                     ? <p style={S.error}>{errors.nomScene}</p>
-                    : <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
+                    : <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '5px 0 0' }}>
                         C'est ton nom affiché sur la plateforme. Laisse vide pour afficher Prénom Nom.
                       </p>
                   }
@@ -1001,7 +1003,7 @@ export default function OnboardingPrestataire() {
                 {errors.siret
                   ? <p style={S.error}>{errors.siret}</p>
                   : selectedTypes.includes('artiste') && (
-                    <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.2)', margin: '5px 0 0', letterSpacing: '0.04em' }}>
+                    <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '5px 0 0' }}>
                       Optionnel — indique ton statut de facturation à l'étape suivante
                     </p>
                   )
@@ -1015,8 +1017,8 @@ export default function OnboardingPrestataire() {
             <div style={{ display: 'none', flexDirection: 'column', gap: 12 }}>
               <Field label="Zones d'intervention">
                 <RegionPicker value={Array.isArray(f.zonesIntervention) ? f.zonesIntervention : []} onChange={v => update('zonesIntervention', v)} />
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: '8px 0 0', letterSpacing: '0.04em' }}>
-                  Sélectionne les pays / zones où tu es disponible
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '8px 0 0' }}>
+                  Sélectionne les pays et zones où tu es disponible
                 </p>
               </Field>
               <Field label="Description courte">
@@ -1031,7 +1033,7 @@ export default function OnboardingPrestataire() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                   Identifiants de connexion
                 </p>
-                <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '-4px 0 8px' }}>
+                <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '-4px 0 8px' }}>
                   Ton email servira à te connecter une fois ton dossier validé.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -1048,14 +1050,16 @@ export default function OnboardingPrestataire() {
                       {errors.regEmail && <p style={S.error}>{errors.regEmail}</p>}
                       {errors.emailExists && (
                         <button type="button" onClick={() => navigate('/connexion')} style={{
-                          marginTop: 8, padding: '9px 14px', width: '100%', cursor: 'pointer',
-                          background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
-                          border: '1px solid rgba(78,232,200,0.4)', borderRadius: 6,
-                          fontFamily: DM, fontSize: 11, letterSpacing: '0.05em', color: '#4ee8c8',
-                        }}>Se connecter à ce compte →</button>
+                          marginTop: 8, padding: '12px 14px', width: '100%', cursor: 'pointer',
+                          background: '#3ed6b5', border: 'none', borderRadius: 10,
+                          fontFamily: DM, fontSize: 13, fontWeight: 700, color: '#04120e',
+                        }}>Se connecter à ce compte</button>
                       )}
                       {anonUidRef.current && (
-                        <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.6)', marginTop: 4 }}>✓ Compte créé — email verrouillé</p>
+                        <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(78,232,200,0.85)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
+                          Compte créé — cet email ne peut plus être modifié
+                        </p>
                       )}
                     </Field>
                   </div>
@@ -1070,7 +1074,7 @@ export default function OnboardingPrestataire() {
                             onChange={e => setRegPassword(e.target.value)}
                             placeholder="8 caractères, 1 majuscule"
                           />
-                          <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
+                          <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: DM, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.02em' }}>
                             {showPwd ? 'Cacher' : 'Voir'}
                           </button>
                         </div>
@@ -1104,7 +1108,7 @@ export default function OnboardingPrestataire() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <Field label="Type d'artiste" required>
                   <select style={S.select} value={f.typeArtiste} onChange={e => update('typeArtiste', e.target.value)}>
-                    <option value="">Choisir...</option>
+                    <option value="">Choisir…</option>
                     <option value="dj">DJ</option>
                     <option value="musicien_live">Musicien live / Band</option>
                     <option value="danseur">Danseur / Danseuse</option>
@@ -1121,7 +1125,7 @@ export default function OnboardingPrestataire() {
                 </Field>
                 <Field label="Années d'expérience">
                   <select style={S.select} value={f.anneesExperience} onChange={e => update('anneesExperience', e.target.value)}>
-                    <option value="">Choisir...</option>
+                    <option value="">Choisir…</option>
                     <option value="moins_1">Moins d'1 an</option>
                     <option value="1_3">1–3 ans</option>
                     <option value="3_5">3–5 ans</option>
@@ -1137,7 +1141,7 @@ export default function OnboardingPrestataire() {
                 </Field>
                 <Field label="Statut de facturation">
                   <select style={S.select} value={f.statutFacturation} onChange={e => update('statutFacturation', e.target.value)}>
-                    <option value="">Choisir...</option>
+                    <option value="">Choisir…</option>
                     <option value="auto_entrepreneur">Auto-entrepreneur</option>
                     <option value="artiste_auteur">Artiste-Auteur (Agessa / MDA)</option>
                     <option value="salarie_intermittent">Salarié / Intermittent</option>
@@ -1162,7 +1166,7 @@ export default function OnboardingPrestataire() {
                 </Field>
                 <Field label="Type de lieu">
                   <select style={S.select} value={f.typeLieu} onChange={e => update('typeLieu', e.target.value)}>
-                    <option value="">Choisir...</option>
+                    <option value="">Choisir…</option>
                     <option value="salle_reception">Salle de réception</option>
                     <option value="loft">Loft / Espace atypique</option>
                     <option value="rooftop">Rooftop / Terrasse</option>
@@ -1196,8 +1200,8 @@ export default function OnboardingPrestataire() {
                 </Field>
                 <Field label="Zones de livraison / installation">
                   <RegionPicker value={Array.isArray(f.zonesIntervention) ? f.zonesIntervention : []} onChange={v => update('zonesIntervention', v)} />
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 9, color: 'rgba(255,255,255,0.22)', margin: '8px 0 0', letterSpacing: '0.04em' }}>
-                    Sélectionne les zones où tu livres / installes ton matériel
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '8px 0 0' }}>
+                    Sélectionne les zones où tu livres et installes ton matériel
                   </p>
                 </Field>
                 <Field label="Conditions de location">
@@ -1214,7 +1218,7 @@ export default function OnboardingPrestataire() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <Field label="Type d'activité">
                   <select style={S.select} value={f.typeActiviteFood} onChange={e => update('typeActiviteFood', e.target.value)}>
-                    <option value="">Choisir...</option>
+                    <option value="">Choisir…</option>
                     <option value="traiteur">Traiteur événementiel</option>
                     <option value="boissons">Bar / Boissons</option>
                     <option value="cocktail">Bar à cocktails</option>
@@ -1229,8 +1233,8 @@ export default function OnboardingPrestataire() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <Toggle value={f.alcoolFood} onChange={v => update('alcoolFood', v)} label="Alcool proposé" />
                   {f.alcoolFood && (
-                    <div style={{ marginTop: 6, marginLeft: 46, padding: '12px 14px', background: 'rgba(200,169,110,0.05)', border: `1px solid ${errors.alcoolFoodAtteste ? '#e05aaa' : 'rgba(200,169,110,0.22)'}`, borderRadius: 8 }}>
-                      <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                    <div style={{ marginTop: 6, marginLeft: 46, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: `1px solid ${errors.alcoolFoodAtteste ? '#e05aaa' : 'rgba(255,255,255,0.07)'}`, borderLeft: `3px solid ${errors.alcoolFoodAtteste ? '#e05aaa' : GOLD}`, borderRadius: 12 }}>
+                      <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: '0 0 10px' }}>
                         La vente d'alcool est soumise à la réglementation de ton pays (licence, autorisations, âge légal). Cette responsabilité t'incombe entièrement — LIVEINBLACK n'est pas responsable de la conformité de ton activité.
                       </p>
                       <div
@@ -1249,12 +1253,12 @@ export default function OnboardingPrestataire() {
                             </svg>
                           )}
                         </div>
-                        <span style={{ fontFamily: DM, fontSize: 10.5, color: f.alcoolFoodAtteste ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                        <span style={{ fontFamily: DM, fontSize: 12.5, color: f.alcoolFoodAtteste ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
                           J'atteste respecter la réglementation locale sur la vente d'alcool et en assumer l'entière responsabilité.
                         </span>
                       </div>
                       {errors.alcoolFoodAtteste && <p style={{ ...S.error, margin: '6px 0 0 28px' }}>{errors.alcoolFoodAtteste}</p>}
-                      <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '8px 0 0 28px', letterSpacing: '0.04em' }}>
+                      <p style={{ fontFamily: DM, fontSize: 11.5, color: 'rgba(255,255,255,0.45)', margin: '8px 0 0 28px' }}>
                         Facultatif : tu pourras joindre un justificatif à l'étape Documents si tu en as un.
                       </p>
                     </div>
@@ -1274,10 +1278,10 @@ export default function OnboardingPrestataire() {
             <p style={S.section}>Comment ça fonctionne</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={{ fontFamily: CG, fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+              <p style={{ fontFamily: CG, fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>
                 Une vitrine, un catalogue, une messagerie
               </p>
-              <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.8, margin: 0 }}>
+              <p style={{ fontFamily: DM, fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: 0 }}>
                 LIVE IN BLACK te rend visible auprès des clients et des organisateurs. Ils consultent ta page puis te contactent directement dans la messagerie.
               </p>
             </div>
@@ -1302,19 +1306,19 @@ export default function OnboardingPrestataire() {
                 color: PURPLE,
               },
             ].map(s => (
-              <div key={s.num} style={{ display: 'flex', gap: 14, padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
-                <div style={{ fontFamily: DM, fontSize: 20, fontWeight: 700, color: s.color, opacity: 0.5, flexShrink: 0, lineHeight: 1, paddingTop: 2 }}>
+              <div key={s.num} style={{ display: 'flex', gap: 14, padding: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }}>
+                <div style={{ fontFamily: DM, fontSize: 20, fontWeight: 700, color: s.color, opacity: 0.8, flexShrink: 0, lineHeight: 1, paddingTop: 2 }}>
                   {s.num}
                 </div>
                 <div>
-                  <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.85)', margin: '0 0 5px', letterSpacing: '0.05em' }}>{s.title}</p>
-                  <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.32)', margin: 0, lineHeight: 1.7 }}>{s.desc}</p>
+                  <p style={{ fontFamily: DM, fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)', margin: '0 0 5px' }}>{s.title}</p>
+                  <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>{s.desc}</p>
                 </div>
               </div>
             ))}
 
-            <div style={{ padding: '10px 14px', background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.12)', borderRadius: 6 }}>
-              <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(78,232,200,0.55)', letterSpacing: '0.06em', margin: 0, lineHeight: 1.7 }}>
+            <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: '3px solid #4ee8c8', borderRadius: 12 }}>
+              <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.7 }}>
                 LIVE IN BLACK ne collecte pas le paiement de tes prestations et ne prélève aucune commission dessus. La facturation et le règlement restent entre toi et ton client.
               </p>
             </div>
@@ -1325,7 +1329,7 @@ export default function OnboardingPrestataire() {
         {step === 4 && (
           <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={S.section}>Documents justificatifs</p>
-            <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: 0 }}>
               Ajoute les documents requis pour ta catégorie. Ils sont stockés de façon privée et accessibles uniquement à l'équipe LIVEINBLACK.
             </p>
 
@@ -1369,8 +1373,8 @@ export default function OnboardingPrestataire() {
               />
             )}
 
-            <div style={{ padding: '13px 15px', borderRadius: 10, background: 'rgba(78,232,200,.04)', border: '1px solid rgba(78,232,200,.16)' }}>
-              <p style={{ margin: 0, fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,.55)', lineHeight: 1.6 }}>
+            <div style={{ padding: '13px 15px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: '3px solid #4ee8c8' }}>
+              <p style={{ margin: 0, fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6 }}>
                 Une fois les documents ajoutés, continue vers la dernière étape pour vérifier ton email et envoyer ton dossier.
               </p>
             </div>
@@ -1388,15 +1392,15 @@ export default function OnboardingPrestataire() {
             <div style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={S.section}>Finaliser mon inscription</p>
 
-              <div style={{ padding: 16, borderRadius: 13, background: docsReady ? 'rgba(78,232,200,.05)' : 'rgba(224,90,170,.05)', border: `1px solid ${docsReady ? 'rgba(78,232,200,.22)' : 'rgba(224,90,170,.24)'}` }}>
-                <p style={{ margin: 0, fontFamily: DM, fontWeight: 700, fontSize: 12, color: docsReady ? '#4ee8c8' : '#e05aaa' }}>{docsReady ? 'Dossier complet' : 'Documents manquants'}</p>
-                {!docsReady && missing.map(label => <p key={label} style={{ margin: '7px 0 0', fontFamily: DM, fontSize: 10, color: 'rgba(224,90,170,.75)' }}>— {label}</p>)}
+              <div style={{ padding: 16, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${docsReady ? '#4ee8c8' : '#e05aaa'}` }}>
+                <p style={{ margin: 0, fontFamily: DM, fontWeight: 700, fontSize: 13, color: docsReady ? '#4ee8c8' : '#e05aaa' }}>{docsReady ? 'Dossier complet' : 'Documents manquants'}</p>
+                {!docsReady && missing.map(label => <p key={label} style={{ margin: '7px 0 0', fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,.6)' }}>— {label}</p>)}
               </div>
 
-              <div style={{ padding: 16, borderRadius: 13, background: emailReady ? 'rgba(78,232,200,.05)' : 'rgba(200,169,110,.06)', border: `1px solid ${emailReady ? 'rgba(78,232,200,.22)' : 'rgba(200,169,110,.28)'}` }}>
-                <p style={{ margin: 0, fontFamily: DM, fontWeight: 700, fontSize: 12, color: emailReady ? '#4ee8c8' : GOLD }}>{emailReady ? 'Email vérifié' : 'Vérifie ton adresse email'}</p>
+              <div style={{ padding: 16, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${emailReady ? '#4ee8c8' : GOLD}` }}>
+                <p style={{ margin: 0, fontFamily: DM, fontWeight: 700, fontSize: 13, color: emailReady ? '#4ee8c8' : GOLD }}>{emailReady ? 'Email vérifié' : 'Vérifie ton adresse email'}</p>
                 {!emailReady && <>
-                  <p style={{ margin: '7px 0 12px', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.48)' }}>Le premier email a été envoyé à {regEmail || user?.email}. Vérifie aussi les courriers indésirables.</p>
+                  <p style={{ margin: '7px 0 12px', fontFamily: DM, fontSize: 12.5, lineHeight: 1.6, color: 'rgba(255,255,255,.55)' }}>Le premier email a été envoyé à {regEmail || user?.email}. Vérifie aussi les courriers indésirables.</p>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button type="button" onClick={() => checkEmailVerification()} style={{ ...S.btnGhost, width: 'auto', flex: 1, padding: 11 }}>J'ai vérifié</button>
                     <button type="button" onClick={() => checkEmailVerification({ resend: true })} style={{ ...S.btnGhost, width: 'auto', flex: 1, padding: 11 }}>Renvoyer l'email</button>
@@ -1404,12 +1408,12 @@ export default function OnboardingPrestataire() {
                 </>}
               </div>
 
-              <div style={{ padding: 20, borderRadius: 14, background: 'linear-gradient(145deg,rgba(200,169,110,.12),rgba(10,12,22,.72))', border: '1px solid rgba(200,169,110,.32)' }}>
-                <p style={{ margin: 0, fontFamily: DM, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: GOLD }}>Après validation</p>
-                <p style={{ margin: '9px 0 0', fontFamily: DM, fontSize: 13, lineHeight: 1.6, color: 'rgba(255,255,255,.72)' }}>
+              <div style={{ padding: 20, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${GOLD}` }}>
+                <p style={{ margin: 0, fontFamily: DM, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: GOLD }}>Après validation</p>
+                <p style={{ margin: '9px 0 0', fontFamily: DM, fontSize: 13, lineHeight: 1.6, color: 'rgba(255,255,255,.75)' }}>
                   L'inscription est <strong style={{ color: '#fff' }}>gratuite</strong>. Ton dossier part à l'équipe LIVEINBLACK pour validation.
                 </p>
-                <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 10.5, lineHeight: 1.6, color: 'rgba(255,255,255,.46)' }}>
+                <p style={{ margin: '8px 0 0', fontFamily: DM, fontSize: 12.5, lineHeight: 1.6, color: 'rgba(255,255,255,.55)' }}>
                   Une fois validé, ton compte est créé. Pour rendre ton profil <strong style={{ color: 'rgba(255,255,255,.7)' }}>visible publiquement</strong>, tu activeras ton abonnement depuis ton espace ({candidateCurrency === 'XOF' ? `${fmtMoney(PROVIDER_SUB.price, 'XOF')} / ${PROVIDER_SUB.periodDays} j · Mobile Money` : '9,99 €/mois · carte'}). Aucune commission sur tes prestations.
                 </p>
               </div>
@@ -1417,8 +1421,13 @@ export default function OnboardingPrestataire() {
               {subError && <p style={{ ...S.error, margin: 0 }}>{subError}</p>}
 
               <textarea value={candidateNote} onChange={e => setCandidateNote(e.target.value)} placeholder="Message pour l'équipe (optionnel)" style={{ ...S.input, minHeight: 78, resize: 'vertical' }} />
-              <button onClick={handleSubmit} disabled={submitting || !docsReady || !emailReady} style={{ ...S.btnGold, opacity: (submitting || !docsReady || !emailReady) ? .45 : 1, cursor: (submitting || !docsReady || !emailReady) ? 'not-allowed' : 'pointer' }}>
-                {submitting ? 'Envoi en cours…' : 'Envoyer mon dossier'}
+              <button onClick={handleSubmit} disabled={submitting || !docsReady || !emailReady} style={{ ...S.btnGold, ...((submitting || !docsReady || !emailReady) ? S.btnDisabled : {}) }}>
+                {submitting
+                  ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />
+                      Envoi en cours…
+                    </span>
+                  : 'Envoyer mon dossier'}
               </button>
             </div>
           )
@@ -1427,17 +1436,22 @@ export default function OnboardingPrestataire() {
         {/* Navigation */}
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           {step > 0 && (
-            <button onClick={prev} disabled={creatingAccount || submitting} style={{ ...S.btnGhost, flex: 1 }}>← Retour</button>
+            <button onClick={prev} disabled={creatingAccount || submitting} style={{ ...S.btnGhost, flex: 1, ...((creatingAccount || submitting) ? S.btnDisabled : {}) }}>Retour</button>
           )}
           {step < STEPS.length - 1 && (
-            <button onClick={next} disabled={creatingAccount} style={{ ...S.btnGold, flex: 2, opacity: creatingAccount ? 0.6 : 1 }}>
-              {creatingAccount ? 'Création du compte...' : 'Continuer →'}
+            <button onClick={next} disabled={creatingAccount} style={{ ...S.btnGold, flex: 2, ...(creatingAccount ? S.btnDisabled : {}) }}>
+              {creatingAccount
+                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />
+                    Création du compte…
+                  </span>
+                : 'Continuer'}
             </button>
           )}
         </div>
 
-        <p style={{ fontFamily: DM, fontSize: 9, color: 'rgba(255,255,255,0.18)', textAlign: 'center', marginTop: 12, letterSpacing: '0.1em' }}>
-          {anonMode ? 'Brouillon enregistré localement' : 'Sauvegarde automatique activée'}
+        <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(255,255,255,0.38)', textAlign: 'center', marginTop: 12, letterSpacing: '0.02em' }}>
+          {anonMode ? 'Brouillon enregistré sur cet appareil' : 'Sauvegarde automatique activée'}
         </p>
       </div>
 
@@ -1445,11 +1459,12 @@ export default function OnboardingPrestataire() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
-          padding: '10px 20px', borderRadius: 6, backdropFilter: 'blur(20px)',
-          fontFamily: DM, fontSize: 11, letterSpacing: '0.06em',
+          padding: '12px 20px', borderRadius: 12, background: 'rgba(12,12,22,0.96)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+          fontFamily: DM, fontSize: 13, fontWeight: 600, color: '#fff',
           ...(toast.type === 'error'
-            ? { background: 'rgba(220,50,50,0.16)', border: '1px solid rgba(220,50,50,0.4)', color: 'rgba(220,100,100,0.95)' }
-            : { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ee8c8' }),
+            ? { border: '1px solid rgba(224,90,170,0.5)' }
+            : { border: '1px solid rgba(78,232,200,0.5)' }),
         }}>
           {toast.msg}
         </div>
@@ -1464,7 +1479,7 @@ function FileRow({ file, onRemove }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
-      padding: '8px 10px', borderRadius: 6,
+      padding: '8px 10px', borderRadius: 10,
       background: failed ? 'rgba(224,90,170,0.06)' : 'rgba(78,232,200,0.05)',
       border: `1px solid ${failed ? 'rgba(224,90,170,0.25)' : 'rgba(78,232,200,0.12)'}`,
     }}>
@@ -1475,15 +1490,15 @@ function FileRow({ file, onRemove }) {
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{
-          fontFamily: "Inter, sans-serif", fontSize: 10,
-          color: failed ? 'rgba(224,90,170,0.9)' : 'rgba(255,255,255,0.8)',
+          fontFamily: "Inter, sans-serif", fontSize: 12, fontWeight: 500,
+          color: failed ? 'rgba(224,90,170,0.9)' : 'rgba(255,255,255,0.85)',
           display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {file.name}
         </span>
         <span style={{
-          fontFamily: "Inter, sans-serif", fontSize: 8, letterSpacing: '0.04em',
-          color: failed ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.3)',
+          fontFamily: "Inter, sans-serif", fontSize: 11,
+          color: failed ? 'rgba(224,90,170,0.7)' : 'rgba(255,255,255,0.45)',
         }}>
           {failed
             ? 'Envoi échoué — retire et rajoute ce fichier'
@@ -1497,12 +1512,12 @@ function FileRow({ file, onRemove }) {
       <button
         onClick={onRemove}
         style={{
-          background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.25)',
-          cursor: 'pointer', color: '#e05aaa', fontSize: 13, lineHeight: 1,
-          padding: '3px 7px', borderRadius: 4, flexShrink: 0,
+          background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)',
+          cursor: 'pointer', color: '#e05aaa', lineHeight: 0,
+          padding: '5px 7px', borderRadius: 8, flexShrink: 0,
         }}
         title="Retirer ce fichier"
-      >✕</button>
+      ><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
   )
 }
@@ -1518,7 +1533,7 @@ function DocUploadRow({ label, required, files = [], status, onChange, onRemove 
     : missing ? 'rgba(224,90,170,0.35)' : 'rgba(255,255,255,0.10)'
   const bgColor = hasFiles
     ? 'rgba(78,232,200,0.04)'
-    : missing ? 'rgba(224,90,170,0.04)' : 'rgba(255,255,255,0.02)'
+    : missing ? 'rgba(224,90,170,0.04)' : 'rgba(255,255,255,0.04)'
   const iconColor = hasFiles ? '#4ee8c8' : missing ? '#e05aaa' : 'rgba(255,255,255,0.25)'
   const btnColor  = hasFiles ? 'rgba(78,232,200,0.7)' : missing ? '#e05aaa' : 'rgba(200,169,110,0.7)'
   const btnBorder = hasFiles ? 'rgba(78,232,200,0.3)' : missing ? 'rgba(224,90,170,0.4)' : 'rgba(200,169,110,0.3)'
@@ -1532,32 +1547,37 @@ function DocUploadRow({ label, required, files = [], status, onChange, onRemove 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 16px' }}>
         <div style={{
-          width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+          width: 40, height: 40, borderRadius: 10, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 16, fontWeight: 700,
           background: hasFiles ? 'rgba(78,232,200,0.10)' : missing ? 'rgba(224,90,170,0.10)' : 'rgba(255,255,255,0.05)',
           border: `1px solid ${borderColor}`,
           color: iconColor,
         }}>
           {isUploading ? (
-            <span style={{ fontSize: 12, opacity: 0.6 }}>···</span>
-          ) : hasFiles ? '✓' : missing ? '!' : '○'}
+            <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />
+          ) : hasFiles ? (
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          ) : missing ? (
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          ) : (
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="8"/></svg>
+          )}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{
-            fontFamily: "Inter, sans-serif", fontSize: 11, margin: 0, letterSpacing: '0.03em',
-            color: hasFiles ? '#fff' : missing ? '#e05aaa' : 'rgba(255,255,255,0.6)',
-            fontWeight: hasFiles ? 500 : 400,
+            fontFamily: "Inter, sans-serif", fontSize: 13, margin: 0,
+            color: hasFiles ? '#fff' : missing ? '#e05aaa' : 'rgba(255,255,255,0.75)',
+            fontWeight: 600,
           }}>
             {label}
             {required && <span style={{ color: '#e05aaa', marginLeft: 4 }}>*</span>}
           </p>
           <p style={{
-            fontFamily: "Inter, sans-serif", fontSize: 9, margin: '3px 0 0',
+            fontFamily: "Inter, sans-serif", fontSize: 11.5, margin: '3px 0 0',
             color: hasFiles
-              ? 'rgba(78,232,200,0.6)'
-              : missing ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.22)',
+              ? 'rgba(78,232,200,0.75)'
+              : missing ? 'rgba(224,90,170,0.75)' : 'rgba(255,255,255,0.45)',
           }}>
             {isUploading
               ? 'Enregistrement en cours…'
@@ -1578,14 +1598,14 @@ function DocUploadRow({ label, required, files = [], status, onChange, onRemove 
           />
           <span style={{
             display: 'inline-block',
-            fontFamily: "Inter, sans-serif", fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
-            padding: '7px 14px', borderRadius: 5,
-            color: isUploading ? 'rgba(255,255,255,0.25)' : btnColor,
-            border: `1px solid ${isUploading ? 'rgba(255,255,255,0.08)' : btnBorder}`,
-            background: 'transparent',
+            fontFamily: "Inter, sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: '0.02em',
+            padding: '8px 14px', borderRadius: 10,
+            color: isUploading ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.9)',
+            border: `1px solid ${isUploading ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.14)'}`,
+            background: isUploading ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)',
             whiteSpace: 'nowrap',
           }}>
-            {isUploading ? '···' : hasFiles ? '+ Ajouter' : 'Choisir'}
+            {isUploading ? 'Envoi…' : hasFiles ? 'Ajouter' : 'Choisir un fichier'}
           </span>
         </label>
       </div>

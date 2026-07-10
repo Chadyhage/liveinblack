@@ -39,7 +39,7 @@ function StaffEventCard({ assignment, onOpen }) {
     return () => { cancelled = true }
   }, [assignment.eventId])
 
-  const meta = ROLE_META[assignment.role] || { label: assignment.role, color: 'rgba(255,255,255,0.5)', desc: '' }
+  const meta = ROLE_META[assignment.role] || { label: assignment.role, color: '#9ca3af', desc: '' }
   const live = ev && isEventLive(ev, Date.now(), 12 * 3600 * 1000)
   const started = ev && isEventStarted(ev)
   const dateLine = ev ? [ev.dateDisplay || ev.date, ev.city || ev.venue].filter(Boolean).join(' · ') : null
@@ -47,8 +47,8 @@ function StaffEventCard({ assignment, onOpen }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', gap: 14, padding: 18, borderRadius: 16,
-      background: 'rgba(9,11,20,0.6)', border: `1px solid ${live ? meta.color + '55' : 'rgba(255,255,255,0.10)'}`,
-      backdropFilter: 'blur(18px)',
+      background: '#0e0f16', border: `1px solid ${live ? meta.color + '55' : 'rgba(255,255,255,0.08)'}`,
+      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
@@ -58,28 +58,28 @@ function StaffEventCard({ assignment, onOpen }) {
           {dateLine && <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0' }}>{dateLine}</p>}
         </div>
         <span style={{
-          flexShrink: 0, fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
-          color: meta.color, background: `${meta.color}1c`, border: `1px solid ${meta.color}55`, borderRadius: 999, padding: '4px 10px',
+          flexShrink: 0, fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+          color: meta.color, background: `${meta.color}1f`, border: `1px solid ${meta.color}59`, borderRadius: 8, padding: '4px 10px',
         }}>{meta.label}</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {live ? (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: meta.color }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color, boxShadow: `0 0 8px ${meta.color}` }} /> En cours
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color }} /> En cours
           </span>
         ) : started ? (
           <span style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.4)' }}>Soirée terminée</span>
         ) : (
           <span style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.4)' }}>À venir</span>
         )}
-        <span style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.32)' }}>· {meta.desc}</span>
+        <span style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.45)' }}>· {meta.desc}</span>
       </div>
 
       <button onClick={() => onOpen(assignment)} style={{
-        width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: 'pointer',
-        fontFamily: FONT, fontSize: 14.5, fontWeight: 800, color: C.obsidian,
-        background: `linear-gradient(135deg, ${meta.color}, #ffffff22)`,
+        width: '100%', padding: '14px', minHeight: 48, borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer',
+        fontFamily: FONT, fontSize: 15, fontWeight: 800, color: C.obsidian,
+        background: meta.color,
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
       }}>
         {assignment.role === 'scan' ? 'Ouvrir le scan des entrées' : 'Ouvrir le POS bar'}
@@ -113,10 +113,10 @@ export default function MesSoireesPage() {
   return (
     <Layout>
       <div style={{ maxWidth: 620, margin: '0 auto', padding: '24px 16px 40px' }}>
-        <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>Équipe</p>
-        <h1 style={{ fontFamily: FONT, fontSize: 30, fontWeight: 800, letterSpacing: '-1px', color: '#fff', margin: '6px 0 4px' }}>Mes soirées</h1>
+        <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>Équipe</p>
+        <h1 style={{ fontFamily: FONT, fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '6px 0 4px' }}>Mes soirées</h1>
         <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,0.5)', margin: '0 0 24px', lineHeight: 1.5 }}>
-          Les événements où tu fais partie de l'équipe. Ouvre le POS le soir J pour servir ou scanner.
+          Les événements où tu fais partie de l'équipe. Ouvre le POS le jour J pour servir ou scanner.
         </p>
 
         {sorted.length === 0 ? (

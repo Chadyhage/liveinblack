@@ -26,26 +26,26 @@ Sur ${LEGAL.domain}, nous utilisons à la fois des "cookies" classiques et des t
       body: `Ces cookies sont indispensables au fonctionnement du site et ne peuvent pas être désactivés. Ils sont déposés automatiquement, sans consentement préalable, conformément à la directive ePrivacy.`,
       list: [
         { label: 'lib_user', value: 'session de connexion (Firebase Auth)' },
-        { label: 'lib_bookings', value: 'historique de tes billets (stockage local)' },
-        { label: 'lib_conversations', value: 'cache de tes messageries (stockage local)' },
-        { label: 'lib_cookie_consent', value: 'mémorise ton choix de consentement aux cookies' },
-        { label: 'firebase auth tokens', value: "jetons de sécurité pour ton authentification" },
+        { label: 'lib_bookings', value: 'historique de vos billets (stockage local)' },
+        { label: 'lib_conversations', value: 'cache de vos conversations (stockage local)' },
+        { label: 'lib_cookie_consent', value: 'mémorise votre choix de consentement aux cookies' },
+        { label: 'firebase auth tokens', value: 'jetons de sécurité pour votre authentification' },
       ],
     },
     {
       n: '03',
       title: "Cookies de fonctionnement",
-      body: `Ces cookies améliorent ton expérience de navigation (préférences, brouillons, etc.). Ils ne contiennent pas de données personnelles identifiantes.`,
+      body: `Ces cookies améliorent votre expérience de navigation (préférences, brouillons, etc.). Ils ne contiennent pas de données personnelles identifiantes.`,
       list: [
         { label: 'lib_age_verified', value: 'évite de redemander la vérification d\'âge' },
         { label: 'lib_selected_region', value: 'région choisie pour filtrer les événements' },
-        { label: 'lib_dismissed_*', value: 'masque les bandeaux que tu as fermés' },
+        { label: 'lib_dismissed_*', value: 'masque les bandeaux que vous avez fermés' },
       ],
     },
     {
       n: '04',
       title: "Cookies de paiement",
-      body: `Lorsque tu effectues un paiement, tu es redirigé vers Stripe (notre prestataire de paiement). Stripe dépose ses propres cookies pour sécuriser la transaction et lutter contre la fraude. Nous ne contrôlons pas ces cookies.
+      body: `Lorsque vous effectuez un paiement, vous êtes redirigé vers Stripe (notre prestataire de paiement). Stripe dépose ses propres cookies pour sécuriser la transaction et lutter contre la fraude. Nous ne contrôlons pas ces cookies.
 
 Politique cookies de Stripe : https://stripe.com/cookies-policy/legal`,
     },
@@ -54,21 +54,21 @@ Politique cookies de Stripe : https://stripe.com/cookies-policy/legal`,
       title: "Cookies de mesure d'audience",
       body: `Actuellement, nous n'utilisons aucun outil de mesure d'audience tiers (pas de Google Analytics, pas de Meta Pixel, etc.).
 
-Si nous décidons d'en intégrer à l'avenir, nous mettrons à jour cette politique et te demanderons ton consentement explicite avant tout dépôt.`,
+Si nous décidons d'en intégrer à l'avenir, nous mettrons à jour cette politique et vous demanderons votre consentement explicite avant tout dépôt.`,
     },
     {
       n: '06',
       title: "Durée de conservation",
       body: `La plupart de nos cookies sont des cookies de session ou ont une durée limitée à 13 mois maximum, conformément aux recommandations de la CNIL.
 
-Tu peux supprimer tous les cookies à tout moment via les paramètres de ton navigateur.`,
+Vous pouvez supprimer tous les cookies à tout moment via les paramètres de votre navigateur.`,
     },
     {
       n: '07',
-      title: "Gérer ton consentement",
-      body: `Au premier accès au site, un bandeau te permet d'accepter ou de refuser les cookies non essentiels. Tu peux modifier ton choix à tout moment.
+      title: "Gérer votre consentement",
+      body: `Au premier accès au site, un bandeau vous permet d'accepter ou de refuser les cookies non essentiels. Vous pouvez modifier votre choix à tout moment.
 
-Tu peux également configurer ton navigateur pour refuser les cookies :`,
+Vous pouvez également configurer votre navigateur pour refuser les cookies :`,
       list: [
         { label: 'Google Chrome', value: 'support.google.com/chrome → Effacer les cookies' },
         { label: 'Mozilla Firefox', value: 'support.mozilla.org → Cookies' },
@@ -79,7 +79,7 @@ Tu peux également configurer ton navigateur pour refuser les cookies :`,
     {
       n: '08',
       title: "Contact",
-      body: `Pour toute question relative à notre politique cookies, écris-nous à :`,
+      body: `Pour toute question relative à notre politique de cookies, écrivez-nous à :`,
       contact: LEGAL.contactEmail,
     },
   ]
@@ -97,10 +97,10 @@ Tu peux également configurer ton navigateur pour refuser les cookies :`,
         <button
           onClick={reopenConsent}
           style={{
-            fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.2em',
-            textTransform: 'uppercase', color: '#c8a96e',
-            background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.32)',
-            borderRadius: 4, padding: '10px 18px', cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+            color: 'rgba(255,255,255,0.9)',
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+            borderRadius: 12, padding: '12px 18px', minHeight: 44, cursor: 'pointer',
           }}>
           Réinitialiser mes préférences cookies
         </button>

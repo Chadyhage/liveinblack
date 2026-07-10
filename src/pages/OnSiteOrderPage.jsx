@@ -163,7 +163,7 @@ export default function OnSiteOrderPage() {
   const startMs = event ? eventStartMs(event) : 0
   const notStarted = !!startMs && Date.now() < startMs - 3 * 3600 * 1000
 
-  if (loading) return <Shell><div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,.5)', fontFamily: FONT }}>Chargement…</div></Shell>
+  if (loading) return <Shell><div style={{ padding: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'rgba(255,255,255,.55)', fontFamily: FONT, fontSize: 13, fontWeight: 600 }}><span className="lib-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.25)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />Chargement…</div></Shell>
   if (!event) return (
     <Shell>
       <Center title="Événement introuvable" sub="Ce lien de commande n'est plus valide.">
@@ -180,12 +180,12 @@ export default function OnSiteOrderPage() {
   )
   if (notStarted) return (
     <Shell>
-      <Center title="Pas encore ouvert" sub="Les commandes sur place ouvrent le soir de l'événement, à l'approche du début. Reviens un peu avant !">
+      <Center title="Pas encore ouvert" sub="Les commandes sur place ouvrent le soir de l'événement, peu avant le début.">
         <BackBtn onClick={() => navigate(-1)} />
       </Center>
     </Shell>
   )
-  if (access === 'checking') return <Shell><div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,.5)', fontFamily: FONT }}>Vérification du billet…</div></Shell>
+  if (access === 'checking') return <Shell><div style={{ padding: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'rgba(255,255,255,.55)', fontFamily: FONT, fontSize: 13, fontWeight: 600 }}><span className="lib-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.25)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />Vérification du billet…</div></Shell>
   if (access === 'denied') return (
     <Shell>
       <Center title="Billet non reconnu" sub="Ce billet n'est pas rattaché à ton compte. Ouvre-le depuis « Mes billets » pour commander.">
@@ -221,11 +221,11 @@ export default function OnSiteOrderPage() {
           {menu.length === 0 ? (
             <div style={{ ...cardStyle, padding: 22, textAlign: 'center', marginTop: 10 }}>
               <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,.6)', margin: 0 }}>Aucune carte disponible</p>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.35)', margin: '4px 0 0' }}>L'organisateur n'a pas encore publié de menu pour la commande sur place.</p>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '4px 0 0' }}>L'organisateur n'a pas encore publié de menu pour la commande sur place.</p>
             </div>
           ) : byCategory.map(([cat, list]) => (
             <div key={cat} style={{ marginTop: 12 }}>
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.35)', margin: '0 0 8px' }}>{cat}</p>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.45)', margin: '0 0 8px' }}>{cat}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {list.map(m => {
                   const line = editableLine(m)
@@ -235,18 +235,24 @@ export default function OnSiteOrderPage() {
                     <div key={id} className="order-product-card">
                       <OrderItemVisual item={m}/>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</p>
-                        {m.description && <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.4)', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.description}</p>}
+                        <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</p>
+                        {m.description && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.45)', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.description}</p>}
                       </div>
-                      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: C.gold, flexShrink: 0 }}>{euro(m.price, cur)}</span>
+                      <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: C.gold, flexShrink: 0 }}>{euro(m.price, cur)}</span>
                       {qty > 0 ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                           <Stepper label="−" onClick={() => dec(m)} disabled={busy === id} tone="dim" />
-                          <span style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: C.teal, minWidth: 16, textAlign: 'center' }}>{qty}</span>
+                          <span style={{ fontFamily: FONT, fontSize: 17, fontWeight: 800, color: C.teal, minWidth: 20, textAlign: 'center' }}>{qty}</span>
                           <Stepper label="+" onClick={() => inc(m)} disabled={busy === id} tone="teal" />
                         </div>
                       ) : (
-                        <button onClick={() => inc(m)} disabled={busy === id} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 12, fontWeight: 700, background: 'rgba(78,232,200,.14)', border: '1px solid rgba(78,232,200,.5)', color: C.teal }}>Ajouter</button>
+                        <button onClick={() => inc(m)} disabled={busy === id} style={{
+                          flexShrink: 0, padding: '12px 20px', minHeight: 44, borderRadius: 12, fontFamily: FONT, fontSize: 14, fontWeight: 700,
+                          cursor: busy === id ? 'not-allowed' : 'pointer',
+                          background: busy === id ? 'rgba(255,255,255,.07)' : '#3ed6b5',
+                          border: `1px solid ${busy === id ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.14)'}`,
+                          color: busy === id ? 'rgba(255,255,255,.35)' : '#04120e',
+                        }}>Ajouter</button>
                       )}
                     </div>
                   )
@@ -271,7 +277,7 @@ export default function OnSiteOrderPage() {
       )}
 
       {toast && (
-        <div style={{ position: 'fixed', left: '50%', bottom: dueTotal > 0 ? 96 : 24, transform: 'translateX(-50%)', zIndex: 20, background: 'rgba(78,232,200,.14)', border: '1px solid rgba(78,232,200,.4)', color: C.teal, fontFamily: FONT, fontSize: 12.5, fontWeight: 600, padding: '9px 16px', borderRadius: 999, backdropFilter: 'blur(12px)' }}>{toast}</div>
+        <div style={{ position: 'fixed', left: '50%', bottom: dueTotal > 0 ? 96 : 24, transform: 'translateX(-50%)', zIndex: 20, background: 'rgba(12,12,22,.96)', border: '1px solid rgba(78,232,200,.5)', color: '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 600, padding: '10px 16px', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.45)', whiteSpace: 'nowrap' }}>{toast}</div>
       )}
     </Shell>
   )
@@ -293,10 +299,10 @@ function MyLine({ item, cur = 'EUR' }) {
     <div className="order-live-line" style={{ opacity: served ? 0.72 : 1 }}>
       <OrderItemVisual item={item} preorder={isPre || isInc}/>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 600, color: '#fff', margin: 0 }}>{item.name} <span style={{ color: 'rgba(255,255,255,.45)', fontWeight: 500 }}>×{item.quantity}</span></p>
-        <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: statusColor }}>{statusLabel}</span>
+        <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: '#fff', margin: 0 }}>{item.name} <span style={{ color: 'rgba(255,255,255,.5)', fontWeight: 500 }}>×{item.quantity}</span></p>
+        <span style={{ display: 'inline-block', marginTop: 5, fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', color: statusColor, background: `${statusColor}24`, border: `1px solid ${statusColor}59`, borderRadius: 8, padding: '3px 9px' }}>{statusLabel}</span>
       </div>
-      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: (isPre || isInc) ? 'rgba(255,255,255,.5)' : C.gold, flexShrink: 0 }}>{(isPre || isInc) ? 'incluse' : euro(item.unitPrice * item.quantity, cur)}</span>
+      <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: (isPre || isInc) ? 'rgba(255,255,255,.5)' : C.gold, flexShrink: 0 }}>{(isPre || isInc) ? 'incluse' : euro(item.unitPrice * item.quantity, cur)}</span>
     </div>
   )
 }
@@ -315,33 +321,33 @@ function Stepper({ label, onClick, disabled, tone }) {
   const teal = tone === 'teal'
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      width: 30, height: 30, borderRadius: 9, cursor: disabled ? 'default' : 'pointer', flexShrink: 0,
-      fontFamily: FONT, fontSize: 18, fontWeight: 700, lineHeight: 1, display: 'grid', placeItems: 'center',
-      background: teal ? 'rgba(78,232,200,.14)' : 'rgba(255,255,255,.05)',
-      border: `1px solid ${teal ? 'rgba(78,232,200,.5)' : 'rgba(255,255,255,.14)'}`,
-      color: teal ? C.teal : 'rgba(255,255,255,.6)', opacity: disabled ? 0.5 : 1,
+      width: 44, height: 44, borderRadius: 12, cursor: disabled ? 'not-allowed' : 'pointer', flexShrink: 0,
+      fontFamily: FONT, fontSize: 20, fontWeight: 700, lineHeight: 1, display: 'grid', placeItems: 'center',
+      background: disabled ? 'rgba(255,255,255,.07)' : teal ? '#3ed6b5' : 'rgba(255,255,255,.08)',
+      border: `1px solid ${disabled ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.14)'}`,
+      color: disabled ? 'rgba(255,255,255,.35)' : teal ? '#04120e' : 'rgba(255,255,255,.75)',
     }}>{label}</button>
   )
 }
 
 const sectionLabel = { fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)', margin: 0 }
-const cardStyle = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 13 }
+const cardStyle = { background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
 
 function Shell({ children }) {
   return (
     <div className="onsite-order-shell" style={{ minHeight: '100vh', background: C.obsidian, color: '#fff' }}>
       <style>{`
-        .onsite-order-shell{background:radial-gradient(circle at 50% -10%,rgba(132,68,255,.18),transparent 42%),#04040b!important;font-family:Inter,sans-serif}
+        .onsite-order-shell{background:radial-gradient(circle at 50% -10%,rgba(132,68,255,.1),transparent 42%),#04040b!important;font-family:Inter,sans-serif}
         .onsite-order-shell>div{max-width:560px!important}
         .order-header{padding:20px 20px 22px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;z-index:5;background:rgba(4,4,11,.9);backdrop-filter:blur(22px)}
         .order-back{display:flex;align-items:center;gap:5px;background:none;border:0;color:rgba(255,255,255,.55);font:600 12px Inter,sans-serif;cursor:pointer;padding:0;margin-bottom:28px}
-        .order-kicker{font:800 9px Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#4ee8c8}
-        .order-header h1{font:800 34px/1 Inter,sans-serif;letter-spacing:-.045em;color:#fff;margin:8px 0 12px}.order-header p{display:flex;justify-content:space-between;gap:16px;font:500 12px Inter,sans-serif;color:rgba(255,255,255,.48);margin:0}.order-header p span{color:#c8a96e;font-weight:700}
+        .order-kicker{font:800 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#4ee8c8}
+        .order-header h1{font:800 26px/1.05 Inter,sans-serif;letter-spacing:-.03em;color:#fff;margin:8px 0 12px}.order-header p{display:flex;justify-content:space-between;gap:16px;font:500 12px Inter,sans-serif;color:rgba(255,255,255,.48);margin:0}.order-header p span{color:#c8a96e;font-weight:700}
         .order-content{padding:22px 18px 140px;display:flex;flex-direction:column;gap:30px}
-        .order-product-card,.order-live-line{display:flex;align-items:center;gap:13px;padding:13px;border-radius:16px;background:rgba(12,13,23,.76);border:1px solid rgba(255,255,255,.1);box-shadow:0 12px 30px rgba(0,0,0,.14)}
-        .order-item-visual{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;overflow:hidden;flex:none;color:#4ee8c8;background:linear-gradient(145deg,rgba(78,232,200,.12),rgba(132,68,255,.1));border:1px solid rgba(255,255,255,.08)}.order-item-visual img{width:100%;height:100%;object-fit:cover}.order-item-visual svg{width:21px;height:21px}
+        .order-product-card,.order-live-line{display:flex;align-items:center;gap:13px;padding:13px;border-radius:16px;background:#0e0f16;border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+        .order-item-visual{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;overflow:hidden;flex:none;color:#4ee8c8;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}.order-item-visual img{width:100%;height:100%;object-fit:cover}.order-item-visual svg{width:21px;height:21px}
         .order-total-bar{position:fixed;left:0;right:0;bottom:0;z-index:10;max-width:560px;margin:0 auto;padding:17px 20px calc(17px + env(safe-area-inset-bottom));background:rgba(8,9,17,.96);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.1);border-bottom:0;border-radius:20px 20px 0 0;box-shadow:0 -18px 55px rgba(0,0,0,.45)}
-        @media(max-width:600px){.order-header{padding:18px 18px 20px}.order-content{padding-left:14px;padding-right:14px}.order-header h1{font-size:32px}}
+        @media(max-width:600px){.order-header{padding:18px 18px 20px}.order-content{padding-left:14px;padding-right:14px}.order-header h1{font-size:24px}}
       `}</style>
       <div style={{ maxWidth: 480, margin: '0 auto', position: 'relative', minHeight: '100vh' }}>{children}</div>
     </div>
@@ -357,5 +363,5 @@ function Center({ title, sub, children }) {
   )
 }
 function BackBtn({ onClick }) {
-  return <button onClick={onClick} style={{ padding: '11px 20px', borderRadius: 999, background: 'rgba(78,232,200,.12)', border: '1px solid rgba(78,232,200,.4)', color: C.teal, fontFamily: FONT, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>← Retour</button>
+  return <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '12px 20px', minHeight: 44, borderRadius: 12, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>Retour</button>
 }

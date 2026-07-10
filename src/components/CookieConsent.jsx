@@ -76,21 +76,14 @@ export default function CookieConsent() {
 
         .cc-stripe {
           height: 1px;
-          background: linear-gradient(90deg,
-            transparent 0%,
-            rgba(132,68,255,0.6) 20%,
-            rgba(255,77,166,0.5) 50%,
-            rgba(132,68,255,0.6) 80%,
-            transparent 100%
-          );
+          background: rgba(255,255,255,0.08);
         }
 
         .cc-body {
-          background: rgba(10,10,18,0.88);
-          backdrop-filter: blur(40px) saturate(1.6);
-          -webkit-backdrop-filter: blur(40px) saturate(1.6);
-          border: 1px solid rgba(255,255,255,0.06);
+          background: #12131c;
+          border: 1px solid rgba(255,255,255,0.10);
           border-top: none;
+          box-shadow: 0 24px 64px rgba(0,0,0,0.55);
           padding: 20px 22px 18px;
         }
 
@@ -105,15 +98,14 @@ export default function CookieConsent() {
 
         .cc-desc {
           font-family: Inter, system-ui, sans-serif;
-          font-size: 12.5px;
-          color: rgba(255,255,255,0.44);
+          font-size: 13px;
+          color: rgba(255,255,255,0.5);
           margin: 0 0 16px 0;
-          line-height: 1.65;
-          letter-spacing: 0.005em;
+          line-height: 1.6;
         }
         .cc-desc strong {
-          color: rgba(255,255,255,0.68);
-          font-weight: 500;
+          color: rgba(255,255,255,0.72);
+          font-weight: 600;
         }
         .cc-desc a {
           color: rgba(255,255,255,0.52);
@@ -131,26 +123,26 @@ export default function CookieConsent() {
 
         .cc-btn {
           flex: 1;
-          padding: 10px 16px;
+          min-height: 44px;
+          padding: 12px 16px;
           border-radius: 10px;
           cursor: pointer;
           font-family: Inter, system-ui, sans-serif;
-          font-size: 12.5px;
-          font-weight: 500;
-          letter-spacing: 0.01em;
+          font-size: 13px;
+          font-weight: 600;
           transition: all 0.2s ease;
           outline: none;
         }
 
         .cc-btn-refuse {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          color: rgba(255,255,255,0.48);
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.14);
+          color: rgba(255,255,255,0.75);
         }
         .cc-btn-refuse:hover {
-          background: rgba(255,255,255,0.07);
-          border-color: rgba(255,255,255,0.14);
-          color: rgba(255,255,255,0.72);
+          background: rgba(255,255,255,0.12);
+          border-color: rgba(255,255,255,0.2);
+          color: rgba(255,255,255,0.92);
         }
 
         .cc-btn-accept {
@@ -160,7 +152,6 @@ export default function CookieConsent() {
         }
         .cc-btn-accept:hover {
           background: #fff;
-          box-shadow: 0 0 20px rgba(255,255,255,0.12);
         }
         .cc-btn-accept:active {
           transform: scale(0.97);
@@ -178,9 +169,9 @@ export default function CookieConsent() {
             Cookies & vie privée
           </p>
           <p className="cc-desc">
-            Cookies essentiels pour ta connexion et tes billets.{' '}
-            <strong>Aucun tracking, aucune pub.</strong>{' '}
-            <Link to="/cookies">En savoir plus →</Link>
+            Nous utilisons uniquement des cookies essentiels, pour ta connexion et tes billets.{' '}
+            <strong>Aucun traçage, aucune publicité.</strong>{' '}
+            <Link to="/cookies">En savoir plus</Link>
           </p>
           <div className="cc-actions">
             <button className="cc-btn cc-btn-refuse" onClick={() => dismiss('refused')}>

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { getStaffRole, addEventStaff, removeEventStaff, listenEventStaff, STAFF_ROLES, getActiveOrdersForStaff, reassignAndRemoveStaff } from '../utils/eventOrders'
 import { searchUsers, getUserId } from '../utils/messaging'
 import { isEventStarted } from '../utils/event-time'
+import { IconAlert, IconTrash } from './icons'
 
 // ── Gestion de l'équipe d'un événement (mini-POS soirée) ─────────────────────
 // Le manager (organisateur propriétaire ou agent) invite des membres et leur
@@ -43,9 +44,9 @@ function RoleBadge({ role }) {
   const m = ROLE_META[role] || { label: role, color: 'rgba(255,255,255,0.5)' }
   return (
     <span style={{
-      fontFamily: FONT, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-      color: m.color, background: `${m.color}1c`, border: `1px solid ${m.color}55`,
-      borderRadius: 999, padding: '3px 9px', flexShrink: 0, whiteSpace: 'nowrap',
+      fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+      color: m.color, background: `${m.color}24`, border: `1px solid ${m.color}59`,
+      borderRadius: 8, padding: '4px 10px', flexShrink: 0, whiteSpace: 'nowrap',
     }}>{m.label}</span>
   )
 }
@@ -185,11 +186,12 @@ export default function EventStaffModal({ event, user, onClose }) {
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
       <div style={{
         position: 'relative', width: '100%', maxWidth: 440, maxHeight: '86vh', overflowY: 'auto',
-        background: 'rgba(8,10,20,0.96)', backdropFilter: 'blur(22px) saturate(1.5)',
-        border: '1px solid rgba(255,255,255,0.10)', borderRadius: 18, padding: 22,
+        background: '#12131c',
+        border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, padding: 22,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
         display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         {/* Header */}
@@ -216,7 +218,7 @@ export default function EventStaffModal({ event, user, onClose }) {
         ) : (
           <>
             {/* Invite */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 15, background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.14)', borderRadius: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 15, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }}>
               <p style={{ fontFamily: FONT, fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)', margin: 0 }}>Inviter un membre</p>
 
               {/* Rôle */}
@@ -227,7 +229,7 @@ export default function EventStaffModal({ event, user, onClose }) {
                     <button key={r.value} onClick={() => setRole(r.value)} style={{
                       flex: 1, padding: '10px 8px', borderRadius: 11, cursor: 'pointer', textAlign: 'left',
                       border: active ? `1px solid ${r.color}88` : '1px solid rgba(255,255,255,0.10)',
-                      background: active ? `${r.color}14` : 'rgba(255,255,255,0.02)',
+                      background: active ? `${r.color}22` : 'rgba(255,255,255,0.05)',
                     }}>
                       <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: active ? r.color : 'rgba(255,255,255,0.75)' }}>{r.label}</span>
                       <span style={{ display: 'block', fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,0.4)', marginTop: 2, lineHeight: 1.4 }}>{r.desc}</span>
@@ -243,9 +245,9 @@ export default function EventStaffModal({ event, user, onClose }) {
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Nom, pseudo ou email…"
                   style={{
-                    width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 11,
-                    background: 'rgba(6,8,16,0.6)', border: '1px solid rgba(255,255,255,0.12)',
-                    fontFamily: FONT, fontSize: 14, color: '#fff', outline: 'none',
+                    width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 10,
+                    background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)',
+                    fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,0.92)', outline: 'none',
                   }}
                   onFocus={e => (e.target.style.borderColor = C.teal)}
                   onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
@@ -260,16 +262,17 @@ export default function EventStaffModal({ event, user, onClose }) {
                       {searching ? 'Recherche…' : <>Aucun membre trouvé. Essaie son <strong>email exact</strong> — il doit avoir un compte LIVEINBLACK.</>}
                     </p>
                   ) : results.map(u => (
-                    <div key={u.id || u.uid} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 11px', borderRadius: 11, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div key={u.id || u.uid} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 11px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                       <Avatar name={u.name} avatar={u.avatar} size={36} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || u.username || 'Membre'}</p>
                         <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.username ? '@' + u.username : u.email}</p>
                       </div>
                       <button onClick={() => invite(u)} disabled={busy} style={{
-                        flexShrink: 0, padding: '8px 14px', borderRadius: 999, cursor: busy ? 'default' : 'pointer',
-                        border: 'none', color: '#04040b', fontFamily: FONT, fontSize: 12.5, fontWeight: 700,
-                        background: `linear-gradient(135deg, ${C.teal}, #7af0d8)`, opacity: busy ? 0.5 : 1,
+                        flexShrink: 0, padding: '8px 14px', borderRadius: 10, cursor: busy ? 'not-allowed' : 'pointer',
+                        border: busy ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
+                        color: busy ? 'rgba(255,255,255,0.35)' : '#04120e', fontFamily: FONT, fontSize: 12.5, fontWeight: 700,
+                        background: busy ? 'rgba(255,255,255,0.07)' : '#3ed6b5',
                       }}>Ajouter</button>
                     </div>
                   ))}
@@ -280,10 +283,10 @@ export default function EventStaffModal({ event, user, onClose }) {
             {/* Message */}
             {message && (
               <div style={{
-                padding: '10px 14px', borderRadius: 11, fontFamily: FONT, fontSize: 13, textAlign: 'center',
-                border: isErr ? '1px solid rgba(234,88,12,0.35)' : `1px solid ${C.teal}4d`,
-                background: isErr ? 'rgba(234,88,12,0.08)' : 'rgba(78,232,200,0.07)',
-                color: isErr ? '#fb923c' : C.teal,
+                padding: '10px 14px', borderRadius: 12, fontFamily: FONT, fontSize: 13, textAlign: 'center',
+                border: isErr ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(78,232,200,0.5)',
+                background: 'rgba(12,12,22,0.96)',
+                color: '#fff',
               }}>{msgText}</div>
             )}
 
@@ -294,7 +297,7 @@ export default function EventStaffModal({ event, user, onClose }) {
               </p>
 
               {/* Manager (toi) — implicite, toujours affiché */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 12, background: `${C.gold}0d`, border: `1px solid ${C.gold}33` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: '3px solid rgba(200,169,110,0.55)' }}>
                 <Avatar name={user?.name} avatar={user?.avatar} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name || 'Toi'}</p>
@@ -304,11 +307,11 @@ export default function EventStaffModal({ event, user, onClose }) {
               </div>
 
               {rosterEntries.length === 0 ? (
-                <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.32)', textAlign: 'center', padding: '10px 0', lineHeight: 1.6, margin: 0 }}>
-                  Personne d'autre pour l'instant — invite tes serveurs ci-dessus.
+                <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '10px 0', lineHeight: 1.6, margin: 0 }}>
+                  Personne d'autre pour l'instant. Invite tes serveurs ci-dessus.
                 </p>
               ) : rosterEntries.map(m => (
-                <div key={m.uid} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div key={m.uid} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <Avatar name={m.name} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name || 'Membre'}</p>
@@ -318,7 +321,7 @@ export default function EventStaffModal({ event, user, onClose }) {
                   <button onClick={() => remove(m.uid, m.name)} title="Retirer" style={{
                     flexShrink: 0, width: 30, height: 30, borderRadius: 9, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(220,50,50,0.07)', border: '1px solid rgba(220,50,50,0.20)', color: C.red,
+                    background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.45)', color: '#ff9ed2',
                   }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   </button>
@@ -326,8 +329,8 @@ export default function EventStaffModal({ event, user, onClose }) {
               ))}
             </div>
 
-            <p style={{ fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: 0 }}>
-              Un <strong style={{ color: 'rgba(255,255,255,0.45)' }}>serveur</strong> prend et sert les commandes en mode Service du scanner. Un <strong style={{ color: 'rgba(255,255,255,0.45)' }}>contrôle entrée</strong> peut scanner les billets. Toi seul (manager) peux annuler une commande ou encaisser.
+            <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
+              Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>serveur</strong> prend et sert les commandes en mode Service du scanner. Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>contrôle entrée</strong> peut scanner les billets. Toi seul (manager) peux annuler une commande ou encaisser.
             </p>
           </>
         )}
@@ -337,9 +340,11 @@ export default function EventStaffModal({ event, user, onClose }) {
       {confirmRemove && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => !busy && setConfirmRemove(null)}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
-          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 360, background: 'rgba(12,14,24,0.98)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 360, background: '#12131c', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: 22, boxShadow: '0 24px 64px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 22 }}>{confirmRemove.count > 0 ? '⚠️' : '👋'}</span>
+              <span style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: confirmRemove.count > 0 ? 'rgba(200,169,110,0.12)' : 'rgba(224,90,170,0.12)', border: `1px solid ${confirmRemove.count > 0 ? 'rgba(200,169,110,0.35)' : 'rgba(224,90,170,0.35)'}` }}>
+                {confirmRemove.count > 0 ? <IconAlert size={18} color="#c8a96e" /> : <IconTrash size={18} color="#e05aaa" />}
+              </span>
               <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>
                 {confirmRemove.count > 0 ? 'Commandes en cours' : 'Retirer de l\'équipe ?'}
               </p>
@@ -356,11 +361,11 @@ export default function EventStaffModal({ event, user, onClose }) {
               )}
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-              <button onClick={() => setConfirmRemove(null)} disabled={busy} style={{ flex: 1, padding: '11px', borderRadius: 11, cursor: busy ? 'default' : 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)', fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}>
+              <button onClick={() => setConfirmRemove(null)} disabled={busy} style={{ flex: 1, padding: '11px', borderRadius: 12, cursor: busy ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}>
                 Annuler
               </button>
-              <button onClick={doConfirmRemove} disabled={busy} style={{ flex: 1.4, padding: '11px', borderRadius: 11, cursor: busy ? 'default' : 'pointer', background: confirmRemove.count > 0 ? `linear-gradient(135deg, ${C.teal}, #7af0d8)` : 'rgba(224,90,170,0.15)', border: confirmRemove.count > 0 ? 'none' : '1px solid rgba(224,90,170,0.45)', color: confirmRemove.count > 0 ? '#04040b' : C.pink, fontFamily: FONT, fontSize: 13.5, fontWeight: 800, opacity: busy ? 0.6 : 1 }}>
-                {busy ? '…' : confirmRemove.count > 0 ? 'Réattribuer + retirer' : 'Retirer'}
+              <button onClick={doConfirmRemove} disabled={busy} style={{ flex: 1.4, padding: '11px', borderRadius: 12, cursor: busy ? 'not-allowed' : 'pointer', background: busy ? 'rgba(255,255,255,0.07)' : confirmRemove.count > 0 ? '#3ed6b5' : '#c2347f', border: busy ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent', color: busy ? 'rgba(255,255,255,0.35)' : confirmRemove.count > 0 ? '#04120e' : '#fff', fontFamily: FONT, fontSize: 13.5, fontWeight: 700 }}>
+                {busy ? <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px' }} /> : confirmRemove.count > 0 ? 'Réattribuer et retirer' : 'Retirer'}
               </button>
             </div>
           </div>

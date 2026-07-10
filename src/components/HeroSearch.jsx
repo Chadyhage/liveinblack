@@ -135,14 +135,14 @@ export default function HeroSearch() {
       {open && query && (
         <div className="lib-fade" style={{
           position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
-          background: '#0c0e16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18,
-          boxShadow: '0 28px 60px -16px rgba(0,0,0,0.8)', backdropFilter: 'blur(22px)',
+          background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12,
+          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
           padding: 8, maxHeight: 360, overflowY: 'auto',
         }}>
           {results.length === 0 ? (
             <div style={{ padding: '22px 14px', textAlign: 'center' }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>Aucun résultat pour « {q.trim()} »</p>
-              <button onClick={submit} className="lib-press" style={{ marginTop: 10, padding: '8px 16px', borderRadius: 999, border: '1px solid rgba(78,232,200,0.4)', background: 'rgba(78,232,200,0.08)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Voir tous les événements</button>
+              <button onClick={submit} className="lib-press" style={{ marginTop: 10, padding: '10px 16px', borderRadius: 10, border: 'none', background: '#3ed6b5', color: '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Voir tous les événements</button>
             </div>
           ) : results.map(r => (
             <button key={r.kind + r.id} onClick={() => go(r)} className="lib-press"
@@ -158,7 +158,7 @@ export default function HeroSearch() {
                 <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
                 {r.meta && <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</span>}
               </span>
-              <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: r.color, padding: '3px 8px', borderRadius: 999, background: r.color + '14', border: `1px solid ${r.color}33` }}>{r.tag}</span>
+              <span style={{ flexShrink: 0, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: r.color, padding: '3px 8px', borderRadius: 8, background: r.color + '1f', border: `1px solid ${r.color}59` }}>{r.tag}</span>
             </button>
           ))}
         </div>

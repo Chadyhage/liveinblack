@@ -41,13 +41,13 @@ function HostToolsWidget() {
   return (
     <div style={{
       width: '100%', maxWidth: 340, margin: '0 auto', padding: 20,
-      borderRadius: 20, background: 'rgba(6,6,12,.5)',
-      border: '1px solid rgba(255,255,255,.07)', backdropFilter: 'blur(16px)',
-      boxShadow: '0 20px 60px rgba(0,0,0,.38)',
+      borderRadius: 16, background: '#0e0f16',
+      border: '1px solid rgba(255,255,255,0.08)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 15 }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ee8c8', boxShadow: '0 0 8px rgba(78,232,200,.8)' }} />
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)' }}>Ton espace organisateur</span>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ee8c8' }} />
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)' }}>Ton espace organisateur</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
         {tools.map(tool => (
@@ -57,7 +57,7 @@ function HostToolsWidget() {
           </div>
         ))}
       </div>
-      <p style={{ margin: '13px 0 0', fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,.32)', lineHeight: 1.5 }}>
+      <p style={{ margin: '13px 0 0', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,.45)', lineHeight: 1.5 }}>
         Les données affichées dans ton espace proviennent uniquement de tes événements et de tes ventes.
       </p>
     </div>
@@ -107,13 +107,11 @@ function HostStatsWidget() {
 
   return (
     <div style={{
-      background: 'rgba(6, 6, 12, 0.48)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      border: '1px solid rgba(255, 255, 255, 0.05)',
-      borderRadius: 20,
+      background: '#0e0f16',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: 16,
       padding: '20px 24px',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.02)',
+      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
       width: '100%',
       maxWidth: 320,
       minWidth: 260,
@@ -128,8 +126,8 @@ function HostStatsWidget() {
       {/* Header Widget */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ee8c8', boxShadow: '0 0 6px #4ee8c8' }} />
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255, 255, 255, 0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ventes en direct</span>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ee8c8' }} />
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'rgba(255, 255, 255, 0.55)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ventes en direct</span>
         </div>
         <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: '#c9b0ff', background: 'rgba(132,68,255,0.18)', padding: '2px 8px', borderRadius: 999 }}>LIVE</span>
       </div>
@@ -145,19 +143,13 @@ function HostStatsWidget() {
               cy="44"
               r={radius}
               fill="none"
-              stroke="url(#widgetGrad)"
+              stroke="#8444ff"
               strokeWidth="8"
               strokeDasharray={circ}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
               style={{ transition: 'stroke-dashoffset 1.8s cubic-bezier(0.22, 1, 0.36, 1)' }}
             />
-            <defs>
-              <linearGradient id="widgetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#8444ff" />
-                <stop offset="100%" stopColor="#ff4da6" />
-              </linearGradient>
-            </defs>
           </svg>
           <div style={{
             position: 'absolute', inset: 0,
@@ -165,18 +157,18 @@ function HostStatsWidget() {
             lineHeight: 1,
           }}>
             <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#fff', letterSpacing: '0.02em' }}>{percent}%</span>
-            <span style={{ fontSize: 7, color: 'rgba(255, 255, 255, 0.3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 2 }}>Rempli</span>
+            <span style={{ fontSize: 9, color: 'rgba(255, 255, 255, 0.45)', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 2 }}>Rempli</span>
           </div>
         </div>
 
         {/* Text metrics */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div>
-            <p style={{ margin: 0, fontSize: 8.5, color: 'rgba(255, 255, 255, 0.35)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revenue</p>
+            <p style={{ margin: 0, fontSize: 10, color: 'rgba(255, 255, 255, 0.45)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revenus</p>
             <p style={{ margin: '1px 0 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: '#fff', letterSpacing: '0.02em' }}>{revenue.toLocaleString()} €</p>
           </div>
           <div>
-            <p style={{ margin: 0, fontSize: 8.5, color: 'rgba(255, 255, 255, 0.35)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Audience</p>
+            <p style={{ margin: 0, fontSize: 10, color: 'rgba(255, 255, 255, 0.45)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Audience</p>
             <p style={{ margin: '1px 0 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: '#ff4da6', letterSpacing: '0.02em' }}>{contacts.toLocaleString()}</p>
           </div>
         </div>
@@ -361,7 +353,7 @@ function HeroVideoGallery() {
       style={{
         position: 'absolute', top: '50%', [side]: 4, transform: 'translateY(-50%)', zIndex: 6,
         width: 38, height: 38, borderRadius: '50%', cursor: 'pointer',
-        background: 'rgba(8,9,14,0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.15)',
+        background: 'rgba(8,9,14,0.92)', border: '1px solid rgba(255,255,255,0.15)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
       }}>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -373,8 +365,6 @@ function HeroVideoGallery() {
   return (
     <div style={{ position: 'relative', width: 400, height: 388 }}
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div style={{ position: 'absolute', inset: '-10px 0', background: 'radial-gradient(58% 52% at 50% 40%, rgba(78,232,200,0.16), transparent 70%)', filter: 'blur(22px)', pointerEvents: 'none' }} />
-
       {HERO_VIDEOS.map((v, i) => {
         const r = rel(i)
         const center = r === 0
@@ -401,7 +391,7 @@ function HeroVideoGallery() {
                 <>
                   <div style={{ position: 'absolute', top: 14, left: 14 }}><LibMark size={30} /></div>
                   <div style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4ee8c8', margin: '0 0 4px' }}>Live in black</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#4ee8c8', margin: '0 0 4px' }}>Live in black</p>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0, lineHeight: 1.1 }}>{v.title}</p>
                   </div>
                   <div style={{ position: 'absolute', top: 16, right: 14, display: 'flex', gap: 5 }}>
@@ -553,7 +543,7 @@ export default function HomePage() {
           if (matched) {
             setSelectedRegion(matched)
             localStorage.setItem('lib_region', JSON.stringify({ id: matched.id }))
-            setGeoToast(`${matched.flag} ${matched.name} détecté`)
+            setGeoToast(`${matched.flag} Région détectée : ${matched.name}`)
             setTimeout(() => setGeoToast(''), 4000)
           }
         } catch {}
@@ -714,7 +704,6 @@ export default function HomePage() {
         .stats-widget-wrapper {
           transform-style: preserve-3d;
           transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.7s ease;
-          animation: libWidgetFloat 5s ease-in-out infinite alternate;
           width: 100%;
           max-width: 320px;
         }
@@ -722,23 +711,13 @@ export default function HomePage() {
         /* Hovering the card lifts and tilts the widget */
         .lib-org-card:hover .stats-widget-wrapper {
           transform: translateZ(35px) rotateY(-14deg) rotateX(10deg) translateY(-8px);
-          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(132, 68, 255, 0.15);
-        }
-
-        @keyframes libWidgetFloat {
-          0% {
-            transform: translateY(0px) rotateY(-3deg) rotateX(2deg);
-          }
-          100% {
-            transform: translateY(-8px) rotateY(3deg) rotateX(-2deg);
-          }
+          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
         }
 
         /* Card hover effects on HomePage */
         .lib-org-card:hover .lib-org-cta {
           background: #8444ff !important;
           color: #fff !important;
-          box-shadow: 0 0 24px rgba(132,68,255,0.45);
           border-color: rgba(255,255,255,0.3) !important;
         }
         .lib-org-card:hover .lib-org-cta svg {
@@ -751,7 +730,6 @@ export default function HomePage() {
         .lib-prest-card:hover .lib-prest-cta {
           background: #ff4da6 !important;
           color: #fff !important;
-          box-shadow: 0 0 24px rgba(255,77,166,0.45);
           border-color: rgba(255,255,255,0.3) !important;
         }
         .lib-prest-card:hover .lib-prest-cta svg {
@@ -765,17 +743,15 @@ export default function HomePage() {
       {geoToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
           style={{
-            padding: '8px 20px',
-            background: 'rgba(6,8,16,0.75)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(78,232,200,0.3)',
-            borderRadius: 99,
+            padding: '10px 18px',
+            background: 'rgba(12,12,22,0.96)',
+            border: '1px solid rgba(78,232,200,0.5)',
+            borderRadius: 12,
             color: 'var(--teal)',
             fontFamily: 'Inter, sans-serif',
-            fontSize: '11px',
+            fontSize: '12px',
             fontWeight: 600,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
           }}>
           {geoToast}
         </div>
@@ -812,7 +788,7 @@ export default function HomePage() {
                 marginTop: 26, position: 'relative', overflow: 'hidden', display: 'block', textAlign: 'left',
                 width: 'min(440px, 100%)', height: 132, padding: 0, borderRadius: 20, cursor: 'pointer',
                 border: '1px solid rgba(78,232,200,0.4)',
-                boxShadow: '0 18px 44px -14px rgba(78,232,200,0.45)',
+                boxShadow: '0 16px 40px -14px rgba(0,0,0,0.6)',
               }}
             >
               <video src="/discover.mp4" autoPlay loop muted playsInline
@@ -825,7 +801,7 @@ export default function HomePage() {
                   Découvrir les événements
                 </span>
                 {/* Pastille flèche en bas */}
-                <span style={{ alignSelf: 'flex-end', width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)', boxShadow: '0 6px 18px rgba(78,232,200,0.5)' }}>
+                <span style={{ alignSelf: 'flex-end', width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#3ed6b5', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#04040b" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
                   </svg>
@@ -843,9 +819,11 @@ export default function HomePage() {
         {/* ── Bannière onboarding goûts (optionnelle, non bloquante) ── */}
         {showTasteBanner && (
           <div style={{
-            margin: '0 0 40px', padding: '16px 20px', borderRadius: 20,
-            background: 'linear-gradient(135deg, rgba(132,68,255,0.14), rgba(78,232,200,0.06))',
-            border: '1px solid rgba(132,68,255,0.3)',
+            margin: '0 0 40px', padding: '16px 20px', borderRadius: 16,
+            background: '#0e0f16',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderLeft: '3px solid #8444ff',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 220 }}>
@@ -858,10 +836,11 @@ export default function HomePage() {
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button onClick={() => setPrefsOpen(true)} style={{
-                  padding: '10px 18px', borderRadius: 999, cursor: 'pointer',
-                  background: 'rgba(132,68,255,0.16)', color: '#c9b0ff',
-                  border: '1px solid rgba(132,68,255,0.5)',
-                  fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 800,
+                  padding: '11px 18px', borderRadius: 12, cursor: 'pointer',
+                  background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
+                  fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700,
                 }}>
                   Personnaliser
                 </button>
@@ -904,9 +883,9 @@ export default function HomePage() {
             {/* section header */}
             <div style={{ marginBottom: 36 }}>
               <p className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, color: 'var(--teal)' }}>
-                <span style={{ width: 22, height: 2, borderRadius: 2, background: 'var(--teal)', boxShadow: '0 0 8px var(--teal)' }} />
+                <span style={{ width: 22, height: 2, borderRadius: 2, background: 'var(--teal)' }} />
                 À ne pas manquer
-                <span style={{ width: 22, height: 2, borderRadius: 2, background: 'var(--teal)', boxShadow: '0 0 8px var(--teal)' }} />
+                <span style={{ width: 22, height: 2, borderRadius: 2, background: 'var(--teal)' }} />
               </p>
               <button
                 onClick={() => setShowRegionSelector(true)}
@@ -948,15 +927,15 @@ export default function HomePage() {
                   >
                     <div style={{
                       position: 'relative',
-                      background: 'linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))',
-                      backdropFilter: 'blur(20px)',
-                      border: '1px solid rgba(255,255,255,0.09)',
-                      borderRadius: 24,
+                      background: '#0e0f16',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 16,
                       overflow: 'hidden',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                       transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     }}
                     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(0,0,0,0.5)' }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}>
+                    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.35)' }}>
 
                       {/* Banner + vidéo d'aperçu au survol */}
                       <EventHoverMedia
@@ -970,13 +949,12 @@ export default function HomePage() {
                             <div style={{ position: 'absolute', top: 16, left: 18, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                               {event.tags?.map((tag) => (
                                 <span key={tag} style={{
-                                  fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600,
-                                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                                  padding: '4px 10px', borderRadius: 999,
-                                  border: '1px solid rgba(255,255,255,0.15)',
-                                  background: 'rgba(255,255,255,0.08)',
-                                  color: 'rgba(255,255,255,0.75)',
-                                  backdropFilter: 'blur(8px)',
+                                  fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700,
+                                  letterSpacing: '0.04em', textTransform: 'uppercase',
+                                  padding: '4px 10px', borderRadius: 8,
+                                  border: '1px solid rgba(255,255,255,0.18)',
+                                  background: 'rgba(5,6,10,0.78)',
+                                  color: 'rgba(255,255,255,0.85)',
                                 }}>
                                   {tag}
                                 </span>
@@ -1005,20 +983,18 @@ export default function HomePage() {
                           fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800,
                           letterSpacing: '0.08em',
                           color: RANK_COLOR[(event.displayPosition || i + 1) - 1],
-                          background: 'rgba(5,6,10,0.6)',
-                          backdropFilter: 'blur(10px)',
+                          background: 'rgba(5,6,10,0.85)',
                           padding: '5px 10px', borderRadius: 999,
-                          border: '1px solid rgba(255,255,255,0.12)',
+                          border: '1px solid rgba(255,255,255,0.14)',
                         }}>
                           {RANK_LABEL[(event.displayPosition || i + 1) - 1]}
                         </div>
                         {event.featured && (
                           <div style={{
-                            fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700,
-                            letterSpacing: '0.18em', textTransform: 'uppercase',
+                            fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700,
+                            letterSpacing: '0.04em', textTransform: 'uppercase',
                             color: '#e05aaa',
-                            background: 'rgba(224,90,170,0.18)',
-                            backdropFilter: 'blur(10px)',
+                            background: 'rgba(5,6,10,0.85)',
                             padding: '4px 9px', borderRadius: 999,
                             border: '1px solid rgba(224,90,170,0.45)',
                             display: 'flex', alignItems: 'center', gap: 4,
@@ -1033,10 +1009,10 @@ export default function HomePage() {
                           const cd = getEventCountdown(event); const urg = isCountdownUrgent(event); const st = getStockBadge(event)
                           return (<>
                             {cd && (
-                              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', color: urg ? '#fff' : '#4ee8c8', background: urg ? 'rgba(224,90,170,0.9)' : 'rgba(5,6,10,0.6)', backdropFilter: 'blur(10px)', padding: '4px 9px', borderRadius: 999, border: `1px solid ${urg ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{cd}</div>
+                              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: urg ? '#fff' : '#4ee8c8', background: urg ? 'rgba(194,52,127,0.95)' : 'rgba(5,6,10,0.85)', padding: '4px 9px', borderRadius: 999, border: `1px solid ${urg ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{cd}</div>
                             )}
                             {st && (
-                              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: st.color, background: 'rgba(5,6,10,0.6)', backdropFilter: 'blur(10px)', padding: '4px 9px', borderRadius: 999, border: `1px solid ${st.color}66` }}>{st.label}</div>
+                              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: st.color, background: 'rgba(5,6,10,0.85)', padding: '4px 9px', borderRadius: 999, border: `1px solid ${st.color}66` }}>{st.label}</div>
                             )}
                           </>)
                         })()}
@@ -1117,16 +1093,16 @@ export default function HomePage() {
               <div style={{ marginTop: 28, textAlign: 'center' }}>
                 <button onClick={() => navigate('/evenements')}
                   style={{
-                    padding: '13px 32px', borderRadius: 999,
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    color: 'rgba(255,255,255,0.55)',
+                    padding: '13px 32px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    color: 'rgba(255,255,255,0.9)',
                     fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
-                    cursor: 'pointer', letterSpacing: '0.04em',
+                    cursor: 'pointer', letterSpacing: '0.02em',
                     transition: 'all 0.2s',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#fff' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.9)' }}
                 >
                   Voir tous les événements →
                 </button>
@@ -1146,7 +1122,7 @@ export default function HomePage() {
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
                 <div>
                   <p className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, color: '#c9b0ff' }}>
-                    <span style={{ width: 22, height: 2, borderRadius: 2, background: '#8444ff', boxShadow: '0 0 8px #8444ff' }} />
+                    <span style={{ width: 22, height: 2, borderRadius: 2, background: '#8444ff' }} />
                     Rien que pour toi
                   </p>
                   <h2 style={{
@@ -1159,9 +1135,9 @@ export default function HomePage() {
                   </h2>
                 </div>
                 <button onClick={() => setPrefsOpen(true)} style={{
-                  padding: '9px 15px', borderRadius: 999, cursor: 'pointer',
-                  border: '1px solid rgba(132,68,255,0.4)', background: 'rgba(132,68,255,0.08)',
-                  color: '#c9b0ff', fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 700,
+                  padding: '9px 16px', borderRadius: 12, cursor: 'pointer',
+                  border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)',
+                  color: 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
                 }}>
                   Régler mes goûts
                 </button>
@@ -1177,17 +1153,17 @@ export default function HomePage() {
                       style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
                     >
                       <div className="reco-card" style={{
-                        background: 'linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid rgba(255,255,255,0.09)',
-                        borderRadius: 24, overflow: 'hidden',
+                        background: '#0e0f16',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 16, overflow: 'hidden',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                       }}>
                         <div style={{ position: 'relative', height: 168 }}>
                           <EventHoverMedia
                             event={event}
                             height={168}
                             zoom
-                            fallbackBackground={`radial-gradient(circle at 30% 20%, ${event.color || '#8444ff'}44, transparent 60%), linear-gradient(135deg, rgba(132,68,255,0.25), rgba(78,232,200,0.08))`}
+                            fallbackBackground={`radial-gradient(circle at 30% 20%, ${event.color || '#8444ff'}44, transparent 60%), linear-gradient(165deg, #110e19, #08080f)`}
                           />
                           {/* Raison de la recommandation — discrète, jamais intrusive */}
                           {reason && (
@@ -1195,11 +1171,11 @@ export default function HomePage() {
                               position: 'absolute', top: 10, left: 10, maxWidth: 'calc(100% - 20px)',
                               display: 'inline-flex', alignItems: 'center', gap: 6,
                               fontFamily: 'Inter, sans-serif', fontSize: 10.5, fontWeight: 700,
-                              color: '#e5d8ff', background: 'rgba(24,10,50,0.72)', backdropFilter: 'blur(8px)',
+                              color: '#e5d8ff', background: 'rgba(5,6,10,0.85)',
                               padding: '5px 10px', borderRadius: 999, border: '1px solid rgba(132,68,255,0.45)',
                               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                             }}>
-                              <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: '50%', background: '#c9b0ff', boxShadow: '0 0 7px rgba(201,176,255,.75)', flexShrink: 0 }} />
+                              <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: '50%', background: '#c9b0ff', flexShrink: 0 }} />
                               {reason}
                             </span>
                           )}
@@ -1276,14 +1252,15 @@ export default function HomePage() {
                   },
                 ].map(step => (
                   <div key={step.n} style={{
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
-                    border: '1px solid rgba(255,255,255,0.07)',
-                    borderRadius: 18,
+                    background: '#0e0f16',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 16,
                     padding: '22px 22px 24px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                   }}>
                     <p style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: 11, letterSpacing: '0.25em',
+                      fontFamily: 'Inter, sans-serif', fontWeight: 700,
+                      fontSize: 11, letterSpacing: '0.08em',
                       color: step.color, margin: 0,
                     }}>{step.n}</p>
                     <h3 style={{
@@ -1307,12 +1284,12 @@ export default function HomePage() {
                   onClick={() => navigate('/connexion?mode=register')}
                   style={{
                     padding: '14px 26px',
-                    background: 'linear-gradient(135deg, var(--teal) 0%, #4ee8c8cc 100%)',
-                    border: 'none', borderRadius: 999,
+                    background: '#3ed6b5',
+                    border: 'none', borderRadius: 12,
                     fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700,
                     letterSpacing: '0.02em',
-                    color: '#04040b', cursor: 'pointer',
-                    boxShadow: '0 10px 30px rgba(78,232,200,0.25)',
+                    color: '#04120e', cursor: 'pointer',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
                   }}
                 >
                   Créer mon compte gratuit →
@@ -1321,12 +1298,12 @@ export default function HomePage() {
                   onClick={() => navigate('/evenements')}
                   style={{
                     padding: '14px 26px',
-                    background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    borderRadius: 999,
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    borderRadius: 12,
                     fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600,
                     letterSpacing: '0.02em',
-                    color: 'rgba(255,255,255,0.78)', cursor: 'pointer',
+                    color: 'rgba(255,255,255,0.9)', cursor: 'pointer',
                   }}
                 >
                   Voir les événements
@@ -1377,17 +1354,16 @@ export default function HomePage() {
                     >
                       <div className="lib-org-card" style={{
                         position: 'relative', overflow: 'hidden',
-                        borderRadius: 24,
-                        background: 'linear-gradient(135deg, rgba(132,68,255,0.14) 0%, rgba(132,68,255,0.04) 100%)',
-                        border: '1px solid rgba(132,68,255,0.28)',
+                        borderRadius: 16,
+                        background: '#0e0f16',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderLeft: '3px solid #8444ff',
                         padding: '36px 32px',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(132,68,255,0.2)' }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}>
-                        {/* Glow */}
-                        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(0,0,0,0.5)' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.35)' }}>
                         <div className="flex flex-col md:flex-row gap-8 md:items-center justify-between" style={{ position: 'relative', zIndex: 2 }}>
                           {/* Left Column (Text Info) */}
                           <div style={{ flex: '1 1 55%', minWidth: 0 }}>
@@ -1416,17 +1392,17 @@ export default function HomePage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               <span className="lib-org-cta" style={{
                                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                                padding: '10px 20px', borderRadius: 999,
-                                background: 'rgba(132,68,255,0.22)',
-                                border: '1px solid rgba(132,68,255,0.35)',
-                                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c9b0ff',
+                                padding: '11px 20px', borderRadius: 12,
+                                background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+                                border: '1px solid rgba(255,255,255,0.14)',
+                                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#fff',
                                 transition: 'all 0.25s cubic-bezier(0.22, 1, 0.36, 1)',
                               }}>
                                 {orgStatus !== 'none' ? 'Voir mon dossier' : 'Créer un compte organisateur'}
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ transition: 'transform 0.2s ease' }}><path d="M9 18l6-6-6-6"/></svg>
                               </span>
                               {orgStatus === 'pending' && (
-                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
+                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.35)', color: 'var(--gold)' }}>
                                   En attente
                                 </span>
                               )}
@@ -1454,17 +1430,16 @@ export default function HomePage() {
                     >
                       <div className="lib-prest-card" style={{
                         position: 'relative', overflow: 'hidden',
-                        borderRadius: 24,
-                        background: 'linear-gradient(135deg, rgba(255,77,166,0.12) 0%, rgba(255,77,166,0.03) 100%)',
-                        border: '1px solid rgba(255,77,166,0.25)',
+                        borderRadius: 16,
+                        background: '#0e0f16',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderLeft: '3px solid #ff4da6',
                         padding: '36px 32px',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(255,77,166,0.18)' }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}>
-                        {/* Glow */}
-                        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,77,166,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 24px 60px rgba(0,0,0,0.5)' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.35)' }}>
                         <div className="flex flex-col md:flex-row gap-8 md:items-center justify-between" style={{ position: 'relative', zIndex: 2 }}>
                           {/* Left Column (Text Info) */}
                           <div style={{ flex: '1 1 55%', minWidth: 0 }}>
@@ -1493,17 +1468,17 @@ export default function HomePage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               <span className="lib-prest-cta" style={{
                                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                                padding: '10px 20px', borderRadius: 999,
-                                background: 'rgba(255,77,166,0.18)',
-                                border: '1px solid rgba(255,77,166,0.32)',
-                                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#ffb3d9',
+                                padding: '11px 20px', borderRadius: 12,
+                                background: '#c2347f',
+                                border: '1px solid rgba(255,255,255,0.14)',
+                                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#fff',
                                 transition: 'all 0.25s cubic-bezier(0.22, 1, 0.36, 1)',
                               }}>
                                 {prestStatus !== 'none' ? 'Voir mon dossier' : 'Créer un compte prestataire'}
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ transition: 'transform 0.2s ease' }}><path d="M9 18l6-6-6-6"/></svg>
                               </span>
                               {prestStatus === 'pending' && (
-                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)', color: 'var(--gold)' }}>
+                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.35)', color: 'var(--gold)' }}>
                                   En attente
                                 </span>
                               )}

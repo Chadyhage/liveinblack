@@ -117,8 +117,8 @@ export default function PlaylistDJPanel({ event }) {
   const iconBtn = (color, active) => ({
     width: 34, height: 34, borderRadius: 10, flexShrink: 0, cursor: 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: active ? `${color}1f` : 'rgba(255,255,255,0.04)',
-    border: `1px solid ${active ? `${color}80` : 'rgba(255,255,255,0.1)'}`, color: active ? color : 'rgba(255,255,255,0.55)',
+    background: active ? `${color}1f` : 'rgba(255,255,255,0.08)',
+    border: `1px solid ${active ? `${color}80` : 'rgba(255,255,255,0.12)'}`, color: active ? color : 'rgba(255,255,255,0.65)',
   })
 
   return (
@@ -130,24 +130,24 @@ export default function PlaylistDJPanel({ event }) {
           <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>{songs.length} son{songs.length > 1 ? 's' : ''} proposé{songs.length > 1 ? 's' : ''} · tu gardes le contrôle final</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={exportList} style={{ padding: '9px 14px', borderRadius: 11, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.gold, background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.35)' }}>
-            {copied ? 'Copié ✓' : 'Exporter'}
+          <button onClick={exportList} style={{ padding: '9px 16px', borderRadius: 11, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: '#181203', background: C.gold, border: '1px solid rgba(255,255,255,0.14)' }}>
+            {copied ? 'Copié' : 'Exporter'}
           </button>
         </div>
       </div>
 
       {toast && (
-        <div style={{ padding: '10px 14px', borderRadius: 12, background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.28)', fontFamily: FONT, fontSize: 13.5, color: C.teal, textAlign: 'center' }}>{toast}</div>
+        <div style={{ padding: '10px 14px', borderRadius: 12, background: 'rgba(12,12,22,0.96)', border: '1px solid rgba(78,232,200,0.5)', fontFamily: FONT, fontSize: 13.5, color: C.teal, textAlign: 'center' }}>{toast}</div>
       )}
 
       {/* Ajouter un son (DJ) */}
       <div>
         <div style={{ position: 'relative' }}>
-          <input value={search} onChange={e => doSearch(e.target.value)} placeholder="Ajouter un son (recherche)…"
-            style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(6,8,16,0.6)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 13, fontFamily: FONT, fontSize: 15, color: '#fff', padding: '14px 14px', outline: 'none' }} />
+          <input value={search} onChange={e => doSearch(e.target.value)} placeholder="Rechercher un titre, un artiste…"
+            style={{ width: '100%', boxSizing: 'border-box', background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, fontFamily: FONT, fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.92)', padding: '13px 14px', outline: 'none' }} />
         </div>
         {results.length > 0 && (
-          <div style={{ marginTop: 10, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, overflow: 'hidden', background: 'rgba(6,8,16,0.92)' }}>
+          <div style={{ marginTop: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, overflow: 'hidden', background: '#12131c', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
             {results.map((r, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 11, borderBottom: i < results.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                 {r.artwork && <img src={r.artwork} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />}
@@ -155,7 +155,7 @@ export default function PlaylistDJPanel({ event }) {
                   <p style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14.5, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</p>
                   <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.artist} · {r.duration}</p>
                 </div>
-                <button onClick={() => addAsDJ(r)} style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', fontSize: 18, color: '#04040b', background: `linear-gradient(135deg,${C.gold},#e0c48a)`, border: 'none' }}>+</button>
+                <button onClick={() => addAsDJ(r)} title="Ajouter à la playlist" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', fontSize: 18, color: '#181203', background: C.gold, border: 'none' }}>+</button>
               </div>
             ))}
           </div>
@@ -176,14 +176,20 @@ export default function PlaylistDJPanel({ event }) {
 
       {/* Liste */}
       {ordered.length === 0 ? (
-        <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '24px 0', margin: 0 }}>Aucun son proposé pour l'instant.</p>
+        <div style={{ textAlign: 'center', padding: '28px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(255,255,255,0.35)" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Aucun son proposé pour l'instant</p>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>Les propositions des participants apparaîtront ici. Tu peux aussi ajouter tes propres sons.</p>
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {ordered.map((song) => {
             const st = song.status ? STATUS[song.status] : null
             const playing = preview?.title === song.title
             return (
-              <div key={song.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 14, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(9,11,20,0.5)', flexWrap: 'wrap' }}>
+              <div key={song.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 14, border: '1px solid rgba(255,255,255,0.08)', background: '#0e0f16', boxShadow: '0 8px 24px rgba(0,0,0,0.35)', flexWrap: 'wrap' }}>
                 <button onClick={() => song.previewUrl && togglePreview(song)} style={{
                   width: 42, height: 42, borderRadius: 9, flexShrink: 0, overflow: 'hidden', position: 'relative', padding: 0,
                   border: playing ? `1px solid ${C.gold}90` : '1px solid rgba(255,255,255,0.1)',
@@ -194,7 +200,7 @@ export default function PlaylistDJPanel({ event }) {
                 <div style={{ flex: 1, minWidth: 120 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 15, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
-                    {st && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', color: st.color, background: `${st.color}1c`, border: `1px solid ${st.color}55`, borderRadius: 999, padding: '2px 8px' }}>{st.label}</span>}
+                    {st && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: st.color, background: `${st.color}1f`, border: `1px solid ${st.color}55`, borderRadius: 8, padding: '3px 8px' }}>{st.label}</span>}
                   </div>
                   <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {song.artist} · <span style={{ color: C.teal }}>{song.likes || 0} like{(song.likes || 0) > 1 ? 's' : ''}</span>{song.addedBy === 'DJ' ? ' · ajouté par toi' : ''}

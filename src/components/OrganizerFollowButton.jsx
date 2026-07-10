@@ -7,8 +7,6 @@ import {
   unfollowOrganizer,
 } from '../utils/organizers'
 
-const C = { obsidian: '#04040b', teal: '#4ee8c8' }
-
 export default function OrganizerFollowButton({ organizer, compact = false, appearance = 'default', onChange }) {
   const { user, openAuthModal } = useAuth()
   const uid = user?.uid || user?.id
@@ -65,22 +63,23 @@ export default function OrganizerFollowButton({ organizer, compact = false, appe
     <div style={{ position: 'relative', minWidth: 0 }}>
       <button onClick={toggle} disabled={busy || organizer?.status !== 'public'} style={{
         width: premium ? '100%' : compact ? 'auto' : '100%', minWidth: compact ? 112 : 148,
-        minHeight: premium ? 46 : undefined,
-        padding: premium ? '11px 16px' : compact ? '9px 14px' : '12px 20px', borderRadius: premium ? 10 : 4,
-        border: premium ? `1px solid ${followed ? 'rgba(78,232,200,.26)' : 'rgba(255,255,255,.14)'}` : followed ? '1px solid rgba(78,232,200,.5)' : '1px solid transparent',
-        background: premium ? (followed ? 'rgba(78,232,200,.07)' : 'rgba(255,255,255,.055)') : followed ? 'rgba(78,232,200,.08)' : C.teal,
-        color: premium ? (followed ? '#8cefdc' : 'rgba(255,255,255,.82)') : followed ? C.teal : C.obsidian, cursor: busy ? 'wait' : 'pointer',
-        fontFamily: premium ? 'Inter, sans-serif' : 'DM Mono, monospace', fontSize: premium ? 12 : compact ? 9 : 10,
-        letterSpacing: premium ? '.02em' : '.14em', textTransform: premium ? 'none' : 'uppercase', fontWeight: 750,
+        minHeight: premium ? 46 : 40,
+        padding: premium ? '11px 16px' : compact ? '9px 14px' : '12px 20px', borderRadius: 10,
+        border: organizer?.status !== 'public' ? '1px solid rgba(255,255,255,0.06)' : followed ? '1px solid rgba(78,232,200,0.35)' : premium ? '1px solid rgba(255,255,255,0.14)' : '1px solid transparent',
+        background: organizer?.status !== 'public' ? 'rgba(255,255,255,0.07)' : followed ? 'rgba(78,232,200,0.12)' : premium ? 'rgba(255,255,255,0.08)' : '#3ed6b5',
+        color: organizer?.status !== 'public' ? 'rgba(255,255,255,0.35)' : followed ? '#6feedd' : premium ? 'rgba(255,255,255,0.9)' : '#04120e',
+        cursor: busy ? 'wait' : organizer?.status !== 'public' ? 'not-allowed' : 'pointer',
+        fontFamily: 'Inter, sans-serif', fontSize: compact ? 12 : 13,
+        letterSpacing: '0.01em', textTransform: 'none', fontWeight: 700,
       }}>
-        {busy ? 'Patiente…' : followed ? <span style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7 }}>Abonné <span aria-hidden="true" style={{ width:6,height:6,borderRadius:'50%',background:'#4ee8c8' }} /></span> : 'S’abonner'}
+        {busy ? <span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'currentColor', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px' }} /> : followed ? <span style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7 }}>Abonné <span aria-hidden="true" style={{ width:6,height:6,borderRadius:'50%',background:'currentColor' }} /></span> : 'S’abonner'}
       </button>
       {menu && (
-        <div style={{ position: 'absolute', zIndex: 80, right: 0, bottom: 'calc(100% + 8px)', width: 'min(210px, calc(100vw - 52px))', padding: 7, borderRadius: 10, background: '#0b0d14', border: '1px solid rgba(255,255,255,.14)', boxShadow: '0 18px 50px rgba(0,0,0,.65)' }}>
-          <button onClick={unfollow} style={{ width: '100%', padding: '10px 12px', border: 0, borderRadius: 5, background: 'rgba(224,90,170,.08)', color: '#f28abe', cursor: 'pointer', fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '.08em', textAlign: 'left' }}>Se désabonner</button>
+        <div style={{ position: 'absolute', zIndex: 80, right: 0, bottom: 'calc(100% + 8px)', width: 'min(210px, calc(100vw - 52px))', padding: 6, borderRadius: 12, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
+          <button onClick={unfollow} style={{ width: '100%', padding: '10px 14px', border: '1px solid rgba(224,90,170,0.55)', borderRadius: 8, background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, textAlign: 'left' }}>Se désabonner</button>
         </div>
       )}
-      {error && <span style={{ position: 'absolute', top: 'calc(100% + 5px)', right: 0, color: '#f28abe', fontSize: 10, whiteSpace: 'nowrap' }}>{error}</span>}
+      {error && <span style={{ position: 'absolute', top: 'calc(100% + 5px)', right: 0, color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 12, whiteSpace: 'nowrap' }}>{error}</span>}
     </div>
   )
 }

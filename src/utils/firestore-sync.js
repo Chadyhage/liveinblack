@@ -365,7 +365,7 @@ export async function saveOrganizerProfileWithSlug(profile) {
     await runTransaction(db, async tx => {
       const [profileSnap, slugSnap] = await Promise.all([tx.get(profileRef), tx.get(slugRef)])
       if (slugSnap.exists() && slugSnap.data().organizerId !== profile.id) {
-        throw new Error('Ce slug est déjà utilisé.')
+        throw new Error('Cette adresse personnalisée est déjà prise. Choisis-en une autre.')
       }
       const oldSlug = profileSnap.exists() ? profileSnap.data().slug : null
       if (oldSlug && oldSlug !== profile.slug) {
@@ -385,7 +385,8 @@ export async function saveOrganizerProfileWithSlug(profile) {
 // Incrément ATOMIQUE d'un champ numérique côté serveur (FieldValue.increment).
 // Évite les pertes du pattern read-modify-write (multi-onglet, double-clic) :
 // deux incréments concurrents s'additionnent au lieu de s'écraser. Utilisé pour
-// les points de fidélité, comme le fait déjà le webhook Stripe.
+// les compteurs organisateur (followers, vues). NB : les points de fidélité ne
+// passent PLUS par ici — ils sont crédités au scan par api/tickets 'checkin'.
 export function syncIncrement(path, field, amount) {
   try {
     const ref = doc(db, ...path.split('/'))
@@ -461,7 +462,10 @@ function mergeBookings(local, remote) {
 // perdus chez l'hôte, copies fantômes scannables chez un invité révoqué).
 // Transaction : sièges de table = version SERVEUR conservée telle quelle
 // (dédoublonnée par ticketCode) ; billets classiques = version LOCALE (le
-// client est l'autorité de ses propres achats).
+// client est l'autorité de ses propres achats), SAUF les billets PAYÉS que
+// le serveur connaît et pas le client (mintés par le webhook Stripe/FedaPay
+// alors que le client n'est jamais revenu) : ceux-là sont préservés — un
+// cache local rassis ne doit jamais pouvoir effacer un achat payé.
 export async function syncMyBookings(uid, localItems) {
   if (!uid) return false
   const list = Array.isArray(localItems) ? localItems : []
@@ -483,7 +487,13 @@ export async function syncMyBookings(uid, localItems) {
         }
       }
       const clientItems = list.filter(it => it && !it.tableId)
-      tx.set(ref, { items: [...seatByCode.values(), ...clientItems], updatedAt: new Date().toISOString() }, { merge: true })
+      // Billets classiques payés présents côté serveur mais inconnus du cache
+      // local : préservés (même clé composite userId+ticketCode que mergeBookings).
+      const localKeys = new Set(clientItems.map(bookingMergeKey))
+      const paidServerOnly = serverItems.filter(it =>
+        it && !it.tableId && it.paid === true && !localKeys.has(bookingMergeKey(it))
+      )
+      tx.set(ref, { items: [...seatByCode.values(), ...clientItems, ...paidServerOnly], updatedAt: new Date().toISOString() }, { merge: true })
     })
     return true
   } catch (e) {
@@ -518,6 +528,21 @@ export function reconcileCreatedEvents(prevList, incoming) {
 // validEventIds = ids issus d'un instantané COMPLET de events/ + créations
 // locales _pendingSync. Transaction sur l'état SERVEUR : un billet ajouté
 // concurremment (arrayUnion du webhook pendant un achat) n'est jamais perdu.
+
+// Sursis anti-course : un billet PAYÉ récent (< 48 h) n'est jamais purgé, même
+// si son event a disparu — couvre la fenêtre « paiement finalisé pendant/juste
+// après la suppression de l'event » : l'acheteur débité garde une trace visible
+// le temps de la revue manuelle (payment_alerts) / du remboursement. Les vieux
+// billets payés d'events de test supprimés, eux, sont bien purgés.
+const PAID_PURGE_GRACE_MS = 48 * 60 * 60 * 1000
+export function isBookingKeepable(it, validEventIds) {
+  if (!it) return false
+  if (validEventIds.has(String(it.eventId))) return true
+  if (it.paid !== true) return false
+  const bookedAt = new Date(it.bookedAt || 0).getTime() || 0
+  return (Date.now() - bookedAt) < PAID_PURGE_GRACE_MS
+}
+
 export async function purgeGhostBookings(uid, validEventIds) {
   try {
     if (!uid || !(validEventIds instanceof Set) || validEventIds.size === 0) return
@@ -526,7 +551,7 @@ export async function purgeGhostBookings(uid, validEventIds) {
       const snap = await tx.get(ref)
       if (!snap.exists()) return
       const items = Array.isArray(snap.data().items) ? snap.data().items : []
-      const kept = items.filter(it => validEventIds.has(String(it.eventId)))
+      const kept = items.filter(it => isBookingKeepable(it, validEventIds))
       if (kept.length === items.length) return
       tx.set(ref, { items: kept, updatedAt: new Date().toISOString() }, { merge: true })
     })
@@ -777,7 +802,7 @@ export async function syncOnLogin(uid, opts = {}) {
       const validEventIds = new Set(publicEvents.map(e => String(e.id)))
       reconciled.forEach(e => { if (e._pendingSync) validEventIds.add(String(e.id)) })
       const allBookings = safeParseArray('lib_bookings')
-      const keptBookings = allBookings.filter(b => validEventIds.has(String(b.eventId)))
+      const keptBookings = allBookings.filter(b => isBookingKeepable(b, validEventIds))
       if (keptBookings.length !== allBookings.length) {
         localStorage.setItem('lib_bookings', JSON.stringify(keptBookings))
       }

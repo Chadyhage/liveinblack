@@ -4,7 +4,7 @@ import Layout from '../components/Layout'
 
 const FONTS = {
   display: "Inter, sans-serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
+  mono: "Inter, sans-serif",
 }
 const COLORS = {
   gold: '#c8a96e',
@@ -12,11 +12,10 @@ const COLORS = {
   dim: 'rgba(255,255,255,0.22)',
 }
 const CARD = {
-  background: 'rgba(8,10,20,0.55)',
-  backdropFilter: 'blur(22px) saturate(1.6)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
+  background: '#12131c',
   border: '1px solid rgba(255,255,255,0.10)',
   borderRadius: 20,
+  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
 
 /**
@@ -85,10 +84,10 @@ export default function PaiementAnnulePage() {
             </svg>
           </div>
 
-          <p style={{ fontFamily: FONTS.display, fontSize: 28, fontWeight: 300, color: COLORS.gold, margin: '0 0 10px' }}>
+          <p style={{ fontFamily: FONTS.display, fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 10px' }}>
             Paiement annulé
           </p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
             Aucun montant n'a été débité. Tu peux retourner à l'événement et réessayer quand tu veux.
           </p>
 
@@ -97,10 +96,10 @@ export default function PaiementAnnulePage() {
               <button
                 onClick={() => navigate(`/evenements/${eventId}`)}
                 style={{
-                  padding: '15px 20px', borderRadius: 14, cursor: 'pointer',
-                  fontFamily: FONTS.display, fontSize: 15, fontWeight: 700,
-                  background: 'linear-gradient(135deg,#c8a96e,#e0c48a)', border: 'none', color: '#04040b',
-                  boxShadow: '0 8px 26px rgba(200,169,110,0.30)',
+                  padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
+                  fontFamily: FONTS.display, fontSize: 14.5, fontWeight: 700,
+                  background: '#c8a96e', border: 'none', color: '#141007',
+                  boxShadow: '0 6px 18px rgba(200,169,110,0.25)',
                 }}
               >
                 Retourner à l'événement
@@ -109,9 +108,9 @@ export default function PaiementAnnulePage() {
             <button
               onClick={() => navigate('/evenements')}
               style={{
-                padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
+                padding: '13px 20px', borderRadius: 12, cursor: 'pointer',
                 fontFamily: FONTS.display, fontSize: 14, fontWeight: 600,
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)',
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)',
               }}
             >
               Voir tous les événements
