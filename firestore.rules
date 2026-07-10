@@ -239,7 +239,19 @@ service cloud.firestore {
     // jamais de modification ni suppression.
     match /tickets/{code} {
       allow read:   if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.paid == false;
+      // Un billet non payé peut être créé côté client (RSVP gratuit, billet
+      // optimiste post-paiement) MAIS une invitation `source:'guestlist'` ne peut
+      // l'être QUE par l'organisateur/agent — sinon n'importe qui forgeait un
+      // faux billet guestlist pour l'événement d'un autre → entrée gratuite. Le
+      // droit d'entrée réel (payé / place à 0 / guestlist officielle) est
+      // RE-VÉRIFIÉ côté serveur au scan (api/tickets checkin, ticketEntryEntitlement).
+      allow create: if isSignedIn()
+        && request.resource.data.paid == false
+        && (
+          request.resource.data.source != 'guestlist'
+          || isEventOwnerOf(request.resource.data.eventId)
+          || isAgent()
+        );
       // L'agent peut tout modifier (validation scanner, etc). L'organisateur de
       // l'event ne peut QUE révoquer une invitation guestlist ou marquer un
       // check-in (jamais flipper `paid`, qui resterait réservé au webhook Stripe).

@@ -315,6 +315,53 @@ async function deleteEventCascade(req, res, caller) {
 // Autorisation : agent plateforme, organisateur de l'événement (createdBy /
 // organizerId, comme isEventOwnerOf des règles), OU membre du roster
 // event_staff/{eventId} (rôle 'scan' et plus — le videur est du staff).
+// Un billet donne droit à l'entrée UNIQUEMENT si l'une de ces conditions tient
+// (le registre tickets/ est créable côté client avec paid:false → on ne fait
+// JAMAIS confiance aux champs paid/source seuls) :
+//   1. paid === true — billet réellement payé (posé par le webhook, Admin SDK) ;
+//   2. source 'guestlist' ET figurant dans la liste OFFICIELLE guestlists/{eventId}
+//      (write réservé à l'organisateur/agent) — un faux source:'guestlist' qui
+//      n'y est pas est refusé ;
+//   3. source 'free' ET la place correspondante de l'événement est réellement à 0
+//      — sinon c'est un faux billet gratuit pour un événement/place PAYANT.
+// Ferme la fraude « forger tickets/{code} {paid:false, source:'free'} pour un
+// événement payant → entrée gratuite ».
+async function ticketEntryEntitlement(db, ticket, ticketCode) {
+  if (ticket.paid === true) return { ok: true }
+  const eventId = String(ticket.eventId || '')
+  if (!eventId) return { ok: false, msg: "Billet non rattaché à un événement — entrée refusée." }
+  const evSnap = await db.collection('events').doc(eventId).get()
+  const ev = evSnap.exists ? evSnap.data() : null
+  if (!ev) return { ok: false, msg: 'Événement introuvable — entrée refusée.' }
+
+  if (ticket.source === 'guestlist') {
+    const gSnap = await db.collection('guestlists').doc(eventId).get()
+    const items = gSnap.exists ? (gSnap.data().items || []) : []
+    const entry = items.find(i => String(i.ticketCode || i.id || '') === String(ticketCode))
+    if (entry && !entry.revoked) return { ok: true }
+    return { ok: false, msg: "Invitation non reconnue par l'organisateur — billet non valide." }
+  }
+
+  // Billet optimiste post-paiement (paid:false portant une référence de session).
+  // On N'ADMET PAS sur la seule référence : le WEBHOOK (Admin SDK) est l'unique
+  // autorité qui pose paid:true, en quelques secondes. Admettre sur la référence
+  // rouvrirait la fraude « je paie 1 billet et j'en forge N avec la même session
+  // pour le même événement » (la référence ne borne ni le ticketCode ni la
+  // quantité). Un achat de dernière minute est donc admis dès que le webhook a
+  // confirmé (le videur re-scanne) — comportement correct : pas d'entrée avant
+  // paiement encaissé.
+  if (ticket.stripeSessionId || ticket.fedapayTxnId) {
+    return { ok: false, msg: 'Paiement en cours de confirmation — patiente puis re-scanne.', pending: true }
+  }
+
+  // Billet gratuit : la place précise du billet doit être réellement gratuite.
+  // (le flux RSVP gratuit écrit `place` = un type exact de event.places → match sûr).
+  const places = Array.isArray(ev.places) ? ev.places : []
+  const place = places.find(p => String(p.type) === String(ticket.place))
+  if (place && Number(place.price) === 0) return { ok: true }
+  return { ok: false, msg: "Billet non payé pour un événement payant — entrée refusée." }
+}
+
 async function checkinTicket(req, res, caller) {
   const ticketCode = String(req.body?.ticketCode || '')
   if (!ticketCode) return res.status(400).json({ error: 'ticketCode requis' })
@@ -349,6 +396,14 @@ async function checkinTicket(req, res, caller) {
     }
     if (!allowed) {
       return res.status(403).json({ error: "Seul un agent, l'organisateur ou un membre du staff de l'événement peut valider une entrée." })
+    }
+
+    // Droit à l'entrée : le billet doit être payé, une invitation guestlist
+    // officielle, ou un billet gratuit d'une place réellement gratuite. Sinon
+    // c'est un faux (registre créable côté client) → entrée refusée, AUCUN point.
+    const entitlement = await ticketEntryEntitlement(db, ticket, ticketCode)
+    if (!entitlement.ok) {
+      return res.status(403).json({ error: entitlement.msg || 'Billet non valide — entrée refusée.', notEntitled: true })
     }
 
     let first = false

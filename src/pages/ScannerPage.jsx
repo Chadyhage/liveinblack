@@ -73,6 +73,11 @@ const STATUS = {
   invalid:        { borderColor: 'rgba(224,90,170,0.60)',  bg: '#260d1b', iconColor: COLORS.pink, label: 'INVALIDE',       sub: 'QR code non reconnu' },
   offline:        { borderColor: 'rgba(200,169,110,0.60)', bg: '#241c0d', iconColor: COLORS.gold, label: 'HORS-LIGNE',      sub: 'Vérification impossible — reconnecte-toi' },
   wrong_event:    { borderColor: 'rgba(200,169,110,0.60)', bg: '#241c0d', iconColor: COLORS.gold, label: 'BILLET REFUSÉ',   sub: 'Ce billet ne concerne pas cet événement' },
+  // Paiement pas encore confirmé (achat de dernière minute, webhook en cours) :
+  // état d'attente NON validable (pas de bouton « Valider l'entrée ») — le
+  // videur re-scanne une fois le paiement encaissé. Empêche d'admettre un billet
+  // non payé (vrai ou forgé) sur le seul feu vert.
+  pending:        { borderColor: 'rgba(200,169,110,0.60)', bg: '#241c0d', iconColor: COLORS.gold, label: 'PAIEMENT EN ATTENTE', sub: 'Re-scanne une fois le paiement confirmé' },
 }
 
 // ── Camera component ────────────────────────────────────────────────
@@ -351,6 +356,27 @@ function ScannerInner({ myAssignments = [] }) {
           headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
           body: JSON.stringify({ action: 'checkin', ticketCode: code }),
         })
+        if (r.status === 403) {
+          // Le SERVEUR refuse l'entrée (billet non payé / invitation non
+          // reconnue par l'organisateur / falsification) : garde AUTORITAIRE
+          // finale. On annule le marquage local optimiste et on bascule
+          // l'affichage en refus (cas où le check d'affichage n'a pas pu trancher,
+          // ex. faux billet source:'guestlist').
+          const body = await r.json().catch(() => ({}))
+          if (body?.notEntitled) {
+            try {
+              const p = new Set(JSON.parse(localStorage.getItem('lib_used_tickets') || '[]'))
+              p.delete(code)
+              localStorage.setItem('lib_used_tickets', JSON.stringify([...p]))
+              setUsedCodes(p)
+            } catch {}
+            setResult(cur => (cur && cur.code === code)
+              ? { ...cur, status: 'invalid', sub: body.error || 'Entrée refusée par le serveur — billet non valide.' }
+              : cur)
+            return
+          }
+          throw new Error('checkin 403')
+        }
         if (!r.ok) throw new Error('checkin ' + r.status)
       }).catch(() => {
         // Repli (API injoignable) : marque au moins le check-in sur le billet —
@@ -385,6 +411,36 @@ function ScannerInner({ myAssignments = [] }) {
   }
 
   // ── Code processing ──
+  // Anti-fraude AFFICHAGE : le registre tickets/ est créable côté client avec
+  // paid:false → un billet non payé n'est légitime que s'il est (a) une
+  // invitation guestlist (certifiée par le serveur au check-in — le staff ne
+  // peut pas lire guestlists/), ou (b) un vrai billet gratuit d'une place à 0.
+  // Un faux billet « gratuit » forgé pour un événement PAYANT est démasqué ici
+  // AVANT le feu vert. Le serveur (api/tickets checkin) reste la garde finale.
+  // Renvoie 'valid' (billet légitime ou paiement en attente à confirmer côté
+  // serveur), 'invalid' (faux billet gratuit démasqué), ou 'unverifiable' (pas
+  // d'info tarifaire fiable → demander un re-scan avec réseau, ne jamais laisser
+  // passer un non-payé à l'aveugle).
+  function entryDisplayVerdict(reg, scanEv) {
+    if (reg?.paid === true) return 'valid'
+    if (reg?.data?.source === 'guestlist') return 'valid' // certifié au check-in serveur
+    // Paiement pas encore encaissé (achat de dernière minute) : état d'attente
+    // NON validable. Ni feu vert (on n'admet pas un non-payé), ni refus sec (le
+    // vrai payeur re-scanne dès que le webhook a posé paid:true → 'valid').
+    if (reg?.data?.source === 'client-postpay' || reg?.data?.stripeSessionId || reg?.data?.fedapayTxnId) return 'pending'
+    // Billet gratuit : la place doit être réellement à 0. Sans tarif fiable, on
+    // NE laisse PAS passer un non-payé (le serveur reste l'autorité).
+    const places = Array.isArray(scanEv?.places) ? scanEv.places : []
+    if (!places.length) return 'unverifiable'
+    const place = places.find(p => String(p.type) === String(reg?.data?.place))
+    if (place) return Number(place.price) === 0 ? 'valid' : 'invalid'
+    // Place du billet introuvable dans l'événement : on NE peut PAS certifier
+    // qu'elle est gratuite (un event mixte gratuit+payant a des places à 0). On
+    // force une re-vérification en ligne (le serveur exige un match exact place↔0)
+    // plutôt que de laisser passer un faux billet gratuit hors-ligne.
+    return 'unverifiable'
+  }
+
   async function processCode(rawValue) {
     setCameraActive(false)
     const val = rawValue.trim()
@@ -433,6 +489,15 @@ function ScannerInner({ myAssignments = [] }) {
       // Options incluses dans le type de place — définies sur le DOC ÉVÉNEMENT
       // (seul l'organisateur peut l'écrire → infalsifiable par le client).
       const scanEv = await fetchEventForScan(reg.data?.eventId || data.ei)
+      const entryV = entryDisplayVerdict(reg, scanEv)
+      if (entryV !== 'valid') {
+        const tk = { holder: data.gn || 'Participant', type: data.pl, event: data.en }
+        setResult(
+          entryV === 'pending' ? { code: tc, status: 'pending', paidConfirmed: false, sub: 'Paiement en cours de confirmation — re-scanne une fois validé.', ticket: tk }
+          : entryV === 'unverifiable' ? { code: tc, status: 'offline', offline: true, sub: 'Tarif non vérifiable hors-ligne — re-scanne avec du réseau.', ticket: tk }
+          : { code: tc, status: 'invalid', sub: 'Billet non payé pour un événement payant — possible falsification.', ticket: tk })
+        return
+      }
       const includedEntry = includedForPlace(scanEv, reg.data?.place || data.pl)
       // Précommandes : le REGISTRE (écrit par le webhook depuis les line_items
       // Stripe) prime sur le token — le token est signé côté client avec une
@@ -483,6 +548,15 @@ function ScannerInner({ myAssignments = [] }) {
       const guard = await eventScanGuard(reg.data?.eventId)
       if (guard) { setResult({ code: clean, status: 'wrong_event', sub: guard.sub, ticket: { holder: reg.data.guestName || 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—' } }); return }
       const scanEv = await fetchEventForScan(reg.data?.eventId)
+      const entryV = entryDisplayVerdict(reg, scanEv)
+      if (entryV !== 'valid') {
+        const tk = { holder: reg.data.guestName || 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—' }
+        setResult(
+          entryV === 'pending' ? { code: clean, status: 'pending', paidConfirmed: false, sub: 'Paiement en cours de confirmation — re-scanne une fois validé.', ticket: tk }
+          : entryV === 'unverifiable' ? { code: clean, status: 'offline', offline: true, sub: 'Tarif non vérifiable hors-ligne — re-scanne avec du réseau.', ticket: tk }
+          : { code: clean, status: 'invalid', sub: 'Billet non payé pour un événement payant — possible falsification.', ticket: tk })
+        return
+      }
       // Déjà entré ? état local (cet appareil) OU registre serveur (checkedInAt,
       // cross-device) — ferme la double-entrée entre deux portes/deux agents.
       const isUsed = currentUsed.has(clean) || !!reg.data?.checkedInAt
@@ -902,6 +976,7 @@ function ScannerInner({ myAssignments = [] }) {
                       {result.status === 'invalid' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
                       {result.status === 'offline' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.58 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01" /></svg>}
                       {result.status === 'wrong_event' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>}
+                      {result.status === 'pending' && <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>}
                     </div>
                     <div>
                       <p style={{ fontFamily: FONTS.mono, fontSize: 26, fontWeight: 800, color: cfg.iconColor, margin: 0, letterSpacing: '0.04em' }}>
