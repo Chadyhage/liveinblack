@@ -9,17 +9,23 @@
 // Pensé pour un non-technicien : recherche d'événement par nom, ajout d'un
 // clic, réordonnancement par flèches, aperçu du rendu directement dans le
 // panneau. Aucune donnée sensible, aucune manipulation d'argent.
+//
+// IMPORTANT (leçons de revue) : le brouillon d'édition est gardé BRUT (pas de
+// normalisation à chaque frappe) — sinon le trim du titre empêcherait de taper
+// une espace ou de vider le champ. La normalisation (trim, cap 12, défauts) est
+// appliquée UNIQUEMENT à l'enregistrement (saveActualite) et à l'aperçu.
 
 import { useEffect, useRef, useState } from 'react'
 import ui from '../styles/ui'
 import { useAuth } from '../context/AuthContext'
 import { isClientDiscoverableEvent } from '../utils/eventDiscovery'
 import {
-  listenActualite, saveActualite, normalizeActualite,
+  listenActualite, saveActualite, normalizeActualite, resolveActualiteEvents,
   defaultActualite, ACTUALITE_ACCENTS,
 } from '../utils/homepageConfig'
 
 const FONT = 'Inter, sans-serif'
+const MAX_EVENTS = 12
 
 export default function ActualiteAdminPanel({ allEvents = [] }) {
   const { user } = useAuth()
@@ -27,27 +33,36 @@ export default function ActualiteAdminPanel({ allEvents = [] }) {
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null) // { ok, text }
-  const seededRef = useRef(false)
+  const [loaded, setLoaded] = useState(false)
+  const dirtyRef = useRef(false) // true dès la 1re édition de l'agent
 
-  // Chargement initial (une seule fois) — on n'écrase pas les modifs en cours
-  // si un snapshot arrive pendant l'édition.
+  // On charge la config au montage mais on n'affiche le formulaire QU'UNE FOIS
+  // le 1er snapshot reçu (ou après un délai de secours si Firestore est
+  // injoignable) — ainsi l'agent ne peut pas éditer, puis enregistrer, un
+  // brouillon PAR DÉFAUT avant que la valeur réellement enregistrée soit chargée
+  // (sinon un save écraserait la config existante). Un snapshot tardif re-seede
+  // tant que l'agent n'a pas commencé à éditer (dirtyRef).
   useEffect(() => {
     const unsub = listenActualite(cfg => {
-      if (!seededRef.current) {
-        seededRef.current = true
-        setDraft(cfg)
-      }
+      if (!dirtyRef.current) setDraft(cfg)
+      setLoaded(true)
     })
-    return unsub
+    const timer = setTimeout(() => setLoaded(true), 4000) // secours offline/permission refusée
+    return () => { clearTimeout(timer); unsub() }
   }, [])
 
-  const cfg = normalizeActualite(draft)
-  const selectedIds = cfg.eventIds
-  const selectedSet = new Set(selectedIds)
+  // Brouillon BRUT — jamais re-normalisé pendant l'édition.
+  function patch(p) {
+    dirtyRef.current = true
+    setDraft(d => ({ ...d, ...p }))
+    setMsg(null)
+  }
 
-  // Événements sélectionnés, dans l'ordre curé (résolus depuis allEvents).
+  const eventIds = Array.isArray(draft.eventIds) ? draft.eventIds.map(String) : []
+  const selectedSet = new Set(eventIds)
+  const atMax = eventIds.length >= MAX_EVENTS
+
   const byId = new Map(allEvents.map(e => [String(e.id), e]))
-  const selectedEvents = selectedIds.map(id => byId.get(String(id))).filter(Boolean)
 
   // Candidats à l'ajout : événements découvrables, non déjà sélectionnés,
   // filtrés par la recherche, triés par date la plus proche.
@@ -59,28 +74,41 @@ export default function ActualiteAdminPanel({ allEvents = [] }) {
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 30)
 
-  function patch(p) { setDraft(d => ({ ...normalizeActualite(d), ...p })); setMsg(null) }
-  function addEvent(id) { patch({ eventIds: [...selectedIds, String(id)] }) }
-  function removeEvent(id) { patch({ eventIds: selectedIds.filter(x => x !== String(id)) }) }
+  function addEvent(id) {
+    if (eventIds.length >= MAX_EVENTS || selectedSet.has(String(id))) return
+    patch({ eventIds: [...eventIds, String(id)] })
+  }
+  function removeEvent(id) { patch({ eventIds: eventIds.filter(x => x !== String(id)) }) }
   function move(id, dir) {
-    const i = selectedIds.indexOf(String(id))
+    const i = eventIds.indexOf(String(id))
     const j = i + dir
-    if (i < 0 || j < 0 || j >= selectedIds.length) return
-    const next = [...selectedIds]
+    if (i < 0 || j < 0 || j >= eventIds.length) return
+    const next = [...eventIds]
     ;[next[i], next[j]] = [next[j], next[i]]
     patch({ eventIds: next })
   }
 
   async function onSave() {
     setSaving(true); setMsg(null)
-    const res = await saveActualite(cfg, user?.uid || '')
+    const res = await saveActualite(draft, user?.uid || '') // saveActualite normalise (trim, cap, défauts)
     setSaving(false)
     setMsg(res.ok
       ? { ok: true, text: 'Enregistré. Le carrousel est à jour sur l\'accueil.' }
       : { ok: false, text: `Échec de l'enregistrement : ${res.error || 'réessaie'}.` })
   }
 
-  const activeAccent = ACTUALITE_ACCENTS[cfg.accent] || ACTUALITE_ACCENTS.teal
+  // Aperçu = ce qui sera RÉELLEMENT enregistré/affiché (normalisé).
+  const preview = normalizeActualite(draft)
+  const previewAccent = ACTUALITE_ACCENTS[preview.accent] || ACTUALITE_ACCENTS.teal
+  const willShowCount = resolveActualiteEvents({ ...preview, active: true }, allEvents).length
+
+  if (!loaded) {
+    return (
+      <div style={{ ...ui.card, padding: '28px 18px', textAlign: 'center' }}>
+        <span style={{ font: `600 13px ${FONT}`, color: ui.text.secondary }}>Chargement de la configuration…</span>
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -100,19 +128,19 @@ export default function ActualiteAdminPanel({ allEvents = [] }) {
           <span>
             <span style={{ display: 'block', font: `700 14px ${FONT}`, color: ui.text.primary }}>Afficher sur l'accueil</span>
             <span style={{ display: 'block', font: `500 12px ${FONT}`, color: ui.text.tertiary, marginTop: 2 }}>
-              {cfg.active ? 'Le carrousel est visible par les visiteurs.' : 'Masqué — personne ne le voit.'}
+              {draft.active ? 'Le carrousel est visible par les visiteurs.' : 'Masqué — personne ne le voit.'}
             </span>
           </span>
           <button
             type="button"
             role="switch"
-            aria-checked={cfg.active}
-            onClick={() => patch({ active: !cfg.active })}
+            aria-checked={!!draft.active}
+            onClick={() => patch({ active: !draft.active })}
             style={{
               flexShrink: 0, width: 48, height: 28, borderRadius: 999, border: 'none', cursor: 'pointer',
-              background: cfg.active ? '#3ed6b5' : 'rgba(255,255,255,0.14)', position: 'relative', transition: 'background 0.2s',
+              background: draft.active ? '#3ed6b5' : 'rgba(255,255,255,0.14)', position: 'relative', transition: 'background 0.2s',
             }}>
-            <span style={{ position: 'absolute', top: 3, left: cfg.active ? 23 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+            <span style={{ position: 'absolute', top: 3, left: draft.active ? 23 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
           </button>
         </label>
 
@@ -123,10 +151,10 @@ export default function ActualiteAdminPanel({ allEvents = [] }) {
               <button key={a.key} type="button" onClick={() => patch({ accent: a.key })}
                 style={{
                   flex: 1, padding: '8px 10px', borderRadius: 10, cursor: 'pointer',
-                  background: cfg.accent === a.key ? a.soft : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${cfg.accent === a.key ? a.border : 'rgba(255,255,255,0.08)'}`,
+                  background: draft.accent === a.key ? a.soft : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${draft.accent === a.key ? a.border : 'rgba(255,255,255,0.08)'}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                  font: `700 12px ${FONT}`, color: cfg.accent === a.key ? a.dot : ui.text.secondary,
+                  font: `700 12px ${FONT}`, color: draft.accent === a.key ? a.dot : ui.text.secondary,
                 }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: a.dot }} />
                 {a.label}
@@ -136,43 +164,56 @@ export default function ActualiteAdminPanel({ allEvents = [] }) {
         </div>
       </div>
 
-      {/* Titre + sous-titre */}
+      {/* Titre + sous-titre — liés au brouillon BRUT (pas de trim pendant la frappe) */}
       <div style={{ ...ui.card, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <span style={ui.label}>Titre</span>
-          <input style={ui.input} value={cfg.title} maxLength={80}
+          <input style={ui.input} value={draft.title ?? ''} maxLength={80}
             onChange={e => patch({ title: e.target.value })} placeholder="L'actu du moment" />
         </div>
         <div>
           <span style={ui.label}>Sous-titre</span>
-          <input style={ui.input} value={cfg.subtitle} maxLength={140}
+          <input style={ui.input} value={draft.subtitle ?? ''} maxLength={140}
             onChange={e => patch({ subtitle: e.target.value })} placeholder="Les temps forts à ne pas manquer" />
         </div>
       </div>
 
-      {/* Événements sélectionnés (ordre curé) */}
+      {/* Événements sélectionnés (ordre curé) — rendus depuis eventIds pour que
+          les index des flèches restent alignés même si un événement a été supprimé */}
       <div style={{ ...ui.card, padding: '16px 18px' }}>
-        <span style={{ ...ui.label, marginBottom: 10 }}>À la une ({selectedEvents.length})</span>
-        {selectedEvents.length === 0 ? (
+        <span style={{ ...ui.label, marginBottom: 10 }}>À la une ({eventIds.length}/{MAX_EVENTS})</span>
+        {eventIds.length === 0 ? (
           <p style={{ margin: 0, font: `500 13px ${FONT}`, color: ui.text.tertiary }}>
             Aucun événement choisi. Ajoute-en depuis la liste ci-dessous.
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {selectedEvents.map((ev, i) => (
-              <div key={ev.id} style={{ ...ui.inset, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ font: `700 12px ${FONT}`, color: ui.text.tertiary, width: 18, textAlign: 'center' }}>{i + 1}</span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', font: `700 13px ${FONT}`, color: ui.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</span>
-                  <span style={{ display: 'block', font: `500 11px ${FONT}`, color: ui.text.tertiary }}>{[ev.date, ev.city || ev.region].filter(Boolean).join(' · ')}</span>
-                </span>
-                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                  <IconBtn label="Monter" disabled={i === 0} onClick={() => move(ev.id, -1)}>↑</IconBtn>
-                  <IconBtn label="Descendre" disabled={i === selectedEvents.length - 1} onClick={() => move(ev.id, +1)}>↓</IconBtn>
-                  <IconBtn label="Retirer" danger onClick={() => removeEvent(ev.id)}>✕</IconBtn>
+            {eventIds.map((id, i) => {
+              const ev = byId.get(id)
+              return (
+                <div key={id} style={{ ...ui.inset, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ font: `700 12px ${FONT}`, color: ui.text.tertiary, width: 18, textAlign: 'center' }}>{i + 1}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    {ev ? (
+                      <>
+                        <span style={{ display: 'block', font: `700 13px ${FONT}`, color: ui.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</span>
+                        <span style={{ display: 'block', font: `500 11px ${FONT}`, color: ui.text.tertiary }}>{[ev.date, ev.city || ev.region].filter(Boolean).join(' · ')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ display: 'block', font: `700 13px ${FONT}`, color: '#ff9ed2' }}>Événement introuvable</span>
+                        <span style={{ display: 'block', font: `500 11px ${FONT}`, color: ui.text.tertiary }}>Supprimé ou indisponible — retire-le</span>
+                      </>
+                    )}
+                  </span>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    <IconBtn label="Monter" disabled={i === 0} onClick={() => move(id, -1)}>↑</IconBtn>
+                    <IconBtn label="Descendre" disabled={i === eventIds.length - 1} onClick={() => move(id, +1)}>↓</IconBtn>
+                    <IconBtn label="Retirer" danger onClick={() => removeEvent(id)}>✕</IconBtn>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
@@ -180,6 +221,11 @@ export default function ActualiteAdminPanel({ allEvents = [] }) {
       {/* Ajout d'événements */}
       <div style={{ ...ui.card, padding: '16px 18px' }}>
         <span style={{ ...ui.label, marginBottom: 10 }}>Ajouter un événement</span>
+        {atMax && (
+          <p style={{ margin: '0 0 10px', font: `600 12px ${FONT}`, color: '#c8a96e' }}>
+            Maximum atteint ({MAX_EVENTS} événements). Retire-en un pour en ajouter un autre.
+          </p>
+        )}
         <input style={{ ...ui.input, marginBottom: 10 }} value={search}
           onChange={e => setSearch(e.target.value)} placeholder="Rechercher par nom, ville…" />
         {candidates.length === 0 ? (
@@ -189,9 +235,10 @@ export default function ActualiteAdminPanel({ allEvents = [] }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
             {candidates.map(ev => (
-              <button key={ev.id} type="button" onClick={() => addEvent(ev.id)}
+              <button key={ev.id} type="button" onClick={() => addEvent(ev.id)} disabled={atMax}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                  cursor: atMax ? 'not-allowed' : 'pointer', opacity: atMax ? 0.5 : 1,
                   padding: '8px 10px', borderRadius: 10, background: 'rgba(255,255,255,0.04)',
                   border: '1px solid rgba(255,255,255,0.07)',
                 }}>
@@ -206,19 +253,19 @@ export default function ActualiteAdminPanel({ allEvents = [] }) {
         )}
       </div>
 
-      {/* Aperçu de l'en-tête */}
+      {/* Aperçu de l'en-tête (rendu normalisé = ce qui sera enregistré) */}
       <div style={{ ...ui.card, padding: '16px 18px' }}>
         <span style={{ ...ui.label, marginBottom: 10 }}>Aperçu</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: activeAccent.soft, border: `1px solid ${activeAccent.border}` }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: activeAccent.dot }} />
-            <span style={{ font: `700 11px ${FONT}`, letterSpacing: '0.04em', textTransform: 'uppercase', color: activeAccent.dot }}>{cfg.title}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: previewAccent.soft, border: `1px solid ${previewAccent.border}` }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: previewAccent.dot }} />
+            <span style={{ font: `700 11px ${FONT}`, letterSpacing: '0.04em', textTransform: 'uppercase', color: previewAccent.dot }}>{preview.title}</span>
           </span>
-          {cfg.subtitle && <span style={{ font: `500 12px ${FONT}`, color: ui.text.secondary }}>{cfg.subtitle}</span>}
+          {preview.subtitle && <span style={{ font: `500 12px ${FONT}`, color: ui.text.secondary }}>{preview.subtitle}</span>}
         </div>
         <p style={{ margin: '10px 0 0', font: `500 12px ${FONT}`, color: ui.text.tertiary }}>
-          {cfg.active
-            ? (selectedEvents.length ? `Visible sur l'accueil avec ${selectedEvents.length} événement${selectedEvents.length > 1 ? 's' : ''}.` : 'Activé, mais aucun événement à venir → rien ne s\'affichera.')
+          {draft.active
+            ? (willShowCount > 0 ? `Visible sur l'accueil avec ${willShowCount} événement${willShowCount > 1 ? 's' : ''}.` : 'Activé, mais aucun événement à venir → rien ne s\'affichera.')
             : 'Désactivé → masqué sur l\'accueil.'}
         </p>
       </div>

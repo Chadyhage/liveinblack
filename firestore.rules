@@ -558,9 +558,18 @@ service cloud.firestore {
     // app_config/homepage_actualite = carrousel « Actualité » curé par l'admin
     // (titre, accent, liste ordonnée d'eventIds). Lecture PUBLIQUE (le carrousel
     // s'affiche pour les visiteurs non connectés) ; écriture réservée aux agents.
-    match /app_config/{docId} {
+    // Portée limitée au SEUL doc voulu (pas de wildcard read:true qui rendrait
+    // public tout futur doc app_config/*). Validation de forme cÔté serveur =
+    // défense en profondeur (le client normalise déjà, mais on ne s'y fie pas :
+    // un token agent forgé hors UI ne peut pas écrire un doc surdimensionné).
+    match /app_config/homepage_actualite {
       allow read:  if true;
-      allow write: if isAgent();
+      allow write: if isAgent()
+        && request.resource.data.active is bool
+        && request.resource.data.title is string && request.resource.data.title.size() <= 80
+        && request.resource.data.subtitle is string && request.resource.data.subtitle.size() <= 140
+        && request.resource.data.accent in ['teal', 'gold', 'pink']
+        && request.resource.data.eventIds is list && request.resource.data.eventIds.size() <= 12;
     }
   }
 }
