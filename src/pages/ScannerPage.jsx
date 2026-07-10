@@ -482,6 +482,13 @@ function ScannerInner({ myAssignments = [] }) {
         setResult({ code: tc, status: 'offline', offline: true, sub: 'Registre injoignable — impossible de certifier ce billet. Re-scanne avec du réseau.' })
         return
       }
+      // Siège de table RÉATTRIBUÉ : un QR émis avant la réattribution (screenshot
+      // d'un invité révoqué) porte une seatVersion périmée < celle du registre.
+      // Le titulaire ACTUEL a régénéré son QR avec la version à jour → il passe.
+      if ((Number(data.sv) || 0) < (Number(reg.data?.seatVersion) || 0)) {
+        setResult({ code: tc, status: 'invalid', sub: 'Billet réattribué — ce QR n\'est plus valide. Le titulaire actuel doit présenter le sien.', ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en } })
+        return
+      }
       // Garde événement : billet d'un event terminé / pas le tien → refusé
       // (avant, un billet d'un ancien événement passait « VALIDE »).
       const guard = await eventScanGuard(reg.data?.eventId || data.ei)
@@ -543,6 +550,14 @@ function ScannerInner({ myAssignments = [] }) {
     if (reg.found) {
       if (reg.revoked) {
         setResult({ code: clean, status: 'invalid', sub: "Invitation annulée par l'organisateur" })
+        return
+      }
+      // Siège de table RÉATTRIBUÉ : la saisie manuelle du code brut ne porte PAS
+      // de seatVersion (pas de token), donc un invité révoqué pourrait re-taper
+      // son ancien code. Pour un siège déjà réattribué (tableId + seatVersion>0)
+      // on EXIGE le QR à jour ; le titulaire courant l'a dans « Mes billets ».
+      if (reg.data?.tableId && (Number(reg.data?.seatVersion) || 0) > 0) {
+        setResult({ code: clean, status: 'invalid', sub: 'Siège de table réattribué — présente le QR à jour (la saisie manuelle du code n\'est pas acceptée pour ce siège).', ticket: { holder: reg.data.guestName || 'Participant', type: reg.data.place || '—', event: reg.data.eventName || '—' } })
         return
       }
       const guard = await eventScanGuard(reg.data?.eventId)

@@ -130,6 +130,12 @@ export default async function handler(req, res) {
       if (fresh.checkedInAt) { const e = new Error('checked_in'); e.code = 'checked_in'; throw e }
       const curHolder = String(fresh.userId || host) // titulaire RÉEL au moment de la tx
 
+      // seatVersion : incrémentée à CHAQUE attribution/révocation. Écrite dans le
+      // registre ET dans les copies (hôte + invité) → le QR du nouveau titulaire
+      // (régénéré depuis sa copie) porte cette version ; un QR émis AVANT cette
+      // opération (screenshot d'un invité révoqué) devient périmé au scan.
+      const newSeatVersion = (Number(fresh.seatVersion) || 0) + 1
+
       // Carnets distincts réellement concernés (basés sur le titulaire frais).
       const uids = [...new Set([host, target, curHolder])]
       const refByUid = {}
@@ -149,7 +155,7 @@ export default async function handler(req, res) {
       }
 
       // 1) Carnet HÔTE : garde le siège, met à jour le pointeur d'attribution.
-      const hostSeatUpdated = { ...base, userId: host, assignedTo: action === 'assign' ? target : null, assignedName: targetName, assignedAt }
+      const hostSeatUpdated = { ...base, userId: host, assignedTo: action === 'assign' ? target : null, assignedName: targetName, assignedAt, seatVersion: newSeatVersion }
       delete hostSeatUpdated.token
       itemsByUid[host] = [...itemsByUid[host].filter(it => it.ticketCode !== ticketCode), hostSeatUpdated]
 
@@ -160,7 +166,7 @@ export default async function handler(req, res) {
 
       // 3) Nouveau titulaire invité : on lui dépose sa copie personnelle.
       if (target !== host) {
-        const guestCopy = { ...base, userId: target, assignedByHost: true }
+        const guestCopy = { ...base, userId: target, assignedByHost: true, seatVersion: newSeatVersion }
         delete guestCopy.token; delete guestCopy.assignedTo; delete guestCopy.assignedName
         itemsByUid[target] = [...itemsByUid[target].filter(it => it.ticketCode !== ticketCode), guestCopy]
       }
@@ -176,6 +182,7 @@ export default async function handler(req, res) {
         assignedTo: action === 'assign' ? target : null,
         assignedName: action === 'assign' ? targetName : null,
         assignedAt,
+        seatVersion: newSeatVersion,
       }, { merge: true })
     })
     } catch (txErr) {

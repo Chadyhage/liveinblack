@@ -45,6 +45,11 @@ export function generateTicketToken(booking) {
     // gn = nom de l'invité — uniquement présent pour un billet guestlist, pour
     // que /ticket/:token affiche son nom sans avoir besoin d'un compte/login.
     ...(booking.guestName ? { gn: booking.guestName } : {}),
+    // sv = version du siège (place de table) — incrémentée à CHAQUE attribution/
+    // révocation. Le scanner compare sv au registre : un QR émis avant une
+    // réattribution (screenshot d'un invité révoqué) devient périmé. Absent pour
+    // un billet normal → tokens EUR existants inchangés (rétrocompat).
+    ...(Number(booking.seatVersion) > 0 ? { sv: Number(booking.seatVersion) } : {}),
   }
   const sig = computeHash(JSON.stringify(payload) + SECRET)
   try {
