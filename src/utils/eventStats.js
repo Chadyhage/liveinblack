@@ -17,17 +17,24 @@ export const EVENT_STATS_DEFINITIONS = {
   },
   fillRate: {
     label: 'Taux de remplissage',
-    plain: 'Part de la salle déjà vendue',
-    definition: 'Quelle proportion de la capacité totale a déjà trouvé preneur. Répond à : « suis-je bientôt complet ? »',
-    formula: 'Billets émis ÷ capacité totale × 100',
-    limitation: 'À ne pas confondre avec le taux de présence (qui, lui, mesure les entrées réelles). Non calculable sans capacité définie.',
+    plain: 'Part du stock déjà vendue',
+    definition: 'Quelle proportion des places en vente a déjà trouvé preneur. Répond à : « suis-je bientôt complet ? ». Avec le filtre catégorie, ne concerne que la place sélectionnée.',
+    formula: 'Places vendues ÷ capacité × 100 (une table de groupe = 1 place en vente)',
+    limitation: 'Compte les unités VENDABLES : une table vendue compte pour 1, même si elle émet plusieurs billets-sièges. Non calculable sans capacité définie.',
   },
   remaining: {
     label: 'Places restantes',
     plain: 'Encore disponibles à la vente',
-    definition: 'Combien de billets tu peux encore vendre avant d’être complet.',
-    formula: 'Capacité totale − billets émis',
-    limitation: 'Le stock réel d’une catégorie précise (VIP, Carré…) peut s’épuiser avant le total.',
+    definition: 'Le stock réel encore en vente — le même chiffre que voient les clients sur la page de l’événement. Avec le filtre catégorie, c’est le stock de la place sélectionnée.',
+    formula: 'Stock restant de la place (capacité − vendues)',
+    limitation: 'Une table de groupe compte pour 1 place en vente. Une session de paiement en cours réserve la place quelques minutes même si elle n’aboutit pas.',
+  },
+  toScan: {
+    label: 'Restent à scanner',
+    plain: 'Billets pas encore entrés',
+    definition: 'Billets émis dont le QR n’a pas encore été scanné à l’entrée. C’est le nombre de personnes encore attendues.',
+    formula: 'Billets émis − entrées confirmées',
+    limitation: 'Un billet non scanné n’est pas forcément un absent : la personne n’est peut-être pas encore arrivée.',
   },
   present: {
     label: 'Entrées confirmées',
@@ -69,6 +76,33 @@ export function eventCapacity(event) {
     const value = Number(place.total || 0)
     return sum + (Number.isFinite(value) ? Math.max(0, value) : 0)
   }, 0)
+}
+
+// ── Stock de vente (capacité / restantes / vendues) — en UNITÉS VENDABLES ─────
+// Source de vérité : place.total et place.available du doc événement (le stock
+// vivant, décrémenté transactionnellement à chaque vente). C'est LE même chiffre
+// que les clients voient sur la fiche (« 99/100 restantes ») — donc toujours
+// cohérent. Une table de groupe compte pour 1 unité (elle émet pourtant
+// groupMax billets-sièges) : compter les restantes en « capacité − billets émis »
+// était donc structurellement faux pour les tables.
+// placeFilter : 'all' = tout l'événement, sinon UNIQUEMENT la place sélectionnée
+// (le filtre catégorie de la page stats s'applique ainsi aussi au stock).
+export function eventStock(event, placeFilter = 'all') {
+  const places = (event?.places || []).filter(p =>
+    placeFilter === 'all' || String(p.type || 'Standard') === String(placeFilter))
+  let capacity = 0
+  let remaining = 0
+  for (const place of places) {
+    const total = Math.max(0, Number(place.total) || 0)
+    if (!total) continue
+    capacity += total
+    // `available` ABSENT (place sans suivi de stock / legacy) ≠ « 0 restante » :
+    // sans ce repli sur `total`, une place non suivie s'affichait 100 % vendue.
+    // On distingue `available:0` explicite (réellement épuisé) de l'absence.
+    const avail = place.available != null ? Number(place.available) : total
+    remaining += Math.max(0, Math.min(total, avail))
+  }
+  return { capacity, remaining, sold: Math.max(0, capacity - remaining) }
 }
 
 export function isActiveTicket(ticket) {
@@ -154,7 +188,12 @@ export function ticketPreorderLines(ticket) {
 export function computeEventStats(event, tickets, options = {}) {
   const now = options.now || new Date()
   const active = filterEventTickets(tickets, options.filters, now)
-  const capacity = eventCapacity(event)
+  // Capacité / restantes / vendues : STOCK RÉEL, filtré par la catégorie
+  // sélectionnée (avant : capacité globale vs billets filtrés → 110 places
+  // affichées pour une place de 100, restantes fausses, et unités mélangées
+  // pour les tables de groupe).
+  const stock = eventStock(event, options.filters?.place || 'all')
+  const capacity = stock.capacity
   const assignedTickets = active.length
   const paidTickets = active.filter(ticket => ticket.paid === true)
   const freeTickets = active.filter(ticket => ticket.paid !== true)
@@ -182,7 +221,8 @@ export function computeEventStats(event, tickets, options = {}) {
     current.paid += ticket.paid === true ? 1 : 0
     current.free += ticket.paid === true ? 0 : 1
     current.revenue += ticket.paid === true ? ticketPrice(event, ticket) : 0
-    current.present += ticket.checkedInAt ? 1 : 0
+    // Même déduplication que le compteur global present (Set par ticketCode)
+    current.present += ticket.checkedInAt && presentCodes.has(ticket.ticketCode || ticket.id) ? 1 : 0
     byPlaceMap.set(name, current)
   })
 
@@ -207,11 +247,18 @@ export function computeEventStats(event, tickets, options = {}) {
   })
 
   const uniqueBuyers = new Set(active.map(ticket => ticket.userId).filter(Boolean)).size
-  const fillRate = capacity > 0 ? assignedTickets / capacity * 100 : null
+  // Remplissage = unités de stock vendues ÷ capacité (cohérent avec « restantes »
+  // et avec la fiche événement ; une table = 1). Les billets émis restent un
+  // compte de PERSONNES attendues — deux notions distinctes, deux libellés.
+  const fillRate = capacity > 0 ? stock.sold / capacity * 100 : null
   const attendanceRate = assignedTickets > 0 ? present / assignedTickets * 100 : null
-  const remaining = capacity > 0 ? Math.max(0, capacity - assignedTickets) : null
+  const remaining = capacity > 0 ? stock.remaining : null
   const eventDate = new Date(event?.date || 0)
-  const checkInReliable = present > 0 || (Number.isFinite(eventDate.getTime()) && eventDate.getTime() < now.getTime())
+  // Fiabilité du check-in : évaluée sur TOUS les billets de l'événement (pas la
+  // vue filtrée) — sinon filtrer sur une catégorie sans scan affichait « check-in
+  // pas commencé » alors que des entrées existent déjà.
+  const anyCheckedIn = (tickets || []).some(t => isActiveTicket(t) && t.checkedInAt)
+  const checkInReliable = anyCheckedIn || (Number.isFinite(eventDate.getTime()) && eventDate.getTime() < now.getTime())
 
   return {
     tickets: active,
@@ -219,6 +266,7 @@ export function computeEventStats(event, tickets, options = {}) {
     paidTickets: paidTickets.length,
     freeTickets: freeTickets.length,
     capacity,
+    soldUnits: stock.sold,
     fillRate,
     remaining,
     present,
@@ -257,6 +305,72 @@ export function buildEventInsights(stats) {
 
   insights.push({ tone: 'muted', text: 'Le CA affiché est une estimation billetterie hors remboursements, remises, frais et précommandes.' })
   return insights
+}
+
+// ─── Démographie des participants (âge / genre) ───────────────────────────────
+// Basée sur le TITULAIRE COURANT de chaque billet (ticket.userId — pour un siège
+// de table attribué, c'est l'invité, pas l'acheteur) croisé avec users/{uid}
+// (birthYear, gender — renseignés à l'inscription ou dans le profil, OPTIONNELS).
+//
+// RÈGLES PRODUIT (Chady, 2026-07-10) :
+//  - l'âge déclaré ne sert QU'AUX statistiques — jamais à autoriser/bloquer un
+//    achat 18+ (donnée modifiable à tout moment, non vérifiable) ;
+//  - pour un événement avec limite d'âge (minAge), les tranches commencent à
+//    l'âge minimum ; un âge déclaré INFÉRIEUR au minimum est compté dans la
+//    première tranche (la personne a forcément l'âge requis à l'entrée) ;
+//  - billets sans compte (guestlist non réclamée) ou sans âge/genre renseigné →
+//    « Non renseigné », jamais un faux 0 %.
+const AGE_BOUNDS = [18, 25, 35, 45] // bornes de tranches standard
+
+export function ageFromBirthYear(birthYear, now = new Date()) {
+  const y = Number(birthYear)
+  if (!Number.isFinite(y) || y < 1900 || y > now.getFullYear()) return null
+  return Math.max(0, now.getFullYear() - y)
+}
+
+export function buildAgeBuckets(minAge = 0) {
+  const min = Math.max(0, Number(minAge) || 0)
+  const bounds = AGE_BOUNDS.filter(b => b > min)
+  const buckets = []
+  let lower = min
+  for (const bound of bounds) {
+    buckets.push({ min: lower, max: bound - 1, label: lower === 0 ? `Moins de ${bound} ans` : `${lower}–${bound - 1} ans`, count: 0 })
+    lower = bound
+  }
+  buckets.push({ min: lower, max: null, label: `${lower} ans et +`, count: 0 })
+  return buckets
+}
+
+export function computeDemographics(tickets, usersById = {}, minAge = 0, now = new Date()) {
+  const active = (tickets || []).filter(isActiveTicket)
+  const buckets = buildAgeBuckets(minAge)
+  const gender = { femme: 0, homme: 0, autre: 0 }
+  let ageKnown = 0
+  let genderKnown = 0
+  let noAccount = 0
+  for (const ticket of active) {
+    const holder = ticket.userId ? usersById[String(ticket.userId)] : null
+    if (!ticket.userId) { noAccount += 1; continue }
+    let age = ageFromBirthYear(holder?.birthYear, now)
+    if (age != null) {
+      // Limite d'âge : un âge déclaré sous le minimum rejoint la première tranche.
+      if (minAge > 0 && age < minAge) age = minAge
+      const bucket = buckets.find(b => age >= b.min && (b.max == null || age <= b.max))
+      if (bucket) { bucket.count += 1; ageKnown += 1 }
+    }
+    const g = String(holder?.gender || '').toLowerCase()
+    if (g === 'femme' || g === 'homme' || g === 'autre') { gender[g] += 1; genderKnown += 1 }
+  }
+  return {
+    total: active.length,
+    ageKnown,
+    ageUnknown: active.length - ageKnown,
+    genderKnown,
+    genderUnknown: active.length - genderKnown,
+    noAccount,
+    buckets,
+    gender,
+  }
 }
 
 export function eventStatsCsvRows(event, stats) {

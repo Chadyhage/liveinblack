@@ -664,8 +664,10 @@ function syncMessagesToFirestore(convId, msgs) {
 }
 
 // extra: { replyTo: { id, senderName, preview }, forwardedFrom: { senderName, convName } }
-export function sendMessage(convId, senderId, senderName, type, content, extra = {}) {
-  const permission = canSendInConversation(convId, senderId, type)
+export function sendMessage(convId, senderId, senderName, type, content, extra = {}, now = Date.now()) {
+  // `now` injectable (défaut = horloge réelle) pour que le blocage sourdine soit
+  // testable de façon déterministe — en production c'est toujours Date.now().
+  const permission = canSendInConversation(convId, senderId, type, now)
   if (!permission.ok) return { blocked: true, reason: permission.reason, mute: permission.mute || null }
   const msgs = getMessages(convId)
   const msg = {
