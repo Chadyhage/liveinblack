@@ -35,7 +35,7 @@ ${LEGAL.brand} n'est pas partie au contrat de vente conclu entre l'acheteur et l
     {
       n: '05',
       title: 'Prix, frais de service et commission',
-      body: `Le prix des billets et des prestations est fixé librement par l'organisateur ou le prestataire. Des frais de service ${LEGAL.brand} sont ajoutés au prix et payés par l'acheteur : en zone euro, actuellement 5 % + 0,49 € par billet, plafonnés à 2,50 € par billet ; en zone FCFA, actuellement 5 % + 300 FCFA par billet, plafonnés à 1 500 FCFA par billet. Ils sont gratuits sur les billets gratuits et affichés clairement avant la validation du paiement.
+      body: `Le prix des billets et des prestations est fixé librement par l'organisateur ou le prestataire. Des frais de service ${LEGAL.brand} sont ajoutés au prix et payés par l'acheteur : en zone euro, actuellement 5 % + 0,49 € par billet, plafonnés à 2,50 € par billet ; en zone FCFA, actuellement 5 % + 300 FCFA par billet, plafonnés à 1 500 FCFA par billet. Aucuns frais ne s'appliquent aux billets gratuits. Les frais de service sont affichés clairement avant la validation du paiement.
 
 Pour les prestations de services réservées et payées via la plateforme, une commission (actuellement 10 %) est prélevée sur le montant dû au prestataire. Les options de mise en avant (« boosts », placements sponsorisés, abonnements) sont des services payants distincts, facturés directement par ${LEGAL.brand}. Les frais de service et commissions ne sont pas remboursables, sauf disposition légale impérative contraire.`,
     },

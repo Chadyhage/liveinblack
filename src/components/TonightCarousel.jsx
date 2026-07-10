@@ -46,14 +46,14 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
     <div style={{ marginTop: 8, marginBottom: 12 }}>
       {/* En-tête */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 999, background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.35)' }}>
-          <span className="animate-pulse" style={{ width: 7, height: 7, borderRadius: '50%', background: '#e05aaa', boxShadow: '0 0 8px rgba(224,90,170,0.9)' }} />
-          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#e05aaa' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.35)' }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#e05aaa' }} />
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#e05aaa' }}>
             Réservez pour ce soir
           </span>
         </span>
         {!empty && (
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.32)' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
             {events.length} soirée{events.length > 1 ? 's' : ''}{regionName && regionName !== 'Toutes' ? ` · ${regionName}` : ''}
           </span>
         )}
@@ -61,17 +61,19 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
 
       {/* État vide : aucune soirée dans les prochaines heures */}
       {empty && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '36px 20px', borderRadius: 18, background: 'rgba(255,255,255,0.025)', border: '1px dashed rgba(255,255,255,0.12)', textAlign: 'center' }}>
-          {/* Zzz endormi — « ça dort, rien ce soir » */}
-          <svg width="54" height="46" viewBox="0 0 54 46" fill="none">
-            <path d="M4 14 H20 L4 30 H20" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M27 2 H39 L27 16 H39" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>
-            C'est bien calme par ici pour l'instant
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '36px 20px', borderRadius: 16, background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)', textAlign: 'center' }}>
+          {/* Icône « Zzz » — rien de prévu ce soir */}
+          <span style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="30" height="26" viewBox="0 0 54 46" fill="none">
+              <path d="M4 14 H20 L4 30 H20" stroke="rgba(255,255,255,0.65)" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M27 2 H39 L27 16 H39" stroke="rgba(255,255,255,0.65)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
+          <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.93)' }}>
+            Rien de prévu ce soir
           </p>
-          <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, maxWidth: 320 }}>
-            Aucune soirée dans les prochaines heures{regionName && regionName !== 'Toutes' ? ` ${inRegion(regionName)}` : ''}. Reviens vite, ça bouge tout le temps !
+          <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, maxWidth: 320 }}>
+            Aucune soirée dans les prochaines heures{regionName && regionName !== 'Toutes' ? ` ${inRegion(regionName)}` : ''}. Repasse un peu plus tard, de nouvelles dates arrivent régulièrement.
           </p>
         </div>
       )}
@@ -100,30 +102,30 @@ export default function TonightCarousel({ events, onOpen, regionName }) {
                   overlay="linear-gradient(to top, rgba(11,13,20,0.92) 4%, transparent 62%)"
                 />
                 {/* Heure de début — l'info clé pour "ce soir" */}
-                <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: "'Syne', sans-serif", fontSize: 11, fontWeight: 800, color: '#0b0d14', background: '#e05aaa', padding: '3px 9px', borderRadius: 7, boxShadow: '0 4px 12px rgba(224,90,170,0.4)' }}>
+                <span style={{ position: 'absolute', top: 8, left: 8, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#0b0d14', background: '#e05aaa', padding: '4px 9px', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
                   {ev.time || 'CE SOIR'}
                 </span>
                 {lowStock && (
-                  <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.9)', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', padding: '3px 7px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)' }}>
-                    {rem} pl.
+                  <span style={{ position: 'absolute', top: 8, right: 8, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.9)', background: 'rgba(5,6,10,0.85)', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)' }}>
+                    {rem} places
                   </span>
                 )}
-                <p style={{ position: 'absolute', left: 10, right: 10, bottom: 8, margin: 0, fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 15, color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.7)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <p style={{ position: 'absolute', left: 10, right: 10, bottom: 8, margin: 0, fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 15, letterSpacing: '-0.2px', color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.7)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {ev.name}
                 </p>
               </div>
               {/* Pied */}
               <div style={{ padding: '9px 11px 11px' }}>
-                <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {ev.city || ev.location || ''}{ev.region ? ` · ${ev.region}` : ''}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, gap: 6 }}>
-                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 13, color: '#c8a96e' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 13, color: '#c8a96e' }}>
                     {price > 0 ? `dès ${fmtMoney(price, eventCurrency(ev))}` : 'Gratuit'}
                   </span>
                   {carre
-                    ? <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, color: '#4ee8c8', background: 'rgba(78,232,200,0.1)', border: '1px solid rgba(78,232,200,0.25)', padding: '2px 7px', borderRadius: 6, whiteSpace: 'nowrap' }}>Carré dispo</span>
-                    : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: '#e05aaa' }}>Réserver →</span>
+                    ? <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: '#4ee8c8', background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', padding: '3px 8px', borderRadius: 8, whiteSpace: 'nowrap' }}>Carré dispo</span>
+                    : <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#e05aaa' }}>Réserver →</span>
                   }
                 </div>
               </div>

@@ -120,7 +120,7 @@ export default function PublicLanding() {
       color: '#fff', overflowX: 'hidden', minHeight: '100vh',
       // Ambiance colorée (violet/teal/pink) fixée au scroll — évite le noir plat,
       // visible dans tout le viewport (haut-gauche, milieu-droite, bas).
-      background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.30), transparent 60%), radial-gradient(circle 820px at 96% 38%, rgba(78,232,200,.15), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.17), transparent 60%), radial-gradient(circle 1100px at 50% 45%, rgba(96,66,150,.13), transparent 70%), ${C.obsidian}`,
+      background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.16), transparent 60%), radial-gradient(circle 820px at 96% 38%, rgba(78,232,200,.08), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.09), transparent 60%), radial-gradient(circle 1100px at 50% 45%, rgba(96,66,150,.07), transparent 70%), ${C.obsidian}`,
       backgroundAttachment: 'fixed',
     }}>
       {/* ══ NAVBAR PUBLIQUE unifiée (vidéo + onglet actif souligné) ══ */}
@@ -128,15 +128,9 @@ export default function PublicLanding() {
       <style>{`
         .lb-navlink{ display:none }
         @media(min-width:720px){ .lb-navlink{ display:inline-block } }
-        @keyframes lbFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        @keyframes lbGlow { 0%,100%{box-shadow:0 0 0 0 rgba(78,232,200,.0),0 14px 40px -12px rgba(78,232,200,.5)} 50%{box-shadow:0 0 24px -2px rgba(78,232,200,.35),0 14px 40px -12px rgba(78,232,200,.7)} }
-        @keyframes lbGrad { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
         @keyframes lbSpin { to { transform:rotate(360deg) } }
         @keyframes lbEq { 0%,100%{ transform:scaleY(.28) } 50%{ transform:scaleY(1) } }
-        @keyframes lbDance { 0%,100%{ transform:translateY(0) rotate(0) } 50%{ transform:translateY(-6px) rotate(-6deg) } }
-        .lb-letter{ display:inline-block; transition:color .12s ease, transform .12s ease; will-change:transform }
-        .lb-letter:hover{ animation:lbDance .5s ease-in-out; }
-        .lb-cta-primary{ animation:lbGlow 3.4s ease-in-out infinite; transition:transform .18s ease }
+        .lb-cta-primary{ transition:transform .18s ease }
         .lb-cta-primary:hover{ transform:translateY(-2px) }
         .lb-card{ transition:transform .25s cubic-bezier(.22,.9,.3,1), border-color .25s ease, box-shadow .25s ease }
         .lb-card:hover{ transform:translateY(-4px); border-color:rgba(78,232,200,.4); box-shadow:0 26px 60px -24px rgba(0,0,0,.85) }
@@ -145,13 +139,13 @@ export default function PublicLanding() {
       {/* ══ HERO ══ */}
       <section style={{ position: 'relative', minHeight: '92vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 22px', textAlign: 'center' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${HERO_IMG})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.32 }} />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 50% 30%, rgba(139,92,246,.22), transparent 55%), radial-gradient(ellipse at 80% 80%, rgba(78,232,200,.14), transparent 50%), linear-gradient(to bottom, rgba(4,4,11,.72) 0%, rgba(4,4,11,.55) 40%, rgba(4,4,11,.98) 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 50% 30%, rgba(139,92,246,.14), transparent 55%), radial-gradient(ellipse at 80% 80%, rgba(78,232,200,.08), transparent 50%), linear-gradient(to bottom, rgba(4,4,11,.72) 0%, rgba(4,4,11,.55) 40%, rgba(4,4,11,.98) 100%)` }} />
         <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
           <p style={{ fontFamily: FONT, fontSize: 34, fontWeight: 300, letterSpacing: '.14em', margin: 0, color: '#fff' }}>
-            L<span style={{ color: C.pink }}>|</span>VE&nbsp;IN&nbsp;<span style={{ fontStyle: 'italic', fontWeight: 700, background: `linear-gradient(90deg,${C.pink},${C.violet})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>BLACK</span>
+            L<span style={{ color: '#fff' }}>|</span>VE&nbsp;IN&nbsp;<span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700, color: '#fff' }}>BLACK</span>
           </p>
           <h1 style={{ fontFamily: FONT, fontSize: 'clamp(34px, 8vw, 62px)', fontWeight: 800, lineHeight: 1.03, letterSpacing: '-1.5px', margin: '22px 0 0', color: '#fff' }}>
-            Les meilleures soirées,<br /><span style={{ background: `linear-gradient(90deg,${C.teal},${C.violet},${C.pink})`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'lbGrad 6s linear infinite alternate' }}>au bout des doigts.</span>
+            Les meilleures soirées,<br /><span style={{ color: C.teal }}>au bout des doigts.</span>
           </h1>
           <p style={{ fontFamily: FONT, fontSize: 'clamp(15px,4vw,19px)', color: 'rgba(255,255,255,.66)', margin: '18px auto 0', maxWidth: 520, lineHeight: 1.5 }}>
             Réserve, découvre, profite. Ta prochaine sortie commence ici — billets, événements privés et prestataires réunis au même endroit.
@@ -165,7 +159,7 @@ export default function PublicLanding() {
           </p>
           <Ambiance />
         </div>
-        <div style={{ position: 'absolute', bottom: 22, left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,.3)', fontSize: 22, animation: 'lbFloat 2.4s ease-in-out infinite' }}>↓</div>
+        <div aria-hidden="true" style={{ position: 'absolute', bottom: 22, left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,.35)' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></div>
       </section>
 
       {/* ══ ÉVÉNEMENTS À DÉCOUVRIR ══ */}
@@ -192,13 +186,13 @@ export default function PublicLanding() {
                           fallbackBackground={`linear-gradient(135deg, ${C.violet}44, ${C.obsidian})`}
                           overlay="linear-gradient(to top, rgba(8,9,14,.9), transparent 55%)"
                         />
-                        {min != null && <span style={{ position: 'absolute', top: 10, right: 10, fontFamily: FONT, fontSize: 11, fontWeight: 800, color: C.gold, background: 'rgba(5,6,10,.7)', backdropFilter: 'blur(8px)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>dès {fmtMoney(min, eventCurrency(e))}</span>}
+                        {min != null && <span style={{ position: 'absolute', top: 10, right: 10, fontFamily: FONT, fontSize: 11, fontWeight: 800, color: C.gold, background: 'rgba(5,6,10,.92)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>dès {fmtMoney(min, eventCurrency(e))}</span>}
                       </div>
                       <div style={{ padding: '12px 14px 14px' }}>
                         <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, letterSpacing: '-.3px', color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.name}</p>
                         <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '4px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
                         <button onClick={ev => { ev.stopPropagation(); gate(`Crée ton compte pour réserver « ${e.name} »`) }}
-                          style={{ marginTop: 12, width: '100%', padding: '9px 0', borderRadius: 10, cursor: 'pointer', fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none' }}>
+                          style={{ marginTop: 12, width: '100%', padding: '11px 0', borderRadius: 10, cursor: 'pointer', fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: '#04120e', background: '#3ed6b5', border: 'none' }}>
                           Réserver
                         </button>
                       </div>
@@ -310,8 +304,8 @@ export default function PublicLanding() {
       <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
           <Reveal>
-            <div className="lb-card" style={{ ...card, padding: 24, height: '100%', display: 'flex', flexDirection: 'column', borderColor: 'rgba(139,92,246,.28)', background: `linear-gradient(160deg, rgba(139,92,246,.1), rgba(9,11,20,.6))` }}>
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: C.violet, margin: 0 }}>Organisateur</p>
+            <div className="lb-card" style={{ ...card, padding: 24, height: '100%', display: 'flex', flexDirection: 'column', borderLeft: '3px solid rgba(139,92,246,.75)' }}>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: C.violet, margin: 0 }}>Organisateur</p>
               <h3 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: '#fff', margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
               <ul style={{ ...featList, flex: 1 }}>
                 {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map(f => <li key={f} style={featItem}><span style={{ color: C.violet }}>◆</span> {f}</li>)}
@@ -320,8 +314,8 @@ export default function PublicLanding() {
             </div>
           </Reveal>
           <Reveal delay={80}>
-            <div className="lb-card" style={{ ...card, padding: 24, height: '100%', display: 'flex', flexDirection: 'column', borderColor: 'rgba(200,169,110,.28)', background: `linear-gradient(160deg, rgba(200,169,110,.1), rgba(9,11,20,.6))` }}>
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>Prestataire</p>
+            <div className="lb-card" style={{ ...card, padding: 24, height: '100%', display: 'flex', flexDirection: 'column', borderLeft: '3px solid rgba(200,169,110,.75)' }}>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>Prestataire</p>
               <h3 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: '#fff', margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
               <ul style={{ ...featList, flex: 1 }}>
                 {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map(f => <li key={f} style={featItem}><span style={{ color: C.gold }}>◆</span> {f}</li>)}
@@ -336,7 +330,7 @@ export default function PublicLanding() {
       <Section eyebrow="Encore plus" title="Ce que ton compte débloque">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
           {[
-            { t: 'Des points à chaque achat', d: 'Cumule des points sur tes billets — bientôt échangeables contre réductions, accès prioritaire et offres exclusives.', img: '/avantages/07_des_points.png' },
+            { t: 'Des points à chaque sortie', d: 'Cumule un point par billet scanné à l\'entrée — bientôt échangeables contre réductions, accès prioritaire et offres exclusives.', img: '/avantages/07_des_points.png' },
             { t: 'Recommandations perso', d: 'Des soirées selon ta ville, tes styles musicaux préférés et ce que tu as déjà réservé.', img: '/avantages/03_recommandations.png' },
             { t: 'Événements privés', d: 'Certaines soirées sont sur invitation. Un code te donne accès.', img: '/avantages/08_evenements_prives.png', cta: true },
           ].map((c, i) => (
@@ -358,7 +352,7 @@ export default function PublicLanding() {
       {/* ══ CTA FINAL ══ */}
       <section style={{ padding: '10px 22px 70px' }}>
         <Reveal>
-          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,.1)', background: `radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.2), transparent 60%), linear-gradient(160deg, rgba(20,14,32,.7), rgba(6,8,15,.7))`, backdropFilter: 'blur(16px)' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,.1)', background: `radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.14), transparent 60%), #12131c`, boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
             <h2 style={{ fontFamily: FONT, fontSize: 'clamp(26px,6vw,40px)', fontWeight: 800, letterSpacing: '-1px', margin: 0, color: '#fff' }}>Rejoins Live in Black</h2>
             <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,.6)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
@@ -385,8 +379,8 @@ function Section({ eyebrow, title, sub, children }) {
     <section style={{ padding: '54px 22px', maxWidth: 1120, margin: '0 auto' }}>
       <Reveal>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
-          {eyebrow && <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: C.teal, margin: 0 }}>{eyebrow}</p>}
-          <h2 style={{ fontFamily: FONT, fontSize: 'clamp(24px,5.5vw,36px)', fontWeight: 800, letterSpacing: '-.8px', color: '#fff', margin: '8px 0 0' }}><DiscoTitle text={title} /></h2>
+          {eyebrow && <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: C.teal, margin: 0 }}>{eyebrow}</p>}
+          <h2 style={{ fontFamily: FONT, fontSize: 'clamp(24px,5.5vw,36px)', fontWeight: 800, letterSpacing: '-.8px', color: '#fff', margin: '8px 0 0' }}>{title}</h2>
           {sub && <p style={{ fontFamily: FONT, fontSize: 14.5, color: 'rgba(255,255,255,.5)', margin: '10px auto 0', maxWidth: 520, lineHeight: 1.5 }}>{sub}</p>}
         </div>
       </Reveal>
@@ -408,10 +402,10 @@ function Ambiance() {
       <button onClick={toggle} className={on ? '' : 'lb-cta-primary'} style={{
         display: 'inline-flex', alignItems: 'center', gap: 10, padding: '11px 22px', borderRadius: 999, cursor: 'pointer',
         fontFamily: FONT, fontSize: 14, fontWeight: 700, transition: 'all .25s ease',
-        color: on ? C.pink : '#fff', background: on ? 'rgba(224,90,170,.12)' : 'rgba(255,255,255,.06)',
+        color: on ? C.pink : '#fff', background: on ? 'rgba(224,90,170,.12)' : 'rgba(255,255,255,.08)',
         border: `1px solid ${on ? 'rgba(224,90,170,.5)' : 'rgba(255,255,255,.22)'}`,
       }}>
-        {on ? <><Equalizer /> Ambiance en cours</> : <><span style={{ fontSize: 15 }}>♪</span> Mettre l'ambiance</>}
+        {on ? <><Equalizer /> Ambiance en cours</> : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg> Mettre l'ambiance</>}
       </button>
     </div>
   )
@@ -425,7 +419,7 @@ function Equalizer() {
 }
 function Vinyl({ playing, size = 116 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={{ animation: playing ? 'lbSpin 3.4s linear infinite' : 'none', filter: 'drop-shadow(0 12px 34px rgba(224,90,170,.45))' }}>
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ animation: playing ? 'lbSpin 3.4s linear infinite' : 'none', filter: 'drop-shadow(0 12px 30px rgba(0,0,0,.5))' }}>
       <defs><radialGradient id="lbVinylLabel" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#e05aaa" /><stop offset="100%" stopColor="#8b5cf6" /></radialGradient></defs>
       <circle cx="50" cy="50" r="48" fill="#08080f" stroke="rgba(255,255,255,.14)" strokeWidth="0.8" />
       {[42, 36, 30, 24].map(r => <circle key={r} cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="0.6" />)}
@@ -453,10 +447,10 @@ function DiscoTitle({ text, style }) {
 
 // ── Styles ──
 const accentSq = (c) => ({ display: 'block', width: 26, height: 26, borderRadius: 8, background: `linear-gradient(135deg, ${c}40, ${c}0d)`, border: `1px solid ${c}66` })
-const card = { background: 'rgba(9,11,20,.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.09)', borderRadius: 16 }
-const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.obsidian, background: `linear-gradient(135deg,${C.teal},#7af0d8)`, border: 'none' }
-const btnGhost = { padding: '13px 24px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.18)' }
-const btnSolid = (c) => ({ padding: '12px 20px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: C.obsidian, background: c, border: 'none' })
+const card = { background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
+const btnPrimary = { padding: '14px 26px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, color: '#04120e', background: '#3ed6b5', border: 'none', boxShadow: '0 6px 20px rgba(62,214,181,.25)' }
+const btnGhost = { padding: '13px 24px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.18)' }
+const btnSolid = (c) => ({ padding: '13px 20px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 700, color: c === C.violet ? '#fff' : '#04120e', background: c === C.violet ? 'linear-gradient(180deg, #8f56ff, #7a3bf2)' : c, border: '1px solid rgba(255,255,255,.14)', boxShadow: c === C.violet ? '0 6px 20px rgba(122,59,242,.35)' : 'none' })
 const linkBtn = (c) => ({ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: c })
 const featList = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }
 const featItem = { fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,.72)', display: 'flex', gap: 9, alignItems: 'baseline' }

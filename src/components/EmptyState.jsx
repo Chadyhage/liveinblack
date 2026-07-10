@@ -1,5 +1,5 @@
-// État vide réutilisable — look premium cohérent dans toute l'app.
-// icon : un <svg> (ou émoji) ; title : Cormorant ; subtitle : DM Mono ; action : optionnel.
+// État vide réutilisable — cohérent dans toute l'app.
+// icon : un <svg> (icons.jsx) ; title : titre court ; subtitle : description ; action : CTA optionnel.
 export default function EmptyState({ icon, title, subtitle, action, compact = false }) {
   return (
     <div style={{
@@ -9,21 +9,20 @@ export default function EmptyState({ icon, title, subtitle, action, compact = fa
     }}>
       {icon && (
         <div style={{
-          width: 60, height: 60, borderRadius: '50%',
+          width: 56, height: 56, borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'radial-gradient(circle at 32% 28%, rgba(78,232,200,0.10), rgba(255,255,255,0.015) 70%)',
+          background: 'rgba(255,255,255,0.05)',
           border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
         }}>
           {icon}
         </div>
       )}
       <div>
-        <p style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 20, color: 'rgba(255,255,255,0.72)', margin: '0 0 5px', letterSpacing: '0.01em' }}>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 15, color: 'rgba(255,255,255,0.92)', margin: '0 0 5px' }}>
           {title}
         </p>
         {subtitle && (
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.30)', margin: 0, lineHeight: 1.7 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6, maxWidth: 340 }}>
             {subtitle}
           </p>
         )}

@@ -10,6 +10,7 @@ import {
   MUSIC_STYLES,
 } from '../utils/recommendations'
 import { ARTIST_SUGGESTIONS, CITY_SUGGESTIONS } from '../data/tasteOptions'
+import { IconCheck } from './icons'
 
 // ─── Éditeur de goûts client — WIZARD étape par étape ─────────────────────────
 // Onboarding post-inscription + « Régler mes goûts » depuis les Paramètres.
@@ -229,7 +230,7 @@ function SearchMultiSelect({ value = [], photos = {}, onChange, suggestions = []
             disabled={value.length >= max}
             style={{
               width: '100%', boxSizing: 'border-box', padding: '13px 14px 13px 40px', borderRadius: 12,
-              border: `1px solid ${focused ? color : 'rgba(255,255,255,0.14)'}`, background: 'rgba(255,255,255,0.045)',
+              border: `1px solid ${focused ? color : 'rgba(255,255,255,0.12)'}`, background: '#0b0c12',
               color: '#fff', outline: 'none', fontFamily: FONT, fontSize: 14, transition: 'border-color .15s',
             }}
           />
@@ -240,8 +241,8 @@ function SearchMultiSelect({ value = [], photos = {}, onChange, suggestions = []
           <div style={{
             position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 5,
             maxHeight: 280, overflowY: 'auto', borderRadius: 12, padding: 6,
-            background: 'rgba(12,13,22,0.99)', border: '1px solid rgba(255,255,255,0.14)',
-            boxShadow: '0 18px 50px rgba(0,0,0,0.6)',
+            background: '#12131c', border: '1px solid rgba(255,255,255,0.10)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
           }}>
             {matches.map(m => (
               <button key={m.name} type="button" onMouseDown={e => { e.preventDefault(); add(m) }} style={{
@@ -272,7 +273,7 @@ function SearchMultiSelect({ value = [], photos = {}, onChange, suggestions = []
         )}
       </div>
       <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '8px 0 0' }}>
-        Tape un nom puis choisis-le. Pas dans la liste ? « Ajouter » le crée. {value.length}/{max}
+        Tape un nom et sélectionne-le, ou ajoute-le s’il n’apparaît pas. {value.length}/{max}
       </p>
     </div>
   )
@@ -342,13 +343,13 @@ export default function PreferencesWizard({ user, setUser, onDone, doneLabel = '
       {/* Barre de progression */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-          <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: current.color }}>
+          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: current.color }}>
             Étape {step + 1} / {STEPS.length}
           </span>
-          <span style={{ fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,0.4)' }}>{progress}%</span>
+          <span style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{progress}%</span>
         </div>
         <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: `linear-gradient(90deg, ${VIOLET}, ${TEAL})`, transition: 'width .35s cubic-bezier(.4,0,.2,1)' }} />
+          <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: VIOLET, transition: 'width .35s cubic-bezier(.4,0,.2,1)' }} />
         </div>
       </div>
 
@@ -384,13 +385,13 @@ export default function PreferencesWizard({ user, setUser, onDone, doneLabel = '
         {step > 0 && (
           <button type="button" onClick={goBack} aria-label="Précédent" style={{
             width: 46, height: 46, borderRadius: 12, flexShrink: 0, cursor: 'pointer',
-            border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: 18,
+            border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18,
           }}>‹</button>
         )}
         <button type="button" onClick={goNext} style={{
-          flex: 1, padding: '15px 24px', borderRadius: 12, border: 'none', cursor: 'pointer',
-          background: `linear-gradient(135deg, ${VIOLET}, #a56bff)`, color: '#fff',
-          fontFamily: FONT, fontSize: 14, fontWeight: 800, boxShadow: '0 8px 24px -8px rgba(132,68,255,0.55)',
+          flex: 1, padding: '15px 24px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer',
+          background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff',
+          fontFamily: FONT, fontSize: 14, fontWeight: 700, boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
         }}>
           {isLast ? doneLabel : (hasValue ? 'Continuer' : 'Passer cette étape')}
         </button>
@@ -406,26 +407,27 @@ export function PreferencesModal({ open, onClose, user, setUser }) {
   if (!open) return null
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)' }} onClick={onClose} />
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
       <div style={{
         position: 'relative', width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto',
-        background: 'rgba(8,9,18,0.98)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 22, padding: '22px 22px 22px',
+        background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, padding: '22px 22px 22px',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
       }}>
         <button onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1, zIndex: 2 }}>×</button>
         {done ? (
           <div style={{ textAlign: 'center', padding: '30px 10px 20px' }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'grid', placeItems: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: TEAL, fontSize: 30 }}>✓</div>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'grid', placeItems: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)', color: TEAL }}><IconCheck size={30} color={TEAL} /></div>
             <h2 style={{ fontFamily: FONT, fontSize: 23, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>C’est noté !</h2>
             <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>
               Tes recommandations sont prêtes. Retrouve-les sur l’accueil, section « Nos recommandations pour toi ».
             </p>
-            <button onClick={onClose} style={{ padding: '13px 28px', borderRadius: 999, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${VIOLET}, #a56bff)`, color: '#fff', fontFamily: FONT, fontSize: 13.5, fontWeight: 800 }}>
+            <button onClick={onClose} style={{ padding: '13px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff', fontFamily: FONT, fontSize: 14, fontWeight: 700, boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
               Voir mes recommandations
             </button>
           </div>
         ) : (
           <>
-            <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: VIOLET, margin: '0 0 6px' }}>Personnalisation</p>
+            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: VIOLET, margin: '0 0 6px' }}>Personnalisation</p>
             <h2 style={{ fontFamily: FONT, fontSize: 23, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 18px' }}>Dis-nous ce que tu aimes</h2>
             <PreferencesWizard user={user} setUser={setUser} onDone={() => setDone(true)} />
           </>

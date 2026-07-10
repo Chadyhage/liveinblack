@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AnimatedLogo from '../components/AnimatedLogo'
+import { IconCheck } from '../components/icons'
 import { USE_REAL_FIREBASE } from '../firebase'
 import { DIAL_CODES } from '../data/dialCodes'
 import {
@@ -279,69 +280,68 @@ const COUNTRY_CODES = DIAL_CODES
 
 const S = {
   card: {
-    background: 'linear-gradient(180deg, rgba(18,10,32,0.92), rgba(10,8,20,0.96))',
-    backdropFilter: 'blur(28px) saturate(1.5)',
-    WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
-    border: '1px solid rgba(255,255,255,0.09)',
-    borderRadius: '24px',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+    background: '#12131c',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: '20px',
+    boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
   },
   input: {
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: '13px',
+    background: '#0b0c12',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '10px',
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '15.5px',
+    fontSize: '14px',
+    fontWeight: 500,
     color: 'rgba(255,255,255,0.92)',
-    padding: '15px 16px',
+    padding: '12px 14px',
     width: '100%',
     outline: 'none',
     transition: 'border-color 0.2s, box-shadow 0.2s',
     boxSizing: 'border-box',
   },
   btnPrimary: {
-    padding: '16px 28px',
-    background: 'linear-gradient(135deg, rgba(132,68,255,0.96), rgba(255,77,166,0.92))',
-    border: 'none',
-    borderRadius: '14px',
+    padding: '14px 24px',
+    background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: '12px',
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '15.5px',
+    fontSize: '15px',
     fontWeight: 700,
-    color: 'white',
+    color: '#fff',
     cursor: 'pointer',
     width: '100%',
-    boxShadow: '0 8px 28px rgba(132,68,255,0.38)',
+    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
     transition: 'opacity 0.2s',
   },
   btnGold: {
-    padding: '16px 28px',
-    background: 'linear-gradient(135deg, rgba(200,169,110,0.18), rgba(200,169,110,0.08))',
-    border: '1px solid rgba(200,169,110,0.40)',
-    borderRadius: '14px',
+    padding: '14px 24px',
+    background: '#c8a96e',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: '12px',
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '15.5px',
+    fontSize: '15px',
     fontWeight: 700,
-    color: '#c8a96e',
+    color: '#181104',
     cursor: 'pointer',
     width: '100%',
   },
   btnGhost: {
-    padding: '16px 28px',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '14px',
+    padding: '13px 24px',
+    background: 'rgba(255,255,255,0.08)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: '12px',
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '15px',
+    fontSize: '14px',
     fontWeight: 600,
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.9)',
     cursor: 'pointer',
     width: '100%',
   },
   label: {
     fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: 600,
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.6)',
     display: 'block',
     marginBottom: '8px',
   },
@@ -617,21 +617,21 @@ export default function LoginPage() {
               <path d="M2 7l10 7 10-7"/>
             </svg>
           </div>
-          <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
+          <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: '22px', color: 'white' }}>
             Vérifie ton email
           </h2>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
             Un lien de confirmation a été envoyé à{' '}
             <span style={{ color: 'white' }}>{unverifiedEmail}</span>.
           </p>
           <div style={{
             textAlign: 'left',
-            background: 'rgba(6,8,16,0.6)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '4px',
-            padding: '12px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: '12px',
+            padding: '14px',
           }}>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: '8px' }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: '8px' }}>
               Comment ça marche
             </p>
             {[
@@ -640,11 +640,11 @@ export default function LoginPage() {
               '3. Clique sur le lien dans cet email',
               '4. Reviens ici et connecte-toi',
             ].map((step) => (
-              <p key={step} style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.8' }}>{step}</p>
+              <p key={step} style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: '1.8' }}>{step}</p>
             ))}
           </div>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>
-            L'email peut arriver dans les spams / courriers indésirables.
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+            L'email peut arriver dans les spams ou courriers indésirables.
           </p>
           {resendSent && (
             <p style={S.successText}>
@@ -654,7 +654,7 @@ export default function LoginPage() {
             </p>
           )}
           <button onClick={handleResendVerification}
-            style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', letterSpacing: '0.2em', color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
+            style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', fontWeight: 600, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
             Renvoyer l'email
           </button>
           <button
@@ -688,17 +688,17 @@ export default function LoginPage() {
               <polyline points="12 6 12 12 16 14"/>
             </svg>
           </div>
-          <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: '22px', letterSpacing: '0.04em', color: 'white' }}>
-            {isRoleReq ? 'Demande envoyée !' : 'Validation en cours'}
+          <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: '22px', color: 'white' }}>
+            {isRoleReq ? 'Demande envoyée' : 'Validation en cours'}
           </h2>
           {isRoleReq ? (
             <>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
                 Ta demande d'accès à l'espace{' '}
                 <span style={{ color: '#c8a96e' }}>{roleLabel}</span>{' '}
                 a été transmise à l'équipe LIVEINBLACK.
               </p>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
                 Ton compte <span style={{ color: 'white' }}>Client</span> est actif et tu peux déjà utiliser l'app. Tu recevras une notification dès que ton espace sera validé.
               </p>
               <button
@@ -710,12 +710,12 @@ export default function LoginPage() {
             </>
           ) : (
             <>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
                 Ton compte{' '}
                 <span style={{ color: '#c8a96e' }}>{roleLabel}</span>{' '}
                 est en attente de validation par l'équipe LIVEINBLACK.
               </p>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
                 Tu recevras une confirmation dès que ton compte sera activé. Cela prend généralement moins de 24h.
               </p>
               <button
@@ -726,7 +726,7 @@ export default function LoginPage() {
               </button>
               <button
                 onClick={() => { setPendingInfo(null); setMode('login') }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginTop: '4px', textDecoration: 'underline' }}
               >
                 Retour à la connexion
               </button>
@@ -744,10 +744,6 @@ export default function LoginPage() {
         .lib-role-card{ transition:transform .18s ease, border-color .2s ease, background .2s ease }
       `}</style>
 
-      {/* Glow blobs */}
-      <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(132,68,255,0.15) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
-      <div style={{ position: 'fixed', bottom: '-5%', right: '-5%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,77,166,0.10) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
-
       {/* Continuer sans compte — accès invité, discret en haut à droite */}
       <button
         onClick={() => navigate('/accueil')}
@@ -755,8 +751,8 @@ export default function LoginPage() {
         style={{
           position: 'fixed', top: 20, right: 20, zIndex: 20,
           padding: '9px 14px', borderRadius: 10, cursor: 'pointer',
-          background: 'rgba(6,8,16,0.5)', border: '1px solid rgba(255,255,255,0.12)',
-          fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
+          background: '#0e0f16', border: '1px solid rgba(255,255,255,0.12)',
+          fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)',
           display: 'flex', alignItems: 'center', gap: 6,
           transition: 'border-color 0.2s, color 0.2s',
         }}
@@ -772,7 +768,7 @@ export default function LoginPage() {
         <div style={{ display: 'inline-flex', justifyContent: 'center', marginBottom: 10 }}>
           <AnimatedLogo size={34} textScale={0.62} onClick={() => navigate('/accueil')} />
         </div>
-        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px', color: 'rgba(255,255,255,0.28)', letterSpacing: '0.06em' }}>
+        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.06em' }}>
           La marketplace de l'événementiel
         </p>
       </div>
@@ -782,8 +778,8 @@ export default function LoginPage() {
         <div style={{ ...S.card, padding: '38px 32px' }}>
 
           {/* ── Mode tabs ── */}
-          <div style={{ display: 'flex', gap: 6, padding: '5px', background: 'rgba(255,255,255,0.04)', borderRadius: '16px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.07)' }}>
-            {[['login', 'Connexion'], ['register', "S'inscrire"]].map(([m, label]) => (
+          <div style={{ display: 'flex', gap: 6, padding: '5px', background: 'rgba(255,255,255,0.04)', borderRadius: '14px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.07)' }}>
+            {[['login', 'Connexion'], ['register', 'Inscription']].map(([m, label]) => (
               <button key={m} onClick={() => {
                 setMode(m); setRegStep(1); setError('')
                 // Reset complet — sinon un état laissé par l'onglet précédent (email non
@@ -792,9 +788,9 @@ export default function LoginPage() {
                 setUnverifiedEmail(''); setResendSent(false); setPendingInfo(null)
                 setLoginAccounts(null); setLoginRole(null)
               }}
-                style={{ flex: 1, padding: '12px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14.5px', fontWeight: 700, border: 'none', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s',
-                  ...(mode === m ? { background: 'linear-gradient(135deg, rgba(132,68,255,0.85), rgba(255,77,166,0.75))', color: '#fff', boxShadow: '0 2px 12px rgba(132,68,255,0.3)' }
-                  : { background: 'transparent', color: 'rgba(255,255,255,0.35)' }) }}>
+                style={{ flex: 1, padding: '12px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14.5px', fontWeight: 700, border: 'none', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.2s',
+                  ...(mode === m ? { background: 'rgba(255,255,255,0.10)', color: '#fff' }
+                  : { background: 'transparent', color: 'rgba(255,255,255,0.5)' }) }}>
                 {label}
               </button>
             ))}
@@ -802,7 +798,7 @@ export default function LoginPage() {
 
           {/* ── Error ── */}
           {error && (
-            <div style={{ marginBottom: '16px', padding: '11px 14px', background: 'rgba(255,77,166,0.08)', border: '1px solid rgba(255,77,166,0.22)', borderRadius: '10px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', color: '#ff6b9d', textAlign: 'center', lineHeight: 1.5 }}>
+            <div style={{ marginBottom: '16px', padding: '11px 14px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: '10px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', color: '#ff8fc0', textAlign: 'center', lineHeight: 1.5 }}>
               {error}
             </div>
           )}
@@ -821,27 +817,27 @@ export default function LoginPage() {
               {/* Multi-account role picker */}
               {loginAccounts && loginAccounts.length > 1 && !loginRole && (
                 <div>
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginBottom: 8 }}>
-                    Plusieurs comptes détectés — lequel ?
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: 8 }}>
+                    Plusieurs comptes sont associés à cet email. Choisis celui à utiliser.
                   </p>
                   {loginAccounts.map(acc => (
                     <button key={acc.uid} type="button"
                       onClick={() => setLoginRole(acc.role)}
                       style={{
-                        width: '100%', marginBottom: 6, padding: '11px 14px', borderRadius: 4,
-                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                        width: '100%', marginBottom: 6, padding: '11px 14px', borderRadius: 12,
+                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
                         display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left',
                       }}>
                       <span style={{
-                        padding: '2px 8px', borderRadius: 3, fontSize: 9,
-                        fontFamily: "Inter, sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase',
+                        padding: '3px 9px', borderRadius: 8, fontSize: 10, fontWeight: 700,
+                        fontFamily: "Inter, sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase',
                         background: (ROLES[acc.role]?.color || '#fff') + '14',
                         border: `1px solid ${ROLES[acc.role]?.color || '#fff'}44`,
                         color: ROLES[acc.role]?.color || '#fff',
                       }}>
                         {ROLES[acc.role]?.label || acc.role}
                       </span>
-                      <span style={{ fontFamily: "Inter, sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
+                      <span style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
                         {acc.name}
                       </span>
                     </button>
@@ -855,8 +851,8 @@ export default function LoginPage() {
                   {loginRole && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: -4 }}>
                       <span style={{
-                        padding: '2px 8px', borderRadius: 3, fontSize: 9,
-                        fontFamily: "Inter, sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase',
+                        padding: '3px 9px', borderRadius: 8, fontSize: 10, fontWeight: 700,
+                        fontFamily: "Inter, sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase',
                         background: (ROLES[loginRole]?.color || '#fff') + '14',
                         border: `1px solid ${ROLES[loginRole]?.color || '#fff'}44`,
                         color: ROLES[loginRole]?.color || '#fff',
@@ -864,7 +860,7 @@ export default function LoginPage() {
                         {ROLES[loginRole]?.label || loginRole}
                       </span>
                       <button type="button" onClick={() => setLoginRole(null)}
-                        style={{ fontFamily: "Inter, sans-serif", fontSize: 9, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                        style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
                         Changer
                       </button>
                     </div>
@@ -879,14 +875,14 @@ export default function LoginPage() {
                         style={{
                           position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
                           fontFamily: 'Inter, system-ui, sans-serif', fontSize: '11px', fontWeight: 500,
-                          color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer',
                         }}>
                         {showPwd ? 'Cacher' : 'Voir'}
                       </button>
                     </div>
                   </div>
-                  <button type="submit" disabled={loading} style={{ ...S.btnPrimary, marginTop: '4px', opacity: loading ? 0.6 : 1 }}>
-                    {loading ? <Spinner text="Connexion..." /> : 'Se connecter'}
+                  <button type="submit" disabled={loading} style={{ ...S.btnPrimary, marginTop: '4px', opacity: loading ? 0.75 : 1, cursor: loading ? 'wait' : 'pointer' }}>
+                    {loading ? <Spinner text="Connexion…" /> : 'Se connecter'}
                   </button>
                 </>
               )}
@@ -898,8 +894,8 @@ export default function LoginPage() {
               onClick={() => { setResetEmail(email); setResetSent(false); setShowResetModal(true) }}
               style={{
                 width: '100%', textAlign: 'center', marginTop: '10px',
-                fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px', fontWeight: 400,
-                color: 'rgba(255,255,255,0.28)',
+                fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px', fontWeight: 500,
+                color: 'rgba(255,255,255,0.55)',
                 background: 'none', border: 'none', cursor: 'pointer',
               }}>
               Mot de passe oublié ?
@@ -929,7 +925,7 @@ export default function LoginPage() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: '15px',
                     padding: '17px 18px',
-                    background: regRole === role ? `${accent}14` : 'rgba(255,255,255,0.025)',
+                    background: regRole === role ? `${accent}14` : 'rgba(255,255,255,0.04)',
                     border: `1px solid ${regRole === role ? `${accent}66` : 'rgba(255,255,255,0.09)'}`,
                     borderRadius: '16px',
                     textAlign: 'left',
@@ -951,7 +947,7 @@ export default function LoginPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '3px', flexWrap: 'wrap' }}>
                       <p style={{ fontFamily: "Inter, sans-serif", fontSize: '16px', fontWeight: 700, letterSpacing: '-0.2px', color: '#fff', margin: 0 }}>{title}</p>
                       {badge && (
-                        <span style={{ fontFamily: "Inter, sans-serif", fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', padding: '3px 8px', borderRadius: 999, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.08)' }}>
+                        <span style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#c8a96e', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.12)' }}>
                           {badge}
                         </span>
                       )}
@@ -988,10 +984,10 @@ export default function LoginPage() {
                   marginLeft: 'auto',
                   fontFamily: "Inter, sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em',
                   textTransform: 'uppercase', color: '#c8a96e',
-                  padding: '5px 11px',
+                  padding: '4px 10px',
                   border: '1px solid rgba(200,169,110,0.35)',
-                  borderRadius: '999px',
-                  background: 'rgba(200,169,110,0.08)',
+                  borderRadius: '8px',
+                  background: 'rgba(200,169,110,0.12)',
                 }}>
                   {ROLES[regRole]?.label}
                 </span>
@@ -1001,9 +997,10 @@ export default function LoginPage() {
               {(regRole === 'organisateur' || regRole === 'prestataire') && (
                 <div style={{
                   padding: '14px 16px',
-                  background: 'rgba(200,169,110,0.06)',
-                  border: '1px solid rgba(200,169,110,0.25)',
-                  borderRadius: '14px',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderLeft: '3px solid #c8a96e',
+                  borderRadius: '12px',
                 }}>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '6px' }}>
                     {regRole === 'organisateur' ? 'Espace Organisateur' : 'Espace Prestataire'}
@@ -1016,14 +1013,15 @@ export default function LoginPage() {
               {/* Agent warning */}
               {regRole === 'agent' && (
                 <div style={{
-                  padding: '10px 14px',
-                  background: 'rgba(200,169,110,0.06)',
-                  border: '1px solid rgba(200,169,110,0.25)',
-                  borderRadius: '4px',
+                  padding: '12px 14px',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderLeft: '3px solid #c8a96e',
+                  borderRadius: '12px',
                 }}>
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>Compte Agent</p>
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                    Ton compte sera soumis à validation. Tu recevras une confirmation sous 24h.
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: '4px' }}>Compte Agent</p>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+                    Ton compte sera soumis à validation. Tu recevras une confirmation sous 24 h.
                   </p>
                 </div>
               )}
@@ -1062,10 +1060,10 @@ export default function LoginPage() {
                       {showDialPicker && (
                         <div style={{
                           position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50,
-                          background: 'rgba(8,10,20,0.97)',
+                          background: '#12131c',
                           border: '1px solid rgba(255,255,255,0.10)',
-                          borderRadius: '4px',
-                          boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
+                          borderRadius: '12px',
+                          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
                           maxHeight: '200px', overflowY: 'auto', width: '220px',
                         }}>
                           {COUNTRY_CODES.map(c => (
@@ -1073,15 +1071,15 @@ export default function LoginPage() {
                               onClick={() => { setRegDialCode(c.dial); setShowDialPicker(false) }}
                               style={{
                                 width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                                padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none',
+                                padding: '10px 12px', textAlign: 'left', background: 'none', border: 'none',
                                 cursor: 'pointer', transition: 'background 0.15s',
                               }}
-                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
                               onMouseLeave={e => e.currentTarget.style.background = 'none'}
                             >
                               <span style={{ fontSize: '14px' }}>{c.flag}</span>
-                              <span style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.6)', flex: 1 }}>{c.name}</span>
-                              <span style={{ fontFamily: "Inter, sans-serif", fontSize: '10px', color: regDialCode === c.dial ? '#c8a96e' : 'rgba(255,255,255,0.3)' }}>{c.dial}</span>
+                              <span style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.75)', flex: 1 }}>{c.name}</span>
+                              <span style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: regDialCode === c.dial ? '#c8a96e' : 'rgba(255,255,255,0.45)' }}>{c.dial}</span>
                             </button>
                           ))}
                         </div>
@@ -1094,8 +1092,8 @@ export default function LoginPage() {
 
               {/* Le prestataire choisit ensuite une ou plusieurs activités dans son profil. */}
               {regRole === 'prestataire' && (
-                <div style={{ padding: '11px 13px', borderRadius: 8, border: '1px solid rgba(78,232,200,.18)', background: 'rgba(78,232,200,.05)' }}>
-                  <p style={{ margin: 0, fontFamily: "Inter, sans-serif", fontSize: 11, color: 'rgba(255,255,255,.55)', lineHeight: 1.55 }}>
+                <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', borderLeft: '3px solid rgba(78,232,200,0.6)', background: 'rgba(255,255,255,0.04)' }}>
+                  <p style={{ margin: 0, fontFamily: "Inter, sans-serif", fontSize: 12.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.55 }}>
                     Crée d’abord ton compte. Tu choisiras ensuite librement tes activités et compléteras ta page prestataire.
                   </p>
                 </div>
@@ -1112,7 +1110,7 @@ export default function LoginPage() {
                     style={{
                       position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
                       fontFamily: 'Inter, system-ui, sans-serif', fontSize: '11px', fontWeight: 500,
-                      color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer',
                     }}>
                     {showRegPwd ? 'Cacher' : 'Voir'}
                   </button>
@@ -1131,15 +1129,15 @@ export default function LoginPage() {
                       }} />
                     ))}
                   </div>
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.15em', color: pwdStrength.color }}>{pwdStrength.label}</p>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: pwdStrength.color }}>{pwdStrength.label}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
                     {[
-                      { ok: regPwd.length >= 8, text: '8 car. min.' },
+                      { ok: regPwd.length >= 8, text: '8 caractères min.' },
                       { ok: /[A-Z]/.test(regPwd), text: 'Majuscule' },
                       { ok: /[0-9]/.test(regPwd), text: 'Chiffre' },
                     ].map(r => (
-                      <span key={r.text} style={{ fontFamily: "Inter, sans-serif", fontSize: '9px', color: r.ok ? '#4ee8c8' : 'rgba(255,255,255,0.2)' }}>
-                        {r.ok ? '✓' : '○'} {r.text}
+                      <span key={r.text} style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', fontWeight: 600, color: r.ok ? '#4ee8c8' : 'rgba(255,255,255,0.45)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        {r.ok ? <IconCheck size={11} /> : <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', opacity: 0.6, display: 'inline-block' }} />} {r.text}
                       </span>
                     ))}
                   </div>
@@ -1154,18 +1152,18 @@ export default function LoginPage() {
                 <p style={{ ...S.errorText, marginTop: '-6px' }}>Les mots de passe ne correspondent pas</p>
               )}
 
-              <button type="submit" disabled={loading} style={{ ...S.btnPrimary, marginTop: '4px', opacity: loading ? 0.6 : 1 }}>
-                {loading ? <Spinner text="Création..." /> : regRole === 'agent' ? 'Demander un accès agent' : 'Créer mon compte'}
+              <button type="submit" disabled={loading} style={{ ...S.btnPrimary, marginTop: '4px', opacity: loading ? 0.75 : 1, cursor: loading ? 'wait' : 'pointer' }}>
+                {loading ? <Spinner text="Création…" /> : regRole === 'agent' ? 'Demander un accès agent' : 'Créer mon compte'}
               </button>
             </form>
           )}
 
           {mode === 'register' && regStep === 1 && (
-            <p style={{ textAlign: 'center', fontFamily: "Inter, sans-serif", fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.2)', marginTop: '16px', lineHeight: 1.6 }}>
-              En t'inscrivant tu acceptes nos{' '}
-              <span style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/cgu')}>CGU</span>{' '}
+            <p style={{ textAlign: 'center', fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: '16px', lineHeight: 1.6 }}>
+              En t'inscrivant, tu acceptes nos{' '}
+              <span style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/cgu')}>CGU</span>{' '}
               et notre{' '}
-              <span style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/cgu')}>Politique de confidentialité</span>
+              <span style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/cgu')}>Politique de confidentialité</span>.
             </p>
           )}
         </div>
@@ -1174,15 +1172,15 @@ export default function LoginPage() {
       {/* ── Reset password modal ── */}
       {showResetModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }}
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }}
             onClick={() => setShowResetModal(false)} />
           <div style={{ position: 'relative', ...S.card, padding: '28px 24px', width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: '20px', letterSpacing: '0.04em', color: 'white', margin: 0 }}>
+            <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: '20px', color: 'white', margin: 0 }}>
               Mot de passe oublié
             </h3>
             {!resetSent ? (
               <form onSubmit={e => { e.preventDefault(); handleSendReset() }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
                   Entre ton adresse email. Si elle est associée à un compte, tu recevras un lien de réinitialisation.
                 </p>
                 <div>
@@ -1191,8 +1189,8 @@ export default function LoginPage() {
                     value={resetEmail} onChange={e => { setResetEmail(e.target.value); setResetError('') }} />
                 </div>
                 {resetError && <p style={S.errorText}>{resetError}</p>}
-                <button type="submit" disabled={resetLoading} style={{ ...S.btnGold, opacity: resetLoading ? 0.6 : 1 }}>
-                  {resetLoading ? <Spinner text="Envoi..." /> : 'Envoyer'}
+                <button type="submit" disabled={resetLoading} style={{ ...S.btnGold, opacity: resetLoading ? 0.75 : 1, cursor: resetLoading ? 'wait' : 'pointer' }}>
+                  {resetLoading ? <Spinner text="Envoi…" /> : 'Envoyer'}
                 </button>
                 <button type="button" onClick={() => setShowResetModal(false)} style={{ ...S.btnGhost }}>
                   Annuler
@@ -1206,8 +1204,8 @@ export default function LoginPage() {
                     <path d="M2 7l10 7 10-7"/>
                   </svg>
                 </div>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#4ee8c8' }}>Vérifie tes emails</p>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '14px', fontWeight: 700, color: '#4ee8c8' }}>Vérifie tes emails</p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
                   Si <span style={{ color: 'white' }}>{resetEmail}</span> est associée à un compte, un lien de réinitialisation vient d'être envoyé. Pense à vérifier tes spams.
                 </p>
                 <button onClick={() => setShowResetModal(false)} style={S.btnGold}>Fermer</button>
@@ -1220,7 +1218,7 @@ export default function LoginPage() {
   )
 }
 
-// ── Focus-aware input (teal border on focus) ──────────────────────────────
+// ── Focus-aware input (bordure violette au focus) ─────────────────────────
 function FocusInput({ style = {}, ...props }) {
   const [focused, setFocused] = useState(false)
   return (
@@ -1229,17 +1227,18 @@ function FocusInput({ style = {}, ...props }) {
       onFocus={e => { setFocused(true); props.onFocus?.(e) }}
       onBlur={e => { setFocused(false); props.onBlur?.(e) }}
       style={{
-        background: 'rgba(255,255,255,0.05)',
-        border: `1px solid ${focused ? '#4ee8c8' : 'rgba(255,255,255,0.10)'}`,
+        background: '#0b0c12',
+        border: `1px solid ${focused ? '#8444ff' : 'rgba(255,255,255,0.12)'}`,
         borderRadius: '10px',
         fontFamily: 'Inter, system-ui, sans-serif',
         fontSize: '14px',
-        color: 'rgba(255,255,255,0.9)',
+        fontWeight: 500,
+        color: 'rgba(255,255,255,0.92)',
         padding: '12px 14px',
         width: '100%',
         outline: 'none',
         transition: 'border-color 0.2s, box-shadow 0.2s',
-        boxShadow: focused ? '0 0 0 3px rgba(78,232,200,0.08)' : 'none',
+        boxShadow: focused ? '0 0 0 3px rgba(132,68,255,0.14)' : 'none',
         boxSizing: 'border-box',
         ...style,
       }}

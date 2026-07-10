@@ -17,16 +17,14 @@ const COLORS = {
   dim: 'rgba(255,255,255,0.22)',
 }
 const CARD = {
-  background: 'linear-gradient(180deg, rgba(18,12,30,0.85), rgba(10,8,18,0.92))',
-  backdropFilter: 'blur(24px) saturate(1.5)',
-  WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+  background: '#12131c',
   border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 24,
-  boxShadow: '0 30px 90px rgba(0,0,0,0.55)',
+  borderRadius: 20,
+  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
-// Boutons réutilisables (style vitrine)
-const btnPrimary = (c) => ({ padding: '15px 20px', borderRadius: 14, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 700, border: 'none', width: '100%', color: '#04040b', background: `linear-gradient(135deg, ${c}, ${c}cc)`, boxShadow: `0 8px 26px ${c}44` })
-const btnGhostS = { padding: '15px 20px', borderRadius: 14, cursor: 'pointer', fontFamily: FONT, fontSize: 15, fontWeight: 600, width: '100%', color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)' }
+// Boutons réutilisables — CTA pleins et opaques (design system)
+const btnSolid = (bg, fg) => ({ padding: '14px 20px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 14.5, fontWeight: 700, border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)' })
+const btnGhostS = { padding: '13px 20px', borderRadius: 12, cursor: 'pointer', fontFamily: FONT, fontSize: 14, fontWeight: 600, width: '100%', color: 'rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }
 
 const PENDING_KEY = (id) => `lib_pending_booking_${id}`
 
@@ -345,18 +343,9 @@ export default function PaiementReussiPage() {
           }).catch(() => {})
         }
 
-        // Points fidélité — incrément ATOMIQUE serveur (évite la perte de
-        // points en multi-onglet sur la page de succès ; cohérent avec le webhook)
-        if (user && pending.userId === user.uid) {
-          const newPoints = (user.points || 0) + qty
-          setUser({ ...user, points: newPoints })
-          import('../utils/firestore-sync').then(({ syncIncrement }) => {
-            syncIncrement(`users/${user.uid}`, 'points', qty)
-          }).catch(() => {})
-          import('../utils/accounts').then(({ updateAccount }) => {
-            updateAccount(user.uid, { points: newPoints })
-          }).catch(() => {})
-        }
+        // Points de fidélité : AUCUN à l'achat. Le point (+1/billet) se gagne
+        // au scan à l'entrée — action 'checkin' d'api/tickets.js, créditée au
+        // titulaire courant du billet.
       } catch {}
 
       // 5) Cleanup pending
@@ -406,7 +395,7 @@ export default function PaiementReussiPage() {
 
           {state === 'success' && (
             <>
-              <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(78,232,200,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px -8px rgba(78,232,200,0.5)' }}>
+              <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(78,232,200,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
               <h1 style={{ fontFamily: FONT, fontSize: 28, fontWeight: 800, letterSpacing: '-0.8px', color: '#fff', margin: '0 0 10px' }}>
@@ -414,7 +403,7 @@ export default function PaiementReussiPage() {
               </h1>
               <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>{successMsg}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-                <button onClick={() => navigate('/profil')} style={btnPrimary(COLORS.teal)}>Voir mes billets →</button>
+                <button onClick={() => navigate('/profil')} style={btnSolid('#3ed6b5', '#04120e')}>Voir mes billets</button>
                 <button onClick={() => navigate('/evenements')} style={btnGhostS}>Découvrir d'autres événements</button>
               </div>
             </>
@@ -422,7 +411,7 @@ export default function PaiementReussiPage() {
 
           {state === 'pending' && (
             <>
-              <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(139,92,246,0.12)', border: `2px solid ${COLORS.violet}`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px -8px rgba(139,92,246,0.5)' }}>
+              <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(139,92,246,0.12)', border: `2px solid ${COLORS.violet}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.violet} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
               </div>
               <h1 style={{ fontFamily: FONT, fontSize: 27, fontWeight: 800, letterSpacing: '-0.7px', color: '#fff', margin: '0 0 10px' }}>
@@ -432,7 +421,7 @@ export default function PaiementReussiPage() {
                 On finalise {eventName ? '« ' + eventName + ' »' : 'ta réservation'}. Tes billets arrivent dans <strong style={{ color: '#fff' }}>Mes billets</strong> d'ici quelques instants — inutile de repayer.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-                <button onClick={() => navigate('/profil')} style={btnPrimary(COLORS.violet)}>Voir mes billets →</button>
+                <button onClick={() => navigate('/profil')} style={{ ...btnSolid('linear-gradient(180deg, #8f56ff, #7a3bf2)', '#fff'), border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Voir mes billets</button>
                 <button onClick={() => setAttempt(a => a + 1)} style={btnGhostS}>Vérifier maintenant</button>
               </div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 14 }}>
@@ -446,19 +435,19 @@ export default function PaiementReussiPage() {
               <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: `2px solid rgba(224,90,170,0.5)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
               </div>
-              <h1 style={{ fontFamily: FONT, fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>
-                Un souci est survenu
+              <h1 style={{ fontFamily: FONT, fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
+                Une erreur est survenue
               </h1>
               <p style={{ fontSize: 14, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>{errorMsg}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-                <button onClick={copySupport} style={{ ...btnPrimary(COLORS.gold), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
-                  <IconMail size={16} color="#04040b" />
-                  {copied ? 'Adresse copiée ✓' : 'Copier l’email du support'}
+                <button onClick={copySupport} style={{ ...btnSolid('#c8a96e', '#141007'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+                  <IconMail size={16} color="#141007" />
+                  {copied ? 'Adresse copiée' : 'Copier l’email du support'}
                 </button>
                 <button onClick={() => navigate('/profil')} style={btnGhostS}>Voir mes billets</button>
-                <button onClick={() => navigate('/')} style={{ ...btnGhostS, border: 'none', background: 'none', color: 'rgba(255,255,255,0.4)' }}>Retour à l'accueil</button>
+                <button onClick={() => navigate('/')} style={{ ...btnGhostS, border: 'none', background: 'none', color: 'rgba(255,255,255,0.55)' }}>Retour à l'accueil</button>
               </div>
-              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.35)', marginTop: 16 }}>{SUPPORT_EMAIL}</p>
+              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', marginTop: 16 }}>{SUPPORT_EMAIL}</p>
             </>
           )}
         </div>

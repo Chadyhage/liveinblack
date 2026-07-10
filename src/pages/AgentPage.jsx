@@ -20,6 +20,7 @@ import {
 // Source unique des taux (mêmes valeurs que le back-end api/checkout.js)
 import { computeTicketFeeCents } from '../../lib/fees.js'
 import { getProviderCategories, getProviderTypes } from '../utils/providerCategories'
+import { IconCheck, IconEdit } from '../components/icons'
 
 const ADMIN_EMAIL = 'hagechady4@gmail.com'
 
@@ -41,10 +42,10 @@ function formatDate(ts) {
 
 // ─── Design tokens ────────────────────────────────────────────────────────
 const CARD = {
-  background: 'rgba(8,10,20,0.55)',
-  backdropFilter: 'blur(22px) saturate(1.6)',
-  border: '1px solid rgba(255,255,255,0.10)',
+  background: '#0e0f16',
+  border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: 16,
+  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
 }
 
 // `mono` pointe désormais sur Inter : le token diffusait la typo mono
@@ -59,8 +60,8 @@ const COLORS = {
   teal: '#4ee8c8',
   pink: '#e05aaa',
   gold: '#c8a96e',
-  muted: 'rgba(255,255,255,0.42)',
-  dim: 'rgba(255,255,255,0.22)',
+  muted: 'rgba(255,255,255,0.55)',
+  dim: 'rgba(255,255,255,0.40)',
 }
 
 const SECTION_MAP = {
@@ -73,13 +74,13 @@ const SECTION_MAP = {
 }
 
 function RoleBadge({ role, small }) {
-  const r = ROLES[role] || { label: role, icon: '', color: COLORS.muted }
-  const size = small ? { fontSize: 9, padding: '2px 6px' } : { fontSize: 10, padding: '3px 8px' }
+  const r = ROLES[role] || { label: role, icon: '', color: '#8b8f9c' }
+  const size = small ? { fontSize: 11, padding: '2px 8px' } : { fontSize: 11, padding: '3px 9px' }
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 3,
-      borderRadius: 4, border: `1px solid ${r.color}44`,
-      background: r.color + '11', color: r.color,
+      borderRadius: 8, border: `1px solid ${r.color}55`,
+      background: r.color + '22', color: r.color,
       fontFamily: FONTS.mono, fontWeight: 600, letterSpacing: '0.04em',
       ...size,
     }}>
@@ -93,14 +94,14 @@ function StatusBadge({ status }) {
     active:   { label: 'ACTIF',      color: '#4ee8c8' },
     pending:  { label: 'EN ATTENTE', color: '#c8a96e' },
     rejected: { label: 'REFUSÉ',     color: '#e05aaa' },
-    banned:   { label: 'BANNI',      color: COLORS.muted },
-  }[status] || { label: status.toUpperCase(), color: COLORS.muted }
+    banned:   { label: 'BANNI',      color: '#8b8f9c' },
+  }[status] || { label: status.toUpperCase(), color: '#8b8f9c' }
   return (
     <span style={{
-      fontFamily: FONTS.mono, fontSize: 9, padding: '2px 6px',
-      borderRadius: 4, border: `1px solid ${cfg.color}44`,
-      background: cfg.color + '11', color: cfg.color,
-      fontWeight: 600, letterSpacing: '0.06em',
+      fontFamily: FONTS.mono, fontSize: 11, padding: '2px 8px',
+      borderRadius: 8, border: `1px solid ${cfg.color}55`,
+      background: cfg.color + '22', color: cfg.color,
+      fontWeight: 700, letterSpacing: '0.04em',
     }}>
       {cfg.label}
     </span>
@@ -525,7 +526,7 @@ export default function AgentPage() {
       a.createdAt && (Date.now() - a.createdAt) > 7 * 24 * 60 * 60 * 1000
     )
     for (const a of expired) await handleDeleteUnverified(a.uid)
-    showToast(`${expired.length} compte(s) expirés supprimés`)
+    showToast(`${expired.length} compte(s) expiré(s) supprimé(s)`)
   }
 
   async function handleCleanupDuplicates() {
@@ -647,7 +648,7 @@ export default function AgentPage() {
         const { createNotification } = await import('../utils/notifications')
         if (status === 'approved') {
           createNotification(applicantUid, 'application_approved',
-            'Dossier approuvé ✅',
+            'Dossier approuvé',
             'Ton dossier LIVEINBLACK a été validé. Connecte-toi pour accéder à ton espace.',
             { appId }
           )
@@ -659,7 +660,7 @@ export default function AgentPage() {
           )
         } else if (status === 'needs_changes') {
           createNotification(applicantUid, 'application_needs_changes',
-            'Corrections requises ⚠️',
+            'Corrections requises',
             note || 'Des modifications sont demandées sur ton dossier. Ouvre Mon Dossier pour voir les détails.',
             { appId }
           )
@@ -691,7 +692,7 @@ export default function AgentPage() {
   // ── Shared input style ──
   const inputStyle = {
     width: '100%', boxSizing: 'border-box',
-    background: 'rgba(8,10,20,0.7)',
+    background: '#0b0c12',
     border: '1px solid rgba(255,255,255,0.10)',
     borderRadius: 10, color: '#fff',
     fontFamily: FONTS.display, fontSize: 13.5,
@@ -723,7 +724,7 @@ export default function AgentPage() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 18, letterSpacing: '-0.3px', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 9 }}>
               Administration
-              <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: COLORS.gold, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 999, padding: '2px 9px' }}>
+              <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.gold, background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 999, padding: '2px 9px' }}>
                 Agent
               </span>
             </h1>
@@ -732,18 +733,18 @@ export default function AgentPage() {
             </p>
           </div>
           <button onClick={() => navigate('/agent/organisateurs')} style={{
-            fontFamily: FONTS.display, fontSize: 11, fontWeight: 800, flexShrink: 0,
-            background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.35)',
-            color: COLORS.teal, borderRadius: 999, padding: '7px 12px', cursor: 'pointer',
+            fontFamily: FONTS.display, fontSize: 12, fontWeight: 700, flexShrink: 0,
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+            color: 'rgba(255,255,255,0.9)', borderRadius: 999, padding: '8px 14px', cursor: 'pointer',
           }}>Organisateurs</button>
           {totalAllPending > 0 && (
             <button
               onClick={() => setTab('dossiers')}
               style={{
-                fontFamily: FONTS.display, fontSize: 11, fontWeight: 800, flexShrink: 0,
+                fontFamily: FONTS.display, fontSize: 12, fontWeight: 700, flexShrink: 0,
                 background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.5)',
-                color: COLORS.gold, borderRadius: 999, padding: '7px 13px',
-                cursor: 'pointer', animation: 'pulse 2s infinite',
+                color: COLORS.gold, borderRadius: 999, padding: '8px 14px',
+                cursor: 'pointer',
               }}>
               {totalAllPending} en attente
             </button>
@@ -760,9 +761,9 @@ export default function AgentPage() {
           borderRadius: 12, overflowX: 'auto',
         }}>
           {[
-            { key: 'dashboard',    label: 'Dashboard' },
+            { key: 'dashboard',    label: 'Tableau de bord' },
             { key: 'users',        label: 'Comptes' },
-            { key: 'events',       label: 'Events',        count: allEvents.length },
+            { key: 'events',       label: 'Événements',    count: allEvents.length },
             { key: 'dossiers',     label: 'Dossiers',      count: totalAppsSubmitted, alert: totalAppsSubmitted > 0 },
             { key: 'boosts',       label: 'Boosts',        count: adminBoosts.filter(b => new Date(b.expiresAt).getTime() > Date.now()).length, alert: adminBoosts.some(b => b.conflict && new Date(b.expiresAt).getTime() > Date.now()) },
             { key: 'reversements', label: 'Reversements',  count: payoutRequests.length, alert: payoutRequests.length > 0 },
@@ -778,7 +779,7 @@ export default function AgentPage() {
                 padding: '8px 14px',
                 fontFamily: FONTS.display, fontSize: 12.5, fontWeight: 700, letterSpacing: '0.01em',
                 cursor: 'pointer',
-                background: tab === t.key ? 'linear-gradient(135deg, rgba(200,169,110,0.2), rgba(200,169,110,0.06))' : 'transparent',
+                background: tab === t.key ? 'rgba(200,169,110,0.16)' : 'transparent',
                 border: tab === t.key ? '1px solid rgba(200,169,110,0.45)' : '1px solid transparent',
                 borderRadius: 9,
                 color: tab === t.key ? COLORS.gold : 'rgba(255,255,255,0.55)',
@@ -808,7 +809,7 @@ export default function AgentPage() {
 
             {/* ──────── MÉTRIQUES BUSINESS ──────── */}
             <div>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
                 Métriques business
               </p>
 
@@ -817,10 +818,10 @@ export default function AgentPage() {
                 ...CARD,
                 padding: 20,
                 borderColor: 'rgba(200,169,110,0.30)',
-                background: 'linear-gradient(135deg, rgba(200,169,110,0.08), rgba(200,169,110,0.02))',
+                borderLeft: '3px solid rgba(200,169,110,0.6)',
                 marginBottom: 10,
               }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
                   Revenus plateforme — Total
                 </p>
                 <p style={{ fontFamily: FONTS.display, fontSize: 42, fontWeight: 300, color: COLORS.gold, margin: '6px 0 0', lineHeight: 1 }}>
@@ -828,13 +829,13 @@ export default function AgentPage() {
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
                   <div>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Frais billets</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Frais billets</p>
                     <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
                       {ticketFeeRevenue.toFixed(2)} €
                     </p>
                   </div>
                   <div>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Boosts (100%)</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Boosts (100%)</p>
                     <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
                       {gmvBoosts.toFixed(2)} €
                     </p>
@@ -845,32 +846,32 @@ export default function AgentPage() {
               {/* GMV + activité */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 <div style={{ ...CARD, padding: 12 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>GMV total</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>GMV total</p>
                   <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>
                     {totalGMV.toFixed(0)} €
                   </p>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, margin: '3px 0 0' }}>Volume transactions</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '3px 0 0' }}>Volume transactions</p>
                 </div>
                 <div style={{ ...CARD, padding: 12 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Billets vendus</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Billets vendus</p>
                   <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: '#4ee8c8', margin: '3px 0 0', lineHeight: 1 }}>
                     {totalTicketsSold}
                   </p>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, margin: '3px 0 0' }}>{recentBookings.length} ces 30j</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '3px 0 0' }}>{recentBookings.length} ces 30j</p>
                 </div>
                 <div style={{ ...CARD, padding: 12 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Events publiés</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, margin: 0 }}>Events publiés</p>
                   <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>
                     {totalEventsPublished}
                   </p>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, margin: '3px 0 0' }}>{upcomingEventsCount} à venir</p>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '3px 0 0' }}>{upcomingEventsCount} à venir</p>
                 </div>
               </div>
             </div>
 
             {/* ──────── COMMUNAUTÉ ──────── */}
             <div>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
                 Communauté
               </p>
 
@@ -889,14 +890,14 @@ export default function AgentPage() {
                   cursor: 'pointer', textAlign: 'left',
                   transition: 'border-color 0.2s, background 0.2s',
                 }}>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>
                     {s.label}
                   </p>
                   <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 38, color: s.color, margin: 0, lineHeight: 1 }}>
                     {s.value}
                   </p>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: s.color, margin: '6px 0 0', letterSpacing: '0.08em', opacity: 0.7 }}>
-                    VOIR →
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 600, color: s.color, margin: '6px 0 0', opacity: 0.75 }}>
+                    Voir →
                   </p>
                 </button>
               ))}
@@ -906,7 +907,7 @@ export default function AgentPage() {
             {/* ──────── GRAPHIQUE CROISSANCE 30 JOURS ──────── */}
             <div style={{ ...CARD, padding: 16 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
                   Nouveaux comptes — 30 derniers jours
                 </p>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#4ee8c8', margin: 0 }}>
@@ -934,14 +935,14 @@ export default function AgentPage() {
               </div>
               {/* Labels J-30 / aujourd'hui */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                <span style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, letterSpacing: '0.1em' }}>J-30</span>
-                <span style={{ fontFamily: FONTS.mono, fontSize: 8, color: COLORS.dim, letterSpacing: '0.1em' }}>AUJOURD'HUI</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, letterSpacing: '0.06em' }}>J-30</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, letterSpacing: '0.06em' }}>AUJOURD'HUI</span>
               </div>
             </div>
 
             {/* Recent registrations */}
             <div>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
                 Inscriptions récentes
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -989,7 +990,7 @@ export default function AgentPage() {
 
             {/* Breakdown by role */}
             <div>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
                 Répartition par rôle
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1014,16 +1015,16 @@ export default function AgentPage() {
             {/* ── Emails non vérifiés ── */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: unverifiedAccounts.length > 0 ? '#f59e0b' : COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-                  {unverifiedAccounts.length > 0 ? '⚠' : '✓'} Emails non vérifiés ({unverifiedAccounts.length})
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: unverifiedAccounts.length > 0 ? '#f59e0b' : COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+                  Emails non vérifiés ({unverifiedAccounts.length})
                 </p>
                 {expiredUnverified.length > 0 && (
                   <button onClick={handleCleanupExpired} style={{
-                    fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
-                    background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)',
-                    color: '#ef4444', borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
+                    fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700,
+                    background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
+                    color: '#fff', borderRadius: 8, padding: '5px 10px', cursor: 'pointer',
                   }}>
-                    Supprimer +7j ({expiredUnverified.length})
+                    Supprimer +7 j ({expiredUnverified.length})
                   </button>
                 )}
               </div>
@@ -1061,7 +1062,7 @@ export default function AgentPage() {
                             </p>
                           </div>
                           <span style={{
-                            fontFamily: FONTS.mono, fontSize: 9, flexShrink: 0,
+                            fontFamily: FONTS.mono, fontSize: 10, flexShrink: 0,
                             color: isExpired ? '#ef4444' : '#f59e0b',
                             background: isExpired ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
                             border: `1px solid ${isExpired ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.2)'}`,
@@ -1073,20 +1074,20 @@ export default function AgentPage() {
                         {/* Actions */}
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button onClick={() => handleVerifyEmail(u.uid)} style={{
-                            flex: 1, padding: '7px 0',
-                            fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase',
-                            background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.3)',
-                            color: COLORS.teal, borderRadius: 4, cursor: 'pointer',
+                            flex: 1, padding: '9px 0',
+                            fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
+                            background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)',
+                            color: '#04120e', borderRadius: 10, cursor: 'pointer',
                           }}>
-                            ✓ Vérifier manuellement
+                            Vérifier manuellement
                           </button>
                           <button onClick={() => handleDeleteUnverified(u.uid)} style={{
-                            flex: 1, padding: '7px 0',
-                            fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase',
-                            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-                            color: '#ef4444', borderRadius: 4, cursor: 'pointer',
+                            flex: 1, padding: '9px 0',
+                            fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
+                            background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
+                            color: '#fff', borderRadius: 10, cursor: 'pointer',
                           }}>
-                            ✕ Supprimer
+                            Supprimer
                           </button>
                         </div>
                       </div>
@@ -1099,16 +1100,16 @@ export default function AgentPage() {
             {/* ── Doublons détectés ── */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: duplicateGroups.length > 0 ? COLORS.pink : COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-                  {duplicateGroups.length > 0 ? '⚠' : '✓'} Doublons ({duplicateGroups.length})
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: duplicateGroups.length > 0 ? COLORS.pink : COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+                  Doublons ({duplicateGroups.length})
                 </p>
                 {duplicateGroups.length > 0 && (
                   <button onClick={handleCleanupDuplicates} style={{
-                    fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
-                    background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.3)',
-                    color: COLORS.pink, borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
+                    fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700,
+                    background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
+                    color: '#fff', borderRadius: 8, padding: '5px 10px', cursor: 'pointer',
                   }}>
-                    Nettoyer tout
+                    Tout nettoyer
                   </button>
                 )}
               </div>
@@ -1124,8 +1125,8 @@ export default function AgentPage() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {[...group].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map((u, i) => (
                           <div key={u.uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: i === 0 ? COLORS.teal : COLORS.dim }}>
-                              {i === 0 ? '✓ Garder' : '✕ Doublon'} · {formatDate(u.createdAt)}
+                            <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: i === 0 ? COLORS.teal : COLORS.dim }}>
+                              {i === 0 ? 'À garder' : 'Doublon'} · {formatDate(u.createdAt)}
                             </span>
                             <RoleBadge role={u.role} small />
                             <StatusBadge status={u.status} />
@@ -1197,7 +1198,7 @@ export default function AgentPage() {
                 ].map(s => (
                   <div key={s.label} style={{ ...CARD, padding: '10px 8px', textAlign: 'center' }}>
                     <p style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 300, color: s.color, margin: 0 }}>{s.value}</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.dim, marginTop: 2, margin: '2px 0 0' }}>{s.label}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: COLORS.dim, marginTop: 2, margin: '2px 0 0' }}>{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -1223,7 +1224,7 @@ export default function AgentPage() {
                   return (
                     <button key={f.key} onClick={() => setEventsFilter(f.key)} style={{
                       padding: '7px 12px', borderRadius: 999, cursor: 'pointer',
-                      fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase',
+                      fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
                       border: active ? '1px solid rgba(200,169,110,0.45)' : '1px solid rgba(255,255,255,0.10)',
                       background: active ? 'rgba(200,169,110,0.15)' : 'rgba(255,255,255,0.03)',
                       color: active ? COLORS.gold : COLORS.dim,
@@ -1237,7 +1238,7 @@ export default function AgentPage() {
               {/* Liste des events */}
               {filtered.length === 0 ? (
                 <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
-                  <p style={{ fontFamily: FONTS.display, fontSize: 18, fontWeight: 300, color: COLORS.muted, margin: 0 }}>
+                  <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 600, color: COLORS.muted, margin: 0 }}>
                     {allEvents.length === 0 ? 'Aucun événement publié' : 'Aucun résultat'}
                   </p>
                 </div>
@@ -1277,7 +1278,7 @@ export default function AgentPage() {
                             <span style={{
                               flexShrink: 0,
                               padding: '2px 7px', borderRadius: 3, border: '1px solid',
-                              fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase',
+                              fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
                               ...statusStyle,
                             }}>
                               {statusLabel}
@@ -1298,10 +1299,10 @@ export default function AgentPage() {
                         <button
                           onClick={() => navigate(`/evenements/${ev.id}`)}
                           style={{
-                            padding: '8px 14px', borderRadius: 4, cursor: 'pointer', flexShrink: 0,
-                            background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.30)',
-                            fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase',
-                            color: COLORS.gold,
+                            padding: '8px 14px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
+                            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                            fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
+                            color: 'rgba(255,255,255,0.9)',
                           }}>
                           Voir
                         </button>
@@ -1328,7 +1329,7 @@ export default function AgentPage() {
                 </svg>
                 <input
                   style={{ ...inputStyle, paddingLeft: 34 }}
-                  placeholder="Nom, email, téléphone..."
+                  placeholder="Nom, email, téléphone…"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
@@ -1339,14 +1340,14 @@ export default function AgentPage() {
                 {[
                   { key: 'all',          label: 'Tous' },
                   { key: 'user',         label: 'Utilisateurs' },
-                  { key: 'prestataire',  label: 'Presta' },
-                  { key: 'organisateur', label: 'Orgas' },
+                  { key: 'prestataire',  label: 'Prestataires' },
+                  { key: 'organisateur', label: 'Organisateurs' },
                   { key: 'agent',        label: 'Agents' },
                 ].map(f => (
                   <button key={f.key} onClick={() => setRoleFilter(f.key)}
                     style={{
                       flexShrink: 0, padding: '4px 10px', borderRadius: 4,
-                      fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em',
+                      fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em',
                       textTransform: 'uppercase', cursor: 'pointer',
                       background: roleFilter === f.key ? 'rgba(200,169,110,0.18)' : 'transparent',
                       border: roleFilter === f.key ? '1px solid rgba(200,169,110,0.45)' : '1px solid rgba(255,255,255,0.10)',
@@ -1364,7 +1365,7 @@ export default function AgentPage() {
                   <button key={s} onClick={() => setStatusFilter(s)}
                     style={{
                       flexShrink: 0, padding: '3px 8px', borderRadius: 4,
-                      fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.06em',
+                      fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em',
                       textTransform: 'uppercase', cursor: 'pointer',
                       background: statusFilter === s ? 'rgba(255,255,255,0.08)' : 'transparent',
                       border: statusFilter === s ? '1px solid rgba(255,255,255,0.20)' : '1px solid rgba(255,255,255,0.08)',
@@ -1439,7 +1440,7 @@ export default function AgentPage() {
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: 0 }}>
+                <p style={{ fontFamily: FONTS.display, fontWeight: 600, fontSize: 16, color: '#fff', margin: 0 }}>
                   Aucune validation en attente
                 </p>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Tous les comptes ont été traités.</p>
@@ -1468,7 +1469,7 @@ export default function AgentPage() {
                       <RoleBadge role={u.role} small />
                       {getProviderCategories(u).length > 0 && (u.prestataireType || u.prestataireTypes?.length) && (
                         <span style={{
-                          fontFamily: FONTS.mono, fontSize: 9,
+                          fontFamily: FONTS.mono, fontSize: 10,
                           background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
                           borderRadius: 4, padding: '2px 6px', color: COLORS.dim,
                         }}>
@@ -1476,7 +1477,7 @@ export default function AgentPage() {
                         </span>
                       )}
                     </div>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
                       Demande le {formatDate(u.requestedAt)}
                     </p>
                   </div>
@@ -1493,22 +1494,22 @@ export default function AgentPage() {
                   <button
                     onClick={() => setConfirmAction({ type: 'reject', uid: u.uid, name: u.name })}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
-                      border: '1px solid rgba(220,50,50,0.35)',
-                      background: 'rgba(220,50,50,0.10)',
-                      color: 'rgba(220,100,100,0.9)',
-                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      background: '#c2347f',
+                      color: '#fff',
+                      fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
                     }}>
                     Refuser
                   </button>
                   <button
                     onClick={() => setConfirmAction({ type: 'approve', uid: u.uid, name: u.name })}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
-                      background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
-                      border: '1px solid rgba(78,232,200,0.35)',
-                      color: COLORS.teal,
-                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                      background: '#3ed6b5',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      color: '#04120e',
+                      fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
                     }}>
                     Valider
                   </button>
@@ -1528,7 +1529,7 @@ export default function AgentPage() {
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: 0 }}>
+                <p style={{ fontFamily: FONTS.display, fontWeight: 600, fontSize: 16, color: '#fff', margin: 0 }}>
                   Aucune demande de rôle
                 </p>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>
@@ -1554,21 +1555,21 @@ export default function AgentPage() {
                       <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 6px' }}>{req.email}</p>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                         {/* Current role (client) */}
-                        <span style={{ fontFamily: FONTS.mono, fontSize: 9, padding: '2px 6px', borderRadius: 4, border: '1px solid rgba(34,197,94,0.35)', background: 'rgba(34,197,94,0.08)', color: '#22c55e' }}>
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 10, padding: '2px 6px', borderRadius: 4, border: '1px solid rgba(34,197,94,0.35)', background: 'rgba(34,197,94,0.08)', color: '#22c55e' }}>
                           Client
                         </span>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
                         {/* Requested role */}
-                        <span style={{ fontFamily: FONTS.mono, fontSize: 9, padding: '2px 6px', borderRadius: 4, border: `1px solid ${roleCfg.color}44`, background: roleCfg.color + '14', color: roleCfg.color }}>
+                        <span style={{ fontFamily: FONTS.mono, fontSize: 10, padding: '2px 6px', borderRadius: 4, border: `1px solid ${roleCfg.color}44`, background: roleCfg.color + '14', color: roleCfg.color }}>
                           {roleCfg.label}
                         </span>
                         {(req.prestataireType || req.prestataireTypes?.length) && (
-                          <span style={{ fontFamily: FONTS.mono, fontSize: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '2px 6px', color: COLORS.dim }}>
+                          <span style={{ fontFamily: FONTS.mono, fontSize: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, padding: '2px 6px', color: COLORS.dim }}>
                             {getProviderCategories(req).map(category => category.singular).join(' · ')}
                           </span>
                         )}
                       </div>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
                         Demandé le {formatDate(req.requestedAt)}
                       </p>
                     </div>
@@ -1585,22 +1586,22 @@ export default function AgentPage() {
                     <button
                       onClick={() => setConfirmAction({ type: 'rejectRole', id: req.id, name: req.name, role: roleCfg.label })}
                       style={{
-                        flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
-                        border: '1px solid rgba(220,50,50,0.35)',
-                        background: 'rgba(220,50,50,0.10)',
-                        color: 'rgba(220,100,100,0.9)',
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                        flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        background: '#c2347f',
+                        color: '#fff',
+                        fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
                       }}>
                       Refuser
                     </button>
                     <button
                       onClick={() => setConfirmAction({ type: 'approveRole', id: req.id, name: req.name, role: roleCfg.label })}
                       style={{
-                        flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
-                        background: `linear-gradient(135deg, ${roleCfg.color}33, ${roleCfg.color}11)`,
-                        border: `1px solid ${roleCfg.color}55`,
-                        color: roleCfg.color,
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                        flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                        background: '#3ed6b5',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        color: '#04120e',
+                        fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
                       }}>
                       Activer
                     </button>
@@ -1631,7 +1632,7 @@ export default function AgentPage() {
                       transition: 'all 0.15s',
                     }}>
                     <p style={{ fontFamily: FONTS.mono, fontSize: 16, fontWeight: 700, color: active ? sec.color : COLORS.dim, margin: '0 0 2px', lineHeight: 1 }}>{count}</p>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, color: active ? sec.color : COLORS.dim, margin: 0, letterSpacing: '0.04em', lineHeight: 1.3, textTransform: 'uppercase' }}>{sec.label}</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: active ? sec.color : COLORS.dim, margin: 0, letterSpacing: '0.04em', lineHeight: 1.3, textTransform: 'uppercase' }}>{sec.label}</p>
                   </button>
                 )
               })}
@@ -1644,10 +1645,9 @@ export default function AgentPage() {
               if (totalInSection === 0) return null
               return (
                 <div style={{ position: 'relative' }}>
-                  <span style={{
-                    position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)',
-                    fontSize: 13, color: 'rgba(255,255,255,0.25)', pointerEvents: 'none', lineHeight: 1,
-                  }}>⌕</span>
+                  <svg style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', width: 13, height: 13, color: 'rgba(255,255,255,0.35)', pointerEvents: 'none' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                   <input
                     type="text"
                     value={dossierSearch}
@@ -1655,7 +1655,7 @@ export default function AgentPage() {
                     placeholder={`Rechercher dans « ${sec.label} »…`}
                     style={{
                       width: '100%', boxSizing: 'border-box',
-                      background: 'rgba(8,10,20,0.6)',
+                      background: '#0b0c12',
                       border: `1px solid ${dossierSearch ? sec.color + '55' : 'rgba(255,255,255,0.10)'}`,
                       borderRadius: 7, color: '#fff',
                       fontFamily: FONTS.mono, fontSize: 11,
@@ -1694,7 +1694,7 @@ export default function AgentPage() {
                 .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
               if (list.length === 0) return (
                 <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                  <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 20, color: '#fff', margin: '0 0 8px' }}>
+                  <p style={{ fontFamily: FONTS.display, fontWeight: 600, fontSize: 16, color: '#fff', margin: '0 0 8px' }}>
                     {q ? 'Aucun résultat' : 'Aucun dossier'}
                   </p>
                   <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>
@@ -1712,7 +1712,7 @@ export default function AgentPage() {
                 </div>
               )
               const openApp = (app) => { setSelectedApp(app); setAppNote(''); setAppAdminNote(''); setActiveAction(null); setAdminNoteInput('') }
-              const typeLabel = (app) => app.type === 'organisateur' ? '🎪 Organisateur' : `🎤 Prestataire · ${getProviderCategories(app.formData || {}).map(category => category.singular).join(' · ')}`
+              const typeLabel = (app) => app.type === 'organisateur' ? 'Organisateur' : `Prestataire · ${getProviderCategories(app.formData || {}).map(category => category.singular).join(' · ')}`
               const scoreColor = (s) => s >= 80 ? COLORS.teal : s >= 50 ? COLORS.gold : COLORS.pink
 
               const AppCard = (app) => {
@@ -1738,27 +1738,27 @@ export default function AgentPage() {
                         <p style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {app.formData?.nomCommercial || app.name}
                         </p>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '1px 0 0' }}>
                           {typeLabel(app)}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: scoreColor(score), fontWeight: 700 }}>{score}%</span>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0' }}>complétude</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '1px 0 0' }}>complétude</p>
                       </div>
                     </div>
                     {/* Row 2: email + date */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim }}>{app.email}</span>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim }}>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>{app.email}</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>
                         {app.submittedAt ? `Soumis le ${new Date(app.submittedAt).toLocaleDateString('fr-FR')}` : `Créé le ${new Date(app.createdAt).toLocaleDateString('fr-FR')}`}
                       </span>
                     </div>
                     {/* Row 3: correction note if needs_changes */}
                     {app.status === 'needs_changes' && app.requestedChanges && (
                       <div style={{ padding: '7px 10px', background: 'rgba(245,158,11,0.08)', borderRadius: 6, border: '1px solid rgba(245,158,11,0.25)' }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', margin: 0, lineHeight: 1.5 }}>
-                          ⚠ {app.requestedChanges}
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: 0, lineHeight: 1.5 }}>
+                          {app.requestedChanges}
                         </p>
                       </div>
                     )}
@@ -1844,11 +1844,11 @@ export default function AgentPage() {
       ══════════════════════════════════════════════ */}
       {selectedUser && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }} onClick={() => setSelectedUser(null)} />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={() => setSelectedUser(null)} />
           <div style={{
             position: 'relative', width: '100%', maxWidth: 520,
-            background: 'rgba(8,10,20,0.97)', backdropFilter: 'blur(28px)',
-            border: '1px solid rgba(255,255,255,0.10)',
+            background: '#12131c',
+            border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
             borderRadius: '16px 16px 0 0',
             maxHeight: '85vh', overflowY: 'auto',
             paddingBottom: 32,
@@ -1857,7 +1857,7 @@ export default function AgentPage() {
             <div style={{
               padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
               position: 'sticky', top: 0,
-              background: 'rgba(8,10,20,0.97)', zIndex: 10,
+              background: '#12131c', zIndex: 10,
             }}>
               <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '0 auto 14px' }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1907,7 +1907,7 @@ export default function AgentPage() {
                     <ContactRow label="Téléphone" value={selectedUser.phone} tag="Perso" tagColor={COLORS.teal} />
                     {isPro && <ContactRow label="Téléphone" value={selectedUser.proPhone} tag="Pro" tagColor={COLORS.gold} />}
                     {isPro && (
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 8.5, color: COLORS.dim, margin: '6px 0 0', lineHeight: 1.5 }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '6px 0 0', lineHeight: 1.5 }}>
                         Le numéro pro est unique par compte, partagé entre les interfaces organisateur et prestataire.
                       </p>
                     )}
@@ -1948,17 +1948,17 @@ export default function AgentPage() {
                             type={f.type} value={editField.value}
                             onChange={e => setEditField(ef => ({ ...ef, value: e.target.value }))}
                           />
-                          <button onClick={handleSaveEdit} style={{
-                            padding: '0 12px', borderRadius: 4, cursor: 'pointer',
-                            background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))',
-                            border: '1px solid rgba(78,232,200,0.35)', color: COLORS.teal,
-                            fontFamily: FONTS.mono, fontSize: 12,
-                          }}>✓</button>
-                          <button onClick={() => setEditField(null)} style={{
-                            padding: '0 12px', borderRadius: 4, cursor: 'pointer',
-                            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                            color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 12,
-                          }}>✕</button>
+                          <button onClick={handleSaveEdit} aria-label="Enregistrer" style={{
+                            padding: '0 14px', borderRadius: 10, cursor: 'pointer',
+                            background: '#3ed6b5',
+                            border: '1px solid rgba(255,255,255,0.14)', color: '#04120e',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          }}><IconCheck size={14} color="#04120e" /></button>
+                          <button onClick={() => setEditField(null)} aria-label="Annuler" style={{
+                            padding: '0 14px', borderRadius: 10, cursor: 'pointer',
+                            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                            color: 'rgba(255,255,255,0.7)', fontFamily: FONTS.mono, fontSize: 15,
+                          }}>×</button>
                         </div>
                       ) : (
                         <button
@@ -1972,7 +1972,7 @@ export default function AgentPage() {
                           <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>{f.label}</span>
                           <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted }}>
                             {selectedUser[f.field] || '—'}
-                            <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6 }}>✏</span>
+                            <span style={{ marginLeft: 6, display: 'inline-flex', verticalAlign: 'middle' }}><IconEdit size={12} color="rgba(255,255,255,0.35)" /></span>
                           </span>
                         </button>
                       )}
@@ -1987,7 +1987,7 @@ export default function AgentPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '12px 14px', ...CARD,
                 }}>
-                  <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted }}>Générer un nouveau mdp</span>
+                  <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted }}>Générer un nouveau mot de passe</span>
                   <button
                     onClick={async () => {
                       const newPwd = 'LIB' + Math.random().toString(36).slice(2, 8).toUpperCase()
@@ -2002,10 +2002,10 @@ export default function AgentPage() {
                           await sendPasswordResetEmail(auth, selectedUser.email)
                           showToast(`Lien de réinitialisation envoyé à ${selectedUser.email}`)
                         } else {
-                          showToast(`Nouveau mdp (local) : ${newPwd}`)
+                          showToast(`Nouveau mot de passe (local) : ${newPwd}`)
                         }
                       } catch {
-                        showToast(`Nouveau mdp : ${newPwd}`)
+                        showToast(`Nouveau mot de passe : ${newPwd}`)
                       }
                       refresh()
                     }}
@@ -2017,7 +2017,7 @@ export default function AgentPage() {
                     Réinitialiser →
                   </button>
                 </div>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 6 }}>
                   Le nouveau mot de passe s'affichera dans la notification.
                 </p>
               </Section>
@@ -2027,28 +2027,25 @@ export default function AgentPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {selectedUser.status === 'banned' ? (
                     <button onClick={() => handleReactivate(selectedUser.uid)} style={{
-                      width: '100%', padding: '11px 0', borderRadius: 4, cursor: 'pointer',
-                      background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.30)',
-                      color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 11,
-                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                      width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                      background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)',
+                      color: '#04120e', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                     }}>
                       Réactiver le compte
                     </button>
                   ) : selectedUser.status === 'active' ? (
                     <button onClick={() => setConfirmAction({ type: 'ban', uid: selectedUser.uid, name: selectedUser.name })} style={{
-                      width: '100%', padding: '11px 0', borderRadius: 4, cursor: 'pointer',
-                      background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.30)',
-                      color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 11,
-                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                      width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                      background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.55)',
+                      color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                     }}>
                       Suspendre le compte
                     </button>
                   ) : null}
                   <button onClick={() => setConfirmAction({ type: 'delete', uid: selectedUser.uid, name: selectedUser.name })} style={{
-                    width: '100%', padding: '11px 0', borderRadius: 4, cursor: 'pointer',
-                    background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.35)',
-                    color: 'rgba(220,100,100,0.9)', fontFamily: FONTS.mono, fontSize: 11,
-                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                    width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                    background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
+                    color: '#fff', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                   }}>
                     Supprimer le compte
                   </button>
@@ -2064,11 +2061,11 @@ export default function AgentPage() {
       ══════════════════════════════════════════════ */}
       {selectedApp && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }} onClick={() => setSelectedApp(null)} />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={() => setSelectedApp(null)} />
           <div style={{
             position: 'relative', width: '100%', maxWidth: 520,
-            background: 'rgba(8,10,20,0.97)', backdropFilter: 'blur(28px)',
-            border: '1px solid rgba(255,255,255,0.10)',
+            background: '#12131c',
+            border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
             borderRadius: '16px 16px 0 0',
             maxHeight: '88vh', overflowY: 'auto',
             paddingBottom: 32,
@@ -2076,7 +2073,7 @@ export default function AgentPage() {
             {/* Handle */}
             <div style={{
               padding: '14px 20px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)',
-              position: 'sticky', top: 0, background: 'rgba(8,10,20,0.97)', zIndex: 10,
+              position: 'sticky', top: 0, background: '#12131c', zIndex: 10,
             }}>
               <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '0 auto 12px' }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2094,7 +2091,7 @@ export default function AgentPage() {
                   const cfg = APPLICATION_STATUSES[selectedApp.status] || {}
                   return (
                     <span style={{
-                      fontFamily: FONTS.mono, fontSize: 9, padding: '3px 8px', borderRadius: 4,
+                      fontFamily: FONTS.mono, fontSize: 10, padding: '3px 8px', borderRadius: 4,
                       border: `1px solid ${cfg.color || COLORS.dim}44`,
                       background: cfg.bg || 'transparent',
                       color: cfg.color || COLORS.dim,
@@ -2118,7 +2115,7 @@ export default function AgentPage() {
                       <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, color }}>{score}%</span>
                     </div>
                     <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', borderRadius: 99, width: `${score}%`, background: `linear-gradient(90deg, ${color}88, ${color})` }} />
+                      <div style={{ height: '100%', borderRadius: 99, width: `${score}%`, background: color }} />
                     </div>
                   </div>
                 )
@@ -2133,11 +2130,11 @@ export default function AgentPage() {
                     border: '1px solid rgba(167,139,250,0.22)',
                     borderRadius: 8,
                   }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#a78bfa', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                      {selectedApp.status === 'resubmitted' ? '↩ Message joint à la re-soumission' : '✉ Message joint à la soumission'}
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#a78bfa', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      {selectedApp.status === 'resubmitted' ? 'Message joint à la re-soumission' : 'Message joint à la soumission'}
                     </p>
                     <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6, wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
-                      "{selectedApp.candidateNote}"
+                      « {selectedApp.candidateNote} »
                     </p>
                   </div>
                 </Section>
@@ -2152,7 +2149,7 @@ export default function AgentPage() {
 
                   const FR = ({ label, value, href, mono }) => !value ? null : (
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, flexShrink: 0, minWidth: 120, paddingTop: 1 }}>{label}</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, flexShrink: 0, minWidth: 120, paddingTop: 1 }}>{label}</span>
                       {href
                         ? <a href={href} target="_blank" rel="noreferrer" style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, wordBreak: 'break-all', flex: 1 }}>{value}</a>
                         : <span style={{ fontFamily: mono === false ? FONTS.display : FONTS.mono, fontSize: 10, color: COLORS.muted, wordBreak: 'break-all', flex: 1, lineHeight: 1.5 }}>{value}</span>
@@ -2161,7 +2158,7 @@ export default function AgentPage() {
                   )
 
                   const Sub = ({ title }) => (
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 8, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.15)', margin: '12px 0 6px', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', margin: '12px 0 6px', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                       {title}
                     </p>
                   )
@@ -2252,7 +2249,7 @@ export default function AgentPage() {
                           <Sub title="Food / Boissons" />
                           <FR label="Type activité" value={fd.typeActiviteFood} />
                           {fd.menuBase && <FR label="Menu / Carte" value={fd.menuBase} />}
-                          <FR label="Alcool" value={fd.alcoolFood ? '⚠️ Oui — vérifier licence alcool' : 'Non'} />
+                          <FR label="Alcool" value={fd.alcoolFood ? 'Oui — vérifier la licence alcool' : 'Non'} />
                         </>
                       )}
 
@@ -2294,17 +2291,17 @@ export default function AgentPage() {
                           </svg>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: 0 }}>{DOCUMENT_LABELS[key]?.label || key}</p>
-                            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {entry.name}{entry.size ? ` · ${Math.round(entry.size / 1024)}ko` : ''}
                             </p>
                           </div>
                           {entry.url ? (
                             <a href={entry.url} target="_blank" rel="noreferrer"
-                              style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, textDecoration: 'none', padding: '4px 8px', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4 }}>
+                              style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, textDecoration: 'none', padding: '4px 8px', border: '1px solid rgba(78,232,200,0.25)', borderRadius: 4 }}>
                               Voir →
                             </a>
                           ) : (
-                            <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim }}>Local</span>
+                            <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>Local</span>
                           )}
                         </div>
                       ))
@@ -2373,7 +2370,7 @@ export default function AgentPage() {
                 const doneCount = notes.filter(n => n.done).length
                 return (
                   <Section title={`Notes internes${notes.length > 0 ? ` (${doneCount}/${notes.length})` : ''}`}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 10px', lineHeight: 1.5 }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '0 0 10px', lineHeight: 1.5 }}>
                       Privé — jamais visible par le candidat.
                     </p>
 
@@ -2398,7 +2395,7 @@ export default function AgentPage() {
                                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 color: COLORS.teal, fontSize: 11, lineHeight: 1,
                               }}>
-                              {note.done ? '✓' : ''}
+                              {note.done ? <IconCheck size={11} color={COLORS.teal} /> : null}
                             </button>
                             {/* Texte */}
                             <span style={{
@@ -2426,11 +2423,11 @@ export default function AgentPage() {
                         value={adminNoteInput}
                         onChange={e => setAdminNoteInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && addNote()}
-                        placeholder="Ajouter une note..."
+                        placeholder="Ajouter une note…"
                         style={{
-                          flex: 1, background: 'rgba(8,10,20,0.7)',
-                          border: '1px solid rgba(255,255,255,0.10)',
-                          borderRadius: 6, color: '#fff',
+                          flex: 1, background: '#0b0c12',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: 10, color: '#fff',
                           fontFamily: FONTS.mono, fontSize: 11,
                           padding: '8px 10px', outline: 'none',
                         }}
@@ -2439,10 +2436,10 @@ export default function AgentPage() {
                         onClick={addNote}
                         disabled={!adminNoteInput.trim()}
                         style={{
-                          flexShrink: 0, padding: '8px 14px', borderRadius: 6, cursor: adminNoteInput.trim() ? 'pointer' : 'not-allowed',
-                          background: adminNoteInput.trim() ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          color: adminNoteInput.trim() ? '#fff' : COLORS.dim,
+                          flexShrink: 0, padding: '8px 14px', borderRadius: 10, cursor: adminNoteInput.trim() ? 'pointer' : 'not-allowed',
+                          background: adminNoteInput.trim() ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.07)',
+                          border: adminNoteInput.trim() ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)',
+                          color: adminNoteInput.trim() ? '#fff' : 'rgba(255,255,255,0.35)',
                           fontFamily: FONTS.mono, fontSize: 16, lineHeight: 1,
                         }}>+</button>
                     </div>
@@ -2459,44 +2456,42 @@ export default function AgentPage() {
                     <button
                       onClick={() => setActiveAction(a => a === 'approve' ? null : 'approve')}
                       style={{
-                        width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                        background: activeAction === 'approve'
-                          ? 'linear-gradient(135deg, rgba(34,197,94,0.28), rgba(34,197,94,0.14))'
-                          : 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))',
-                        border: `1px solid ${activeAction === 'approve' ? 'rgba(34,197,94,0.6)' : 'rgba(34,197,94,0.35)'}`,
-                        color: '#22c55e',
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                        width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                        background: '#3ed6b5',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        color: '#04120e',
+                        fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                       }}>
-                      ✓ Approuver le dossier
+                      Approuver le dossier
                     </button>
                     {activeAction === 'approve' && (
                       <div style={{ padding: '12px 14px', background: 'rgba(34,197,94,0.05)', borderRadius: 8, border: '1px solid rgba(34,197,94,0.18)', marginTop: -4 }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#22c55e', margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#22c55e', margin: '0 0 8px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                           Message d'approbation (optionnel)
                         </p>
                         <textarea
                           value={appNote}
                           onChange={e => setAppNote(e.target.value)}
-                          placeholder="Félicitations ! Votre dossier a été approuvé. Bienvenue sur LIVEINBLACK..."
+                          placeholder="Ex : Votre dossier a été approuvé. Bienvenue sur LIVEINBLACK."
                           style={{
                             width: '100%', boxSizing: 'border-box',
-                            background: 'rgba(8,10,20,0.7)', border: '1px solid rgba(34,197,94,0.25)',
+                            background: '#0b0c12', border: '1px solid rgba(34,197,94,0.25)',
                             borderRadius: 6, color: '#fff', fontFamily: FONTS.mono, fontSize: 11,
                             padding: '9px 12px', outline: 'none', resize: 'vertical', minHeight: 64, lineHeight: 1.5,
                           }}
                         />
                         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                           <button onClick={() => setActiveAction(null)} style={{
-                            flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                            color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase',
+                            flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                            color: 'rgba(255,255,255,0.85)', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
                           }}>Annuler</button>
                           <button onClick={() => handleAppAction(selectedApp.id, 'approved', appNote)} style={{
-                            flex: 2, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                            background: 'linear-gradient(135deg, rgba(34,197,94,0.22), rgba(34,197,94,0.08))',
-                            border: '1px solid rgba(34,197,94,0.45)', color: '#22c55e',
-                            fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
-                          }}>✓ Confirmer l'approbation</button>
+                            flex: 2, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                            background: '#3ed6b5',
+                            border: '1px solid rgba(255,255,255,0.14)', color: '#04120e',
+                            fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
+                          }}>Confirmer l'approbation</button>
                         </div>
                       </div>
                     )}
@@ -2505,49 +2500,49 @@ export default function AgentPage() {
                     <button
                       onClick={() => setActiveAction(a => a === 'changes' ? null : 'changes')}
                       style={{
-                        width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                        background: activeAction === 'changes' ? 'rgba(245,158,11,0.18)' : 'rgba(245,158,11,0.10)',
-                        border: `1px solid ${activeAction === 'changes' ? 'rgba(245,158,11,0.60)' : 'rgba(245,158,11,0.35)'}`,
-                        color: '#f59e0b',
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                        width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                        background: 'rgba(245,158,11,0.14)',
+                        border: '1px solid rgba(245,158,11,0.55)',
+                        color: '#f5b04b',
+                        fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                       }}>
-                      ⚠ Demander des corrections
+                      Demander des corrections
                     </button>
                     {activeAction === 'changes' && (
                       <div style={{ padding: '12px 14px', background: 'rgba(245,158,11,0.04)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.20)', marginTop: -4 }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: '0 0 8px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                           Corrections requises *
                         </p>
                         <textarea
                           value={appNote}
                           onChange={e => setAppNote(e.target.value)}
-                          placeholder="Ex: Merci de renvoyer une pièce d'identité valide, et de compléter la section activité..."
+                          placeholder="Ex : Merci de renvoyer une pièce d'identité valide et de compléter la section activité."
                           style={{
                             width: '100%', boxSizing: 'border-box',
-                            background: 'rgba(8,10,20,0.7)', border: '1px solid rgba(245,158,11,0.25)',
+                            background: '#0b0c12', border: '1px solid rgba(245,158,11,0.25)',
                             borderRadius: 6, color: '#fff', fontFamily: FONTS.mono, fontSize: 11,
                             padding: '9px 12px', outline: 'none', resize: 'vertical', minHeight: 80, lineHeight: 1.5,
                           }}
                         />
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '6px 0 8px', lineHeight: 1.5 }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '6px 0 8px', lineHeight: 1.5 }}>
                           Ce message sera visible par le candidat depuis son espace.
                         </p>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button onClick={() => setActiveAction(null)} style={{
-                            flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                            color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase',
+                            flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                            color: 'rgba(255,255,255,0.85)', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
                           }}>Annuler</button>
                           <button
                             onClick={() => { if (appNote.trim()) handleAppAction(selectedApp.id, 'needs_changes', appNote) }}
                             disabled={!appNote.trim()}
                             style={{
-                              flex: 2, padding: '9px 0', borderRadius: 4, cursor: appNote.trim() ? 'pointer' : 'not-allowed',
-                              background: appNote.trim() ? 'rgba(245,158,11,0.18)' : 'rgba(245,158,11,0.06)',
-                              border: `1px solid ${appNote.trim() ? 'rgba(245,158,11,0.50)' : 'rgba(245,158,11,0.20)'}`,
-                              color: appNote.trim() ? '#f59e0b' : 'rgba(245,158,11,0.40)',
-                              fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
-                            }}>⚠ Envoyer les corrections</button>
+                              flex: 2, padding: '9px 0', borderRadius: 10, cursor: appNote.trim() ? 'pointer' : 'not-allowed',
+                              background: appNote.trim() ? '#f59e0b' : 'rgba(255,255,255,0.07)',
+                              border: appNote.trim() ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.06)',
+                              color: appNote.trim() ? '#241703' : 'rgba(255,255,255,0.35)',
+                              fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
+                            }}>Envoyer les corrections</button>
                         </div>
                       </div>
                     )}
@@ -2557,12 +2552,12 @@ export default function AgentPage() {
                       <button
                         onClick={() => handleAppAction(selectedApp.id, 'under_review', appAdminNote)}
                         style={{
-                          width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                          background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.35)',
-                          color: '#3b82f6',
-                          fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                          width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                          background: 'rgba(59,130,246,0.14)', border: '1px solid rgba(59,130,246,0.55)',
+                          color: '#7fb3f9',
+                          fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                         }}>
-                        → Passer en révision
+                        Passer en révision
                       </button>
                     )}
 
@@ -2570,44 +2565,44 @@ export default function AgentPage() {
                     <button
                       onClick={() => setActiveAction(a => a === 'reject' ? null : 'reject')}
                       style={{
-                        width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                        background: activeAction === 'reject' ? 'rgba(224,90,170,0.18)' : 'rgba(224,90,170,0.10)',
-                        border: `1px solid ${activeAction === 'reject' ? 'rgba(224,90,170,0.60)' : 'rgba(224,90,170,0.35)'}`,
-                        color: COLORS.pink,
-                        fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                        width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                        background: '#c2347f',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        color: '#fff',
+                        fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                       }}>
-                      ✕ Refuser le dossier
+                      Refuser le dossier
                     </button>
                     {activeAction === 'reject' && (
                       <div style={{ padding: '12px 14px', background: 'rgba(224,90,170,0.04)', borderRadius: 8, border: '1px solid rgba(224,90,170,0.20)', marginTop: -4 }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.pink, margin: '0 0 8px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                           Motif de refus (optionnel)
                         </p>
                         <textarea
                           value={appNote}
                           onChange={e => setAppNote(e.target.value)}
-                          placeholder="Ex: Le dossier ne correspond pas aux critères d'éligibilité..."
+                          placeholder="Ex : Le dossier ne correspond pas aux critères d'éligibilité."
                           style={{
                             width: '100%', boxSizing: 'border-box',
-                            background: 'rgba(8,10,20,0.7)', border: '1px solid rgba(224,90,170,0.25)',
+                            background: '#0b0c12', border: '1px solid rgba(224,90,170,0.25)',
                             borderRadius: 6, color: '#fff', fontFamily: FONTS.mono, fontSize: 11,
                             padding: '9px 12px', outline: 'none', resize: 'vertical', minHeight: 64, lineHeight: 1.5,
                           }}
                         />
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '6px 0 8px', lineHeight: 1.5 }}>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '6px 0 8px', lineHeight: 1.5 }}>
                           Ce motif sera visible par le candidat depuis son espace.
                         </p>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button onClick={() => setActiveAction(null)} style={{
-                            flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                            background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                            color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase',
+                            flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                            color: 'rgba(255,255,255,0.85)', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
                           }}>Annuler</button>
                           <button onClick={() => handleAppAction(selectedApp.id, 'rejected', appNote)} style={{
-                            flex: 2, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                            background: 'rgba(224,90,170,0.16)', border: '1px solid rgba(224,90,170,0.45)',
-                            color: COLORS.pink, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
-                          }}>✕ Confirmer le refus</button>
+                            flex: 2, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                            background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
+                            color: '#fff', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
+                          }}>Confirmer le refus</button>
                         </div>
                       </div>
                     )}
@@ -2620,47 +2615,47 @@ export default function AgentPage() {
                 <Section title="En attente de corrections">
                   <div style={{ padding: '12px', background: 'rgba(245,158,11,0.06)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)', marginBottom: 12 }}>
                     <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: 0 }}>
-                      Le candidat a été notifié des corrections à apporter. Le dossier repassera en "En attente" une fois resoumis.
+                      Le candidat a été notifié des corrections à apporter. Le dossier repassera en « En attente » une fois re-soumis.
                     </p>
                   </div>
                   <button
                     onClick={() => setActiveAction(a => a === 'reject' ? null : 'reject')}
                     style={{
-                      width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                      background: activeAction === 'reject' ? 'rgba(224,90,170,0.18)' : 'rgba(224,90,170,0.10)',
-                      border: `1px solid ${activeAction === 'reject' ? 'rgba(224,90,170,0.60)' : 'rgba(224,90,170,0.35)'}`,
-                      color: COLORS.pink,
-                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                      background: '#c2347f',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      color: '#fff',
+                      fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                     }}>
-                    ✕ Refuser définitivement
+                    Refuser définitivement
                   </button>
                   {activeAction === 'reject' && (
                     <div style={{ padding: '12px 14px', background: 'rgba(224,90,170,0.04)', borderRadius: 8, border: '1px solid rgba(224,90,170,0.20)', marginTop: 8 }}>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.pink, margin: '0 0 8px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                         Motif de refus (optionnel)
                       </p>
                       <textarea
                         value={appNote}
                         onChange={e => setAppNote(e.target.value)}
-                        placeholder="Ex: Malgré les demandes de correction, le dossier ne satisfait pas les critères..."
+                        placeholder="Ex : Malgré les corrections demandées, le dossier ne répond pas aux critères."
                         style={{
                           width: '100%', boxSizing: 'border-box',
-                          background: 'rgba(8,10,20,0.7)', border: '1px solid rgba(224,90,170,0.25)',
+                          background: '#0b0c12', border: '1px solid rgba(224,90,170,0.25)',
                           borderRadius: 6, color: '#fff', fontFamily: FONTS.mono, fontSize: 11,
                           padding: '9px 12px', outline: 'none', resize: 'vertical', minHeight: 64, lineHeight: 1.5,
                         }}
                       />
                       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                         <button onClick={() => setActiveAction(null)} style={{
-                          flex: 1, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                          background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                          color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase',
+                          flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                          color: 'rgba(255,255,255,0.85)', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
                         }}>Annuler</button>
                         <button onClick={() => handleAppAction(selectedApp.id, 'rejected', appNote)} style={{
-                          flex: 2, padding: '9px 0', borderRadius: 4, cursor: 'pointer',
-                          background: 'rgba(224,90,170,0.16)', border: '1px solid rgba(224,90,170,0.45)',
-                          color: COLORS.pink, fontFamily: FONTS.mono, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
-                        }}>✕ Confirmer le refus</button>
+                          flex: 2, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                          background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
+                          color: '#fff', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
+                        }}>Confirmer le refus</button>
                       </div>
                     </div>
                   )}
@@ -2672,10 +2667,10 @@ export default function AgentPage() {
                   <button
                     onClick={() => setConfirmAction({ type: 'appSuspend', appId: selectedApp.id, name: selectedApp.formData?.nomCommercial || selectedApp.name })}
                     style={{
-                      width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                      background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.35)',
-                      color: '#ef4444',
-                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                      background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
+                      color: '#fff',
+                      fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                     }}>
                     Suspendre le compte
                   </button>
@@ -2687,10 +2682,10 @@ export default function AgentPage() {
                   <button
                     onClick={() => handleAppAction(selectedApp.id, 'approved', appAdminNote)}
                     style={{
-                      width: '100%', padding: '11px 0', borderRadius: 5, cursor: 'pointer',
-                      background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))',
-                      border: '1px solid rgba(34,197,94,0.35)', color: '#22c55e',
-                      fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
+                      background: '#3ed6b5',
+                      border: '1px solid rgba(255,255,255,0.14)', color: '#04120e',
+                      fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                     }}>
                     Réactiver le dossier
                   </button>
@@ -2732,15 +2727,15 @@ export default function AgentPage() {
                                 </p>
                                 {/* Auto note (system text) — dim */}
                                 {entry.note && !isAdminNote && (
-                                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 2px', fontStyle: 'italic', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{entry.note}</p>
+                                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '0 0 2px', fontStyle: 'italic', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{entry.note}</p>
                                 )}
                                 {/* Admin message — highlighted */}
                                 {isAdminNote && (
                                   <div style={{ padding: '5px 8px', background: color + '0d', border: `1px solid ${color}22`, borderRadius: 4, marginBottom: 4 }}>
-                                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: color, margin: 0, lineHeight: 1.5, wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>"{entry.note}"</p>
+                                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: color, margin: 0, lineHeight: 1.5, wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>« {entry.note} »</p>
                                   </div>
                                 )}
-                                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: 0 }}>
+                                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0 }}>
                                   {authorLabel} · {new Date(entry.at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                 </p>
                               </div>
@@ -2810,9 +2805,9 @@ export default function AgentPage() {
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setConfirmAction(null)} style={{
-                flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
+                flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                color: 'rgba(255,255,255,0.85)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600,
               }}>Annuler</button>
               <button
                 onClick={() => {
@@ -2829,13 +2824,13 @@ export default function AgentPage() {
                   if (confirmAction.type === 'markPaid')    { handleMarkPaid(confirmAction.uid, confirmAction.amountCents, confirmAction.requestId); setConfirmAction(null) }
                 }}
                 style={{
-                  flex: 1, padding: '10px 0', borderRadius: 4, cursor: 'pointer',
-                  fontFamily: FONTS.mono, fontSize: 11, textTransform: 'uppercase',
+                  flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
+                  fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
                   ...((confirmAction.type === 'approve' || confirmAction.type === 'approveRole' || confirmAction.type === 'appApprove' || confirmAction.type === 'markPaid')
-                    ? { background: 'linear-gradient(135deg, rgba(78,232,200,0.22), rgba(78,232,200,0.08))', border: '1px solid rgba(78,232,200,0.35)', color: COLORS.teal }
+                    ? { background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e' }
                     : confirmAction.type === 'appChanges'
-                    ? { background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.40)', color: '#f59e0b' }
-                    : { background: 'rgba(220,50,50,0.14)', border: '1px solid rgba(220,50,50,0.40)', color: 'rgba(220,100,100,0.9)' }
+                    ? { background: '#f59e0b', border: '1px solid rgba(255,255,255,0.14)', color: '#241703' }
+                    : { background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)', color: '#fff' }
                   ),
                 }}>
                 Confirmer
@@ -2858,12 +2853,12 @@ export default function AgentPage() {
         const eventName = id => allEvents.find(e => String(e.id) === String(id))?.name || `Event ${id}`
         const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) } catch { return '—' } }
         const BoostCard = (b) => (
-          <div key={b.id} style={{ ...CARD, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, ...(b.conflict && isActive(b) ? { borderColor: 'rgba(220,50,50,0.5)', boxShadow: '0 0 18px rgba(220,50,50,0.12)' } : {}) }}>
+          <div key={b.id} style={{ ...CARD, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, ...(b.conflict && isActive(b) ? { borderColor: 'rgba(220,50,50,0.5)' } : {}) }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: FONTS.display, fontSize: 11, fontWeight: 800, color: '#0b0d14', background: COLORS.gold, borderRadius: 999, padding: '2px 9px' }}>Top {b.position}</span>
               <span style={{ fontFamily: FONTS.display, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.07)', borderRadius: 999, padding: '2px 9px' }}>{b.region || 'Toutes régions'}</span>
               {b.conflict && isActive(b) && (
-                <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', color: '#fff', background: 'rgba(220,50,50,0.85)', borderRadius: 999, padding: '2px 9px' }}>⚠ CONFLIT DE CRÉNEAU</span>
+                <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', color: '#fff', background: 'rgba(220,50,50,0.85)', borderRadius: 999, padding: '2px 9px' }}>CONFLIT DE CRÉNEAU</span>
               )}
               <span style={{ marginLeft: 'auto', fontFamily: FONTS.display, fontWeight: 800, fontSize: 15, color: COLORS.gold }}>{Number(b.price) || 0}€</span>
             </div>
@@ -2920,17 +2915,17 @@ export default function AgentPage() {
       ══════════════════════════════════════════════ */}
       {tab === 'reports' && (
         <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 16px' }}>
             Signalements d'utilisateurs
           </p>
           {reports.length === 0 ? (
             <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
-              <p style={{ fontFamily: FONTS.display, fontSize: 18, fontWeight: 300, color: COLORS.muted, margin: 0 }}>Aucun signalement</p>
+              <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 600, color: COLORS.muted, margin: 0 }}>Aucun signalement</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {reports.slice().reverse().map(r => (
-                <div key={r.id} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,0.28)', background: 'rgba(224,90,170,0.04)' }}>
+                <div key={r.id} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,0.28)', borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
                     <div>
                       <p style={{ fontFamily: FONTS.display, fontSize: 17, fontWeight: 300, color: '#fff', margin: '0 0 2px' }}>
@@ -2940,13 +2935,13 @@ export default function AgentPage() {
                         par {r.fromName} · {r.reportedAt ? new Date(r.reportedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                       </p>
                     </div>
-                    <span style={{ padding: '3px 9px', borderRadius: 4, flexShrink: 0, background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.35)', fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink || '#e05aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>À traiter</span>
+                    <span style={{ padding: '3px 9px', borderRadius: 4, flexShrink: 0, background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.35)', fontFamily: FONTS.mono, fontSize: 10, color: COLORS.pink || '#e05aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>À traiter</span>
                   </div>
                   <div style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, marginBottom: 12 }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Motif</p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Motif</p>
                     <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{r.reason || '—'}</p>
                   </div>
-                  <button onClick={() => resolveReport(r.id)} style={{ padding: '9px 16px', borderRadius: 999, cursor: 'pointer', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.32)', color: '#22c55e', fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em' }}>Marquer traité</button>
+                  <button onClick={() => resolveReport(r.id)} style={{ padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700 }}>Marquer comme traité</button>
                 </div>
               ))}
             </div>
@@ -2956,7 +2951,7 @@ export default function AgentPage() {
 
       {tab === 'paiements' && (
         <div style={{ padding: '16px 16px 40px', maxWidth: 620, margin: '0 auto' }}>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 8px' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>
             Alertes financières
           </p>
           <p style={{ fontFamily: FONTS.display, fontSize: 13, color: COLORS.muted, lineHeight: 1.55, margin: '0 0 18px' }}>
@@ -2977,19 +2972,19 @@ export default function AgentPage() {
                 const reference = alert.stripeSessionId || alert.transactionId || alert.bookingId || alert.id
                 const created = alert.createdAt?.toMillis ? alert.createdAt.toMillis() : alert.createdAt
                 return (
-                  <div key={alert.id} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,.32)', background: 'rgba(224,90,170,.04)' }}>
+                  <div key={alert.id} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,.32)', borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                       <div>
                         <p style={{ fontFamily: FONTS.display, fontWeight: 750, fontSize: 15, color: '#fff', margin: '0 0 5px' }}>{reason}</p>
                         <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0 }}>{String(alert.provider || '').toUpperCase()} · {created ? formatDate(created) : 'date inconnue'}</p>
                       </div>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, border: '1px solid rgba(224,90,170,.35)', borderRadius: 999, padding: '4px 8px' }}>À vérifier</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.pink, border: '1px solid rgba(224,90,170,.35)', borderRadius: 999, padding: '4px 8px' }}>À vérifier</span>
                     </div>
                     <div style={{ marginTop: 13, padding: '10px 12px', borderRadius: 9, background: 'rgba(255,255,255,.035)' }}>
                       <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, overflowWrap: 'anywhere' }}>Référence : {reference}</p>
                       {alert.paidAmount != null && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '5px 0 0' }}>Payé : {alert.paidAmount} FCFA · Attendu : {alert.expectedAmount} FCFA</p>}
                     </div>
-                    <button onClick={() => resolvePaymentAlert(alert.id)} style={{ marginTop: 13, padding: '9px 15px', borderRadius: 9, cursor: 'pointer', background: 'rgba(78,232,200,.10)', border: '1px solid rgba(78,232,200,.30)', color: COLORS.teal, fontFamily: FONTS.display, fontWeight: 700, fontSize: 12 }}>Marquer comme examiné</button>
+                    <button onClick={() => resolvePaymentAlert(alert.id)} style={{ marginTop: 13, padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontFamily: FONTS.display, fontWeight: 700, fontSize: 12 }}>Marquer comme examiné</button>
                   </div>
                 )
               })}
@@ -3000,13 +2995,13 @@ export default function AgentPage() {
 
       {tab === 'suppressions' && (
         <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 16px' }}>
             Demandes de suppression de compte
           </p>
 
           {deletionRequests.length === 0 ? (
             <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
-              <p style={{ fontFamily: FONTS.display, fontSize: 18, fontWeight: 300, color: COLORS.muted, margin: 0 }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 600, color: COLORS.muted, margin: 0 }}>
                 Aucune demande en attente
               </p>
             </div>
@@ -3016,7 +3011,7 @@ export default function AgentPage() {
                 <div key={req.id} style={{
                   ...CARD, padding: 18,
                   borderColor: 'rgba(239,68,68,0.28)',
-                  background: 'rgba(239,68,68,0.04)',
+                  borderLeft: '3px solid rgba(239,68,68,0.55)',
                 }}>
                   {/* En-tête */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
@@ -3031,7 +3026,7 @@ export default function AgentPage() {
                     <span style={{
                       padding: '3px 9px', borderRadius: 4, flexShrink: 0,
                       background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)',
-                      fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444',
+                      fontFamily: FONTS.mono, fontSize: 10, color: '#ef4444',
                       textTransform: 'uppercase', letterSpacing: '0.06em',
                     }}>
                       En attente
@@ -3039,13 +3034,13 @@ export default function AgentPage() {
                   </div>
 
                   {/* Date */}
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 10px' }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '0 0 10px' }}>
                     Demandé le {new Date(req.requestedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
 
                   {/* Raison */}
                   <div style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, marginBottom: 12 }}>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
                       Raison invoquée
                     </p>
                     <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
@@ -3056,8 +3051,8 @@ export default function AgentPage() {
                   {/* Audit — blockers */}
                   {req.audit?.blockers?.length > 0 && (
                     <div style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.22)', borderRadius: 6, marginBottom: 10 }}>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
-                        ⚠ Points signalés par le système
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
+                        Points signalés par le système
                       </p>
                       {req.audit.blockers.map((b, i) => (
                         <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(239,68,68,0.75)', margin: '0 0 3px', lineHeight: 1.5 }}>
@@ -3070,8 +3065,8 @@ export default function AgentPage() {
                   {/* Audit — warnings */}
                   {req.audit?.warnings?.length > 0 && (
                     <div style={{ padding: '10px 12px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.18)', borderRadius: 6, marginBottom: 10 }}>
-                      <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
-                        ℹ Éléments à archiver
+                      <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
+                        Éléments à archiver
                       </p>
                       {req.audit.warnings.map((w, i) => (
                         <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(245,158,11,0.7)', margin: '0 0 3px', lineHeight: 1.5 }}>
@@ -3082,7 +3077,7 @@ export default function AgentPage() {
                   )}
 
                   {/* Note admin */}
-                  <label style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 }}>
+                  <label style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 }}>
                     Note pour l&apos;utilisateur (optionnel)
                   </label>
                   <textarea
@@ -3092,8 +3087,8 @@ export default function AgentPage() {
                     onChange={e => setDelResNote(e.target.value)}
                     style={{
                       width: '100%', boxSizing: 'border-box',
-                      background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)',
-                      borderRadius: 5, padding: '8px 10px', resize: 'vertical',
+                      background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: 10, padding: '10px 12px', resize: 'vertical',
                       fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)',
                       lineHeight: 1.6, outline: 'none', marginBottom: 12,
                     }}
@@ -3109,12 +3104,11 @@ export default function AgentPage() {
                         showToast('Suppression approuvée — compte anonymisé.')
                       }}
                       style={{
-                        flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                        background: 'rgba(239,68,68,0.16)', border: '1px solid rgba(239,68,68,0.40)',
-                        color: '#ef4444', fontFamily: FONTS.mono, fontSize: 10,
-                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                        background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
+                        color: '#fff', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700,
                       }}>
-                      ✓ Approuver
+                      Approuver la suppression
                     </button>
                     <button
                       onClick={async () => {
@@ -3124,12 +3118,11 @@ export default function AgentPage() {
                         showToast('Demande refusée.')
                       }}
                       style={{
-                        flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-                        color: COLORS.muted, fontFamily: FONTS.mono, fontSize: 10,
-                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                        background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                        color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
                       }}>
-                      ✕ Refuser
+                      Refuser
                     </button>
                   </div>
                 </div>
@@ -3166,30 +3159,30 @@ export default function AgentPage() {
             <button
               onClick={() => setConfirmAction({ type: 'markPaid', uid, amountCents, requestId, name: nameOf(uid) })}
               style={{
-                width: '100%', marginTop: 12, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                background: 'rgba(34,197,94,0.14)', border: '1px solid rgba(34,197,94,0.40)',
-                color: '#22c55e', fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
+                width: '100%', marginTop: 12, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)',
+                color: '#04120e', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
               }}>
-              ✓ Marquer payé ({fmt(amountCents)})
+              Marquer payé ({fmt(amountCents)})
             </button>
           </div>
         )
 
         return (
           <div style={{ padding: '16px 16px 40px', maxWidth: 520, margin: '0 auto' }}>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 16px' }}>
               Reversements vendeurs
             </p>
 
             {!empty && (
-              <div style={{ ...CARD, padding: 18, marginBottom: 18, borderColor: 'rgba(200,169,110,0.30)', background: 'linear-gradient(135deg, rgba(200,169,110,0.08), rgba(200,169,110,0.02))' }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
+              <div style={{ ...CARD, padding: 18, marginBottom: 18, borderColor: 'rgba(200,169,110,0.30)', borderLeft: '3px solid rgba(200,169,110,0.6)' }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>
                   Total à reverser
                 </p>
                 <p style={{ fontFamily: FONTS.display, fontSize: 34, fontWeight: 300, color: COLORS.gold, margin: '4px 0 0', lineHeight: 1 }}>
                   {fmt(totalDueCents)}
                 </p>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '8px 0 0', lineHeight: 1.6 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '8px 0 0', lineHeight: 1.6 }}>
                   Vendeurs hors zone Stripe (Afrique) ou sans Connect — à régler par virement / Wave / Orange Money, puis marquer payé ici.
                 </p>
               </div>
@@ -3197,7 +3190,7 @@ export default function AgentPage() {
 
             {empty ? (
               <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
-                <p style={{ fontFamily: FONTS.display, fontSize: 18, fontWeight: 300, color: COLORS.muted, margin: 0 }}>
+                <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 600, color: COLORS.muted, margin: 0 }}>
                   Aucun reversement en attente
                 </p>
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '8px 0 0' }}>
@@ -3208,8 +3201,8 @@ export default function AgentPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {payoutRequests.length > 0 && (
                   <div>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>
-                      ⏳ Demandes de virement ({payoutRequests.length})
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>
+                      Demandes de virement ({payoutRequests.length})
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {payoutRequests.map(p => (
@@ -3221,7 +3214,7 @@ export default function AgentPage() {
 
                 {balancesNoReq.length > 0 && (
                   <div>
-                    <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>
                       Soldes dus (sans demande)
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -3241,12 +3234,13 @@ export default function AgentPage() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 70, padding: '11px 20px', borderRadius: 6,
-          fontFamily: FONTS.mono, fontSize: 11, letterSpacing: '0.06em',
-          backdropFilter: 'blur(20px)',
+          zIndex: 70, padding: '12px 20px', borderRadius: 12,
+          fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600,
+          background: 'rgba(12,12,22,0.96)', color: '#fff',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
           ...(toast.type === 'error'
-            ? { background: 'rgba(220,50,50,0.16)', border: '1px solid rgba(220,50,50,0.40)', color: 'rgba(220,100,100,0.95)' }
-            : { background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.40)', color: COLORS.teal }
+            ? { border: '1px solid rgba(224,90,170,0.5)' }
+            : { border: '1px solid rgba(78,232,200,0.5)' }
           ),
         }}>
           {toast.msg}
@@ -3267,7 +3261,7 @@ function Section({ title, children }) {
     <div>
       <p style={{
         fontFamily: FONTS_SUB.display, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)',
-        textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10,
+        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10,
       }}>{title}</p>
       {children}
     </div>
@@ -3297,7 +3291,7 @@ function InfoRow({ label, value, mono }) {
 function Tag({ label, color }) {
   return (
     <span style={{
-      fontFamily: FONTS_SUB.mono, fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase',
+      fontFamily: FONTS_SUB.mono, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
       color: color || 'rgba(255,255,255,0.42)', border: `1px solid ${color || 'rgba(255,255,255,0.42)'}55`,
       borderRadius: 4, padding: '1px 5px', flexShrink: 0, whiteSpace: 'nowrap',
     }}>{label}</span>

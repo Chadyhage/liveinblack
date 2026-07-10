@@ -63,11 +63,11 @@ const C = { teal: '#4ee8c8', gold: '#c8a96e', violet: '#8b5cf6', pink: '#e05aaa'
 
 const S = {
   card: {
-    background: 'rgba(9,11,20,0.6)',
-    backdropFilter: 'blur(22px) saturate(1.5)',
-    border: '1px solid rgba(255,255,255,0.10)',
+    background: '#0e0f16',
+    border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: 16,
     padding: '16px 18px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
   },
   label: {
     fontFamily: FONT,
@@ -78,12 +78,13 @@ const S = {
     color: 'rgba(255,255,255,0.5)',
   },
   input: {
-    background: 'rgba(6,8,16,0.6)',
+    background: '#0b0c12',
     border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: 13,
+    borderRadius: 10,
     fontFamily: FONT,
-    fontSize: 15,
-    color: 'white',
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.92)',
     padding: '14px 40px 14px 14px',
     width: '100%',
     outline: 'none',
@@ -94,7 +95,7 @@ const S = {
 // Puce statistique (billets/likes) en tête de la playlist
 function StatChip({ label, value, color }) {
   return (
-    <div style={{ flex: 1, minWidth: 92, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '10px 14px' }}>
+    <div style={{ flex: 1, minWidth: 92, background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '10px 14px' }}>
       <p style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>{label}</p>
       <p style={{ fontFamily: FONT, fontSize: 19, fontWeight: 800, letterSpacing: '-0.5px', color: color || '#fff', margin: '3px 0 0' }}>{value}</p>
     </div>
@@ -388,11 +389,11 @@ export default function PlaylistSystem({ event, booked }) {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 14,
-        border: top ? `1px solid ${C.gold}55` : '1px solid rgba(255,255,255,0.07)',
-        background: top ? `${C.gold}0d` : 'rgba(9,11,20,0.5)',
+        border: top ? `1px solid ${C.gold}55` : '1px solid rgba(255,255,255,0.08)',
+        background: top ? '#14120d' : '#0e0f16',
       }}>
         {rank != null && (
-          <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: top ? C.gold : 'rgba(255,255,255,0.28)' }}>{rank}</span>
+          <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: top ? C.gold : 'rgba(255,255,255,0.45)' }}>{rank}</span>
         )}
         {/* Pochette (cover) — clic = pré-écoute si dispo */}
         <button onClick={() => song.previewUrl && togglePreview(song)} style={{
@@ -409,8 +410,8 @@ export default function PlaylistSystem({ event, booked }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 15.5, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
-            {song.status === 'validated' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 9.5, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.teal, background: `${C.teal}1c`, border: `1px solid ${C.teal}55`, borderRadius: 999, padding: '2px 7px' }}>Validé</span>}
-            {song.status === 'played' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 9.5, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.violet, background: `${C.violet}1c`, border: `1px solid ${C.violet}55`, borderRadius: 999, padding: '2px 7px' }}>Joué</span>}
+            {song.status === 'validated' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.teal, background: `${C.teal}1f`, border: `1px solid ${C.teal}55`, borderRadius: 8, padding: '3px 8px' }}>Validé</span>}
+            {song.status === 'played' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.violet, background: `${C.violet}1f`, border: `1px solid ${C.violet}55`, borderRadius: 8, padding: '3px 8px' }}>Joué</span>}
           </div>
           <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {song.artist}
@@ -419,19 +420,19 @@ export default function PlaylistSystem({ event, booked }) {
           </p>
         </div>
         <button onClick={() => toggleLike(song.id)} disabled={mine} title={mine ? 'Tu ne peux pas liker ton propre son' : undefined} style={{
-          display: 'flex', alignItems: 'center', gap: 6, padding: '8px 13px', borderRadius: 999, flexShrink: 0,
-          border: song.myLike ? `1px solid ${C.teal}66` : '1px solid rgba(255,255,255,0.12)',
-          background: song.myLike ? `${C.teal}14` : 'transparent',
-          cursor: mine ? 'not-allowed' : 'pointer', opacity: mine ? 0.4 : 1,
+          display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 999, flexShrink: 0,
+          border: mine ? '1px solid rgba(255,255,255,0.06)' : song.myLike ? `1px solid ${C.teal}66` : '1px solid rgba(255,255,255,0.14)',
+          background: mine ? 'rgba(255,255,255,0.04)' : song.myLike ? 'rgba(78,232,200,0.16)' : 'rgba(255,255,255,0.08)',
+          cursor: mine ? 'not-allowed' : 'pointer',
         }}>
-          <HeartIcon filled={song.myLike} size={14} color={song.myLike ? C.teal : 'rgba(255,255,255,0.4)'} />
-          <span style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: song.myLike ? C.teal : 'rgba(255,255,255,0.55)' }}>{song.likes}</span>
+          <HeartIcon filled={song.myLike} size={14} color={mine ? 'rgba(255,255,255,0.25)' : song.myLike ? C.teal : 'rgba(255,255,255,0.55)'} />
+          <span style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: mine ? 'rgba(255,255,255,0.35)' : song.myLike ? C.teal : 'rgba(255,255,255,0.75)' }}>{song.likes}</span>
         </button>
         {canDelete && mine && (
           <button onClick={() => removeSong(song)} title="Supprimer mon son" style={{
             width: 34, height: 34, borderRadius: 10, flexShrink: 0, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.3)', color: C.pink,
+            background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', color: C.pink,
           }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /></svg>
           </button>
@@ -501,16 +502,16 @@ export default function PlaylistSystem({ event, booked }) {
       {/* Stats */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <StatChip label="Tes sons" value={`${songsAdded} / ${ticketCount}`} color={C.gold} />
-        <StatChip label="Likes dispo" value={`${likesLeft} / ${MAX_LIKES_PER_USER}`} color={C.teal} />
-        <StatChip label="Classement" value={sortedSongs.length} />
+        <StatChip label="Likes restants" value={`${likesLeft} / ${MAX_LIKES_PER_USER}`} color={C.teal} />
+        <StatChip label="Dans la playlist" value={sortedSongs.length} />
       </div>
 
       {/* Message */}
       {message && (
         <div style={{
           padding: '11px 15px', borderRadius: 12,
-          border: isWarn ? '1px solid rgba(234,88,12,0.35)' : '1px solid rgba(78,232,200,0.30)',
-          background: isWarn ? 'rgba(234,88,12,0.08)' : 'rgba(78,232,200,0.07)',
+          border: isWarn ? '1px solid rgba(234,88,12,0.45)' : '1px solid rgba(78,232,200,0.5)',
+          background: 'rgba(12,12,22,0.96)',
           fontFamily: FONT, fontSize: 13.5, fontWeight: 500,
           color: isWarn ? '#fb923c' : C.teal, textAlign: 'center',
         }}>
@@ -526,8 +527,8 @@ export default function PlaylistSystem({ event, booked }) {
             <button key={id} onClick={() => setTab(id)} style={{
               flex: 1, padding: '10px 8px', borderRadius: 12, border: 'none', cursor: 'pointer',
               fontFamily: FONT, fontSize: 13.5, fontWeight: active ? 800 : 600, transition: 'all 0.2s',
-              color: active ? '#04040b' : 'rgba(255,255,255,0.55)',
-              background: active ? `linear-gradient(135deg, ${C.teal}, #7af0d8)` : 'transparent',
+              color: active ? '#04120e' : 'rgba(255,255,255,0.55)',
+              background: active ? '#3ed6b5' : 'transparent',
             }}>
               {label}{id === 'mine' && mySongs.length ? ` · ${mySongs.length}` : ''}
             </button>
@@ -620,7 +621,7 @@ export default function PlaylistSystem({ event, booked }) {
           {isCheckedIn && (songsRemaining > 0 ? (
             <div>
               <p style={{ ...S.label, marginBottom: 8, letterSpacing: '0.01em', textTransform: 'none', fontSize: 13.5, fontWeight: 600, color: 'rgba(255,255,255,0.62)' }}>
-                Propose un son au DJ — <span style={{ color: C.gold, fontWeight: 700 }}>{songsRemaining} slot{songsRemaining > 1 ? 's' : ''} restant{songsRemaining > 1 ? 's' : ''}</span>
+                Propose un son au DJ — <span style={{ color: C.gold, fontWeight: 700 }}>{songsRemaining} proposition{songsRemaining > 1 ? 's' : ''} restante{songsRemaining > 1 ? 's' : ''}</span>
               </p>
               <div style={{ position: 'relative' }}>
                 <input
@@ -632,12 +633,12 @@ export default function PlaylistSystem({ event, booked }) {
                   onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
                 />
                 <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
-                  {isSearching ? <span style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>…</span> : <SearchIcon />}
+                  {isSearching ? <span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.25)', borderTopColor: 'rgba(255,255,255,0.8)', borderRadius: '50%', display: 'inline-block' }} /> : <SearchIcon />}
                 </span>
               </div>
 
               {searchResults.length > 0 && (
-                <div style={{ marginTop: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, overflow: 'hidden', background: 'rgba(6,8,16,0.92)' }}>
+                <div style={{ marginTop: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, overflow: 'hidden', background: '#12131c', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
                   {searchResults.map((r, idx) => (
                     <div key={idx} style={{ borderBottom: idx < searchResults.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, gap: 10 }}>
@@ -648,8 +649,8 @@ export default function PlaylistSystem({ event, booked }) {
                               <button onClick={() => togglePreview(r)} style={{
                                 width: 26, height: 26, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', fontSize: 9,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                background: 'rgba(255,255,255,0.06)', color: preview?.title === r.title ? C.gold : 'rgba(255,255,255,0.5)',
-                                border: preview?.title === r.title ? `1px solid ${C.gold}80` : '1px solid rgba(255,255,255,0.12)',
+                                background: 'rgba(255,255,255,0.08)', color: preview?.title === r.title ? C.gold : 'rgba(255,255,255,0.55)',
+                                border: preview?.title === r.title ? `1px solid ${C.gold}80` : '1px solid rgba(255,255,255,0.14)',
                               }}>{preview?.title === r.title ? '■' : '▶'}</button>
                               <div style={{ minWidth: 0 }}>
                                 <p style={{ fontFamily: FONT, fontWeight: 600, fontSize: 15, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</p>
@@ -658,10 +659,10 @@ export default function PlaylistSystem({ event, booked }) {
                             </div>
                           </div>
                         </div>
-                        <button onClick={() => addSong(r)} style={{
+                        <button onClick={() => addSong(r)} title="Proposer ce son" style={{
                           width: 34, height: 34, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', fontSize: 20, lineHeight: 1,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#04040b',
-                          background: `linear-gradient(135deg, ${C.gold}, #e0c48a)`, border: 'none',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#181203',
+                          background: C.gold, border: 'none',
                         }}>+</button>
                       </div>
                     </div>
@@ -676,10 +677,10 @@ export default function PlaylistSystem({ event, booked }) {
           ) : (
             <div style={{ ...S.card, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
               <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, color: C.teal, margin: 0 }}>
-                {ticketCount <= 1 ? 'Ton son est dans la playlist' : `${songsAdded} / ${ticketCount} slots utilisés`}
+                {ticketCount <= 1 ? 'Ton son est dans la playlist' : `${songsAdded} / ${ticketCount} sons proposés`}
               </p>
-              <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-                Tu as utilisé tous tes slots · 1 son par billet réservé
+              <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                Tu as utilisé toutes tes propositions · 1 son par billet réservé
               </p>
             </div>
           ))}
@@ -730,7 +731,7 @@ export default function PlaylistSystem({ event, booked }) {
           </div>
 
           {/* DJ garde le contrôle final */}
-          <div style={{ ...S.card, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.28)', background: 'rgba(200,169,110,0.05)' }}>
+          <div style={{ ...S.card, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.28)' }}>
             <div style={{ marginTop: 2, flexShrink: 0 }}><HeadphonesIcon size={20} color={C.gold} /></div>
             <div>
               <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>{djName} garde le choix final</p>

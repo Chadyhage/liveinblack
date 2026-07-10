@@ -67,7 +67,7 @@ function ResultCard({ item, type, onOpen }) {
 
   return (
     <button className="search-result" onClick={onOpen} aria-label={`Ouvrir ${title}`}>
-      <div className="search-result-media" style={{ background: `linear-gradient(135deg,${accent}45,rgba(8,10,18,.95))` }}>
+      <div className="search-result-media" style={{ background: '#12131c', border: '1px solid rgba(255,255,255,0.07)' }}>
         {image ? <img src={image} alt="" /> : <span style={{ color: accent }}>{title?.charAt(0)?.toUpperCase() || '?'}</span>}
       </div>
       <div className="search-result-copy">
@@ -138,38 +138,39 @@ export default function GlobalSearchPage() {
   const content = (
     <div className="global-search-page">
       <style>{`
-        .global-search-page{min-height:100vh;background:radial-gradient(circle 850px at 8% 4%,rgba(139,92,246,.12),transparent 60%),${C.obsidian};color:#fff;font-family:${FONT}}
+        .global-search-page{min-height:100vh;background:${C.obsidian};color:#fff;font-family:${FONT}}
         .global-search-main{max-width:980px;margin:0 auto;padding:48px 20px 110px}
         .global-search-title{font:clamp(48px,8vw,76px)/.95 'Bebas Neue',Impact,sans-serif;letter-spacing:.02em;margin:0 0 28px}
-        .global-search-input{width:100%;box-sizing:border-box;padding:18px 20px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.16);color:#fff;font:15px ${FONT};outline:none;transition:border-color .2s,box-shadow .2s}
-        .global-search-input:focus{border-color:rgba(78,232,200,.58);box-shadow:0 0 0 3px rgba(78,232,200,.07)}
+        .global-search-input{width:100%;box-sizing:border-box;padding:16px 18px;background:#0b0c12;border:1px solid rgba(255,255,255,.12);border-radius:12px;color:rgba(255,255,255,.92);font:500 15px ${FONT};outline:none;transition:border-color .2s,box-shadow .2s}
+        .global-search-input::placeholder{color:rgba(255,255,255,.38)}
+        .global-search-input:focus{border-color:#8444ff;box-shadow:0 0 0 3px rgba(132,68,255,.14)}
         .search-sections{display:grid;gap:38px;margin-top:38px}
         .search-section-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}
         .search-section-title h2{font:32px 'Bebas Neue',Impact,sans-serif;letter-spacing:.025em;margin:0}
-        .search-section-title span{display:grid;place-items:center;min-width:22px;height:22px;border-radius:99px;background:rgba(78,232,200,.1);color:${C.teal};font:10px 'DM Mono',monospace}
+        .search-section-title span{display:grid;place-items:center;min-width:22px;height:22px;padding:0 7px;box-sizing:border-box;border-radius:99px;background:rgba(78,232,200,.14);border:1px solid rgba(78,232,200,.35);color:${C.teal};font:700 11px ${FONT}}
         .search-results{display:grid;gap:10px}
-        .search-result{width:100%;display:grid;grid-template-columns:88px minmax(0,1fr) 32px;gap:16px;align-items:center;padding:12px;background:rgba(9,11,20,.68);border:1px solid rgba(255,255,255,.09);color:#fff;text-align:left;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
-        .search-result:hover{transform:translateY(-2px);border-color:rgba(78,232,200,.28);background:rgba(13,16,27,.82)}
-        .search-result-media{width:88px;height:88px;overflow:hidden;display:grid;place-items:center}
+        .search-result{width:100%;display:grid;grid-template-columns:88px minmax(0,1fr) 32px;gap:16px;align-items:center;padding:12px;background:#0e0f16;border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35);color:#fff;text-align:left;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
+        .search-result:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.18);background:#12131c}
+        .search-result-media{width:88px;height:88px;overflow:hidden;display:grid;place-items:center;border-radius:10px}
         .search-result-media img{width:100%;height:100%;object-fit:cover}
         .search-result-media span{font:38px 'Bebas Neue',Impact,sans-serif}
         .search-result-copy{min-width:0}
-        .search-result-type{font:700 9px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
+        .search-result-type{font:700 11px ${FONT};letter-spacing:.06em;text-transform:uppercase}
         .search-result-copy h3{font:700 17px ${FONT};margin:5px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .search-result-meta{font:11px ${FONT};color:rgba(255,255,255,.48);margin:5px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .search-result-description{font:12.5px/1.45 ${FONT};color:rgba(255,255,255,.58);margin:7px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .search-result-meta{font:12px ${FONT};color:rgba(255,255,255,.55);margin:5px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .search-result-description{font:13px/1.5 ${FONT};color:rgba(255,255,255,.58);margin:7px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .search-result-arrow{font-size:22px;text-align:center;transition:transform .2s}
         .search-result:hover .search-result-arrow{transform:translateX(3px)}
-        .search-empty{margin:0;padding:16px;border-top:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.35);font-size:12px}
-        .search-hint{color:rgba(255,255,255,.42);margin-top:24px}
-        @media(max-width:600px){.global-search-main{padding:34px 14px 100px}.global-search-title{margin-bottom:20px}.search-result{grid-template-columns:68px minmax(0,1fr) 22px;gap:11px;padding:10px}.search-result-media{width:68px;height:74px}.search-result-description{-webkit-line-clamp:1}.search-result-copy h3{font-size:15px}.search-result-meta{font-size:10px}}
+        .search-empty{margin:0;padding:16px;border-top:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.5);font-size:13px}
+        .search-hint{color:rgba(255,255,255,.5);font-size:14px;margin-top:24px}
+        @media(max-width:600px){.global-search-main{padding:34px 14px 100px}.global-search-title{margin-bottom:20px}.search-result{grid-template-columns:68px minmax(0,1fr) 22px;gap:11px;padding:10px}.search-result-media{width:68px;height:74px}.search-result-description{-webkit-line-clamp:1}.search-result-copy h3{font-size:15px}.search-result-meta{font-size:11px}}
       `}</style>
       {!user && <PublicNav />}
       <main className="global-search-main">
         <h1 className="global-search-title">Rechercher</h1>
         <input className="global-search-input" autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder="Événement, organisateur, prestataire, ville…" />
         {!normalizedQuery
-          ? <p className="search-hint">Saisis au moins un mot pour lancer la recherche.</p>
+          ? <p className="search-hint">Saisissez un mot-clé pour lancer la recherche.</p>
           : <div className="search-sections">
               <ResultSection title="Événements" items={results.events} type="event" onOpen={item => navigate(`/evenements/${item.id}`)} />
               <ResultSection title="Organisateurs" items={results.organizers} type="organizer" onOpen={item => navigate(`/organisateurs/${item.slug}`)} />

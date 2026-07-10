@@ -11,15 +11,22 @@ const DM = "Inter, sans-serif"
 const CG = "Inter, sans-serif"
 
 const card = {
-  background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(18px)',
-  border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: 18,
+  background: '#0e0f16',
+  border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: 18,
+  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
 }
-const label = { fontFamily: DM, fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }
-const btn = (color) => ({
-  width: '100%', padding: '13px', marginTop: 14, borderRadius: 12, cursor: 'pointer',
-  fontFamily: DM, fontSize: 12, fontWeight: 700, letterSpacing: '0.02em',
-  background: `${color}1f`, border: `1px solid ${color}66`, color,
+const label = { fontFamily: DM, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: 0 }
+const btn = () => ({
+  width: '100%', padding: '13px 20px', marginTop: 14, borderRadius: 12, cursor: 'pointer',
+  fontFamily: DM, fontSize: 14, fontWeight: 700,
+  background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)',
+  color: '#fff', boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
 })
+const spin = {
+  width: 14, height: 14, display: 'inline-block', borderRadius: '50%',
+  border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff',
+  verticalAlign: '-2px', marginRight: 8,
+}
 
 function eur(cents, cur = 'eur') {
   return (Number(cents || 0) / 100).toLocaleString('fr-FR', { style: 'currency', currency: (cur || 'eur').toUpperCase() })
@@ -104,7 +111,7 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
         status: 'pending',
         createdAt: Date.now(),
       })
-      setMsg("Demande de reversement envoyée ✅ — l'équipe LIVEINBLACK va la traiter.")
+      setMsg("Demande de reversement envoyée. L'équipe LIVEINBLACK va la traiter.")
     } catch {
       setMsg('Erreur — réessaie.')
     }
@@ -113,7 +120,7 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
 
   if (!uid) return null
   if (loading) {
-    return <div style={card}><p style={{ ...label, color: 'rgba(255,255,255,0.3)' }}>Reversements — chargement…</p></div>
+    return <div style={card}><p style={{ ...label, color: 'rgba(255,255,255,0.5)' }}><span className="lib-spin" style={{ ...spin, borderTopColor: 'rgba(255,255,255,0.7)' }} />Chargement des reversements…</p></div>
   }
 
   const due = status.amountDueCents > 0 || (status.amountDueXOF || 0) > 0
@@ -123,21 +130,21 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
   return (
     <div style={card}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <p style={label}>💸 Mes reversements</p>
-        {connected && <span style={{ fontFamily: DM, fontSize: 9, color: '#4ee8c8', letterSpacing: '0.1em' }}>✓ COMPTE CONNECTÉ</span>}
+        <p style={label}>Mes reversements</p>
+        {connected && <span style={{ fontFamily: DM, fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#4ee8c8', background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', borderRadius: 8, padding: '4px 10px', whiteSpace: 'nowrap' }}>Compte connecté</span>}
       </div>
 
       {/* Solde à reverser (EUR et/ou FCFA — deux compteurs séparés) */}
       {due && (
         <div style={{ marginTop: 12 }}>
-          <p style={{ ...label, color: 'rgba(255,255,255,0.3)' }}>Solde à reverser</p>
+          <p style={{ fontFamily: DM, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.55)', margin: 0 }}>Solde à reverser</p>
           {status.amountDueCents > 0 && (
-            <p style={{ fontFamily: CG, fontSize: 32, fontWeight: 300, color: '#c8a96e', margin: '2px 0 0', lineHeight: 1 }}>
+            <p style={{ fontFamily: CG, fontSize: 32, fontWeight: 700, letterSpacing: '-0.5px', fontVariantNumeric: 'tabular-nums', color: 'rgba(255,255,255,0.95)', margin: '4px 0 0', lineHeight: 1 }}>
               {eur(status.amountDueCents, status.currency)}
             </p>
           )}
           {(status.amountDueXOF || 0) > 0 && (
-            <p style={{ fontFamily: CG, fontSize: 26, fontWeight: 300, color: '#c8a96e', margin: '2px 0 0', lineHeight: 1.2 }}>
+            <p style={{ fontFamily: CG, fontSize: 26, fontWeight: 700, letterSpacing: '-0.4px', fontVariantNumeric: 'tabular-nums', color: 'rgba(255,255,255,0.95)', margin: '4px 0 0', lineHeight: 1.2 }}>
               {Math.round(status.amountDueXOF).toLocaleString('fr-FR')} FCFA
             </p>
           )}
@@ -151,8 +158,8 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
             Ton pays est réglé par <strong style={{ color: '#c8a96e', fontWeight: 600 }}>virement / mobile money</strong> (Wave, Orange Money…). Demande un reversement de ton solde quand tu veux.
           </p>
           {due
-            ? <button disabled={busy} onClick={requestPayout} style={btn('#c8a96e')}>{busy ? '…' : 'Demander un reversement'}</button>
-            : <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 10 }}>Aucun solde à reverser pour l'instant.</p>}
+            ? <button disabled={busy} onClick={requestPayout} style={btn()}>{busy ? <><span className="lib-spin" style={spin} />Envoi…</> : 'Demander un reversement'}</button>
+            : <p style={{ fontFamily: DM, fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 10 }}>Aucun solde à reverser pour l'instant.</p>}
         </>
       )}
 
@@ -169,12 +176,12 @@ export default function PayoutPanel({ uid, returnPath = '/mon-dossier' }) {
           <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65, marginTop: 12 }}>
             Reçois tes recettes directement sur ton compte bancaire. Les paiements sont gérés par <strong style={{ color: '#fff', fontWeight: 600 }}>Stripe</strong>, la solution de paiement utilisée par des millions d'entreprises. Tu seras redirigé vers Stripe pour ajouter ton compte en quelques minutes.
           </p>
-          <button disabled={busy} onClick={connect} style={btn('#4ee8c8')}>{busy ? 'Ouverture…' : 'Connecter mon compte bancaire'}</button>
+          <button disabled={busy} onClick={connect} style={btn()}>{busy ? <><span className="lib-spin" style={spin} />Ouverture…</> : 'Connecter mon compte bancaire'}</button>
         </>
       )}
 
       {msg && (
-        <p style={{ fontFamily: DM, fontSize: 10, color: 'rgba(78,232,200,0.85)', lineHeight: 1.6, marginTop: 12, background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.15)', borderRadius: 6, padding: '8px 10px' }}>
+        <p style={{ fontFamily: DM, fontSize: 12.5, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, marginTop: 12, background: 'rgba(12,12,22,0.96)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 12, padding: '10px 14px' }}>
           {msg}
         </p>
       )}

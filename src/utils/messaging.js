@@ -412,7 +412,7 @@ export function createGroup(name, creatorId, creatorName, memberIds, memberNames
     pinnedMessageId: null,
   }
   saveConversation(conv)
-  sendMessage(conv.id, creatorId, creatorName, 'system', `${creatorName} a créé le groupe "${name}"`)
+  sendMessage(conv.id, creatorId, creatorName, 'system', `${creatorName} a créé le groupe « ${name} »`)
   return conv
 }
 
@@ -553,15 +553,15 @@ export function sendMessage(convId, senderId, senderName, type, content, extra =
       all[idx].updatedAt = msg.timestamp
       all[idx].lastSenderId = senderId
       all[idx].lastMessage = type === 'text' ? content
-        : type === 'image' ? '📷 Photo'
-        : type === 'voice' ? '🎤 Vocal'
-        : type === 'story' ? '📰 Article'
-        : type === 'poll' ? '📊 Sondage'
-        : type === 'event' ? '🎟 Événement'
+        : type === 'image' ? 'Photo'
+        : type === 'voice' ? 'Message vocal'
+        : type === 'story' ? 'Article'
+        : type === 'poll' ? 'Sondage'
+        : type === 'event' ? 'Événement'
         : type === 'catalog_item' ? 'Offre prestataire'
-        : type === 'group_booking' ? '👥 Réservation clôturée'
+        : type === 'group_booking' ? 'Réservation clôturée'
         : type === 'system' ? content
-        : '📎'
+        : 'Pièce jointe'
       localStorage.setItem('lib_conversations', JSON.stringify(all))
       // Sync conv + messages to Firestore
       const updatedConv = all[idx]

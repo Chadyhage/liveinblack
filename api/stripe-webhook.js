@@ -261,6 +261,27 @@ async function finalizeBooking(db, session, meta) {
   const eventName = meta.eventName || ''
   const placeType = meta.placeType || ''
 
+  // Paiement finalisé APRÈS suppression de l'événement (course « session de
+  // paiement ouverte pendant que l'organisateur supprime ») : ne JAMAIS minter
+  // de billets pour un event disparu — ils seraient invisibles côté acheteur
+  // (purge des billets fantômes au login) alors qu'il a été débité. Trace pour
+  // revue manuelle + remboursement — même patron que account_deleted_after_payment.
+  // Un event ANNULÉ garde son doc events/ → il ne passe pas par ici.
+  if (eventId) {
+    const evGuard = await db.collection('events').doc(String(eventId)).get()
+    if (!evGuard.exists) {
+      await db.collection('payment_alerts').doc(`stripe_${session.id}`).set({
+        provider: 'stripe', stripeSessionId: session.id, bookingId,
+        userId: String(userId || ''), eventId: String(eventId),
+        reason: 'event_deleted_before_fulfillment',
+        status: 'manual_review', amountTotal: session.amount_total || null,
+        currency: session.currency || null, createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+      console.warn('[webhook] paiement reçu pour un event supprimé — revue manuelle:', session.id, eventId)
+      return
+    }
+  }
+
   // ── Table entière (modèle « hôte ») : émet `tableSeats` billets (sièges) tous
   // détenus par l'hôte, à attribuer via /api/tickets. Chaque siège vaut
   // prix_table ÷ sièges pour que les stats organisateur restent justes.
@@ -448,7 +469,7 @@ async function finalizeBooking(db, session, meta) {
     }
   }
 
-  // ── Crédit vendeur + points : EXACTEMENT UNE FOIS ──
+  // ── Crédit vendeur : EXACTEMENT UNE FOIS ──
   // Les FieldValue.increment ne sont pas idempotents → flag `settled` posé dans la
   // MÊME transaction : un retry après échec partiel ne peut ni doubler ni sauter.
   const feeCents = Math.max(0, Number(meta.feeCents || 0))
@@ -466,11 +487,9 @@ async function finalizeBooking(db, session, meta) {
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true })
     }
-    // Points : 1/billet — sauf si le client a déjà finalisé (il se les est
-    // attribués lui-même via syncIncrement).
-    if (userId && !clientAlreadyFinalized) {
-      tx.set(db.collection('users').doc(userId), { points: FieldValue.increment(qty) }, { merge: true })
-    }
+    // Points de fidélité : AUCUN à l'achat. Le point (+1/billet) se gagne au
+    // scan à l'entrée — action 'checkin' d'api/tickets.js, créditée au
+    // titulaire courant (règle anti-abus attribution/révocation de sièges).
     tx.set(ref, { settled: true }, { merge: true })
     firstSettle = true
   })
@@ -488,7 +507,7 @@ async function finalizeBooking(db, session, meta) {
         const notif = {
           id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
           type: 'new_order',
-          title: '🎫 Nouvelle vente',
+          title: 'Nouvelle vente',
           body: `${qty} × ${placeType} — ${eventName}`,
           data: { eventId: String(eventId) },
           read: false,

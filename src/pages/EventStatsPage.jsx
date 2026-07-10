@@ -41,6 +41,18 @@ function initialEvent(eventId) {
   } catch { return null }
 }
 
+// Boutons d'action solides (surchargent les pilules translucides du CSS)
+const ACTION_BTN = {
+  padding: '10px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.14)',
+  background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)',
+  font: '600 12px Inter, sans-serif', letterSpacing: 'normal', textTransform: 'none', cursor: 'pointer',
+}
+const PAGE_BTN = {
+  padding: '7px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.14)',
+  background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)',
+  font: '600 12px Inter, sans-serif', letterSpacing: 'normal', textTransform: 'none',
+}
+
 // Icônes fines (stroke = currentColor) — une par métrique, pour lisibilité immédiate
 const I = {
   revenue: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 7c0-1.66-3-3-6-3S6 5.34 6 7m12 0c0 1.66-3 3-6 3S6 8.66 6 7m12 0v10c0 1.66-3 3-6 3s-6-1.34-6-3V7m12 5c0 1.66-3 3-6 3s-6-1.34-6-3"/></svg>,
@@ -73,8 +85,8 @@ function MetricCard({ definition, value, helper, tone = 'teal', icon }) {
         <Info definition={definition} />
       </div>
       <div className="event-stats-metric-body">
-        <span className="event-stats-metric-name">{definition.label}</span>
-        <strong>{value}</strong>
+        <span className="event-stats-metric-name" style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{definition.label}</span>
+        <strong style={{ color: 'rgba(255,255,255,0.95)' }}>{value}</strong>
         <p>{helper}</p>
       </div>
     </article>
@@ -158,7 +170,7 @@ function SalesChart({ series: rawSeries, cur = 'EUR' }) {
 
   return (
     <div className="event-stats-chart-wrap">
-      <div className="event-stats-chart-legend"><span className="line" /> CA cumulé estimé <span className="bar" /> billets attribués{isAggregated && <small style={{ marginLeft: 8, opacity: 0.5 }}>(agrégé par semaine)</small>}</div>
+      <div className="event-stats-chart-legend"><span className="line" /> CA cumulé estimé <span className="bar" /> billets attribués{isAggregated && <small style={{ marginLeft: 8, color: 'rgba(255,255,255,0.45)' }}>(agrégé par semaine)</small>}</div>
       <svg className="event-stats-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Évolution des ventes et du chiffre d'affaires estimé">
         {[0, 1, 2, 3, 4].map(row => {
           const yy = pad + row * ((height - pad * 2) / 4)
@@ -226,9 +238,9 @@ function TicketTable({ event, tickets, showBuyer = true }) {
       </table>
       {totalPages > 1 && (
         <div className="event-stats-pagination">
-          <button disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>← Précédent</button>
+          <button style={PAGE_BTN} disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>← Précédent</button>
           <span>{safePage + 1} / {totalPages}</span>
-          <button disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)}>Suivant →</button>
+          <button style={PAGE_BTN} disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)}>Suivant →</button>
         </div>
       )}
     </div>
@@ -323,7 +335,7 @@ export default function EventStatsPage() {
   }
 
   if (access === 'checking') return <Layout hideNav><div className="event-stats-state">Vérification de l'événement…</div></Layout>
-  if (!event || access === 'denied') return <Layout hideNav><div className="event-stats-state"><strong>Statistiques indisponibles</strong><p>Cet événement n'existe pas dans ton espace ou tu n'es pas autorisé à consulter ses données.</p><button onClick={() => navigate('/mes-evenements')}>Retour à mes événements</button></div></Layout>
+  if (!event || access === 'denied') return <Layout hideNav><div className="event-stats-state"><strong>Statistiques indisponibles</strong><p>Cet événement n'existe pas dans ton espace ou tu n'es pas autorisé à consulter ses données.</p><button style={{ ...ACTION_BTN, padding: '12px 20px', font: '600 13px Inter, sans-serif' }} onClick={() => navigate('/mes-evenements')}>Retour à mes événements</button></div></Layout>
 
   return (
     <Layout hideNav>
@@ -333,12 +345,12 @@ export default function EventStatsPage() {
           <div className="event-stats-heading-row">
             <div>
               <h1>{event.name}</h1>
-              <p>{event.dateDisplay || shortDate(event.date)} · {event.city || event.location || 'Lieu à préciser'} <span>{event.cancelled ? 'Annulé' : new Date(event.date) < new Date() ? 'Terminé' : 'En vente'}</span></p>
+              <p>{event.dateDisplay || shortDate(event.date)} · {event.city || event.location || 'Lieu à préciser'} <span style={event.cancelled ? { color: '#e05aaa', borderColor: 'rgba(224,90,170,0.45)' } : new Date(event.date) < new Date() ? { color: 'rgba(255,255,255,0.6)', borderColor: 'rgba(255,255,255,0.25)' } : undefined}>{event.cancelled ? 'Annulé' : new Date(event.date) < new Date() ? 'Terminé' : 'En vente'}</span></p>
             </div>
             <div className="event-stats-actions">
               <small>Dernière mise à jour {updatedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</small>
-              <button onClick={exportCsv}>Exporter CSV</button>
-              <button className="gold" onClick={() => window.print()}>Imprimer</button>
+              <button style={ACTION_BTN} onClick={exportCsv}>Exporter CSV</button>
+              <button style={ACTION_BTN} onClick={() => window.print()}>Imprimer</button>
             </div>
           </div>
         </header>
@@ -369,17 +381,17 @@ export default function EventStatsPage() {
         {(activeTab === 'overview' || activeTab === 'sales') && (
           <>
             <section className="event-stats-metrics">
-              <MetricCard icon={I.revenue} definition={EVENT_STATS_DEFINITIONS.estimatedRevenue} value={money(stats.estimatedRevenue, statCur)} helper="Hors frais, remises & remboursements" tone="teal" />
+              <MetricCard icon={I.revenue} definition={EVENT_STATS_DEFINITIONS.estimatedRevenue} value={money(stats.estimatedRevenue, statCur)} helper="Hors frais, remises et remboursements" tone="teal" />
               <MetricCard icon={I.ticket} definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(stats.assignedTickets)} helper={`${number(stats.paidTickets)} payant${stats.paidTickets > 1 ? 's' : ''} · ${number(stats.freeTickets)} invitation${stats.freeTickets > 1 ? 's' : ''}`} tone="gold" />
               <MetricCard icon={I.gauge} definition={EVENT_STATS_DEFINITIONS.fillRate} value={percent(stats.fillRate)} helper={stats.capacity ? `${number(stats.assignedTickets)} / ${number(stats.capacity)} places vendues` : 'Capacité non définie'} tone="teal" />
-              <MetricCard icon={I.seat} definition={EVENT_STATS_DEFINITIONS.remaining} value={stats.remaining == null ? '—' : number(stats.remaining)} helper={stats.capacity ? 'encore vendables' : 'capacité non définie'} tone="gold" />
+              <MetricCard icon={I.seat} definition={EVENT_STATS_DEFINITIONS.remaining} value={stats.remaining == null ? '—' : number(stats.remaining)} helper={stats.capacity ? 'Places encore disponibles' : 'Capacité non définie'} tone="gold" />
               <MetricCard icon={I.present} definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper={`${number(stats.present)} / ${number(stats.assignedTickets)} billets scannés`} tone="teal" />
-              <MetricCard icon={I.attend} definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? `${number(stats.present)} entrée${stats.present > 1 ? 's' : ''} sur ${number(stats.assignedTickets)} billets` : 'check-in pas commencé'} tone={stats.checkInReliable ? 'teal' : 'pink'} />
+              <MetricCard icon={I.attend} definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? `${number(stats.present)} entrée${stats.present > 1 ? 's' : ''} sur ${number(stats.assignedTickets)} billets` : 'Check-in pas encore commencé'} tone={stats.checkInReliable ? 'teal' : 'pink'} />
             </section>
 
             <section className="event-stats-overview-grid">
               <article className="event-stats-panel event-stats-sales-panel"><h2>Évolution des ventes</h2><SalesChart series={stats.salesSeries} cur={statCur} /></article>
-              <aside className="event-stats-panel event-stats-insights"><h2>Insights</h2>{insights.map((item, index) => <div key={index} className={`insight-${item.tone}`}><span>{index + 1}</span><p>{item.text}</p></div>)}</aside>
+              <aside className="event-stats-panel event-stats-insights"><h2>Points clés</h2>{insights.map((item, index) => <div key={index} className={`insight-${item.tone}`}><span>{index + 1}</span><p>{item.text}</p></div>)}</aside>
             </section>
           </>
         )}
@@ -393,7 +405,7 @@ export default function EventStatsPage() {
 
         {activeTab === 'sales' && (
           <section className="event-stats-lower-grid">
-            <div style={{ display: 'grid', gap: 12 }}><article className="event-stats-panel"><h2>Performance des catégories</h2><PlaceBreakdown rows={stats.byPlace} total={stats.assignedTickets} cur={statCur} /></article><article className="event-stats-panel event-stats-summary-list"><h2>Précommandes consommations</h2>{stats.preorderItems.length ? <dl>{stats.preorderItems.map(item => <div key={item.name}><dt>{item.emoji} {item.name} · ×{item.quantity}</dt><dd>{money(item.revenue, statCur)}</dd></div>)}</dl> : <EmptyState title="Aucune précommande" body="Les boissons et snacks commandés avec les billets apparaîtront ici." />}</article></div>
+            <div style={{ display: 'grid', gap: 12 }}><article className="event-stats-panel"><h2>Performance des catégories</h2><PlaceBreakdown rows={stats.byPlace} total={stats.assignedTickets} cur={statCur} /></article><article className="event-stats-panel event-stats-summary-list"><h2>Précommandes de consommations</h2>{stats.preorderItems.length ? <dl>{stats.preorderItems.map(item => <div key={item.name}><dt>{item.name} · ×{item.quantity}</dt><dd>{money(item.revenue, statCur)}</dd></div>)}</dl> : <EmptyState title="Aucune précommande" body="Les boissons et snacks commandés avec les billets apparaîtront ici." />}</article></div>
             <article className="event-stats-panel event-stats-summary-list"><h2>Lecture des revenus</h2><dl><div><dt>Billetterie estimée</dt><dd>{money(stats.estimatedRevenue, statCur)}</dd></div><div><dt>Précommandes</dt><dd>{money(stats.preorderRevenue, statCur)}</dd></div><div><dt>Total estimé</dt><dd>{money(stats.totalEstimatedRevenue, statCur)}</dd></div><div><dt>Revenu moyen par billet payant</dt><dd>{money(stats.averageRevenuePerPaidTicket, statCur)}</dd></div><div><dt>Billets payants</dt><dd>{number(stats.paidTickets)}</dd></div><div><dt>Billets gratuits</dt><dd>{number(stats.freeTickets)}</dd></div></dl><p>Les remboursements, remises et frais de paiement ne sont pas déduits tant qu'ils ne sont pas exposés à l'organisateur.</p></article>
           </section>
         )}
@@ -406,7 +418,7 @@ export default function EventStatsPage() {
           <section className="event-stats-section-stack"><div className="event-stats-metrics compact"><MetricCard definition={EVENT_STATS_DEFINITIONS.present} value={number(stats.present)} helper="scans uniques valides" /><MetricCard definition={EVENT_STATS_DEFINITIONS.attendanceRate} value={percent(stats.attendanceRate)} helper={stats.checkInReliable ? 'sur billets attribués' : 'non fiable pour le moment'} /><MetricCard definition={EVENT_STATS_DEFINITIONS.assignedTickets} value={number(Math.max(0, stats.assignedTickets - stats.present))} helper="billets non scannés" /></div><article className="event-stats-panel"><h2>Journal de présence</h2><TicketTable event={event} tickets={[...stats.tickets].sort((a, b) => Number(Boolean(b.checkedInAt)) - Number(Boolean(a.checkedInAt)))} showBuyer={false} /></article></section>
         )}
 
-        {activeTab === 'data' && <section className="event-stats-panel"><div className="event-stats-panel-heading"><div><h2>Données brutes</h2><p>Les identifiants acheteurs sont masqués à l'écran. L'export respecte les filtres actifs.</p></div><button onClick={exportCsv}>Exporter CSV</button></div><TicketTable event={event} tickets={stats.tickets} /></section>}
+        {activeTab === 'data' && <section className="event-stats-panel"><div className="event-stats-panel-heading"><div><h2>Données brutes</h2><p>Les identifiants acheteurs sont masqués à l'écran. L'export respecte les filtres actifs.</p></div><button style={ACTION_BTN} onClick={exportCsv}>Exporter CSV</button></div><TicketTable event={event} tickets={stats.tickets} /></section>}
         </div>
 
         {loading && <div className="event-stats-loading">Actualisation…</div>}

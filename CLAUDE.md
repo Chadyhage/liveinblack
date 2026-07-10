@@ -12,8 +12,8 @@ Marketplace événementielle / nightlife en français. Les utilisateurs peuvent 
 ## Design system
 - **Palette** : `--obsidian` (#04040b) fond, `--teal` (#4ee8c8) accent principal, `--gold` (#c8a96e) accent secondaire (logo, agent), `--pink` (#e05aaa) badges
 - **Logo** : `L|VE IN` (Bebas Neue) + `BLACK` (Playfair Display italic) — le `|` est une barre blanche verticale
-- **Nav labels** : DM Mono uppercase, 10px, letterSpacing 0.2em
-- **Texture** : grain SVG en `body::after` (opacity 0.035) + backdrop blur sur sidebar
+- **Refonte 2026-07** : surfaces OPAQUES (`#0e0f16` cartes, `#12131c` modals/menus), CTA pleins (violet `linear-gradient(180deg,#8f56ff,#7a3bf2)`, teal plein `#3ed6b5`, danger `#c2347f`), Inter partout (PAS de DM Mono), letterSpacing ≤ 0.08em, pas de glow néon ni glassmorphism de contenu (blur toléré : nav/header/backdrops), pas d'emojis dans l'UI système. Recettes partagées : `src/styles/ui.js`
+- **Texture** : grain SVG en `body::after` (opacity 0.035)
 - **NE PAS** utiliser #d4af37 (ancien gold) — utiliser var(--gold) ou var(--teal)
 
 ## Architecture src/

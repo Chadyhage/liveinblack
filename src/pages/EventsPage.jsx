@@ -265,10 +265,12 @@ export default function EventsPage() {
             alignItems: 'center',
             gap: 12,
             padding: '12px 16px',
-            background: 'rgba(200,169,110,0.08)',
-            border: '1px solid rgba(200,169,110,0.28)',
+            background: '#12131c',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderLeft: '3px solid #c8a96e',
             borderRadius: 12,
             marginBottom: 20,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
           }}>
             <div style={{
               width: 36,
@@ -285,14 +287,17 @@ export default function EventsPage() {
               </svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Mode partage</p>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '3px 0 0' }}>Touche un événement pour l'envoyer dans la conversation</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', margin: 0 }}>Mode partage</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.55)', margin: '3px 0 0' }}>Touche un événement pour l'envoyer dans la conversation.</p>
             </div>
             <button
               onClick={() => navigate('/messagerie')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.28)', fontSize: 16, flexShrink: 0, padding: 4, lineHeight: 1 }}
+              aria-label="Fermer"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', flexShrink: 0, padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center' }}
             >
-              ✕
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         )}
@@ -308,17 +313,16 @@ export default function EventsPage() {
                 alignItems: 'center',
                 gap: 8,
                 padding: '10px 18px',
-                background: 'linear-gradient(135deg, rgba(200,169,110,0.20), rgba(200,169,110,0.04))',
-                border: '1px solid rgba(200,169,110,0.55)',
+                background: 'rgba(200,169,110,0.14)',
+                border: '1px solid rgba(200,169,110,0.45)',
                 borderRadius: 999,
                 cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: 11,
                 fontWeight: 700,
-                letterSpacing: '0.12em',
+                letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 color: '#e2c68c',
-                boxShadow: '0 6px 20px -6px rgba(200,169,110,0.45), inset 0 1px 0 rgba(255,255,255,0.08)',
                 transition: 'all 0.2s',
               }}
             >
@@ -391,18 +395,18 @@ export default function EventsPage() {
       {showCodeModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
           <div
-            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(8px)' }}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }}
             onClick={() => { setShowCodeModal(false); setCodeInput(''); setCodeMsg(null) }}
           />
           <div style={{
             position: 'relative',
-            background: 'rgba(8,10,20,0.92)',
-            backdropFilter: 'blur(22px)',
+            background: '#12131c',
             border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: 12,
+            borderRadius: 20,
             padding: '32px 28px',
             width: '100%',
             maxWidth: 360,
+            boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
           }}>
             {/* Modal header */}
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -421,10 +425,10 @@ export default function EventsPage() {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
               </div>
-              <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 22, color: 'white', margin: '0 0 8px' }}>
+              <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 20, color: 'white', margin: '0 0 8px' }}>
                 Code d'accès privé
               </h3>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.28)', margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
                 Entre le code reçu de l'organisateur pour débloquer la soirée.
               </p>
             </div>
@@ -434,12 +438,13 @@ export default function EventsPage() {
               style={{
                 width: '100%',
                 padding: '14px 16px',
-                background: 'rgba(6,8,16,0.6)',
-                border: '1px solid rgba(255,255,255,0.10)',
-                borderRadius: 4,
-                fontFamily: "'DM Mono', monospace",
+                background: '#0b0c12',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 10,
+                fontFamily: 'Inter, sans-serif',
                 fontSize: 16,
-                letterSpacing: '0.3em',
+                fontWeight: 600,
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 color: 'white',
                 textAlign: 'center',
@@ -452,8 +457,8 @@ export default function EventsPage() {
               value={codeInput}
               onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeMsg(null) }}
               onKeyDown={e => e.key === 'Enter' && handleCodeSubmit()}
-              onFocus={e => e.target.style.borderColor = '#4ee8c8'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.10)'}
+              onFocus={e => e.target.style.borderColor = '#8444ff'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
               maxLength={20}
             />
 
@@ -461,14 +466,14 @@ export default function EventsPage() {
             {codeMsg && (
               <div style={{
                 padding: '10px 14px',
-                borderRadius: 6,
+                borderRadius: 10,
                 marginBottom: 12,
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 10,
-                letterSpacing: '0.15em',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 12.5,
+                fontWeight: 600,
                 textAlign: 'center',
-                background: codeMsg.type === 'success' ? 'rgba(78,232,200,0.08)' : 'rgba(224,90,170,0.08)',
-                border: `1px solid ${codeMsg.type === 'success' ? 'rgba(78,232,200,0.25)' : 'rgba(224,90,170,0.25)'}`,
+                background: codeMsg.type === 'success' ? 'rgba(78,232,200,0.12)' : 'rgba(224,90,170,0.12)',
+                border: `1px solid ${codeMsg.type === 'success' ? 'rgba(78,232,200,0.4)' : 'rgba(224,90,170,0.4)'}`,
                 color: codeMsg.type === 'success' ? '#4ee8c8' : '#e05aaa',
               }}>
                 {codeMsg.text}
@@ -482,15 +487,14 @@ export default function EventsPage() {
                 style={{
                   flex: 1,
                   padding: '13px 16px',
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 4,
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  borderRadius: 12,
                   cursor: 'pointer',
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 10,
-                  letterSpacing: '0.25em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.6)',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.9)',
                   transition: 'all 0.2s',
                 }}
               >
@@ -501,15 +505,15 @@ export default function EventsPage() {
                 style={{
                   flex: 1,
                   padding: '13px 16px',
-                  background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-                  border: '1px solid rgba(200,169,110,0.45)',
-                  borderRadius: 4,
+                  background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  borderRadius: 12,
                   cursor: 'pointer',
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 10,
-                  letterSpacing: '0.25em',
-                  textTransform: 'uppercase',
-                  color: '#c8a96e',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: '#fff',
+                  boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
                   transition: 'all 0.2s',
                 }}
               >
@@ -606,7 +610,7 @@ function EventPoster({ event, onClick }) {
       <div style={{
         position: 'relative', width: '100%', height: '100%', borderRadius: 14, overflow: 'hidden', background: '#0b0d14',
         border: expanded ? `1px solid ${accent}` : '1px solid rgba(255,255,255,0.08)',
-        boxShadow: expanded ? `0 20px 44px -10px rgba(0,0,0,0.75), 0 0 24px -6px ${accent}55` : 'none',
+        boxShadow: expanded ? '0 20px 44px -10px rgba(0,0,0,0.75)' : 'none',
         transition: 'border-color 0.35s ease, box-shadow 0.35s ease',
       }}>
         <EventHoverMedia
@@ -618,7 +622,7 @@ function EventPoster({ event, onClick }) {
         />
         {/* Countdown — bornée à gauche pour ne jamais chevaucher le prix */}
         {countdown && (
-          <span style={{ position: 'absolute', top: 8, left: 8, maxWidth: '42%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: urgent ? '#fff' : '#4ee8c8', background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(5,6,10,0.6)', backdropFilter: 'blur(8px)', padding: '3px 7px', borderRadius: 999, border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{countdown}</span>
+          <span style={{ position: 'absolute', top: 8, left: 8, maxWidth: '42%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: urgent ? '#fff' : '#4ee8c8', background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(5,6,10,0.78)', padding: '3px 7px', borderRadius: 999, border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}` }}>{countdown}</span>
         )}
         {/* Nom + meta + prix (le prix vit EN BAS : les prix FCFA sont longs et
             chevaucheraient le compte à rebours s'ils étaient en haut à droite). */}
@@ -633,13 +637,13 @@ function EventPoster({ event, onClick }) {
           <div style={{ maxHeight: expanded ? 90 : 0, opacity: expanded ? 1 : 0, overflow: 'hidden', transition: 'max-height 0.35s ease, opacity 0.3s ease 0.05s' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
               {event.category && (
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8.5, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.16)', padding: '2px 7px', borderRadius: 999 }}>{event.category}</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.16)', padding: '2px 7px', borderRadius: 999 }}>{event.category}</span>
               )}
               {event.time && (
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8.5, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.16)', padding: '2px 7px', borderRadius: 999 }}>{event.time}</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.16)', padding: '2px 7px', borderRadius: 999 }}>{event.time}</span>
               )}
             </div>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: '#0b0d14', background: accent, padding: '5px 11px', borderRadius: 8, boxShadow: `0 4px 14px ${accent}55` }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: '#0b0d14', background: accent, padding: '5px 11px', borderRadius: 8 }}>
               Réserver
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0b0d14" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </span>
@@ -666,30 +670,16 @@ function EventCard({ event, onClick, shareMode, shared }) {
       <div
         style={{
           position: 'relative',
-          background: 'rgba(8,10,20,0.55)',
-          backdropFilter: 'blur(22px)',
-          border: shareMode ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 12,
+          background: '#0e0f16',
+          border: shareMode ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 16,
           overflow: 'hidden',
           transition: 'transform 0.25s ease, box-shadow 0.25s ease',
           transform: hovered && !shared ? 'translateY(-4px)' : 'none',
-          boxShadow: hovered && !shared ? '0 12px 40px rgba(0,0,0,0.45)' : 'none',
+          boxShadow: hovered && !shared ? '0 12px 40px rgba(0,0,0,0.45)' : '0 8px 24px rgba(0,0,0,0.35)',
           opacity: shared ? 0.6 : 1,
         }}
       >
-        {/* Iridescent top edge on hover */}
-        {hovered && !shared && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 1,
-            background: 'linear-gradient(90deg, #4ee8c8, #e05aaa, #c8a96e)',
-            zIndex: 2,
-          }} />
-        )}
-
         {/* Share overlay */}
         {shareMode && !shared && hovered && (
           <div style={{
@@ -700,21 +690,22 @@ function EventCard({ event, onClick, shareMode, shared }) {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'rgba(0,0,0,0.6)',
-            borderRadius: 12,
+            borderRadius: 16,
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: 8,
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-              border: '1px solid rgba(200,169,110,0.45)',
-              borderRadius: 4,
-              fontFamily: "'DM Mono', monospace",
-              fontSize: 10,
-              letterSpacing: '0.2em',
+              background: 'rgba(12,12,22,0.96)',
+              border: '1px solid rgba(200,169,110,0.5)',
+              borderRadius: 12,
+              fontFamily: 'Inter, sans-serif',
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: '0.04em',
               textTransform: 'uppercase',
-              color: '#c8a96e',
+              color: '#e2c68c',
             }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
@@ -734,22 +725,26 @@ function EventCard({ event, onClick, shareMode, shared }) {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'rgba(0,0,0,0.65)',
-            borderRadius: 12,
+            borderRadius: 16,
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: 8,
               padding: '10px 20px',
-              background: 'rgba(78,232,200,0.10)',
-              border: '1px solid rgba(78,232,200,0.35)',
-              borderRadius: 4,
-              fontFamily: "'DM Mono', monospace",
-              fontSize: 10,
-              letterSpacing: '0.2em',
+              background: 'rgba(12,12,22,0.96)',
+              border: '1px solid rgba(78,232,200,0.5)',
+              borderRadius: 12,
+              fontFamily: 'Inter, sans-serif',
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: '0.04em',
               textTransform: 'uppercase',
               color: '#4ee8c8',
             }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
               Envoyé
             </div>
           </div>
@@ -759,13 +754,13 @@ function EventCard({ event, onClick, shareMode, shared }) {
         {!shareMode && (countdown || stock) && (
           <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
             {countdown && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 99, background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(8,10,20,0.78)', backdropFilter: 'blur(8px)', border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}`, fontFamily: "'DM Mono', monospace", fontSize: 8.5, fontWeight: 600, letterSpacing: '0.08em', color: urgent ? '#fff' : '#4ee8c8' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 99, background: urgent ? 'rgba(224,90,170,0.92)' : 'rgba(8,10,20,0.88)', border: `1px solid ${urgent ? 'rgba(224,90,170,0.6)' : 'rgba(78,232,200,0.4)'}`, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: urgent ? '#fff' : '#4ee8c8' }}>
                 <span style={{ width: 4, height: 4, borderRadius: '50%', background: urgent ? '#fff' : '#4ee8c8' }} />
                 {countdown}
               </span>
             )}
             {stock && (
-              <span style={{ padding: '3px 8px', borderRadius: 99, background: 'rgba(8,10,20,0.78)', backdropFilter: 'blur(8px)', border: `1px solid ${stock.color}66`, fontFamily: "'DM Mono', monospace", fontSize: 8.5, fontWeight: 600, letterSpacing: '0.08em', color: stock.color }}>
+              <span style={{ padding: '3px 8px', borderRadius: 99, background: 'rgba(8,10,20,0.88)', border: `1px solid ${stock.color}66`, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: stock.color }}>
                 {stock.label}
               </span>
             )}
@@ -773,7 +768,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
         )}
 
         {/* Color accent bar */}
-        <div style={{ height: 2, width: '100%', background: `linear-gradient(to right, ${event.color}, ${event.accentColor})` }} />
+        <div style={{ height: 2, width: '100%', background: event.color || 'rgba(255,255,255,0.08)' }} />
 
         {event.imageUrl ? (
           /* Image card (user-created events with photo) */
@@ -792,25 +787,26 @@ function EventCard({ event, onClick, shareMode, shared }) {
                   {event.name}
                 </h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.1em' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
                     {event.dateDisplay}
                   </span>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.1em' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
                     {event.city}
                   </span>
                 </div>
               </div>
               {event.userCreated && (
                 <span style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 9,
-                  letterSpacing: '0.2em',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                   color: '#c8a96e',
-                  background: 'rgba(200,169,110,0.10)',
-                  border: '1px solid rgba(200,169,110,0.25)',
+                  background: 'rgba(200,169,110,0.14)',
+                  border: '1px solid rgba(200,169,110,0.35)',
                   padding: '4px 10px',
-                  borderRadius: 4,
+                  borderRadius: 8,
                   flexShrink: 0,
                   marginLeft: 12,
                 }}>
@@ -855,14 +851,15 @@ function EventCard({ event, onClick, shareMode, shared }) {
               <div style={{ position: 'absolute', top: 12, left: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {(event.tags || []).map((tag) => (
                   <span key={tag} style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: 9,
-                    letterSpacing: '0.2em',
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                     padding: '3px 10px',
                     borderRadius: 999,
-                    border: `1px solid ${event.color}44`,
-                    background: `${event.color}11`,
+                    border: `1px solid ${event.color}55`,
+                    background: 'rgba(5,6,10,0.72)',
                     color: event.accentColor,
                   }}>
                     {tag}
@@ -876,7 +873,7 @@ function EventCard({ event, onClick, shareMode, shared }) {
               <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 21, letterSpacing: '-0.5px', color: event.accentColor, margin: '0 0 4px', lineHeight: 1.15 }}>
                 {event.name}
               </h3>
-              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.30)', margin: '0 0 12px', letterSpacing: '0.08em' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.55)', margin: '0 0 12px' }}>
                 {event.subtitle}
               </p>
               <div style={{
@@ -888,24 +885,24 @@ function EventCard({ event, onClick, shareMode, shared }) {
               }}>
                 {/* Date */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.08em' }}>{event.dateDisplay}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{event.dateDisplay}</span>
                 </div>
                 {/* Time */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.08em' }}>{event.time}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{event.time}</span>
                 </div>
                 {/* City */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
                   </svg>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.08em', maxWidth: 96, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)', maxWidth: 96, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {event.city}
                   </span>
                 </div>

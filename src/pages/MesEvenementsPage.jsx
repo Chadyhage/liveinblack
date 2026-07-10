@@ -2,12 +2,11 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import Layout from '../components/Layout'
-import PayoutPanel from '../components/PayoutPanel'
 import { useAuth } from '../context/AuthContext'
 import BoostModal from '../components/BoostModal'
 import EventStaffModal from '../components/EventStaffModal'
 import EventHoverMedia from '../components/EventHoverMedia'
-import { IconHourglass } from '../components/icons'
+import { IconHourglass, IconAlert } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
 import { regions } from '../data/regions'
@@ -74,94 +73,92 @@ function isEventPast(ev) {
 // ── Shared style tokens ────────────────────────────────────────────────────────
 const S = {
   card: {
-    background: 'rgba(8,10,20,0.55)',
-    backdropFilter: 'blur(22px) saturate(1.6)',
-    border: '1px solid rgba(255,255,255,0.10)',
+    background: '#0e0f16',
+    border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: 12,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
   },
   inputBase: {
-    background: 'rgba(6,8,16,0.6)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 4,
+    background: '#0b0c12',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 10,
     fontFamily: 'Inter, sans-serif',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.9)',
-    padding: '10px 14px',
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.92)',
+    padding: '12px 14px',
     width: '100%',
     outline: 'none',
     boxSizing: 'border-box',
   },
   label: {
     fontFamily: 'Inter, sans-serif',
-    fontSize: 9,
-    letterSpacing: '0.35em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.28)',
+    fontSize: 12,
+    fontWeight: 600,
+    letterSpacing: 'normal',
+    color: 'rgba(255,255,255,0.6)',
     display: 'block',
     marginBottom: 6,
   },
   btnPrimary: {
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(78,232,200,0.12))',
-    border: '1px solid rgba(255,255,255,0.28)',
-    borderRadius: 4,
+    padding: '13px 20px',
+    background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: 12,
     fontFamily: 'Inter, sans-serif',
-    fontSize: 11,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: 'white',
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#fff',
     cursor: 'pointer',
+    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
     width: '100%',
   },
   btnGold: {
-    padding: '13px 28px',
-    background: 'linear-gradient(135deg, rgba(200,169,110,0.22), rgba(200,169,110,0.06))',
-    border: '1px solid rgba(200,169,110,0.45)',
-    borderRadius: 4,
+    padding: '13px 20px',
+    background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: 12,
     fontFamily: 'Inter, sans-serif',
-    fontSize: 11,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: '#c8a96e',
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#fff',
     cursor: 'pointer',
+    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
     width: '100%',
   },
   btnGhost: {
-    padding: '13px 28px',
-    background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.18)',
-    borderRadius: 4,
+    padding: '12px 18px',
+    background: 'rgba(255,255,255,0.08)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: 12,
     fontFamily: 'Inter, sans-serif',
-    fontSize: 11,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.9)',
     cursor: 'pointer',
     width: '100%',
   },
   btnDanger: {
-    padding: '13px 28px',
-    background: 'rgba(220,50,50,0.10)',
-    border: '1px solid rgba(220,50,50,0.35)',
-    borderRadius: 4,
+    padding: '13px 20px',
+    background: '#c2347f',
+    border: 'none',
+    borderRadius: 12,
     fontFamily: 'Inter, sans-serif',
-    fontSize: 11,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: 'rgba(220,100,100,0.9)',
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#fff',
     cursor: 'pointer',
     width: '100%',
   },
   btnTeal: {
-    padding: '13px 28px',
-    background: 'rgba(78,232,200,0.10)',
-    border: '1px solid rgba(78,232,200,0.35)',
-    borderRadius: 4,
+    padding: '13px 20px',
+    background: '#3ed6b5',
+    border: 'none',
+    borderRadius: 12,
     fontFamily: 'Inter, sans-serif',
-    fontSize: 11,
-    letterSpacing: '0.25em',
-    textTransform: 'uppercase',
-    color: '#4ee8c8',
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#04120e',
     cursor: 'pointer',
     width: '100%',
   },
@@ -174,10 +171,11 @@ function Eyebrow({ children, style = {} }) {
       <div style={{ width: 28, height: 1, background: '#4ee8c8', flexShrink: 0 }} />
       <span style={{
         fontFamily: 'Inter, sans-serif',
-        fontSize: 9,
-        letterSpacing: '0.4em',
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: '0.08em',
         textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.25)',
+        color: 'rgba(255,255,255,0.5)',
       }}>{children}</span>
     </div>
   )
@@ -268,7 +266,7 @@ function InputField({ label, value, onChange, placeholder, type = 'text', error,
         onFocus={() => !locked && setFocused(true)}
         onBlur={() => setFocused(false)}
       />
-      {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{error}</p>}
+      {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{error}</p>}
     </div>
   )
 }
@@ -326,6 +324,7 @@ export default function MesEvenementsPage() {
   const [createStep, setCreateStep] = useState(0)
   const [editingEventId, setEditingEventId] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [deleteError, setDeleteError] = useState('')
   const [cancellationMessageDraft, setCancellationMessageDraft] = useState('')
   const [syncErrorBanner, setSyncErrorBanner] = useState(null)
   const [showBoostModal, setShowBoostModal] = useState(false)
@@ -1028,8 +1027,48 @@ export default function MesEvenementsPage() {
   // En cas d'event annulé, on verrouille TOUT (lecture seule)
   const isReadOnly = editingEventCancelled
 
-  function deleteEvent(id) {
+  async function deleteEvent(id) {
     const sid = String(id)
+    // Un event encore _pendingSync n'a jamais atteint Firestore : aucun billet
+    // serveur ne peut exister → suppression locale directe, sans passer par l'API.
+    const isPendingLocal = createdEvents.some(ev => String(ev.id) === sid && ev._pendingSync === true)
+    if (!isPendingLocal) {
+      // Cascade serveur OBLIGATOIRE (fail-closed) : purge le registre tickets/
+      // et les carnets user_bookings des détenteurs, puis supprime events/{id}.
+      // Sans ça, les billets déjà émis restaient orphelins et ressuscitaient
+      // dans « Mes billets » à chaque sync (billets fantômes).
+      try {
+        const { authHeaders } = await import('../utils/apiAuth')
+        const r = await fetch('/api/tickets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+          body: JSON.stringify({ action: 'delete_event', eventId: sid }),
+        })
+        if (r.status === 409) {
+          // Des réservations existent (souvent faites depuis un autre appareil,
+          // invisibles dans lib_bookings local) → flux d'annulation, pas suppression.
+          const data = await r.json().catch(() => ({}))
+          setCancellationMessageDraft('')
+          setDeleteError('')
+          setDeleteConfirm({ id, bookingCount: data.bookingCount || data.paidCount || 1 })
+          return
+        }
+        if (!r.ok && r.status !== 404) {
+          // 401/403/5xx : on NE retombe PAS sur la suppression locale — elle
+          // contournerait la garde « réservations existantes » et laisserait des
+          // billets orphelins impossibles à re-purger (la cascade exige events/{id}).
+          const data = await r.json().catch(() => ({}))
+          setDeleteError(data.error || 'Suppression impossible pour le moment — réessaie dans un instant.')
+          return
+        }
+        // 2xx (cascade OK) ou 404 (déjà supprimé côté serveur) → on poursuit.
+      } catch {
+        // Vraie erreur réseau : même principe fail-closed.
+        setDeleteError('Connexion impossible — vérifie ta connexion et réessaie.')
+        return
+      }
+    }
+
     // Tombstone : marque l'event comme supprimé pour empêcher le "merge robuste"
     // du listener de le ressusciter. Sinon un snapshot Firestore périmé pouvait
     // le réinjecter dans le state, puis le merge le gardait à vie comme « event
@@ -1042,10 +1081,11 @@ export default function MesEvenementsPage() {
     localStorage.setItem('lib_created_events', JSON.stringify(updated))
     setCreatedEvents(updated)
     setDeleteConfirm(null)
+    setDeleteError('')
     setCancellationMessageDraft('')
-    // Remove from shared Firestore collection too
-    import('../utils/firestore-sync').then(async ({ syncDelete, syncDoc }) => {
-      syncDelete(`events/${id}`)
+    // events/{id} est déjà supprimé par la cascade (ou n'a jamais existé pour un
+    // _pendingSync) — il ne reste qu'à mettre à jour la liste de l'organisateur.
+    import('../utils/firestore-sync').then(async ({ syncDoc }) => {
       if (user?.uid) {
         const { sanitizeEventsForSync } = await import('../utils/uploadImage')
         syncDoc(`user_events/${user.uid}`, { items: await sanitizeEventsForSync(updated) })
@@ -1180,15 +1220,15 @@ export default function MesEvenementsPage() {
             }}>
               <IconHourglass size={32} color="#c8a96e" />
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 12 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 12 }}>
               Validation en cours
             </p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: 24 }}>
               Ton compte organisateur est en attente de validation par l'équipe LIVEINBLACK. Tu pourras créer des événements dès que ton dossier sera approuvé.
             </p>
             <button onClick={() => navigate('/mon-dossier')}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', background: 'none', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 4, padding: '10px 20px', cursor: 'pointer' }}>
-              Voir mon dossier →
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 12, padding: '11px 20px', cursor: 'pointer' }}>
+              Voir mon dossier
             </button>
           </div>
         </div>
@@ -1203,13 +1243,13 @@ export default function MesEvenementsPage() {
           <svg width="40" height="40" viewBox="0 0 24 24" fill="rgba(255,255,255,0.08)" style={{ marginBottom: 16 }}>
             <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
           </svg>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 24, fontWeight: 300, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 8 }}>
             Accès restreint
           </p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 20 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: 20 }}>
             {getCreateEventBlockedReason(user)}
           </p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em', lineHeight: 1.6 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6 }}>
             Pour créer des événements, tu dois avoir un compte organisateur validé.
           </p>
         </div>
@@ -1223,22 +1263,22 @@ export default function MesEvenementsPage() {
       <Layout>
         <style>{`
           .event-manage-list{display:flex;flex-direction:column;gap:14px}
-          .event-manage-card{display:grid;grid-template-columns:minmax(390px,1.25fr) minmax(390px,.9fr);min-height:220px;overflow:hidden;border:1px solid rgba(255,255,255,.11);border-radius:16px;background:rgba(8,10,20,.62);box-shadow:0 18px 50px rgba(0,0,0,.18)}
+          .event-manage-card{display:grid;grid-template-columns:minmax(390px,1.25fr) minmax(390px,.9fr);min-height:220px;overflow:hidden;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:#0e0f16;box-shadow:0 8px 24px rgba(0,0,0,.35)}
           .event-manage-main{display:grid;grid-template-columns:minmax(190px,.8fr) 1fr;min-width:0;padding:0;border:0;border-right:1px solid rgba(255,255,255,.08);background:transparent;color:#fff;text-align:left;cursor:pointer}
-          .event-manage-media{min-height:220px;background:linear-gradient(145deg,rgba(200,169,110,.2),rgba(78,232,200,.05));background-size:cover;background-position:center;display:grid;place-items:center}
+          .event-manage-media{min-height:220px;background:#12131c;background-size:cover;background-position:center;display:grid;place-items:center}
           .event-manage-media svg{width:42px;fill:none;stroke:rgba(200,169,110,.7);stroke-width:1.2}
           .event-manage-copy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:28px;min-width:0}
           .event-manage-copy h3{font:600 22px Inter,sans-serif;letter-spacing:-.025em;margin:13px 0 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-          .event-manage-copy p{font:9px 'DM Mono',monospace;letter-spacing:.08em;color:rgba(255,255,255,.43);margin:0;text-transform:uppercase}
-          .event-status{font:8px 'DM Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#4ee8c8;border:1px solid rgba(78,232,200,.24);background:rgba(78,232,200,.07);padding:5px 8px;border-radius:999px}
-          .event-open-link{font:9px Inter,sans-serif;color:rgba(255,255,255,.42);margin-top:24px}
+          .event-manage-copy p{font:500 12px Inter,sans-serif;letter-spacing:.04em;color:rgba(255,255,255,.5);margin:0;text-transform:uppercase}
+          .event-status{font:700 11px Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#4ee8c8;border:1px solid rgba(78,232,200,.35);background:rgba(78,232,200,.14);padding:4px 10px;border-radius:8px}
+          .event-open-link{font:500 12px Inter,sans-serif;color:rgba(255,255,255,.55);margin-top:24px}
           .event-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:18px;align-content:center}
-          .event-action{min-height:52px;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--action-color) 26%,transparent);background:color-mix(in srgb,var(--action-color) 7%,transparent);color:rgba(255,255,255,.74);font:600 10px Inter,sans-serif;cursor:pointer;text-align:left;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+          .event-action{min-height:52px;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--action-color) 26%,transparent);background:color-mix(in srgb,var(--action-color) 7%,transparent);color:rgba(255,255,255,.82);font:600 12px Inter,sans-serif;cursor:pointer;text-align:left;transition:transform .18s ease,border-color .18s ease,background .18s ease}
           .event-action:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--action-color) 55%,transparent);background:color-mix(in srgb,var(--action-color) 12%,transparent)}
           .event-action-icon{width:27px;height:27px;display:grid;place-items:center;border-radius:7px;background:color-mix(in srgb,var(--action-color) 10%,transparent);color:var(--action-color);flex:none}
           .event-action-icon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
           @media(max-width:980px){.event-manage-card{grid-template-columns:1fr}.event-manage-main{border-right:0;border-bottom:1px solid rgba(255,255,255,.08)}}
-          @media(max-width:600px){.event-manage-card{border-radius:14px}.event-manage-main{grid-template-columns:1fr}.event-manage-media{min-height:180px}.event-manage-copy{padding:19px}.event-manage-copy h3{font-size:20px}.event-open-link{margin-top:16px}.event-action-grid{padding:12px;gap:7px}.event-action{min-height:50px;padding:9px;font-size:9px}.event-action-icon{width:25px;height:25px}}
+          @media(max-width:600px){.event-manage-card{border-radius:14px}.event-manage-main{grid-template-columns:1fr}.event-manage-media{min-height:180px}.event-manage-copy{padding:19px}.event-manage-copy h3{font-size:20px}.event-open-link{margin-top:16px}.event-action-grid{padding:12px;gap:7px}.event-action{min-height:50px;padding:9px;font-size:11px}.event-action-icon{width:25px;height:25px}}
         `}</style>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
@@ -1247,21 +1287,23 @@ export default function MesEvenementsPage() {
             <h2 style={{ fontFamily: "Inter, sans-serif", fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0, letterSpacing: '0.02em', lineHeight: 1.1 }}>
               Mes <span style={{ color: '#c8a96e' }}>Événements</span>
             </h2>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.42)', marginTop: 6 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, letterSpacing: '0.02em', color: 'rgba(255,255,255,0.55)', marginTop: 6 }}>
               Crée et gère tes soirées
             </p>
           </div>
 
-          {/* Reversements — connecter son compte / solde / demander un virement */}
-          <PayoutPanel uid={user?.uid || user?.id} returnPath={typeof window !== 'undefined' ? window.location.pathname : '/'} />
+          {/* Panneau « Reversements » retiré volontairement (décision produit) :
+              les paiements FCFA passent par FedaPay configuré — plus de demande
+              manuelle de reversement ici. Ne pas le réintroduire. */}
 
           {/* Bandeau d'erreur de sync — l'event n'a pas pu être publié sur Firestore */}
           {syncErrorBanner && (
             <div style={{
-              background: 'rgba(220,50,50,0.08)',
-              border: '1px solid rgba(220,50,50,0.35)',
-              borderRadius: 8, padding: '14px 16px',
+              background: '#12131c',
+              border: '1px solid rgba(224,90,170,0.5)',
+              borderRadius: 12, padding: '14px 16px',
               display: 'flex', flexDirection: 'column', gap: 10,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
             }}>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.95)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
@@ -1270,10 +1312,10 @@ export default function MesEvenementsPage() {
                   <circle cx="12" cy="16" r="0.6" fill="rgba(220,100,100,0.95)"/>
                 </svg>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
                     {syncErrorBanner.title}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
                     {syncErrorBanner.message}
                   </p>
                 </div>
@@ -1287,13 +1329,13 @@ export default function MesEvenementsPage() {
                   onClick={syncErrorBanner.retry}
                   style={{
                     alignSelf: 'flex-start', marginLeft: 30,
-                    fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em',
-                    textTransform: 'uppercase', color: '#c8a96e',
-                    background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)',
-                    borderRadius: 4, padding: '7px 14px', cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+                    color: 'rgba(255,255,255,0.9)',
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                    borderRadius: 10, padding: '9px 16px', cursor: 'pointer',
                   }}
                 >
-                  ↺ Réessayer la publication
+                  Réessayer la publication
                 </button>
               )}
             </div>
@@ -1305,13 +1347,14 @@ export default function MesEvenementsPage() {
               <div style={{
                 position: 'relative',
                 overflow: 'hidden',
-                borderRadius: 12,
+                borderRadius: 14,
                 border: '1px solid rgba(200,169,110,0.30)',
-                background: 'linear-gradient(135deg, rgba(200,169,110,0.08) 0%, transparent 60%)',
+                background: '#0e0f16',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                 padding: 20,
                 height: '100%',
               }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 6 }}>Nouveau</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c8a96e', marginBottom: 6 }}>Nouveau</p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: '0 0 4px', letterSpacing: '-0.01em' }}>Créer un événement</p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.45)' }}>De A à Z — lieux, places, options</p>
                 <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.10 }}>
@@ -1322,16 +1365,17 @@ export default function MesEvenementsPage() {
 
             <button onClick={() => navigate('/ma-page-organisateur')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
               <div style={{
-                position: 'relative', overflow: 'hidden', borderRadius: 12,
-                border: '1px solid rgba(78,232,200,0.28)',
-                background: 'linear-gradient(135deg, rgba(78,232,200,0.07) 0%, transparent 60%)',
+                position: 'relative', overflow: 'hidden', borderRadius: 14,
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: '#0e0f16',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                 padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14,
               }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.30)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3"/><path d="M5 20c0-4 3-7 7-7s7 3 7 7"/><path d="M18 4h3v3"/></svg>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#4ee8c8', marginBottom: 4 }}>Audience</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#4ee8c8', marginBottom: 4 }}>Audience</p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: 0 }}>Ma page publique</p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Active ta page pour apparaître chez les clients</p>
                 </div>
@@ -1344,9 +1388,10 @@ export default function MesEvenementsPage() {
               <div style={{
                 position: 'relative',
                 overflow: 'hidden',
-                borderRadius: 12,
-                border: '1px solid rgba(78,232,200,0.28)',
-                background: 'linear-gradient(135deg, rgba(78,232,200,0.07) 0%, transparent 60%)',
+                borderRadius: 14,
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: '#0e0f16',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                 padding: '16px 20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -1373,7 +1418,7 @@ export default function MesEvenementsPage() {
                   </svg>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#4ee8c8', marginBottom: 4 }}>Entrée</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#4ee8c8', marginBottom: 4 }}>Entrée</p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: 0, letterSpacing: '-0.01em' }}>Scanner les billets</p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Vérifie les QR à l'entrée en temps réel</p>
                 </div>
@@ -1386,12 +1431,12 @@ export default function MesEvenementsPage() {
 
           {/* Analytics — ventes réelles (registre tickets/) */}
           {salesError ? (
-            <div style={{ background: 'rgba(220,160,50,0.10)', border: '1px solid rgba(220,160,50,0.30)', borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,220,100,0.85)', margin: 0, lineHeight: 1.6 }}>
+            <div style={{ background: '#12131c', border: '1px solid rgba(220,160,50,0.4)', borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6 }}>
                 Impossible de charger tes statistiques de vente. Vérifie ta connexion.
               </p>
               <button onClick={() => setSalesRetry(n => n + 1)}
-                style={{ padding: '7px 14px', borderRadius: 4, cursor: 'pointer', background: 'rgba(220,160,50,0.14)', border: '1px solid rgba(220,160,50,0.40)', color: 'rgba(255,220,100,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.1em' }}>
+                style={{ padding: '9px 16px', borderRadius: 10, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>
                 Réessayer
               </button>
             </div>
@@ -1423,11 +1468,13 @@ export default function MesEvenementsPage() {
             <Eyebrow style={{ marginBottom: 14 }}>Mes soirées en cours</Eyebrow>
             {upcomingEvents.length === 0 ? (
               <div style={{ ...S.card, padding: 40, textAlign: 'center' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
-                  <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-                </svg>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>Tu n'as pas encore d'événement créé.</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 4 }}>Lance-toi !</p>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                  </svg>
+                </div>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Aucun événement pour l'instant</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>Crée ton premier événement pour le retrouver ici.</p>
               </div>
             ) : (
               <div className="event-manage-list">
@@ -1440,7 +1487,7 @@ export default function MesEvenementsPage() {
                   onCodes={() => { setCodesTargetEvent(ev); setGeneratedCodes(null); setCodesQty(10); setShowCodesModal(true) }}
                   onDuplicate={() => duplicateEvent(ev)}
                   onEdit={() => startEdit(ev)}
-                  onDelete={() => setDeleteConfirm({ id: ev.id, bookingCount: getEventBookingCount(ev.id) })}
+                  onDelete={() => { setDeleteError(''); setDeleteConfirm({ id: ev.id, bookingCount: getEventBookingCount(ev.id) }) }}
                 />)}
               </div>
             )}
@@ -1462,22 +1509,22 @@ export default function MesEvenementsPage() {
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.78)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
-                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: 'rgba(220,100,100,0.95)', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
-                            ANNULÉ
+                          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#e05aaa', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.35)', padding: '4px 10px', borderRadius: 8, marginTop: 4, display: 'inline-block' }}>
+                            Annulé
                           </span>
                         </div>
                       </button>
                       <button
                         onClick={() => hideCancelledEvent(ev.id)}
                         title="Retirer de ma liste"
-                        style={{ flexShrink: 0, padding: '8px 12px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                        style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                         Retirer de ma liste
                       </button>
                     </div>
                   ))}
                 </div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, marginTop: 8 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, marginTop: 8 }}>
                   Les événements annulés restent accessibles aux personnes ayant déjà un billet (elles voient ton message d'annulation). « Retirer de ma liste » les enlève seulement de ton tableau de bord.
                 </p>
               </div>
@@ -1503,12 +1550,12 @@ export default function MesEvenementsPage() {
                           )}
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.75)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{ev.dateDisplay} · {ev.city}</p>
                             <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: 3 }}>
-                                TERMINÉ
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8 }}>
+                                Terminé
                               </span>
-                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: '#c8a96e' }}>
+                              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, letterSpacing: '0.02em', color: '#c8a96e', alignSelf: 'center' }}>
                                 {evBookings.length} billet{evBookings.length !== 1 ? 's' : ''} · {fmtMoney(Math.round(totalRevenue), eventCurrency(ev))}
                               </span>
                             </div>
@@ -1518,7 +1565,7 @@ export default function MesEvenementsPage() {
                         <button
                           onClick={() => navigate(`/mes-evenements/${ev.id}/statistiques`)}
                           title="Statistiques"
-                          style={{ width: 36, height: 36, borderRadius: 6, background: 'linear-gradient(135deg, rgba(78,232,200,0.12), rgba(78,232,200,0.04))', border: '1px solid rgba(78,232,200,0.25)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2 }}
+                          style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2 }}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                         </button>
@@ -1538,22 +1585,22 @@ export default function MesEvenementsPage() {
           {deleteConfirm && (
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => setDeleteConfirm(null)} />
-              <div style={{ ...S.card, position: 'relative', padding: 24, width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Supprimer l'événement ?</p>
+              <div style={{ ...S.card, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', position: 'relative', padding: 24, width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Supprimer l'événement ?</p>
 
                 {deleteConfirm.bookingCount > 0 ? (
                   /* Cas : réservations existantes — on annule (pas de suppression dure) */
                   <>
-                    <div style={{ background: 'rgba(220,160,50,0.10)', border: '1px solid rgba(220,160,50,0.30)', borderRadius: 8, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,220,100,0.85)', lineHeight: 1.7, margin: 0 }}>
+                    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(220,160,50,0.35)', borderRadius: 12, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{ flexShrink: 0, display: 'inline-flex', marginTop: 1 }}><IconAlert size={18} color="rgba(255,210,110,0.9)" /></span>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, margin: 0 }}>
                         <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. C'est à toi de gérer les remboursements éventuels, dans le respect de la loi.
                       </p>
                     </div>
 
                     <div>
                       <label style={{ ...S.label, marginBottom: 6 }}>
-                        Message aux acheteurs <span style={{ color: 'rgba(255,255,255,0.20)' }}>(optionnel)</span>
+                        Message aux acheteurs <span style={{ color: 'rgba(255,255,255,0.38)' }}>(optionnel)</span>
                       </label>
                       <textarea
                         value={cancellationMessageDraft}
@@ -1568,13 +1615,13 @@ export default function MesEvenementsPage() {
                           lineHeight: 1.6,
                         }}
                       />
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.30)', marginTop: 5, lineHeight: 1.6 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 5, lineHeight: 1.6 }}>
                         Ce message s'affichera sur le billet de chaque acheteur, accompagné d'un bouton de contact support. ({cancellationMessageDraft.length}/500)
                       </p>
                     </div>
 
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: 0 }}>
-                      L'événement sera marqué <strong style={{ color: 'rgba(220,100,100,0.9)' }}>ANNULÉ</strong> et retiré du site, mais restera accessible aux personnes ayant un billet pour qu'elles voient ce message.
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
+                      L'événement sera marqué <strong style={{ color: '#e05aaa' }}>Annulé</strong> et retiré du site, mais restera accessible aux personnes ayant un billet pour qu'elles voient ce message.
                     </p>
 
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -1585,11 +1632,16 @@ export default function MesEvenementsPage() {
                 ) : (
                   /* Cas : aucune réservation — suppression directe */
                   <>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7, margin: 0 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
                       Cette action est irréversible. L'événement sera retiré de la liste.
                     </p>
+                    {deleteError && (
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#dc7777', lineHeight: 1.6, margin: 0 }}>
+                        {deleteError}
+                      </p>
+                    )}
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setDeleteConfirm(null)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
+                      <button onClick={() => { setDeleteConfirm(null); setDeleteError('') }} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
                       <button onClick={() => deleteEvent(deleteConfirm.id)} style={{ ...S.btnDanger, flex: 1 }}>Supprimer</button>
                     </div>
                   </>
@@ -1613,7 +1665,7 @@ export default function MesEvenementsPage() {
         {showBoostToast && justPublishedEvent && (
           <div style={{ position: 'fixed', bottom: 96, right: 16, zIndex: 50, maxWidth: 280 }}>
             <div
-              style={{ ...S.card, padding: 16, borderColor: 'rgba(224,90,170,0.40)', cursor: 'pointer' }}
+              style={{ ...S.card, background: '#12131c', boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: 16, borderColor: 'rgba(224,90,170,0.40)', cursor: 'pointer' }}
               onClick={() => {
                 clearTimeout(toastTimerRef.current)
                 setShowBoostToast(false)
@@ -1627,11 +1679,11 @@ export default function MesEvenementsPage() {
                   <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/>
                 </svg>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>Booste ton événement</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.93)' }}>Booste ton événement</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 4, lineHeight: 1.6 }}>
                     Apparais dans le Top 3 régional et multiplie ta visibilité.
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#e05aaa', marginTop: 6, letterSpacing: '0.1em' }}>Voir les offres</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#e05aaa', marginTop: 6 }}>Voir les offres</p>
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); clearTimeout(toastTimerRef.current); setShowBoostToast(false); navigate('/evenements') }}
@@ -1657,13 +1709,13 @@ export default function MesEvenementsPage() {
         {showCodesModal && codesTargetEvent && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { setShowCodesModal(false); setGeneratedCodes(null) }} />
-            <div style={{ ...S.card, position: 'relative', padding: 24, width: '100%', maxWidth: 360, maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ ...S.card, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', position: 'relative', padding: 24, width: '100%', maxWidth: 360, maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Codes d'accès</p>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Codes d'accès</p>
                 </div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.7 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
                   Génère des codes uniques pour{' '}
                   <span style={{ color: '#c8a96e' }}>{codesTargetEvent.name}</span>
                 </p>
@@ -1678,7 +1730,7 @@ export default function MesEvenementsPage() {
                       onChange={e => setCodesQty(e.target.value)}
                       placeholder="10"
                     />
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 4 }}>Max 100 codes par génération</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>100 codes maximum par génération</p>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={() => setShowCodesModal(false)} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
@@ -1687,23 +1739,23 @@ export default function MesEvenementsPage() {
                 </>
               ) : (
                 <>
-                  <div style={{ background: 'rgba(78,232,200,0.06)', border: '1px solid rgba(78,232,200,0.18)', borderRadius: 4, padding: '10px 14px' }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#4ee8c8' }}>{generatedCodes.length} codes générés</p>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(78,232,200,0.35)', borderRadius: 12, padding: '10px 14px' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#4ee8c8' }}>{generatedCodes.length} codes générés</p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 240, overflowY: 'auto' }}>
                     {generatedCodes.map((c, i) => (
-                      <div key={i} style={{ ...S.card, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#c8a96e', letterSpacing: '0.25em' }}>{c.code}</span>
-                        <button onClick={() => copyOneCode(c.code, i)} style={{ padding: '4px 10px', borderRadius: 4, cursor: 'pointer', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.20)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>{copiedCodeIdx === i ? '✓ Copié' : 'Copier'}</button>
+                      <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: '#c8a96e', letterSpacing: '0.08em' }}>{c.code}</span>
+                        <button onClick={() => copyOneCode(c.code, i)} style={{ padding: '8px 14px', borderRadius: 10, cursor: 'pointer', background: copiedCodeIdx === i ? '#3ed6b5' : 'rgba(255,255,255,0.08)', border: copiedCodeIdx === i ? 'none' : '1px solid rgba(255,255,255,0.14)', color: copiedCodeIdx === i ? '#04120e' : 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{copiedCodeIdx === i ? 'Copié' : 'Copier'}</button>
                       </div>
                     ))}
                   </div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.7 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
                     Copie et envoie ces codes à tes invités. Chaque code ne peut être utilisé qu'une seule fois.
                   </p>
-                  <button onClick={copyAllCodes} style={{ ...S.btnGold, width: '100%' }}>{codesCopied ? '✓ Tous les codes copiés' : 'Copier tous les codes'}</button>
+                  <button onClick={copyAllCodes} style={{ ...S.btnGold, width: '100%' }}>{codesCopied ? 'Tous les codes copiés' : 'Copier tous les codes'}</button>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => setGeneratedCodes(null)} style={{ ...S.btnGhost, flex: 1 }}>Générer d'autres</button>
+                    <button onClick={() => setGeneratedCodes(null)} style={{ ...S.btnGhost, flex: 1 }}>Générer d'autres codes</button>
                     <button onClick={() => { setShowCodesModal(false); setGeneratedCodes(null) }} style={{ ...S.btnGhost, flex: 1 }}>Fermer</button>
                   </div>
                 </>
@@ -1716,14 +1768,14 @@ export default function MesEvenementsPage() {
         {showGuestlistModal && guestlistTargetEvent && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => setShowGuestlistModal(false)} />
-            <div style={{ ...S.card, position: 'relative', padding: 24, width: '100%', maxWidth: 420, maxHeight: '86vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ ...S.card, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', position: 'relative', padding: 24, width: '100%', maxWidth: 420, maxHeight: '86vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.5"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
-                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Guestlist</p>
+                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Guestlist</p>
                   </div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
                     Invitations pour <span style={{ color: '#4ee8c8' }}>{guestlistTargetEvent.name}</span>
                     {guestlistItems.length > 0 && (
                       <> · {guestlistItems.length} invité{guestlistItems.length > 1 ? 's' : ''} · {guestlistItems.filter(g => g.checkedInAt).length} arrivé{guestlistItems.filter(g => g.checkedInAt).length > 1 ? 's' : ''}</>
@@ -1736,7 +1788,7 @@ export default function MesEvenementsPage() {
               </div>
 
               {/* Add guest form */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, ...S.card, padding: 14, background: 'rgba(78,232,200,0.04)', border: '1px solid rgba(78,232,200,0.14)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 14 }}>
                 <InputField label="Nom de l'invité" value={guestForm.name} onChange={e => setGuestForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex : Aminata Koné" />
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ flex: 1 }}>
@@ -1760,17 +1812,24 @@ export default function MesEvenementsPage() {
                   </div>
                 </div>
                 <InputField label="Note (optionnel)" value={guestForm.note} onChange={e => setGuestForm(f => ({ ...f, note: e.target.value }))} placeholder="Ex : table 4, presse, artiste…" />
-                {guestlistError && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{guestlistError}</p>}
-                <button onClick={handleAddGuest} disabled={guestlistAdding || !guestForm.name.trim()} style={{ ...S.btnTeal, opacity: guestlistAdding || !guestForm.name.trim() ? 0.5 : 1, cursor: guestlistAdding || !guestForm.name.trim() ? 'not-allowed' : 'pointer' }}>
-                  {guestlistAdding ? 'Ajout…' : '+ Ajouter à la guestlist'}
+                {guestlistError && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{guestlistError}</p>}
+                <button onClick={handleAddGuest} disabled={guestlistAdding || !guestForm.name.trim()} style={{ ...S.btnTeal, ...(guestlistAdding || !guestForm.name.trim() ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)', cursor: 'not-allowed', boxShadow: 'none' } : {}) }}>
+                  {guestlistAdding ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                      <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />
+                      Ajout…
+                    </span>
+                  ) : 'Ajouter à la guestlist'}
                 </button>
               </div>
 
               {/* Guest list */}
               {guestlistLoading ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '12px 0' }}>Chargement…</p>
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0' }}>
+                  <span className="lib-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />
+                </div>
               ) : guestlistItems.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.28)', textAlign: 'center', padding: '12px 0', lineHeight: 1.6 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '12px 0', lineHeight: 1.6 }}>
                   Pas encore d'invité — ajoute le premier ci-dessus.
                 </p>
               ) : (
@@ -1779,30 +1838,30 @@ export default function MesEvenementsPage() {
                     const link = `${window.location.origin}/ticket/${g.ticketToken}`
                     const waLink = g.phone ? `https://wa.me/${g.phone.replace(/[^\d+]/g, '').replace(/^\+/, '')}?text=${encodeURIComponent(`Salut ${g.name} ! Voici ton entrée pour ${guestlistTargetEvent.name} : ${link}`)}` : null
                     return (
-                      <div key={g.id} style={{ ...S.card, padding: '10px 12px' }}>
+                      <div key={g.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '10px 12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                           <div style={{ minWidth: 0 }}>
-                            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 15, color: 'rgba(255,255,255,0.92)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</p>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>
+                            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.92)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</p>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>
                               {g.place}{g.note ? ` · ${g.note}` : ''}
                             </p>
                           </div>
-                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, color: g.checkedInAt ? '#22c55e' : 'rgba(255,255,255,0.32)' }}>
-                            {g.checkedInAt ? '✓ Arrivé' : 'En attente'}
+                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', flexShrink: 0, color: g.checkedInAt ? '#22c55e' : 'rgba(255,255,255,0.45)' }}>
+                            {g.checkedInAt ? 'Arrivé' : 'En attente'}
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                          <button onClick={() => copyGuestLink(g)} style={{ flex: 1, padding: '7px', borderRadius: 4, cursor: 'pointer', background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.20)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                            {copiedGuestId === g.id ? '✓ Copié' : 'Copier le lien'}
+                          <button onClick={() => copyGuestLink(g)} style={{ flex: 1, padding: '9px', borderRadius: 10, cursor: 'pointer', background: copiedGuestId === g.id ? '#3ed6b5' : 'rgba(255,255,255,0.08)', border: copiedGuestId === g.id ? 'none' : '1px solid rgba(255,255,255,0.14)', color: copiedGuestId === g.id ? '#04120e' : 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600 }}>
+                            {copiedGuestId === g.id ? 'Copié' : 'Copier le lien'}
                           </button>
                           {waLink && (
-                            <a href={waLink} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: '7px', borderRadius: 4, textAlign: 'center', textDecoration: 'none', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.20)', color: '#22c55e', fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                            <a href={waLink} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: '9px', borderRadius: 10, textAlign: 'center', textDecoration: 'none', background: 'rgba(34,197,94,0.14)', border: '1px solid rgba(34,197,94,0.35)', color: '#22c55e', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600 }}>
                               WhatsApp
                             </a>
                           )}
                           {!g.checkedInAt && (
-                            <button onClick={() => handleRemoveGuest(g.id)} title="Retirer" style={{ padding: '7px 10px', borderRadius: 4, cursor: 'pointer', background: 'rgba(220,50,50,0.06)', border: '1px solid rgba(220,50,50,0.16)', color: 'rgba(220,100,100,0.8)', fontFamily: 'Inter, sans-serif', fontSize: 9 }}>
-                              ✕
+                            <button onClick={() => handleRemoveGuest(g.id)} title="Retirer" style={{ padding: '9px 12px', borderRadius: 10, cursor: 'pointer', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center' }}>
+                              <IconClose size={11} color="#ff9ed2" />
                             </button>
                           )}
                         </div>
@@ -1812,7 +1871,7 @@ export default function MesEvenementsPage() {
                 </div>
               )}
 
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: 0 }}>
                 Chaque invité reçoit un billet réel (gratuit) à ce lien — il le présente à l'entrée, le videur le scanne comme n'importe quel billet.
               </p>
             </div>
@@ -1834,9 +1893,9 @@ export default function MesEvenementsPage() {
       {showCropper && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', background: 'black' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <button onClick={() => setShowCropper(false)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}>Annuler</button>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.1em' }}>Recadrer l'image</p>
-            <button onClick={applyCrop} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#c8a96e', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}>Valider</button>
+            <button onClick={() => setShowCropper(false)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.65)', background: 'none', border: 'none', cursor: 'pointer' }}>Annuler</button>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.93)' }}>Recadrer l'image</p>
+            <button onClick={applyCrop} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, padding: '8px 16px', cursor: 'pointer', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Valider</button>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <Cropper
@@ -1850,7 +1909,7 @@ export default function MesEvenementsPage() {
             />
           </div>
           <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', textAlign: 'center', marginBottom: 8, letterSpacing: '0.1em' }}>Pinch / molette pour zoomer</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', textAlign: 'center', marginBottom: 8 }}>Pince à deux doigts ou molette pour zoomer</p>
             <input
               type="range"
               min={1}
@@ -1870,15 +1929,15 @@ export default function MesEvenementsPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={() => createStep === 0 ? setView('dashboard') : setCreateStep(s => s - 1)}
-            style={{ width: 32, height: 32, borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <div>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.93)', margin: 0 }}>
               {editingEventId ? "Modifier l'événement" : 'Créer un événement'}
             </p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, letterSpacing: '0.02em', color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
               Étape {createStep + 1}/{CREATION_STEPS.length} — {CREATION_STEPS[createStep]}
             </p>
           </div>
@@ -1894,20 +1953,21 @@ export default function MesEvenementsPage() {
         {/* Bannière de modification post-publication — billets déjà vendus */}
         {editingEventId && isLocked && !isReadOnly && (
           <div style={{
-            background: 'linear-gradient(135deg, rgba(200,169,110,0.10), rgba(200,169,110,0.03))',
-            border: '1px solid rgba(200,169,110,0.30)',
-            borderRadius: 8, padding: '14px 16px',
+            background: '#12131c',
+            border: '1px solid rgba(200,169,110,0.35)',
+            borderRadius: 12, padding: '14px 16px',
             display: 'flex', gap: 12, alignItems: 'flex-start',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
               <rect x="4" y="11" width="16" height="10" rx="2"/>
               <path d="M8 11 V7 a4 4 0 0 1 8 0 V11"/>
             </svg>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c8a96e', margin: 0, marginBottom: 4 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c8a96e', margin: 0, marginBottom: 4 }}>
                 {editingBookingCount} billet{editingBookingCount > 1 ? 's' : ''} déjà vendu{editingBookingCount > 1 ? 's' : ''}
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.7 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
                 Pour ne pas léser les acheteurs, certains champs sont verrouillés (date, heures, lieu, prix existants, type d'événement, âge minimum, options, date de publication). Tu peux toujours modifier la description, l'affiche, les artistes et la date de clôture.
               </p>
             </div>
@@ -1917,10 +1977,11 @@ export default function MesEvenementsPage() {
         {/* Bannière event annulé : lecture seule complète */}
         {isReadOnly && (
           <div style={{
-            background: 'rgba(220,50,50,0.07)',
-            border: '1px solid rgba(220,50,50,0.30)',
-            borderRadius: 8, padding: '14px 16px',
+            background: '#12131c',
+            border: '1px solid rgba(224,90,170,0.5)',
+            borderRadius: 12, padding: '14px 16px',
             display: 'flex', gap: 12, alignItems: 'flex-start',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.95)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
               <circle cx="12" cy="12" r="10"/>
@@ -1928,10 +1989,10 @@ export default function MesEvenementsPage() {
               <circle cx="12" cy="16" r="0.6" fill="rgba(220,100,100,0.95)"/>
             </svg>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: 0, marginBottom: 4 }}>
                 Événement annulé
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
                 Cet événement a été annulé. Les modifications sont désactivées. Pour relancer un événement similaire, crée-en un nouveau depuis ton tableau de bord.
               </p>
             </div>
@@ -1948,12 +2009,12 @@ export default function MesEvenementsPage() {
               <div
                 style={{
                   position: 'relative',
-                  borderRadius: 8,
+                  borderRadius: 12,
                   overflow: 'hidden',
                   cursor: 'pointer',
                   aspectRatio: '16/9',
-                  border: imagePreview ? '1px solid rgba(200,169,110,0.35)' : '2px dashed rgba(255,255,255,0.07)',
-                  background: 'rgba(6,8,16,0.4)',
+                  border: imagePreview ? '1px solid rgba(200,169,110,0.35)' : '2px dashed rgba(255,255,255,0.14)',
+                  background: '#0b0c12',
                 }}
                 onClick={() => imageInputRef.current?.click()}
               >
@@ -1965,14 +2026,14 @@ export default function MesEvenementsPage() {
                       <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
                       <polyline points="21 15 16 10 5 21"/>
                     </svg>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.42)' }}>Clique pour ajouter l'affiche</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em' }}>Format recommandé : 1200 × 630 px</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.18)' }}>JPG · PNG · WEBP — max 5 MB</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Clique pour ajouter l'affiche</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Format recommandé : 1200 × 630 px</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.38)' }}>JPG, PNG ou WEBP — 5 Mo maximum</p>
                   </div>
                 )}
               </div>
               <input ref={imageInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" style={{ display: 'none' }} onChange={handleImage} />
-              {errors.image && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
+              {errors.image && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
             </div>
 
             {/* Video preview upload */}
@@ -1982,10 +2043,10 @@ export default function MesEvenementsPage() {
                 style={{
                   position: 'relative',
                   minHeight: 118,
-                  borderRadius: 10,
+                  borderRadius: 12,
                   overflow: 'hidden',
-                  border: videoPreview ? '1px solid rgba(78,232,200,0.32)' : '1px dashed rgba(78,232,200,0.22)',
-                  background: 'linear-gradient(135deg, rgba(78,232,200,0.055), rgba(132,68,255,0.055))',
+                  border: videoPreview ? '1px solid rgba(78,232,200,0.32)' : '1px dashed rgba(255,255,255,0.14)',
+                  background: '#0b0c12',
                 }}
               >
                 {videoPreview ? (
@@ -1994,9 +2055,9 @@ export default function MesEvenementsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                       <div style={{ minWidth: 0 }}>
                         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#4ee8c8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9.5, color: 'rgba(255,255,255,0.36)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
                       </div>
-                      <button onClick={clearEventVideoPreview} style={{ flexShrink: 0, padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(220,100,100,0.28)', background: 'rgba(220,50,50,0.08)', color: 'rgba(255,150,150,0.95)', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                      <button onClick={clearEventVideoPreview} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.55)', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                         Retirer
                       </button>
                     </div>
@@ -2022,14 +2083,14 @@ export default function MesEvenementsPage() {
                       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     </span>
                     <span style={{ minWidth: 0 }}>
-                      <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>Ajouter une courte vidéo</span>
-                      <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: 'rgba(255,255,255,0.42)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · max 30 MB. Idéal : 6–12 secondes en 720p.</span>
+                      <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Ajouter une courte vidéo</span>
+                      <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · 30 Mo maximum. Idéal : 6 à 12 secondes en 720p.</span>
                     </span>
                   </button>
                 )}
               </div>
               <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime" style={{ display: 'none' }} onChange={handleVideo} />
-              {errors.video && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.video}</p>}
+              {errors.video && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.video}</p>}
             </div>
 
             {/* Basic fields */}
@@ -2049,14 +2110,14 @@ export default function MesEvenementsPage() {
                   <InputField label="Heure début" type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))} locked={isLocked || isReadOnly} />
                   <InputField label="Heure fin" type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))} locked={isLocked || isReadOnly} />
                 </div>
-                {errors.timeEnd && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
+                {errors.timeEnd && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
               </div>
 
               <div>
                 <label style={S.label}>Description courte</label>
                 <textarea
                   style={{ ...S.inputBase, resize: 'none', height: 80 }}
-                  placeholder="Décris ta soirée en 2-3 phrases..."
+                  placeholder="Décris ta soirée en deux ou trois phrases…"
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
@@ -2068,8 +2129,8 @@ export default function MesEvenementsPage() {
               <div style={{ ...S.card, padding: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showArtistSection ? 12 : 0 }}>
                   <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.08em' }}>DJs / Artistes</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>DJs / Artistes</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
                   </div>
                   <Toggle value={showArtistSection} onChange={() => setShowArtistSection(v => !v)} />
                 </div>
@@ -2086,7 +2147,7 @@ export default function MesEvenementsPage() {
                         </select>
                         <input
                           style={{ ...S.inputBase, flex: 1 }}
-                          placeholder="Nom..."
+                          placeholder="Nom de l'artiste"
                           value={a.name}
                           onChange={e => setArtists(prev => prev.map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))}
                           onFocus={e => { e.target.style.borderColor = '#4ee8c8'; e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)' }}
@@ -2102,7 +2163,7 @@ export default function MesEvenementsPage() {
                     ))}
                     <button
                       onClick={() => setArtists(prev => [...prev, { name: '', role: 'DJ' }])}
-                      style={{ padding: '8px', fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 4, background: 'transparent', cursor: 'pointer', letterSpacing: '0.1em' }}
+                      style={{ padding: '10px', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(255,255,255,0.08)', cursor: 'pointer' }}
                     >
                       + Ajouter un DJ / artiste
                     </button>
@@ -2137,8 +2198,8 @@ export default function MesEvenementsPage() {
                       textAlign: 'center',
                       cursor: isLocked || isReadOnly ? 'not-allowed' : 'pointer',
                       opacity: (isLocked || isReadOnly) && eventType !== t ? 0.4 : 1,
-                      borderColor: eventType === t ? 'rgba(200,169,110,0.55)' : 'rgba(255,255,255,0.07)',
-                      background: eventType === t ? 'rgba(200,169,110,0.08)' : 'rgba(8,10,20,0.55)',
+                      borderColor: eventType === t ? 'rgba(200,169,110,0.55)' : 'rgba(255,255,255,0.08)',
+                      background: eventType === t ? 'rgba(200,169,110,0.08)' : '#0e0f16',
                     }}
                   >
                     <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'center' }}>
@@ -2148,16 +2209,16 @@ export default function MesEvenementsPage() {
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.42)'} strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                       )}
                     </div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.90)', letterSpacing: '0.1em' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: eventType === t ? '#c8a96e' : 'rgba(255,255,255,0.93)' }}>
                       {t === 'public' ? 'Public' : 'Privé'}
                     </p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
                       {t === 'public' ? 'Visible par tous' : 'Accès par code'}
                     </p>
                   </button>
                 ))}
               </div>
-              {errors.eventType && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.eventType}</p>}
+              {errors.eventType && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.eventType}</p>}
               {eventType === 'private' && (
                 <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <InputField
@@ -2165,9 +2226,9 @@ export default function MesEvenementsPage() {
                     placeholder="Ex: NEON2026"
                     value={form.privateCode}
                     onChange={e => setForm(f => ({ ...f, privateCode: e.target.value.toUpperCase() }))}
-                    style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.25em', textTransform: 'uppercase' }}
+                    style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase' }}
                   />
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', lineHeight: 1.6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
                     Tu pourras aussi générer des codes individuels depuis ton tableau de bord après publication.
                   </p>
                 </div>
@@ -2184,13 +2245,13 @@ export default function MesEvenementsPage() {
                     onClick={() => { setCategory(g); if (g !== 'Autre') setCustomGenre('') }}
                     style={{
                       padding: '10px',
-                      borderRadius: 4,
-                      border: category === g ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.07)',
-                      background: category === g ? 'rgba(200,169,110,0.08)' : 'transparent',
+                      borderRadius: 10,
+                      border: category === g ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                      background: category === g ? 'rgba(200,169,110,0.10)' : '#0e0f16',
                       fontFamily: 'Inter, sans-serif',
-                      fontSize: 10,
-                      letterSpacing: '0.1em',
-                      color: category === g ? '#c8a96e' : 'rgba(255,255,255,0.5)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: category === g ? '#c8a96e' : 'rgba(255,255,255,0.6)',
                       cursor: 'pointer',
                       textAlign: 'center',
                     }}
@@ -2227,11 +2288,11 @@ export default function MesEvenementsPage() {
                 aux bons profils. Ids partagés avec le profil client. */}
             <div>
               <label style={{ ...S.label, marginBottom: 4 }}>Ciblage & recommandations</label>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, margin: '0 0 12px' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 12px' }}>
                 Optionnel mais recommandé : ta soirée sera proposée en priorité aux clients dont les goûts correspondent.
               </p>
 
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 7px' }}>Type de soirée</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Type de soirée</p>
               <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
                 {EVENT_TYPES.map(t => (
                   <button key={t.id} type="button" onClick={() => setPartyType(cur => cur === t.id ? '' : t.id)}
@@ -2247,7 +2308,7 @@ export default function MesEvenementsPage() {
                 ))}
               </div>
 
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 7px' }}>Styles musicaux joués</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Styles musicaux joués</p>
               <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
                 {MUSIC_STYLES.map(s => (
                   <button key={s.id} type="button" onClick={() => setMusicStyles(cur => cur.includes(s.id) ? cur.filter(x => x !== s.id) : [...cur, s.id])}
@@ -2263,7 +2324,7 @@ export default function MesEvenementsPage() {
                 ))}
               </div>
 
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 7px' }}>Ambiance (3 max)</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Ambiance (3 max)</p>
               <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
                 {AMBIANCES.map(a => {
                   const active = ambiances.includes(a.id)
@@ -2305,14 +2366,15 @@ export default function MesEvenementsPage() {
                     title={(isLocked || isReadOnly) ? "Verrouillé — billets déjà vendus" : undefined}
                     onClick={() => setForm(f => ({ ...f, minAge: value }))}
                     style={{
-                      padding: '8px 18px',
-                      borderRadius: 4,
-                      border: form.minAge === value ? '1px solid #4ee8c8' : '1px solid rgba(255,255,255,0.10)',
-                      background: form.minAge === value ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.6)',
-                      color: form.minAge === value ? '#4ee8c8' : 'rgba(255,255,255,0.4)',
+                      padding: '9px 18px',
+                      borderRadius: 10,
+                      border: form.minAge === value ? '1px solid rgba(78,232,200,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                      background: form.minAge === value ? 'rgba(78,232,200,0.12)' : '#0e0f16',
+                      color: form.minAge === value ? '#4ee8c8' : 'rgba(255,255,255,0.6)',
                       fontFamily: 'Inter, sans-serif',
-                      fontSize: 11,
-                      letterSpacing: '0.15em',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
                       cursor: (isLocked || isReadOnly) ? 'not-allowed' : 'pointer',
                       opacity: (isLocked || isReadOnly) && form.minAge !== value ? 0.4 : 1,
                     }}
@@ -2346,9 +2408,8 @@ export default function MesEvenementsPage() {
                 />
                 <span style={{
                   fontFamily: 'Inter, sans-serif',
-                  fontSize: 10,
-                  letterSpacing: '0.12em',
-                  color: 'rgba(255,255,255,0.25)',
+                  fontSize: 12,
+                  color: 'rgba(255,255,255,0.5)',
                 }}>
                   {form.minAge === 0 ? 'Tout public' : `${form.minAge} ans minimum`}
                 </span>
@@ -2363,8 +2424,8 @@ export default function MesEvenementsPage() {
         {createStep === 1 && (
           <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Tes types de places</p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Configure chaque type de place que tu veux proposer.</p>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: '0 0 4px' }}>Tes types de places</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Configure chaque type de place que tu veux proposer.</p>
             </div>
 
             {/* Devise explicite : l'organisateur voit clairement dans quelle devise
@@ -2373,9 +2434,13 @@ export default function MesEvenementsPage() {
               const cur = orgCurrency || regionToCurrency(form.region)
               const isXof = cur === 'XOF'
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: isXof ? 'rgba(78,232,200,0.06)' : 'rgba(200,169,110,0.06)', border: `1px solid ${isXof ? 'rgba(78,232,200,0.22)' : 'rgba(200,169,110,0.22)'}` }}>
-                  <span style={{ fontSize: 16, lineHeight: 1 }}>{isXof ? '📱' : '💳'}</span>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${isXof ? '#4ee8c8' : '#c8a96e'}` }}>
+                  {isXof ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  )}
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.4 }}>
                     Tu fixes tes prix en <strong style={{ color: isXof ? '#4ee8c8' : '#c8a96e' }}>{currencySymbol(cur)}</strong> — paiement par {payRailLabel(cur)}.
                   </p>
                 </div>
@@ -2395,9 +2460,9 @@ export default function MesEvenementsPage() {
               <div key={i} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, ...(placeHasSales ? { borderColor: 'rgba(200,169,110,0.25)' } : {}) }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c8a96e' }}>Place {i + 1}</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c8a96e' }}>Place {i + 1}</p>
                     {placeHasSales && (
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.30)', borderRadius: 3, padding: '1px 6px' }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#c8a96e', background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 8, padding: '4px 10px' }}>
                         {placeSoldCount} vendu{placeSoldCount > 1 ? 's' : ''}
                       </span>
                     )}
@@ -2411,11 +2476,12 @@ export default function MesEvenementsPage() {
                       disabled={placeDeleteLocked}
                       title={placeDeleteLocked ? "Impossible — cette place a déjà été vendue" : undefined}
                       style={{
-                        background: 'none', border: 'none',
+                        padding: '8px 14px', borderRadius: 10,
+                        background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)',
                         cursor: placeDeleteLocked ? 'not-allowed' : 'pointer',
-                        opacity: placeDeleteLocked ? 0.35 : 1,
-                        fontFamily: 'Inter, sans-serif', fontSize: 9,
-                        color: 'rgba(220,100,100,0.9)', letterSpacing: '0.1em',
+                        opacity: placeDeleteLocked ? 0.4 : 1,
+                        fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
+                        color: '#ff9ed2',
                       }}>Supprimer</button>
                   )}
                 </div>
@@ -2461,8 +2527,8 @@ export default function MesEvenementsPage() {
                       locked={isReadOnly}
                     />
                     {placeHasSales && (
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(200,169,110,0.7)', marginTop: 4, letterSpacing: '0.05em' }}>
-                        Min : {placeSoldCount} (déjà vendu{placeSoldCount > 1 ? 's' : ''})
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(200,169,110,0.85)', marginTop: 4 }}>
+                        Minimum : {placeSoldCount} (déjà vendu{placeSoldCount > 1 ? 's' : ''})
                       </p>
                     )}
                   </div>
@@ -2477,7 +2543,7 @@ export default function MesEvenementsPage() {
                       locked={placeHasSales || isReadOnly}
                     />
                     {place.groupType === 'group' && (
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(78,232,200,0.6)', letterSpacing: '0.08em', marginTop: 4 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(78,232,200,0.75)', marginTop: 4 }}>
                         Fixé à 1 réservation par compte (groupe)
                       </p>
                     )}
@@ -2485,8 +2551,8 @@ export default function MesEvenementsPage() {
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.70)' }}>Place de groupe</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Place de groupe</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
                   </div>
                   <Toggle
                     value={place.groupType === 'group'}
@@ -2508,14 +2574,14 @@ export default function MesEvenementsPage() {
                       <InputField label="Min personnes" type="number" placeholder="Ex: 8" value={place.groupMin || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMin: e.target.value } : p))} locked={placeHasSales || isReadOnly} />
                       <InputField label="Max personnes" type="number" placeholder="Ex: 12" value={place.groupMax || ''} onChange={e => setPlaces(places.map((p, j) => j === i ? { ...p, groupMax: e.target.value } : p))} locked={placeHasSales || isReadOnly} />
                     </div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Validé dès le min atteint · accepté jusqu'au max avec marge</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>La réservation est validée dès le minimum atteint, jusqu'au maximum indiqué.</p>
                   </div>
                 )}
 
                 {/* Photos de la place — ce que le client verra via « Voir à quoi
                     ressemble ma place » sur la fiche de l'événement */}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
-                  <p style={{ ...S.label }}>Photos de cette place <span style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: 0 }}>(optionnel)</span></p>
+                  <p style={{ ...S.label }}>Photos de cette place <span style={{ color: 'rgba(255,255,255,0.38)', letterSpacing: 0 }}>(optionnel)</span></p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                     {(place.photos || []).map((ph, k) => (
                       <div key={k} style={{ position: 'relative', width: 66, height: 66, borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
@@ -2532,26 +2598,26 @@ export default function MesEvenementsPage() {
                       <label style={{ width: 66, height: 66, borderRadius: 8, border: '1px dashed rgba(200,169,110,0.4)', background: 'rgba(200,169,110,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', color: '#c8a96e', flexShrink: 0 }}>
                         <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => { handlePlacePhotos(i, e.target.files); e.target.value = '' }} />
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 8.5, fontWeight: 700 }}>Ajouter</span>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700 }}>Ajouter</span>
                       </label>
                     )}
                   </div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 8, lineHeight: 1.4 }}>
-                    Montre le carré, la table, la vue… Le client les verra avant de réserver. Max 6.
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
+                    Montre le carré, la table, la vue… Le client les verra avant de réserver. 6 photos maximum.
                   </p>
                 </div>
 
                 {/* Options incluses dans ce billet — liées au menu de l'événement */}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
-                  <p style={{ ...S.label }}>Options incluses dans ce billet <span style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: 0 }}>(optionnel)</span></p>
+                  <p style={{ ...S.label }}>Options incluses dans ce billet <span style={{ color: 'rgba(255,255,255,0.38)', letterSpacing: 0 }}>(optionnel)</span></p>
                   {(() => {
                     const menuChoices = menuItems.filter(m => m.name.trim() && m.price)
                     const incs = Array.isArray(place.included) ? place.included : []
                     const setInc = (updater) => setPlaces(places.map((p, j) => j === i ? { ...p, included: updater(Array.isArray(p.included) ? p.included : []) } : p))
                     if (!menuChoices.length && !incs.length) {
                       return (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 8, lineHeight: 1.5 }}>
-                          Ajoute d'abord des articles au <span style={{ color: '#c8a96e', fontWeight: 700 }}>menu de l'événement</span> (étape Options → Précommandes / Menu). Tu pourras ensuite inclure une boisson, un dîner ou une bouteille directement dans ce billet — ex. « Entrée + boisson ».
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
+                          Ajoute d'abord des articles au <span style={{ color: '#c8a96e', fontWeight: 700 }}>menu de l'événement</span> (étape Options avancées → Précommandes). Tu pourras ensuite inclure une boisson, un dîner ou une bouteille directement dans ce billet — ex. « Entrée + boisson ».
                         </p>
                       )
                     }
@@ -2560,12 +2626,12 @@ export default function MesEvenementsPage() {
                         {incs.map((inc, k) => {
                           const stillInMenu = menuChoices.some(m => m.name.trim() === inc.name)
                           return (
-                            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(78,232,200,0.22)' : 'rgba(220,100,100,0.35)'}`, background: 'rgba(78,232,200,0.04)' }}>
+                            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(78,232,200,0.22)' : 'rgba(220,100,100,0.35)'}`, background: 'rgba(255,255,255,0.04)' }}>
                               <select
                                 value={inc.name}
                                 disabled={isReadOnly}
                                 onChange={e => setInc(list => list.map((x, m) => m === k ? { ...x, name: e.target.value } : x))}
-                                style={{ flex: 1, minWidth: 0, background: 'rgba(8,10,20,0.85)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 8px', outline: 'none' }}
+                                style={{ flex: 1, minWidth: 0, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 8px', outline: 'none' }}
                               >
                                 {!stillInMenu && <option value={inc.name}>{inc.name} (retiré du menu)</option>}
                                 {menuChoices.map(m => (
@@ -2577,13 +2643,13 @@ export default function MesEvenementsPage() {
                                 disabled={isReadOnly}
                                 onChange={e => setInc(list => list.map((x, m) => m === k ? { ...x, qty: Math.max(1, parseInt(e.target.value) || 1) } : x))}
                                 title="Quantité incluse"
-                                style={{ width: 52, background: 'rgba(8,10,20,0.85)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 6px', textAlign: 'center', outline: 'none' }}
+                                style={{ width: 52, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 6px', textAlign: 'center', outline: 'none' }}
                               />
                               <span
                                 title="Inclus gratuitement dans le billet"
-                                style={{ flexShrink: 0, padding: '7px 9px', borderRadius: 999, fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.04em', border: '1px solid rgba(78,232,200,0.4)', background: 'rgba(78,232,200,0.10)', color: '#4ee8c8' }}
+                                style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(78,232,200,0.35)', background: 'rgba(78,232,200,0.14)', color: '#4ee8c8' }}
                               >
-                                GRATUIT
+                                Offert
                               </span>
                               {!isReadOnly && (
                                 <button
@@ -2598,12 +2664,12 @@ export default function MesEvenementsPage() {
                         {!isReadOnly && menuChoices.length > 0 && (
                           <button
                             onClick={() => setInc(list => [...list, { name: menuChoices[0].name.trim(), qty: 1 }])}
-                            style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 9, background: 'rgba(78,232,200,0.07)', border: '1px dashed rgba(78,232,200,0.35)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}
+                            style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', color: '#4ee8c8', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                           >
                             + Inclure un article du menu
                           </button>
                         )}
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: 0 }}>
                           Ex. « Entrée + boisson », « VIP dîner »… Le client voit ce qui est inclus avant de réserver, et le staff coche chaque option servie au scan (aucun dépassement possible).
                         </p>
                       </div>
@@ -2624,7 +2690,7 @@ export default function MesEvenementsPage() {
             >
               + Ajouter un type de place
             </button>
-            <button onClick={() => validateAndNext(1)} style={S.btnGold} disabled={isReadOnly}>
+            <button onClick={() => validateAndNext(1)} style={{ ...S.btnGold, ...(isReadOnly ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'none', cursor: 'not-allowed' } : {}) }} disabled={isReadOnly}>
               Suivant
             </button>
           </div>
@@ -2634,8 +2700,8 @@ export default function MesEvenementsPage() {
         {createStep === 2 && (
           <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>Lieu & Infos pratiques</p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)' }}>Indique où se déroulera ton événement.</p>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: '0 0 4px' }}>Lieu & infos pratiques</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Indique où se déroulera ton événement.</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
@@ -2656,7 +2722,7 @@ export default function MesEvenementsPage() {
               {/* Sélecteur de région */}
               <div>
                 <label style={{ ...S.label, marginBottom: 4 }}>Région *</label>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em', marginBottom: 10 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>
                   Dans quelle région se déroule l'événement ?
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -2682,10 +2748,11 @@ export default function MesEvenementsPage() {
                           padding: '8px 14px',
                           borderRadius: 999,
                           border: selected ? '1px solid rgba(78,232,200,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                          background: selected ? 'rgba(78,232,200,0.10)' : 'rgba(6,8,16,0.5)',
-                          color: selected ? '#4ee8c8' : 'rgba(255,255,255,0.45)',
+                          background: selected ? 'rgba(78,232,200,0.10)' : '#0e0f16',
+                          color: selected ? '#4ee8c8' : 'rgba(255,255,255,0.55)',
                           fontFamily: 'Inter, sans-serif',
-                          fontSize: 11,
+                          fontSize: 12,
+                          fontWeight: 600,
                           cursor: (isLocked || isReadOnly) ? 'not-allowed' : 'pointer',
                           opacity: (isLocked || isReadOnly) && !selected ? 0.4 : 1,
                           transition: 'all 0.15s',
@@ -2709,7 +2776,7 @@ export default function MesEvenementsPage() {
                     )
                   })}
                 </div>
-                {errors.region && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
+                {errors.region && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
               </div>
             </div>
             <div style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.18)' }}>
@@ -2717,8 +2784,8 @@ export default function MesEvenementsPage() {
                 <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
               </svg>
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#c8a96e', letterSpacing: '0.05em' }}>Tu cherches une salle ou des prestataires ?</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>DJs, artistes, sono, lumières — tout est disponible dans l'onglet Services.</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#c8a96e' }}>Tu cherches une salle ou des prestataires ?</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>DJs, artistes, sono, lumières — tout est disponible dans l'onglet Services.</p>
               </div>
             </div>
             <button onClick={() => validateAndNext(2)} style={S.btnGold}>Suivant</button>
@@ -2728,18 +2795,18 @@ export default function MesEvenementsPage() {
         {/* ── Step 3: Options avancées ── */}
         {createStep === 3 && (
           <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Options avancées</p>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Options avancées</p>
             {/* QR Code — toujours actif, non modifiable */}
             <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(78,232,200,0.15)' }}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>QR Code billet</p>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l'entrée — obligatoire</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>QR code billet</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l'entrée — obligatoire</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: '#4ee8c8', letterSpacing: '0.15em' }}>INCLUS</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: '#4ee8c8', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Inclus</span>
               </div>
             </div>
             {[
@@ -2750,10 +2817,10 @@ export default function MesEvenementsPage() {
               return (
               <div key={opt.key} style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(optLocked ? { borderColor: 'rgba(200,169,110,0.18)' } : {}) }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>{opt.label}</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginTop: 4, lineHeight: 1.6 }}>{opt.desc}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>{opt.label}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>{opt.desc}</p>
                   {optLocked && (
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(200,169,110,0.7)', marginTop: 4 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(200,169,110,0.85)', marginTop: 4 }}>
                       {opt.key === 'preorder' && hasPreorders ? 'Verrouillé — des précommandes existent' : 'Verrouillé — billets déjà vendus'}
                     </p>
                   )}
@@ -2766,11 +2833,11 @@ export default function MesEvenementsPage() {
                 <div style={{ borderTop: '1px solid rgba(200,169,110,0.15)', paddingTop: 16 }}>
                   <p style={{ ...S.label, color: '#c8a96e', marginBottom: 4 }}>Définir ta carte / menu</p>
                   {hasPreorders ? (
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(200,169,110,0.8)', marginBottom: 12 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(200,169,110,0.85)', marginBottom: 12 }}>
                       Menu verrouillé — des clients ont déjà passé des précommandes.
                     </p>
                   ) : (
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.42)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
                   )}
                   {menuItems.map((item, i) => (
                     <MenuItemEditor
@@ -2794,23 +2861,23 @@ export default function MesEvenementsPage() {
             )}
             {options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0 && (
               <div style={{
-                padding: '10px 14px',
-                background: 'rgba(220,50,50,0.07)',
-                border: '1px solid rgba(220,50,50,0.25)',
-                borderRadius: 6,
+                padding: '12px 14px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(224,90,170,0.5)',
+                borderRadius: 12,
                 fontFamily: 'Inter, sans-serif',
-                fontSize: 10,
-                color: 'rgba(220,100,100,0.9)',
-                lineHeight: 1.7,
+                fontSize: 12,
+                color: 'rgba(255,255,255,0.75)',
+                lineHeight: 1.6,
               }}>
                 La précommande est activée mais aucun article n'a été renseigné. Ajoute au moins un article avec un nom et un prix, ou désactive la précommande.
               </div>
             )}
             {/* ── Publication & clôture ── */}
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', margin: 0 }}>Planification</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Planification</p>
               <div>
-                <label style={S.label}>Date de publication <span style={{ color: 'rgba(255,255,255,0.20)' }}>(optionnel — vide = maintenant)</span></label>
+                <label style={S.label}>Date de publication <span style={{ color: 'rgba(255,255,255,0.38)' }}>(optionnel — vide = maintenant)</span></label>
                 <input
                   type="datetime-local"
                   value={publishAt}
@@ -2818,12 +2885,12 @@ export default function MesEvenementsPage() {
                   disabled={isLocked || isReadOnly}
                   style={{ ...S.inputBase, colorScheme: 'dark', ...(isLocked || isReadOnly ? { opacity: 0.55, cursor: 'not-allowed' } : {}) }}
                 />
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: isLocked ? 'rgba(200,169,110,0.7)' : 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
-                  {isLocked ? 'Verrouillé — l\'événement est déjà publié.' : 'L\'événement apparaîtra sur le site à cette date/heure. Laisse vide pour publier immédiatement.'}
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: isLocked ? 'rgba(200,169,110,0.85)' : 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
+                  {isLocked ? 'Verrouillé — l\'événement est déjà publié.' : 'L\'événement apparaîtra sur le site à cette date et heure. Laisse vide pour publier immédiatement.'}
                 </p>
               </div>
               <div>
-                <label style={S.label}>Date de clôture des réservations <span style={{ color: 'rgba(255,255,255,0.20)' }}>(optionnel)</span></label>
+                <label style={S.label}>Date de clôture des réservations <span style={{ color: 'rgba(255,255,255,0.38)' }}>(optionnel)</span></label>
                 <input
                   type="datetime-local"
                   value={closingDate}
@@ -2831,7 +2898,7 @@ export default function MesEvenementsPage() {
                   min={form.date || undefined}
                   style={{ ...S.inputBase, colorScheme: 'dark' }}
                 />
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 5, lineHeight: 1.6 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
                   Laisse vide pour fermer automatiquement à la date de l'événement.
                 </p>
               </div>
@@ -2844,8 +2911,9 @@ export default function MesEvenementsPage() {
               }}
               style={{
                 ...S.btnGold,
-                opacity: (options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0) ? 0.4 : 1,
-                cursor: (options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0) ? 'not-allowed' : 'pointer',
+                ...((options.preorder && menuItems.filter(i => i.name.trim() && i.price).length === 0)
+                  ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'none', cursor: 'not-allowed' }
+                  : {}),
               }}
             >
               Suivant
@@ -2856,7 +2924,7 @@ export default function MesEvenementsPage() {
         {/* ── Step 4: Récapitulatif & Publier ── */}
         {createStep === 4 && (
           <div className="lib-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Récapitulatif & Publication</p>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Récapitulatif & publication</p>
 
             {imagePreview && (
               <div style={{ borderRadius: 8, overflow: 'hidden', aspectRatio: '16/9' }}>
@@ -2879,26 +2947,29 @@ export default function MesEvenementsPage() {
                 ].filter(Boolean).join(', ') || 'Aucun tag (recommandations limitées)' },
                 { label: 'Types de places', val: `${places.length} type(s)` },
                 { label: 'Lieu', val: venue.name ? `${venue.name}, ${venue.city}` : venue.city ? venue.city : '—' },
-                { label: 'Région', val: (() => { const r = regions.find(x => x.name === form.region); return r ? `${r.flag} ${r.name}` : form.region || '—' })() },
+                { label: 'Région', val: (() => { const r = regions.find(x => x.name === form.region); return r ? r.name : form.region || '—' })() },
                 { label: 'Playlist interactive', val: options.playlist ? 'Activée' : 'Désactivée' },
                 { label: 'Précommande conso', val: options.preorder ? `Activée (${menuItems.filter(i => i.name.trim()).length} articles)` : 'Désactivée' },
                 { label: 'QR Code billet', val: 'Activé — obligatoire' },
               ].map((r) => (
                 <div key={r.label} style={{ ...S.card, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', flexShrink: 0 }}>{r.label}</span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', textAlign: 'right' }}>{r.val}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>{r.label}</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.92)', textAlign: 'right' }}>{r.val}</span>
                 </div>
               ))}
             </div>
 
             <button
-              style={{ ...S.btnGold, opacity: publishing ? 0.6 : 1, cursor: publishing ? 'wait' : 'pointer' }}
+              style={{ ...S.btnGold, cursor: publishing ? 'wait' : 'pointer' }}
               onClick={handlePublish}
               disabled={publishing}
             >
-              {publishing
-                ? (videoUploadPct != null ? `Envoi de la vidéo… ${videoUploadPct}%` : 'Publication en cours…')
-                : editingEventId ? 'Enregistrer les modifications' : 'Publier mon événement'}
+              {publishing ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                  <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block' }} />
+                  {videoUploadPct != null ? `Envoi de la vidéo… ${videoUploadPct}%` : 'Publication…'}
+                </span>
+              ) : editingEventId ? 'Enregistrer les modifications' : 'Publier mon événement'}
             </button>
           </div>
         )}
@@ -2941,7 +3012,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
     <div style={{ ...S.card, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.42)' }}>Article {index + 1}</p>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>Article {index + 1}</p>
         {onRemove && (
           <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 2 }}>
             <IconClose size={12} color="rgba(220,100,100,0.9)" />
@@ -2964,7 +3035,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
         ) : (
           <input
             style={{ ...S.inputBase, width: 56, textAlign: 'center', flexShrink: 0, padding: '8px 6px' }}
-            placeholder="icon"
+            placeholder="Icône"
             value={item.emoji}
             onChange={e => u('emoji', e.target.value)}
             maxLength={4}
@@ -2974,9 +3045,9 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
         )}
         <button
           onClick={() => photoRef.current?.click()}
-          style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '6px 10px', background: 'transparent', cursor: 'pointer', letterSpacing: '0.05em', flexShrink: 0 }}
+          style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, padding: '8px 14px', background: 'rgba(255,255,255,0.08)', cursor: 'pointer', flexShrink: 0 }}
         >
-          {item.imageUrl ? 'Changer photo' : 'Ajouter photo'}
+          {item.imageUrl ? 'Changer la photo' : 'Ajouter une photo'}
         </button>
         <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -3014,7 +3085,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
 
       {/* Description toggle */}
       {!showDesc ? (
-        <button onClick={() => setShowDesc(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)', textAlign: 'left', letterSpacing: '0.1em' }}>
+        <button onClick={() => setShowDesc(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.65)', textAlign: 'left' }}>
           + Ajouter une description
         </button>
       ) : (
@@ -3035,8 +3106,8 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
       {/* Show toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <div>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.05em' }}>Option Show</p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Option show</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
         </div>
         <Toggle value={item.hasShow} onChange={() => u('hasShow', !item.hasShow)} />
       </div>
@@ -3044,7 +3115,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
       {/* Show options editor */}
       {item.hasShow && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Définis les shows disponibles pour cet article :</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Définis les shows disponibles pour cet article :</p>
           {(item.showOptions || []).map(opt => (
             <div key={opt.id} style={{ ...S.card, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -3064,7 +3135,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
                 </button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>Nécessite des infos client</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Nécessite des informations client</p>
                 <Toggle value={opt.requiresInfo} onChange={() => updateShowOption(opt.id, 'requiresInfo', !opt.requiresInfo)} />
               </div>
               {opt.requiresInfo && (
@@ -3080,7 +3151,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
               {/* Exclusion par place pour CE show spécifiquement */}
               {placeTypes.length > 1 && (
                 <div style={{ paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.22)', marginBottom: 6 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>
                     Masquer ce show pour certaines places :
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -3096,12 +3167,13 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
                           }}
                           style={{
                             fontFamily: 'Inter, sans-serif',
-                            fontSize: 9,
-                            padding: '3px 10px',
-                            borderRadius: 3,
-                            border: isExcl ? '1px solid rgba(220,50,50,0.30)' : '1px solid rgba(255,255,255,0.07)',
-                            background: isExcl ? 'rgba(220,50,50,0.08)' : 'rgba(6,8,16,0.6)',
-                            color: isExcl ? 'rgba(220,100,100,0.9)' : 'rgba(255,255,255,0.38)',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: '5px 10px',
+                            borderRadius: 8,
+                            border: isExcl ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(255,255,255,0.10)',
+                            background: isExcl ? 'rgba(224,90,170,0.14)' : '#0b0c12',
+                            color: isExcl ? '#ff9ed2' : 'rgba(255,255,255,0.55)',
                             cursor: 'pointer',
                           }}
                         >
@@ -3121,7 +3193,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
           ))}
           <button
             onClick={addShowOption}
-            style={{ padding: '7px', fontFamily: 'Inter, sans-serif', fontSize: 9, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)', borderRadius: 4, background: 'transparent', cursor: 'pointer', letterSpacing: '0.1em' }}
+            style={{ padding: '8px 14px', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#c8a96e', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 10, background: 'rgba(200,169,110,0.10)', cursor: 'pointer' }}
           >
             + Ajouter un show
           </button>
@@ -3131,7 +3203,7 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
       {/* Place exclusion */}
       {placeTypes.length > 1 && (
         <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.28)', marginBottom: 8 }}>Exclure de certaines places :</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>Exclure de certaines places :</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {placeTypes.map(pt => {
               const isExcluded = (item.excludedPlaces || []).includes(pt)
@@ -3144,12 +3216,13 @@ function MenuItemEditor({ item, index, onUpdate, onRemove, placeTypes = [], curr
                   }}
                   style={{
                     fontFamily: 'Inter, sans-serif',
-                    fontSize: 9,
-                    padding: '3px 10px',
-                    borderRadius: 3,
-                    border: isExcluded ? '1px solid rgba(220,50,50,0.30)' : '1px solid rgba(255,255,255,0.07)',
-                    background: isExcluded ? 'rgba(220,50,50,0.08)' : 'rgba(6,8,16,0.6)',
-                    color: isExcluded ? 'rgba(220,100,100,0.9)' : 'rgba(255,255,255,0.42)',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '5px 10px',
+                    borderRadius: 8,
+                    border: isExcluded ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(255,255,255,0.10)',
+                    background: isExcluded ? 'rgba(224,90,170,0.14)' : '#0b0c12',
+                    color: isExcluded ? '#ff9ed2' : 'rgba(255,255,255,0.55)',
                     cursor: 'pointer',
                   }}
                 >
@@ -3208,43 +3281,44 @@ function OrganizerAnalytics({ events, tickets, loading }) {
     return { event: e, sold: evTix.length, cap, rev, fill: cap > 0 ? Math.round(evTix.length / cap * 100) : 0 }
   }).filter(x => x.sold > 0).sort((a, b) => b.rev - a.rev).slice(0, 6)
 
-  const card = { background: 'rgba(8,10,20,0.55)', backdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12 }
+  const card = { background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }
   const inter = 'Inter, sans-serif'
 
   if (loading && totalTickets === 0) {
     return (
       <div style={{ ...card, padding: 20, textAlign: 'center' }}>
-        <p style={{ fontFamily: inter, fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.4)' }}>Chargement des ventes…</p>
+        <span className="lib-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-3px', marginRight: 8 }} />
+        <span style={{ fontFamily: inter, fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.55)' }}>Chargement des ventes…</span>
       </div>
     )
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Statistiques de ventes</p>
+      <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Statistiques de ventes</p>
 
       {totalTickets === 0 ? (
         <div style={{ ...card, padding: '28px 20px', textAlign: 'center' }}>
-          <p style={{ fontFamily: inter, fontSize: 18, fontWeight: 500, color: 'rgba(255,255,255,0.6)', margin: '0 0 6px' }}>Aucune vente pour l'instant</p>
-          <p style={{ fontFamily: inter, fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.32)', margin: 0 }}>Tes ventes apparaîtront ici dès le premier billet.</p>
+          <p style={{ fontFamily: inter, fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: '0 0 6px' }}>Aucune vente pour l'instant</p>
+          <p style={{ fontFamily: inter, fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Tes ventes apparaîtront ici dès le premier billet.</p>
         </div>
       ) : (<>
         {/* KPI cards */}
         <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ ...card, flex: 1.4, padding: '16px 18px', background: 'linear-gradient(135deg, rgba(200,169,110,0.14), rgba(200,169,110,0.03))', border: '1px solid rgba(200,169,110,0.30)' }}>
-            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', margin: '0 0 6px' }}>Revenus billetterie</p>
+          <div style={{ ...card, flex: 1.4, padding: '16px 18px', borderLeft: '3px solid #c8a96e' }}>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.85)', margin: '0 0 6px' }}>Revenus billetterie</p>
             <p style={{ fontFamily: inter, fontSize: statsCur === 'XOF' ? 24 : 30, fontWeight: 600, color: '#c8a96e', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{fmtMoney(grossRevenue, statsCur)}</p>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>100% pour toi — frais de service payés par l'acheteur</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0' }}>100 % pour toi — frais de service payés par l'acheteur</p>
           </div>
           <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
-            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Billets</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px' }}>Billets</p>
             <p style={{ fontFamily: inter, fontSize: 28, fontWeight: 600, color: '#4ee8c8', margin: 0, lineHeight: 1 }}>{totalTickets}</p>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>{paidCount} payé{paidCount > 1 ? 's' : ''}</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0' }}>{paidCount} payé{paidCount > 1 ? 's' : ''}</p>
           </div>
           <div style={{ ...card, flex: 1, padding: '16px 14px' }}>
-            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Remplissage</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px' }}>Remplissage</p>
             <p style={{ fontFamily: inter, fontSize: 28, fontWeight: 600, color: '#fff', margin: 0, lineHeight: 1 }}>{fillPct}%</p>
-            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0' }}>{totalTickets}/{totalCap} places</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0' }}>{totalTickets}/{totalCap} places</p>
           </div>
         </div>
 
@@ -3252,7 +3326,7 @@ function OrganizerAnalytics({ events, tickets, loading }) {
             une redite des KPI Revenus / Billets / Remplissage ci-dessus). */}
         {perEvent.length > 1 && (
           <div style={{ ...card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontFamily: inter, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>Par événement</p>
+            <p style={{ fontFamily: inter, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Par événement</p>
             {perEvent.map(({ event, sold, cap, rev, fill }) => (
               <div key={event.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, gap: 8 }}>
@@ -3261,7 +3335,7 @@ function OrganizerAnalytics({ events, tickets, loading }) {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${fill}%`, borderRadius: 99, background: fill >= 80 ? 'linear-gradient(90deg,#c8a96e,#e05aaa)' : 'linear-gradient(90deg,#4ee8c8,#c8a96e)' }} />
+                    <div style={{ height: '100%', width: `${fill}%`, borderRadius: 99, background: fill >= 80 ? '#c8a96e' : '#4ee8c8' }} />
                   </div>
                   <span style={{ fontFamily: inter, fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{sold}/{cap}</span>
                 </div>
@@ -3323,7 +3397,7 @@ function BookingsPanel({ event, onClose }) {
   })
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'rgba(4,4,11,0.98)', backdropFilter: 'blur(20px)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: '#05060a' }}>
       {/* Header */}
       <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12 }}>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', padding: 4, display: 'flex', alignItems: 'center' }}>
@@ -3339,11 +3413,11 @@ function BookingsPanel({ event, onClose }) {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 20 }}>
         {eventBookings.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.28)' }}>
+          <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.45)' }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
               <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400 }}>Aucune réservation pour l'instant.</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>Aucune réservation pour l'instant.</p>
           </div>
         ) : (
           <>
@@ -3397,7 +3471,7 @@ function BookingsPanel({ event, onClose }) {
                 <div key={b.id || idx} style={{ ...S.card, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.12em' }}>{b.ticketCode}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.90)', letterSpacing: '0.08em' }}>{b.ticketCode}</p>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{b.place} · {fmtMoney(b.placePrice, eventCurrency(event))}</p>
                       {b.userName && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{b.userName}</p>}
                     </div>
@@ -3468,7 +3542,7 @@ function StatsPanel({ event, onClose }) {
   const preorderRevenue = Object.values(itemTotals).reduce((s, i) => s + i.revenue, 0)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'rgba(4,4,11,0.98)', backdropFilter: 'blur(20px)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: '#05060a' }}>
       {/* Header */}
       <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12 }}>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', padding: 4, display: 'flex', alignItems: 'center' }}>
@@ -3476,7 +3550,7 @@ function StatsPanel({ event, onClose }) {
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 500, color: 'rgba(255,255,255,0.92)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{event.name}</p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)', marginTop: 3 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>
             Statistiques · {event.dateDisplay || event.date}
           </p>
         </div>
@@ -3492,7 +3566,7 @@ function StatsPanel({ event, onClose }) {
             { label: 'Dont précommandes', value: fmtMoney(Math.round(preorderRevenue), eventCurrency(event)), color: 'rgba(255,255,255,0.55)' },
           ].map(k => (
             <div key={k.label} style={{ ...S.card, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{k.label}</p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }}>{k.label}</p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 26, fontWeight: 600, color: k.color, margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{k.value}</p>
             </div>
           ))}
@@ -3514,7 +3588,7 @@ function StatsPanel({ event, onClose }) {
                     </div>
                   </div>
                   <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #4ee8c8, #c8a96e)', borderRadius: 2, transition: 'width 0.6s ease' }} />
+                    <div style={{ height: '100%', width: `${pct}%`, background: '#4ee8c8', borderRadius: 2, transition: 'width 0.6s ease' }} />
                   </div>
                 </div>
               )
@@ -3540,11 +3614,11 @@ function StatsPanel({ event, onClose }) {
 
         {/* No data */}
         {bookings.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.28)' }}>
+          <div style={{ textAlign: 'center', padding: '64px 0', color: 'rgba(255,255,255,0.45)' }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 12px', display: 'block' }}>
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400 }}>Aucune réservation enregistrée.</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>Aucune réservation enregistrée.</p>
           </div>
         )}
       </div>

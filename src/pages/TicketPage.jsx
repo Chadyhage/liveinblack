@@ -5,10 +5,10 @@ import { fmtMoney } from '../utils/money'
 
 // ─── Design tokens ────────────────────────────────────────────────────────
 const CARD = {
-  background: 'rgba(8,10,20,0.55)',
-  backdropFilter: 'blur(22px) saturate(1.6)',
+  background: '#0e0f16',
   border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 12,
+  borderRadius: 16,
+  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
 }
 
 const FONTS = {
@@ -20,8 +20,8 @@ const COLORS = {
   teal: '#4ee8c8',
   pink: '#e05aaa',
   gold: '#c8a96e',
-  muted: 'rgba(255,255,255,0.42)',
-  dim: 'rgba(255,255,255,0.22)',
+  muted: 'rgba(255,255,255,0.60)',
+  dim: 'rgba(255,255,255,0.42)',
 }
 
 export default function TicketPage() {
@@ -54,10 +54,10 @@ export default function TicketPage() {
             </svg>
           </div>
 
-          <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 28, color: COLORS.pink, margin: '0 0 10px' }}>
+          <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 25, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
             Billet invalide
           </p>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: '0 0 24px', lineHeight: 1.7 }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 13.5, color: COLORS.muted, margin: '0 0 24px', lineHeight: 1.6 }}>
             Ce QR code n'est pas reconnu ou a été falsifié.
           </p>
 
@@ -70,7 +70,7 @@ export default function TicketPage() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
               </svg>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(224,90,170,0.55)', margin: 0, letterSpacing: '0.06em' }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(224,90,170,0.75)', margin: 0, letterSpacing: '0.04em' }}>
                 Signature cryptographique invalide · LIVEINBLACK
               </p>
             </div>
@@ -99,10 +99,10 @@ export default function TicketPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </div>
-          <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 30, color: COLORS.teal, margin: '0 0 5px', letterSpacing: '0.04em' }}>
-            Billet Valide
+          <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 26, color: COLORS.teal, margin: '0 0 5px', letterSpacing: '-0.4px' }}>
+            Billet valide
           </p>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, letterSpacing: '0.06em' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, letterSpacing: '0.02em' }}>
             Scanné le {scannedAt}
           </p>
         </div>
@@ -110,19 +110,19 @@ export default function TicketPage() {
         {/* Guest name — uniquement présent sur les invitations guestlist */}
         {data.gn && (
           <div style={{ ...CARD, padding: '14px 20px', textAlign: 'center' }}>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.teal, textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 4px' }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.teal, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>
               Invité
             </p>
-            <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: '#fff', margin: 0 }}>{data.gn}</p>
+            <p style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 21, color: '#fff', margin: 0 }}>{data.gn}</p>
           </div>
         )}
 
         {/* QR code — à présenter à l'entrée pour scan */}
         <div style={{ ...CARD, padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-          <div style={{ padding: 14, background: 'white', borderRadius: 8 }}>
+          <div style={{ padding: 16, background: '#fff', borderRadius: 12 }}>
             <QRCodeSVG value={typeof window !== 'undefined' ? window.location.href : ''} size={168} level="H" />
           </div>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, letterSpacing: '0.08em', margin: 0 }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.02em', margin: 0 }}>
             Présente ce QR code à l'entrée
           </p>
         </div>
@@ -134,39 +134,39 @@ export default function TicketPage() {
             style={{
               width: '100%', padding: '15px 0', borderRadius: 12, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-              fontFamily: FONTS.display, fontSize: 14, fontWeight: 700, letterSpacing: '.01em',
-              color: '#04040b', background: 'linear-gradient(135deg, #4ee8c8, #7af0d8)',
-              border: 'none', boxShadow: '0 8px 24px -8px rgba(78,232,200,0.6)',
+              fontFamily: FONTS.display, fontSize: 14.5, fontWeight: 700,
+              color: '#04120e', background: '#3ed6b5',
+              border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.30)',
             }}>
-            🍹 Commander sur place
+            Commander sur place
           </button>
         )}
 
         {/* Event block */}
         <div style={{ ...CARD, padding: 20 }}>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 10px' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>
             Événement
           </p>
-          <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 30, color: '#fff', textTransform: 'uppercase', lineHeight: 1.15, margin: '0 0 5px', letterSpacing: '0.04em' }}>
+          <p style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 24, color: '#fff', textTransform: 'uppercase', lineHeight: 1.2, margin: '0 0 5px', letterSpacing: '0.01em' }}>
             {data.en}
           </p>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>{data.ed}</p>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.muted, margin: 0 }}>{data.ed}</p>
 
           <div style={{
             borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 16, paddingTop: 16,
             display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
           }}>
             <div>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.dim, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Type de place
               </p>
-              <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 18, color: '#fff', margin: 0 }}>{data.pl}</p>
+              <p style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 17, color: '#fff', margin: 0 }}>{data.pl}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Prix place
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.dim, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Prix de la place
               </p>
-              <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: COLORS.gold, margin: 0 }}>{fmtMoney(data.pr, data.cur)}</p>
+              <p style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 20, color: COLORS.gold, margin: 0 }}>{fmtMoney(data.pr, data.cur)}</p>
             </div>
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function TicketPage() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.gold} strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
               </svg>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.14em', margin: 0 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
                 Précommande
               </p>
             </div>
@@ -189,12 +189,12 @@ export default function TicketPage() {
                 paddingBottom: i < data.po.length - 1 ? 10 : 0,
                 borderBottom: i < data.po.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
               }}>
-                <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted }}>
+                <span style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.muted }}>
                   {item.n}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim }}>×{item.q}</span>
-                  <span style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 16, color: '#fff' }}>{fmtMoney(item.p * item.q, data.cur)}</span>
+                  <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim }}>×{item.q}</span>
+                  <span style={{ fontFamily: FONTS.display, fontWeight: 600, fontSize: 15, color: '#fff' }}>{fmtMoney(item.p * item.q, data.cur)}</span>
                 </div>
               </div>
             ))}
@@ -203,16 +203,16 @@ export default function TicketPage() {
 
         {/* Total */}
         <div style={{ ...CARD, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted }}>Total payé</span>
-          <span style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: data.cur === 'XOF' ? 22 : 30, color: COLORS.gold }}>{fmtMoney(data.tp, data.cur)}</span>
+          <span style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color: COLORS.muted }}>Total payé</span>
+          <span style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: data.cur === 'XOF' ? 20 : 24, color: COLORS.gold }}>{fmtMoney(data.tp, data.cur)}</span>
         </div>
 
         {/* Ticket code */}
         <div style={{ ...CARD, padding: '12px 16px', textAlign: 'center' }}>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 6px' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>
             Code billet
           </p>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 14, color: COLORS.gold, letterSpacing: '0.10em', margin: 0 }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 15, fontWeight: 700, color: COLORS.gold, letterSpacing: '0.08em', margin: 0 }}>
             {data.tc}
           </p>
         </div>
@@ -220,10 +220,10 @@ export default function TicketPage() {
         {/* Security badge */}
         <div style={{ textAlign: 'center', marginTop: 6 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={1.5}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', margin: 0, letterSpacing: '0.06em' }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: 0, letterSpacing: '0.04em' }}>
               Signature cryptographique valide · LIVEINBLACK
             </p>
           </div>

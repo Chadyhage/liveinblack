@@ -17,25 +17,26 @@ import {
   getDeletionRequestByUser,
 } from '../utils/accountDeletion'
 import Layout from '../components/Layout'
+import { IconCheck, IconAlert } from '../components/icons'
 import { getProviderCategories } from '../utils/providerCategories'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────
 const FONTS = {
   display: "Inter, sans-serif",
-  mono: "'DM Mono', 'Fira Mono', monospace",
+  mono: "Inter, sans-serif",
 }
 const COLORS = {
   teal:  '#4ee8c8',
   pink:  '#e05aaa',
   gold:  '#c8a96e',
-  muted: 'rgba(255,255,255,0.42)',
-  dim:   'rgba(255,255,255,0.22)',
+  muted: 'rgba(255,255,255,0.55)',
+  dim:   'rgba(255,255,255,0.4)',
 }
 const CARD = {
-  background: 'rgba(8,10,20,0.55)',
-  backdropFilter: 'blur(22px) saturate(1.6)',
-  border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 12,
+  background: '#0e0f16',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 16,
+  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
 }
 
 function formatDate(ts) {
@@ -84,10 +85,10 @@ function openValidationReceipt(app) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attestation — ${orgName}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'DM Mono', monospace;
+      font-family: Inter, sans-serif;
       background: #ffffff;
       color: #0a0a18;
       padding: 64px 80px;
@@ -238,7 +239,7 @@ function openValidationReceipt(app) {
       position: fixed; bottom: 32px; right: 32px;
       background: #0a0a18; color: #fff;
       border: none; border-radius: 6px;
-      padding: 12px 24px; font-family: 'DM Mono', monospace;
+      padding: 12px 24px; font-family: Inter, sans-serif;
       font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
       cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
@@ -253,7 +254,7 @@ function openValidationReceipt(app) {
   <div class="header">
     <div class="logo">L<span style="font-style:normal;font-weight:400">|</span>VE IN <span>BLACK</span></div>
     <div class="ref">
-      <div class="badge">✓ Validé</div>
+      <div class="badge">Validé</div>
       <div style="margin-top:8px">Réf. ${refId}</div>
       <div>Émis le ${approvedDate}</div>
     </div>
@@ -266,7 +267,7 @@ function openValidationReceipt(app) {
   </div>
 
   <div class="seal">
-    <div class="seal-icon">✓</div>
+    <div class="seal-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
     <div class="seal-text">
       <strong>${orgName}</strong>
       ${roleDesc}
@@ -304,7 +305,7 @@ function openValidationReceipt(app) {
     </div>
   </div>
 
-  <button class="print-btn" onclick="window.print()">↓ Enregistrer en PDF</button>
+  <button class="print-btn" onclick="window.print()">Enregistrer en PDF</button>
 
 </body>
 </html>`
@@ -314,16 +315,17 @@ function openValidationReceipt(app) {
 }
 
 function StatusBadge({ status }) {
-  const cfg = APPLICATION_STATUSES[status] || { label: status, color: COLORS.muted, bg: 'transparent' }
+  const cfg = APPLICATION_STATUSES[status] || { label: status, color: COLORS.muted, bg: 'rgba(255,255,255,0.06)' }
+  const isHex = typeof cfg.color === 'string' && cfg.color.startsWith('#')
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '4px 10px', borderRadius: 5,
-      border: `1px solid ${cfg.color}55`,
+      padding: '4px 10px', borderRadius: 8,
+      border: `1px solid ${isHex ? cfg.color + '59' : 'rgba(255,255,255,0.22)'}`,
       background: cfg.bg,
       color: cfg.color,
-      fontFamily: FONTS.mono, fontSize: 10, fontWeight: 600,
-      letterSpacing: '0.06em', textTransform: 'uppercase',
+      fontFamily: FONTS.display, fontSize: 11, fontWeight: 700,
+      letterSpacing: '0.04em', textTransform: 'uppercase',
     }}>
       {cfg.label}
     </span>
@@ -335,14 +337,14 @@ function CompletenessBar({ score }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>Complétude du dossier</span>
-        <span style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600, color }}>{score}%</span>
+        <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted }}>Complétude du dossier</span>
+        <span style={{ fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700, color }}>{score}%</span>
       </div>
       <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
         <div style={{
           height: '100%', borderRadius: 99,
           width: `${score}%`,
-          background: `linear-gradient(90deg, ${color}88, ${color})`,
+          background: color,
           transition: 'width 0.6s ease',
         }} />
       </div>
@@ -358,6 +360,7 @@ function AuditLog({ log }) {
       {[...log].reverse().map((entry, i) => {
         const statusCfg = APPLICATION_STATUSES[entry.action]
         const color = statusCfg?.color || COLORS.dim
+        const ringHex = typeof color === 'string' && color.startsWith('#')
         return (
           <div key={i} style={{ display: 'flex', gap: 12, position: 'relative', paddingBottom: i < log.length - 1 ? 16 : 0 }}>
             {/* line */}
@@ -370,23 +373,23 @@ function AuditLog({ log }) {
             {/* dot */}
             <div style={{
               width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-              border: `1px solid ${color}55`,
-              background: color + '14',
+              border: `1px solid ${ringHex ? color + '55' : 'rgba(255,255,255,0.18)'}`,
+              background: ringHex ? color + '14' : 'rgba(255,255,255,0.06)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               marginTop: 1,
             }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
             </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', margin: '3px 0 2px', fontWeight: 600 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: '#fff', margin: '3px 0 2px', fontWeight: 600 }}>
                 {statusCfg?.label || entry.action}
               </p>
               {entry.note && (
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 2px', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: '0 0 2px', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>
                   {entry.note}
                 </p>
               )}
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: 0 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>
                 {entry.byName} · {formatDate(entry.at)}
               </p>
             </div>
@@ -413,18 +416,17 @@ function DocRow({ docKey, entry, required, onUpload, uploading }) {
         width: 28, height: 28, borderRadius: 6, flexShrink: 0,
         background: uploaded ? 'rgba(78,232,200,0.10)' : missing ? 'rgba(224,90,170,0.08)' : 'rgba(255,255,255,0.04)',
         border: `1px solid ${uploaded ? 'rgba(78,232,200,0.25)' : missing ? 'rgba(224,90,170,0.25)' : 'rgba(255,255,255,0.08)'}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: uploaded ? COLORS.teal : missing ? COLORS.pink : COLORS.dim,
-        fontWeight: 700,
       }}>
-        {uploaded ? '✓' : missing ? '!' : '○'}
+        {uploaded ? <IconCheck size={14} /> : missing ? <IconAlert size={14} /> : <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', display: 'inline-block' }} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: uploaded ? '#fff' : missing ? COLORS.pink : COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, color: uploaded ? '#fff' : missing ? COLORS.pink : COLORS.muted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {label}{missing && <span style={{ color: COLORS.pink }}> — requis</span>}
         </p>
         {entry?.name && (
-          <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {entry.name}
           </p>
         )}
@@ -434,12 +436,15 @@ function DocRow({ docKey, entry, required, onUpload, uploading }) {
           <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
             onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
           <span style={{
-            fontFamily: FONTS.mono, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
-            padding: '4px 9px', borderRadius: 4, cursor: 'pointer',
-            color: uploaded ? COLORS.teal : COLORS.pink,
-            border: `1px solid ${uploaded ? 'rgba(78,232,200,0.3)' : 'rgba(224,90,170,0.4)'}`,
+            fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, letterSpacing: '0.02em',
+            padding: '8px 14px', borderRadius: 10, cursor: 'pointer', display: 'inline-block',
+            color: 'rgba(255,255,255,0.9)',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.14)',
           }}>
-            {uploading ? '…' : uploaded ? 'Modifier' : 'Ajouter'}
+            {uploading
+              ? <span className="lib-spin" style={{ width: 12, height: 12, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px' }} />
+              : uploaded ? 'Modifier' : 'Ajouter'}
           </span>
         </label>
       )}
@@ -529,14 +534,16 @@ export default function MonDossierPage() {
     return (
       <Layout>
         <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 20 }}>
-          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke={COLORS.dim} strokeWidth={1}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+          </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 22, color: '#fff', margin: '0 0 8px' }}>
+            <p style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 20, color: '#fff', margin: '0 0 8px' }}>
               Aucun dossier trouvé
             </p>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.5 }}>
               {user.role === 'organisateur'
                 ? 'Ton dossier organisateur a été supprimé. Tu peux en soumettre un nouveau.'
                 : user.role === 'prestataire'
@@ -549,24 +556,22 @@ export default function MonDossierPage() {
               <button
                 onClick={() => navigate('/onboarding-organisateur', { state: { prefill: prefillOrg } })}
                 style={{
-                  padding: '11px 22px', borderRadius: 6, cursor: 'pointer',
-                  background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.35)',
-                  color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 11,
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  minHeight: 44, padding: '12px 22px', borderRadius: 12, cursor: 'pointer',
+                  background: '#c8a96e', border: '1px solid rgba(255,255,255,0.14)',
+                  color: '#1c1405', fontFamily: FONTS.display, fontSize: 14, fontWeight: 700,
                 }}>
-                Dossier Organisateur
+                Dossier organisateur
               </button>
             )}
             {canPrest && (
               <button
                 onClick={() => navigate('/onboarding-prestataire')}
                 style={{
-                  padding: '11px 22px', borderRadius: 6, cursor: 'pointer',
-                  background: 'rgba(78,232,200,0.08)', border: '1px solid rgba(78,232,200,0.28)',
-                  color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 11,
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  minHeight: 44, padding: '12px 22px', borderRadius: 12, cursor: 'pointer',
+                  background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)',
+                  color: '#04120e', fontFamily: FONTS.display, fontSize: 14, fontWeight: 700,
                 }}>
-                Dossier Prestataire
+                Dossier prestataire
               </button>
             )}
           </div>
@@ -595,14 +600,14 @@ export default function MonDossierPage() {
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: COLORS.dim, fontSize: 18, padding: 0, lineHeight: 1 }}>
               ←
             </button>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
               Mon dossier
             </p>
           </div>
-          <h1 style={{ fontFamily: FONTS.display, fontWeight: 300, fontSize: 26, color: '#fff', margin: '0 0 4px', letterSpacing: '0.05em' }}>
-            {app.type === 'organisateur' ? 'Dossier Organisateur' : 'Dossier Prestataire'}
+          <h1 style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 24, color: '#fff', margin: '0 0 4px', letterSpacing: '0.01em' }}>
+            {app.type === 'organisateur' ? 'Dossier organisateur' : 'Dossier prestataire'}
           </h1>
-          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0 }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, margin: 0 }}>
             Soumis le {formatDate(app.submittedAt)} · Réf. {app.id}
           </p>
         </div>
@@ -610,11 +615,11 @@ export default function MonDossierPage() {
         {/* ── Status banner ── */}
         <div style={{
           ...CARD, padding: 16, marginBottom: 16,
-          borderColor: statusCfg.color ? statusCfg.color + '44' : 'rgba(255,255,255,0.10)',
-          background: statusCfg.bg || 'rgba(8,10,20,0.55)',
+          borderColor: (typeof statusCfg.color === 'string' && statusCfg.color.startsWith('#')) ? statusCfg.color + '44' : 'rgba(255,255,255,0.10)',
+          borderLeft: `3px solid ${statusCfg.color || 'rgba(255,255,255,0.2)'}`,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
               Statut du dossier
             </p>
             <StatusBadge status={app.status} />
@@ -627,12 +632,12 @@ export default function MonDossierPage() {
           <div style={{
             ...CARD, padding: 16, marginBottom: 16,
             borderColor: 'rgba(245,158,11,0.40)',
-            background: 'rgba(245,158,11,0.06)',
+            borderLeft: '3px solid #f59e0b',
           }}>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
-              ⚠ Corrections requises
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+              Corrections requises
             </p>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.5 }}>
               {app.requestedChanges}
             </p>
           </div>
@@ -642,23 +647,23 @@ export default function MonDossierPage() {
           <div style={{
             ...CARD, padding: 16, marginBottom: 16,
             borderColor: 'rgba(224,90,170,0.40)',
-            background: 'rgba(224,90,170,0.06)',
+            borderLeft: `3px solid ${COLORS.pink}`,
           }}>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.pink, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
-              ✕ Dossier refusé
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: COLORS.pink, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+              Dossier refusé
             </p>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: '0 0 12px', lineHeight: 1.5 }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: 'rgba(255,255,255,0.75)', margin: '0 0 12px', lineHeight: 1.5 }}>
               {app.rejectionReason}
             </p>
             <button
               onClick={() => navigate(editPath)}
               style={{
-                padding: '9px 18px', borderRadius: 5, cursor: 'pointer',
-                background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.35)',
-                color: COLORS.pink, fontFamily: FONTS.mono, fontSize: 10,
-                letterSpacing: '0.06em', textTransform: 'uppercase',
+                minHeight: 44, padding: '11px 18px', borderRadius: 12, cursor: 'pointer',
+                background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)',
+                color: '#fff', fontFamily: FONTS.display, fontSize: 13, fontWeight: 700,
+                boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
               }}>
-              Soumettre un nouveau dossier →
+              Soumettre un nouveau dossier
             </button>
           </div>
         )}
@@ -667,7 +672,7 @@ export default function MonDossierPage() {
           <div style={{
             ...CARD, padding: 16, marginBottom: 16,
             borderColor: 'rgba(34,197,94,0.35)',
-            background: 'rgba(34,197,94,0.06)',
+            borderLeft: '3px solid #22c55e',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -675,10 +680,10 @@ export default function MonDossierPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#22c55e', margin: 0, fontWeight: 600 }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: '#22c55e', margin: 0, fontWeight: 700 }}>
                     Dossier approuvé
                   </p>
-                  <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '2px 0 0' }}>
+                  <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, margin: '2px 0 0' }}>
                     Compte activé le {formatDate(app.approvedAt)}
                   </p>
                 </div>
@@ -688,10 +693,9 @@ export default function MonDossierPage() {
                 title="Télécharger l'attestation"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '7px 12px', borderRadius: 6, cursor: 'pointer', flexShrink: 0,
-                  background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.30)',
-                  color: '#22c55e', fontFamily: FONTS.mono, fontSize: 10,
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  padding: '8px 14px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
+                  background: 'rgba(34,197,94,0.14)', border: '1px solid rgba(34,197,94,0.45)',
+                  color: '#4ade80', fontFamily: FONTS.display, fontSize: 12, fontWeight: 700,
                 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -710,14 +714,13 @@ export default function MonDossierPage() {
           <button
             onClick={() => navigate(editPath)}
             style={{
-              width: '100%', padding: '13px 0', borderRadius: 8, cursor: 'pointer',
-              background: 'linear-gradient(135deg, rgba(200,169,110,0.20), rgba(200,169,110,0.06))',
-              border: '1px solid rgba(200,169,110,0.45)',
-              color: COLORS.gold, fontFamily: FONTS.mono, fontSize: 12,
-              letterSpacing: '0.08em', textTransform: 'uppercase',
+              width: '100%', minHeight: 44, padding: '13px 0', borderRadius: 12, cursor: 'pointer',
+              background: '#c8a96e',
+              border: '1px solid rgba(255,255,255,0.14)',
+              color: '#1c1405', fontFamily: FONTS.display, fontSize: 14, fontWeight: 700,
               marginBottom: 16,
             }}>
-            {app.status === 'needs_changes' ? '✏  Corriger mon dossier' : '✏  Compléter mon dossier'}
+            {app.status === 'needs_changes' ? 'Corriger mon dossier' : 'Compléter mon dossier'}
           </button>
         )}
 
@@ -725,14 +728,14 @@ export default function MonDossierPage() {
         {(app.status === 'submitted' || app.status === 'under_review') && (
           <div style={{
             ...CARD, padding: 14, marginBottom: 16,
-            borderColor: 'rgba(78,232,200,0.18)',
-            background: 'rgba(78,232,200,0.04)',
+            borderColor: 'rgba(78,232,200,0.25)',
+            borderLeft: `3px solid ${COLORS.teal}`,
           }}>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, margin: '0 0 4px', fontWeight: 600 }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.teal, margin: '0 0 4px', fontWeight: 700 }}>
               Dossier verrouillé — en attente de validation
             </p>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>
-              Notre équipe examine ton dossier. Le statut ci-dessus sera mis à jour dès qu&apos;une décision sera prise. Si des corrections sont nécessaires, tu pourras modifier et renvoyer.
+            <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>
+              Notre équipe examine ton dossier. Le statut ci-dessus sera mis à jour dès qu&apos;une décision sera prise. Si des corrections sont nécessaires, tu pourras le modifier et le renvoyer.
             </p>
           </div>
         )}
@@ -746,21 +749,20 @@ export default function MonDossierPage() {
               <div style={{
                 ...CARD, padding: 16,
                 borderColor: 'rgba(239,68,68,0.30)',
-                background: 'rgba(239,68,68,0.05)',
+                borderLeft: '3px solid #ef4444',
               }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
-                  ⏳ Demande de suppression en cours
+                <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
+                  Demande de suppression en cours
                 </p>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 12px', lineHeight: 1.5 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: '0 0 12px', lineHeight: 1.5 }}>
                   Ta demande a été transmise à l&apos;équipe LIVEINBLACK le {new Date(deletionReq.requestedAt).toLocaleDateString('fr-FR')}. Tu recevras une réponse prochainement.
                 </p>
                 <button
                   onClick={() => { cancelDeletionRequest(deletionReq.id); setDeletionReq(null); setShowDeletionForm(false) }}
                   style={{
-                    padding: '8px 16px', borderRadius: 5, cursor: 'pointer',
-                    background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-                    color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 10,
-                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                    padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                    color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.display, fontSize: 12, fontWeight: 600,
                   }}>
                   Annuler la demande
                 </button>
@@ -773,10 +775,9 @@ export default function MonDossierPage() {
                   setShowDeletionForm(true)
                 }}
                 style={{
-                  width: '100%', padding: '11px 0', borderRadius: 8, cursor: 'pointer',
-                  background: 'transparent', border: '1px solid rgba(239,68,68,0.22)',
-                  color: 'rgba(239,68,68,0.55)', fontFamily: FONTS.mono, fontSize: 10,
-                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  width: '100%', minHeight: 44, padding: '11px 0', borderRadius: 12, cursor: 'pointer',
+                  background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.5)',
+                  color: '#f87171', fontFamily: FONTS.display, fontSize: 13, fontWeight: 700,
                 }}>
                 Demander la suppression du compte
               </button>
@@ -785,12 +786,12 @@ export default function MonDossierPage() {
               <div style={{
                 ...CARD, padding: 16,
                 borderColor: 'rgba(239,68,68,0.30)',
-                background: 'rgba(239,68,68,0.04)',
+                borderLeft: '3px solid #ef4444',
               }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
                   Demande de suppression de compte
                 </p>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.6 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.6 }}>
                   La suppression doit être validée par notre équipe. Une fois approuvée, tes données personnelles seront anonymisées. Les données transactionnelles (billets, paiements) restent archivées conformément aux obligations légales (10 ans).
                 </p>
 
@@ -799,11 +800,11 @@ export default function MonDossierPage() {
                   <div style={{ marginBottom: 14 }}>
                     {auditResult.blockers.length > 0 && (
                       <div style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 7, marginBottom: 8 }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
-                          ⚠ Points à résoudre (signalés à l&apos;admin)
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>
+                          Points à résoudre (transmis à l&apos;équipe)
                         </p>
                         {auditResult.blockers.map((b, i) => (
-                          <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(239,68,68,0.8)', margin: '0 0 3px', lineHeight: 1.5 }}>
+                          <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(239,68,68,0.85)', margin: '0 0 3px', lineHeight: 1.5 }}>
                             • {b.label}
                           </p>
                         ))}
@@ -811,11 +812,11 @@ export default function MonDossierPage() {
                     )}
                     {auditResult.warnings.length > 0 && (
                       <div style={{ padding: '10px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.22)', borderRadius: 7 }}>
-                        <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
-                          ℹ Ce qui sera archivé
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>
+                          Ce qui sera archivé
                         </p>
                         {auditResult.warnings.map((w, i) => (
-                          <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(245,158,11,0.75)', margin: '0 0 3px', lineHeight: 1.5 }}>
+                          <p key={i} style={{ fontFamily: FONTS.mono, fontSize: 12, color: 'rgba(245,158,11,0.85)', margin: '0 0 3px', lineHeight: 1.5 }}>
                             • {w.label}
                           </p>
                         ))}
@@ -825,7 +826,7 @@ export default function MonDossierPage() {
                 )}
 
                 {/* Raison */}
-                <label style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>
+                <label style={{ fontFamily: FONTS.display, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>
                   Raison de la suppression <span style={{ color: COLORS.pink }}>*</span>
                 </label>
                 <textarea
@@ -835,9 +836,9 @@ export default function MonDossierPage() {
                   rows={3}
                   style={{
                     width: '100%', boxSizing: 'border-box',
-                    background: 'rgba(6,8,16,0.7)', border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: 5, padding: '9px 11px', resize: 'vertical',
-                    fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.8)',
+                    background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: 10, padding: '12px 14px', resize: 'vertical',
+                    fontFamily: FONTS.display, fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.92)',
                     lineHeight: 1.6, outline: 'none', marginBottom: 12,
                   }}
                 />
@@ -865,23 +866,25 @@ export default function MonDossierPage() {
                       showToast('Demande envoyée — l\'équipe te répondra prochainement.')
                     }}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: 6, cursor: deletionReason.trim() ? 'pointer' : 'not-allowed',
-                      background: deletionReason.trim() ? 'rgba(239,68,68,0.16)' : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${deletionReason.trim() ? 'rgba(239,68,68,0.40)' : 'rgba(255,255,255,0.08)'}`,
-                      color: deletionReason.trim() ? '#ef4444' : COLORS.dim,
-                      fontFamily: FONTS.mono, fontSize: 10,
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                      opacity: deletionLoading ? 0.6 : 1,
+                      flex: 1, minHeight: 44, padding: '10px 0', borderRadius: 12, cursor: deletionReason.trim() ? 'pointer' : 'not-allowed',
+                      background: deletionReason.trim() ? '#c2347f' : 'rgba(255,255,255,0.07)',
+                      border: `1px solid ${deletionReason.trim() ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)'}`,
+                      color: deletionReason.trim() ? '#fff' : 'rgba(255,255,255,0.35)',
+                      fontFamily: FONTS.display, fontSize: 13, fontWeight: 700,
                     }}>
-                    {deletionLoading ? '…' : 'Envoyer la demande'}
+                    {deletionLoading ? (
+                      <>
+                        <span className="lib-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', marginRight: 8, verticalAlign: '-2px' }} />
+                        Envoi…
+                      </>
+                    ) : 'Envoyer la demande'}
                   </button>
                   <button
                     onClick={() => { setShowDeletionForm(false); setAuditResult(null); setDeletionReason('') }}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
-                      color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 10,
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                      flex: 1, minHeight: 44, padding: '10px 0', borderRadius: 12, cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                      color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.display, fontSize: 13, fontWeight: 600,
                     }}>
                     Annuler
                   </button>
@@ -895,10 +898,9 @@ export default function MonDossierPage() {
             <button
               onClick={() => setConfirmDelete(true)}
               style={{
-                width: '100%', padding: '11px 0', borderRadius: 8, cursor: 'pointer',
-                background: 'transparent', border: '1px solid rgba(239,68,68,0.22)',
-                color: 'rgba(239,68,68,0.55)', fontFamily: FONTS.mono, fontSize: 10,
-                letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16,
+                width: '100%', minHeight: 44, padding: '11px 0', borderRadius: 12, cursor: 'pointer',
+                background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.5)',
+                color: '#f87171', fontFamily: FONTS.display, fontSize: 13, fontWeight: 700, marginBottom: 16,
               }}>
               Supprimer le dossier
             </button>
@@ -906,32 +908,30 @@ export default function MonDossierPage() {
             <div style={{
               ...CARD, padding: 16, marginBottom: 16,
               borderColor: 'rgba(239,68,68,0.35)',
-              background: 'rgba(239,68,68,0.06)',
+              borderLeft: '3px solid #ef4444',
             }}>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: '#fff', margin: '0 0 4px', fontWeight: 600 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 14, color: '#fff', margin: '0 0 4px', fontWeight: 700 }}>
                 Supprimer définitivement ce dossier ?
               </p>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.5 }}>
                 Cette action est irréversible. Tu devras soumettre un nouveau dossier pour candidater à nouveau.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={handleDelete}
                   style={{
-                    flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                    background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.45)',
-                    color: '#ef4444', fontFamily: FONTS.mono, fontSize: 10,
-                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                    flex: 1, minHeight: 44, padding: '10px 0', borderRadius: 12, cursor: 'pointer',
+                    background: '#c2347f', border: 'none',
+                    color: '#fff', fontFamily: FONTS.display, fontSize: 13, fontWeight: 700,
                   }}>
                   Oui, supprimer
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
                   style={{
-                    flex: 1, padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
-                    color: COLORS.dim, fontFamily: FONTS.mono, fontSize: 10,
-                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                    flex: 1, minHeight: 44, padding: '10px 0', borderRadius: 12, cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                    color: 'rgba(255,255,255,0.9)', fontFamily: FONTS.display, fontSize: 13, fontWeight: 600,
                   }}>
                   Annuler
                 </button>
@@ -954,12 +954,12 @@ export default function MonDossierPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               style={{
-                flex: 1, padding: '10px 0',
-                fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.07em', textTransform: 'uppercase',
+                flex: 1, padding: '11px 0',
+                fontFamily: FONTS.display, fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
                 background: 'none', cursor: 'pointer',
                 borderBottom: tab === t.key ? `2px solid ${COLORS.gold}` : '2px solid transparent',
                 borderTop: 'none', borderLeft: 'none', borderRight: 'none',
-                color: tab === t.key ? COLORS.gold : COLORS.dim,
+                color: tab === t.key ? '#fff' : 'rgba(255,255,255,0.5)',
               }}>
               {t.label}
             </button>
@@ -972,7 +972,7 @@ export default function MonDossierPage() {
 
             {/* Key info */}
             <div style={{ ...CARD, padding: 16 }}>
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>
                 Informations principales
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -986,8 +986,8 @@ export default function MonDossierPage() {
                     : { label: 'Activités', value: getProviderCategories(app.formData || {}).map(category => category.singular).join(' · ') },
                 ].filter(f => f?.value).map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                    <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, flexShrink: 0 }}>{f.label}</span>
-                    <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#fff', textAlign: 'right' }}>{f.value}</span>
+                    <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim, flexShrink: 0 }}>{f.label}</span>
+                    <span style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, color: '#fff', textAlign: 'right' }}>{f.value}</span>
                   </div>
                 ))}
               </div>
@@ -996,7 +996,7 @@ export default function MonDossierPage() {
             {/* Stripe Connect status */}
             {app.type === 'organisateur' && app.stripe && (
               <div style={{ ...CARD, padding: 16 }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>
                   Paiements (Stripe Connect)
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1006,12 +1006,12 @@ export default function MonDossierPage() {
                     { label: 'Paiements activés', value: app.stripe.charges_enabled  ? 'Oui' : 'Non' },
                   ].map((f, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim }}>{f.label}</span>
-                      <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted }}>{f.value}</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.dim }}>{f.label}</span>
+                      <span style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted }}>{f.value}</span>
                     </div>
                   ))}
                 </div>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', margin: '10px 0 0' }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '10px 0 0' }}>
                   La configuration Stripe sera disponible après validation de ton dossier.
                 </p>
               </div>
@@ -1024,18 +1024,18 @@ export default function MonDossierPage() {
           <div>
             {/* Dossier verrouillé */}
             {!isEditable && (
-              <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, marginBottom: 12 }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, letterSpacing: '0.04em' }}>
-                  🔒 Dossier verrouillé — les documents ne peuvent pas être modifiés après soumission.
+              <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, marginBottom: 12 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, margin: 0 }}>
+                  Dossier verrouillé — les documents ne peuvent plus être modifiés après soumission.
                 </p>
               </div>
             )}
 
             {/* Docs requis manquants — alerte (seulement si éditable) */}
             {isEditable && requiredDocs.some(k => !app.documents?.[k]) && (
-              <div style={{ padding: '10px 14px', background: 'rgba(224,90,170,0.06)', border: '1px solid rgba(224,90,170,0.2)', borderRadius: 8, marginBottom: 12 }}>
-                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.pink, margin: 0, letterSpacing: '0.04em' }}>
-                  ⚠ Des documents obligatoires sont manquants. Ajoute-les pour que ton dossier puisse être traité.
+              <div style={{ padding: '10px 14px', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.3)', borderRadius: 12, marginBottom: 12 }}>
+                <p style={{ fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600, color: COLORS.pink, margin: 0 }}>
+                  Des documents obligatoires sont manquants. Ajoute-les pour que ton dossier puisse être traité.
                 </p>
               </div>
             )}
@@ -1073,7 +1073,7 @@ export default function MonDossierPage() {
             )}
 
             {isEditable && (
-              <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, margin: '12px 0 0', letterSpacing: '0.04em' }}>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '12px 0 0' }}>
                 Formats acceptés : PDF, JPG, PNG
               </p>
             )}
@@ -1083,7 +1083,7 @@ export default function MonDossierPage() {
         {/* ── Tab: Historique ── */}
         {tab === 'history' && (
           <div style={{ ...CARD, padding: 16 }}>
-            <p style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, fontWeight: 600, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px' }}>
               Journal d&apos;activité
             </p>
             <AuditLog log={app.auditLog} />
@@ -1096,14 +1096,13 @@ export default function MonDossierPage() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 999, padding: '10px 20px', borderRadius: 8,
-          background: toast.type === 'error' ? 'rgba(224,90,170,0.15)' : 'rgba(78,232,200,0.12)',
-          border: `1px solid ${toast.type === 'error' ? 'rgba(224,90,170,0.4)' : 'rgba(78,232,200,0.35)'}`,
-          backdropFilter: 'blur(16px)',
-          fontFamily: FONTS.mono, fontSize: 11,
-          color: toast.type === 'error' ? COLORS.pink : COLORS.teal,
-          letterSpacing: '0.04em', whiteSpace: 'nowrap',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+          zIndex: 999, padding: '11px 20px', borderRadius: 12,
+          background: 'rgba(12,12,22,0.96)',
+          border: `1px solid ${toast.type === 'error' ? 'rgba(224,90,170,0.5)' : 'rgba(78,232,200,0.5)'}`,
+          fontFamily: FONTS.display, fontSize: 13, fontWeight: 600,
+          color: '#fff',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
         }}>
           {toast.msg}
         </div>

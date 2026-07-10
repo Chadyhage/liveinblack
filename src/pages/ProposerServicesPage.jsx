@@ -25,10 +25,10 @@ const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
 
 const card = {
-  background: 'rgba(8,10,20,.62)',
-  border: '1px solid rgba(255,255,255,.09)',
+  background: '#0e0f16',
+  border: '1px solid rgba(255,255,255,.08)',
   borderRadius: 16,
-  backdropFilter: 'blur(20px)',
+  boxShadow: '0 8px 24px rgba(0,0,0,.35)',
 }
 const input = {
   width: '100%',
@@ -36,9 +36,9 @@ const input = {
   boxSizing: 'border-box',
   padding: '12px 14px',
   borderRadius: 11,
-  border: '1px solid rgba(255,255,255,.13)',
-  background: 'rgba(255,255,255,.045)',
-  color: '#fff',
+  border: '1px solid rgba(255,255,255,.12)',
+  background: '#0b0c12',
+  color: 'rgba(255,255,255,.92)',
   outline: 'none',
   fontFamily: FONT,
   fontSize: 14,
@@ -50,22 +50,43 @@ const primaryButton = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: 8,
-  padding: '11px 17px',
-  border: 'none',
-  borderRadius: 11,
+  padding: '11px 18px',
+  border: '1px solid rgba(255,255,255,.14)',
+  borderRadius: 12,
   cursor: 'pointer',
-  background: `linear-gradient(135deg,${C.gold},#e0c48a)`,
-  color: C.obsidian,
+  background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+  color: '#fff',
   fontFamily: FONT,
-  fontSize: 13,
-  fontWeight: 800,
+  fontSize: 13.5,
+  fontWeight: 700,
+  boxShadow: '0 6px 20px rgba(122,59,242,.35)',
 }
 
 const secondaryButton = {
   ...primaryButton,
-  background: 'rgba(255,255,255,.05)',
-  border: '1px solid rgba(255,255,255,.13)',
-  color: 'rgba(255,255,255,.82)',
+  background: 'rgba(255,255,255,.08)',
+  border: '1px solid rgba(255,255,255,.14)',
+  color: 'rgba(255,255,255,.9)',
+  fontWeight: 600,
+  boxShadow: 'none',
+}
+
+const disabledButton = {
+  background: 'rgba(255,255,255,.07)',
+  color: 'rgba(255,255,255,.35)',
+  border: '1px solid rgba(255,255,255,.06)',
+  cursor: 'not-allowed',
+  boxShadow: 'none',
+}
+
+const spinner = {
+  width: 14,
+  height: 14,
+  display: 'inline-block',
+  borderRadius: '50%',
+  border: '2px solid rgba(255,255,255,.3)',
+  borderTopColor: '#fff',
+  flexShrink: 0,
 }
 
 function Field({ label, helper, children }) {
@@ -73,7 +94,7 @@ function Field({ label, helper, children }) {
     <label style={{ display: 'block' }}>
       <span style={{ display: 'block', fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>{label}</span>
       {children}
-      {helper && <span style={{ display: 'block', fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,.35)', lineHeight: 1.5, marginTop: 6 }}>{helper}</span>}
+      {helper && <span style={{ display: 'block', fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.45)', lineHeight: 1.5, marginTop: 6 }}>{helper}</span>}
     </label>
   )
 }
@@ -101,12 +122,12 @@ function OfferMediaField({ media, uploading, onSelect, onRemove }) {
         </div>
       )}
       {media.length < 4 && (
-        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} style={{ width: '100%', minHeight: 104, borderRadius: 13, border: '1px dashed rgba(255,255,255,.18)', background: 'rgba(255,255,255,.025)', color: uploading ? C.gold : 'rgba(255,255,255,.55)', cursor: uploading ? 'wait' : 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700 }}>
+        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} style={{ width: '100%', minHeight: 104, borderRadius: 13, border: '1px dashed rgba(255,255,255,.18)', background: 'rgba(255,255,255,.04)', color: uploading ? C.gold : 'rgba(255,255,255,.55)', cursor: uploading ? 'wait' : 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700 }}>
           {uploading ? 'Envoi du média…' : `+ Ajouter une photo ou une vidéo${media.length ? ` (${media.length}/4)` : ''}`}
         </button>
       )}
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" hidden onChange={event => { onSelect(event.target.files?.[0]); event.target.value = '' }} />
-      <span style={{ display: 'block', fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,.35)', lineHeight: 1.5, marginTop: 6 }}>JPG, PNG ou WEBP jusqu’à 8 Mo · MP4, WEBM ou MOV jusqu’à 35 Mo.</span>
+      <span style={{ display: 'block', fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.45)', lineHeight: 1.5, marginTop: 6 }}>JPG, PNG ou WEBP jusqu’à 8 Mo · MP4, WEBM ou MOV jusqu’à 35 Mo.</span>
     </div>
   )
 }
@@ -479,7 +500,7 @@ export default function ProposerServicesPage() {
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, margin: 0, color }}>{active ? 'Abonnement actif' : 'Abonnement inactif'}</h2>
-                  <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color, background: `${color}1e`, border: `1px solid ${color}55`, borderRadius: 999, padding: '2px 8px' }}>{active ? 'Actif' : 'Inactif'}</span>
+                  <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color, background: `${color}1e`, border: `1px solid ${color}55`, borderRadius: 999, padding: '2px 8px' }}>{active ? 'Actif' : 'Inactif'}</span>
                 </div>
                 <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '5px 0 0', lineHeight: 1.45 }}>
                   {active
@@ -489,8 +510,8 @@ export default function ProposerServicesPage() {
                 <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{providerZone ? `Zone : ${providerZone.flag} ${providerZone.name} · ` : ''}9,99 € / mois · carte bancaire (Stripe) · renouvellement automatique</p>
               </div>
               {!active && (
-                <button onClick={handleStripeSubscribe} disabled={renewing} style={{ ...primaryButton, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
-                  {renewing ? 'Redirection…' : 'Activer mon abonnement'}
+                <button onClick={handleStripeSubscribe} disabled={renewing} style={{ ...primaryButton, ...(renewing ? disabledButton : null), whiteSpace: 'nowrap' }}>
+                  {renewing ? <><span className="lib-spin" style={spinner} /> Redirection…</> : 'Activer mon abonnement'}
                 </button>
               )}
             </section>
@@ -505,7 +526,7 @@ export default function ProposerServicesPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, margin: 0, color: dim ? 'rgba(255,255,255,.9)' : p.color }}>{p.title}</h2>
                   {p.status !== 'none' && (
-                    <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: p.color, background: `${p.color}1e`, border: `1px solid ${p.color}55`, borderRadius: 999, padding: '2px 8px' }}>
+                    <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: p.color, background: `${p.color}1e`, border: `1px solid ${p.color}55`, borderRadius: 999, padding: '2px 8px' }}>
                       {p.status === 'active' ? 'Actif' : p.status === 'expiring_soon' ? 'Expire bientôt' : p.status === 'grace' ? 'Grâce' : 'Expiré'}
                     </span>
                   )}
@@ -513,8 +534,8 @@ export default function ProposerServicesPage() {
                 <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '5px 0 0', lineHeight: 1.45 }}>{p.message}</p>
                 <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{providerZone ? `Zone : ${providerZone.flag} ${providerZone.name} · ` : ''}{subPriceLabel()} · Mobile Money (FedaPay) · renouvellement manuel</p>
               </div>
-              <button onClick={handleRenew} disabled={renewing} style={{ ...primaryButton, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
-                {renewing ? 'Redirection…' : p.cta}
+              <button onClick={handleRenew} disabled={renewing} style={{ ...primaryButton, ...(renewing ? disabledButton : null), whiteSpace: 'nowrap' }}>
+                {renewing ? <><span className="lib-spin" style={spinner} /> Redirection…</> : p.cta}
               </button>
             </section>
           )
@@ -522,15 +543,15 @@ export default function ProposerServicesPage() {
 
         {/* Lien vers la page détaillée de l'abonnement (durée, historique, reçus). */}
         <button onClick={() => navigate('/mon-abonnement')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, background: 'none', border: 'none', color: C.teal, fontFamily: FONT, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
-          Détails de mon abonnement · historique →
+          Détails et historique de mon abonnement →
         </button>
 
-        <div style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.07)' }}>
+        <div style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
           {[
             { id: 'profil', label: 'Ma page publique' },
             { id: 'catalogue', label: `Catalogue (${catalog.length})` },
           ].map(item => (
-            <button key={item.id} onClick={() => setTab(item.id)} style={{ flex: 1, minHeight: 42, borderRadius: 9, border: tab === item.id ? `1px solid ${category.color}55` : '1px solid transparent', background: tab === item.id ? `${category.color}15` : 'transparent', color: tab === item.id ? category.color : 'rgba(255,255,255,.5)', cursor: 'pointer', fontFamily: FONT, fontSize: 12.5, fontWeight: 800 }}>{item.label}</button>
+            <button key={item.id} onClick={() => setTab(item.id)} style={{ flex: 1, minHeight: 42, borderRadius: 10, border: '1px solid transparent', background: tab === item.id ? 'rgba(255,255,255,.10)' : 'transparent', color: tab === item.id ? '#fff' : 'rgba(255,255,255,.5)', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700 }}>{item.label}</button>
           ))}
         </div>
 
@@ -549,7 +570,7 @@ export default function ProposerServicesPage() {
                       const selected = providerTypes.includes(item.id)
                       return (
                         <button key={item.id} type="button" onClick={() => toggleProviderCategory(item.id)} style={{ padding: '8px 11px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: selected ? item.color : 'rgba(255,255,255,.62)', background: selected ? `${item.color}18` : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? `${item.color}88` : 'rgba(255,255,255,.12)'}` }}>
-                          {selected ? '✓ ' : ''}{item.singular}
+                          {item.singular}
                         </button>
                       )
                     })}
@@ -579,13 +600,13 @@ export default function ProposerServicesPage() {
                     })}
                   </div>
                 </Field>
-                <button onClick={handleSaveProfile} disabled={!!uploading} style={{ ...primaryButton, alignSelf: 'flex-start', opacity: uploading ? .6 : 1 }}>{uploading ? 'Envoi de l’image…' : 'Enregistrer ma page'}</button>
+                <button onClick={handleSaveProfile} disabled={!!uploading} style={{ ...primaryButton, alignSelf: 'flex-start', ...(uploading ? disabledButton : null) }}>{uploading ? <><span className="lib-spin" style={spinner} /> Envoi de l’image…</> : 'Enregistrer ma page'}</button>
               </div>
             </section>
 
             <aside style={{ ...card, overflow: 'hidden', alignSelf: 'start' }}>
               <button type="button" onClick={() => coverInputRef.current?.click()} style={{ width: '100%', height: 150, position: 'relative', display: 'block', padding: 0, border: 0, cursor: 'pointer', background: profileForm.coverUrl ? `url(${profileForm.coverUrl}) center/cover` : `linear-gradient(135deg,${category.color}55,rgba(8,10,20,.95))` }} aria-label="Modifier la photo de couverture">
-                <span style={{ position: 'absolute', right: 10, top: 10, padding: '6px 9px', borderRadius: 8, background: 'rgba(4,4,11,.75)', color: '#fff', fontFamily: FONT, fontSize: 10.5, fontWeight: 700 }}>Modifier la couverture</span>
+                <span style={{ position: 'absolute', right: 10, top: 10, padding: '6px 9px', borderRadius: 8, background: 'rgba(4,4,11,.82)', color: '#fff', fontFamily: FONT, fontSize: 11, fontWeight: 700 }}>Modifier la couverture</span>
               </button>
               <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={event => { handleImage('coverUrl', event.target.files?.[0]); event.target.value = '' }} />
               <div style={{ padding: '0 18px 19px', marginTop: -38, position: 'relative' }}>
@@ -647,7 +668,7 @@ export default function ProposerServicesPage() {
                     onRemove={index => setNewItem(current => ({ ...current, media: getOfferMedia(current).filter((_, mediaIndex) => mediaIndex !== index) }))}
                   />
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button onClick={handleAddItem} disabled={mediaUploading} style={{ ...primaryButton, opacity: mediaUploading ? .6 : 1 }}>Publier dans le catalogue</button>
+                    <button onClick={handleAddItem} disabled={mediaUploading} style={{ ...primaryButton, ...(mediaUploading ? disabledButton : null) }}>Publier dans le catalogue</button>
                     <button onClick={resetItemForm} disabled={mediaUploading} style={secondaryButton}>Annuler</button>
                   </div>
                 </div>
@@ -675,7 +696,7 @@ export default function ProposerServicesPage() {
                         onRemove={index => setEditingItem(current => { const { mediaUrl, mediaType, ...rest } = current; return { ...rest, media: getOfferMedia(current).filter((_, mediaIndex) => mediaIndex !== index) } })}
                       />
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={saveEditedItem} disabled={mediaUploading} style={{ ...primaryButton, opacity: mediaUploading ? .6 : 1 }}>Enregistrer</button>
+                        <button onClick={saveEditedItem} disabled={mediaUploading} style={{ ...primaryButton, ...(mediaUploading ? disabledButton : null) }}>Enregistrer</button>
                         <button onClick={() => setEditingItem(null)} disabled={mediaUploading} style={secondaryButton}>Annuler</button>
                       </div>
                     </div>
@@ -690,7 +711,7 @@ export default function ProposerServicesPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <h3 style={{ fontFamily: FONT, fontSize: 17, margin: 0 }}>{item.name}</h3>
-                        <span style={{ padding: '3px 7px', borderRadius: 999, fontFamily: FONT, fontSize: 9.5, fontWeight: 800, color: item.available === false ? 'rgba(255,255,255,.45)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.06)' : 'rgba(78,232,200,.08)' }}>{item.available === false ? 'Masquée' : 'Publiée'}</span>
+                        <span style={{ padding: '3px 9px', borderRadius: 8, fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'rgba(255,255,255,.5)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.07)' : 'rgba(78,232,200,.12)', border: `1px solid ${item.available === false ? 'rgba(255,255,255,.14)' : 'rgba(78,232,200,.35)'}` }}>{item.available === false ? 'Masquée' : 'Publiée'}</span>
                       </div>
                       <p style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 800, color: C.gold, margin: '6px 0 0' }}>{Number(item.price) > 0 ? `${Number(item.price).toLocaleString('fr-FR')} €${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}</p>
                       {item.description && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.46)', lineHeight: 1.5, margin: '6px 0 0' }}>{item.description}</p>}
@@ -698,7 +719,7 @@ export default function ProposerServicesPage() {
                     <div className="provider-catalog-actions" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                       <button onClick={() => toggleItem(item)} style={secondaryButton}>{item.available === false ? 'Publier' : 'Masquer'}</button>
                       <button onClick={() => setEditingItem({ ...item })} style={secondaryButton}>Modifier</button>
-                      <button onClick={() => removeItem(item)} style={{ ...secondaryButton, color: '#ff8aaa', borderColor: 'rgba(224,90,170,.28)' }}>Supprimer</button>
+                      <button onClick={() => removeItem(item)} style={{ ...secondaryButton, color: '#ff9ed2', border: '1px solid rgba(224,90,170,.55)', background: 'rgba(224,90,170,.14)' }}>Supprimer</button>
                     </div>
                   </article>
                 ))}
@@ -708,7 +729,7 @@ export default function ProposerServicesPage() {
         )}
       </main>
 
-      {toast && <div role="status" style={{ position: 'fixed', zIndex: 100, left: '50%', bottom: 84, transform: 'translateX(-50%)', maxWidth: 'calc(100vw - 32px)', padding: '11px 16px', borderRadius: 11, background: 'rgba(8,10,20,.96)', border: '1px solid rgba(200,169,110,.38)', color: '#fff', fontFamily: FONT, fontSize: 12.5, boxShadow: '0 16px 44px rgba(0,0,0,.4)' }}>{toast}</div>}
+      {toast && <div role="status" style={{ position: 'fixed', zIndex: 100, left: '50%', bottom: 84, transform: 'translateX(-50%)', maxWidth: 'calc(100vw - 32px)', padding: '11px 16px', borderRadius: 12, background: 'rgba(12,12,22,.96)', border: '1px solid rgba(200,169,110,.5)', color: '#fff', fontFamily: FONT, fontSize: 12.5, boxShadow: '0 16px 44px rgba(0,0,0,.4)' }}>{toast}</div>}
     </Layout>
   )
 }

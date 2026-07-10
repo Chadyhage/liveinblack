@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       const notif = {
         id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
         type: 'new_order',
-        title: '🎫 Nouvelle réservation',
+        title: 'Nouvelle réservation',
         body: `${Math.max(1, Number(qty) || 1)} × ${placeType || req.body?.place || 'place'} — ${ev.name || 'ton événement'}`,
         data: { eventId: String(eventId) },
         read: false,

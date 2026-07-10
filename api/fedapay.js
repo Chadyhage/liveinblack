@@ -444,7 +444,7 @@ async function finalizeProviderSubscription(db, entity, meta) {
     // Notification in-app côté prestataire (écriture directe Admin SDK).
     await pushProviderNotif(db, uid, {
       type: 'sub_renewed',
-      title: 'Abonnement renouvelé ✓',
+      title: 'Abonnement renouvelé',
       body: `Ton profil est visible pendant ${PROVIDER_SUB.periodDays} jours de plus.`,
     })
     console.log('[fedapay-webhook] abonnement prestataire prolongé:', uid, '→', new Date(renewal.subscriptionExpiresAt).toISOString())
@@ -701,6 +701,27 @@ async function finalizeFedapayBooking(db, entity) {
   const unitPrice = Math.round(Number(meta.unitPrice) || 0)
   const preorders = Array.isArray(meta.preorders) ? meta.preorders : []
 
+  // Paiement approuvé APRÈS suppression de l'événement (course « page de
+  // paiement ouverte pendant que l'organisateur supprime ») : ne JAMAIS minter
+  // de billets pour un event disparu — ils seraient invisibles côté acheteur
+  // (purge des billets fantômes au login) alors qu'il a été débité. Trace pour
+  // revue manuelle + remboursement — même patron que account_deleted_after_payment.
+  // Un event ANNULÉ garde son doc events/ → il ne passe pas par ici.
+  if (eventId) {
+    const evGuard = await db.collection('events').doc(String(eventId)).get()
+    if (!evGuard.exists) {
+      await metaRef.set({ status: 'manual_review', reviewReason: 'event_deleted_before_fulfillment', fulfillStartedAt: null }, { merge: true })
+      await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
+        provider: 'fedapay', transactionId: txnId, bookingId,
+        userId: String(userId || ''), eventId: String(eventId),
+        reason: 'event_deleted_before_fulfillment',
+        status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+      console.warn('[fedapay-webhook] paiement reçu pour un event supprimé — revue manuelle:', txnId, eventId)
+      return
+    }
+  }
+
   // ── Table entière (modèle « hôte ») : on émet `tableSeats` billets (sièges)
   // tous détenus par l'hôte, prêts à être attribués via /api/tickets. Chaque
   // siège vaut prix_table ÷ sièges (les stats de l'organisateur restent justes).
@@ -868,7 +889,7 @@ async function finalizeFedapayBooking(db, entity) {
     }
   }
 
-  // ── Crédit vendeur + points fidélité : EXACTEMENT UNE FOIS ──
+  // ── Crédit vendeur : EXACTEMENT UNE FOIS ──
   // Les FieldValue.increment ne sont pas idempotents → flag `settled` posé dans
   // la MÊME transaction : un retry après échec partiel ne peut ni doubler ni
   // sauter le crédit. Ledger amountDueXOF SÉPARÉ des centimes EUR.
@@ -886,13 +907,9 @@ async function finalizeFedapayBooking(db, entity) {
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true })
     }
-    // Points : 1/billet — sauf si le client a déjà finalisé (il se les est
-    // attribués lui-même via syncIncrement, comme sur le tunnel Stripe).
-    if (userId && !clientAlreadyFinalized) {
-      tx.set(db.collection('users').doc(userId), {
-        points: FieldValue.increment(qty),
-      }, { merge: true })
-    }
+    // Points de fidélité : AUCUN à l'achat. Le point (+1/billet) se gagne au
+    // scan à l'entrée — action 'checkin' d'api/tickets.js, créditée au
+    // titulaire courant (règle anti-abus attribution/révocation de sièges).
     tx.set(metaRef, { settled: true }, { merge: true })
     firstSettle = true
   })
@@ -910,7 +927,7 @@ async function finalizeFedapayBooking(db, entity) {
         const notif = {
           id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
           type: 'new_order',
-          title: '🎫 Nouvelle vente',
+          title: 'Nouvelle vente',
           body: `${qty} × ${placeType} — ${eventName}`,
           data: { eventId: String(eventId) },
           read: false,

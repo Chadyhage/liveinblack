@@ -447,17 +447,17 @@ export function validatePassword(pwd) {
 // ─── Role labels ──────────────────────────────────────────────────────────
 
 export const ROLES = {
-  client:       { label: 'Client',       icon: '🎫', color: '#22c55e' },
-  user:         { label: 'Client',       icon: '🎫', color: '#22c55e' },
-  prestataire:  { label: 'Prestataire',  icon: '🎤', color: '#8b5cf6' },
-  organisateur: { label: 'Organisateur', icon: '🎪', color: '#3b82f6' },
-  agent:        { label: 'Admin',        icon: '🔑', color: '#d4af37' },
+  client:       { label: 'Client',       icon: '◇', color: '#22c55e' },
+  user:         { label: 'Client',       icon: '◇', color: '#22c55e' },
+  prestataire:  { label: 'Prestataire',  icon: '✦', color: '#8b5cf6' },
+  organisateur: { label: 'Organisateur', icon: '◆', color: '#3b82f6' },
+  agent:        { label: 'Admin',        icon: '★', color: '#c8a96e' },
 }
 
 const PROVIDER_TYPE_ICONS = {
-  artiste: '🎤', salle: '🏛', materiel: '🔊', food: '🍽', photo_video: '📷',
-  decoration: '✨', securite: '🛡', transport: '🚐', staff: '👥',
-  communication: '📣', bien_etre: '♡', autre: '▦',
+  artiste: '♪', salle: '⌂', materiel: '▣', food: '✦', photo_video: '◉',
+  decoration: '✧', securite: '◈', transport: '➔', staff: '◎',
+  communication: '➤', bien_etre: '♡', autre: '▦',
 }
 
 export const PRESTATAIRE_TYPES = PROVIDER_CATEGORIES.map(category => ({

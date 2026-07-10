@@ -164,14 +164,14 @@ export default function MusicPlayer() {
       {open && (
         <div ref={panelRef} style={{
           position: 'absolute', bottom: 64, right: 0, width: 288,
-          background: 'rgba(10,10,14,0.92)', border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 22, boxShadow: '0 32px 64px -16px rgba(0,0,0,0.9)', backdropFilter: 'blur(28px)',
+          background: '#12131c', border: '1px solid rgba(255,255,255,0.10)',
+          borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
           padding: 14, animation: 'lib-pop 0.2s cubic-bezier(0.22,0.9,0.3,1)',
         }}>
           {/* En-tête */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, padding: '0 2px' }}>
-            <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 10.5, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Ambiance</span>
-            <button onClick={() => playRandom()} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 9px', borderRadius: 999, background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.3)', color: '#e05aaa', fontFamily: 'Inter, sans-serif', fontSize: 9.5, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }} className="lib-press">
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>Ambiance</span>
+            <button onClick={() => playRandom()} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.4)', color: '#e05aaa', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }} className="lib-press">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /><line x1="4" y1="4" x2="9" y2="9" /></svg>
               Au hasard
             </button>
@@ -186,7 +186,7 @@ export default function MusicPlayer() {
             padding: '12px 14px',
             borderRadius: 16,
             border: `1px solid ${accent}44`,
-            boxShadow: `0 8px 24px -4px ${accent}25`,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
             marginBottom: 12,
             overflow: 'hidden',
           }}>
@@ -212,8 +212,8 @@ export default function MusicPlayer() {
             <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
               <Vinyl size={42} color={accent} spinning={st.playing} arm />
               <div style={{ flex: 1, minWidth: 0, lineHeight: 1.15 }}>
-                <p style={{ margin: 0, fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 900, color: '#fff', letterSpacing: '0.01em' }}>{current.name}</p>
-                <p style={{ margin: '3px 0 0', fontSize: 9.5, color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter, sans-serif' }}>{st.playing ? 'En lecture…' : current.desc}</p>
+                <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: '0.01em' }}>{current.name}</p>
+                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)', fontFamily: 'Inter, sans-serif' }}>{st.playing ? 'En lecture…' : current.desc}</p>
               </div>
               <button onClick={() => toggle(current.id)} aria-label={st.playing ? 'Pause' : 'Jouer'}
                 className="lib-press"
@@ -221,7 +221,7 @@ export default function MusicPlayer() {
                   width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', border: 'none', background: accent,
-                  boxShadow: `0 0 16px ${accent}66`,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
                   transition: 'transform 0.2s',
                 }}>
                 {st.playing
@@ -243,7 +243,7 @@ export default function MusicPlayer() {
                   style={{
                     gridColumn: isLast ? '1 / span 2' : undefined,
                     borderColor: isCur ? d.color : 'rgba(255,255,255,0.06)',
-                    boxShadow: isCur ? `0 8px 20px ${d.color}25` : '0 4px 12px rgba(0,0,0,0.3)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                   }}
                 >
                   {/* Image d'ambiance de fond avec zoom au survol */}
@@ -267,8 +267,8 @@ export default function MusicPlayer() {
                   <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
                     <Vinyl size={22} color={d.color} spinning={isCur && st.playing} />
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.1 }}>
-                      <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 11.5, fontWeight: 800, color: isCur ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.01em' }}>{d.name}</span>
-                      <span style={{ fontSize: 8, color: isCur ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.3)', letterSpacing: '0.01em', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.desc}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: isCur ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.01em' }}>{d.name}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, color: isCur ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.45)', letterSpacing: '0.01em', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.desc}</span>
                     </div>
                   </div>
                 </button>
@@ -292,13 +292,13 @@ export default function MusicPlayer() {
         style={{
           position: 'relative', width: 54, height: 54, borderRadius: '50%', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center',
-          background: 'rgba(16,16,20,0.85)', backdropFilter: 'blur(14px)',
+          background: '#12131c',
           border: `1px solid ${st.playing ? accent + '66' : 'rgba(255,255,255,0.1)'}`,
-          boxShadow: st.playing ? `0 8px 28px ${accent}40, 0 0 0 1px ${accent}22` : '0 8px 24px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
           transition: 'border-color 0.3s, box-shadow 0.3s',
         }}>
         <Vinyl size={30} color={accent} spinning={st.playing} arm />
-        {st.playing && <span style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, boxShadow: `0 0 8px ${accent}`, animation: 'lib-pulse 1.4s infinite' }} />}
+        {st.playing && <span style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(0,0,0,0.4)' }} />}
       </button>
     </div>
   )
