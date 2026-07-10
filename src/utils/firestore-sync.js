@@ -462,7 +462,10 @@ function mergeBookings(local, remote) {
 // perdus chez l'hôte, copies fantômes scannables chez un invité révoqué).
 // Transaction : sièges de table = version SERVEUR conservée telle quelle
 // (dédoublonnée par ticketCode) ; billets classiques = version LOCALE (le
-// client est l'autorité de ses propres achats).
+// client est l'autorité de ses propres achats), SAUF les billets PAYÉS que
+// le serveur connaît et pas le client (mintés par le webhook Stripe/FedaPay
+// alors que le client n'est jamais revenu) : ceux-là sont préservés — un
+// cache local rassis ne doit jamais pouvoir effacer un achat payé.
 export async function syncMyBookings(uid, localItems) {
   if (!uid) return false
   const list = Array.isArray(localItems) ? localItems : []
@@ -484,7 +487,13 @@ export async function syncMyBookings(uid, localItems) {
         }
       }
       const clientItems = list.filter(it => it && !it.tableId)
-      tx.set(ref, { items: [...seatByCode.values(), ...clientItems], updatedAt: new Date().toISOString() }, { merge: true })
+      // Billets classiques payés présents côté serveur mais inconnus du cache
+      // local : préservés (même clé composite userId+ticketCode que mergeBookings).
+      const localKeys = new Set(clientItems.map(bookingMergeKey))
+      const paidServerOnly = serverItems.filter(it =>
+        it && !it.tableId && it.paid === true && !localKeys.has(bookingMergeKey(it))
+      )
+      tx.set(ref, { items: [...seatByCode.values(), ...clientItems, ...paidServerOnly], updatedAt: new Date().toISOString() }, { merge: true })
     })
     return true
   } catch (e) {
