@@ -436,11 +436,12 @@ export default function LoginPage() {
     try {
       const userData = await doEmailLogin(email, password, loginRole)
       setUser(userData)
-      // Fire-and-forget: push local data then pull Firestore
+      // Fire-and-forget — TOUJOURS tirer Firestore AVANT de pousser le cache
+      // local : un push lancé en parallèle pouvait écraser des billets payés
+      // mintés par le webhook (client jamais revenu = cache local rassis).
       import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
         syncUserProfile(userData.uid, userData)
-        pushLocalToFirestore(userData.uid).catch(() => {})
-        syncOnLogin(userData.uid).catch(() => {})
+        syncOnLogin(userData.uid).catch(() => {}).finally(() => pushLocalToFirestore(userData.uid).catch(() => {}))
       }).catch(() => {})
       const params = new URLSearchParams(location.search)
       const next = params.get('next')
@@ -515,16 +516,16 @@ export default function LoginPage() {
         setUser(cleanUser)
         import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
           syncUserProfile(cleanUser.uid, cleanUser)
-          pushLocalToFirestore(cleanUser.uid).catch(() => {})
-          syncOnLogin(cleanUser.uid).catch(() => {})
+          // Pull avant push (voir handleLogin) : ne jamais écraser l'état serveur
+          syncOnLogin(cleanUser.uid).catch(() => {}).finally(() => pushLocalToFirestore(cleanUser.uid).catch(() => {}))
         }).catch(() => {})
         navigate(userData._pendingOrgOnboarding === 'organisateur' ? '/onboarding-organisateur' : '/onboarding-prestataire')
       } else {
         setUser(userData)
         import('../utils/firestore-sync').then(({ syncOnLogin, pushLocalToFirestore, syncUserProfile }) => {
           syncUserProfile(userData.uid, userData)
-          pushLocalToFirestore(userData.uid).catch(() => {})
-          syncOnLogin(userData.uid).catch(() => {})
+          // Pull avant push (voir handleLogin) : ne jamais écraser l'état serveur
+          syncOnLogin(userData.uid).catch(() => {}).finally(() => pushLocalToFirestore(userData.uid).catch(() => {}))
         }).catch(() => {})
         navigate('/accueil')
       }
