@@ -28,6 +28,20 @@ test('un Top 2 ne devient jamais visuellement Top 1 si la première place est vi
   assert.deepEqual(result.map(item => [item.id, item.displayPosition]), [['two', 2]])
 })
 
+test('un même événement boosté sur deux positions n\'apparaît qu\'une fois (meilleure position)', () => {
+  const events = [event('star'), event('filler')]
+  const result = buildRegionalTopThree({
+    events,
+    fallbackEvents: [event('filler')],
+    boosts: [boost('star', 1), boost('star', 2)],
+    region: 'France', now: NOW,
+  })
+  // 'star' une seule fois, en position 1 ; la position 2 (redondante) revient à
+  // un fallback distinct — pas de carte dupliquée dans le podium.
+  assert.equal(result.filter(item => item.id === 'star').length, 1)
+  assert.deepEqual(result.map(item => [item.id, item.displayPosition]), [['star', 1], ['filler', 2]])
+})
+
 test('régions, accents, codes pays et casse sont normalisés', () => {
   assert.equal(normalizeBoostRegion('Bénin'), 'benin')
   assert.equal(normalizeBoostRegion('FR'), 'france')
