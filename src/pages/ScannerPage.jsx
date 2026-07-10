@@ -644,6 +644,7 @@ function ScannerInner({ myAssignments = [] }) {
     if (!eventId) return null
     const ev = await fetchEventForScan(eventId)
     if (!ev) return null
+    if (ev.cancelled === true) return { title: 'Événement annulé', sub: 'Cet événement a été annulé — billet non valide (remboursement en cours).' }
     if (isEventEnded(ev)) return { title: 'Événement terminé', sub: "Ce billet est celui d'un événement passé." }
     if (userRole === 'organisateur' && String(ev.organizerId || '') !== String(myId) && String(ev.createdBy || '') !== String(myId)) {
       return { title: 'Pas ton événement', sub: "Ce billet appartient à un événement que tu n'organises pas." }

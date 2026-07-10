@@ -334,11 +334,15 @@ async function deleteEventCascade(req, res, caller) {
 // Ferme la fraude « forger tickets/{code} {paid:false, source:'free'} pour un
 // événement payant → entrée gratuite ».
 async function ticketEntryEntitlement(db, ticket, ticketCode) {
-  if (ticket.paid === true) return { ok: true }
   const eventId = String(ticket.eventId || '')
+  const evSnap = eventId ? await db.collection('events').doc(eventId).get() : null
+  const ev = evSnap && evSnap.exists ? evSnap.data() : null
+  // Événement ANNULÉ → aucune entrée, même pour un billet payé (les QR sont
+  // désactivés dès l'annulation ; les acheteurs sont remboursés). On vérifie
+  // AVANT le raccourci paid:true.
+  if (ev && ev.cancelled === true) return { ok: false, msg: 'Événement annulé — billet non valide.' }
+  if (ticket.paid === true) return { ok: true }
   if (!eventId) return { ok: false, msg: "Billet non rattaché à un événement — entrée refusée." }
-  const evSnap = await db.collection('events').doc(eventId).get()
-  const ev = evSnap.exists ? evSnap.data() : null
   if (!ev) return { ok: false, msg: 'Événement introuvable — entrée refusée.' }
 
   if (ticket.source === 'guestlist') {
