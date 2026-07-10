@@ -496,6 +496,13 @@ async function finalizeBooking(db, session, meta) {
   if (firstSettle && meta.connectMode === 'ledger' && sellerUid && owedCents > 0) {
     console.log('[webhook] ledger vendeur crédité:', sellerUid, '+', owedCents, 'centimes')
   }
+  // Code promo : consomme les utilisations au PREMIER settlement uniquement
+  // (1 billet = 1 utilisation ; une table = 1). Best-effort : un échec ici ne
+  // bloque pas l'émission des billets (le code serait juste sous-compté).
+  if (firstSettle && meta.promoCode && eventId) {
+    const { registerPromoUse } = await import('../lib/promos.js')
+    await registerPromoUse(db, eventId, meta.promoCode, Number(meta.promoUses) || 1)
+  }
 
   // ── Notification de vente à l'organisateur (engagement) — seulement au premier
   // settle : un retry ne renotifie pas.

@@ -40,6 +40,61 @@ export default async function handler(req, res) {
 
   const { eventId, placeType, qty, action } = req.body || {}
 
+  // ─── Validation d'un code promo (UX du récap d'achat) ───────────────────────
+  // L'acheteur saisit un code → on répond valide/invalide + la définition de la
+  // réduction pour l'affichage. L'application AUTORITAIRE (prix réellement payé)
+  // se fait dans api/checkout.js / api/fedapay.js — jamais côté client. Les
+  // codes ne sont pas énumérables : il faut connaître le code exact.
+  if (action === 'validate_promo') {
+    if (!eventId) return res.status(400).json({ error: 'eventId requis' })
+    try {
+      const db = getDb()
+      const { resolvePromo, promoUnitDiscount, promoLabel } = await import('../lib/promos.js')
+      // Même quantité que le checkout : la validation UX reflète alors exactement
+      // le plafond par quantité (#69) — pas de « valide » ici puis refus au paiement.
+      const wantUses = Math.max(1, Math.min(20, Math.floor(Number(qty)) || 1))
+      const result = await resolvePromo(db, eventId, req.body?.code, wantUses)
+      if (!result.ok) return res.status(200).json({ valid: false, reason: result.reason, message: result.message })
+      const promo = result.promo
+      // Réduction par billet calculée sur le PRIX SERVEUR de la place (si fournie),
+      // pour que l'affichage du client colle exactement à ce que le checkout fera.
+      let unitDiscount = null
+      let currency = 'EUR'
+      if (placeType) {
+        const evSnap = await db.collection('events').doc(String(eventId)).get()
+        if (evSnap.exists) {
+          const ev = evSnap.data()
+          currency = String(ev.currency || '').toUpperCase() === 'XOF' ? 'XOF' : 'EUR'
+          const place = (ev.places || []).find(p => p.type === placeType)
+          if (place && place.price != null) {
+            const minor = currency === 'XOF' ? 1 : 100
+            const unitSmallest = Math.round(Number(place.price) * minor) || 0
+            const disc = promoUnitDiscount(promo, unitSmallest, minor)
+            // Un code qui rend le billet 100% gratuit n'est pas pris en charge
+            // par le paiement en ligne (minimums Stripe/mobile money) — pour
+            // offrir des places, l'organisateur utilise la guestlist.
+            if (unitSmallest > 0 && disc >= unitSmallest) {
+              return res.status(200).json({ valid: false, reason: 'free_not_supported', message: 'Ce code rend le billet gratuit — non pris en charge pour le paiement en ligne.' })
+            }
+            unitDiscount = disc
+          }
+        }
+      }
+      return res.status(200).json({
+        valid: true,
+        code: promo.code,
+        type: promo.type,
+        value: Number(promo.value) || 0,
+        label: promoLabel(promo, currency),
+        unitDiscount, // plus petite unité (centimes EUR / FCFA entiers), null si place inconnue
+        currency,
+      })
+    } catch (err) {
+      console.error('[/api/event-stock validate_promo] error:', err)
+      return res.status(500).json({ error: err.message || 'Internal error' })
+    }
+  }
+
   // ─── Notification de réservation gratuite (ex /api/notify-sale) ─────────────
   if (action === 'notify') {
     if (!eventId) return res.status(400).json({ error: 'eventId requis' })

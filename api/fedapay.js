@@ -28,6 +28,7 @@ import {
 import { requireAuth } from '../lib/verifyAuth.js'
 import { PROVIDER_SUB, computeRenewal } from '../lib/providerSubscription.js'
 import { findGroupTieForEvent, groupTieBuyMessage } from '../lib/groupTicketGuard.js'
+import { providerBillingCurrency } from '../lib/providerBillingRegion.js'
 
 // Raw body indispensable pour vérifier la signature du webhook.
 export const config = {
@@ -82,6 +83,7 @@ async function checkout(req, res, body) {
       preorderItems = [], userEmail, userName,
       bookingId,
       isTable, // achat d'une TABLE entière (place de groupe) — modèle « hôte »
+      promoCode, // code promo saisi par l'acheteur (validé et appliqué SERVEUR)
     } = body
     // Identité du payeur = TOUJOURS le token vérifié (jamais le body) : le
     // webhook s'en sert pour user_bookings, les points ET payments[uid] des
@@ -130,6 +132,28 @@ async function checkout(req, res, body) {
     }
     // Nombre de sièges de la table (0 si ce n'est pas un achat de table).
     const tableSeats = isTable ? Math.min(50, Math.max(2, Number(place.groupMax) || 2)) : 0
+
+    // ── Code promo : validé AVANT le décrément de stock, appliqué PAR BILLET
+    // sur le prix serveur (table = 1 unité au prix plein → réduction une fois).
+    // FCFA entiers (minorPerMajor = 1). Un code qui rendrait le billet gratuit
+    // est refusé (plancher mobile money) — pour offrir, guestlist. Le plafond
+    // d'utilisations est vérifié POUR CETTE QUANTITÉ (table = 1, sinon nQty) —
+    // sinon une commande de N billets viderait un code à usage limité (#69).
+    let promo = null
+    let promoUnitDiscountXOF = 0
+    if (promoCode) {
+      const { resolvePromo, promoUnitDiscount } = await import('../lib/promos.js')
+      const result = await resolvePromo(db, eventId, promoCode, isTable ? 1 : nQty)
+      if (!result.ok) return res.status(400).json({ error: result.message })
+      promo = result.promo
+      if (unitPrice > 0) {
+        promoUnitDiscountXOF = promoUnitDiscount(promo, unitPrice, 1)
+        if (promoUnitDiscountXOF >= unitPrice) {
+          return res.status(400).json({ error: 'Ce code rend le billet gratuit — non pris en charge pour le paiement en ligne.' })
+        }
+        unitPrice -= promoUnitDiscountXOF
+      }
+    }
 
     // ── Précommandes (consos) : montants entiers bornés. Comme sur le tunnel
     // Stripe v1 les prix consos viennent du client ; le montant réellement payé
@@ -269,6 +293,8 @@ async function checkout(req, res, body) {
         connectMode: 'ledger',
         // Table entière : le webhook émet `tableSeats` sièges détenus par l'hôte.
         ...(isTable ? { isTable: true, tableSeats } : {}),
+        // Code promo : le webhook incrémente usedCount au PREMIER settlement.
+        ...(promo ? { promoCode: promo.code, promoUses: isTable ? 1 : nQty, promoUnitDiscountXOF } : {}),
         status: 'pending',
         stockDecremented,
         createdAt: FieldValue.serverTimestamp(),
@@ -298,6 +324,11 @@ async function subscriptionCheckout(req, res, body) {
   try {
     const uid = caller.uid
     const db = getDb()
+    const billingSnap = await db.collection('provider_billing').doc(String(uid)).get()
+    const billing = billingSnap.exists ? billingSnap.data() : {}
+    if (!billing.regionId || providerBillingCurrency(billing.regionId) !== 'XOF') {
+      return res.status(409).json({ error: 'Ton pays de facturation utilise le paiement par carte. Ouvre les paramètres du compte si cette information est erronée.' })
+    }
     // Pas d'exigence d'un doc providers/{uid} existant : un CANDIDAT paie son
     // abonnement à la dernière étape de l'onboarding, AVANT l'approbation du
     // dossier (donc avant la création du profil annuaire). Le webhook écrit en
@@ -939,6 +970,13 @@ async function finalizeFedapayBooking(db, entity) {
   })
   if (firstSettle && sellerUid && sellerUid !== userId && owed > 0) {
     console.log('[fedapay-webhook] ledger vendeur crédité:', sellerUid, '+', owed, 'FCFA')
+  }
+  // Code promo : consomme les utilisations au PREMIER settlement uniquement
+  // (1 billet = 1 utilisation ; une table = 1). Best-effort : un échec ici ne
+  // bloque pas l'émission des billets (le code serait juste sous-compté).
+  if (firstSettle && meta.promoCode && eventId) {
+    const { registerPromoUse } = await import('../lib/promos.js')
+    await registerPromoUse(db, eventId, meta.promoCode, Number(meta.promoUses) || 1)
   }
 
   // ── Notification de vente à l'organisateur (in-app) — seulement au premier

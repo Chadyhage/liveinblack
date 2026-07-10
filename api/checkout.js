@@ -46,6 +46,7 @@ export default async function handler(req, res) {
       userEmail,
       bookingId,
       isTable, // achat d'une TABLE entière (place de groupe) — modèle « hôte »
+      promoCode, // code promo saisi par l'acheteur (validé et appliqué SERVEUR)
     } = req.body || {}
 
     if (!eventId || !eventName || !placeType || !bookingId) {
@@ -71,6 +72,28 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Cet événement se paie en FCFA (mobile money). Recharge la page pour utiliser le bon tunnel de paiement.' })
     }
 
+    // Quantité bornée (aligné sur /api/event-stock). Une table entière = 1 unité
+    // de stock (la table compte pour 1, pas groupMax). Sert aussi de nombre
+    // d'utilisations du code promo pour cette commande (#69).
+    const nQty = isTable ? 1 : Math.max(1, Math.min(20, Math.floor(Number(qty)) || 1))
+
+    // ── Code promo : validé AVANT le décrément de stock (échec rapide, rien à
+    // restocker). Le plafond d'utilisations est vérifié POUR CETTE QUANTITÉ
+    // (nQty) — sinon une commande de N billets viderait un code à usage limité
+    // (bypass #69). La réduction est calculée plus bas sur le prix SERVEUR.
+    let promo = null
+    if (promoCode) {
+      if (!db) {
+        // Sans Admin SDK on ne peut pas vérifier le code — on n'applique JAMAIS
+        // une réduction non vérifiée, et on ne facture pas plein tarif en douce.
+        return res.status(503).json({ error: 'Code promo momentanément invérifiable — réessaye dans un instant.' })
+      }
+      const { resolvePromo } = await import('../lib/promos.js')
+      const result = await resolvePromo(db, eventId, promoCode, nQty)
+      if (!result.ok) return res.status(400).json({ error: result.message })
+      promo = result.promo
+    }
+
     // ── Table entière (modèle « hôte ») : un acheteur réserve TOUTE une place de
     // groupe (carré/table) au prix plein et recevra groupMax billets à attribuer
     // à ses invités. La place doit réellement être une place de groupe (validé
@@ -93,10 +116,6 @@ export default async function handler(req, res) {
         if (tie) return res.status(409).json({ error: groupTieBuyMessage(tie) })
       }
     }
-
-    // Quantité bornée (aligné sur /api/event-stock). Une table entière = 1 unité
-    // de stock (la table compte pour 1, pas groupMax).
-    const nQty = isTable ? 1 : Math.max(1, Math.min(20, Math.floor(Number(qty)) || 1))
 
     // ── Décrément atomique du stock AVANT de créer la session Stripe ──────────
     // C'est le seul point fiable pour empêcher la survente sur le tunnel payant :
@@ -178,6 +197,21 @@ export default async function handler(req, res) {
       placeUnitCents = serverUnitCents
     }
 
+    // ── Application du code promo : réduction PAR BILLET sur le prix serveur
+    // (une table = 1 unité au prix plein → la réduction s'applique une fois).
+    // Un code qui rendrait le billet gratuit est refusé (minimum Stripe) —
+    // pour offrir des places, l'organisateur passe par la guestlist.
+    let promoUnitDiscountCents = 0
+    if (promo && placeUnitCents > 0) {
+      const { promoUnitDiscount } = await import('../lib/promos.js')
+      promoUnitDiscountCents = promoUnitDiscount(promo, placeUnitCents, 100)
+      if (promoUnitDiscountCents >= placeUnitCents) {
+        await restockOnFailure()
+        return res.status(400).json({ error: 'Ce code rend le billet gratuit — non pris en charge pour le paiement en ligne.' })
+      }
+      placeUnitCents -= promoUnitDiscountCents
+    }
+
     // Construire les line_items pour Stripe (montants en CENTIMES)
     const line_items = []
 
@@ -187,7 +221,8 @@ export default async function handler(req, res) {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: isTable ? `${eventName} — ${placeType} (table ${tableSeats} pers.)` : `${eventName} — ${placeType}`,
+            name: (isTable ? `${eventName} — ${placeType} (table ${tableSeats} pers.)` : `${eventName} — ${placeType}`)
+              + (promo ? ` — code ${promo.code}` : ''),
             ...(eventImage && eventImage.startsWith('http') ? { images: [eventImage] } : {}),
           },
           unit_amount: placeUnitCents,
@@ -304,6 +339,9 @@ export default async function handler(req, res) {
           // Table entière : le webhook émet `tableSeats` billets (sièges) tous
           // détenus par l'hôte, à attribuer ensuite via /api/tickets.
           ...(isTable ? { tableSeats: String(tableSeats), isTable: '1' } : {}),
+          // Code promo appliqué : le webhook incrémente usedCount au PREMIER
+          // settlement (1 billet = 1 utilisation ; une table = 1).
+          ...(promo ? { promoCode: promo.code, promoUses: String(isTable ? 1 : nQty), promoUnitDiscountCents: String(promoUnitDiscountCents) } : {}),
         },
         // Stripe collecte aussi le nom complet du payeur
         billing_address_collection: 'auto',

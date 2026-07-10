@@ -16,6 +16,7 @@ import Stripe from 'stripe'
 import { SUBSCRIPTION } from '../lib/fees.js'
 import { requireAuth } from '../lib/verifyAuth.js'
 import { getDb } from '../lib/firebaseAdmin.js'
+import { providerBillingCurrency } from '../lib/providerBillingRegion.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-02-25.clover' })
 
@@ -37,6 +38,7 @@ async function persistVerifiedSubscription(db, uid, session) {
     prestataireSubActive: true,
     prestataireSubStatus: subscription.status,
     prestataireSubEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+    prestataireSubRail: 'stripe',
     stripeSubscriptionId: subscription.id,
     stripeCustomerId: customerId || null,
     _syncedAt: Date.now(),
@@ -76,6 +78,12 @@ export default async function handler(req, res) {
     const userRef = db.collection('users').doc(String(uid))
     const userSnap = await userRef.get()
     const profile = userSnap.exists ? userSnap.data() : {}
+    const billingSnap = await db.collection('provider_billing').doc(String(uid)).get()
+    const billing = billingSnap.exists ? billingSnap.data() : {}
+
+    if (!billing.regionId || providerBillingCurrency(billing.regionId) !== 'EUR') {
+      return res.status(409).json({ error: 'Ton pays de facturation utilise le paiement Mobile Money. Ouvre les paramètres du compte si cette information est erronée.' })
+    }
 
     // Protection financière : ne jamais ouvrir un deuxième Checkout si un
     // abonnement actif existe déjà, même si l'interface locale est en retard.

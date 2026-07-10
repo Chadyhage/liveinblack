@@ -678,7 +678,9 @@ export default function EventDetailPage() {
       const r = await fetch('/api/event-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-        body: JSON.stringify({ action: 'validate_promo', eventId: event.id, code, placeType: selectedPlace }),
+        // qty = utilisations demandées (table = 1) → la validation reflète le
+        // plafond par quantité du code, comme le fera le checkout (#69).
+        body: JSON.stringify({ action: 'validate_promo', eventId: event.id, code, placeType: selectedPlace, qty: isGroupPlace ? 1 : ticketQty }),
       })
       const data = await r.json().catch(() => ({}))
       if (!r.ok) throw new Error(data.error || 'Vérification impossible')

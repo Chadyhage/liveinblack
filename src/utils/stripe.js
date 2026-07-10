@@ -45,6 +45,8 @@ export async function startFedapayCheckout(params) {
         userName: params.userName,
         bookingId: params.bookingId,
         ...(params.isTable ? { isTable: true } : {}),
+        // Code promo : validé et appliqué CÔTÉ SERVEUR (le client n'envoie que le code)
+        ...(params.promoCode ? { promoCode: params.promoCode } : {}),
       }),
     })
     if (!res.ok) {
