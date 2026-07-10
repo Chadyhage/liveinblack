@@ -8,10 +8,20 @@
 //   - La devise d'un événement vient de event.currency, sinon de sa région
 //     (Togo/Bénin → XOF) — miroir de lib/fees.js côté serveur.
 
+// Zone XOF/FedaPay (UEMOA). Accepte l'id de région, le code pays ou le nom.
+// Toute région FedaPay ajoutée dans src/data/regions.js est automatiquement XOF.
+const XOF_REGION_KEYS = new Set([
+  'togo', 'tg', 'benin', 'bénin', 'bj',
+  'cote-ivoire', 'côte d’ivoire', 'cote d’ivoire', "cote d'ivoire", 'ci',
+  'senegal', 'sénégal', 'sn',
+  'burkina-faso', 'burkina faso', 'bf',
+  'mali', 'ml',
+  'niger', 'ne',
+  'guinee-bissau', 'guinée-bissau', 'guinee bissau', 'gw',
+])
 export function regionToCurrency(region) {
   const r = String(region || '').trim().toLowerCase()
-  if (r === 'togo' || r === 'bénin' || r === 'benin' || r === 'tg' || r === 'bj') return 'XOF'
-  return 'EUR'
+  return XOF_REGION_KEYS.has(r) ? 'XOF' : 'EUR'
 }
 
 // Devise d'un événement (ou d'un billet/booking portant currency).

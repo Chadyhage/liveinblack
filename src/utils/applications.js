@@ -1,4 +1,5 @@
 import { normalizeRegionId } from './locations.js'
+import { regions } from '../data/regions.js'
 import { getPrimaryProviderType, normalizeProviderTypes } from './providerCategories.js'
 
 // ─── Applications / Candidatures ─────────────────────────────────────────────
@@ -445,6 +446,11 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
     // Jamais rétrograder un AGENT : écraser role:'agent' lui ferait perdre ses
     // droits admin (firestore.rules isAgent()).
     const isAgentAccount = liveDoc?.role === 'agent' || enabledRoles.includes('agent')
+    // Zone de facturation = région valide (France EUR ou zone FedaPay XOF),
+    // sinon repli France. La liste des régions valides vient de regions.js.
+    const submittedBillingRegionId = normalizeRegionId(app.formData?.pays)
+    const billingRegionId = (submittedBillingRegionId && submittedBillingRegionId !== 'international'
+      && regions.some(r => r.id === submittedBillingRegionId)) ? submittedBillingRegionId : 'france'
 
     // Permissions dérivées du formulaire
     const perms = {
@@ -488,6 +494,14 @@ export async function updateApplicationStatus(id, status, adminUid, adminName, n
     const roleResult = await syncDocAwaitable(`users/${app.uid}`, perms)
     if (!roleResult.ok) {
       throw new Error(`Échec de l'attribution du rôle (${roleResult.code || 'erreur serveur'})`)
+    }
+    if (newRole === 'prestataire') {
+      const billingResult = await syncDocAwaitable(`provider_billing/${app.uid}`, {
+        regionId: billingRegionId,
+        source: 'onboarding',
+        updatedAt: now,
+      })
+      if (!billingResult.ok) throw new Error(`Échec de l'enregistrement de la facturation (${billingResult.code || 'erreur serveur'})`)
     }
     // Local seulement après succès serveur
     updateAccount(app.uid, perms)

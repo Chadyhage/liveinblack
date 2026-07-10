@@ -18,6 +18,7 @@ import { IconMail, IconIdBadge, IconHourglass } from '../components/icons'
 import { events as staticEvents } from '../data/events'
 import { getProviderCategories, getPrimaryProviderType } from '../utils/providerCategories'
 import { includedForPlace, getTicketOrders, ORDER_SOURCE } from '../utils/eventOrders'
+import { regions } from '../data/regions'
 
 // ─── Génération carte d'accréditation (organisateur + prestataire) ───────────
 function openCredentialPDF(app, role) {
@@ -74,8 +75,10 @@ function openCredentialPDF(app, role) {
     ['Zones d\'intervention', Array.isArray(fd.zonesIntervention) && fd.zonesIntervention.length
       ? fd.zonesIntervention.map(id => ({
           'international': 'International', 'france': '🇫🇷 France',
-          'cote-divoire': "🇨🇮 Côte d'Ivoire", 'ghana': '🇬🇭 Ghana',
+          'cote-divoire': "🇨🇮 Côte d'Ivoire", 'cote-ivoire': "🇨🇮 Côte d'Ivoire", 'ghana': '🇬🇭 Ghana',
           'togo': '🇹🇬 Togo', 'benin': '🇧🇯 Bénin', 'amerique': 'Amérique',
+          'senegal': '🇸🇳 Sénégal', 'burkina-faso': '🇧🇫 Burkina Faso', 'mali': '🇲🇱 Mali',
+          'niger': '🇳🇪 Niger', 'guinee-bissau': '🇬🇼 Guinée-Bissau',
         }[id] || id)).join('  ·  ')
       : '—'],
     ['Date de validation',  approvedDate],
@@ -437,6 +440,9 @@ export default function ProfilePage() {
   const [deleteError, setDeleteError] = useState('')
   const [deleting, setDeleting] = useState(false)
 
+  // Settings — recherche (filtre les sections de réglages en direct)
+  const [settingsSearch, setSettingsSearch] = useState('')
+
   // Settings — nom du compte
   const [settingsForm, setSettingsForm] = useState({ name: user?.name || '' })
   const [settingsMsg, setSettingsMsg] = useState(null)
@@ -444,6 +450,12 @@ export default function ProfilePage() {
 
   // Settings — téléphone perso (compte, privé/opt-in)
   const [phoneForm, setPhoneForm] = useState(user?.phone || '')
+  // Année de naissance + genre : optionnels, stats démographiques organisateurs
+  // uniquement (jamais affichés publiquement, jamais un contrôle d'âge).
+  const [birthYearForm, setBirthYearForm] = useState(user?.birthYear ? String(user.birthYear) : '')
+  const [genderForm, setGenderForm] = useState(user?.gender || '')
+  const [savingDemo, setSavingDemo] = useState(false)
+  const [demoMsg, setDemoMsg] = useState(null)
   const [phoneMsg, setPhoneMsg] = useState(null)
   const [savingPhone, setSavingPhone] = useState(false)
 
@@ -456,6 +468,11 @@ export default function ProfilePage() {
   const [providerForm, setProviderForm] = useState(null) // null = pas encore chargé
   const [providerMsg, setProviderMsg] = useState(null)
   const [savingProvider, setSavingProvider] = useState(false)
+  const [billingRegionForm, setBillingRegionForm] = useState('')
+  const [billingRegionSaved, setBillingRegionSaved] = useState('')
+  const [billingRegionCanChange, setBillingRegionCanChange] = useState(false)
+  const [billingRegionMsg, setBillingRegionMsg] = useState(null)
+  const [savingBillingRegion, setSavingBillingRegion] = useState(false)
 
   // Settings — interface organisateur (nom public → organizer_profiles/{uid})
   const [orgForm, setOrgForm] = useState(null) // null = pas encore chargé
@@ -518,6 +535,16 @@ export default function ProfilePage() {
       .then(remoteUser => {
         if (remoteUser?.proPhone) setProPhoneForm(remoteUser.proPhone)
       }).catch(() => {})
+    if (user.role === 'prestataire') {
+      import('../utils/apiAuth').then(async ({ authHeaders }) => {
+        const response = await fetch('/api/provider-billing-region', { headers: await authHeaders() })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(data.error || 'Facturation indisponible')
+        setBillingRegionForm(data.billingRegionId || '')
+        setBillingRegionSaved(data.billingRegionId || '')
+        setBillingRegionCanChange(data.canChange === true)
+      }).catch(() => setBillingRegionMsg({ type: 'error', text: 'Impossible de charger le pays de facturation.' }))
+    }
     if (user.role === 'prestataire' || user.role === 'organisateur') {
       import('../utils/firestore-sync')
         .then(({ loadDoc }) => loadDoc(`providers/${uid}`))
@@ -560,17 +587,46 @@ export default function ProfilePage() {
     }
   }, [panel, user?.uid, user?.role]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function saveBillingRegion() {
+    if (!billingRegionForm || billingRegionForm === billingRegionSaved) return
+    setSavingBillingRegion(true)
+    setBillingRegionMsg(null)
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const response = await fetch('/api/provider-billing-region', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ billingRegionId: billingRegionForm }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Enregistrement impossible.')
+      setBillingRegionForm(data.billingRegionId || billingRegionForm)
+      setBillingRegionSaved(data.billingRegionId || billingRegionForm)
+      setBillingRegionCanChange(data.canChange === true)
+      setBillingRegionMsg({ type: 'success', text: 'Pays de facturation enregistré. Il est privé et ne modifie pas ta page prestataire.' })
+    } catch (error) {
+      setBillingRegionMsg({ type: 'error', text: error.message || 'Enregistrement impossible.' })
+    } finally {
+      setSavingBillingRegion(false)
+    }
+  }
+
   // ── Numéro Mobile Money d'encaissement (organisateur) ──────────────────────
-  // +228 = Togo, +229 = Bénin — les deux pays FedaPay. Vide = effacer.
+  // Zone UEMOA / FedaPay : l'indicatif (+228 Togo, +229 Bénin, +225 Côte d'Ivoire,
+  // +221 Sénégal, +226 Burkina, +223 Mali, +227 Niger, +245 Guinée-Bissau)
+  // détermine le pays du payout. Vide = effacer.
   async function savePayoutMomo() {
     const raw = payoutMomoForm.replace(/[\s.-]/g, '').trim()
-    if (raw && !/^\+22[89]\d{8}$/.test(raw)) {
-      setPayoutMsg({ type: 'error', text: 'Numéro invalide. Format attendu : +228XXXXXXXX (Togo) ou +229XXXXXXXX (Bénin), 8 chiffres après l\'indicatif.' })
+    const { momoCountryFromDial } = await import('../data/regions')
+    const country = raw ? momoCountryFromDial(raw) : null
+    // 8 à 10 chiffres après l'indicatif selon les opérateurs UEMOA.
+    if (raw && (!country || !/^\+\d{3}\d{7,10}$/.test(raw))) {
+      setPayoutMsg({ type: 'error', text: 'Numéro invalide. Utilise le format international d\'un pays FedaPay, ex. +228 90 00 00 00 (Togo), +225 07 00 00 00 00 (Côte d\'Ivoire).' })
       return
     }
     setSavingPayout(true)
     setPayoutMsg(null)
-    const payoutMomo = raw ? { number: raw, country: raw.startsWith('+228') ? 'tg' : 'bj' } : null
+    const payoutMomo = raw ? { number: raw, country } : null
     try {
       const { updateAccount } = await import('../utils/accounts')
       updateAccount(user.uid, { payoutMomo })
@@ -674,6 +730,33 @@ export default function ProfilePage() {
       setPhoneMsg({ type: 'error', text: 'Enregistrement impossible, réessaie.' })
     } finally {
       setSavingPhone(false)
+    }
+  }
+
+  // ── Année de naissance + genre → users/{uid} (stats démographiques SEULEMENT,
+  // règle produit : jamais utilisés pour autoriser/bloquer un achat 18+). ──────
+  async function saveDemographics() {
+    const birthYear = birthYearForm ? Number(birthYearForm) : null
+    if (birthYear && (birthYear < 1900 || birthYear > new Date().getFullYear() - 13)) {
+      setDemoMsg({ type: 'error', text: 'Année de naissance invalide.' })
+      return
+    }
+    setSavingDemo(true)
+    setDemoMsg(null)
+    try {
+      const uid = getUserId(user)
+      const patch = { birthYear, gender: genderForm || null }
+      const updatedUser = { ...user, ...patch }
+      setUser(updatedUser)
+      try { localStorage.setItem('lib_user', JSON.stringify(updatedUser)) } catch {}
+      updateAccount(uid, patch)
+      import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`users/${uid}`, patch)).catch(() => {})
+      setDemoMsg({ type: 'success', text: 'Infos enregistrées' })
+      setTimeout(() => setDemoMsg(null), 3000)
+    } catch {
+      setDemoMsg({ type: 'error', text: 'Enregistrement impossible, réessaie.' })
+    } finally {
+      setSavingDemo(false)
     }
   }
 
@@ -1042,6 +1125,33 @@ export default function ProfilePage() {
           : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: 'rgba(239,68,68,0.9)' }),
       }}>{msg.text}</div>
     )
+
+    // ── Recherche dans les réglages ──
+    // Filtre LOCAL et instantané : chaque section est indexée par son titre + des
+    // synonymes courants (déjà normalisés, sans accents), pour que « argent »
+    // trouve Encaissement et « password » le mot de passe. Tous les mots tapés
+    // doivent matcher (ET) — insensible à la casse et aux accents.
+    const normalizeQ = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    const settingsQ = normalizeQ(settingsSearch.trim())
+    const SETTINGS_INDEX = {
+      perso: 'informations personnelles nom prenom responsable telephone perso portable numero compte identite',
+      presta: 'interface prestataire page publique nom de page numero professionnel pro telephone annuaire catalogue photos presentation services',
+      facturation: 'facturation privee pays abonnement paiement monnaie devise billing subscription',
+      orga: 'interface organisateur page publique nom organisation numero professionnel pro telephone evenements annuaire',
+      encaissement: 'encaissement mobile money versement recette revenus argent paiement momo flooz mixx mtn numero payout banque virement',
+      visibilite: 'qui voit quoi visibilite pseudo username nom affiche public prive telephone contacts',
+      gouts: 'gouts recommandations preferences musique genres soirees suggestions accueil personnalisation',
+      confidentialite: 'confidentialite vie privee statut en ligne photo de profil numero de telephone confirmations de lecture accuse recommandations personnalisees visible bloquer',
+      email: 'adresse e-mail email mail changer verification connexion identifiant',
+      motdepasse: 'securite mot de passe password changer oublie reinitialisation lien force',
+      danger: 'zone de danger supprimer mon compte suppression fermer compte effacer donnees resilier',
+    }
+    const showSection = id => !settingsQ || settingsQ.split(/\s+/).every(w => SETTINGS_INDEX[id].includes(w))
+    const settingsMatchCount = Object.keys(SETTINGS_INDEX).filter(id => {
+      if ((id === 'presta' || id === 'facturation') && user?.role !== 'prestataire') return false
+      if ((id === 'orga' || id === 'encaissement') && user?.role !== 'organisateur') return false
+      return showSection(id)
+    }).length
     return (
       <>
       <Layout>
@@ -1051,9 +1161,57 @@ export default function ProfilePage() {
             <h2 style={S.sectionTitle}>Paramètres</h2>
           </div>
 
+          {/* ── Recherche dans les réglages ── */}
+          <div style={{ position: 'relative', margin: '4px 0 16px' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              value={settingsSearch}
+              onChange={e => setSettingsSearch(e.target.value)}
+              placeholder="Rechercher un réglage — nom, e-mail, mot de passe…"
+              aria-label="Rechercher un réglage"
+              onFocus={e => { e.target.style.borderColor = 'rgba(78,232,200,0.45)' }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.12)' }}
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '13px 44px 13px 42px',
+                borderRadius: 12, background: '#0e0f16', border: '1px solid rgba(255,255,255,0.12)',
+                color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 14,
+                outline: 'none', transition: 'border-color 0.15s',
+              }}
+            />
+            {settingsSearch && (
+              <button
+                onClick={() => setSettingsSearch('')}
+                aria-label="Effacer la recherche"
+                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            )}
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
+            {/* ── Aucune correspondance ── */}
+            {settingsQ && settingsMatchCount === 0 && (
+              <div style={{ ...S.card, textAlign: 'center', padding: '36px 20px' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.85)', margin: '0 0 6px' }}>
+                  Aucun réglage ne correspond à « {settingsSearch.trim()} »
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '0 0 18px' }}>
+                  Essaie « nom », « e-mail », « mot de passe », « confidentialité »…
+                </p>
+                <button onClick={() => setSettingsSearch('')} style={{ ...S.btnGhost, width: 'auto', display: 'inline-block', padding: '10px 22px' }}>
+                  Effacer la recherche
+                </button>
+              </div>
+            )}
+
             {/* ── Interface active : périmètre des réglages ── */}
+            {!settingsQ && (
             <div style={{ padding: '12px 16px', borderRadius: 12, background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderLeft: '3px solid #c8a96e' }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6 }}>
                 Interface active : <strong style={{ color: '#c8a96e' }}>{roleLabel}</strong>.
@@ -1063,8 +1221,10 @@ export default function ProfilePage() {
                 {(user?.enabledRoles || []).length > 1 && ' Pour gérer une autre interface, change d’interface dans le menu puis reviens ici.'}
               </p>
             </div>
+            )}
 
             {/* ── Nom ── */}
+            {showSection('perso') && (
             <div style={S.card}>
               <EyebrowLabel text="Informations personnelles" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -1120,11 +1280,45 @@ export default function ProfilePage() {
                 >
                   {savingPhone ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Enregistrement…</> : 'Enregistrer le téléphone'}
                 </button>
+
+                <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
+
+                {/* ── Année de naissance + genre (stats démographiques uniquement) ── */}
+                <div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div>
+                      <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Année de naissance</label>
+                      <select value={birthYearForm} onChange={e => setBirthYearForm(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#0b0c12', color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 14, outline: 'none', cursor: 'pointer' }}>
+                        <option value="">—</option>
+                        {Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - 13 - i).map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Genre</label>
+                      <select value={genderForm} onChange={e => setGenderForm(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#0b0c12', color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 14, outline: 'none', cursor: 'pointer' }}>
+                        <option value="">—</option>
+                        <option value="femme">Femme</option>
+                        <option value="homme">Homme</option>
+                        <option value="autre">Autre</option>
+                      </select>
+                    </div>
+                  </div>
+                  <p style={hintStyle}>Optionnel — sert uniquement aux statistiques anonymes des organisateurs. Jamais affiché sur ton profil, jamais utilisé comme contrôle d'âge.</p>
+                </div>
+                {msgBox(demoMsg)}
+                <button
+                  onClick={saveDemographics}
+                  disabled={savingDemo || (String(user?.birthYear || '') === birthYearForm && (user?.gender || '') === genderForm)}
+                  style={{ ...S.btnGold, ...((savingDemo || (String(user?.birthYear || '') === birthYearForm && (user?.gender || '') === genderForm)) ? S.btnDisabled : {}) }}
+                >
+                  {savingDemo ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Enregistrement…</> : 'Enregistrer ces infos'}
+                </button>
               </div>
             </div>
+            )}
 
             {/* ── Interface Prestataire (visible uniquement sur cette interface) ── */}
-            {user?.role === 'prestataire' && (
+            {user?.role === 'prestataire' && showSection('presta') && (
               <div style={S.card}>
                 <EyebrowLabel text="Interface Prestataire — infos publiques" />
                 {providerForm === null ? (
@@ -1166,8 +1360,38 @@ export default function ProfilePage() {
               </div>
             )}
 
+            {user?.role === 'prestataire' && showSection('facturation') && (
+              <div style={S.card}>
+                <EyebrowLabel text="Facturation — privée" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={S.inputLabel}>Pays de facturation</label>
+                    <select
+                      value={billingRegionForm}
+                      onChange={e => setBillingRegionForm(e.target.value)}
+                      disabled={!billingRegionCanChange || savingBillingRegion}
+                      style={{ width: '100%', background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', fontFamily: 'Inter, sans-serif', fontSize: '14px', color: 'rgba(255,255,255,0.92)', padding: '12px 14px', outline: 'none', boxSizing: 'border-box', opacity: !billingRegionCanChange ? 0.55 : 1 }}
+                    >
+                      <option value="">Sélectionne un pays</option>
+                      {regions.map(region => <option key={region.id} value={region.id}>{region.flag} {region.name}</option>)}
+                    </select>
+                    <p style={hintStyle}>Cette information détermine uniquement la monnaie et la méthode de paiement de ton abonnement. Elle n’est jamais affichée sur ta page prestataire.</p>
+                    {!billingRegionCanChange && <p style={{ ...hintStyle, color: 'rgba(200,169,110,.78)' }}>Le pays ne peut pas être modifié tant qu’un abonnement est actif.</p>}
+                  </div>
+                  {msgBox(billingRegionMsg)}
+                  <button
+                    onClick={saveBillingRegion}
+                    disabled={!billingRegionCanChange || savingBillingRegion || !billingRegionForm || billingRegionForm === billingRegionSaved}
+                    style={{ ...S.btnGold, ...((!billingRegionCanChange || savingBillingRegion || !billingRegionForm || billingRegionForm === billingRegionSaved) ? S.btnDisabled : {}) }}
+                  >
+                    {savingBillingRegion ? 'Enregistrement…' : 'Enregistrer le pays de facturation'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* ── Interface Organisateur (visible uniquement sur cette interface) ── */}
-            {user?.role === 'organisateur' && (
+            {user?.role === 'organisateur' && showSection('orga') && (
               <div style={S.card}>
                 <EyebrowLabel text="Interface Organisateur — infos publiques" />
                 {orgForm === null ? (
@@ -1210,7 +1434,7 @@ export default function ProfilePage() {
             )}
 
             {/* ── Encaissement des recettes (organisateur) ── */}
-            {user?.role === 'organisateur' && (
+            {user?.role === 'organisateur' && showSection('encaissement') && (
               <div style={S.card}>
                 <EyebrowLabel text="Encaissement — Mobile Money" />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -1227,8 +1451,10 @@ export default function ProfilePage() {
                       onChange={e => setPayoutMomoForm(e.target.value)}
                     />
                     <p style={hintStyle}>
-                      Togo (+228) ou Bénin (+229) — Mixx by Yas, Flooz/Moov, MTN MoMo… Ce numéro n'est
-                      jamais affiché publiquement : il sert uniquement à te verser ton argent.
+                      Numéro d'un pays FedaPay (Togo, Bénin, Côte d'Ivoire, Sénégal, Burkina, Mali,
+                      Niger, Guinée-Bissau) avec son indicatif — Mixx by Yas, Wave, Orange Money,
+                      MTN MoMo, Moov… Ce numéro n'est jamais affiché publiquement : il sert
+                      uniquement à te verser ton argent.
                     </p>
                   </div>
                   {msgBox(payoutMsg)}
@@ -1244,6 +1470,7 @@ export default function ProfilePage() {
             )}
 
             {/* ── Qui voit quoi ? ── */}
+            {showSection('visibilite') && (
             <div style={S.card}>
               <EyebrowLabel text="Qui voit quoi ?" />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1265,9 +1492,10 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
+            )}
 
             {/* ── Mes goûts (recommandations personnalisées) ── */}
-            {(() => {
+            {showSection('gouts') && (() => {
               const summary = summarizePreferences(user?.preferences)
               return (
                 <div style={S.card}>
@@ -1295,6 +1523,7 @@ export default function ProfilePage() {
             <PreferencesModal open={prefsModalOpen} onClose={() => setPrefsModalOpen(false)} user={user} setUser={setUser} />
 
             {/* ── Confidentialité ── */}
+            {showSection('confidentialite') && (
             <div style={S.card}>
               <EyebrowLabel text="Confidentialité" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -1312,8 +1541,10 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
+            )}
 
             {/* ── Adresse e-mail ── */}
+            {showSection('email') && (
             <div style={S.card}>
               <EyebrowLabel text="Adresse e-mail" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -1395,8 +1626,10 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
+            )}
 
             {/* ── Mot de passe ── */}
+            {showSection('motdepasse') && (
             <div style={S.card}>
               <EyebrowLabel text="Sécurité — Mot de passe" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -1478,8 +1711,10 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
+            )}
 
             {/* ── Zone danger ── */}
+            {showSection('danger') && (
             <div style={{ marginTop: 8 }}>
               <hr style={S.divider} />
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '16px 0 10px' }}>
@@ -1497,6 +1732,7 @@ export default function ProfilePage() {
                 Supprimer mon compte
               </button>
             </div>
+            )}
           </div>
         </div>
       </Layout>
@@ -1940,6 +2176,7 @@ export default function ProfilePage() {
             // directement sur chaque billet — pas de page séparée redondante).
             (!['organisateur', 'prestataire', 'agent'].includes(user?.role)) &&
               { label: 'Mes billets',       action: () => setPanel('billets')   },
+            { label: 'Événements intéressés', action: () => navigate('/profil/evenements-interesses') },
             { label: 'Organisateurs suivis', action: () => navigate('/profil/organisateurs-suivis') },
             user?.role === 'organisateur' &&
               { label: 'Ma page publique', action: () => navigate('/ma-page-organisateur'), gold: true },
@@ -2138,12 +2375,15 @@ function FocusInput({ label, value, onChange, type = 'text', placeholder, hasErr
 }
 
 // Patch local d'un billet dans lib_bookings (reflète l'attribution sans refresh).
+// Émet `lib:sync-complete` → la liste « Mes billets » du parent se re-rend
+// immédiatement (une place attribuée se marque/retire sans recharger la page).
 function patchLocalBooking(ticketCode, fields) {
   try {
     const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
     localStorage.setItem('lib_bookings', JSON.stringify(
       all.map(b => b.ticketCode === ticketCode ? { ...b, ...fields } : b)
     ))
+    window.dispatchEvent(new Event('lib:sync-complete'))
   } catch {}
 }
 
