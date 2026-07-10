@@ -12,7 +12,10 @@ import { startTicketCheckout } from '../utils/stripe'
 import { shareOrCopy } from '../utils/share'
 import { eventCurrency, fmtMoney } from '../utils/money'
 import { canBook, getBookingBlockedReason } from '../utils/permissions'
+import { canDJ as canDJStaff } from '../utils/eventOrders'
 import AgeVerificationModal from '../components/AgeVerificationModal'
+import Breadcrumb from '../components/Breadcrumb'
+import EventInterestButton from '../components/EventInterestButton'
 import { IconLock, IconTicket, IconCheck } from '../components/icons'
 
 // Cache séparé pour les events fetchés depuis Firestore par les visiteurs.
@@ -418,6 +421,10 @@ export default function EventDetailPage() {
   })
   const [selectedPlace, setSelectedPlace] = useState(null)
   const [djPlaylistView, setDjPlaylistView] = useState('dj') // organisateur/agent : 'dj' | 'participant'
+  // Rôle staff RÉACTIF sur cet événement (pour débloquer le panneau DJ même au
+  // cache froid). Un simple read localStorage au render n'est pas réactif : le
+  // listener global de Layout ne re-render pas cette page.
+  const [myStaffRole, setMyStaffRole] = useState(null)
   const [ticketQty, setTicketQty] = useState(1)
   const [bookingStep, setBookingStep] = useState('place') // 'place' | 'preorder' | 'confirmed'
   const [activePreorderTicket, setActivePreorderTicket] = useState(0)
@@ -445,9 +452,50 @@ export default function EventDetailPage() {
   const [conflictProceedFn, setConflictProceedFn] = useState(null)
   const [eventStartedError, setEventStartedError] = useState(false)
   const [groupLimitError, setGroupLimitError] = useState('') // règle « 1 place de groupe par compte »
+  // ── Code promo (modèle Shotgun) : saisi ici, VALIDÉ et APPLIQUÉ côté serveur
+  // (action 'validate_promo' d'api/event-stock pour l'affichage, puis
+  // api/checkout / api/fedapay pour le prix réellement payé).
+  const [promoInput, setPromoInput] = useState('')
+  const [promoOpen, setPromoOpen] = useState(false)
+  const [promoApplied, setPromoApplied] = useState(null) // { code, label, unitDiscount, currency }
+  const [promoError, setPromoError] = useState('')
+  const [promoBusy, setPromoBusy] = useState(false)
+  // La réduction est calculée sur le prix de LA place sélectionnée → changer de
+  // place invalide le code appliqué (il sera re-vérifié sur la nouvelle place).
+  useEffect(() => { setPromoApplied(null); setPromoError(''); setPromoInput(''); setPromoOpen(false) }, [selectedPlace])
   const [showAgeModal, setShowAgeModal] = useState(false)
   const [ageVerified, setAgeVerified] = useState(false)
   const [playlistTabBlink, setPlaylistTabBlink] = useState(false)
+
+  // Abonnement staff réactif → myStaffRole pour CET événement (débloque le
+  // panneau DJ même quand la fiche est ouverte au cache froid, ex. deep-link
+  // « Gérer la playlist » depuis Mes soirées sur un appareil neuf).
+  useEffect(() => {
+    const uid = getUserId(user)
+    if (!uid || !event?.id) return
+    let unsub = () => {}
+    import('../utils/eventOrders').then(({ listenMyStaffAssignments }) => {
+      unsub = listenMyStaffAssignments(uid, list => {
+        const mine = (list || []).find(a => String(a.eventId) === String(event.id))
+        setMyStaffRole(mine?.role || null)
+      })
+    }).catch(() => {})
+    return () => { try { unsub() } catch {} }
+  }, [user, event?.id])
+
+  // Deep-link ?tab=Playlist : l'onglet Playlist n'existe qu'une fois l'event
+  // résolu (hasPlaylist). Au cache froid, l'initialiseur d'activeTab s'exécute
+  // avec event=null → param ignoré. On le ré-applique dès que l'onglet devient
+  // valide, une seule fois, sans écraser un choix manuel de l'utilisateur.
+  const tabParamAppliedRef = useRef(false)
+  useEffect(() => {
+    if (tabParamAppliedRef.current) return
+    const t = searchParams.get('tab')
+    if (t && TABS.includes(t)) {
+      tabParamAppliedRef.current = true
+      setActiveTab(cur => cur === 'Réservation' ? t : cur)
+    }
+  }, [hasPlaylist]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Loading state — pendant qu'on cherche l'event sur Firestore (cas client cross-device)
   if (eventLoading) {
@@ -508,7 +556,14 @@ export default function EventDetailPage() {
   const preorderTotal = perTicketOrders.reduce((total, t) =>
     total + activeMenu.reduce((sum, item) => sum + (t.items[item.name] || 0) * item.price, 0), 0)
   // Place price × qty + preorder total (preorderTotal already sums all tickets)
-  const grandTotal = placePrice * ticketQty + preorderTotal
+  // Réduction promo (par billet, validée serveur) DÉDUITE du total : tout ce qui
+  // affiche grandTotal (bouton Payer, modal, totalPrice stocké sur la résa) doit
+  // montrer ce que Stripe/FedaPay débitera réellement. Jamais 0 : les codes 100 %
+  // sont refusés à la création ET au checkout.
+  const promoDiscountTotal = promoApplied
+    ? Math.min(placePrice * ticketQty, (promoApplied.unitDiscount / (evCur === 'XOF' ? 1 : 100)) * ticketQty)
+    : 0
+  const grandTotal = Math.max(0, placePrice * ticketQty - promoDiscountTotal) + preorderTotal
   const isAuctionPlace = selectedPlaceObj?.auctionType === 'auction'
   const currentAuctionPrice = 0
   const userCanBook = canBook(user)
@@ -603,6 +658,32 @@ export default function EventDetailPage() {
     } catch { return null }
   }
 
+  // ── Code promo : vérification serveur (jamais de liste de codes côté client).
+  // La réduction affichée vient du PRIX SERVEUR de la place — identique à ce que
+  // le checkout appliquera. Changer de place invalide le code appliqué (le
+  // montant de la réduction dépend de la place).
+  async function applyPromo() {
+    const code = promoInput.trim()
+    if (!code) return
+    if (!user) { openAuthModal('Connecte-toi pour utiliser un code promo.'); return }
+    setPromoBusy(true); setPromoError('')
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const r = await fetch('/api/event-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ action: 'validate_promo', eventId: event.id, code, placeType: selectedPlace }),
+      })
+      const data = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(data.error || 'Vérification impossible')
+      if (!data.valid) { setPromoApplied(null); setPromoError(data.message || 'Code promo invalide.') }
+      else { setPromoApplied(data); setPromoInput(''); setPromoOpen(false) }
+    } catch (e) {
+      setPromoError(e.message || 'Vérification impossible — réessaye.')
+    }
+    setPromoBusy(false)
+  }
+
   // Ouvre le résumé/paiement — mais affiche D'ABORD l'avertissement d'âge si
   // l'événement est 18+ et pas encore acquitté. But : que « Payer » n'apparaisse
   // qu'UNE SEULE fois. Avant, l'avertissement s'intercalait APRÈS un premier clic
@@ -693,7 +774,12 @@ export default function EventDetailPage() {
         eventEndTime: event.endTime,
         placeType: selectedPlace,
         qty: ticketQty,
-        unitPriceEUR: placePrice,
+        // Prix PAYÉ par billet (code promo déduit) : les billets réhydratés à
+        // /paiement-reussi portent le prix réel, aligné sur le webhook.
+        unitPriceEUR: promoApplied
+          ? Math.max(0, placePrice - promoApplied.unitDiscount / (evCur === 'XOF' ? 1 : 100))
+          : placePrice,
+        ...(promoApplied ? { promoCode: promoApplied.code } : {}),
         currency: evCur, // XOF (FedaPay) ou EUR (Stripe) — réhydraté à /paiement-reussi
         isTable: isGroupPlace, // table entière → le webhook émet tous les sièges
         preorderItems,
@@ -715,7 +801,7 @@ export default function EventDetailPage() {
         eventImage: event.imageUrl,
         placeType: selectedPlace,
         qty: ticketQty,
-        unitPriceEUR: placePrice,
+        unitPriceEUR: placePrice, // prix PLEIN — le serveur applique le code lui-même
         currency: evCur,
         isTable: isGroupPlace,
         preorderItems,
@@ -723,6 +809,8 @@ export default function EventDetailPage() {
         userEmail: user?.email,
         userName: user?.name,
         bookingId,
+        // Code promo : le serveur re-valide et applique la réduction sur SON prix
+        ...(promoApplied ? { promoCode: promoApplied.code } : {}),
       })
 
       if (!result.ok) {
@@ -953,6 +1041,17 @@ export default function EventDetailPage() {
     <Layout>
       <div style={{ position: 'relative', zIndex: 1 }}>
 
+        {/* ── Fil d'ariane + retour ──────────────────────────────────────── */}
+        <Breadcrumb
+          style={{ padding: '10px 16px' }}
+          items={[
+            { label: 'Accueil', to: '/accueil' },
+            { label: 'Événements', to: '/evenements' },
+            ...(event.city ? [{ label: `Événements à ${event.city}`, to: '/evenements' }] : []),
+            { label: event.name || 'Événement' },
+          ]}
+        />
+
         {/* ── Hero Banner ─────────────────────────────────────────────────── */}
         <div
           style={{
@@ -974,47 +1073,27 @@ export default function EventDetailPage() {
           {/* Gradient overlay */}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,5,12,1) 0%, transparent 60%)' }} />
 
-          {/* Back button */}
-          <button
-            onClick={() => navigate('/evenements')}
-            style={{
-              position: 'absolute',
-              top: 16,
-              left: 16,
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              background: 'rgba(0,0,0,0.55)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <BackIcon size={16} color="white" />
-          </button>
-
-          {/* Share button */}
-          <button
-            onClick={() => setShowShareModal(true)}
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              background: 'rgba(0,0,0,0.55)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <ShareIcon size={14} color="white" />
-          </button>
+          {/* Interest + share actions */}
+          <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <EventInterestButton event={event} floating />
+            <button
+              onClick={() => setShowShareModal(true)}
+              aria-label="Partager l'événement"
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: '50%',
+                background: 'rgba(0,0,0,0.55)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <ShareIcon size={14} color="white" />
+            </button>
+          </div>
 
           {/* Title area */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 20px' }}>
@@ -1389,10 +1468,44 @@ export default function EventDetailPage() {
                           <span style={S.rowLabel}>
                             {isAuctionPlace ? (currentAuctionPrice > 0 ? 'Enchère actuelle' : 'Prix de base') : ticketQty > 1 ? `Prix (${fmtMoney(placePrice, evCur)} × ${ticketQty})` : 'Prix'}
                           </span>
-                          <span style={{ ...S.price, fontSize: 20 }}>
+                          <span style={{ ...S.price, fontSize: 20, ...(promoApplied ? { textDecoration: 'line-through', opacity: 0.45, fontSize: 15 } : {}) }}>
                             {fmtMoney(isAuctionPlace ? (currentAuctionPrice > 0 ? currentAuctionPrice : placePrice) : placePrice * ticketQty, evCur)}
                           </span>
                         </div>
+                        {/* ── Code promo (modèle Shotgun) — validation serveur, prix final serveur ── */}
+                        {!isAuctionPlace && placePrice > 0 && (promoApplied ? (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ ...S.rowLabel, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                              Code {promoApplied.code} ({promoApplied.label})
+                              <button onClick={() => { setPromoApplied(null); setPromoError('') }} style={{ background: 'none', border: 'none', color: 'rgba(224,90,170,0.85)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, padding: 0 }}>Retirer</button>
+                            </span>
+                            <span style={{ ...S.price, fontSize: 20, color: '#4ee8c8' }}>
+                              {fmtMoney(Math.max(0, (placePrice - promoApplied.unitDiscount / (evCur === 'XOF' ? 1 : 100)) * ticketQty), evCur)}
+                            </span>
+                          </div>
+                        ) : promoOpen ? (
+                          <div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <input
+                                value={promoInput}
+                                onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError('') }}
+                                onKeyDown={e => { if (e.key === 'Enter') applyPromo() }}
+                                placeholder="TON CODE"
+                                autoFocus
+                                style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 9, border: `1px solid ${promoError ? 'rgba(224,90,170,0.55)' : 'rgba(255,255,255,0.14)'}`, background: '#0b0c12', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13, letterSpacing: '0.06em', outline: 'none', textTransform: 'uppercase' }}
+                              />
+                              <button onClick={applyPromo} disabled={promoBusy || !promoInput.trim()} style={{ padding: '10px 16px', borderRadius: 9, border: 'none', background: promoBusy || !promoInput.trim() ? 'rgba(255,255,255,0.08)' : '#3ed6b5', color: promoBusy || !promoInput.trim() ? 'rgba(255,255,255,0.35)' : '#04120e', fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 700, cursor: promoBusy ? 'wait' : 'pointer' }}>
+                                {promoBusy ? '…' : 'Appliquer'}
+                              </button>
+                            </div>
+                            {promoError && <p style={{ margin: '7px 0 0', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 12 }}>{promoError}</p>}
+                          </div>
+                        ) : (
+                          <button onClick={() => setPromoOpen(true)} style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: 'rgba(255,255,255,0.55)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a2 2 0 0 0-2 2v5.59c0 .53.21 1.04.59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l5.59-5.59a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="8.5" r="1"/></svg>
+                            Ajouter un code promo
+                          </button>
+                        ))}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={S.rowLabel}>Points fidélité</span>
                           <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#c8a96e' }}>+1 par billet scanné à l'entrée</span>
@@ -1842,12 +1955,16 @@ export default function EventDetailPage() {
           {activeTab === 'Playlist' && (() => {
             const ownerUid = event.organizerId || event.createdBy
             const myUid = user?.uid || getUserId(user)
-            const canManage = (ownerUid && (ownerUid === myUid || ownerUid === getUserId(user))) || user?.role === 'agent'
+            const isOwnerOrAgent = (ownerUid && (ownerUid === myUid || ownerUid === getUserId(user))) || user?.role === 'agent'
+            // Membre d'équipe rôle DJ (ou manager invité) : même panneau que
+            // l'organisateur. myStaffRole vient d'un listener réactif (state) —
+            // pas d'un read localStorage au render, qui restait périmé au cache froid.
+            const canManagePlaylist = isOwnerOrAgent || canDJStaff(myStaffRole)
             const hasBooking = allBookedThisSession.length > 0 || (() => { try { const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]'); return all.some(b => String(b.eventId) === String(event.id) && b.userId === (user?.uid || getUserId(user))) } catch { return false } })()
-            if (!canManage) return <PlaylistSystem event={event} booked={hasBooking} />
+            if (!canManagePlaylist) return <PlaylistSystem event={event} booked={hasBooking} />
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {/* Bascule DJ / vue participant (organisateur & agent) */}
+                {/* Bascule DJ / vue participant (organisateur, agent & DJ invité) */}
                 <div style={{ display: 'flex', gap: 6, padding: 5, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, alignSelf: 'flex-start' }}>
                   {[['dj', 'Vue DJ'], ['participant', 'Vue participant']].map(([id, label]) => {
                     const active = (djPlaylistView || 'dj') === id
@@ -1863,7 +1980,10 @@ export default function EventDetailPage() {
                 </div>
                 {(djPlaylistView || 'dj') === 'dj'
                   ? <PlaylistDJPanel event={event} />
-                  : <PlaylistSystem event={event} booked />}
+                  : /* previewCheckedIn : l'équipe voit ce qu'un participant AVEC
+                       billet scanné voit — sans ça, le champ d'ajout restait
+                       invisible en test (gate « billet scanné requis »). */
+                    <PlaylistSystem event={event} booked previewCheckedIn />}
               </div>
             )
           })()}
@@ -2424,6 +2544,11 @@ export default function EventDetailPage() {
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
                     {ticketQty} {selectedPlace}{ticketQty > 1 ? 's' : ''}{preorderTotal > 0 ? ' + précommandes' : ''}
                   </p>
+                  {promoApplied && (
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#4ee8c8', margin: '4px 0 0' }}>
+                      Code {promoApplied.code} appliqué ({promoApplied.label})
+                    </p>
+                  )}
                 </div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-1px', color: '#4ee8c8', margin: 0, whiteSpace: 'nowrap' }}>
                   {fmtMoney(grandTotal, evCur)}

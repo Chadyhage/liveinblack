@@ -5,11 +5,12 @@ import { searchUsers, getUserId } from '../utils/messaging'
 import { isEventStarted } from '../utils/event-time'
 import { IconAlert, IconTrash } from './icons'
 
-// ── Gestion de l'équipe d'un événement (mini-POS soirée) ─────────────────────
+// ── Gestion de l'équipe d'un événement ────────────────────────────────────────
 // Le manager (organisateur propriétaire ou agent) invite des membres et leur
-// attribue un rôle : « serveur » (prend/sert les commandes au bar) ou « scan »
-// (contrôle des entrées). Le manager lui-même n'est jamais dans le roster —
-// il l'est implicitement via la propriété de l'événement (getStaffRole).
+// attribue un rôle : « serveur » (prend/sert les commandes au bar), « scan »
+// (contrôle des entrées) ou « dj » (gestion de la playlist interactive).
+// Le manager lui-même n'est jamais dans le roster — il l'est implicitement via
+// la propriété de l'événement (getStaffRole).
 
 const FONT = 'Inter, sans-serif'
 const C = { teal: '#4ee8c8', gold: '#c8a96e', violet: '#8b5cf6', pink: '#e05aaa', red: 'rgba(220,100,100,0.9)' }
@@ -18,12 +19,14 @@ const C = { teal: '#4ee8c8', gold: '#c8a96e', violet: '#8b5cf6', pink: '#e05aaa'
 const INVITE_ROLES = [
   { value: STAFF_ROLES.SERVEUR, label: 'Serveur', desc: 'Prend et sert les commandes au bar', color: C.teal },
   { value: STAFF_ROLES.SCAN, label: 'Contrôle entrée', desc: 'Scanne les billets à l\'entrée', color: C.violet },
+  { value: STAFF_ROLES.DJ, label: 'DJ', desc: 'Gère la playlist interactive de la soirée', color: C.pink },
 ]
 
 const ROLE_META = {
   manager: { label: 'Manager', color: C.gold },
   serveur: { label: 'Serveur', color: C.teal },
   scan: { label: 'Contrôle entrée', color: C.violet },
+  dj: { label: 'DJ', color: C.pink },
 }
 
 function Avatar({ name, avatar, size = 38 }) {
@@ -138,8 +141,17 @@ export default function EventStaffModal({ event, user, onClose }) {
     // eventName transmis → alimente l'index inversé staff_assignments (page « Mes
     // soirées » + notification côté membre, générée par son propre client).
     const res = await addEventStaff(event.id, id, role, u.name || u.username || 'Membre', byUser, event.name)
+    if (!res.ok) { setBusy(false); notify(res.error || 'Impossible d\'ajouter ce membre.', true); return }
+    // Inviter un DJ active implicitement la playlist interactive de l'événement,
+    // sinon son bouton « Gérer la playlist » mènerait à une fiche sans onglet.
+    if (role === STAFF_ROLES.DJ && !event.playlist) {
+      try {
+        const { syncDoc } = await import('../utils/firestore-sync')
+        syncDoc(`events/${event.id}`, { playlist: true })
+        event.playlist = true // reflète localement pour la suite de la session
+      } catch {}
+    }
     setBusy(false)
-    if (!res.ok) { notify(res.error || 'Impossible d\'ajouter ce membre.', true); return }
     const roleLabel = INVITE_ROLES.find(r => r.value === role)?.label || role
     notify(`${u.name || 'Membre'} ajouté comme ${roleLabel.toLowerCase()} · il sera prévenu.`)
     setQuery('')
@@ -308,7 +320,7 @@ export default function EventStaffModal({ event, user, onClose }) {
 
               {rosterEntries.length === 0 ? (
                 <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '10px 0', lineHeight: 1.6, margin: 0 }}>
-                  Personne d'autre pour l'instant. Invite tes serveurs ci-dessus.
+                  Personne d'autre pour l'instant. Invite tes serveurs, contrôleurs d'entrée ou ton DJ ci-dessus.
                 </p>
               ) : rosterEntries.map(m => (
                 <div key={m.uid} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -330,7 +342,7 @@ export default function EventStaffModal({ event, user, onClose }) {
             </div>
 
             <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
-              Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>serveur</strong> prend et sert les commandes en mode Service du scanner. Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>contrôle entrée</strong> peut scanner les billets. Toi seul (manager) peux annuler une commande ou encaisser.
+              Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>serveur</strong> prend et sert les commandes en mode Service du scanner. Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>contrôle entrée</strong> peut scanner les billets. Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>DJ</strong> gère la playlist interactive (sons proposés, validation, en cours de lecture) — sans accès au scanner ni au bar. Toi seul (manager) peux annuler une commande ou consulter l'historique.
             </p>
           </>
         )}

@@ -24,10 +24,12 @@ export default function PlaylistDJPanel({ event }) {
   const userId = getUserId(user)
   const [songs, setSongs] = useState([])
   const [sort, setSort] = useState('likes') // likes | recent
+  const [filter, setFilter] = useState('all') // all | pending | validated | played | refused
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [preview, setPreview] = useState(null)
+  const [nowPlaying, setNowPlaying] = useState(null) // { id, title, artist, cover } — partagé avec les participants
   const [toast, setToast] = useState('')
   const [copied, setCopied] = useState(false)
   const audioRef = useRef(null)
@@ -39,6 +41,7 @@ export default function PlaylistDJPanel({ event }) {
     import('../utils/firestore-sync').then(({ listenDoc }) => {
       if (cancelled) return
       unsub = listenDoc(`event_playlists/${event.id}`, data => {
+        setNowPlaying(data?.nowPlaying || null)
         if (!Array.isArray(data?.songs)) { setSongs([]); return }
         setSongs(data.songs)
       })
@@ -57,6 +60,8 @@ export default function PlaylistDJPanel({ event }) {
     import('../utils/firestore-sync').then(({ mergeItemsById }) => {
       mergeItemsById(`event_playlists/${event.id}`, { field: 'songs', patches: [{ id: song.id, set: { status: next } }] })
     }).catch(() => {})
+    // Refuser le morceau EN COURS → retire aussi la bannière « En ce moment ».
+    if (next === 'refused' && nowPlaying?.id === song.id) stopNow()
     if (next) flash(`« ${song.title} » → ${STATUS[next].label}`)
   }
 
@@ -66,6 +71,8 @@ export default function PlaylistDJPanel({ event }) {
       mergeItemsById(`event_playlists/${event.id}`, { field: 'songs', removeIds: [song.id] })
     }).catch(() => {})
     if (preview?.title === song.title) { audioRef.current?.pause(); setPreview(null) }
+    // Supprimer le morceau en cours → pas de bannière fantôme chez les participants.
+    if (nowPlaying?.id === song.id) stopNow()
     flash(`« ${song.title} » retiré`)
   }
 
@@ -74,6 +81,26 @@ export default function PlaylistDJPanel({ event }) {
     audioRef.current?.pause()
     if (song.previewUrl) { audioRef.current = new Audio(song.previewUrl); audioRef.current.play().catch(() => {}) }
     setPreview(song)
+  }
+
+  // « Jouer maintenant » : affiche le morceau en bannière « En ce moment » chez
+  // TOUS les participants (champ nowPlaying du doc partagé) et le marque Joué.
+  function playNow(song) {
+    const np = { id: song.id, title: song.title, artist: song.artist || '', cover: song.cover || null, at: Date.now() }
+    setNowPlaying(np)
+    setSongs(prev => prev.map(s => s.id === song.id ? { ...s, status: 'played' } : s))
+    import('../utils/firestore-sync').then(({ syncDoc, mergeItemsById }) => {
+      syncDoc(`event_playlists/${event.id}`, { nowPlaying: np })
+      mergeItemsById(`event_playlists/${event.id}`, { field: 'songs', patches: [{ id: song.id, set: { status: 'played' } }] })
+    }).catch(() => {})
+    flash(`« ${song.title} » en cours — visible par la salle`)
+  }
+
+  function stopNow() {
+    setNowPlaying(null)
+    import('../utils/firestore-sync').then(({ syncDoc }) => {
+      syncDoc(`event_playlists/${event.id}`, { nowPlaying: null })
+    }).catch(() => {})
   }
 
   function doSearch(val) {
@@ -103,7 +130,10 @@ export default function PlaylistDJPanel({ event }) {
   }
 
   function exportList() {
-    const lines = ordered.map((s, i) => `${i + 1}. ${s.title} — ${s.artist}${s.status ? ` [${STATUS[s.status].label}]` : ''}`).join('\n')
+    // Export TOUJOURS la liste complète (triée), indépendamment du filtre actif —
+    // sinon un DJ qui exporte depuis « À jouer » perdait des morceaux sans le voir.
+    const full = [...songs].sort((a, b) => sort === 'likes' ? (b.likes || 0) - (a.likes || 0) : (b.id || 0) - (a.id || 0))
+    const lines = full.map((s, i) => `${i + 1}. ${s.title} — ${s.artist}${s.status ? ` [${STATUS[s.status].label}]` : ''}`).join('\n')
     const text = `Playlist — ${event.name || 'Événement'}\n\n${lines}`
     const done = () => { setCopied(true); setTimeout(() => setCopied(false), 2200) }
     try {
@@ -112,7 +142,22 @@ export default function PlaylistDJPanel({ event }) {
     } catch { done() }
   }
 
-  const ordered = [...songs].sort((a, b) => sort === 'likes' ? (b.likes || 0) - (a.likes || 0) : (b.id || 0) - (a.id || 0))
+  const filtered = songs.filter(s => {
+    if (filter === 'pending') return !s.status
+    if (filter === 'validated') return s.status === 'validated'
+    if (filter === 'played') return s.status === 'played'
+    if (filter === 'refused') return s.status === 'refused'
+    return true
+  })
+  const ordered = [...filtered].sort((a, b) => sort === 'likes' ? (b.likes || 0) - (a.likes || 0) : (b.id || 0) - (a.id || 0))
+  const stats = {
+    total: songs.length,
+    likes: songs.reduce((s, x) => s + (x.likes || 0), 0),
+    validated: songs.filter(s => s.status === 'validated').length,
+    played: songs.filter(s => s.status === 'played').length,
+    refused: songs.filter(s => s.status === 'refused').length,
+    pending: songs.filter(s => !s.status).length,
+  }
 
   const iconBtn = (color, active) => ({
     width: 34, height: 34, borderRadius: 10, flexShrink: 0, cursor: 'pointer',
@@ -140,6 +185,43 @@ export default function PlaylistDJPanel({ event }) {
         <div style={{ padding: '10px 14px', borderRadius: 12, background: 'rgba(12,12,22,0.96)', border: '1px solid rgba(78,232,200,0.5)', fontFamily: FONT, fontSize: 13.5, color: C.teal, textAlign: 'center' }}>{toast}</div>
       )}
 
+      {/* « En ce moment » — visible aussi par toute la salle (vue participant).
+          Auto-masqué 30 min après le dernier « Jouer maintenant » : si le DJ
+          oublie « Terminer » (fin de soirée), la bannière ne survit pas des jours. */}
+      {nowPlaying && (!nowPlaying.at || Date.now() - nowPlaying.at < 30 * 60 * 1000) && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
+          border: `1px solid ${C.gold}55`, background: 'linear-gradient(135deg, rgba(200,169,110,0.14), rgba(139,92,246,0.10))',
+        }}>
+          <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, background: nowPlaying.cover ? `url(${nowPlaying.cover}) center/cover` : 'rgba(255,255,255,0.06)', border: `1px solid ${C.gold}66` }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>En ce moment · affiché à la salle</p>
+            <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: '#fff', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nowPlaying.title}</p>
+            <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nowPlaying.artist}</p>
+          </div>
+          <button onClick={stopNow} title="Retirer l'affichage « En ce moment »" style={{
+            flexShrink: 0, padding: '8px 13px', borderRadius: 10, cursor: 'pointer',
+            fontFamily: FONT, fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.8)',
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)',
+          }}>Terminer</button>
+        </div>
+      )}
+
+      {/* Stats de la soirée */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {[
+          ['Proposés', stats.total, '#fff'],
+          ['Likes', stats.likes, C.teal],
+          ['À jouer', stats.validated, C.gold],
+          ['Joués', stats.played, C.violet],
+        ].map(([label, value, color]) => (
+          <div key={label} style={{ flex: 1, minWidth: 76, background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '8px 12px' }}>
+            <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>{label}</p>
+            <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 800, color, margin: '2px 0 0' }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Ajouter un son (DJ) */}
       <div>
         <div style={{ position: 'relative' }}>
@@ -162,11 +244,26 @@ export default function PlaylistDJPanel({ event }) {
         )}
       </div>
 
-      {/* Tri */}
-      <div style={{ display: 'flex', gap: 8 }}>
+      {/* Filtres par statut + tri */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        {[
+          ['all', `Tous · ${stats.total}`],
+          ['pending', `Nouveaux · ${stats.pending}`],
+          ['validated', `À jouer · ${stats.validated}`],
+          ['played', `Joués · ${stats.played}`],
+          ['refused', `Refusés · ${stats.refused}`],
+        ].map(([id, label]) => (
+          <button key={id} onClick={() => setFilter(id)} style={{
+            padding: '7px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 12, fontWeight: 700,
+            color: filter === id ? C.gold : 'rgba(255,255,255,0.5)',
+            background: filter === id ? 'rgba(200,169,110,0.12)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${filter === id ? 'rgba(200,169,110,0.45)' : 'rgba(255,255,255,0.1)'}`,
+          }}>{label}</button>
+        ))}
+        <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.12)', margin: '0 2px' }} />
         {[['likes', 'Par likes'], ['recent', 'Plus récents']].map(([id, label]) => (
           <button key={id} onClick={() => setSort(id)} style={{
-            padding: '8px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700,
+            padding: '7px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT, fontSize: 12, fontWeight: 700,
             color: sort === id ? C.teal : 'rgba(255,255,255,0.55)',
             background: sort === id ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
             border: `1px solid ${sort === id ? 'rgba(78,232,200,0.4)' : 'rgba(255,255,255,0.1)'}`,
@@ -180,8 +277,12 @@ export default function PlaylistDJPanel({ event }) {
           <div style={{ width: 56, height: 56, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(255,255,255,0.35)" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
           </div>
-          <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Aucun son proposé pour l'instant</p>
-          <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>Les propositions des participants apparaîtront ici. Tu peux aussi ajouter tes propres sons.</p>
+          <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>
+            {filter === 'all' ? 'Aucun son proposé pour l\'instant' : 'Aucun son dans ce filtre'}
+          </p>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>
+            {filter === 'all' ? 'Les propositions des participants apparaîtront ici. Tu peux aussi ajouter tes propres sons.' : 'Change de filtre pour voir les autres sons.'}
+          </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -208,6 +309,12 @@ export default function PlaylistDJPanel({ event }) {
                 </div>
                 {/* Actions DJ */}
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => playNow(song)} title="Jouer maintenant — affiché à toute la salle" style={{
+                    ...iconBtn(C.gold, nowPlaying?.id === song.id),
+                    ...(nowPlaying?.id === song.id ? {} : { background: 'rgba(200,169,110,0.16)', border: `1px solid ${C.gold}66`, color: C.gold }),
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                  </button>
                   <button onClick={() => patchStatus(song, 'validated')} title="Valider" style={iconBtn(C.teal, song.status === 'validated')}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                   </button>

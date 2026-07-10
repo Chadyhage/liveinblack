@@ -28,7 +28,10 @@ function NavIcon({ id, active, activeColor = 'var(--violet)' }) {
 }
 
 // ── Nav items per role ──────────────────────────────────────────────────────────
-function getNavItems(role) {
+// Exporté : SideMenu affiche les MÊMES onglets que la nav (sinon le menu
+// hamburger perdait les entrées propres à l'interface active — Mes Events,
+// Mon Espace, Prestataires…).
+export function getNavItems(role) {
   // Guest
   if (!role) return [
     { path: '/accueil',    label: 'Accueil' },
@@ -226,6 +229,8 @@ export default function Layout({ children, hideNav, chatMode }) {
             if (addedAtMs && Date.now() - addedAtMs < RECENT_MS) {
               const body = a.role === 'scan'
                 ? `Tu contrôles les entrées de « ${a.eventName || 'un événement'} ». Va dans « Mes soirées » pour accéder au scan.`
+                : a.role === 'dj'
+                ? `Tu es le DJ de « ${a.eventName || 'un événement'} ». Va dans « Mes soirées » pour gérer la playlist.`
                 : `Tu es serveur pour « ${a.eventName || 'un événement'} ». Va dans « Mes soirées » pour prendre les commandes.`
               createNotification(uid, 'staff_invited', 'Tu fais partie de l\'équipe', body, { eventId: k, role: a.role })
             }

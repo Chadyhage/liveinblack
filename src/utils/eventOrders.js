@@ -14,7 +14,9 @@
 // ── Rôles staff (par événement) ──────────────────────────────────────────────
 // 'manager' > 'serveur' > 'scan'. L'organisateur propriétaire et les agents
 // plateforme sont managers implicites de l'événement, sans être dans le roster.
-export const STAFF_ROLES = { SCAN: 'scan', SERVEUR: 'serveur', MANAGER: 'manager' }
+// 'dj' est HORS hiérarchie scanner/POS (rank 0 → ni scan ni service) : il gère
+// la playlist interactive de la soirée (PlaylistDJPanel via « Mes soirées »).
+export const STAFF_ROLES = { SCAN: 'scan', SERVEUR: 'serveur', MANAGER: 'manager', DJ: 'dj' }
 const ROLE_RANK = { scan: 1, serveur: 2, manager: 3 }
 
 // ── Sources d'une ligne de commande ──────────────────────────────────────────
@@ -69,6 +71,9 @@ export function getStaffRole(eventId, user, event) {
 export const canScan   = (role) => (ROLE_RANK[role] || 0) >= 1
 export const canServe  = (role) => (ROLE_RANK[role] || 0) >= 2
 export const canManage = (role) => role === 'manager'
+// La gestion de playlist est ouverte au DJ invité ET au manager (l'organisateur
+// garde la main sur sa soirée même sans DJ dédié).
+export const canDJ     = (role) => role === 'dj' || role === 'manager'
 
 // Index inversé « pour quels events suis-je staff ? » — le roster event_staff est
 // indexé PAR event (non requêtable par user). staff_assignments/{eventId__uid} est

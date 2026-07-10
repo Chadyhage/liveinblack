@@ -193,12 +193,15 @@ export default function ScannerPage() {
   // de Layout ne tourne pas ici. Sans listener LOCAL, un deep-link / appareil neuf
   // (cache lib_my_staff froid) bloquerait à tort un membre légitime, définitivement
   // (car figé). On monte donc un listener propre qui débloque dès résolution.
-  const [isStaffMember, setIsStaffMember] = useState(() => getMyStaffEvents(myId).length > 0)
+  const [myAssignments, setMyAssignments] = useState(() => getMyStaffEvents(myId))
   useEffect(() => {
     if (!myId) return
-    const unsub = listenMyStaffAssignments(myId, list => setIsStaffMember(list.length > 0))
+    const unsub = listenMyStaffAssignments(myId, list => setMyAssignments(list))
     return () => unsub()
   }, [myId])
+  // Le rôle 'dj' ne donne PAS accès au scanner : son outil est la gestion de
+  // playlist (Mes soirées → « Gérer la playlist »). Seuls scan/serveur/manager comptent.
+  const isStaffMember = myAssignments.some(a => a.role !== 'dj')
 
   // Guard: agent, organisateur, OU membre staff d'au moins un événement.
   const userRole = user?.role || user?.activeRole
@@ -213,19 +216,41 @@ export default function ScannerPage() {
       </div>
     )
   }
-  return <ScannerInner />
+  return <ScannerInner myAssignments={myAssignments} />
 }
 
-function ScannerInner() {
+function ScannerInner({ myAssignments = [] }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
   const myId = getUserId(user)
   const userRole = user?.role || user?.activeRole
 
+  // Le mode Service (POS bar) est réservé à ceux qui peuvent SERVIR : organisateur,
+  // agent, ou membre avec un rôle serveur/manager quelque part. Un « contrôle
+  // entrée » reste au scan — avant, le rôle choisi par l'organisateur ne
+  // verrouillait rien (toggle libre), il n'était que cosmétique.
+  const canUseService = userRole === 'agent' || userRole === 'organisateur'
+    || myAssignments.some(a => canServe(a.role))
+
   // Mode initial : deep-link depuis « Mes soirées » (state.mode) — un serveur arrive
   // en mode service (POS bar), un contrôle entrée en mode entrée.
-  const [scanMode, setScanMode] = useState(location.state?.mode === 'service' ? 'service' : 'entry') // 'entry' | 'service'
+  const [scanMode, setScanMode] = useState(
+    location.state?.mode === 'service' && (userRole === 'agent' || userRole === 'organisateur' || getMyStaffEvents(myId).some(a => canServe(a.role)))
+      ? 'service' : 'entry'
+  ) // 'entry' | 'service'
+  // Deep-link « service » sur un appareil au cache froid : le droit de servir
+  // n'est connu qu'à la résolution du listener → on honore l'intention initiale
+  // dès que canUseService devient vrai (une seule fois, jamais après un switch manuel).
+  const wantedServiceRef = useRef(location.state?.mode === 'service')
+  useEffect(() => {
+    // Révocation en direct : rôle serveur retiré pendant la session → mode entrée.
+    if (!canUseService && scanMode === 'service') setScanMode('entry')
+    if (canUseService && wantedServiceRef.current && scanMode === 'entry') {
+      wantedServiceRef.current = false
+      setScanMode('service')
+    }
+  }, [canUseService]) // eslint-disable-line react-hooks/exhaustive-deps
   // Événements résolus au scan (id → doc), pour recalculer le rôle en direct.
   const eventsByIdRef = useRef({})
 
@@ -675,6 +700,7 @@ function ScannerInner() {
   }
 
   function switchMode(mode) {
+    wantedServiceRef.current = false // choix manuel → on n'auto-bascule plus
     setScanMode(mode)
     setCameraActive(false)
     setResult(null); setManualCode('')
@@ -724,29 +750,37 @@ function ScannerInner() {
         <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.teal }} />
       </div>
 
-      {/* Mode toggle — segmented control */}
-      <div style={{
-        display: 'flex', margin: '14px 16px 0',
-        background: '#0e0f16',
-        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 999, padding: 4, gap: 4,
-      }}>
-        {[['entry', 'Contrôle entrée', COLORS.teal, '78,232,200'], ['service', 'Service commandes', COLORS.gold, '200,169,110']].map(([m, label, accent, rgb]) => {
-          const on = scanMode === m
-          return (
-            <button key={m} onClick={() => switchMode(m)}
-              style={{
-                flex: 1, padding: '10px 0', borderRadius: 999, cursor: 'pointer',
-                fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '.01em',
-                transition: 'all 0.2s',
-                background: on ? `rgba(${rgb},0.14)` : 'transparent',
-                border: on ? `1px solid rgba(${rgb},0.5)` : '1px solid transparent',
-                color: on ? accent : COLORS.muted,
-              }}>
-              {label}
-            </button>
-          )
-        })}
-      </div>
+      {/* Mode toggle — segmented control. « Service commandes » n'apparaît que
+          pour ceux qui peuvent servir (organisateur/agent/serveur/manager) :
+          un « contrôle entrée » n'a pas à voir le POS ni les montants du bar. */}
+      {canUseService ? (
+        <div style={{
+          display: 'flex', margin: '14px 16px 0',
+          background: '#0e0f16',
+          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 999, padding: 4, gap: 4,
+        }}>
+          {[['entry', 'Contrôle entrée', COLORS.teal, '78,232,200'], ['service', 'Service commandes', COLORS.gold, '200,169,110']].map(([m, label, accent, rgb]) => {
+            const on = scanMode === m
+            return (
+              <button key={m} onClick={() => switchMode(m)}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 999, cursor: 'pointer',
+                  fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, letterSpacing: '.01em',
+                  transition: 'all 0.2s',
+                  background: on ? `rgba(${rgb},0.14)` : 'transparent',
+                  border: on ? `1px solid rgba(${rgb},0.5)` : '1px solid transparent',
+                  color: on ? accent : COLORS.muted,
+                }}>
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: '14px 16px 0', textAlign: 'center' }}>
+          Rôle contrôle entrée — le mode Service (bar) est réservé aux serveurs et au manager.
+        </p>
+      )}
 
       <div style={{ flex: 1, padding: '16px 16px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 

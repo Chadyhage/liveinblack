@@ -121,7 +121,10 @@ function ScanIcon({ size = 32, color = 'rgba(255,255,255,0.2)' }) {
   )
 }
 
-export default function PlaylistSystem({ event, booked }) {
+// previewCheckedIn : mode APERÇU ÉQUIPE (organisateur/agent/DJ depuis la bascule
+// « Vue participant ») — simule un billet scanné pour voir ce que vit un
+// participant sur place, sinon le champ d'ajout reste invisible en test.
+export default function PlaylistSystem({ event, booked, previewCheckedIn = false }) {
   const { user } = useAuth()
   const userId = getUserId(user)
 
@@ -153,11 +156,14 @@ export default function PlaylistSystem({ event, booked }) {
     try { return parseInt(localStorage.getItem(likesKey)) || 0 } catch { return 0 }
   }
 
-  const ticketCount = loadTicketCount()
+  // Aperçu équipe : au moins 1 proposition même sans billet, sinon le champ
+  // d'ajout resterait invisible (quota 0/0) et l'aperçu ne montrerait rien.
+  const ticketCount = previewCheckedIn ? Math.max(1, loadTicketCount()) : loadTicketCount()
 
   // Vérifie si au moins un billet de l'utilisateur a été scanné (checkedInAt)
-  const [isCheckedIn, setIsCheckedIn] = useState(false)
+  const [isCheckedInReal, setIsCheckedIn] = useState(false)
   const [checkInLoading, setCheckInLoading] = useState(true)
+  const isCheckedIn = previewCheckedIn || isCheckedInReal
 
   useEffect(() => {
     if (!booked || !event?.id || !userId) { setCheckInLoading(false); return }
@@ -200,6 +206,7 @@ export default function PlaylistSystem({ event, booked }) {
   const [preview, setPreview] = useState(null)
   const [message, setMessage] = useState('')
   const [tab, setTab] = useState('top') // top | mine | rules
+  const [nowPlaying, setNowPlaying] = useState(null) // { id, title, artist, cover } — posé par le DJ
   const audioRef = useRef(null)
   const debounceRef = useRef(null)
 
@@ -215,12 +222,23 @@ export default function PlaylistSystem({ event, booked }) {
     import('../utils/firestore-sync').then(({ listenDoc }) => {
       if (cancelled) return
       unsubscribe = listenDoc(`event_playlists/${event.id}`, data => {
+        // « En ce moment » : posé/retiré par le DJ (PlaylistDJPanel)
+        setNowPlaying(data?.nowPlaying || null)
         if (!Array.isArray(data?.songs)) return
         const remoteSongs = [...data.songs].sort((a, b) => (b.likes || 0) - (a.likes || 0))
         // myLike est un état PERSONNEL (jamais écrit dans le doc partagé) :
         // on le réapplique depuis l'état local au moment du merge distant.
         setSongsState(prev => {
-          const merged = remoteSongs.map(s => ({ ...s, myLike: prev.find(p => String(p.id) === String(s.id))?.myLike || false }))
+          // Remboursement de like : un son que J'AI liké et que le DJ vient de
+          // REFUSER sort du Top (seul endroit où je peux dé-liker) → sans ça mon
+          // budget de likes reste amputé toute la soirée. On me rend le like.
+          let refund = 0
+          const merged = remoteSongs.map(s => {
+            const wasLiked = prev.find(p => String(p.id) === String(s.id))?.myLike || false
+            if (wasLiked && s.status === 'refused') { refund++; return { ...s, myLike: false } }
+            return { ...s, myLike: wasLiked }
+          })
+          if (refund > 0) setLikesUsed(l => Math.max(0, l - refund))
           try { localStorage.setItem(songsKey, JSON.stringify(merged)) } catch {}
           return merged
         })
@@ -241,6 +259,10 @@ export default function PlaylistSystem({ event, booked }) {
     })
   }
   function incrementSongsAdded() {
+    // Aperçu équipe : on ne consomme PAS le quota réel du compte (le staff seede
+    // / teste, il ne « participe » pas — sinon son futur quota de participant
+    // serait entamé par les tests).
+    if (previewCheckedIn) return
     const next = songsAdded + 1
     setSongsAddedState(next)
     try { localStorage.setItem(addedKey, String(next)) } catch {}
@@ -371,7 +393,9 @@ export default function PlaylistSystem({ event, booked }) {
     setTimeout(() => setMessage(''), 3500)
   }
 
-  const sortedSongs = [...songs].sort((a, b) => b.likes - a.likes)
+  // Les sons REFUSÉS par le DJ sortent du classement public (ils restent
+  // visibles dans « Mes sons » de leur auteur, avec le badge Refusé).
+  const sortedSongs = [...songs].filter(s => s.status !== 'refused').sort((a, b) => b.likes - a.likes)
   const mySongs = songs.filter((s) => s.userId && s.userId === userId)
   const likesLeft = Math.max(0, MAX_LIKES_PER_USER - likesUsed)
 
@@ -412,6 +436,7 @@ export default function PlaylistSystem({ event, booked }) {
             <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 15.5, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
             {song.status === 'validated' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.teal, background: `${C.teal}1f`, border: `1px solid ${C.teal}55`, borderRadius: 8, padding: '3px 8px' }}>Validé</span>}
             {song.status === 'played' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.violet, background: `${C.violet}1f`, border: `1px solid ${C.violet}55`, borderRadius: 8, padding: '3px 8px' }}>Joué</span>}
+            {song.status === 'refused' && <span style={{ flexShrink: 0, fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: C.pink, background: `${C.pink}1f`, border: `1px solid ${C.pink}55`, borderRadius: 8, padding: '3px 8px' }}>Refusé par le DJ</span>}
           </div>
           <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {song.artist}
@@ -498,6 +523,38 @@ export default function PlaylistSystem({ event, booked }) {
           ))}
         </div>
       </div>
+
+      {/* Aperçu équipe : rappel que le vrai participant doit avoir scanné son billet */}
+      {previewCheckedIn && (
+        <div style={{ padding: '9px 13px', borderRadius: 10, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.08)', fontFamily: FONT, fontSize: 12, color: C.gold }}>
+          Aperçu équipe — les participants, eux, doivent avoir leur billet scanné à l'entrée pour proposer un son.
+        </div>
+      )}
+
+      {/* « En ce moment » — le morceau que le DJ vient de lancer (auto-masqué
+          30 min après, pour ne pas afficher un morceau fantôme après la soirée). */}
+      {nowPlaying && (!nowPlaying.at || Date.now() - nowPlaying.at < 30 * 60 * 1000) && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
+          border: `1px solid ${C.gold}55`, background: 'linear-gradient(135deg, rgba(200,169,110,0.14), rgba(139,92,246,0.10))',
+        }}>
+          <div style={{
+            width: 46, height: 46, borderRadius: 10, flexShrink: 0,
+            background: nowPlaying.cover ? `url(${nowPlaying.cover}) center/cover` : 'rgba(255,255,255,0.06)',
+            border: `1px solid ${C.gold}66`,
+          }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>En ce moment</p>
+            <p style={{ fontFamily: FONT, fontSize: 15.5, fontWeight: 800, color: '#fff', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nowPlaying.title}</p>
+            <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nowPlaying.artist}</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 20, flexShrink: 0 }}>
+            {[0, 1, 2].map(i => (
+              <div key={i} style={{ width: 3, height: 8, background: C.gold, borderRadius: 2, animation: `lbBar${(i % 3) + 1} 0.6s ease-in-out ${i * 0.12}s infinite alternate` }} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -695,8 +752,9 @@ export default function PlaylistSystem({ event, booked }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {mySongs.map((song) => {
-                  const rank = sortedSongs.findIndex((s) => s.id === song.id) + 1
-                  return <SongRow key={song.id} song={song} rank={rank} canDelete />
+                  // Un son refusé n'est plus classé (absent du Top) → pas de rang.
+                  const idx = sortedSongs.findIndex((s) => s.id === song.id)
+                  return <SongRow key={song.id} song={song} rank={idx >= 0 ? idx + 1 : null} canDelete />
                 })}
               </div>
             )}

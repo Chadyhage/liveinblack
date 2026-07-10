@@ -18,6 +18,7 @@ const ROLE_META = {
   serveur: { label: 'Serveur', color: C.teal, desc: 'Prends et sers les commandes au bar' },
   scan:    { label: 'Contrôle entrée', color: C.violet, desc: 'Scanne les billets à l\'entrée' },
   manager: { label: 'Manager', color: C.gold, desc: 'Gestion complète de la soirée' },
+  dj:      { label: 'DJ', color: '#e05aaa', desc: 'Gère la playlist interactive de la soirée' },
 }
 
 // Récupère les détails (date/lieu) d'un event — best-effort Firestore.
@@ -82,7 +83,7 @@ function StaffEventCard({ assignment, onOpen }) {
         background: meta.color,
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
       }}>
-        {assignment.role === 'scan' ? 'Ouvrir le scan des entrées' : 'Ouvrir le POS bar'}
+        {assignment.role === 'dj' ? 'Gérer la playlist' : assignment.role === 'scan' ? 'Ouvrir le scan des entrées' : 'Ouvrir le POS bar'}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
     </div>
@@ -103,6 +104,11 @@ export default function MesSoireesPage() {
   }, [uid])
 
   function openPos(assignment) {
+    // DJ → gestion de la playlist sur la fiche événement (pas de scanner/POS).
+    if (assignment.role === 'dj') {
+      navigate(`/evenements/${assignment.eventId}?tab=Playlist`)
+      return
+    }
     // Le scanner démarre en mode service (POS bar) pour un serveur, en mode entrée
     // pour un contrôle entrée. Il devra scanner un billet pour ouvrir un onglet.
     navigate('/scanner', { state: { mode: assignment.role === 'scan' ? 'entry' : 'service', eventId: assignment.eventId } })
@@ -128,7 +134,7 @@ export default function MesSoireesPage() {
               {loaded ? 'Aucune soirée pour l\'instant' : 'Chargement…'}
             </p>
             <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 340, lineHeight: 1.55 }}>
-              Quand un organisateur t'ajoute à l'équipe d'une soirée (serveur ou contrôle entrée), elle apparaît ici.
+              Quand un organisateur t'ajoute à l'équipe d'une soirée (serveur, contrôle entrée ou DJ), elle apparaît ici.
             </p>
           </div>
         ) : (

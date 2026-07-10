@@ -340,7 +340,11 @@ async function checkinTicket(req, res, caller) {
       if (!allowed) {
         const sSnap = await db.collection('event_staff').doc(eventId).get()
         const roster = sSnap.exists ? (sSnap.data().roster || {}) : {}
-        if (roster[caller.uid]) allowed = true
+        // Le rôle 'dj' ne donne PAS accès au contrôle d'entrée (son outil est la
+        // playlist) : sinon un DJ pouvait griller des billets à distance et
+        // farmer les points fidélité. Seuls scan / serveur / manager valident.
+        const entry = roster[caller.uid]
+        if (entry && entry.role !== 'dj') allowed = true
       }
     }
     if (!allowed) {

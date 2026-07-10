@@ -73,6 +73,14 @@ service cloud.firestore {
       allow delete: if isAgent();
     }
 
+    // Pays de facturation prestataire : document séparé de users/{uid}, car les
+    // profils de compte sont lisibles par les contacts connectés. Cette donnée ne
+    // doit jamais rejoindre les collections publiques providers/ ou catalogues/.
+    match /provider_billing/{uid} {
+      allow read: if isOwner(uid) || isAgent();
+      allow write: if isAgent();
+    }
+
     // ── Applications / candidatures ────────────────────────────────────────────
     match /applications/{id} {
       allow read, write: if isSignedIn() && (
@@ -142,10 +150,38 @@ service cloud.firestore {
           || request.auth.uid in data.get('participantIds', []);
     }
 
+    // Groupes : la liste d'admins et les sourdines sont des données de
+    // modération. Une heure d'expiration est stockée en Timestamp afin que la
+    // comparaison se fasse avec l'heure serveur, jamais avec l'horloge client.
+    function isGroupAdmin(data) {
+      return data.get('type', '') == 'group'
+          && request.auth.uid in data.get('adminIds', []);
+    }
+
+    function isMutedGroupMember(data) {
+      let mutes = data.get('memberMutes', {});
+      let mute = mutes.get(request.auth.uid, {});
+      return data.get('type', '') == 'group'
+          && mutes.keys().hasAny([request.auth.uid])
+          && mute.get('untilAt', request.time) is timestamp
+          && mute.get('untilAt', request.time) > request.time;
+    }
+
+    function canUpdateConversation(before, after) {
+      // Les membres continuent à mettre à jour le dernier message. En revanche,
+      // seuls les admins peuvent changer les droits d'administration ou les
+      // sanctions temporaires, ce qui empêche un membre de se réactiver seul.
+      return before.get('type', '') != 'group'
+          || isGroupAdmin(before)
+          || !after.diff(before).affectedKeys().hasAny(['adminIds', 'memberMutes']);
+    }
+
     match /conversations/{id} {
       allow read:   if isSignedIn() && (isMemberOf(resource.data) || isAgent());
       allow create: if isSignedIn() && isMemberOf(request.resource.data);
-      allow update, delete: if isSignedIn() && (isMemberOf(resource.data) || isAgent());
+      allow update: if isSignedIn() && (isMemberOf(resource.data) || isAgent())
+          && (isAgent() || canUpdateConversation(resource.data, request.resource.data));
+      allow delete: if isSignedIn() && (isMemberOf(resource.data) || isAgent());
     }
 
     // conv_messages/{convId} : l'ID du doc = l'ID de la conversation.
@@ -155,7 +191,8 @@ service cloud.firestore {
     match /conv_messages/{convId} {
       allow read, write: if isSignedIn() && (
         !exists(/databases/$(database)/documents/conversations/$(convId)) ||
-        isMemberOf(get(/databases/$(database)/documents/conversations/$(convId)).data) ||
+        (isMemberOf(get(/databases/$(database)/documents/conversations/$(convId)).data)
+          && !isMutedGroupMember(get(/databases/$(database)/documents/conversations/$(convId)).data)) ||
         isAgent()
       );
     }
@@ -224,10 +261,30 @@ service cloud.firestore {
       allow read, write: if isOwner(uid) || isAgent();
     }
 
-    // ── Playlists événements (lecture publique, écriture = participants connectés) ──
+    // ── Playlists événements (lecture publique) ────────────────────────────────
+    // Modération réservée au DJ / organisateur / agent. Le champ `nowPlaying`
+    // (bannière « En ce moment » diffusée à TOUTE la salle) ne peut être écrit
+    // que par eux : sinon n'importe quel connecté défigurait la soirée en direct.
+    // Un participant peut toujours proposer/liker des sons (le tableau `songs`
+    // n'est pas inspectable élément par élément par les règles), mais jamais
+    // toucher nowPlaying.
+    function isPlaylistManager(eventId) {
+      return isEventOwnerOf(eventId) || isAgent() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/staff_assignments/$(eventId + '__' + request.auth.uid)) &&
+        get(/databases/$(database)/documents/staff_assignments/$(eventId + '__' + request.auth.uid)).data.role == 'dj'
+      );
+    }
     match /event_playlists/{id} {
       allow read: if true;
-      allow write: if isSignedIn();
+      // Création : tout connecté (1er son), mais sans poser nowPlaying.
+      allow create: if isSignedIn() && !('nowPlaying' in request.resource.data);
+      // MAJ : le manager peut tout ; les autres ne peuvent pas toucher nowPlaying.
+      allow update: if isSignedIn() && (
+        isPlaylistManager(id) ||
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['nowPlaying'])
+      );
+      allow delete: if isPlaylistManager(id);
     }
 
     // ── Boosts ────────────────────────────────────────────────────────────────
@@ -307,6 +364,32 @@ service cloud.firestore {
       allow read, write: if isOwner(uid) || isAgent();
     }
 
+    // ── Index inversé des abonnés (e-mails « nouvel événement ») ───────────────
+    // organizer_subscribers/{organizerId}__{uid} = { organizerId, uid, newEventEmail }.
+    // Écrit par l'ABONNÉ lui-même (id verrouillé sur son uid). L'organisateur ne
+    // peut PAS lire la liste nominative de ses abonnés : seul le serveur (Admin
+    // SDK, api/send-email type new_event_followers) la parcourt pour envoyer les
+    // e-mails. L'adresse
+    // e-mail n'est pas stockée ici (résolue côté serveur depuis Firebase Auth).
+    match /organizer_subscribers/{id} {
+      allow read: if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create, update: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && id == request.resource.data.organizerId + '__' + request.auth.uid;
+      allow delete: if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
+    }
+    // event_notifications/{eventId} : flag d'idempotence des envois d'e-mails —
+    // serveur uniquement (aucune règle = accès refusé au client, c'est voulu).
+
+    // ── Codes promo par événement ───────────────────────────────────────────────
+    // event_promos/{eventId} = { items: [{ code, type, value, maxUses, usedCount,
+    // expiresAt, active }] }. SEUL l'organisateur (ou un agent) lit/écrit la liste :
+    // un acheteur ne peut pas énumérer les codes — il en saisit un et le serveur
+    // (api/event-stock action 'validate_promo', puis checkout/fedapay) le valide.
+    match /event_promos/{eventId} {
+      allow read, write: if isEventOwnerOf(eventId) || isAgent();
+    }
+
     match /organizer_slugs/{slug} {
       allow read: if true;
       allow create: if isAgent() || (isSignedIn() && request.resource.data.organizerId == request.auth.uid);
@@ -345,6 +428,35 @@ service cloud.firestore {
     match /catalogs/{uid} {
       allow read:  if true;
       allow write: if isOwner(uid) || isAgent();
+    }
+
+    // ── Avis clients sur les prestataires ─────────────────────────────────────
+    // provider_reviews/{providerId__authorUid} — écrits UNIQUEMENT par le
+    // serveur (api/provider-reviews, Admin SDK) : note, statut et badge
+    // « vérifié » ne sont jamais forgés côté client. Lecture : les avis PUBLIÉS
+    // sont publics (la page prestataire est publique) ; un avis masqué reste
+    // lisible par son auteur, le prestataire concerné et les agents (dashboards).
+    match /provider_reviews/{id} {
+      allow read: if resource.data.status == 'published'
+        || (isSignedIn() && resource.data.authorId == request.auth.uid)
+        || (isSignedIn() && resource.data.providerId == request.auth.uid)
+        || isAgent();
+      allow write: if false;
+    }
+
+    // Signalements d'avis — l'identité du signaleur ne doit JAMAIS être visible
+    // du prestataire ni de l'auteur (risque de représailles) : lecture agent
+    // uniquement, écriture serveur uniquement (api/provider-reviews 'report').
+    match /provider_review_reports/{id} {
+      allow read:  if isAgent();
+      allow write: if false;
+    }
+
+    // Journal d'audit des actions admin (modération d'avis…) — écrit par le
+    // serveur, consulté par les agents.
+    match /admin_audit/{id} {
+      allow read:  if isAgent();
+      allow write: if false;
     }
 
     // ── Paiements d'abonnement prestataire (historique) ───────────────────────
@@ -417,7 +529,7 @@ service cloud.firestore {
       allow create, update: if isAgent() || (
         isEventOwnerOf(request.resource.data.eventId) &&
         id == request.resource.data.eventId + '__' + request.resource.data.uid &&
-        request.resource.data.role in ['scan', 'serveur', 'manager'] &&
+        request.resource.data.role in ['scan', 'serveur', 'manager', 'dj'] &&
         request.resource.data.uid in get(/databases/$(database)/documents/event_staff/$(request.resource.data.eventId)).data.roster
       );
       allow delete: if isAgent() || isEventOwnerOf(resource.data.eventId);
