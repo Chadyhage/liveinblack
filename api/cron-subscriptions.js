@@ -1,13 +1,15 @@
-// Cron quotidien — abonnements prestataires FCFA (renouvellement manuel).
-// NE PRÉLÈVE JAMAIS d'argent. Il se contente de :
-//   1. envoyer les rappels (J-7 / J-3 / J-1 / jour J / grâce / masqué),
-//   2. mettre à jour le statut dérivé des dates,
-//   3. masquer le profil (subscriptionActive=false) une fois la grâce terminée.
+// Cron quotidien — deux missions :
+//   A. Abonnements prestataires FCFA (rappels J-7/J-3/J-1/J0/grâce, statut,
+//      masquage) — ne prélève JAMAIS d'argent.
+//   B. VERSEMENTS AUTOMATIQUES aux organisateurs (lib/eventPayouts.js) :
+//      événement terminé → Payout FedaPay de la recette (total − frais) vers
+//      leur mobile money. Échec → payment_alert (filet admin Reversements).
 // Déclenché par Vercel Cron (voir vercel.json). Sécurisé par CRON_SECRET :
 // Vercel ajoute automatiquement `Authorization: Bearer $CRON_SECRET`.
 
 import { getDb, FieldValue } from '../lib/firebaseAdmin.js'
 import { deriveSubStatus, dueReminders, cycleKey, PROVIDER_SUB } from '../lib/providerSubscription.js'
+import { processEventPayouts } from '../lib/eventPayouts.js'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -127,7 +129,20 @@ export default async function handler(req, res) {
     }
 
     console.log(`[cron-subs] scanned=${scanned} reminders=${reminders} emails=${emails} hidden=${hidden}`)
-    return res.status(200).json({ ok: true, scanned, reminders, emails, hidden })
+
+    // ── B. Versements automatiques des recettes (fin d'événement) ──
+    // Isolé : un échec de versement ne doit pas faire échouer les rappels
+    // d'abonnement (et inversement — d'où le try/catch dédié).
+    let payouts = null
+    try {
+      payouts = await processEventPayouts(db, now)
+      console.log('[cron-payouts]', JSON.stringify(payouts))
+    } catch (e) {
+      console.error('[cron-payouts] error:', e)
+      payouts = { error: e.message }
+    }
+
+    return res.status(200).json({ ok: true, scanned, reminders, emails, hidden, payouts })
   } catch (err) {
     console.error('[cron-subs] error:', err)
     return res.status(500).json({ error: err.message || 'cron error' })

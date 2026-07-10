@@ -462,6 +462,13 @@ export default function ProfilePage() {
   const [orgMsg, setOrgMsg] = useState(null)
   const [savingOrg, setSavingOrg] = useState(false)
 
+  // Settings — ENCAISSEMENT organisateur : numéro Mobile Money où le versement
+  // AUTOMATIQUE de la recette part à la fin de chaque événement (users.payoutMomo,
+  // lu par le cron lib/eventPayouts.js). Jamais public.
+  const [payoutMomoForm, setPayoutMomoForm] = useState(user?.payoutMomo?.number || '')
+  const [payoutMsg, setPayoutMsg] = useState(null)
+  const [savingPayout, setSavingPayout] = useState(false)
+
   // Settings — changement d'e-mail (flux avec vérification)
   const [emailForm, setEmailForm] = useState({ newEmail: '', password: '' })
   const [emailMsg, setEmailMsg] = useState(null)
@@ -543,8 +550,42 @@ export default function ProfilePage() {
           else setOrgForm(f => f || { publicName: '' })
         })
         .catch(() => setOrgForm(f => f || { publicName: '' }))
+      // Numéro d'encaissement : la vérité est users/{uid}.payoutMomo (cross-device).
+      setPayoutMomoForm(user?.payoutMomo?.number || '')
+      import('../utils/firestore-sync')
+        .then(({ loadDoc }) => loadDoc(`users/${uid}`))
+        .then(remoteUser => {
+          if (remoteUser?.payoutMomo?.number) setPayoutMomoForm(remoteUser.payoutMomo.number)
+        }).catch(() => {})
     }
   }, [panel, user?.uid, user?.role]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Numéro Mobile Money d'encaissement (organisateur) ──────────────────────
+  // +228 = Togo, +229 = Bénin — les deux pays FedaPay. Vide = effacer.
+  async function savePayoutMomo() {
+    const raw = payoutMomoForm.replace(/[\s.-]/g, '').trim()
+    if (raw && !/^\+22[89]\d{8}$/.test(raw)) {
+      setPayoutMsg({ type: 'error', text: 'Numéro invalide. Format attendu : +228XXXXXXXX (Togo) ou +229XXXXXXXX (Bénin), 8 chiffres après l\'indicatif.' })
+      return
+    }
+    setSavingPayout(true)
+    setPayoutMsg(null)
+    const payoutMomo = raw ? { number: raw, country: raw.startsWith('+228') ? 'tg' : 'bj' } : null
+    try {
+      const { updateAccount } = await import('../utils/accounts')
+      updateAccount(user.uid, { payoutMomo })
+      const { syncDocAwaitable } = await import('../utils/firestore-sync')
+      const result = await syncDocAwaitable(`users/${user.uid}`, { payoutMomo })
+      if (!result.ok) throw new Error(result.error || 'sync')
+      if (setUser) setUser({ ...user, payoutMomo })
+      setPayoutMsg({ type: 'success', text: raw
+        ? 'Numéro enregistré. Tes recettes partiront automatiquement sur ce Mobile Money à la fin de chaque événement.'
+        : 'Numéro effacé — tes recettes seront mises en attente jusqu\'à ce que tu en enregistres un.' })
+    } catch (e) {
+      setPayoutMsg({ type: 'error', text: 'Enregistrement impossible — vérifie ta connexion et réessaie.' })
+    }
+    setSavingPayout(false)
+  }
 
   // ── Name change cooldown (1 fois toutes les 2 semaines) ──
   const NAME_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000 // 14 jours
@@ -1168,6 +1209,40 @@ export default function ProfilePage() {
               </div>
             )}
 
+            {/* ── Encaissement des recettes (organisateur) ── */}
+            {user?.role === 'organisateur' && (
+              <div style={S.card}>
+                <EyebrowLabel text="Encaissement — Mobile Money" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <p style={{ ...S.bodyText, margin: 0 }}>
+                    À la fin de chaque événement, ta recette (billets − frais de service) est envoyée
+                    automatiquement sur ce numéro Mobile Money. Rien à demander, rien à valider.
+                  </p>
+                  <div>
+                    <FocusInput
+                      label="Numéro Mobile Money (privé)"
+                      type="tel"
+                      placeholder="+228 90 00 00 00"
+                      value={payoutMomoForm}
+                      onChange={e => setPayoutMomoForm(e.target.value)}
+                    />
+                    <p style={hintStyle}>
+                      Togo (+228) ou Bénin (+229) — Mixx by Yas, Flooz/Moov, MTN MoMo… Ce numéro n'est
+                      jamais affiché publiquement : il sert uniquement à te verser ton argent.
+                    </p>
+                  </div>
+                  {msgBox(payoutMsg)}
+                  <button
+                    onClick={savePayoutMomo}
+                    disabled={savingPayout}
+                    style={{ ...S.btnGold, ...(savingPayout ? S.btnDisabled : {}) }}
+                  >
+                    {savingPayout ? 'Enregistrement…' : 'Enregistrer mon numéro d\'encaissement'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* ── Qui voit quoi ? ── */}
             <div style={S.card}>
               <EyebrowLabel text="Qui voit quoi ?" />
@@ -1597,13 +1672,80 @@ export default function ProfilePage() {
                 Découvrir les événements
               </button>
             </div>
-          ) : (
-            <div className="ticket-wallet-list">
-              {groups.map((g) => (
-                <EventTicketGroup key={g.eventId} group={g} />
-              ))}
-            </div>
-          )}
+          ) : (() => {
+            // Sections claires plutôt qu'une liste plate : à venir d'abord,
+            // l'historique (passés) et les annulés rangés à part en dessous.
+            const upcoming = groups.filter(g => !g._cancelled && !g._past)
+            const past = groups.filter(g => g._past)
+            const cancelled = groups.filter(g => g._cancelled)
+            const upcomingTickets = upcoming.reduce((n, g) => n + g.tickets.length, 0)
+            const sectionLabel = {
+              fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.45)', margin: '26px 0 12px', paddingLeft: 2,
+            }
+            return (
+              <>
+                {/* Bandeau résumé */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+                  padding: '16px 18px', borderRadius: 16, margin: '4px 0 6px',
+                  background: '#0e0f16', border: '1px solid rgba(255,255,255,0.10)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                }}>
+                  <span style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#123028' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ee8c8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 8a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a2 2 0 0 0 0 4v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a2 2 0 0 0 0-4z"/><path d="M14 7v10" strokeDasharray="1.5 2.5"/>
+                    </svg>
+                  </span>
+                  <div style={{ flex: 1, minWidth: 160 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 15, color: '#fff', margin: 0 }}>
+                      {upcomingTickets > 0
+                        ? `${upcomingTickets} place${upcomingTickets > 1 ? 's' : ''} à venir`
+                        : 'Aucune place à venir'}
+                    </p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>
+                      {upcomingTickets > 0
+                        ? `Sur ${upcoming.length} événement${upcoming.length > 1 ? 's' : ''} — QR codes prêts à scanner`
+                        : 'Trouve ta prochaine soirée dans les événements'}
+                    </p>
+                  </div>
+                  <button onClick={() => navigate('/evenements')} style={{
+                    padding: '10px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                    background: '#3ed6b5', color: '#04120e',
+                    fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 12,
+                  }}>
+                    Trouver une soirée
+                  </button>
+                </div>
+
+                {upcoming.length > 0 && (
+                  <>
+                    <p style={sectionLabel}>À venir ({upcoming.length})</p>
+                    <div className="ticket-wallet-list">
+                      {upcoming.map(g => <EventTicketGroup key={g.eventId} group={g} />)}
+                    </div>
+                  </>
+                )}
+                {past.length > 0 && (
+                  <>
+                    <p style={sectionLabel}>Événements passés ({past.length})</p>
+                    <div className="ticket-wallet-list">
+                      {past.map(g => <EventTicketGroup key={g.eventId} group={g} />)}
+                    </div>
+                  </>
+                )}
+                {cancelled.length > 0 && (
+                  <>
+                    <p style={sectionLabel}>Annulés ({cancelled.length})</p>
+                    <div className="ticket-wallet-list">
+                      {cancelled.map(g => <EventTicketGroup key={g.eventId} group={g} />)}
+                    </div>
+                  </>
+                )}
+              </>
+            )
+          })()}
         </div>
       </Layout>
     )

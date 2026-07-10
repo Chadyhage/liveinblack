@@ -605,6 +605,15 @@ async function webhook(req, res) {
       return res.status(200).json({ received: true })
     }
 
+    // Versements organisateurs : confirmation temps réel de l'envoi mobile
+    // money lancé par le cron (lib/eventPayouts.js). sent → recette marquée
+    // payée + ledger décrémenté + notif ; failed → filet admin.
+    if (name.startsWith('payout.')) {
+      const { handlePayoutEvent } = await import('../lib/eventPayouts.js')
+      await handlePayoutEvent(db, name, entity)
+      return res.status(200).json({ received: true })
+    }
+
     return res.status(200).json({ received: true, ignored: name })
   } catch (err) {
     console.error('[fedapay-webhook] handler error:', err)
@@ -906,6 +915,21 @@ async function finalizeFedapayBooking(db, entity) {
         amountDueXOF: FieldValue.increment(owed),
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true })
+      // Recette PAR ÉVÉNEMENT : c'est cette enveloppe que le cron reverse
+      // automatiquement au mobile money de l'organisateur une fois la soirée
+      // terminée (lib/eventPayouts.js). status repasse à 'accumulating' si une
+      // vente tardive arrive après un versement : le cron paiera le reliquat.
+      if (eventId) {
+        tx.set(db.collection('event_payouts').doc(String(eventId)), {
+          eventId: String(eventId),
+          eventName: eventName || '',
+          sellerUid: String(sellerUid),
+          currency: 'XOF',
+          amountDueXOF: FieldValue.increment(owed),
+          status: 'accumulating',
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true })
+      }
     }
     // Points de fidélité : AUCUN à l'achat. Le point (+1/billet) se gagne au
     // scan à l'entrée — action 'checkin' d'api/tickets.js, créditée au

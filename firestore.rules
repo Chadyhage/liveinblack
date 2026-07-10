@@ -381,6 +381,14 @@ service cloud.firestore {
       allow write: if isAgent();
     }
 
+    // ── Recettes par événement → versement AUTO en fin d'événement ────────────
+    // Écrit uniquement par le serveur (webhook FedaPay + cron, Admin SDK).
+    // L'organisateur peut lire l'enveloppe de SES événements (transparence).
+    match /event_payouts/{eventId} {
+      allow read:  if isAgent() || (isSignedIn() && resource.data.sellerUid == request.auth.uid);
+      allow write: if false;
+    }
+
     // ── Staff d'un événement (roster serveur/manager) — mini-POS soirée ───────
     // Lecture : tout connecté (un serveur doit pouvoir lire son propre rôle).
     // Écriture : seul le propriétaire de l'event (manager implicite) ou un agent

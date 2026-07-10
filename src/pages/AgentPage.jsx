@@ -3344,6 +3344,7 @@ export default function AgentPage() {
                   missing_server_metadata: 'Paiement sans dossier serveur vérifiable',
                   sub_amount_mismatch: 'Abonnement : montant payé différent du tarif',
                   event_deleted_before_fulfillment: 'Paiement reçu pour un événement supprimé',
+                  auto_payout_failed: 'Versement auto à l\'organisateur ÉCHOUÉ — à régler à la main',
                 }[alert.reason] || alert.reason || 'Anomalie de paiement'
                 const reference = alert.stripeSessionId || alert.transactionId || alert.bookingId || alert._docId
                 const created = alert.createdAt?.toMillis ? alert.createdAt.toMillis() : alert.createdAt
@@ -3648,7 +3649,9 @@ export default function AgentPage() {
                   </p>
                 )}
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '8px 0 0', lineHeight: 1.6 }}>
-                  Vendeurs hors zone Stripe (Afrique) ou sans Connect — à régler par virement / Wave / Orange Money, puis marquer payé ici.
+                  FILET DE SÉCURITÉ. Le flux normal est le versement AUTOMATIQUE sur le Mobile Money
+                  de l'organisateur à la fin de chaque événement — n'apparaissent ici que les échecs
+                  (numéro manquant, envoi refusé) et les anciens soldes. Régler à la main, puis marquer payé.
                 </p>
               </div>
             )}
