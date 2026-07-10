@@ -97,6 +97,21 @@
   .lib-stagger > *:nth-child(3){animation-delay:.13s}.lib-stagger > *:nth-child(4){animation-delay:.18s}
   .lib-stagger > *:nth-child(5){animation-delay:.23s}.lib-stagger > *:nth-child(6){animation-delay:.28s}
   .lib-stagger > *:nth-child(7){animation-delay:.33s}.lib-stagger > *:nth-child(8){animation-delay:.38s}
+  /* ── Squelettes de chargement (skeletons) — rend l'attente pro ── */
+  .lib-skel {
+    position: relative; overflow: hidden;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+  }
+  .lib-skel::after {
+    content: ''; position: absolute; inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+    animation: lib-shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes lib-shimmer { 100% { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .lib-skel::after { animation: none; } }
+
   /* pression tactile + lift au survol pour boutons/cartes */
   .lib-press { transition: transform 0.18s cubic-bezier(0.3,0.9,0.3,1), box-shadow 0.2s ease, border-color 0.2s ease; }
   .lib-press:active { transform: scale(0.96); }
@@ -382,7 +397,61 @@
   .lib-route { animation: lib-route-in 0.3s ease both; }
   @keyframes lib-route-in { from { opacity: 0; } to { opacity: 1; } }
 
-  @media (prefers-reduced-motion: reduce) { .lib-page, .lib-tab-content, .lib-route { animation: none; } }
+  /* Retour visuel global lors de chaque changement d'interface. C'est une
+     couche non bloquante : les actions restent toujours disponibles pendant
+     que les pages et leurs données finissent de se présenter. */
+  .lib-route-feedback {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 700;
+    height: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.16s ease;
+  }
+  .lib-route-feedback.is-visible { opacity: 1; }
+  .lib-route-feedback__line {
+    display: block;
+    width: 42%;
+    height: 3px;
+    margin-left: -42%;
+    border-radius: 0 99px 99px 0;
+    background: linear-gradient(90deg, var(--teal), #e05aaa, var(--gold));
+    box-shadow: 0 0 16px rgba(78,232,200,0.52);
+  }
+  .lib-route-feedback.is-visible .lib-route-feedback__line { animation: lib-route-progress 0.34s cubic-bezier(.2,.8,.2,1) both; }
+  .lib-route-feedback__label {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-7px);
+    padding: 6px 10px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 999px;
+    background: rgba(9,10,16,.92);
+    box-shadow: 0 10px 25px rgba(0,0,0,.32);
+    color: rgba(255,255,255,.72);
+    font: 700 10px/1 Inter, sans-serif;
+    letter-spacing: .055em;
+    white-space: nowrap;
+    opacity: 0;
+  }
+  .lib-route-feedback.is-visible .lib-route-feedback__label { animation: lib-route-label .24s .04s ease both; }
+  @keyframes lib-route-progress { from { margin-left: -42%; width: 42%; } to { margin-left: 100%; width: 18%; } }
+  @keyframes lib-route-label { to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  /* Rythme tactile cohérent, sans forcer d'animation lourde sur les cartes. */
+  button:not(:disabled), a[href], [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .16s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease;
+  }
+  button:not(:disabled):active, a[href]:active, [role="button"]:active { transform: scale(.985); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lib-page, .lib-tab-content, .lib-route { animation: none; }
+    .lib-route-feedback { display: none; }
+    button:not(:disabled), a[href], [role="button"] { transition: none; }
+  }
 }
 
 /* ─── Animations ───────────────────────────────────────────────────────────── */

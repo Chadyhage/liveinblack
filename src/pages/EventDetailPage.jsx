@@ -16,6 +16,7 @@ import { canDJ as canDJStaff } from '../utils/eventOrders'
 import AgeVerificationModal from '../components/AgeVerificationModal'
 import Breadcrumb from '../components/Breadcrumb'
 import EventInterestButton from '../components/EventInterestButton'
+import { Skeleton, SkeletonText } from '../components/Skeleton'
 import { IconLock, IconTicket, IconCheck } from '../components/icons'
 
 // Cache séparé pour les events fetchés depuis Firestore par les visiteurs.
@@ -497,21 +498,26 @@ export default function EventDetailPage() {
     }
   }, [hasPlaylist]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Loading state — pendant qu'on cherche l'event sur Firestore (cas client cross-device)
+  // Loading state — squelette de la fiche pendant le fetch Firestore (cas client
+  // cross-device). Plus pro qu'un spinner : la structure de la page est déjà là.
   if (eventLoading) {
     return (
-      <Layout>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: '50%',
-            border: '2px solid rgba(255,255,255,0.10)',
-            borderTopColor: '#4ee8c8',
-            animation: 'spin 0.9s linear infinite',
-          }} />
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-            Chargement de l'événement…
-          </p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <Layout hideNav>
+        <div style={{ maxWidth: 760, margin: '0 auto', padding: '0 0 40px' }}>
+          <Skeleton w="100%" h={0} r={0} style={{ aspectRatio: '16 / 10', height: 'auto' }} />
+          <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Skeleton w="70%" h={26} />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Skeleton w={110} h={30} r={999} />
+              <Skeleton w={90} h={30} r={999} />
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <Skeleton w={120} h={40} r={12} />
+              <Skeleton w={90} h={40} r={12} />
+            </div>
+            <div style={{ marginTop: 10 }}><SkeletonText lines={4} /></div>
+            <Skeleton w="100%" h={56} r={14} style={{ marginTop: 8 }} />
+          </div>
         </div>
       </Layout>
     )
