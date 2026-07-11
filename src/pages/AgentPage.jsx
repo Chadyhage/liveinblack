@@ -146,6 +146,9 @@ export default function AgentPage() {
   const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [onlineOnly, setOnlineOnly] = useState(false) // drill-down « Connectés » réel (audit #21)
+  const [adminCancel, setAdminCancel] = useState(null) // { id, name } — annulation d'un event par l'admin (audit #16)
+  const [adminCancelMsg, setAdminCancelMsg] = useState('')
+  const [adminCancelBusy, setAdminCancelBusy] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [confirmAction, setConfirmAction] = useState(null)
@@ -999,6 +1002,41 @@ export default function AgentPage() {
     else showToast(`Versement de ${Math.round(paid).toLocaleString('fr-FR')} FCFA marqué payé`)
   }
 
+  // ── Annuler un événement depuis l'admin (audit #16) ─────────────────────────
+  // Même flux serveur autoritaire que l'organisateur (api/tickets 'cancel_event',
+  // isAdminCaller déjà autorisé) : rembourse Stripe auto, met les XOF en worklist,
+  // annule les billets, libère le stock, bloque le versement. Fail-closed : on ne
+  // touche rien localement si le serveur refuse (le listener Firestore rafraîchira).
+  async function handleAdminCancelEvent() {
+    if (!adminCancel?.id) return
+    setAdminCancelBusy(true)
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const r = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ action: 'cancel_event', eventId: String(adminCancel.id), reason: adminCancelMsg || '' }),
+      })
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}))
+        showToast(data.error || "Annulation impossible pour le moment — réessaie.", 'error')
+        setAdminCancelBusy(false)
+        return
+      }
+      // Prévenir les acheteurs par e-mail (fire-and-forget, idempotent serveur).
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ type: 'event_cancelled', eventId: String(adminCancel.id) }),
+      }).catch(() => {})
+      showToast('Événement annulé — remboursements enclenchés, acheteurs prévenus.')
+      setAdminCancel(null); setAdminCancelMsg('')
+    } catch {
+      showToast('Connexion impossible — réessaie.', 'error')
+    }
+    setAdminCancelBusy(false)
+  }
+
   async function handleAppAction(appId, status, note) {
     const adminNoteValue = appAdminNote || ''
     let updatedApp
@@ -1705,17 +1743,32 @@ export default function AgentPage() {
                             </p>
                           )}
                         </div>
-                        {/* Action */}
-                        <button
-                          onClick={() => navigate(`/evenements/${ev.id}`)}
-                          style={{
-                            padding: '8px 14px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
-                            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
-                            fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
-                            color: 'rgba(255,255,255,0.9)',
-                          }}>
-                          Voir
-                        </button>
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          {/* Annulation admin (audit #16) : uniquement un event encore
+                              à venir et non déjà annulé → déclenche le remboursement. */}
+                          {status === 'upcoming' && (
+                            <button
+                              onClick={() => { setAdminCancel({ id: ev.id, name: ev.name || 'cet événement' }); setAdminCancelMsg('') }}
+                              style={{
+                                padding: '8px 12px', borderRadius: 10, cursor: 'pointer',
+                                background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.5)',
+                                fontFamily: FONTS.mono, fontSize: 12, fontWeight: 700, color: COLORS.pink,
+                              }}>
+                              Annuler
+                            </button>
+                          )}
+                          <button
+                            onClick={() => navigate(`/evenements/${ev.id}`)}
+                            style={{
+                              padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
+                              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                              fontFamily: FONTS.mono, fontSize: 12, fontWeight: 600,
+                              color: 'rgba(255,255,255,0.9)',
+                            }}>
+                            Voir
+                          </button>
+                        </div>
                       </div>
                     )
                   })}
@@ -3989,6 +4042,29 @@ export default function AgentPage() {
           </div>
         )
       })()}
+
+      {/* ── Modale d'annulation d'événement par l'admin (audit #16) ── */}
+      {adminCancel && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.75)', backdropFilter: 'blur(6px)' }} onClick={() => !adminCancelBusy && setAdminCancel(null)} />
+          <div style={{ position: 'relative', width: 'min(460px, 100%)', ...CARD, padding: 22, borderColor: 'rgba(224,90,170,0.4)' }}>
+            <p style={{ fontFamily: FONTS.display, fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Annuler « {adminCancel.name} » ?</p>
+            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.muted, margin: '0 0 14px', lineHeight: 1.6 }}>
+              Action irréversible : rembourse automatiquement les acheteurs (carte via
+              Stripe, mobile money mis en liste de remboursement), annule les billets,
+              libère le stock et bloque tout versement à l'organisateur. Les acheteurs
+              sont prévenus par e-mail.
+            </p>
+            <label style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 }}>Message aux acheteurs (optionnel)</label>
+            <textarea rows={3} value={adminCancelMsg} onChange={e => setAdminCancelMsg(e.target.value)} placeholder="Ex : soirée annulée pour raisons de sécurité…"
+              style={{ width: '100%', boxSizing: 'border-box', background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '10px 12px', resize: 'vertical', fontFamily: FONTS.mono, fontSize: 11, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, marginBottom: 14, outline: 'none' }} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setAdminCancel(null)} disabled={adminCancelBusy} style={{ flex: 1, padding: '11px 0', borderRadius: 10, cursor: adminCancelBusy ? 'default' : 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.85)', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 600 }}>Retour</button>
+              <button onClick={handleAdminCancelEvent} disabled={adminCancelBusy} style={{ flex: 1, padding: '11px 0', borderRadius: 10, cursor: adminCancelBusy ? 'default' : 'pointer', background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700 }}>{adminCancelBusy ? 'Annulation…' : "Annuler l'événement"}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Toast ── */}
       {toast && (
