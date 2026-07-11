@@ -1045,33 +1045,27 @@ export default function MessagingPage() {
   const isMutedInActiveGroup = !!myGroupMute
   const pinnedMsg   = activeConv?.pinnedMessageId ? messages.find(m => m.id === activeConv.pinnedMessageId) : null
 
-  // Téléphone de l'interlocuteur (conv directe) — fetché à la demande depuis Firestore
-  // (users/{uid} + providers/{uid}, lisibles par tout connecté). Confidentialité :
-  //  · numéro PERSO (users.phone) affiché SEULEMENT si l'autre l'a autorisé (privacy.showPhone) ;
-  //  · numéro PRO = users.proPhone (UN numéro par compte, partagé organisateur/
-  //    prestataire) → contact business, affiché s'il existe. Fallback historique :
-  //    providers.phone (anciens comptes pas encore migrés).
+  // Téléphone de l'interlocuteur (conv directe) — UNIQUEMENT le numéro PRO (business).
+  // Le numéro PERSO a été RETIRÉ (décision produit) : on n'affiche plus de numéro
+  // personnel en conversation. Le PRO = users.proPhone (UN numéro par compte, partagé
+  // organisateur/prestataire) ; fallback historique providers.phone.
   const directOtherId = activeConv?.type === 'direct' ? activeConv.participants?.find(id => id !== myId) : null
-  const [contactPhones, setContactPhones] = useState(null) // { perso, pro } | null
+  const [contactPhones, setContactPhones] = useState(null) // { pro } | null
   useEffect(() => {
     if (!directOtherId) { setContactPhones(null); return }
     let cancelled = false
     setContactPhones(null)
     Promise.all([import('../firebase'), import('firebase/firestore')]).then(async ([{ db }, { doc, getDoc }]) => {
-      let perso = null, pro = null
+      let pro = null
       try {
         const s = await getDoc(doc(db, 'users', String(directOtherId)))
-        if (s.exists()) {
-          const d = s.data()
-          if (d.privacy?.showPhone === true && d.phone) perso = d.phone
-          if (d.proPhone) pro = d.proPhone
-        }
+        if (s.exists() && s.data().proPhone) pro = s.data().proPhone
       } catch {}
       if (!pro) {
         try { const s = await getDoc(doc(db, 'providers', String(directOtherId))); if (s.exists() && s.data().phone) pro = s.data().phone } catch {}
       }
-      if (!cancelled) setContactPhones({ perso, pro })
-    }).catch(() => { if (!cancelled) setContactPhones({ perso: null, pro: null }) })
+      if (!cancelled) setContactPhones({ pro })
+    }).catch(() => { if (!cancelled) setContactPhones({ pro: null }) })
     return () => { cancelled = true }
   }, [directOtherId])
 
@@ -2744,10 +2738,10 @@ export default function MessagingPage() {
                       {isOnline(otherId) ? '● En ligne' : '○ Hors ligne'}
                     </p>
 
-                    {/* Numéros — Pro (business) toujours visible s'il existe ; Perso seulement si autorisé */}
-                    {contactPhones && (contactPhones.pro || contactPhones.perso) && (
+                    {/* Numéro PRO (business) uniquement — le perso a été retiré. */}
+                    {contactPhones && contactPhones.pro && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, width: '100%', maxWidth: 280 }}>
-                        {[['Pro', contactPhones.pro, '#c8a96e'], ['Perso', contactPhones.perso, '#4ee8c8']].filter(([, n]) => n).map(([label, number, color]) => (
+                        {[['Pro', contactPhones.pro, '#c8a96e']].filter(([, n]) => n).map(([label, number, color]) => (
                           <a key={label} href={`tel:${String(number).replace(/[^\d+]/g, '')}`}
                             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, textDecoration: 'none', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>

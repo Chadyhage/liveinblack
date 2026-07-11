@@ -462,16 +462,14 @@ export default function ProfilePage() {
   const [settingsMsg, setSettingsMsg] = useState(null)
   const [saving, setSaving] = useState(false)
 
-  // Settings — téléphone perso (compte, privé/opt-in)
-  const [phoneForm, setPhoneForm] = useState(user?.phone || '')
+  // Numéro perso RETIRÉ (décision produit) : le compte n'expose plus de numéro
+  // personnel. Seuls subsistent le numéro PRO (proPhone) et le Mobile Money.
   // Année de naissance + genre : optionnels, stats démographiques organisateurs
   // uniquement (jamais affichés publiquement, jamais un contrôle d'âge).
   const [birthYearForm, setBirthYearForm] = useState(user?.birthYear ? String(user.birthYear) : '')
   const [genderForm, setGenderForm] = useState(user?.gender || '')
   const [savingDemo, setSavingDemo] = useState(false)
   const [demoMsg, setDemoMsg] = useState(null)
-  const [phoneMsg, setPhoneMsg] = useState(null)
-  const [savingPhone, setSavingPhone] = useState(false)
 
   // Settings — NUMÉRO PRO : un seul par compte (users/{uid}.proPhone), PARTAGÉ
   // par les interfaces organisateur et prestataire. Miroir vers providers/{uid}.phone
@@ -553,7 +551,6 @@ export default function ProfilePage() {
   // Local d'abord (instantané), puis Firestore (source de vérité cross-device).
   useEffect(() => {
     if (panel !== 'settings' || !user?.uid) return
-    setPhoneForm(user?.phone || '')
     const uid = user.uid
     // Numéro pro partagé : users.proPhone d'abord ; sinon héritage de l'ancien
     // emplacement providers.phone (migration douce des comptes existants).
@@ -703,36 +700,8 @@ export default function ProfilePage() {
     }
   }
 
-  // ── Téléphone perso → users/{uid}.phone (privé, opt-in via Confidentialité) ──
+  // Regex partagée pour valider le NUMÉRO PRO (le perso a été retiré).
   const PHONE_RX = /^[+0-9][0-9 ().\-]{5,19}$/
-  async function savePhonePerso() {
-    const phone = phoneForm.trim()
-    if (phone && !PHONE_RX.test(phone)) {
-      setPhoneMsg({ type: 'error', text: 'Numéro invalide — chiffres, +, espaces (6 à 20 caractères).' })
-      return
-    }
-    setSavingPhone(true)
-    setPhoneMsg(null)
-    try {
-      const uid = getUserId(user)
-      // phone: '' (jamais undefined) pour bien EFFACER le champ côté Firestore.
-      // phoneNormalized DOIT suivre : c'est la clé de la garde anti-doublon
-      // « 1 numéro = 1 compte » (LoginPage). Sans ça, changer son numéro laissait
-      // un phoneNormalized périmé → la garde devenait contournable.
-      const phoneNormalized = phone ? phone.replace(/\D/g, '') : ''
-      const updatedUser = { ...user, phone, phoneNormalized }
-      setUser(updatedUser)
-      try { localStorage.setItem('lib_user', JSON.stringify(updatedUser)) } catch {}
-      updateAccount(uid, { phone, phoneNormalized })
-      import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`users/${uid}`, { phone, phoneNormalized })).catch(() => {})
-      setPhoneMsg({ type: 'success', text: phone ? 'Numéro perso enregistré' : 'Numéro perso retiré' })
-      setTimeout(() => setPhoneMsg(null), 3000)
-    } catch {
-      setPhoneMsg({ type: 'error', text: 'Enregistrement impossible, réessaie.' })
-    } finally {
-      setSavingPhone(false)
-    }
-  }
 
   // ── Année de naissance + genre → users/{uid} (stats démographiques SEULEMENT,
   // règle produit : jamais utilisés pour autoriser/bloquer un achat 18+). ──────
@@ -1086,8 +1055,6 @@ export default function ProfilePage() {
       showPhoto: user?.privacy?.showPhoto !== false,
       showInfo: user?.privacy?.showInfo !== false,
       readReceipts: user?.privacy?.readReceipts !== false,
-      // Numéro perso : OPT-IN (désactivé par défaut) — donnée sensible.
-      showPhone: user?.privacy?.showPhone === true,
       // Personnalisation des recommandations : ACTIVE par défaut, désactivable.
       personalization: user?.privacy?.personalization !== false,
     }
@@ -1109,7 +1076,6 @@ export default function ProfilePage() {
     const PRIV_ROWS = [
       { key: 'showOnline', label: 'Statut en ligne', desc: 'Les autres voient quand tu es connecté·e.' },
       { key: 'showPhoto', label: 'Photo de profil', desc: 'Les autres voient ta photo (sinon : initiales).' },
-      { key: 'showPhone', label: 'Numéro de téléphone', desc: 'Autorise les autres à voir ton numéro PERSO dans les conversations (désactivé par défaut). Le numéro pro d’un prestataire est public quoi qu’il arrive.' },
       { key: 'readReceipts', label: 'Confirmations de lecture', desc: 'Si désactivé, tu ne sais pas si on a lu tes messages — et personne ne sait si tu as lu les leurs.' },
       { key: 'personalization', label: 'Recommandations personnalisées', desc: 'Utilise tes goûts et ton activité (réservations, organisateurs suivis) pour te proposer des soirées. Rien n’est partagé avec les organisateurs. Désactive pour un accueil neutre.' },
     ]
@@ -1257,28 +1223,6 @@ export default function ProfilePage() {
                   style={{ ...S.btnGold, ...((saving || !nameChanged) ? S.btnDisabled : {}) }}
                 >
                   {saving ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Enregistrement…</> : 'Enregistrer le nom'}
-                </button>
-
-                <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
-
-                {/* ── Téléphone perso (compte) ── */}
-                <div>
-                  <FocusInput
-                    label="Téléphone perso"
-                    type="tel"
-                    placeholder="+33 6 12 34 56 78"
-                    value={phoneForm}
-                    onChange={e => setPhoneForm(e.target.value)}
-                  />
-                  <p style={hintStyle}>Privé par défaut : visible dans les conversations uniquement si tu actives « Numéro de téléphone » dans Confidentialité. Laisse vide pour le retirer.</p>
-                </div>
-                {msgBox(phoneMsg)}
-                <button
-                  onClick={savePhonePerso}
-                  disabled={savingPhone || phoneForm.trim() === (user?.phone || '')}
-                  style={{ ...S.btnGold, ...((savingPhone || phoneForm.trim() === (user?.phone || '')) ? S.btnDisabled : {}) }}
-                >
-                  {savingPhone ? <><span className="lib-spin" style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', verticalAlign: '-2px', marginRight: 8 }} />Enregistrement…</> : 'Enregistrer le téléphone'}
                 </button>
 
                 <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
@@ -1475,7 +1419,6 @@ export default function ProfilePage() {
                   ...(user?.username ? [{ what: `@${user.username}`, tag: 'Pseudo', where: 'Recherche d’amis et profil dans la messagerie.' }] : []),
                   ...(user?.role === 'prestataire' ? [{ what: (providerForm?.name || '').trim() || 'Nom de ta page', tag: 'Page prestataire', where: 'Annuaire prestataires, ta page publique, premiers contacts depuis ta page.' }] : []),
                   ...(user?.role === 'organisateur' ? [{ what: (orgForm?.publicName || '').trim() || orgName || 'Nom public', tag: 'Page organisateur', where: 'Annuaire organisateurs, ta page publique, tes événements.' }] : []),
-                  { what: phoneForm.trim() || 'Aucun numéro perso', tag: 'Tél. perso', where: pv.showPhone ? 'Visible dans les conversations (réglage Confidentialité activé).' : 'Masqué — active « Numéro de téléphone » dans Confidentialité pour l’afficher.' },
                   ...(user?.role === 'prestataire' || user?.role === 'organisateur' ? [{ what: proPhoneForm.trim() || 'Aucun numéro pro', tag: 'Tél. pro', where: proPhoneForm.trim() ? 'Public : conversations + page prestataire. Un seul numéro, partagé par tes interfaces organisateur et prestataire.' : 'Rien n’est affiché tant que tu ne renseignes pas de numéro pro.' }] : []),
                 ].map((row, i) => (
                   <div key={i} style={{ padding: '10px 0', borderTop: i ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
@@ -2105,9 +2048,6 @@ export default function ProfilePage() {
             letterSpacing: '-0.3px',
           }}>{(user?.role === 'organisateur' && orgName) ? orgName : user?.name}</h2>
           <p style={{ ...S.label, marginTop: '6px' }}>{user?.email}</p>
-          {user?.phone && (
-            <p style={{ ...S.label, marginTop: '4px' }}>{user.phone}</p>
-          )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
             {user?.role && ROLES[user.role] && (
               <span style={{
