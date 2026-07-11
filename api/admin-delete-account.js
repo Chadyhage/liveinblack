@@ -197,6 +197,40 @@ export default async function handler(req, res) {
     await Promise.allSettled(slugs.docs.map(d => d.ref.delete()))
   } catch {}
 
+  // ── 7.5 Réconcilier le registre anti-fraude tickets/ (audit #4/#12/#13) : sièges
+  // de table hébergés/détenus par le compte supprimé sur l'événement d'un AUTRE
+  // organisateur (non couverts par la garde événements ci-dessus, qui ne vise que
+  // les events DE l'utilisateur). Sinon ces sièges restent « détenus par un
+  // fantôme » — gelés, potentiellement scannables.
+  try {
+    const [asHolder, asHost] = await Promise.all([
+      db.collection('tickets').where('userId', '==', uid).get(),
+      db.collection('tickets').where('hostUid', '==', uid).get(),
+    ])
+    const writes = []
+    // (a) Compte supprimé = HÔTE d'une table → toute la table est orpheline (plus
+    // d'hôte pour gérer) : ses sièges sont ANNULÉS (non scannables).
+    for (const d of asHost.docs) {
+      if (d.data().cancelled !== true) {
+        writes.push({ ref: d.ref, data: { cancelled: true, cancelledAt: Date.now(), cancelReason: 'host_account_deleted' } })
+      }
+    }
+    // (b) Compte supprimé = TITULAIRE d'un siège d'invité (tableId + hôte différent
+    // et toujours présent) → on REND le siège à l'hôte pour qu'il puisse le
+    // réattribuer ; bump seatVersion pour périmer un éventuel QR de l'invité.
+    for (const d of asHolder.docs) {
+      const t = d.data()
+      if (t.tableId && t.hostUid && String(t.hostUid) !== uid && t.cancelled !== true) {
+        writes.push({ ref: d.ref, data: { userId: t.hostUid, assignedTo: null, assignedName: null, seatVersion: (Number(t.seatVersion) || 0) + 1 } })
+      }
+    }
+    for (let i = 0; i < writes.length; i += 450) {
+      const batch = db.batch()
+      writes.slice(i, i + 450).forEach(w => batch.set(w.ref, w.data, { merge: true }))
+      await batch.commit()
+    }
+  } catch (e) { console.error('[admin-delete-account] réconciliation registre tickets échouée:', e.message) }
+
   // ── 8. Firestore — retirer le membre supprimé des conversations (audit #18) :
   // sinon il reste « fantôme » dans les groupes ; et si un groupe se retrouve SANS
   // admin, le promouvoir au membre restant le plus ancien (sinon groupe ingérable).

@@ -221,6 +221,30 @@ async function finalizeBooking(db, session, meta) {
         status: 'manual_review', amountTotal: session.amount_total || null,
         currency: session.currency || null, createdAt: FieldValue.serverTimestamp(),
       }, { merge: true })
+      // Libérer le stock réservé à la création de la session (audit #21 : sinon la
+      // place restait décrémentée à vie alors qu'aucun billet n'est émis). Idempotent
+      // via stock_releases/{sessionId}, clé partagée avec le webhook d'expiration.
+      try {
+        const evId = meta.eventId, placeType = meta.placeType, qtyRel = Math.max(0, Number(meta.qty) || 0)
+        if (evId && placeType && qtyRel > 0) {
+          const relRef = db.collection('stock_releases').doc(session.id)
+          if (!(await relRef.get()).exists) {
+            const evRef = db.collection('events').doc(String(evId))
+            await db.runTransaction(async (tx) => {
+              const snap = await tx.get(evRef)
+              if (!snap.exists) return
+              const places = snap.data().places || []
+              const idx = places.findIndex(p => p.type === placeType)
+              if (idx === -1) return
+              const available = Number(places[idx].available) || 0
+              const total = Number(places[idx].total) || 0
+              const nextAvailable = Math.max(0, Math.min(total || Infinity, available + qtyRel))
+              tx.update(evRef, { places: places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p) })
+            })
+            await relRef.set({ sessionId: session.id, eventId: String(evId), placeType, qty: qtyRel, releasedAt: FieldValue.serverTimestamp(), via: 'account_deleted' }, { merge: true })
+          }
+        }
+      } catch (e) { console.error('[webhook] restock post-suppression échoué:', session.id, e.message) }
       console.warn('[webhook] paiement recu apres suppression du compte - revue manuelle:', session.id)
       return
     }
