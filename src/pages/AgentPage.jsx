@@ -19,6 +19,7 @@ import {
 } from '../utils/accountDeletion'
 // Source unique des taux (mêmes valeurs que le back-end api/checkout.js)
 import { computeTicketFeeCents, computeTicketFeeXOF } from '../../lib/fees.js'
+import { getEventEndTimestamp } from '../utils/eventUrgency'
 import { getProviderCategories, getProviderTypes } from '../utils/providerCategories'
 import { IconCheck, IconEdit } from '../components/icons'
 import AdminReviewsPanel from '../components/AdminReviewsPanel'
@@ -519,16 +520,15 @@ export default function AgentPage() {
   const totalTicketsSold = serverBookings.reduce((sum, b) => sum + ticketCountOf(b), 0)
   const recentBookings = serverBookings.filter(b => bookingTime(b) > thirtyDaysAgo)
   const totalEventsPublished = allEvents.length
+  // « À venir » = fin de l'événement encore dans le futur. Helper PARTAGÉ
+  // (getEventEndTimestamp) qui gère heure de fin manquante ET soirées après
+  // minuit — avant, ce compteur du dashboard IGNORAIT l'après-minuit et divergeait
+  // de l'onglet Événements (audit admin #9/#10). Un event 22h→04h n'est plus
+  // « passé » dès 22h.
   const upcomingEventsCount = allEvents.filter(ev => {
     if (ev.cancelled) return false
-    if (!ev.date) return false
-    try {
-      const endTime = ev.endTime || ev.time || '23:59'
-      const [h, m] = endTime.split(':').map(Number)
-      const d = new Date(ev.date + 'T00:00:00')
-      d.setHours(h, m, 0, 0)
-      return d.getTime() > Date.now()
-    } catch { return false }
+    const end = getEventEndTimestamp(ev)
+    return end > 0 && end > Date.now()
   }).length
   // Nouveaux comptes ce mois
   const newAccountsThisMonth = verifiedAccounts.filter(a =>
@@ -1558,18 +1558,11 @@ export default function AgentPage() {
         {tab === 'events' && (() => {
           const now = Date.now()
           // Détermine si event est passé (event.date + endTime < now)
+          // Même définition que le compteur du dashboard (helper partagé) : passé =
+          // fin d'événement dépassée, avec gestion de l'après-minuit (audit #9/#10).
           function isPast(ev) {
-            if (!ev.date) return false
-            try {
-              const endTime = ev.endTime || ev.time || '23:59'
-              const [h, m] = endTime.split(':').map(Number)
-              const d = new Date(ev.date + 'T00:00:00')
-              d.setHours(h, m, 0, 0)
-              const startTime = ev.time || '00:00'
-              const [sh, sm] = startTime.split(':').map(Number)
-              if (h < sh || (h === sh && m < sm)) d.setDate(d.getDate() + 1)
-              return d.getTime() < now
-            } catch { return false }
+            const end = getEventEndTimestamp(ev)
+            return end > 0 && end < now
           }
           const filtered = allEvents
             .filter(ev => {
@@ -2503,7 +2496,10 @@ export default function AgentPage() {
                     }}>
                       Réactiver le compte
                     </button>
-                  ) : selectedUser.status === 'active' ? (
+                  ) : (selectedUser.role === 'deleted' || selectedUser.status === 'deleted') ? null : (
+                    // Suspendre disponible pour TOUT compte non banni, quel que soit
+                    // son statut (audit #19 : un pro en 'onboarding'/'pending' n'était
+                    // pas bannissable car le bouton exigeait status==='active').
                     <button onClick={() => setConfirmAction({ type: 'ban', uid: selectedUser.uid, name: selectedUser.name })} style={{
                       width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
                       background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.55)',
@@ -2511,7 +2507,7 @@ export default function AgentPage() {
                     }}>
                       Suspendre le compte
                     </button>
-                  ) : null}
+                  )}
                   <button onClick={() => setConfirmAction({ type: 'delete', uid: selectedUser.uid, name: selectedUser.name })} style={{
                     width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
                     background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
