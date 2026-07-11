@@ -375,7 +375,19 @@ function ScannerInner({ myAssignments = [] }) {
               : cur)
             return
           }
-          throw new Error('checkin 403')
+          // #24 : autre 403 (le serveur REFUSE : permission/garde) → on annule aussi
+          // le marquage optimiste et on affiche un refus. JAMAIS de repli checkedInAt
+          // sur un refus serveur (avant, ce throw basculait vers l'écriture client).
+          try {
+            const p = new Set(JSON.parse(localStorage.getItem('lib_used_tickets') || '[]'))
+            p.delete(code)
+            localStorage.setItem('lib_used_tickets', JSON.stringify([...p]))
+            setUsedCodes(p)
+          } catch {}
+          setResult(cur => (cur && cur.code === code)
+            ? { ...cur, status: 'invalid', sub: body.error || 'Entrée refusée par le serveur.' }
+            : cur)
+          return
         }
         if (!r.ok) throw new Error('checkin ' + r.status)
       }).catch(() => {
