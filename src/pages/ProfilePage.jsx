@@ -710,12 +710,16 @@ export default function ProfilePage() {
     setPhoneMsg(null)
     try {
       const uid = getUserId(user)
-      // phone: '' (jamais undefined) pour bien EFFACER le champ côté Firestore
-      const updatedUser = { ...user, phone }
+      // phone: '' (jamais undefined) pour bien EFFACER le champ côté Firestore.
+      // phoneNormalized DOIT suivre : c'est la clé de la garde anti-doublon
+      // « 1 numéro = 1 compte » (LoginPage). Sans ça, changer son numéro laissait
+      // un phoneNormalized périmé → la garde devenait contournable.
+      const phoneNormalized = phone ? phone.replace(/\D/g, '') : ''
+      const updatedUser = { ...user, phone, phoneNormalized }
       setUser(updatedUser)
       try { localStorage.setItem('lib_user', JSON.stringify(updatedUser)) } catch {}
-      updateAccount(uid, { phone })
-      import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`users/${uid}`, { phone })).catch(() => {})
+      updateAccount(uid, { phone, phoneNormalized })
+      import('../utils/firestore-sync').then(({ syncDoc }) => syncDoc(`users/${uid}`, { phone, phoneNormalized })).catch(() => {})
       setPhoneMsg({ type: 'success', text: phone ? 'Numéro perso enregistré' : 'Numéro perso retiré' })
       setTimeout(() => setPhoneMsg(null), 3000)
     } catch {

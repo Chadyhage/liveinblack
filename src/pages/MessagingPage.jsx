@@ -841,6 +841,9 @@ export default function MessagingPage() {
         const merged = mergeById(local, convs)
         localStorage.setItem('lib_conversations', JSON.stringify(merged))
         const hidden = new Set(getHiddenConversationIds(myId).map(String))
+        // #3 : ne jamais notifier pour un message d'un expéditeur BLOQUÉ (le fil le
+        // masque déjà — la notif le laissait passer avec son texte).
+        const blocked = new Set(getBlockedUsers(myId))
 
         // ── Detect new messages → notification ──
         convs.forEach(incoming => {
@@ -851,7 +854,9 @@ export default function MessagingPage() {
           // Si c'est la conversation ACTUELLEMENT ouverte → aucune notif, quel
           // que soit l'état de visibilité (on est dedans, on lit déjà).
           const isActive = String(incoming.id) === String(activeConvIdRef.current)
-          if (isNewer && incoming.lastMessage && !isActive) {
+          // notMyMessage (#3) : ne pas se notifier de SON PROPRE message (multi-appareil) ;
+          // blocked : ne pas notifier d'un contact bloqué.
+          if (isNewer && incoming.lastMessage && !isActive && notMyMessage && !blocked.has(incoming.lastSenderId)) {
             const lastRead = getLastRead(incoming.id)
             const hasUnread = !lastRead || incoming.updatedAt > lastRead
             if (hasUnread) {
