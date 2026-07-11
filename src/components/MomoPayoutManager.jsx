@@ -73,8 +73,15 @@ export default function MomoPayoutManager({ uid, eventCountries = [] }) {
       const result = await syncDocAwaitable(`users/${uid}`, { payoutMomos, payoutMomo: null })
       if (!result.ok) throw new Error(result.error || 'sync')
       const n = Object.keys(payoutMomos).length
+      // Ré-armer tout de suite les versements bloqués faute de numéro (#70) — sinon
+      // ils attendraient le cron quotidien. Best-effort (le cron rattrape sinon).
+      if (n > 0) {
+        import('../utils/apiAuth').then(({ authHeaders }) => authHeaders())
+          .then(h => fetch('/api/fedapay', { method: 'POST', headers: { 'Content-Type': 'application/json', ...h }, body: JSON.stringify({ action: 'rearm_payouts' }) }))
+          .catch(() => {})
+      }
       setMsg({ type: 'success', text: n
-        ? 'Numéros enregistrés. Chaque événement est payé sur le numéro de son pays.'
+        ? 'Numéros enregistrés. Chaque événement est payé sur le numéro de son pays. Les versements en attente pour ces pays repartent automatiquement.'
         : 'Aucun numéro enregistré — tes recettes FCFA seront en attente jusqu\'à ce que tu en ajoutes un.' })
     } catch { setMsg({ type: 'error', text: 'Enregistrement impossible — vérifie ta connexion et réessaie.' }) }
     setSaving(false)

@@ -1,7 +1,31 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { parsePayoutMomoForCountry, configuredMomoCountries } from '../lib/eventPayouts.js'
+import { parsePayoutMomoForCountry, configuredMomoCountries, rearmFailedPayouts } from '../lib/eventPayouts.js'
 import { momoCountryFromRegionName, regionByMomoCountry } from '../src/data/regions.js'
+
+// ── Faux Firestore Admin minimal pour rearmFailedPayouts ──────────────────────
+function makeDb(seed) {
+  const store = new Map(Object.entries(seed)) // 'col/id' -> data
+  function docRef(path) {
+    return { path, id: path.split('/').pop(),
+      async get() { return { exists: store.has(path), data: () => store.get(path), ref: docRef(path) } },
+      set(data, _opts) { store.set(path, { ...(store.get(path) || {}), ...data }) } }
+  }
+  return { _store: store,
+    collection: (name) => ({
+      doc: (id) => docRef(`${name}/${id}`),
+      where(field, _op, val) {
+        return { async get() {
+          const docs = []
+          for (const [path, data] of store) {
+            if (!path.startsWith(name + '/')) continue
+            if (data[field] === val) docs.push({ id: path.split('/').pop(), data: () => data, ref: docRef(path) })
+          }
+          return { docs }
+        } }
+      },
+    }) }
+}
 
 // ── Router le versement vers le numéro DU PAYS de l'événement ──────────────────
 test('parsePayoutMomoForCountry : choisit le numéro du bon pays', () => {
@@ -69,4 +93,39 @@ test('momoCountryFromRegionName : robuste aux accents/casse/apostrophes/id/code 
   assert.equal(momoCountryFromRegionName("Côte d'Ivoire"), 'ci') // apostrophe droite
   assert.equal(momoCountryFromRegionName('Côte d’Ivoire'), 'ci') // apostrophe courbe
   assert.equal(momoCountryFromRegionName('Cotonou'), null)     // une VILLE reste non résolue → mise en attente
+})
+
+// ── Auto-guérison des versements (#70) ────────────────────────────────────────
+test('rearmFailedPayouts : ré-arme dès que le numéro du pays existe', async () => {
+  const db = makeDb({
+    'event_payouts/e1': { eventId: 'e1', sellerUid: 'o1', status: 'failed', failCode: 'no_momo_number', momoCountry: 'bj', amountDueXOF: 5000 },
+    'events/e1': { name: 'Cotonou night', region: 'Bénin', cancelled: false },
+    'users/o1': { payoutMomos: { bj: { number: '+22990000000', country: 'bj' } } }, // numéro AJOUTÉ
+  })
+  const n = await rearmFailedPayouts(db, 'o1')
+  assert.equal(n, 1)
+  assert.equal(db._store.get('event_payouts/e1').status, 'accumulating') // repart
+  assert.equal(db._store.get('event_payouts/e1').failCode, null)
+})
+
+test('rearmFailedPayouts : NE ré-arme PAS si toujours pas de numéro', async () => {
+  const db = makeDb({
+    'event_payouts/e1': { eventId: 'e1', sellerUid: 'o1', status: 'failed', failCode: 'no_momo_number', momoCountry: 'bj', amountDueXOF: 5000 },
+    'events/e1': { name: 'x', region: 'Bénin' },
+    'users/o1': { payoutMomos: { tg: { number: '+22890000000', country: 'tg' } } }, // Togo seulement
+  })
+  const n = await rearmFailedPayouts(db, 'o1')
+  assert.equal(n, 0)
+  assert.equal(db._store.get('event_payouts/e1').status, 'failed') // reste en attente
+})
+
+test('rearmFailedPayouts : ne touche PAS un échec non ré-armable (event annulé)', async () => {
+  const db = makeDb({
+    'event_payouts/e1': { eventId: 'e1', sellerUid: 'o1', status: 'failed', failCode: 'event_cancelled', momoCountry: 'bj', amountDueXOF: 5000 },
+    'events/e1': { name: 'x', region: 'Bénin', cancelled: true },
+    'users/o1': { payoutMomos: { bj: { number: '+22990000000', country: 'bj' } } },
+  })
+  const n = await rearmFailedPayouts(db, 'o1')
+  assert.equal(n, 0)
+  assert.equal(db._store.get('event_payouts/e1').status, 'failed')
 })

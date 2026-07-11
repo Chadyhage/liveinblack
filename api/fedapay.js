@@ -66,11 +66,31 @@ export default async function handler(req, res) {
     if (body.action === 'checkout') return checkout(req, res, body)
     if (body.action === 'subscribe') return subscriptionCheckout(req, res, body)
     if (body.action === 'release') return release(req, res, body)
-    return res.status(400).json({ error: "action doit être 'checkout', 'subscribe' ou 'release'" })
+    if (body.action === 'rearm_payouts') return rearmPayouts(req, res)
+    return res.status(400).json({ error: "action doit être 'checkout', 'subscribe', 'release' ou 'rearm_payouts'" })
   }
 
   res.setHeader('Allow', 'GET, POST')
   return res.status(405).json({ error: 'Method not allowed' })
+}
+
+// ─── Ré-armement immédiat des versements en échec « pas de numéro » (#70) ─────
+// Appelé par l'organisateur juste après avoir enregistré un numéro Mobile Money :
+// ses enveloppes bloquées faute de numéro (pour un pays qu'il vient de renseigner)
+// repartent tout de suite au lieu d'attendre le cron quotidien. Sécurisé : ne
+// touche QUE les enveloppes du vendeur appelant (sellerUid === caller.uid).
+async function rearmPayouts(req, res) {
+  const caller = await requireAuth(req, res)
+  if (!caller) return
+  try {
+    const db = getDb()
+    const { rearmFailedPayouts } = await import('../lib/eventPayouts.js')
+    const rearmed = await rearmFailedPayouts(db, caller.uid)
+    return res.status(200).json({ ok: true, rearmed })
+  } catch (e) {
+    console.error('[fedapay rearm] error:', e.message)
+    return res.status(500).json({ error: 'Ré-armement impossible — réessaie.' })
+  }
 }
 
 // ─── Checkout billets (miroir XOF de api/checkout.js) ────────────────────────
