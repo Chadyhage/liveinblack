@@ -337,11 +337,16 @@ export function syncUserProfile(uid, userData) {
     id: uid,
     uid, // legacy compat — some docs use uid
     name: userData.name || '',
+    // #8 : l'email est PII et users/ est lisible par tout connecté. Migration staged :
+    // on DOUBLE-ÉCRIT (users/ + user_private/) tant que les lecteurs ne sont pas tous
+    // bascules → aucune casse. Le scrub final (script) retire users/.email, puis un
+    // dernier déploiement retirera cette double-écriture. user_private est la cible.
     email: userData.email || '',
     avatar: userData.avatar || null,
     username: userData.username || generateUsername(userData.name || userData.email || uid),
   }
   syncDoc(`users/${uid}`, profile)
+  if (userData.email) syncDoc(`user_private/${uid}`, { email: userData.email })
 
   // Also update lib_users localStorage immediately so getUserById() works at once
   // (syncOnLogin runs async and may not complete before messaging features are used)

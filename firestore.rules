@@ -110,6 +110,21 @@ service cloud.firestore {
       allow write: if isAgent();
     }
 
+    // ── PII sortie du doc public users/{uid} (#8) ─────────────────────────────
+    // users/{uid} est lisible par tout connecté (noms/avatars pour la messagerie) →
+    // l'email ne doit PLUS y vivre (scraping de masse). On le déplace ici, doc
+    // owner-only comme provider_billing. Écriture bornée aux SEULS champs PII via
+    // hasOnly (le hasOnly porte sur le doc RÉSULTANT après merge) : le propriétaire
+    // ne peut donc pas y planquer role/points/status que les gardes ne relisent
+    // pas ici. Ne JAMAIS y écrire le profil complet (un syncDoc(user_private, profil)
+    // serait refusé). _syncedAt est ajouté automatiquement par syncDoc().
+    match /user_private/{uid} {
+      allow read:            if isOwner(uid) || isAgent();
+      allow create, update:  if isAgent()
+        || (isOwner(uid) && request.resource.data.keys().hasOnly(['email', '_syncedAt', 'updatedAt']));
+      allow delete:          if isOwner(uid) || isAgent();
+    }
+
     // ── Applications / candidatures ────────────────────────────────────────────
     match /applications/{id} {
       allow read, write: if isSignedIn() && (

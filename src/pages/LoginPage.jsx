@@ -270,6 +270,10 @@ async function doEmailRegister(data) {
     createdAt: Date.now(),
   }
   await setDoc(doc(db, 'users', cred.user.uid), userObj)
+  // #8 : peupler aussi le doc PRIVÉ (email). Best-effort (échoue tant que la règle
+  // user_private n'est pas déployée) ; l'email reste dans users/ le temps de la
+  // bascule (double-écriture) → aucune casse. Le scrub final retirera users/.email.
+  setDoc(doc(db, 'user_private', cred.user.uid), { email }, { merge: true }).catch(() => {})
 
   // For org/prest: create the application draft (no pending_validations yet — admin notified only after full dossier is submitted)
   if (isDedicated) {
