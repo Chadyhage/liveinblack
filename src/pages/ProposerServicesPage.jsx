@@ -213,7 +213,13 @@ export default function ProposerServicesPage() {
   const category = getProviderCategory(type)
   const billingRegion = regions.find(region => region.id === billing.regionId) || null
   const subCurrency = billing.currency
-  const catalogDefaultCurrency = regionToCurrency(profileForm.regionId)
+  // Devise par défaut du catalogue = région de FACTURATION (provider_billing),
+  // PAS le « Pays de base » public/marketing (profileForm.regionId). Sinon un
+  // prestataire facturé en EUR qui affiche « Togo » en zone verrait ses prix
+  // proposés en FCFA — le libellé public dit pourtant « ne modifie jamais ta
+  // facturation ». On retombe sur la région marketing seulement tant que la
+  // facturation n'est pas encore chargée.
+  const catalogDefaultCurrency = subCurrency || regionToCurrency(profileForm.regionId)
   const savedProfileForm = useMemo(
     () => providerProfileForm(profile, user?.name || '', accountTypes),
     [profile, user?.name, user?.prestataireType, user?.prestataireTypes]
@@ -362,6 +368,12 @@ export default function ProposerServicesPage() {
         return acc
       }, {}),
       zonesIntervention: profileForm.zonesIntervention,
+      // Devise du catalogue publiée = région de FACTURATION (jamais le marketing).
+      // La page publique ne peut PAS lire provider_billing (privé) : on expose donc
+      // seulement la DEVISE (EUR/XOF, non sensible) pour afficher les prix legacy
+      // sans devise dans la bonne monnaie. subCurrency vide (facturation pas encore
+      // chargée) → on garde la valeur déjà publiée pour ne pas la casser.
+      catalogCurrency: subCurrency || profile?.catalogCurrency || catalogDefaultCurrency,
       userId: uid,
       prestataireType: type,
       prestataireTypes: providerTypes,

@@ -204,7 +204,10 @@ export default function PublicPrestatairePage() {
   const zones = normalizeRegionIds(profile.zonesIntervention).map(getRegionName).filter(Boolean)
   const locationLabel = [profile.city || profile.location, profile.country].filter(Boolean)
     .filter((value, index, all) => all.indexOf(value) === index).join(' · ')
-  const catalogDefaultCurrency = regionToCurrency(profile.regionId || profile.country)
+  // Devise d'affichage des prix legacy (sans currency propre) = devise de
+  // FACTURATION publiée (catalogCurrency), PAS la région marketing. Repli sur la
+  // région seulement pour les vieux profils sans catalogCurrency.
+  const catalogDefaultCurrency = profile.catalogCurrency || regionToCurrency(profile.regionId || profile.country)
 
   return (
     <PageChrome user={user}>

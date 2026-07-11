@@ -75,17 +75,11 @@ export default function PublicPrestataires() {
       p.photoUrl || p.description || p.city || p.location || p.regionId || p.country || p.zonesIntervention?.length ||
       (catalogs[p.userId] || []).some(item => item.available !== false)
     ))
-    // Dedup par nom : si deux docs Firestore portent le même nom, garder le plus complet
-    const byName = {}
-    for (const p of valid) {
-      const key = p.name.trim().toLowerCase()
-      const prev = byName[key]
-      if (!prev || [p.photoUrl, p.description, p.location, p.coverUrl].filter(Boolean).length >
-                   [prev.photoUrl, prev.description, prev.location, prev.coverUrl].filter(Boolean).length) {
-        byName[key] = p
-      }
-    }
-    return Object.values(byName)
+    // PAS de déduplication par NOM : chaque prestataire est déjà unique par userId
+    // (byId ci-dessus fusionne local + Firestore d'UNE même personne). Deux entrées
+    // de même nom = deux PERSONNES différentes → les fusionner masquait un
+    // prestataire pourtant abonné (payant). Le userId est la seule clé d'identité.
+    return valid
   }, [remote, catalogs, user])
 
   const filtered = useMemo(() => {

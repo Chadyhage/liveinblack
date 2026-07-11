@@ -37,11 +37,13 @@ export function getNavItems(role) {
     { path: '/accueil',    label: 'Accueil' },
     { path: '/evenements', label: 'Événements' },
   ]
-  // Admin (agent) — view everything
+  // Admin (agent) — view everything (dont l'annuaire Organisateurs, présent pour
+  // le client et l'organisateur mais qui manquait à l'agent)
   if (role === 'agent') return [
     { path: '/accueil',        label: 'Accueil' },
     { path: '/evenements',     label: 'Événements' },
     { path: '/messagerie',     label: 'Messages' },
+    { path: '/organisateurs',  label: 'Organisateurs' },
     { path: '/prestataires',   label: 'Prestataires' },
   ]
   // Organisateur — event creation + hiring prestataires
