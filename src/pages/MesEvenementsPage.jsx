@@ -3172,6 +3172,30 @@ export default function MesEvenementsPage() {
               ))}
             </div>
 
+            {/* Avertissement encaissement AU MOMENT DE PUBLIER (le plus critique) :
+                on ne bloque pas (l'event peut être gratuit), mais on prévient clairement
+                que les recettes seront mises en attente tant que le paiement n'est pas
+                configuré. Réutilise payoutInfo (lu depuis Firestore). */}
+            {payoutInfo && !payoutInfo.ready && (
+              <div style={{
+                background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.45)',
+                borderRadius: 12, padding: '13px 15px', display: 'flex', gap: 12, alignItems: 'flex-start',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#f59e0b', margin: '0 0 3px' }}>
+                    Ton encaissement n'est pas configuré
+                  </p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.55 }}>
+                    Tu peux publier, mais tant que tu n'as pas {payoutInfo.cur === 'XOF' ? 'ajouté ton numéro Mobile Money' : 'connecté ton compte bancaire'}, la recette de cet événement sera <strong>mise en attente</strong> au lieu de t'être versée automatiquement.{' '}
+                    <button onClick={() => navigate('/profil?section=encaissement')} style={{ background: 'none', border: 'none', padding: 0, color: '#f59e0b', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Inter, sans-serif', fontSize: 12.5 }}>Configurer maintenant</button>
+                  </p>
+                </div>
+              </div>
+            )}
+
             <button
               style={{ ...S.btnGold, cursor: publishing ? 'wait' : 'pointer' }}
               onClick={handlePublish}
