@@ -444,6 +444,13 @@ export default function ProfilePage() {
 
   // Settings — recherche (filtre les sections de réglages en direct)
   const [settingsSearch, setSettingsSearch] = useState('')
+  // Deep-link ?section=encaissement (ex. depuis le rappel de « Mes Événements ») :
+  // pré-filtre les réglages sur l'encaissement pour tomber pile sur la bonne carte.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('section') === 'encaissement') {
+      setSettingsSearch('encaissement')
+    }
+  }, [])
 
   // Settings — nom du compte
   const [settingsForm, setSettingsForm] = useState({ name: user?.name || '' })

@@ -348,6 +348,9 @@ export default function MesEvenementsPage() {
   // source de vérité de la devise de TOUS ses events. null tant qu'inconnue → on
   // retombe sur la région de l'event (rétro-compat, ne casse pas l'existant).
   const [orgCurrency, setOrgCurrency] = useState(null)
+  // Encaissement configuré ? { cur:'EUR'|'XOF', ready:bool } — null tant qu'inconnu
+  // (pas de rappel affiché tant qu'on ne sait pas, pour éviter un faux nudge).
+  const [payoutInfo, setPayoutInfo] = useState(null)
 
   // Step 0: Bases
   const [form, setForm] = useState({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18, region: '' })
@@ -443,6 +446,29 @@ export default function MesEvenementsPage() {
       const cur = organizerCurrency(getOrganizerProfile(user.uid))
       if (!cancelled && cur) setOrgCurrency(cur)
     }).catch(() => {})
+    return () => { cancelled = true }
+  }, [user?.uid])
+
+  // Encaissement configuré ? Lu depuis Firestore (source fiable : stripeChargesEnabled
+  // posé par le webhook Connect, payoutMomo par le profil) → sinon on nudge
+  // l'organisateur à configurer son paiement, faute de quoi ses recettes restent
+  // en attente. EUR → compte Stripe connecté ; XOF → numéro Mobile Money.
+  useEffect(() => {
+    if (!user?.uid) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { db } = await import('../firebase')
+        const { doc, getDoc } = await import('firebase/firestore')
+        const { getOrganizerProfile } = await import('../utils/organizers')
+        const snap = await getDoc(doc(db, 'users', user.uid))
+        const u = snap.exists() ? snap.data() : {}
+        const cur = organizerCurrency(getOrganizerProfile(user.uid))
+          || (u.payoutMomo?.number ? 'XOF' : u.stripeChargesEnabled ? 'EUR' : 'EUR')
+        const ready = cur === 'XOF' ? !!u.payoutMomo?.number : u.stripeChargesEnabled === true
+        if (!cancelled) setPayoutInfo({ cur, ready })
+      } catch { /* réseau : on n'affiche pas de rappel plutôt qu'un faux */ }
+    })()
     return () => { cancelled = true }
   }, [user?.uid])
 
@@ -1410,6 +1436,38 @@ export default function MesEvenementsPage() {
           {/* Panneau « Reversements » retiré volontairement (décision produit) :
               les paiements FCFA passent par FedaPay configuré — plus de demande
               manuelle de reversement ici. Ne pas le réintroduire. */}
+
+          {/* Rappel d'encaissement : tant que l'organisateur n'a pas configuré son
+              moyen de paiement, ses recettes restent en attente. On l'envoie au bon
+              endroit (Profil → Encaissement). Ce N'EST PAS le panneau retiré ci-dessus
+              (pas de demande de virement ici) — juste un rappel + un lien. */}
+          {payoutInfo && !payoutInfo.ready && (
+            <div style={{
+              background: 'linear-gradient(180deg, rgba(200,169,110,0.10), rgba(200,169,110,0.04))',
+              border: '1px solid rgba(200,169,110,0.45)', borderRadius: 12, padding: '14px 16px',
+              display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+            }}>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#c8a96e', margin: '0 0 3px' }}>
+                  Configure ton encaissement pour être payé
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>
+                  {payoutInfo.cur === 'XOF'
+                    ? "Ajoute ton numéro Mobile Money : sans lui, la recette de tes événements reste en attente au lieu de t'être versée automatiquement."
+                    : "Connecte ton compte bancaire (Stripe) : sans ça, la recette de tes événements reste en attente au lieu de t'être versée automatiquement à chaque vente."}
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/profil?section=encaissement')}
+                style={{
+                  flexShrink: 0, padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
+                  background: 'linear-gradient(180deg,#d8b878,#c8a96e)', border: '1px solid rgba(0,0,0,0.15)',
+                  color: '#1a1305', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700,
+                }}>
+                Configurer mon encaissement
+              </button>
+            </div>
+          )}
 
           {/* Bandeau d'erreur de sync — l'event n'a pas pu être publié sur Firestore */}
           {syncErrorBanner && (
