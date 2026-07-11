@@ -329,6 +329,7 @@ export default function MesEvenementsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleteError, setDeleteError] = useState('')
   const [cancellationMessageDraft, setCancellationMessageDraft] = useState('')
+  const [cancelBusy, setCancelBusy] = useState(false)
   const [syncErrorBanner, setSyncErrorBanner] = useState(null)
   const [showBoostModal, setShowBoostModal] = useState(false)
   const [boostTargetEvent, setBoostTargetEvent] = useState(null)
@@ -1111,7 +1112,44 @@ export default function MesEvenementsPage() {
 
   // Annule l'event sans le supprimer pour de vrai — utilisé quand des réservations existent
   // Le client gardera accès à son billet avec le message de l'organisateur + bouton support
-  function cancelEventWithMessage(id, message) {
+  async function cancelEventWithMessage(id, message) {
+    const sid = String(id)
+    setDeleteError('')
+    // Serveur = AUTORITÉ (#71) : marque annulé, REMBOURSE les acheteurs (carte
+    // automatique / mobile money mis en liste), annule les billets, libère le
+    // stock, bloque le versement à l'organisateur. Fail-closed : si l'appel
+    // échoue, on NE marque PAS annulé localement — sinon l'organisateur croirait
+    // les acheteurs remboursés alors que rien n'a bougé. Un event _pendingSync
+    // n'a jamais atteint le serveur (aucun billet payé) → annulation locale directe.
+    const isPendingLocal = createdEvents.some(ev => String(ev.id) === sid && ev._pendingSync === true)
+    if (!isPendingLocal) {
+      setCancelBusy(true)
+      try {
+        const { authHeaders } = await import('../utils/apiAuth')
+        const r = await fetch('/api/tickets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+          body: JSON.stringify({ action: 'cancel_event', eventId: sid, reason: message || '' }),
+        })
+        if (!r.ok) {
+          const data = await r.json().catch(() => ({}))
+          setDeleteError(data.error || "Annulation impossible pour le moment — réessaie dans un instant.")
+          setCancelBusy(false)
+          return
+        }
+        // Prévenir les acheteurs par e-mail (fire-and-forget, idempotent serveur).
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+          body: JSON.stringify({ type: 'event_cancelled', eventId: sid }),
+        }).catch(() => {})
+      } catch {
+        setDeleteError("Connexion impossible — vérifie ta connexion et réessaie.")
+        setCancelBusy(false)
+        return
+      }
+      setCancelBusy(false)
+    }
     const updated = createdEvents.map(ev =>
       ev.id === id
         ? { ...ev, cancelled: true, cancellationMessage: message || '', cancelledAt: new Date().toISOString() }
@@ -1611,7 +1649,7 @@ export default function MesEvenementsPage() {
                     <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(220,160,50,0.35)', borderRadius: 12, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                       <span style={{ flexShrink: 0, display: 'inline-flex', marginTop: 1 }}><IconAlert size={18} color="rgba(255,210,110,0.9)" /></span>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, margin: 0 }}>
-                        <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. C'est à toi de gérer les remboursements éventuels, dans le respect de la loi.
+                        <strong>{deleteConfirm.bookingCount} réservation{deleteConfirm.bookingCount > 1 ? 's' : ''}</strong> {deleteConfirm.bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. En confirmant, <strong>les acheteurs sont remboursés automatiquement</strong> (carte bancaire) ou placés dans ta liste de remboursement mobile money — tu ne touches jamais l'argent d'un événement annulé, et chaque acheteur est prévenu par e-mail.
                       </p>
                     </div>
 
@@ -1641,9 +1679,13 @@ export default function MesEvenementsPage() {
                       L'événement sera marqué <strong style={{ color: '#e05aaa' }}>Annulé</strong> et retiré du site, mais restera accessible aux personnes ayant un billet pour qu'elles voient ce message.
                     </p>
 
+                    {deleteError && (
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#dc7777', lineHeight: 1.6, margin: 0 }}>{deleteError}</p>
+                    )}
+
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => { setDeleteConfirm(null); setCancellationMessageDraft('') }} style={{ ...S.btnGhost, flex: 1 }}>Annuler</button>
-                      <button onClick={() => cancelEventWithMessage(deleteConfirm.id, cancellationMessageDraft.trim())} style={{ ...S.btnDanger, flex: 1 }}>Confirmer l'annulation</button>
+                      <button onClick={() => { setDeleteConfirm(null); setCancellationMessageDraft(''); setDeleteError('') }} disabled={cancelBusy} style={{ ...S.btnGhost, flex: 1, ...(cancelBusy ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}>Retour</button>
+                      <button onClick={() => cancelEventWithMessage(deleteConfirm.id, cancellationMessageDraft.trim())} disabled={cancelBusy} style={{ ...S.btnDanger, flex: 1, ...(cancelBusy ? { opacity: 0.6, cursor: 'wait' } : {}) }}>{cancelBusy ? 'Annulation en cours…' : "Confirmer l'annulation"}</button>
                     </div>
                   </>
                 ) : (
