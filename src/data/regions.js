@@ -34,12 +34,22 @@ export function getRegionByName(name) {
 }
 
 // Code pays FedaPay (momoCountry) d'une région désignée par son NOM (le champ
-// event.region), son id ou son pays. null si inconnue ou hors zone mobile money
-// (France). Sert à router le versement d'un événement vers le BON numéro Mobile
-// Money (celui du pays de l'événement) — un event à Cotonou paie le numéro béninois.
+// event.region), son id, son code ou son pays. null si inconnue ou hors zone
+// mobile money (France). Sert à router le versement d'un événement vers le BON
+// numéro Mobile Money (celui du pays de l'événement).
+// Insensible aux accents/casse/apostrophes — DOIT rester aussi permissif que
+// regionToCurrency (money.js) : sinon un event serait XOF (l'argent bouge) mais
+// sans pays résolu → versement mal routé (audit money-safety).
+function _normRegionKey(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[’']/g, '').replace(/[\s_]+/g, '-').trim().toLowerCase()
+}
 export function momoCountryFromRegionName(name) {
   if (!name) return null
-  const r = regions.find((x) => x.name === name || x.id === name || x.country === name)
+  const key = _normRegionKey(name)
+  const r = regions.find((x) =>
+    _normRegionKey(x.name) === key || _normRegionKey(x.id) === key ||
+    _normRegionKey(x.country) === key || _normRegionKey(x.code) === key)
   return r?.momoCountry || null
 }
 // Région (donc son nom lisible) à partir d'un code momoCountry ('tg' → Togo).
