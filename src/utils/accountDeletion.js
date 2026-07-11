@@ -252,28 +252,31 @@ async function _anonymizeAccount(req) {
     }
   } catch {}
 
+  // Pierre tombale RGPD : purger TOUTES les données personnelles résiduelles,
+  // pas seulement nom/email (audit admin #7). Sans ça, téléphone, numéro mobile
+  // money, avatar, bio, ville, réseaux sociaux… survivaient sur le doc « supprimé ».
+  const anonPatch = {
+    name:        'Compte supprimé',
+    email:       `deleted_${uid.slice(0, 8)}@noreply.local`,
+    role:        'deleted',
+    status:      'deleted',
+    deletedAt:   now,
+    phone:       null, proPhone: null, payoutMomo: null,
+    avatarUrl:   null, photoURL: null, coverUrl: null, bannerUrl: null,
+    bio:         '', headline: '', description: '', city: '', address: '',
+    publicName:  '', slug: '', socialLinks: {},
+  }
+
   // 2. Anonymiser le compte utilisateur (localStorage)
   try {
     const { updateAccount } = await import('./accounts')
-    updateAccount(uid, {
-      name:      'Compte supprimé',
-      email:     `deleted_${uid.slice(0, 8)}@noreply.local`,
-      role:      'deleted',
-      status:    'deleted',
-      deletedAt: now,
-    })
+    updateAccount(uid, anonPatch)
   } catch {}
 
   // 3. Sync Firestore profil + application
   try {
     const { syncDoc } = await import('./firestore-sync')
-    syncDoc(`users/${uid}`, {
-      name:      'Compte supprimé',
-      email:     `deleted_${uid.slice(0, 8)}@noreply.local`,
-      role:      'deleted',
-      status:    'deleted',
-      deletedAt: now,
-    })
+    syncDoc(`users/${uid}`, anonPatch)
     if (applicationId) {
       const apps = JSON.parse(localStorage.getItem('lib_applications') || '[]')
       const app  = apps.find(a => a.id === applicationId)

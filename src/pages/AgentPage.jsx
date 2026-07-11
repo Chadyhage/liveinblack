@@ -145,6 +145,7 @@ export default function AgentPage() {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [onlineOnly, setOnlineOnly] = useState(false) // drill-down « Connectés » réel (audit #21)
   const [selectedUser, setSelectedUser] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [confirmAction, setConfirmAction] = useState(null)
@@ -450,7 +451,10 @@ export default function AgentPage() {
   const livingAccounts = accounts.filter(a => !isTombstone(a))
   // Exclure les comptes avec email non vérifié des stats principales
   const verifiedAccounts  = livingAccounts.filter(a => a.emailVerified !== false)
-  const totalUsers        = verifiedAccounts.length
+  // « Comptes total » = ce que montre RÉELLEMENT l'onglet Comptes (tous les
+  // comptes non-tombstone), pour que le KPI cliquable et la liste coïncident
+  // (audit #20). Les stats métier (actifs, pros) restent sur verifiedAccounts.
+  const totalUsers        = livingAccounts.length
   const totalActive       = verifiedAccounts.filter(a => a.status === 'active').length
   const totalPrestataires = verifiedAccounts.filter(a => a.role === 'prestataire').length
   const totalOrgas        = verifiedAccounts.filter(a => a.role === 'organisateur').length
@@ -557,6 +561,7 @@ export default function AgentPage() {
     // des suppressions est dans l'onglet dédié. Visibles seulement si on filtre
     // explicitement le statut « deleted » (audit), jamais mêlées aux vrais comptes.
     if (isTombstone(a) && statusFilter !== 'deleted') return false
+    if (onlineOnly && !isUserOnline(a)) return false
     const matchSearch = !search ||
       a.name?.toLowerCase().includes(search.toLowerCase()) ||
       a.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -1288,9 +1293,11 @@ export default function AgentPage() {
             {/* Stat grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { label: `Comptes total${newAccountsThisMonth > 0 ? ` · +${newAccountsThisMonth} ce mois` : ''}`, value: totalUsers, color: '#4ee8c8',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch('') } },
-                { label: 'Connectés',     value: totalOnline,       color: '#22c55e',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch('') } },
-                { label: 'Prestataires', value: totalPrestataires,  color: COLORS.gold, onClick: () => { setTab('users'); setRoleFilter('prestataire'); setStatusFilter('all'); setSearch('') } },
+                { label: `Comptes total${newAccountsThisMonth > 0 ? ` · +${newAccountsThisMonth} ce mois` : ''}`, value: totalUsers, color: '#4ee8c8',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch(''); setOnlineOnly(false) } },
+                // Vrai drill-down (audit #21) : « Connectés » filtre réellement sur
+                // les comptes en ligne (avant, il montrait TOUS les comptes).
+                { label: 'Connectés',     value: totalOnline,       color: '#22c55e',   onClick: () => { setTab('users'); setRoleFilter('all'); setStatusFilter('all'); setSearch(''); setOnlineOnly(true) } },
+                { label: 'Prestataires', value: totalPrestataires,  color: COLORS.gold, onClick: () => { setTab('users'); setRoleFilter('prestataire'); setStatusFilter('all'); setSearch(''); setOnlineOnly(false) } },
                 { label: 'En attente',   value: totalAllPending,    color: totalAllPending > 0 ? COLORS.pink : COLORS.muted, alert: totalAllPending > 0, onClick: () => setTab('dossiers') },
               ].map(s => (
                 <button key={s.label} onClick={s.onClick} style={{
@@ -1778,6 +1785,18 @@ export default function AgentPage() {
                     {s === 'all' ? 'Tous statuts' : s}
                   </button>
                 ))}
+                {/* Filtre « en ligne » visible + effaçable (piloté par le KPI Connectés) */}
+                <button onClick={() => setOnlineOnly(v => !v)}
+                  style={{
+                    flexShrink: 0, padding: '3px 8px', borderRadius: 4,
+                    fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.06em',
+                    textTransform: 'uppercase', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5,
+                    background: onlineOnly ? 'rgba(34,197,94,0.14)' : 'transparent',
+                    border: onlineOnly ? '1px solid rgba(34,197,94,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    color: onlineOnly ? '#22c55e' : COLORS.dim, transition: 'all 0.15s',
+                  }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: onlineOnly ? '#22c55e' : 'rgba(255,255,255,0.25)' }} /> En ligne{onlineOnly ? ' ✕' : ''}
+                </button>
               </div>
             </div>
 
