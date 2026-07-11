@@ -27,8 +27,13 @@ service cloud.firestore {
     }
 
     // Super-admin « bootstrap » : seul moyen légitime de poser role:'agent'
-    // (les vrais agents sont ensuite créés par un agent existant). DOIT rester
-    // aligné avec VITE_SUPER_ADMIN_EMAILS côté front (src/pages/LoginPage.jsx).
+    // (les vrais agents sont ensuite créés par un agent existant).
+    // ⚠️ LES RÈGLES NE PEUVENT PAS LIRE LES ENV VARS. Cette liste doit donc être
+    // tenue à jour À LA MAIN et rester EXACTEMENT égale à VITE_SUPER_ADMIN_EMAILS
+    // (Vercel) + VITE_SUPER_ADMIN_EMAILS côté front (src/pages/LoginPage.jsx).
+    // Ajouter un super-admin = l'ajouter aux TROIS endroits, sinon il aura les
+    // droits front mais sera refusé (403) par ces règles serveur. Ne mettre ici
+    // QUE des e-mails réellement de confiance : présence ici = pouvoir total.
     function isSuperAdmin() {
       return isSignedIn() && request.auth.token.email in ['hagechady4@gmail.com'];
     }
