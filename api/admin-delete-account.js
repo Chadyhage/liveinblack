@@ -189,6 +189,14 @@ export default async function handler(req, res) {
     await Promise.allSettled(pendings.docs.map(d => d.ref.delete()))
   } catch {}
 
+  // ── 7. Firestore — libérer les slugs (adresses personnalisées) de l'organisateur
+  // (audit #9 : sans ça, le slug restait verrouillé à vie sur l'uid supprimé, et
+  // personne — pas même l'utilisateur re-créé — ne pouvait le reprendre).
+  try {
+    const slugs = await db.collection('organizer_slugs').where('organizerId', '==', uid).get()
+    await Promise.allSettled(slugs.docs.map(d => d.ref.delete()))
+  } catch {}
+
   console.log(`[admin-delete-account] ${caller.email} a supprimé ${uid} (${deletedEmail || 'email inconnu'}) — auth:${authDeleted} firestore:${firestoreDeleted} apps:${applicationsDeleted}`)
   return res.status(200).json({ ok: true, authDeleted, deletedEmail, billing, firestoreDeleted, applicationsDeleted })
 }

@@ -97,6 +97,13 @@ export default async function handler(req, res) {
       if (status === 'expired' && prov.subscriptionActive === true && prov.adminSuspended !== true) {
         patch.subscriptionActive = false
         changed = true
+        // Miroir sur users/ : le gate FedaPay lit users.prestataireSubActive. Sans
+        // ça, un prestataire FedaPay expiré restait « abonné actif » côté compte —
+        // bloqué à vie pour changer de pays de facturation (audit #14).
+        try {
+          await db.collection('users').doc(doc.id).set(
+            { prestataireSubActive: false, prestataireSubStatus: 'expired' }, { merge: true })
+        } catch (e) { console.error('[cron-subscriptions] miroir users prestataireSubActive échoué:', doc.id, e.message) }
       }
 
       if (due.length) {
