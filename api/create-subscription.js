@@ -127,6 +127,24 @@ export default async function handler(req, res) {
     )
     if (openSession) return res.status(200).json({ url: openSession.url, reused: true })
 
+    // ── Verrou anti-double abonnement (audit #5) : sérialise la création de session
+    // par uid. Un double-clic CONCURRENT (les deux requêtes passent la réutilisation
+    // ci-dessus avant que la 1re n'ait créé sa session) créerait sinon DEUX
+    // abonnements Stripe → l'utilisateur facturé deux fois. La 2e requête voit le
+    // verrou frais et s'arrête ; l'utilisateur réessaie et retombe sur la session
+    // ouverte de la 1re (réutilisée plus haut). Le verrou expire après 25 s.
+    const lockRef = db.collection('subscription_locks').doc(String(uid))
+    const gotLock = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(lockRef)
+      const claimedAt = snap.exists ? Number(snap.data().claimedAt) || 0 : 0
+      if (Date.now() - claimedAt < 25000) return false
+      tx.set(lockRef, { uid: String(uid), claimedAt: Date.now() }, { merge: true })
+      return true
+    })
+    if (!gotLock) {
+      return res.status(409).json({ error: 'Un abonnement est déjà en cours de création — patiente quelques secondes puis réessaie.' })
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
