@@ -445,9 +445,12 @@ export default function ProfilePage() {
   // Settings — recherche (filtre les sections de réglages en direct)
   const [settingsSearch, setSettingsSearch] = useState('')
   // Deep-link ?section=encaissement (ex. depuis le rappel de « Mes Événements ») :
-  // pré-filtre les réglages sur l'encaissement pour tomber pile sur la bonne carte.
+  // OUVRE directement le panneau Paramètres ET pré-filtre sur l'encaissement, pour
+  // tomber pile sur la bonne carte (sinon on atterrissait sur l'aperçu du profil et
+  // il fallait encore cliquer « Paramètres du compte »).
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('section') === 'encaissement') {
+      setPanel('settings')
       setSettingsSearch('encaissement')
     }
   }, [])
