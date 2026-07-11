@@ -294,6 +294,35 @@ export default async function handler(req, res) {
       if (idx === -1) {
         const err = new Error('place_not_found'); err.code = 'place_not_found'; throw err
       }
+
+      // ── Place GRATUITE (prix 0) = 1 par compte et par événement ───────────────
+      // 'reserve' est le passage OBLIGÉ de la réservation gratuite (elle décrémente
+      // le stock ici, avant que le client n'écrive tickets/{code}). Garde AUTORITAIRE
+      // contre le hoarding et les faux comptes qui videraient le stock gratuit ou
+      // gonfleraient une fausse affluence. La guestlist (sur invitation) reste le
+      // canal contrôlé de l'organisateur ; ici c'est le libre-service, donc capé à 1.
+      // Lecture DANS la transaction (avant tout write) : le billet gratuit précédent
+      // du compte est déjà dans tickets/ (le client l'écrit après un reserve réussi)
+      // → une 2ᵉ réservation en est bloquée.
+      if (action === 'reserve' && (Number(places[idx].price) || 0) === 0) {
+        if (q > 1) { const err = new Error('free_one'); err.code = 'free_one'; throw err }
+        // Filtres eventId==+userId== uniquement (2 égalités = même motif éprouvé que le
+        // group-tie guard d'api/tickets.js, servi sans index composite) ; on filtre
+        // source/cancelled/revoked en code sur ce petit lot (billets de CE compte pour
+        // CET event).
+        const mine = await tx.get(
+          db.collection('tickets')
+            .where('eventId', '==', String(eventId))
+            .where('userId', '==', caller.uid)
+        )
+        if (mine.docs.some(d => {
+          const t = d.data()
+          return t.source === 'free' && t.cancelled !== true && t.revoked !== true
+        })) {
+          const err = new Error('already_free'); err.code = 'already_free'; throw err
+        }
+      }
+
       const available = Number(places[idx].available) || 0
       if (delta < 0 && available < -delta) {
         const err = new Error('insufficient_stock'); err.code = 'insufficient_stock'; throw err
@@ -308,6 +337,12 @@ export default async function handler(req, res) {
   } catch (e) {
     if (e.code === 'insufficient_stock') {
       return res.status(409).json({ error: 'Il ne reste plus assez de places disponibles pour cette quantité.' })
+    }
+    if (e.code === 'already_free') {
+      return res.status(409).json({ error: 'Tu as déjà réservé ta place gratuite pour cet événement — une seule par compte.' })
+    }
+    if (e.code === 'free_one') {
+      return res.status(409).json({ error: 'Une seule place gratuite par compte pour cet événement.' })
     }
     if (e.code === 'event_not_found' || e.code === 'place_not_found') {
       return res.status(200).json({ ok: true, skipped: e.code })

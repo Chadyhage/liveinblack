@@ -549,10 +549,13 @@ export default function EventDetailPage() {
   const activeMenu = baseMenu.filter(item => !item.excludedPlaces?.includes(selectedPlace))
 
   const maxPerAccount = selectedPlaceObj?.maxPerAccount || 0
-  // Borne la quantité sélectionnable : stock dispo ET plafond par compte (si défini)
+  // Borne la quantité sélectionnable : stock dispo ET plafond par compte (si défini).
+  // Place GRATUITE (prix 0) = 1 par compte (règle appliquée aussi côté serveur dans
+  // api/event-stock 'reserve') → on cape le sélecteur à 1 pour que l'UX colle.
   const maxQtyForSelectedPlace = Math.max(1, Math.min(
     selectedPlaceObj?.available ?? 1,
     maxPerAccount > 0 ? maxPerAccount : Infinity,
+    (Number(selectedPlaceObj?.price) || 0) === 0 ? 1 : Infinity,
   ))
 
   const placePrice = selectedPlaceObj?.price || 0
