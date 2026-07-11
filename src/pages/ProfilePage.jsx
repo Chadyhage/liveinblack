@@ -561,7 +561,9 @@ export default function ProfilePage() {
     import('../utils/firestore-sync')
       .then(({ loadDoc }) => loadDoc(`users/${uid}`))
       .then(remoteUser => {
-        if (remoteUser?.proPhone) setProPhoneForm(remoteUser.proPhone)
+        // #10 : ne PAS écraser une saisie en cours si le loadDoc résout en retard
+        // (réseau lent) — on ne remplit que si le champ est encore vide.
+        if (remoteUser?.proPhone) setProPhoneForm(cur => cur || remoteUser.proPhone)
       }).catch(() => {})
     if (user.role === 'prestataire') {
       import('../utils/apiAuth').then(async ({ authHeaders }) => {
@@ -588,7 +590,9 @@ export default function ProfilePage() {
       import('../utils/firestore-sync')
         .then(({ loadDoc }) => loadDoc(`providers/${uid}`))
         .then(remote => {
-          if (remote) setProviderForm({ name: remote.name || '' })
+          // #10 : garde anti-écrasement — ne remplit que si le champ n'a pas déjà
+          // été renseigné/édité (même pattern que les autres charges de ce useEffect).
+          if (remote) setProviderForm(f => f || { name: remote.name || '' })
           else setProviderForm(f => f || { name: user?.name || '' })
         })
         .catch(() => setProviderForm(f => f || { name: user?.name || '' }))
@@ -601,7 +605,8 @@ export default function ProfilePage() {
       import('../utils/firestore-sync')
         .then(({ loadDoc }) => loadDoc(`organizer_profiles/${uid}`))
         .then(remote => {
-          if (remote) setOrgForm({ publicName: remote.publicName || '' })
+          // #10 : garde anti-écrasement (idem) — jamais stomper une saisie en cours.
+          if (remote) setOrgForm(f => f || { publicName: remote.publicName || '' })
           else setOrgForm(f => f || { publicName: '' })
         })
         .catch(() => setOrgForm(f => f || { publicName: '' }))
