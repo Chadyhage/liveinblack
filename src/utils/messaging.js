@@ -647,7 +647,14 @@ function saveMessages(convId, msgs) {
 // to avoid exceeding Firestore's 1MB document limit.
 function syncMessagesToFirestore(convId, msgs) {
   if (!msgs.length) return
-  import('./firestore-sync').then(({ syncDoc }) => {
+  // #16 : AVANT, on écrasait tout le tableau `items` (syncDoc last-write-wins) → deux
+  // actions concurrentes (un vote de sondage / une réaction / un message envoyé
+  // ailleurs) se perdaient. On passe par mergeItemsById (transaction, upsert par id) :
+  // les messages du serveur absents en local sont PRÉSERVÉS, on ne fait que
+  // (ré)insérer les nôtres. (Résiduel : deux votes SIMULTANÉS sur le MÊME sondage
+  // restent en last-write-wins au niveau du message — nécessiterait un merge par
+  // champ dans voteOnPoll.)
+  import('./firestore-sync').then(({ mergeItemsById }) => {
     const safe = msgs.map(m => {
       if (m.type === 'image' && typeof m.content === 'string' && m.content.startsWith('data:')) {
         // Store a placeholder — actual image stays in localStorage only
@@ -659,7 +666,7 @@ function syncMessagesToFirestore(convId, msgs) {
       }
       return m
     })
-    syncDoc(`conv_messages/${convId}`, { items: safe })
+    mergeItemsById(`conv_messages/${convId}`, { field: 'items', idKey: 'id', upserts: safe })
   }).catch(() => {})
 }
 
@@ -763,6 +770,10 @@ export function deleteMessageForSelf(convId, msgId, userId) {
       : m
   )
   saveMessages(convId, updated)
+  // #14 : deletedForSelf est porté par le message partagé (liste d'uids) — il DOIT
+  // être synchronisé, sinon au prochain merge le message distant (sans le flag) gagne
+  // et le « Supprimer pour moi » réapparaît. Comme deleteMessageForAll.
+  syncMessagesToFirestore(convId, updated)
 }
 
 export function deleteMessageForAll(convId, msgId) {
