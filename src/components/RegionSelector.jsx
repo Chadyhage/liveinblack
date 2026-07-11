@@ -12,10 +12,18 @@ const COLORS = {
 }
 
 // Petite identité couleur par pays (badge) — donne de la vie à la liste.
+// Une teinte distincte par pays (les 9 codes couverts) — avant, 6 des 9 pays
+// partageaient le teal de TG via le fallback. Palette sobre alignée sur la charte.
 const CODE_STYLE = {
-  FR: { color: '#7c9aff' },
-  TG: { color: '#4ee8c8' },
-  BJ: { color: '#c8a96e' },
+  FR: { color: '#7c9aff' }, // bleu
+  TG: { color: '#4ee8c8' }, // teal
+  BJ: { color: '#c8a96e' }, // gold
+  CI: { color: '#e05aaa' }, // rose
+  SN: { color: '#8f56ff' }, // violet
+  BF: { color: '#f0883e' }, // orange
+  ML: { color: '#5ac8e0' }, // cyan
+  NE: { color: '#b0d84e' }, // lime
+  GW: { color: '#e0a95a' }, // ambre
 }
 
 export default function RegionSelector({ isOpen, onClose, onSelect, currentRegion }) {
