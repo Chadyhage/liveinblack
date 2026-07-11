@@ -1529,8 +1529,12 @@ export default function MessagingPage() {
   function handleRemoveFriend(fid) {
     removeFriend(myId, fid)
     // Retrait d'ami → on supprime VRAIMENT la conversation (pas un simple effacement).
+    // #19 : deleteConversationCompletely n'efface QUE le local → au prochain login,
+    // le mergeById (union) la ressuscite (le doc conversation existe toujours). On
+    // enregistre donc aussi le masquage PERSISTANT (synchronisé user_social) pour que
+    // la suppression tienne cross-device.
     const conv = conversations.find(c => c.type === 'direct' && c.participants?.includes(fid))
-    if (conv) deleteConversationCompletely(conv.id)
+    if (conv) { deleteConversationCompletely(conv.id); hideConversationForUser(myId, conv.id) }
     setFriends(prev => prev.filter(id => id !== fid))
     refresh()
     showToast('Contact supprimé')

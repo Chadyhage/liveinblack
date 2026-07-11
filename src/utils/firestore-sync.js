@@ -779,10 +779,19 @@ export async function syncOnLogin(uid, opts = {}) {
     }
 
     // ── 7. Friend requests (to me) ──
+    // #20 : RÉCONCILIATION (pas un simple union). Pour les demandes ENTRANTES
+    // (toId==uid), le remote fait AUTORITÉ : une demande acceptée/refusée ailleurs
+    // est supprimée de Firestore (syncDelete) — un mergeById union la ressuscitait
+    // depuis le cache d'un autre appareil. On retire donc les entrantes absentes du
+    // remote, puis on fusionne le remote frais. Les demandes SORTANTES (fromId==uid)
+    // et tout le reste du cache local sont préservés. S'exécute même si le remote est
+    // vide (sinon les entrantes périmées restaient).
     const reqsSnap = await loadCollection('friend_requests', [where('toId', '==', uid)])
-    if (reqsSnap.length) {
+    {
       const local = safeParseArray('lib_friend_requests')
-      localStorage.setItem('lib_friend_requests', JSON.stringify(mergeById(local, reqsSnap)))
+      const remoteIds = new Set(reqsSnap.map(r => String(r.id || r._docId)))
+      const kept = local.filter(r => String(r.toId) !== String(uid) || remoteIds.has(String(r.id)))
+      localStorage.setItem('lib_friend_requests', JSON.stringify(mergeById(kept, reqsSnap)))
     }
 
     // ── 8. Catalog ──
