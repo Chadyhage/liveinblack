@@ -532,6 +532,25 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── Remboursements d'événements annulés (#71) ─────────────────────────────
+    // event_refunds/{eventId__paymentRef} — créés par le serveur (cancel_event +
+    // webhooks, Admin SDK). Stripe = 'refunded' (auto) ; FedaPay = 'pending_manual'
+    // (worklist à traiter dans le dashboard FedaPay). L'AGENT lit la liste et peut
+    // marquer un remboursement mobile money comme fait (update status). Création/
+    // suppression réservées au serveur.
+    match /event_refunds/{id} {
+      allow read:   if isAgent();
+      allow update: if isAgent();
+      allow create, delete: if false;
+    }
+
+    // ── Journal des annulations d'événements (audit admin, #71) ───────────────
+    // Écrit par le serveur (cancel_event, Admin SDK). Lecture agent uniquement.
+    match /event_cancellations/{eventId} {
+      allow read:  if isAgent();
+      allow write: if false;
+    }
+
     // ── Staff d'un événement (roster serveur/manager) — mini-POS soirée ───────
     // Lecture : tout connecté (un serveur doit pouvoir lire son propre rôle).
     // Écriture : seul le propriétaire de l'event (manager implicite) ou un agent

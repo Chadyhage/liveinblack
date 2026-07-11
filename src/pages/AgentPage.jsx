@@ -166,6 +166,9 @@ export default function AgentPage() {
   const [reports, setReports]                   = useState([])  // signalements d'utilisateurs
   const [adminBoosts, setAdminBoosts]           = useState([])  // boosts vendus (webhook) — surveille aussi les conflits de créneau
   const [paymentAlerts, setPaymentAlerts]       = useState([])  // paiements à examiner manuellement
+  const [eventRefunds, setEventRefunds]         = useState([])  // remboursements mobile money à traiter (#71)
+  const [eventCancellations, setEventCancellations] = useState([]) // journal des annulations d'events
+  const [refundBusy, setRefundBusy]             = useState('')   // id du remboursement en cours de validation
 
   function loadReports() {
     try { return JSON.parse(localStorage.getItem('lib_reports') || '[]').filter(r => !r.handled) } catch { return [] }
@@ -205,6 +208,26 @@ export default function AgentPage() {
     } catch {
       showToast("Impossible de clôturer l'alerte", 'error')
     }
+  }
+
+  // Marque un remboursement mobile money comme FAIT (l'agent l'a exécuté à la main
+  // dans le dashboard FedaPay — pas d'API de remboursement côté FedaPay). #71
+  async function markRefundDone(refund) {
+    const docId = refund._docId || refund.id
+    if (!docId) return
+    setRefundBusy(docId)
+    try {
+      const { syncDocAwaitable } = await import('../utils/firestore-sync')
+      const result = await syncDocAwaitable(`event_refunds/${docId}`, {
+        status: 'refunded_manual', refundedManuallyAt: Date.now(), refundedBy: user?.uid || null,
+      })
+      if (!result.ok) throw new Error(result.error)
+      setEventRefunds(items => items.filter(it => (it._docId || it.id) !== docId))
+      showToast('Remboursement marqué comme effectué')
+    } catch {
+      showToast('Impossible de marquer le remboursement', 'error')
+    }
+    setRefundBusy('')
   }
 
   // Returns the org/business name for organisateurs & prestataires, personal name otherwise
@@ -288,12 +311,14 @@ export default function AgentPage() {
 
         // Reversements vendeurs : soldes dus + demandes de virement en attente
         // + boosts vendus (surveillance des créneaux Top 3 et des conflits)
-        const [balances, payouts, boosts, alerts, paidBookings] = await Promise.all([
+        const [balances, payouts, boosts, alerts, paidBookings, refunds, cancellations] = await Promise.all([
           loadCollectionStrict('seller_balances'),
           loadCollectionStrict('payout_requests'),
           loadCollectionStrict('boosts'),
           loadCollectionStrict('payment_alerts'),
           loadCollectionStrict('bookings'),
+          loadCollectionStrict('event_refunds'),
+          loadCollectionStrict('event_cancellations'),
         ])
         // Ventes réelles de la PLATEFORME (docs écrits par les webhooks Stripe/
         // FedaPay). lib_bookings (localStorage) ne contient que les achats faits
@@ -311,6 +336,11 @@ export default function AgentPage() {
         else errors.push('boosts')
         if (alerts.ok) setPaymentAlerts(alerts.items.filter(a => a.status === 'manual_review'))
         else errors.push('alertes de paiement')
+        // Remboursements mobile money À TRAITER (FedaPay n'a pas d'API de
+        // remboursement → l'agent les fait à la main dans le dashboard FedaPay).
+        if (refunds.ok) setEventRefunds(refunds.items.filter(r => r.status === 'pending_manual'))
+        else errors.push('remboursements à traiter')
+        if (cancellations.ok) setEventCancellations(cancellations.items.sort((a, b) => Number(b.cancelledAt || 0) - Number(a.cancelledAt || 0)))
       } catch {
         errors.push('données générales')
       }
@@ -1037,6 +1067,7 @@ export default function AgentPage() {
             { key: 'dossiers',     label: 'Dossiers',      count: totalAppsSubmitted, alert: totalAppsSubmitted > 0 },
             { key: 'boosts',       label: 'Boosts',        count: adminBoosts.filter(b => !['refunded_conflict', 'cancelled'].includes(b.status) && new Date(b.expiresAt).getTime() > Date.now()).length, alert: adminBoosts.some(b => b.conflict && b.status !== 'refunded_conflict' && b.status !== 'cancelled' && new Date(b.expiresAt).getTime() > Date.now()) },
             { key: 'reversements', label: 'Reversements',  count: payoutRequests.length, alert: payoutRequests.length > 0 },
+            { key: 'remboursements', label: 'Remboursements', count: eventRefunds.length, alert: eventRefunds.length > 0 },
             { key: 'paiements',     label: 'Paiements',      count: paymentAlerts.length, alert: paymentAlerts.length > 0 },
             { key: 'suppressions', label: 'Suppressions',  count: deletionRequests.length, alert: deletionRequests.length > 0 },
             { key: 'reports',      label: 'Signalements',  count: reports.length, alert: reports.length > 0 },
@@ -3333,6 +3364,69 @@ export default function AgentPage() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'remboursements' && (
+        <div style={{ padding: '16px 16px 40px', maxWidth: 620, margin: '0 auto' }}>
+          <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>
+            Remboursements mobile money à traiter
+          </p>
+          <p style={{ fontFamily: FONTS.display, fontSize: 13, color: COLORS.muted, lineHeight: 1.55, margin: '0 0 18px' }}>
+            FedaPay ne rembourse pas par API. Pour chaque ligne : rembourse l'acheteur dans le dashboard FedaPay (bouton « Refund » sur la transaction), puis marque-la comme faite ici. L'argent d'un événement annulé n'est jamais versé à l'organisateur — il reste disponible pour rembourser. Les paiements par carte (Stripe) sont, eux, remboursés automatiquement.
+          </p>
+          {eventRefunds.length === 0 ? (
+            <div style={{ ...CARD, padding: 32, textAlign: 'center' }}>
+              <p style={{ fontFamily: FONTS.display, fontSize: 18, color: COLORS.muted, margin: 0 }}>Aucun remboursement mobile money en attente</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {eventRefunds.map(refund => {
+                const docId = refund._docId || refund.id
+                const amount = Math.max(0, Number(refund.amountXOF) || 0)
+                return (
+                  <div key={docId} style={{ ...CARD, padding: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>{amount.toLocaleString('fr-FR')} FCFA</p>
+                        <p style={{ fontFamily: FONTS.display, fontSize: 13, color: COLORS.muted, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis' }}>À&nbsp;: {refund.buyerEmail || '— email inconnu —'}</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: 0 }}>Transaction FedaPay&nbsp;: {refund.paymentRef || '?'}</p>
+                        <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.dim, margin: '2px 0 0' }}>Événement&nbsp;: {refund.eventId || '?'}</p>
+                      </div>
+                      <button onClick={() => markRefundDone(refund)} disabled={refundBusy === docId} style={{ flexShrink: 0, background: '#3ed6b5', opacity: refundBusy === docId ? 0.6 : 1, color: '#04040b', border: 'none', borderRadius: 10, padding: '10px 14px', fontFamily: FONTS.display, fontSize: 13, fontWeight: 700, cursor: refundBusy === docId ? 'wait' : 'pointer' }}>
+                        {refundBusy === docId ? '…' : 'Marquer remboursé'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {eventCancellations.length > 0 && (
+            <>
+              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '28px 0 8px' }}>
+                Historique des annulations
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {eventCancellations.slice(0, 40).map(c => {
+                  const when = c.cancelledAt?.toMillis ? c.cancelledAt.toMillis() : c.cancelledAt
+                  return (
+                    <div key={c._docId || c.eventId} style={{ ...CARD, padding: 12 }}>
+                      <p style={{ fontFamily: FONTS.display, fontSize: 14, fontWeight: 600, color: '#fff', margin: '0 0 3px' }}>{c.eventName || c.eventId}</p>
+                      <p style={{ fontFamily: FONTS.display, fontSize: 12, color: COLORS.muted, margin: 0 }}>
+                        {Number(c.stripeRefundedCount) > 0 ? `${c.stripeRefundedCount} remboursement(s) carte (${((Number(c.stripeRefundedCents) || 0) / 100).toFixed(2)} €) · ` : ''}
+                        {Number(c.fedapayWorklistCount) > 0 ? `${c.fedapayWorklistCount} mobile money · ` : ''}
+                        {Number(c.stripeFailedCount) > 0 ? `${c.stripeFailedCount} échec(s) à revoir · ` : ''}
+                        {when ? new Date(when).toLocaleDateString('fr-FR') : ''}
+                      </p>
+                      {c.reason && <p style={{ fontFamily: FONTS.display, fontSize: 12, color: COLORS.dim, margin: '3px 0 0', fontStyle: 'italic' }}>« {c.reason} »</p>}
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           )}
         </div>
       )}
