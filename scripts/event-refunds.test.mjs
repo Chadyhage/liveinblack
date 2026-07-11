@@ -252,6 +252,16 @@ test('recordFedapayRefund : renverse seller_balances.amountDueXOF SI settled (sy
   assert.equal(db._store.get('seller_balances/orga1').amountDueXOF, 0)
 })
 
+test('recordFedapayRefund : renversement CLAMPÉ à 0 (event déjà payé auto puis annulé → jamais négatif)', async () => {
+  const db = makeDb({
+    // solde déjà réduit (2000) < owed (5000) : ex. finalizePaid a déjà versé l'event
+    'seller_balances/orga3': { amountDueXOF: 2000 },
+    'fedapay_txns/903': { amountTotal: 5300, feeAmount: 300, sellerUid: 'orga3', settled: true },
+  })
+  await recordFedapayRefund(db, FieldValue, { eventId: 'e4', paymentRef: '903', tickets: [{}] })
+  assert.equal(db._store.get('seller_balances/orga3').amountDueXOF, 0) // clampé, PAS -3000
+})
+
 test('recordFedapayRefund : ne renverse RIEN si non settled (paiement capté avant crédit vendeur)', async () => {
   const db = makeDb({
     'seller_balances/orga2': { amountDueXOF: 5000 },
