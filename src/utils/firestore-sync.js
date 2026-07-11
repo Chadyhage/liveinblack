@@ -951,8 +951,24 @@ export async function pushLocalToFirestore(uid) {
     if (bookings.length) syncMyBookings(uid, bookings)
 
     // Created events
+    // #30 : ne JAMAIS pousser de cover/vidéo/photo en base64 (data:) — un seul event
+    // dépasse vite la limite Firestore de 1 Mo → l'écriture du tableau ENTIER était
+    // rejetée en silence (aucun event synchronisé cross-device). Les vrais médias
+    // passent par Storage ; un data: résiduel reste purement local (mieux que perdre
+    // tout le tableau). Voir [[firestore-1mb-limit-images]].
     const events = safeParseArray('lib_created_events').filter(e => e.createdBy === uid || e.organizerId === uid)
-    if (events.length) syncDoc(`user_events/${uid}`, { items: events })
+    if (events.length) {
+      const stripData = v => (typeof v === 'string' && v.startsWith('data:')) ? null : v
+      const safeEvents = events.map(e => ({
+        ...e,
+        imageUrl: stripData(e.imageUrl),
+        videoUrl: stripData(e.videoUrl),
+        places: Array.isArray(e.places)
+          ? e.places.map(p => ({ ...p, photos: Array.isArray(p.photos) ? p.photos.map(stripData).filter(Boolean) : p.photos }))
+          : e.places,
+      }))
+      syncDoc(`user_events/${uid}`, { items: safeEvents })
+    }
 
     // Conversations (directs + groupes)
     const convs = safeParseArray('lib_conversations').filter(c =>
