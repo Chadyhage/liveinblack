@@ -269,14 +269,25 @@ async function finalizeBooking(db, session, meta) {
   if (eventId) {
     const evGuard = await db.collection('events').doc(String(eventId)).get()
     if (!evGuard.exists) {
-      await db.collection('payment_alerts').doc(`stripe_${session.id}`).set({
-        provider: 'stripe', stripeSessionId: session.id, bookingId,
-        userId: String(userId || ''), eventId: String(eventId),
-        reason: 'event_deleted_before_fulfillment',
-        status: 'manual_review', amountTotal: session.amount_total || null,
-        currency: session.currency || null, createdAt: FieldValue.serverTimestamp(),
-      }, { merge: true })
-      console.warn('[webhook] paiement reçu pour un event supprimé — revue manuelle:', session.id, eventId)
+      // Event SUPPRIMÉ pendant que la session Checkout était ouverte : ne pas
+      // émettre de billet (il serait invisible/purgé) ET rembourser l'acheteur —
+      // même patron que l'event annulé (correctif audit #15 : avant, seule une
+      // alerte était posée, l'acheteur restait débité sans remboursement auto).
+      try {
+        const { refundPostCancellationStripe } = await import('../lib/eventRefunds.js')
+        await refundPostCancellationStripe(stripe, db, { eventId: String(eventId), session })
+        console.warn('[webhook] paiement reçu pour un event SUPPRIMÉ — remboursé automatiquement:', session.id, eventId)
+      } catch (e) {
+        await db.collection('payment_alerts').doc(`stripe_${session.id}`).set({
+          provider: 'stripe', stripeSessionId: session.id, bookingId,
+          userId: String(userId || ''), eventId: String(eventId),
+          reason: 'event_deleted_before_fulfillment_refund_failed',
+          status: 'manual_review', error: String(e && e.message || '').slice(0, 300),
+          amountTotal: session.amount_total || null,
+          currency: session.currency || null, createdAt: FieldValue.serverTimestamp(),
+        }, { merge: true })
+        console.error('[webhook] remboursement auto (event supprimé) ÉCHOUÉ — revue manuelle:', session.id, e.message)
+      }
       return
     }
     // Paiement finalisé APRÈS l'ANNULATION de l'événement (correctif audit #71) :

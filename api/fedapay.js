@@ -749,6 +749,14 @@ async function finalizeFedapayBooking(db, entity) {
   if (eventId) {
     const evGuard = await db.collection('events').doc(String(eventId)).get()
     if (!evGuard.exists) {
+      // Event SUPPRIMÉ pendant le paiement : ne pas émettre de billet. FedaPay n'a
+      // pas d'API de remboursement → inscrire le paiement dans la worklist manuelle
+      // (comme l'event annulé) + alerte (correctif audit #15 : l'acheteur restait
+      // débité sans piste de remboursement).
+      try {
+        const { recordFedapayRefund } = await import('../lib/eventRefunds.js')
+        await recordFedapayRefund(db, { eventId: String(eventId), paymentRef: txnId, tickets: [] })
+      } catch (e) { console.error('[fedapay-webhook] worklist (event supprimé) échouée:', txnId, e.message) }
       await metaRef.set({ status: 'manual_review', reviewReason: 'event_deleted_before_fulfillment', fulfillStartedAt: null }, { merge: true })
       await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
         provider: 'fedapay', transactionId: txnId, bookingId,
@@ -756,7 +764,7 @@ async function finalizeFedapayBooking(db, entity) {
         reason: 'event_deleted_before_fulfillment',
         status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
       }, { merge: true })
-      console.warn('[fedapay-webhook] paiement reçu pour un event supprimé — revue manuelle:', txnId, eventId)
+      console.warn('[fedapay-webhook] paiement reçu pour un event supprimé — worklist remboursement:', txnId, eventId)
       return
     }
     // Paiement approuvé APRÈS l'ANNULATION de l'événement (correctif audit #71) :

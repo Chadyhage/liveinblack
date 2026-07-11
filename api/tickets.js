@@ -484,15 +484,16 @@ async function postponeEventFlow(req, res, caller) {
 // événement payant → entrée gratuite ».
 async function ticketEntryEntitlement(db, ticket, ticketCode) {
   const eventId = String(ticket.eventId || '')
-  const evSnap = eventId ? await db.collection('events').doc(eventId).get() : null
-  const ev = evSnap && evSnap.exists ? evSnap.data() : null
-  // Événement ANNULÉ → aucune entrée, même pour un billet payé (les QR sont
-  // désactivés dès l'annulation ; les acheteurs sont remboursés). On vérifie
-  // AVANT le raccourci paid:true.
-  if (ev && ev.cancelled === true) return { ok: false, msg: 'Événement annulé — billet non valide.' }
-  if (ticket.paid === true) return { ok: true }
   if (!eventId) return { ok: false, msg: "Billet non rattaché à un événement — entrée refusée." }
+  const evSnap = await db.collection('events').doc(eventId).get()
+  const ev = evSnap.exists ? evSnap.data() : null
+  // L'événement doit EXISTER et ne pas être ANNULÉ — vérifié AVANT le raccourci
+  // paid:true (correctif audit #17 : un billet payé d'un événement SUPPRIMÉ donnait
+  // l'entrée + un point de fidélité, car le raccourci « payé » passait d'abord ;
+  // un événement annulé désactive les QR, ses acheteurs étant remboursés).
   if (!ev) return { ok: false, msg: 'Événement introuvable — entrée refusée.' }
+  if (ev.cancelled === true) return { ok: false, msg: 'Événement annulé — billet non valide.' }
+  if (ticket.paid === true) return { ok: true }
 
   if (ticket.source === 'guestlist') {
     const gSnap = await db.collection('guestlists').doc(eventId).get()
