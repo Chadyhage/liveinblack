@@ -3721,7 +3721,11 @@ export default function AgentPage() {
         // EUR = filet Stripe Connect (réglable ici). XOF actionnable = UNIQUEMENT
         // les versements auto en échec (le reste part tout seul → pas un « à faire »).
         const totalDueCents = sellerBalances.reduce((s, b) => s + Number(b.amountDueCents || 0), 0)
-        const totalFailedXOF = failedPayouts.reduce((s, p) => s + Number(p.amountDueXOF || 0), 0)
+        // Events annulés = leur recette REMBOURSE les acheteurs, JAMAIS de versement
+        // à l'organisateur. Le cron marque quand même leur enveloppe 'failed' → on
+        // les affiche mais SANS bouton payer (le serveur refuse aussi, double garde).
+        const cancelledEventIds = new Set(eventCancellations.map(c => String(c.eventId || c._docId || c.id)))
+        const totalFailedXOF = failedPayouts.reduce((s, p) => cancelledEventIds.has(String(p.eventId || p._docId || p.id)) ? s : s + Number(p.amountDueXOF || 0), 0)
         const empty = payoutRequests.length === 0 && sellerBalances.length === 0 && failedPayouts.length === 0
         // Solde RÉEL du ledger (source de vérité webhook) — le montant d'une
         // demande de virement est écrit par le vendeur, donc jamais fiable seul.
@@ -3855,6 +3859,7 @@ export default function AgentPage() {
                       {failedPayouts.map(p => {
                         const uid = String(p.sellerUid || '')
                         const amt = Math.max(0, Math.round(Number(p.amountDueXOF || 0)))
+                        const isCancelled = cancelledEventIds.has(String(p.eventId || p._docId || p.id))
                         return (
                           <div key={p.eventId || p.id || p._docId} style={{ ...CARD, padding: 16, borderColor: 'rgba(224,90,170,0.30)', borderLeft: '3px solid rgba(224,90,170,0.6)' }}>
                             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
@@ -3871,6 +3876,15 @@ export default function AgentPage() {
                                 Raison : {String(p.failReason).slice(0, 160)}
                               </p>
                             )}
+                            {isCancelled ? (
+                              <p style={{
+                                marginTop: 12, padding: '10px 12px', borderRadius: 10,
+                                background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.4)',
+                                color: 'rgba(224,90,170,0.95)', fontFamily: FONTS.mono, fontSize: 10.5, lineHeight: 1.5,
+                              }}>
+                                Événement ANNULÉ — cette recette rembourse les acheteurs (onglet Remboursements). Ne rien verser à l'organisateur.
+                              </p>
+                            ) : (
                             <button
                               onClick={() => setConfirmAction({ type: 'markPayoutPaid', ep: p, name: nameOf(uid), label: fmtXOF(amt) })}
                               style={{
@@ -3880,6 +3894,7 @@ export default function AgentPage() {
                               }}>
                               Marquer payé ({fmtXOF(amt)})
                             </button>
+                            )}
                           </div>
                         )
                       })}

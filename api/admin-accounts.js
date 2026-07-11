@@ -156,6 +156,18 @@ export default async function handler(req, res) {
       case 'mark_payout_paid': {
         const eventId = String(req.body?.eventId || '')
         if (!eventId) return res.status(400).json({ error: 'missing_eventId' })
+        // Un event ANNULÉ ou SUPPRIMÉ ne se verse JAMAIS à l'organisateur : sa
+        // recette sert à REMBOURSER les acheteurs (worklist FedaPay). Le cron
+        // marque pourtant son enveloppe 'failed' (versement bloqué) → sans ce
+        // garde, l'enveloppe apparaîtrait dans la liste manuelle et l'admin
+        // pourrait payer l'organisateur d'un event annulé = double sortie.
+        const evSnap = await db.collection('events').doc(eventId).get()
+        if (!evSnap.exists) {
+          return res.status(409).json({ error: 'event_gone', message: "Événement supprimé — sa recette rembourse les acheteurs, ne rien verser à l'organisateur." })
+        }
+        if (evSnap.data().cancelled === true) {
+          return res.status(409).json({ error: 'event_cancelled', message: "Événement ANNULÉ — sa recette rembourse les acheteurs (voir Remboursements), ne rien verser à l'organisateur." })
+        }
         const epRef = db.collection('event_payouts').doc(eventId)
         const outcome = await db.runTransaction(async (tx) => {
           const epSnap = await tx.get(epRef)
