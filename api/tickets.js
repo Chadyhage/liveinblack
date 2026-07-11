@@ -137,6 +137,29 @@ export default async function handler(req, res) {
       if (fresh.checkedInAt) { const e = new Error('checked_in'); e.code = 'checked_in'; throw e }
       const curHolder = String(fresh.userId || host) // titulaire RÉEL au moment de la tx
 
+      // ── Garde « 1 place de groupe / compte / événement » DANS la transaction ──
+      // (audit #74 — fermeture du TOCTOU). Le pré-contrôle plus haut (hors tx)
+      // donne un joli message dans le cas courant, mais deux attributions
+      // concurrentes de DEUX tables différentes au MÊME invité le passaient toutes
+      // les deux (docs tRef distincts → pas de conflit). En relisant le registre
+      // tickets/ PAR REQUÊTE dans la transaction, Firestore sérialise : la 1re écrit
+      // userId=target sur son siège, la 2nde re-tente, voit ce lien et abandonne.
+      // ⚠️ Repose sur les transactions de l'ADMIN SDK (serveur, isolation
+      // sérialisable + verrous de plage sur la requête, même sur résultat vide) —
+      // c'est le cas ici (Vercel). Porté un jour vers le SDK client (concurrence
+      // OPTIMISTE), ce garde ne fermerait PAS la course : il faudrait un doc sentinelle
+      // déterministe par (eventId, target) que les deux transactions écrivent.
+      if (action === 'assign') {
+        const [hostTieSnap, holderTieSnap] = await Promise.all([
+          tx.get(db.collection('tickets').where('eventId', '==', String(ticket.eventId)).where('hostUid', '==', target)),
+          tx.get(db.collection('tickets').where('eventId', '==', String(ticket.eventId)).where('userId', '==', target)),
+        ])
+        const tiedElsewhere = [...hostTieSnap.docs, ...holderTieSnap.docs]
+          .map(d => d.data())
+          .some(t => t && t.tableId && t.revoked !== true && String(t.ticketCode) !== String(ticketCode))
+        if (tiedElsewhere) { const e = new Error('group_tie'); e.code = 'group_tie'; throw e }
+      }
+
       // seatVersion : incrémentée à CHAQUE attribution/révocation. Écrite dans le
       // registre ET dans les copies (hôte + invité) → le QR du nouveau titulaire
       // (régénéré depuis sa copie) porte cette version ; un QR émis AVANT cette
@@ -200,6 +223,7 @@ export default async function handler(req, res) {
     } catch (txErr) {
       if (txErr.code === 'checked_in') return res.status(409).json({ error: "Ce billet a été scanné à l'entrée entre-temps — impossible de le déplacer." })
       if (txErr.code === 'not_host') return res.status(403).json({ error: "Tu n'es plus l'hôte de cette table." })
+      if (txErr.code === 'group_tie') return res.status(409).json({ error: `${targetName || 'Cette personne'} vient d'être liée à une place de groupe pour cet événement — une seule place de groupe par personne et par événement.` })
       throw txErr
     }
 
@@ -574,6 +598,7 @@ async function checkinTicket(req, res, caller) {
 
     let first = false
     let holder = null
+    let awardedPoint = false
     await db.runTransaction(async (tx) => {
       const fresh = await tx.get(tRef)
       if (!fresh.exists) return
@@ -586,15 +611,22 @@ async function checkinTicket(req, res, caller) {
       let holderExists = false
       if (holder) holderExists = (await tx.get(db.collection('users').doc(holder))).exists
       tx.set(tRef, { checkedInAt: new Date().toISOString(), checkedInBy: caller.uid }, { merge: true })
-      // Titulaire sans compte (invitation guestlist non réclamée) ou compte supprimé
-      // → check-in enregistré mais AUCUN point (pas de résurrection de doc).
-      if (holder && holderExists) {
+      // Point de fidélité UNIQUEMENT pour un billet réellement PAYÉ (t.paid===true,
+      // posé par le webhook — non forgeable côté client : les règles imposent
+      // paid:false à la création et interdisent à l'organisateur de flipper paid).
+      // Un billet GRATUIT (place à 0) ou une invitation guestlist donne l'ENTRÉE
+      // mais AUCUN point : sinon l'organisateur d'un événement gratuit (ou
+      // auto-créé) mintait des billets gratuits sur son propre compte et se scannait
+      // à volonté pour farmer des points (audit #75). La fidélité récompense la
+      // dépense, pas l'entrée gratuite. Titulaire sans compte / supprimé → aucun point.
+      if (holder && holderExists && t.paid === true) {
         tx.set(db.collection('users').doc(holder), { points: FieldValue.increment(1) }, { merge: true })
+        awardedPoint = true
       }
       first = true
     })
 
-    return res.status(200).json({ ok: true, ticketCode, alreadyCheckedIn: !first, pointAwardedTo: first ? holder : null })
+    return res.status(200).json({ ok: true, ticketCode, alreadyCheckedIn: !first, pointAwardedTo: awardedPoint ? holder : null })
   } catch (err) {
     console.error('[/api/tickets] checkin error:', err)
     return res.status(500).json({ error: err.message || 'Internal error' })
