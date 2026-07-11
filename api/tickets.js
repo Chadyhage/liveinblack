@@ -79,15 +79,24 @@ export default async function handler(req, res) {
         target = String(toUid)
         targetName = uSnap.data().name || uSnap.data().displayName || 'Invité'
       } else if (toEmail) {
-        // Recherche insensible à la casse : les emails peuvent être stockés tels
-        // quels (majuscules) ou normalisés → on tente les deux variantes.
         const raw = String(toEmail).trim()
         let doc = null
-        for (const val of [raw, raw.toLowerCase()]) {
-          const q = await db.collection('users').where('email', '==', val).limit(1).get()
-          if (!q.empty) { doc = q.docs[0]; break }
+        // #8 : l'email n'est plus dans users/ (migré → user_private). Source de vérité
+        // = Firebase Auth : on résout l'uid via getUserByEmail (gère la casse), puis on
+        // lit users/ pour le nom. Repli sur l'ancienne requête users/.email pour les
+        // comptes pas encore migrés.
+        try {
+          const { getAuth } = await import('firebase-admin/auth')
+          const authUser = await getAuth().getUserByEmail(raw)
+          if (authUser?.uid) doc = await db.collection('users').doc(authUser.uid).get()
+        } catch {}
+        if (!doc || !doc.exists) {
+          for (const val of [raw, raw.toLowerCase()]) {
+            const q = await db.collection('users').where('email', '==', val).limit(1).get()
+            if (!q.empty) { doc = q.docs[0]; break }
+          }
         }
-        if (!doc) {
+        if (!doc || !doc.exists) {
           return res.status(404).json({ error: "Cet ami n'a pas encore de compte LIVEINBLACK. Demande-lui d'en créer un, puis attribue-lui le billet." })
         }
         target = doc.id

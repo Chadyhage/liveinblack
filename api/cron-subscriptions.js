@@ -112,7 +112,13 @@ export default async function handler(req, res) {
         // (destinataire de confiance, jamais fourni par un client).
         let toEmail = null
         if (due.some(k => EMAIL_MILESTONES.has(k))) {
-          try { toEmail = (await db.collection('users').doc(doc.id).get()).data()?.email || null } catch {}
+          // #8 : email dans user_private/{uid} ; repli users/.email (comptes non migrés)
+          // puis Firebase Auth (source de vérité). Destinataire de confiance, jamais client.
+          try {
+            toEmail = (await db.collection('user_private').doc(doc.id).get()).data()?.email
+              || (await db.collection('users').doc(doc.id).get()).data()?.email || null
+            if (!toEmail) { const { getAuth } = await import('firebase-admin/auth'); toEmail = (await getAuth().getUser(doc.id)).email || null }
+          } catch {}
         }
         for (const key of due) {
           const r = REMINDER[key]

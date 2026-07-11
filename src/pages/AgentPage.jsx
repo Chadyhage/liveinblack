@@ -265,10 +265,14 @@ export default function AgentPage() {
       try {
         const { loadCollectionStrict } = await import('../utils/firestore-sync')
         const { fetchApplicationsFromFirestore } = await import('../utils/applications')
-        const [apps, pendingRes, usersRes] = await Promise.all([
+        const [apps, pendingRes, usersRes, privRes] = await Promise.all([
           fetchApplicationsFromFirestore().catch(() => { errors.push('dossiers'); return null }),
           loadCollectionStrict('pending_validations'),
           loadCollectionStrict('users'),
+          // #8 : l'email vit désormais dans le doc privé user_private/{uid} (l'agent y
+          // a droit). On le fusionnera par uid, avec repli sur users/.email tant que
+          // tous les comptes ne sont pas migrés/scrubbés.
+          loadCollectionStrict('user_private'),
         ])
 
         // ── Comptes : le snapshot Firestore EST la liste (pas de merge-union). ──
@@ -277,7 +281,13 @@ export default function AgentPage() {
         // suppressions de vrais comptes). On ne conserve en plus que les comptes
         // purement locaux (uid local-*, mode sans Firebase) et l'admin courant.
         if (usersRes.ok) {
-          const serverAccounts = usersRes.items.filter(u => u.uid && (u.email || u.name))
+          // #8 : fusion de l'email depuis user_private/{uid} (repli users/.email pour
+          // les comptes pas encore migrés). Le doc privé est indexé par _docId = uid.
+          const privById = {}
+          for (const p of (privRes?.items || [])) { if (p._docId) privById[p._docId] = p }
+          const serverAccounts = usersRes.items
+            .map(u => ({ ...u, email: (privById[u.uid]?.email) || u.email || '' }))
+            .filter(u => u.uid && (u.email || u.name))
           const serverUids = new Set(serverAccounts.map(u => u.uid))
           const localOnly = getAllAccounts().filter(a =>
             a.uid && String(a.uid).startsWith('local-') && !serverUids.has(a.uid)

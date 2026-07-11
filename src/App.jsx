@@ -93,7 +93,9 @@ function usePersistedUser() {
               try {
                 const { loadDoc } = await import('./utils/firestore-sync')
                 const profile = await loadDoc(`users/${fbUser.uid}`)
-                setUser(profile ? { ...profile, uid: fbUser.uid } : null)
+                // #8 : le doc public n'a plus l'email → on le prend de Firebase Auth
+                // (source de vérité) pour ne pas laisser la session sans son propre email.
+                setUser(profile ? { ...profile, uid: fbUser.uid, email: fbUser.email || profile.email || '' } : null)
               } catch { setUser(null) }
             }
             return // session Firebase valide (et cohérente) → OK
