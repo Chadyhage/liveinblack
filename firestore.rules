@@ -698,7 +698,10 @@ service cloud.firestore {
     // + l'annulation manager sont les garde-fous applicatifs.
     match /event_orders/{eventId} {
       allow read:  if isSignedIn();
-      allow write: if isSignedIn();
+      // #7 : écriture SERVEUR uniquement (api/event-stock action 'order', Admin SDK, qui
+      // valide rôle + prix menu + champs staff-only). Le client n'écrit plus en direct →
+      // fini le « payé »/prix 0/effacement des commandes d'autrui forgés hors UI.
+      allow write: if false;
     }
 
     // ── Historique commun des actions (litiges) ──────────────────────────────

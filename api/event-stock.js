@@ -95,6 +95,104 @@ export default async function handler(req, res) {
     }
   }
 
+  // ─── Commandes de soirée (POS) — mutations SERVEUR-AUTORITAIRES (#7) ─────────
+  // AVANT : toute la caisse écrivait event_orders/{eventId} en DIRECT côté client →
+  // n'importe quel connecté pouvait se marquer « payé », mettre un prix à 0, ou
+  // effacer les commandes d'autrui. Désormais toute mutation passe ici (les règles
+  // bloquent l'écriture client directe). On dérive le rôle RÉEL de l'appelant
+  // (propriétaire / staff du roster / client) et on valide :
+  //  · unitPrice vient TOUJOURS du menu SERVEUR (jamais du client → fini le prix à 0) ;
+  //  · paid_at / served_at / cancelled réservés au staff/propriétaire (pas d'auto-payé) ;
+  //  · un non-staff ne touche QUE ses propres lignes non servies/non payées.
+  if (action === 'order') {
+    if (!eventId) return res.status(400).json({ error: 'eventId requis' })
+    const ops = req.body?.ops || {}
+    try {
+      const db = getDb()
+      const evSnap = await db.collection('events').doc(String(eventId)).get()
+      if (!evSnap.exists) return res.status(404).json({ error: 'Événement introuvable' })
+      const ev = evSnap.data()
+      const isOwner = ev.createdBy === caller.uid || ev.organizerId === caller.uid
+      let staffRole = null
+      try {
+        const st = await db.collection('event_staff').doc(String(eventId)).get()
+        staffRole = st.exists ? ((st.data().roster || {})[caller.uid] || null) : null
+      } catch {}
+      const isStaff = isOwner || !!staffRole
+      const isManager = isOwner || staffRole === 'manager'
+      const menu = Array.isArray(ev.menu) ? ev.menu : []
+      // Prix autoritaire : depuis le menu serveur. Menu configuré mais article inconnu → invalide.
+      const menuPrice = (item) => {
+        if (!menu.length) return Number(item.unitPrice) || 0 // pas de menu → aucun enjeu prix
+        const m = menu.find(x => String(x.id || x.name) === String(item.menuItemId) || String(x.name) === String(item.name))
+        return m ? (Number(m.price) || 0) : null
+      }
+      const STAFF_ONLY = ['paid_at', 'paid_by', 'paid_by_name', 'served_at', 'served_by', 'served_by_name', 'cancelled_at', 'cancelled_by', 'cancellation_reason']
+      const isServed = (it) => it && (it.status === 'served' || it.served_at)
+
+      const upserts = Array.isArray(ops.upserts) ? ops.upserts : []
+      // insertOnly = matérialisation des options INCLUSES au billet + des PRÉCOMMANDES
+      // (déjà payées / gratuites, pas des consos de bar facturables) → insérées telles
+      // quelles si absentes, sans override de prix.
+      const insertOnly = Array.isArray(ops.insertOnly) ? ops.insertOnly : []
+      const patches = Array.isArray(ops.patches) ? ops.patches : []
+      const removeIds = Array.isArray(ops.removeIds) ? ops.removeIds : []
+      const guardedRemoveIds = Array.isArray(ops.guardedRemoveIds) ? ops.guardedRemoveIds : []
+
+      const ref = db.collection('event_orders').doc(String(eventId))
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref)
+        const remote = (snap.exists && Array.isArray(snap.data().items)) ? snap.data().items : []
+        const byId = new Map(remote.map(it => [String(it.id), it]))
+        const deny = (reason) => { const e = new Error('DENIED'); e.reason = reason; throw e }
+
+        for (const raw of upserts) {
+          const existing = byId.get(String(raw.id))
+          const price = menuPrice(raw)
+          if (price === null) deny('unknown_menu_item')
+          let item = { ...raw, unitPrice: price }
+          if (!isStaff) {
+            for (const k of STAFF_ONLY) delete item[k]
+            item.addedBy = caller.uid
+            item.addedByRole = 'client'
+            if (existing && (existing.addedBy !== caller.uid || isServed(existing) || existing.paid_at)) deny('not_your_item')
+          }
+          byId.set(String(item.id), existing ? { ...existing, ...item } : item)
+        }
+        for (const raw of insertOnly) {
+          if (byId.has(String(raw.id))) continue
+          byId.set(String(raw.id), { ...raw, addedBy: raw.addedBy || caller.uid })
+        }
+        for (const p of patches) {
+          const cur = byId.get(String(p.id)); if (!cur) continue
+          if (p.requireUnserved && isServed(cur)) continue
+          if (p.requireUnpaid && cur.paid_at) continue
+          const set = p.set || {}
+          if (STAFF_ONLY.some(k => k in set) && !isStaff) deny('staff_only')
+          if (('cancelled_at' in set) && !isManager) deny('manager_only')
+          if (!isStaff && cur.addedBy !== caller.uid) deny('not_your_item')
+          byId.set(String(p.id), { ...cur, ...set })
+        }
+        const doRemove = (id, guards) => {
+          const cur = byId.get(String(id)); if (!cur) return
+          if (guards.requireUnserved && isServed(cur)) return
+          if (guards.requireUnpaid && cur.paid_at) return
+          if (!isStaff && cur.addedBy !== caller.uid) deny('not_your_item')
+          byId.delete(String(id))
+        }
+        for (const id of removeIds) doRemove(id, {})
+        for (const g of guardedRemoveIds) doRemove(g.id, g)
+
+        tx.set(ref, { items: [...byId.values()], updatedAt: new Date().toISOString() }, { merge: true })
+      })
+      return res.status(200).json({ ok: true })
+    } catch (err) {
+      if (err?.message === 'DENIED') return res.status(403).json({ error: err.reason || 'forbidden' })
+      console.error('[/api/event-stock order] error:', err)
+      return res.status(500).json({ error: err.message || 'Internal error' })
+    }
+  }
+
   // ─── Notification de réservation gratuite (ex /api/notify-sale) ─────────────
   if (action === 'notify') {
     if (!eventId) return res.status(400).json({ error: 'eventId requis' })

@@ -249,6 +249,22 @@ function writeLocalOrders(eventId, items) {
 
 // Écriture ATOMIQUE d'une (ou plusieurs) ligne(s) + mise à jour optimiste locale.
 // upserts : lignes à créer/mettre à jour (par id). removeIds : lignes à retirer.
+// #7 : toute mutation de event_orders passe par le SERVEUR (api/event-stock action
+// 'order'), qui VALIDE le rôle + le prix (menu serveur) + les champs staff-only. Les
+// règles Firestore bloquent l'écriture client directe → plus de « payé »/prix 0/effacement
+// forgés. Renvoie true si le serveur a accepté (sinon hors-ligne/refusé → l'UI prévient).
+async function serverOrderMutate(eventId, ops) {
+  try {
+    const { authHeaders } = await import('./apiAuth')
+    const res = await fetch('/api/event-stock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+      body: JSON.stringify({ action: 'order', eventId: String(eventId), ops }),
+    })
+    return res.ok
+  } catch { return false }
+}
+
 async function commitItems(eventId, { upserts = [], removeIds = [] }) {
   // Optimiste : reflète tout de suite en local pour l'UI de CE device
   const cur = getOrders(eventId)
@@ -256,14 +272,7 @@ async function commitItems(eventId, { upserts = [], removeIds = [] }) {
   for (const u of upserts) byId.set(String(u.id), u)
   for (const r of removeIds) byId.delete(String(r))
   writeLocalOrders(eventId, [...byId.values()])
-  // Vérité cross-device : transaction Firestore (anti-écrasement concurrent).
-  // Renvoie true si l'écriture a bien atteint le serveur (→ le bar la verra), sinon
-  // false (hors-ligne / règles non déployées) pour que l'UI puisse prévenir.
-  try {
-    const { mergeItemsById } = await import('./firestore-sync')
-    const r = await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', upserts, removeIds })
-    return r !== null
-  } catch { return false }
+  return serverOrderMutate(eventId, { upserts, removeIds })
 }
 
 // Patch de CHAMPS d'une ligne (garde serveur atomique). Optimiste en local, puis
@@ -274,20 +283,13 @@ async function commitPatch(eventId, itemId, set, guards = {}) {
   if (list.some(i => String(i.id) === String(itemId))) {
     writeLocalOrders(eventId, list.map(i => String(i.id) === String(itemId) ? { ...i, ...set } : i))
   }
-  try {
-    const { mergeItemsById } = await import('./firestore-sync')
-    const r = await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', patches: [{ id: itemId, set, ...guards }] })
-    return r !== null // true = la transaction a atteint le serveur (sinon hors-ligne / règles)
-  } catch { return false }
+  return serverOrderMutate(eventId, { patches: [{ id: itemId, set, ...guards }] })
 }
 
 // Suppression gardée (ne retire côté serveur que si non servi/payé).
 async function commitRemove(eventId, itemId, guards = {}) {
   writeLocalOrders(eventId, getOrders(eventId).filter(i => String(i.id) !== String(itemId)))
-  try {
-    const { mergeItemsById } = await import('./firestore-sync')
-    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', guardedRemoveIds: [{ id: itemId, ...guards }] })
-  } catch {}
+  await serverOrderMutate(eventId, { guardedRemoveIds: [{ id: itemId, ...guards }] })
 }
 
 // Journal commun (historique) — append atomique + cache local optimiste.
@@ -413,10 +415,8 @@ export async function markTicketPaid(eventId, ticketId, actor) {
   const stampSet = { paid_at: now(), paid_by: a.actorId, paid_by_name: a.actorName }
   const ids = new Set(items.map(i => String(i.id)))
   writeLocalOrders(eventId, getOrders(eventId).map(i => ids.has(String(i.id)) ? { ...i, ...stampSet } : i)) // optimiste
-  try {
-    const { mergeItemsById } = await import('./firestore-sync')
-    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', patches: items.map(i => ({ id: i.id, set: stampSet, requireUnpaid: true })) })
-  } catch {}
+  // #7 : « payé » validé serveur (réservé au staff/manager). paid_at forgé côté client rejeté.
+  await serverOrderMutate(eventId, { patches: items.map(i => ({ id: i.id, set: stampSet, requireUnpaid: true })) })
   const total = Math.round(items.reduce((s, i) => s + i.unitPrice * i.quantity, 0) * 100) / 100
   await logAction(eventId, { ...a, itemId: null, ticketId: String(ticketId), action: 'pay', newValue: `Addition réglée (${items.length} article${items.length > 1 ? 's' : ''})`, amount: total })
   return { ok: true, total }
@@ -504,10 +504,7 @@ export async function ensureIncludedMaterialized(eventId, ticketId, included, ac
   const fresh = toAdd.filter(i => !present.has(String(i.id)))
   if (fresh.length) writeLocalOrders(eventId, [...local, ...fresh])
   // insertOnly : une option déjà servie/annulée côté serveur n'est jamais écrasée.
-  try {
-    const { mergeItemsById } = await import('./firestore-sync')
-    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', insertOnly: toAdd })
-  } catch {}
+  await serverOrderMutate(eventId, { insertOnly: toAdd })
 }
 
 // ── Matérialiser les précommandes d'un billet en lignes de commande ──────────
@@ -540,8 +537,5 @@ export async function ensurePreordersMaterialized(eventId, ticketId, preorders, 
   const fresh = toAdd.filter(i => !present.has(String(i.id)))
   if (fresh.length) writeLocalOrders(eventId, [...local, ...fresh])
   // Serveur : insertOnly → si la préco existe déjà (servie/annulée ailleurs), on n'y touche pas.
-  try {
-    const { mergeItemsById } = await import('./firestore-sync')
-    await mergeItemsById(`event_orders/${eventId}`, { field: 'items', idKey: 'id', insertOnly: toAdd })
-  } catch {}
+  await serverOrderMutate(eventId, { insertOnly: toAdd })
 }
