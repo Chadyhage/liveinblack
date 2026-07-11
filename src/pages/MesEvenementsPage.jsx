@@ -193,6 +193,7 @@ const EVENT_ACTIONS = {
   promo: { label: 'Codes promo', color: '#8b8ff5', icon: <svg viewBox="0 0 24 24"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a2 2 0 0 0-2 2v5.59c0 .53.21 1.04.59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l5.59-5.59a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="8.5" r="1"/></svg> },
   duplicate: { label: 'Dupliquer', color: '#8b8ff5', icon: <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> },
   edit: { label: 'Modifier', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 3 3L12 15l-4 1 1-4Z"/></svg> },
+  postpone: { label: 'Reporter', color: '#c8a96e', icon: <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M12 14v3l2 1"/></svg> },
   delete: { label: 'Supprimer', color: '#dc7777', icon: <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> },
 }
 
@@ -203,7 +204,7 @@ function EventActionButton({ type, onClick }) {
   </button>
 }
 
-function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGuests, onStaff, onCodes, onPromo, onDuplicate, onEdit, onDelete }) {
+function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGuests, onStaff, onCodes, onPromo, onDuplicate, onEdit, onPostpone, onDelete }) {
   return <article className="event-manage-card">
     <button className="event-manage-main" onClick={onOpen}>
       <div className="event-manage-media" style={{ position: 'relative', ...(event.imageUrl ? {backgroundImage:`linear-gradient(to top,rgba(4,4,11,.72),transparent 65%),url(${event.imageUrl})`} : {}) }}>
@@ -228,7 +229,7 @@ function EventDashboardCard({ event, onOpen, onStats, onBookings, onBoost, onGue
       <EventActionButton type="stats" onClick={onStats}/><EventActionButton type="bookings" onClick={onBookings}/>
       <EventActionButton type="boost" onClick={onBoost}/><EventActionButton type="guests" onClick={onGuests}/>
       <EventActionButton type="staff" onClick={onStaff}/><EventActionButton type="promo" onClick={onPromo}/>{event.isPrivate && <EventActionButton type="codes" onClick={onCodes}/>}
-      <EventActionButton type="duplicate" onClick={onDuplicate}/><EventActionButton type="edit" onClick={onEdit}/><EventActionButton type="delete" onClick={onDelete}/>
+      <EventActionButton type="duplicate" onClick={onDuplicate}/><EventActionButton type="edit" onClick={onEdit}/><EventActionButton type="postpone" onClick={onPostpone}/><EventActionButton type="delete" onClick={onDelete}/>
     </div>
   </article>
 }
@@ -330,6 +331,11 @@ export default function MesEvenementsPage() {
   const [deleteError, setDeleteError] = useState('')
   const [cancellationMessageDraft, setCancellationMessageDraft] = useState('')
   const [cancelBusy, setCancelBusy] = useState(false)
+  const [postponeModal, setPostponeModal] = useState(null) // { id, name, currentDate, currentTime }
+  const [postponeDate, setPostponeDate] = useState('')
+  const [postponeTime, setPostponeTime] = useState('')
+  const [postponeBusy, setPostponeBusy] = useState(false)
+  const [postponeError, setPostponeError] = useState('')
   const [syncErrorBanner, setSyncErrorBanner] = useState(null)
   const [showBoostModal, setShowBoostModal] = useState(false)
   const [boostTargetEvent, setBoostTargetEvent] = useState(null)
@@ -1189,6 +1195,58 @@ export default function MesEvenementsPage() {
     }).catch(() => {})
   }
 
+  // Report d'événement (#71) : nouvelle date/heure, billets + QR CONSERVÉS.
+  // Serveur = autorité (postpone_event pose date/time/status/postponedFrom) ;
+  // le client met à jour l'affichage (dateDisplay) et prévient les acheteurs.
+  async function postponeEvent(id, newDate, newTime) {
+    const sid = String(id)
+    setPostponeError('')
+    if (!newDate) { setPostponeError('Choisis une nouvelle date.'); return }
+    setPostponeBusy(true)
+    try {
+      const { authHeaders } = await import('../utils/apiAuth')
+      const r = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ action: 'postpone_event', eventId: sid, newDate, ...(newTime ? { newTime } : {}) }),
+      })
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}))
+        setPostponeError(data.error || 'Report impossible pour le moment — réessaie dans un instant.')
+        setPostponeBusy(false)
+        return
+      }
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ type: 'event_postponed', eventId: sid }),
+      }).catch(() => {})
+    } catch {
+      setPostponeError('Connexion impossible — vérifie ta connexion et réessaie.')
+      setPostponeBusy(false)
+      return
+    }
+    const updated = createdEvents.map(ev => String(ev.id) !== sid ? ev : ({
+      ...ev,
+      date: newDate,
+      dateDisplay: formatDateDisplay(newDate),
+      ...(newTime ? { time: newTime } : {}),
+      status: 'postponed',
+      postponedFrom: { date: ev.date || null, time: ev.time || null },
+    }))
+    localStorage.setItem('lib_created_events', JSON.stringify(updated))
+    setCreatedEvents(updated)
+    setPostponeModal(null); setPostponeDate(''); setPostponeTime(''); setPostponeBusy(false)
+    const ev = updated.find(e => String(e.id) === sid)
+    import('../utils/firestore-sync').then(async ({ syncDoc }) => {
+      syncDoc(`events/${sid}`, { dateDisplay: ev?.dateDisplay || formatDateDisplay(newDate) })
+      if (user?.uid) {
+        const { sanitizeEventsForSync } = await import('../utils/uploadImage')
+        syncDoc(`user_events/${user.uid}`, { items: await sanitizeEventsForSync(updated) })
+      }
+    }).catch(() => {})
+  }
+
   // Retire un event ANNULÉ de la liste de l'organisateur (il reste dans events/
   // pour que les détenteurs de billet voient toujours le message d'annulation).
   // Tombstone local + retrait de user_events → disparaît du dashboard de l'orga
@@ -1542,6 +1600,7 @@ export default function MesEvenementsPage() {
                   onCodes={() => { setCodesTargetEvent(ev); setGeneratedCodes(null); setCodesQty(10); setShowCodesModal(true) }}
                   onDuplicate={() => duplicateEvent(ev)}
                   onEdit={() => startEdit(ev)}
+                  onPostpone={() => { setPostponeError(''); setPostponeDate(ev.date || ''); setPostponeTime(ev.time || ''); setPostponeModal({ id: ev.id, name: ev.name, currentDate: ev.dateDisplay || ev.date, currentTime: ev.time }) }}
                   onDelete={() => { setDeleteError(''); setDeleteConfirm({ id: ev.id, bookingCount: getEventBookingCount(ev.id) }) }}
                 />)}
               </div>
@@ -1637,6 +1696,35 @@ export default function MesEvenementsPage() {
           </div>
 
           {/* Delete confirmation modal */}
+          {postponeModal && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => !postponeBusy && setPostponeModal(null)} />
+              <div style={{ ...S.card, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', position: 'relative', padding: 24, width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Reporter l'événement ?</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, margin: 0 }}>
+                  Les billets déjà vendus <strong style={{ color: '#4ee8c8' }}>restent valables</strong> pour la nouvelle date — personne n'est remboursé. Chaque acheteur est prévenu par e-mail (ancienne et nouvelle date).
+                </p>
+                {postponeModal.currentDate && (
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>Date actuelle : <span style={{ textDecoration: 'line-through' }}>{postponeModal.currentDate}{postponeModal.currentTime ? ` · ${postponeModal.currentTime}` : ''}</span></p>
+                )}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 2 }}>
+                    <label style={{ ...S.label, marginBottom: 6 }}>Nouvelle date</label>
+                    <input type="date" value={postponeDate} onChange={e => setPostponeDate(e.target.value)} style={{ ...S.inputBase }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ ...S.label, marginBottom: 6 }}>Heure</label>
+                    <input type="time" value={postponeTime} onChange={e => setPostponeTime(e.target.value)} style={{ ...S.inputBase }} />
+                  </div>
+                </div>
+                {postponeError && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#dc7777', lineHeight: 1.6, margin: 0 }}>{postponeError}</p>}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { setPostponeModal(null); setPostponeError('') }} disabled={postponeBusy} style={{ ...S.btnGhost, flex: 1, ...(postponeBusy ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}>Retour</button>
+                  <button onClick={() => postponeEvent(postponeModal.id, postponeDate, postponeTime)} disabled={postponeBusy} style={{ ...S.btnPrimary, flex: 1, ...(postponeBusy ? { opacity: 0.6, cursor: 'wait' } : {}) }}>{postponeBusy ? 'Report en cours…' : 'Confirmer le report'}</button>
+                </div>
+              </div>
+            </div>
+          )}
           {deleteConfirm && (
             <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => setDeleteConfirm(null)} />
