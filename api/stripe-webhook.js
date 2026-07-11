@@ -690,20 +690,28 @@ async function finalizeBoost(db, session, meta) {
   const eventId = meta.eventId || ''
   const position = Number(meta.position) || 0
   const days = Math.max(1, Number(meta.days || 1))
-  const offer = getBoostPlan(position, days)
-  if (!offer) throw new Error(`Offre boost invalide dans la session ${session.id}`)
   const region = normalizeBoostRegion(meta.region || '')
   const slotId = meta.slotId || boostSlotId(region, position)
   const slotRef = db.collection('boost_slots').doc(slotId)
   const priceEUR = (session.amount_total || 0) / 100
   // Le montant Stripe est fixé PAR NOTRE serveur à la création de la session
-  // (checkout-boost.js) → il est TOUJOURS légitime (le client ne peut pas le
-  // changer). S'il diffère du tarif ACTUEL de l'offre, c'est que le tarif a été
-  // modifié APRÈS le paiement : on HONORE ce que l'acheteur a réellement payé
-  // (activation au prix payé) au lieu de jeter en boucle — sinon le boost n'était
-  // ni activé ni remboursé (argent capté, rien livré). On trace juste une alerte
-  // d'audit (audit boost #77).
-  if (priceEUR > 0 && Math.round(priceEUR * 100) !== Math.round(offer.tier.price * 100)) {
+  // (checkout-boost.js) → il est TOUJOURS légitime (le client ne peut pas le changer).
+  // On active donc TOUJOURS au prix payé, même si l'offre a changé/disparu entre-temps.
+  const offer = getBoostPlan(position, days)
+  if (!offer) {
+    // #13 : le palier a été RETIRÉ de BOOST_PLANS entre le checkout et le webhook.
+    // AVANT on jetait (throw) → le boost n'était NI activé NI remboursé (argent capté,
+    // rien livré). Comme #77, on HONORE ce qui a été payé : activation au prix payé +
+    // alerte d'audit (jamais de retry en boucle sur un palier qui n'existe plus).
+    await db.collection('payment_alerts').doc(`boost_plan_${boostId}`).set({
+      provider: 'stripe', intent: 'boost', boostId, eventId, userId,
+      reason: 'boost_plan_removed',
+      amountTotal: session.amount_total, currency: session.currency || 'eur',
+      detail: `Palier boost (position ${position}, ${days} j) introuvable au webhook (retiré après paiement) — boost activé au prix payé ${priceEUR}€.`,
+      status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true }).catch(() => {})
+  } else if (priceEUR > 0 && Math.round(priceEUR * 100) !== Math.round(offer.tier.price * 100)) {
+    // #77 : tarif modifié APRÈS le paiement → on honore le prix payé + alerte d'audit.
     await db.collection('payment_alerts').doc(`boost_price_${boostId}`).set({
       provider: 'stripe', intent: 'boost', boostId, eventId, userId,
       reason: 'boost_price_changed',

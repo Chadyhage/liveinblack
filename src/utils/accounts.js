@@ -120,10 +120,18 @@ export async function approveValidation(uid) {
     ? existingAcct.enabledRoles
     : (existingAcct.role ? [existingAcct.role] : [])
   const mergedEnabledRoles = [...new Set([...existingRoles, ...(pending.enabledRoles || []), resolvedRole])]
+  // #21 : ne JAMAIS rétrograder un AGENT via une validation. Un doc pending_validations
+  // est créable par tout connecté ; sans cette garde, approuver un rôle sur le compte
+  // d'un agent écrasait role/activeRole='agent' → perte de l'interface admin. L'agent
+  // conserve son rôle primaire et gagne juste la nouvelle interface dans enabledRoles.
+  const isExistingAgent = existingAcct.role === 'agent' || existingAcct.activeRole === 'agent'
+    || (Array.isArray(existingAcct.enabledRoles) && existingAcct.enabledRoles.includes('agent'))
+  const nextRole = isExistingAgent ? existingAcct.role : resolvedRole
+  const nextActiveRole = isExistingAgent ? (existingAcct.activeRole || existingAcct.role) : resolvedRole
   const approved = {
     ...pending,
-    role: resolvedRole,
-    activeRole: resolvedRole,
+    role: nextRole,
+    activeRole: nextActiveRole,
     enabledRoles: mergedEnabledRoles,
     status: 'active',
     approvedAt: Date.now(),
@@ -139,8 +147,8 @@ export async function approveValidation(uid) {
     await setDoc(doc(db, 'users', uid), {
       status: 'active',
       approvedAt: Date.now(),
-      role: resolvedRole,
-      activeRole: resolvedRole,
+      role: nextRole,
+      activeRole: nextActiveRole,
       enabledRoles: approved.enabledRoles,
     }, { merge: true })
     // Nettoyage de la file pending — non-critique (le rôle est déjà accordé)
