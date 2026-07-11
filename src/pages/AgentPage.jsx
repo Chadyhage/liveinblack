@@ -3616,6 +3616,8 @@ export default function AgentPage() {
                   sub_amount_mismatch: 'Abonnement : montant payé différent du tarif',
                   event_deleted_before_fulfillment: 'Paiement reçu pour un événement supprimé',
                   auto_payout_failed: 'Versement auto à l\'organisateur ÉCHOUÉ — à régler à la main',
+                  boost_price_changed: 'Boost activé au prix payé (le tarif avait changé depuis) — vérifier',
+                  boost_refund_failed: 'Remboursement d\'un boost (slot perdu) ÉCHOUÉ — à rembourser à la main',
                 }[alert.reason] || alert.reason || 'Anomalie de paiement'
                 const reference = alert.stripeSessionId || alert.transactionId || alert.bookingId || alert._docId
                 const created = alert.createdAt?.toMillis ? alert.createdAt.toMillis() : alert.createdAt

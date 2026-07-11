@@ -696,8 +696,22 @@ async function finalizeBoost(db, session, meta) {
   const slotId = meta.slotId || boostSlotId(region, position)
   const slotRef = db.collection('boost_slots').doc(slotId)
   const priceEUR = (session.amount_total || 0) / 100
-  if (Math.round(priceEUR * 100) !== Math.round(offer.tier.price * 100)) {
-    throw new Error(`Montant boost incohérent dans la session ${session.id}`)
+  // Le montant Stripe est fixé PAR NOTRE serveur à la création de la session
+  // (checkout-boost.js) → il est TOUJOURS légitime (le client ne peut pas le
+  // changer). S'il diffère du tarif ACTUEL de l'offre, c'est que le tarif a été
+  // modifié APRÈS le paiement : on HONORE ce que l'acheteur a réellement payé
+  // (activation au prix payé) au lieu de jeter en boucle — sinon le boost n'était
+  // ni activé ni remboursé (argent capté, rien livré). On trace juste une alerte
+  // d'audit (audit boost #77).
+  if (priceEUR > 0 && Math.round(priceEUR * 100) !== Math.round(offer.tier.price * 100)) {
+    await db.collection('payment_alerts').doc(`boost_price_${boostId}`).set({
+      provider: 'stripe', intent: 'boost', boostId, eventId, userId,
+      reason: 'boost_price_changed',
+      amountTotal: session.amount_total, currency: session.currency || 'eur',
+      expectedAmount: Math.round(offer.tier.price * 100),
+      detail: `Tarif boost changé après paiement : payé ${priceEUR}€ vs tarif actuel ${offer.tier.price}€ — boost activé au prix payé.`,
+      status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true }).catch(() => {})
   }
 
   const boost = {
@@ -740,7 +754,25 @@ async function finalizeBoost(db, session, meta) {
     if (error?.code !== 'BOOST_RESERVATION_LOST' && error?.message !== 'BOOST_RESERVATION_LOST') throw error
     const paymentIntent = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
     if (!paymentIntent) throw error
-    const refund = await stripe.refunds.create({ payment_intent: paymentIntent }, { idempotencyKey: `boost-conflict-refund-${boostId}` })
+    let refund
+    try {
+      refund = await stripe.refunds.create({ payment_intent: paymentIntent }, { idempotencyKey: `boost-conflict-refund-${boostId}` })
+    } catch (refundErr) {
+      // Remboursement du conflit ÉCHOUÉ (audit boost #78) : sans trace, l'argent
+      // capté d'un slot boost perdu restait invisible. On crée une alerte à régler
+      // à la main et on marque le boost ; on NE jette PAS (éviter les retries en
+      // boucle — l'idempotencyKey garantirait de toute façon un seul remboursement).
+      await db.collection('payment_alerts').doc(`boost_refund_${boostId}`).set({
+        provider: 'stripe', intent: 'boost', boostId, eventId, userId,
+        reason: 'boost_refund_failed',
+        amountTotal: session.amount_total, currency: session.currency || 'eur',
+        detail: `Remboursement du conflit de réservation boost échoué : ${String(refundErr?.message || refundErr).slice(0, 200)}`,
+        status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true }).catch(() => {})
+      await ref.set({ ...boost, status: 'refund_failed', conflict: true, refundError: String(refundErr?.message || '').slice(0, 200), updatedAt: new Date().toISOString() }, { merge: true })
+      console.error('[webhook] remboursement conflit boost ÉCHOUÉ — alerte créée:', boostId)
+      return
+    }
     const refundedBoost = {
       ...boost,
       status: 'refunded_conflict',
@@ -749,24 +781,30 @@ async function finalizeBoost(db, session, meta) {
       refundedAt: new Date().toISOString(),
     }
     await ref.set(refundedBoost, { merge: true })
-    if (userId) {
-      await db.collection('user_boosts').doc(userId).set({
-        items: FieldValue.arrayUnion(refundedBoost),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true })
-    }
+    await addBoostToUserLedger(db, userId, refundedBoost)
     console.error('[webhook] réservation boost perdue — paiement remboursé automatiquement:', boostId)
     return
   }
 
-  if (userId) {
-    await db.collection('user_boosts').doc(userId).set({
-      items: FieldValue.arrayUnion(boost),
-      updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true })
-  }
+  await addBoostToUserLedger(db, userId, boost)
 
   console.log('[webhook] boost finalized:', boostId)
+}
+
+// Ajoute un boost au ledger user_boosts SANS doublon (clé = id du boost).
+// FieldValue.arrayUnion ne dédoublonne pas des objets aux timestamps différents
+// (un rejeu de webhook produisait des doublons) → on lit / filtre / réécrit en
+// transaction, idempotent par boostId (audit boost #78).
+async function addBoostToUserLedger(db, userId, boostObj) {
+  if (!userId || !boostObj?.id) return
+  const uref = db.collection('user_boosts').doc(String(userId))
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(uref)
+    const items = (snap.exists && Array.isArray(snap.data().items)) ? snap.data().items : []
+    const next = items.filter(it => it && it.id !== boostObj.id)
+    next.push(boostObj)
+    tx.set(uref, { items: next, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+  })
 }
 
 async function releaseExpiredBoostSlot(db, session) {
