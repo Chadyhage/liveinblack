@@ -10,8 +10,9 @@ import EventHoverMedia from '../components/EventHoverMedia'
 import { IconHourglass, IconAlert } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
-import { regions } from '../data/regions'
+import { regions, regionByMomoCountry } from '../data/regions'
 import { fmtMoney, eventCurrency, regionToCurrency, currencySymbol, organizerCurrency, payRailLabel } from '../utils/money'
+import { payoutReadyForRegion } from '../utils/payoutMethods'
 import { MUSIC_STYLES, EVENT_TYPES, AMBIANCES } from '../utils/recommendations'
 import { getGuestlist, loadGuestlistRemote, addGuestlistEntry, removeGuestlistEntry } from '../utils/guestlist'
 import { ticketPreorderLines, eventStock } from '../utils/eventStats'
@@ -350,7 +351,7 @@ export default function MesEvenementsPage() {
   const [orgCurrency, setOrgCurrency] = useState(null)
   // Encaissement configuré ? { cur:'EUR'|'XOF', ready:bool } — null tant qu'inconnu
   // (pas de rappel affiché tant qu'on ne sait pas, pour éviter un faux nudge).
-  const [payoutInfo, setPayoutInfo] = useState(null)
+  const [payoutUser, setPayoutUser] = useState(null) // doc users/{uid} (champs paiement) ou null tant qu'inconnu
 
   // Step 0: Bases
   const [form, setForm] = useState({ name: '', date: '', timeStart: '', timeEnd: '', description: '', privateCode: '', minAge: 18, region: '' })
@@ -449,10 +450,9 @@ export default function MesEvenementsPage() {
     return () => { cancelled = true }
   }, [user?.uid])
 
-  // Encaissement configuré ? Lu depuis Firestore (source fiable : stripeChargesEnabled
-  // posé par le webhook Connect, payoutMomo par le profil) → sinon on nudge
-  // l'organisateur à configurer son paiement, faute de quoi ses recettes restent
-  // en attente. EUR → compte Stripe connecté ; XOF → numéro Mobile Money.
+  // Champs de paiement de l'organisateur, lus depuis Firestore (source fiable :
+  // stripeChargesEnabled posé par le webhook Connect, payoutMomos par le profil).
+  // Sert à repérer les événements dont le PAYS n'a pas de moyen d'encaissement.
   useEffect(() => {
     if (!user?.uid) return
     let cancelled = false
@@ -460,17 +460,36 @@ export default function MesEvenementsPage() {
       try {
         const { db } = await import('../firebase')
         const { doc, getDoc } = await import('firebase/firestore')
-        const { getOrganizerProfile } = await import('../utils/organizers')
         const snap = await getDoc(doc(db, 'users', user.uid))
-        const u = snap.exists() ? snap.data() : {}
-        const cur = organizerCurrency(getOrganizerProfile(user.uid))
-          || (u.payoutMomo?.number ? 'XOF' : u.stripeChargesEnabled ? 'EUR' : 'EUR')
-        const ready = cur === 'XOF' ? !!u.payoutMomo?.number : u.stripeChargesEnabled === true
-        if (!cancelled) setPayoutInfo({ cur, ready })
+        if (!cancelled) setPayoutUser(snap.exists() ? snap.data() : {})
       } catch { /* réseau : on n'affiche pas de rappel plutôt qu'un faux */ }
     })()
     return () => { cancelled = true }
   }, [user?.uid])
+
+  // Lacunes d'encaissement : pays UEMOA (et/ou l'euro) où l'orga a des événements
+  // SANS moyen de paiement configuré → ses recettes y resteraient en attente.
+  // null tant que le doc paiement n'est pas chargé (pas de faux rappel).
+  const payoutGaps = (() => {
+    if (!payoutUser) return null
+    const countries = new Set()
+    let stripe = false
+    for (const ev of createdEvents) {
+      if (!ev || ev.cancelled || ev._pendingSync) continue
+      const { ready, currency, momoCountry } = payoutReadyForRegion(payoutUser, ev.region)
+      if (ready) continue
+      if (currency === 'XOF' && momoCountry) countries.add(momoCountry)
+      else stripe = true
+    }
+    return { stripe, countries: [...countries] }
+  })()
+  const hasPayoutGap = !!payoutGaps && (payoutGaps.stripe || payoutGaps.countries.length > 0)
+  const payoutGapLabel = payoutGaps
+    ? [
+        payoutGaps.stripe ? 'ton compte bancaire (événements en euros)' : null,
+        ...payoutGaps.countries.map(c => `un numéro Mobile Money pour ${regionByMomoCountry(c)?.name || c}`),
+      ].filter(Boolean).join(' · ')
+    : ''
 
   useEffect(() => {
     if (!user?.uid) return
@@ -1441,7 +1460,7 @@ export default function MesEvenementsPage() {
               moyen de paiement, ses recettes restent en attente. On l'envoie au bon
               endroit (Profil → Encaissement). Ce N'EST PAS le panneau retiré ci-dessus
               (pas de demande de virement ici) — juste un rappel + un lien. */}
-          {payoutInfo && !payoutInfo.ready && (
+          {hasPayoutGap && (
             <div style={{
               background: 'linear-gradient(180deg, rgba(200,169,110,0.10), rgba(200,169,110,0.04))',
               border: '1px solid rgba(200,169,110,0.45)', borderRadius: 12, padding: '14px 16px',
@@ -1452,9 +1471,7 @@ export default function MesEvenementsPage() {
                   Configure ton encaissement pour être payé
                 </p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>
-                  {payoutInfo.cur === 'XOF'
-                    ? "Ajoute ton numéro Mobile Money : sans lui, la recette de tes événements reste en attente au lieu de t'être versée automatiquement."
-                    : "Connecte ton compte bancaire (Stripe) : sans ça, la recette de tes événements reste en attente au lieu de t'être versée automatiquement à chaque vente."}
+                  Tu as des événements dont la recette reste en attente : il te manque {payoutGapLabel}. Sans ça, l'argent n'est pas versé automatiquement.
                 </p>
               </div>
               <button
@@ -2990,6 +3007,23 @@ export default function MesEvenementsPage() {
                   })}
                 </div>
                 {errors.region && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
+                {/* Avertissement encaissement DÈS LE CHOIX DU PAYS : si l'orga n'a pas
+                    de moyen de paiement pour ce pays, il faut le lui dire ici. */}
+                {payoutUser && form.region && (() => {
+                  const chk = payoutReadyForRegion(payoutUser, form.region)
+                  if (chk.ready) return null
+                  const what = chk.currency === 'XOF'
+                    ? `de numéro Mobile Money pour ${regionByMomoCountry(chk.momoCountry)?.name || form.region}`
+                    : 'de compte bancaire connecté'
+                  return (
+                    <div style={{ marginTop: 10, padding: '11px 13px', borderRadius: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.45)' }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: '#f59e0b', margin: 0, lineHeight: 1.55 }}>
+                        <strong>Tu n'as pas {what}.</strong> Tu peux quand même créer l'événement, mais sa recette sera mise en attente tant que tu n'auras pas configuré ton encaissement pour ce pays.{' '}
+                        <button type="button" onClick={() => navigate('/profil?section=encaissement')} style={{ background: 'none', border: 'none', padding: 0, color: '#f59e0b', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12.5 }}>Configurer maintenant</button>
+                      </p>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
             <div style={{ ...S.card, padding: 14, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.18)' }}>
@@ -3173,28 +3207,34 @@ export default function MesEvenementsPage() {
             </div>
 
             {/* Avertissement encaissement AU MOMENT DE PUBLIER (le plus critique) :
-                on ne bloque pas (l'event peut être gratuit), mais on prévient clairement
-                que les recettes seront mises en attente tant que le paiement n'est pas
-                configuré. Réutilise payoutInfo (lu depuis Firestore). */}
-            {payoutInfo && !payoutInfo.ready && (
-              <div style={{
-                background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.45)',
-                borderRadius: 12, padding: '13px 15px', display: 'flex', gap: 12, alignItems: 'flex-start',
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#f59e0b', margin: '0 0 3px' }}>
-                    Ton encaissement n'est pas configuré
-                  </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.55 }}>
-                    Tu peux publier, mais tant que tu n'as pas {payoutInfo.cur === 'XOF' ? 'ajouté ton numéro Mobile Money' : 'connecté ton compte bancaire'}, la recette de cet événement sera <strong>mise en attente</strong> au lieu de t'être versée automatiquement.{' '}
-                    <button onClick={() => navigate('/profil?section=encaissement')} style={{ background: 'none', border: 'none', padding: 0, color: '#f59e0b', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Inter, sans-serif', fontSize: 12.5 }}>Configurer maintenant</button>
-                  </p>
+                on vérifie le PAYS DE CET événement (pas un statut global) — un orga
+                peut être configuré pour le Togo mais pas le Bénin. Non bloquant. */}
+            {payoutUser && (() => {
+              const chk = payoutReadyForRegion(payoutUser, form.region)
+              if (chk.ready) return null
+              const missing = chk.currency === 'XOF'
+                ? `ajouté ton numéro Mobile Money pour ${regionByMomoCountry(chk.momoCountry)?.name || form.region || 'ce pays'}`
+                : 'connecté ton compte bancaire (Stripe)'
+              return (
+                <div style={{
+                  background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.45)',
+                  borderRadius: 12, padding: '13px 15px', display: 'flex', gap: 12, alignItems: 'flex-start',
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#f59e0b', margin: '0 0 3px' }}>
+                      Pas d'encaissement pour {chk.currency === 'XOF' ? (regionByMomoCountry(chk.momoCountry)?.name || 'ce pays') : "l'euro"}
+                    </p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.55 }}>
+                      Tu peux publier, mais tant que tu n'as pas {missing}, la recette de cet événement sera <strong>mise en attente</strong> au lieu de t'être versée automatiquement.{' '}
+                      <button onClick={() => navigate('/profil?section=encaissement')} style={{ background: 'none', border: 'none', padding: 0, color: '#f59e0b', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Inter, sans-serif', fontSize: 12.5 }}>Configurer maintenant</button>
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             <button
               style={{ ...S.btnGold, cursor: publishing ? 'wait' : 'pointer' }}
