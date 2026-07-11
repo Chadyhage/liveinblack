@@ -347,6 +347,11 @@ async function finalizeBooking(db, session, meta) {
   const tableSeats = isTable ? Math.min(50, Math.max(2, Number(meta.tableSeats) || 2)) : 0
   const seatCount = isTable ? tableSeats : qty
   const perSeatEUR = isTable ? Math.round((unitPriceEUR / tableSeats) * 100) / 100 : unitPriceEUR
+  // #27 : la somme des sièges arrondis peut dériver du prix RÉELLEMENT payé pour la
+  // table (ex. 100 € ÷ 3 = 33,33 × 3 = 99,99). On fait absorber le reliquat par le
+  // siège 0 → Σ(placePrice) == prix table, donc CA organisateur juste.
+  const seatRoundingEUR = isTable ? Math.round((unitPriceEUR - perSeatEUR * tableSeats) * 100) / 100 : 0
+  const seatPriceEUR = (i) => Math.round((perSeatEUR + (i === 0 ? seatRoundingEUR : 0)) * 100) / 100
   const tableId = isTable ? bookingId : null
 
   // ── PRÉCOMMANDES : source de vérité SERVEUR (faille B-préco de l'audit) ──
@@ -449,7 +454,7 @@ async function finalizeBooking(db, session, meta) {
         eventId,
         eventName,
         place: placeType,
-        placePrice: perSeatEUR,
+        placePrice: seatPriceEUR(i),
         bookedAt: new Date().toISOString(),
         paid: true,
         paymentMethod: 'stripe',
@@ -682,6 +687,11 @@ async function finalizeBoost(db, session, meta) {
   const ref = db.collection('boosts').doc(boostId)
   const existing = await ref.get()
   if (existing.exists) {
+    // #26 : rejeu du webhook — le boost est déjà activé (boosts/). MAIS si le 1er run
+    // est mort ENTRE l'activation et l'écriture du carnet (user_boosts), l'acheteur
+    // n'aurait jamais vu son boost dans « Mes boosts ». On complète donc le ledger ici
+    // (addBoostToUserLedger est idempotent par boostId → aucun doublon).
+    await addBoostToUserLedger(db, existing.data()?.userId || meta.userId || '', existing.data()).catch(() => {})
     console.log('[webhook] boost already finalized:', boostId)
     return
   }
