@@ -169,6 +169,7 @@ export default function AgentPage() {
   const [delResNotes, setDelResNotes]           = useState({})
   const [serverBookings, setServerBookings]     = useState([])  // ventes RÉELLES (webhooks) — jamais lib_bookings (per-device)
   const [sellerBalances, setSellerBalances]     = useState([])  // soldes vendeurs à reverser (ledger)
+  const [failedPayouts, setFailedPayouts]       = useState([])  // versements auto XOF en échec (event_payouts status='failed') = SEUL le filet manuel
   const [payoutRequests, setPayoutRequests]     = useState([])  // demandes de virement en attente
   const [reports, setReports]                   = useState([])  // signalements d'utilisateurs
   const [adminBoosts, setAdminBoosts]           = useState([])  // boosts vendus (webhook) — surveille aussi les conflits de créneau
@@ -318,7 +319,7 @@ export default function AgentPage() {
 
         // Reversements vendeurs : soldes dus + demandes de virement en attente
         // + boosts vendus (surveillance des créneaux Top 3 et des conflits)
-        const [balances, payouts, boosts, alerts, paidBookings, refunds, cancellations] = await Promise.all([
+        const [balances, payouts, boosts, alerts, paidBookings, refunds, cancellations, eventPayouts] = await Promise.all([
           loadCollectionStrict('seller_balances'),
           loadCollectionStrict('payout_requests'),
           loadCollectionStrict('boosts'),
@@ -326,6 +327,7 @@ export default function AgentPage() {
           loadCollectionStrict('bookings'),
           loadCollectionStrict('event_refunds'),
           loadCollectionStrict('event_cancellations'),
+          loadCollectionStrict('event_payouts'),
         ])
         // Ventes réelles de la PLATEFORME (docs écrits par les webhooks Stripe/
         // FedaPay). lib_bookings (localStorage) ne contient que les achats faits
@@ -348,6 +350,12 @@ export default function AgentPage() {
         if (refunds.ok) setEventRefunds(refunds.items.filter(r => r.status === 'pending_manual'))
         else errors.push('remboursements à traiter')
         if (cancellations.ok) setEventCancellations(cancellations.items.sort((a, b) => Number(b.cancelledAt || 0) - Number(a.cancelledAt || 0)))
+        // Versements auto XOF EN ÉCHEC = le SEUL argent XOF à régler à la main
+        // (numéro momo absent, envoi refusé, event terminé sans versement…). Le
+        // reste des recettes XOF part AUTOMATIQUEMENT via le cron event_payouts :
+        // le surfacer comme « à reverser » exposait à un DOUBLE versement (l'admin
+        // paie seller_balances pendant que le cron paie event_payouts). Audit devise.
+        if (eventPayouts.ok) setFailedPayouts(eventPayouts.items.filter(p => p.status === 'failed' && Number(p.amountDueXOF || 0) > 0))
       } catch {
         errors.push('données générales')
       }
@@ -928,6 +936,37 @@ export default function AgentPage() {
     } catch (e) {
       showToast('Échec du marquage — rien n\'a été décrémenté. Réessaie.', 'error')
     }
+  }
+
+  // ── Régler à la main UN versement auto XOF en échec (le filet) ──────────────
+  // event_payouts est server-authoritative (write:false) → la finalisation passe
+  // par api/admin-accounts (Admin SDK, transaction). Le serveur décrémente les
+  // DEUX ledgers (event_payouts → 'paid' + seller_balances) et ne solde QUE des
+  // enveloppes 'failed' — jamais une enveloppe en versement auto (double envoi).
+  async function handleMarkPayoutPaid(ep) {
+    const eventId = String(ep.eventId || ep.id || ep._docId || '')
+    const sellerUid = String(ep.sellerUid || '')
+    if (!eventId) return
+    const res = await adminAccountsApi('mark_payout_paid', { eventId })
+    if (!res.ok) {
+      if (res.error === 'not_failed') {
+        // Reparti en automatique entre-temps : on le retire de la liste manuelle.
+        setFailedPayouts(prev => prev.filter(p => String(p.eventId || p.id || p._docId) !== eventId))
+      }
+      showToast(res.message || 'Échec du marquage — rien n\'a été décrémenté. Réessaie.', 'error')
+      return
+    }
+    const paid = Number(res.data?.paid || 0)
+    setFailedPayouts(prev => prev.filter(p => String(p.eventId || p.id || p._docId) !== eventId))
+    if (sellerUid && paid > 0) {
+      setSellerBalances(prev => prev
+        .map(b => ((b.sellerUid || b.id || b._docId) === sellerUid)
+          ? { ...b, amountDueXOF: Math.max(0, Number(b.amountDueXOF || 0) - paid) }
+          : b)
+        .filter(b => Number(b.amountDueCents) > 0 || Number(b.amountDueXOF) > 0))
+    }
+    if (res.data?.alreadyPaid) showToast('Ce versement avait déjà été réglé — liste mise à jour.')
+    else showToast(`Versement de ${Math.round(paid).toLocaleString('fr-FR')} FCFA marqué payé`)
   }
 
   async function handleAppAction(appId, status, note) {
@@ -3207,6 +3246,7 @@ export default function AgentPage() {
               {confirmAction.type === 'appReject'   && `Refuser le dossier de ${confirmAction.name} ?`}
               {confirmAction.type === 'appSuspend'  && `Suspendre le dossier de ${confirmAction.name} ?`}
               {confirmAction.type === 'markPaid'    && `Confirmer le reversement de ${confirmAction.label || '—'} à ${confirmAction.name} ? (à faire APRÈS avoir envoyé l'argent)`}
+              {confirmAction.type === 'markPayoutPaid' && `Confirmer le versement de ${confirmAction.label || '—'} à ${confirmAction.name} ? (à faire APRÈS avoir envoyé l'argent sur son Mobile Money)`}
               {confirmAction.type === 'deleteUnverified' && `Supprimer définitivement le compte non vérifié de ${confirmAction.name} ?`}
               {confirmAction.type === 'cleanupExpired' && `Supprimer les ${confirmAction.count} compte(s) non vérifié(s) depuis plus de 7 jours ? (chaque compte sera re-vérifié auprès de Firebase Auth avant suppression)`}
               {confirmAction.type === 'cleanupDuplicates' && `Nettoyer les fiches fantômes des ${confirmAction.count} groupe(s) de doublons ? (seules les entrées SANS compte de connexion Firebase seront supprimées)`}
@@ -3231,6 +3271,7 @@ export default function AgentPage() {
                   if (confirmAction.type === 'appReject')   handleAppAction(confirmAction.appId, 'rejected', appNote)
                   if (confirmAction.type === 'appSuspend')  handleAppAction(confirmAction.appId, 'suspended', appNote)
                   if (confirmAction.type === 'markPaid')    { handleMarkPaid(confirmAction.uid, confirmAction.amount, confirmAction.requestId, confirmAction.currency); setConfirmAction(null) }
+                  if (confirmAction.type === 'markPayoutPaid') { handleMarkPayoutPaid(confirmAction.ep); setConfirmAction(null) }
                   if (confirmAction.type === 'deleteUnverified') { handleDeleteUnverified(confirmAction.uid); setConfirmAction(null) }
                   if (confirmAction.type === 'cleanupExpired') { handleCleanupExpired(); setConfirmAction(null) }
                   if (confirmAction.type === 'cleanupDuplicates') { handleCleanupDuplicates(); setConfirmAction(null) }
@@ -3238,7 +3279,7 @@ export default function AgentPage() {
                 style={{
                   flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
                   fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
-                  ...((confirmAction.type === 'approve' || confirmAction.type === 'approveRole' || confirmAction.type === 'appApprove' || confirmAction.type === 'markPaid')
+                  ...((confirmAction.type === 'approve' || confirmAction.type === 'approveRole' || confirmAction.type === 'appApprove' || confirmAction.type === 'markPaid' || confirmAction.type === 'markPayoutPaid')
                     ? { background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e' }
                     : confirmAction.type === 'appChanges'
                     ? { background: '#f59e0b', border: '1px solid rgba(255,255,255,0.14)', color: '#241703' }
@@ -3677,21 +3718,23 @@ export default function AgentPage() {
         const reqSellerIds = new Set(payoutRequests.map(p => p.sellerId))
         const balancesNoReq = sellerBalances.filter(b => !reqSellerIds.has(b.sellerUid || b.id))
         // Deux devises = deux totaux SÉPARÉS (jamais d'addition inter-devises).
+        // EUR = filet Stripe Connect (réglable ici). XOF actionnable = UNIQUEMENT
+        // les versements auto en échec (le reste part tout seul → pas un « à faire »).
         const totalDueCents = sellerBalances.reduce((s, b) => s + Number(b.amountDueCents || 0), 0)
-        const totalDueXOF = sellerBalances.reduce((s, b) => s + Number(b.amountDueXOF || 0), 0)
-        const empty = payoutRequests.length === 0 && sellerBalances.length === 0
+        const totalFailedXOF = failedPayouts.reduce((s, p) => s + Number(p.amountDueXOF || 0), 0)
+        const empty = payoutRequests.length === 0 && sellerBalances.length === 0 && failedPayouts.length === 0
         // Solde RÉEL du ledger (source de vérité webhook) — le montant d'une
         // demande de virement est écrit par le vendeur, donc jamais fiable seul.
         const ledgerOf = (uid) => sellerBalances.find(b => (b.sellerUid || b.id || b._docId) === uid)
 
-        // Une ligne « Marquer payé » PAR devise due, plafonnée au ledger.
-        const PayoutCard = ({ uid, requestedCents, requestedXOF, requestId, date }) => {
+        // Une ligne « Marquer payé » EUR (Stripe filet). Le XOF n'est jamais réglé
+        // ici (versement auto) → affiché en note informative seulement.
+        const PayoutCard = ({ uid, requestedCents, requestId, date }) => {
           const ledger = ledgerOf(uid)
           const dueCents = Math.max(0, Number(ledger?.amountDueCents || 0))
           const dueXOF = Math.max(0, Number(ledger?.amountDueXOF || 0))
           const payCents = requestId ? Math.min(Math.max(0, Number(requestedCents || 0)) || dueCents, dueCents) : dueCents
-          const payXOF = requestId ? Math.min(Math.max(0, Number(requestedXOF || 0)) || dueXOF, dueXOF) : dueXOF
-          const mismatch = requestId && (Number(requestedCents || 0) > dueCents || Number(requestedXOF || 0) > dueXOF)
+          const mismatch = requestId && Number(requestedCents || 0) > dueCents
           return (
             <div style={{ ...CARD, padding: 16, borderColor: requestId ? 'rgba(200,169,110,0.30)' : 'rgba(255,255,255,0.10)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
@@ -3723,18 +3766,21 @@ export default function AgentPage() {
                   Marquer payé ({fmtEUR(payCents)})
                 </button>
               )}
-              {payXOF > 0 && (
-                <button
-                  onClick={() => setConfirmAction({ type: 'markPaid', uid, amount: payXOF, currency: 'XOF', requestId, name: nameOf(uid), label: fmtXOF(payXOF) })}
-                  style={{
-                    width: '100%', marginTop: payCents > 0 ? 8 : 12, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
-                    background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.5)',
-                    color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
-                  }}>
-                  Marquer payé ({fmtXOF(payXOF)})
-                </button>
+              {dueXOF > 0 && (
+                // XOF NON réglable ici : le versement mobile money part AUTOMATIQUEMENT
+                // à la fin de l'événement (cron event_payouts). Le régler à la main
+                // depuis le solde agrégé = double versement (le cron paie aussi).
+                // Les échecs réels apparaissent dans la section « Versements auto en
+                // échec » ci-dessous, avec leur propre bouton.
+                <p style={{
+                  marginTop: payCents > 0 ? 8 : 12, padding: '9px 12px', borderRadius: 10,
+                  background: 'rgba(78,232,200,0.07)', border: '1px solid rgba(78,232,200,0.20)',
+                  color: 'rgba(78,232,200,0.85)', fontFamily: FONTS.mono, fontSize: 10.5, lineHeight: 1.5, margin: `${payCents > 0 ? 8 : 12}px 0 0`,
+                }}>
+                  {fmtXOF(dueXOF)} versés automatiquement sur le Mobile Money à la fin de l'événement. En cas d'échec, à régler dans « Versements auto en échec ».
+                </p>
               )}
-              {requestId && payCents <= 0 && payXOF <= 0 && (
+              {requestId && payCents <= 0 && dueXOF <= 0 && (
                 <button
                   onClick={() => setConfirmAction({ type: 'markPaid', uid, amount: 0, currency: 'EUR', requestId, name: nameOf(uid), label: '0 (clore la demande)' })}
                   style={{
@@ -3765,20 +3811,21 @@ export default function AgentPage() {
                     {fmtEUR(totalDueCents)}
                   </p>
                 )}
-                {totalDueXOF > 0 && (
+                {totalFailedXOF > 0 && (
                   <p style={{ fontFamily: FONTS.display, fontSize: totalDueCents > 0 ? 26 : 34, fontWeight: 300, color: COLORS.teal, margin: '6px 0 0', lineHeight: 1 }}>
-                    {fmtXOF(totalDueXOF)}
+                    {fmtXOF(totalFailedXOF)}
                   </p>
                 )}
-                {totalDueCents <= 0 && totalDueXOF <= 0 && (
+                {totalDueCents <= 0 && totalFailedXOF <= 0 && (
                   <p style={{ fontFamily: FONTS.display, fontSize: 24, fontWeight: 300, color: COLORS.muted, margin: '4px 0 0', lineHeight: 1 }}>
                     0
                   </p>
                 )}
                 <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '8px 0 0', lineHeight: 1.6 }}>
                   FILET DE SÉCURITÉ. Le flux normal est le versement AUTOMATIQUE sur le Mobile Money
-                  de l'organisateur à la fin de chaque événement — n'apparaissent ici que les échecs
-                  (numéro manquant, envoi refusé) et les anciens soldes. Régler à la main, puis marquer payé.
+                  de l'organisateur à la fin de chaque événement. Le XOF ci-dessus = uniquement les
+                  versements auto EN ÉCHEC (numéro manquant, envoi refusé) — à régler à la main puis
+                  marquer payé. L'EUR passe par Stripe. Jamais d'addition entre les deux devises.
                 </p>
               </div>
             )}
@@ -3794,6 +3841,52 @@ export default function AgentPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {failedPayouts.length > 0 && (
+                  <div>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>
+                      Versements auto en échec ({failedPayouts.length})
+                    </p>
+                    <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: '0 0 10px', lineHeight: 1.5 }}>
+                      Le versement Mobile Money n'a pas pu partir. Envoie l'argent à la main depuis le
+                      dashboard FedaPay, PUIS marque payé ici (ça solde aussi le ledger — le cron n'y
+                      retouchera pas).
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {failedPayouts.map(p => {
+                        const uid = String(p.sellerUid || '')
+                        const amt = Math.max(0, Math.round(Number(p.amountDueXOF || 0)))
+                        return (
+                          <div key={p.eventId || p.id || p._docId} style={{ ...CARD, padding: 16, borderColor: 'rgba(224,90,170,0.30)', borderLeft: '3px solid rgba(224,90,170,0.6)' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                              <div style={{ minWidth: 0 }}>
+                                <p style={{ fontFamily: FONTS.display, fontSize: 16, fontWeight: 300, color: '#fff', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.eventName || 'Événement'}</p>
+                                <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.dim, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {nameOf(uid)}{emailOf(uid) ? ` · ${emailOf(uid)}` : ''}
+                                </p>
+                              </div>
+                              <p style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 300, color: COLORS.teal, margin: 0, flexShrink: 0 }}>{fmtXOF(amt)}</p>
+                            </div>
+                            {p.failReason && (
+                              <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: '8px 0 0', lineHeight: 1.5 }}>
+                                Raison : {String(p.failReason).slice(0, 160)}
+                              </p>
+                            )}
+                            <button
+                              onClick={() => setConfirmAction({ type: 'markPayoutPaid', ep: p, name: nameOf(uid), label: fmtXOF(amt) })}
+                              style={{
+                                width: '100%', marginTop: 12, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
+                                background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.5)',
+                                color: COLORS.teal, fontFamily: FONTS.mono, fontSize: 13, fontWeight: 700,
+                              }}>
+                              Marquer payé ({fmtXOF(amt)})
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {payoutRequests.length > 0 && (
                   <div>
                     <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.gold, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>
@@ -3801,7 +3894,7 @@ export default function AgentPage() {
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {payoutRequests.map(p => (
-                        <PayoutCard key={p.id} uid={p.sellerId} requestedCents={p.amountDueCents} requestedXOF={p.amountDueXOF} requestId={p.id} date={p.createdAt} />
+                        <PayoutCard key={p.id} uid={p.sellerId} requestedCents={p.amountDueCents} requestId={p.id} date={p.createdAt} />
                       ))}
                     </div>
                   </div>

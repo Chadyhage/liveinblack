@@ -755,7 +755,7 @@ async function finalizeFedapayBooking(db, entity) {
       // débité sans piste de remboursement).
       try {
         const { recordFedapayRefund } = await import('../lib/eventRefunds.js')
-        await recordFedapayRefund(db, { eventId: String(eventId), paymentRef: txnId, tickets: [] })
+        await recordFedapayRefund(db, FieldValue, { eventId: String(eventId), paymentRef: txnId, tickets: [] })
       } catch (e) { console.error('[fedapay-webhook] worklist (event supprimé) échouée:', txnId, e.message) }
       await metaRef.set({ status: 'manual_review', reviewReason: 'event_deleted_before_fulfillment', fulfillStartedAt: null }, { merge: true })
       await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
@@ -774,7 +774,7 @@ async function finalizeFedapayBooking(db, entity) {
     if (evGuard.data().cancelled === true) {
       try {
         const { recordFedapayRefund } = await import('../lib/eventRefunds.js')
-        await recordFedapayRefund(db, { eventId: String(eventId), paymentRef: txnId, tickets: [] })
+        await recordFedapayRefund(db, FieldValue, { eventId: String(eventId), paymentRef: txnId, tickets: [] })
       } catch (e) {
         console.error('[fedapay-webhook] worklist remboursement (event annulé) échouée:', txnId, e.message)
       }
@@ -975,7 +975,7 @@ async function finalizeFedapayBooking(db, entity) {
       } catch (e) { console.error('[fedapay-webhook] annulation billets post-course échouée:', e.message) }
       try {
         const { recordFedapayRefund } = await import('../lib/eventRefunds.js')
-        await recordFedapayRefund(db, { eventId: String(eventId), paymentRef: txnId, tickets })
+        await recordFedapayRefund(db, FieldValue, { eventId: String(eventId), paymentRef: txnId, tickets })
       } catch (e) { console.error('[fedapay-webhook] worklist post-course échouée:', txnId, e.message) }
       await metaRef.set({ status: 'manual_review', reviewReason: 'paid_during_cancel' }, { merge: true })
       await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({

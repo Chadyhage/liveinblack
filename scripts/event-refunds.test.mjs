@@ -227,15 +227,40 @@ test('refundPostCancellationStripe : idempotent (2e passage skip, un seul rembou
 // ── Worklist FedaPay ──────────────────────────────────────────────────────────
 test('recordFedapayRefund : écrit la liste manuelle (montant + email), idempotent', async () => {
   const db = makeDb({ 'fedapay_txns/900': { amountTotal: 5300, userEmail: 'ali@tg.com' } })
-  const r = await recordFedapayRefund(db, { eventId: 'e1', paymentRef: '900', tickets: [{}, {}] })
+  const r = await recordFedapayRefund(db, FieldValue, { eventId: 'e1', paymentRef: '900', tickets: [{}, {}] })
   assert.equal(r.status, 'pending_manual')
   const doc = db._store.get('event_refunds/e1__900')
   assert.equal(doc.amountXOF, 5300)
   assert.equal(doc.buyerEmail, 'ali@tg.com')
   assert.equal(doc.ticketCount, 2)
   // 2e passage : idempotent (déjà pending_manual)
-  const r2 = await recordFedapayRefund(db, { eventId: 'e1', paymentRef: '900', tickets: [{}, {}] })
+  const r2 = await recordFedapayRefund(db, FieldValue, { eventId: 'e1', paymentRef: '900', tickets: [{}, {}] })
   assert.equal(r2.skipped, true)
+})
+
+test('recordFedapayRefund : renverse seller_balances.amountDueXOF SI settled (symétrie EUR), idempotent', async () => {
+  const db = makeDb({
+    'seller_balances/orga1': { amountDueXOF: 5000 },
+    // settled:true → le vendeur A ÉTÉ crédité (owed = 5300 - 300 = 5000)
+    'fedapay_txns/901': { amountTotal: 5300, feeAmount: 300, sellerUid: 'orga1', settled: true, userEmail: 'a@tg.com' },
+  })
+  await recordFedapayRefund(db, FieldValue, { eventId: 'e2', paymentRef: '901', tickets: [{}] })
+  assert.equal(db._store.get('seller_balances/orga1').amountDueXOF, 0) // renversé
+  assert.equal(db._store.get('event_refunds/e2__901').ledgerReversedXOF, true)
+  // 2e passage : PAS de double décrément (idempotent via skip pending_manual)
+  await recordFedapayRefund(db, FieldValue, { eventId: 'e2', paymentRef: '901', tickets: [{}] })
+  assert.equal(db._store.get('seller_balances/orga1').amountDueXOF, 0)
+})
+
+test('recordFedapayRefund : ne renverse RIEN si non settled (paiement capté avant crédit vendeur)', async () => {
+  const db = makeDb({
+    'seller_balances/orga2': { amountDueXOF: 5000 },
+    // settled absent → garde webhook a capté le paiement AVANT le crédit vendeur
+    'fedapay_txns/902': { amountTotal: 5300, feeAmount: 300, sellerUid: 'orga2', userEmail: 'b@tg.com' },
+  })
+  await recordFedapayRefund(db, FieldValue, { eventId: 'e3', paymentRef: '902', tickets: [{}] })
+  assert.equal(db._store.get('seller_balances/orga2').amountDueXOF, 5000) // intact
+  assert.equal(db._store.get('event_refunds/e3__902').ledgerReversedXOF, false)
 })
 
 // ── Orchestration ─────────────────────────────────────────────────────────────

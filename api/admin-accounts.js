@@ -12,7 +12,7 @@
 //   update_email       { uid, email }          → change l'email de CONNEXION (Auth) + miroir Firestore
 import { getAuth } from 'firebase-admin/auth'
 import { requireAuth } from '../lib/verifyAuth.js'
-import { getDb } from '../lib/firebaseAdmin.js'
+import { getDb, FieldValue } from '../lib/firebaseAdmin.js'
 import { isAdminCaller, isSuperAdminEmail } from '../lib/adminGuard.js'
 import { emailVerificationEmail } from '../lib/email-templates.js'
 
@@ -142,6 +142,56 @@ export default async function handler(req, res) {
         await auth.revokeRefreshTokens(uid).catch(() => {})
         console.log(`[admin-accounts] ${caller.email} a changé l'email de ${uid} → ${user.email}`)
         return res.status(200).json({ ok: true, status: authSnapshot(user) })
+      }
+
+      // ── Solder à la main UN versement auto XOF EN ÉCHEC (le filet) ──────────
+      // event_payouts est server-authoritative (write:false côté règles) : la
+      // finalisation manuelle passe donc par ici (Admin SDK). Décrémente les DEUX
+      // ledgers en UNE transaction, symétrie exacte avec le cron finalizePaid :
+      //  - event_payouts.amountDueXOF → 0, status 'paid' (le cron n'y touche plus) ;
+      //  - seller_balances.amountDueXOF -= montant (clampé ≥ 0).
+      // Ne solde QUE des enveloppes 'failed' : une enveloppe accumulating/paying
+      // est en versement AUTO → la solder ici = double versement. Idempotent
+      // (journal déterministe par event).
+      case 'mark_payout_paid': {
+        const eventId = String(req.body?.eventId || '')
+        if (!eventId) return res.status(400).json({ error: 'missing_eventId' })
+        const epRef = db.collection('event_payouts').doc(eventId)
+        const outcome = await db.runTransaction(async (tx) => {
+          const epSnap = await tx.get(epRef)
+          if (!epSnap.exists) return { error: 'not_found' }
+          const ep = epSnap.data()
+          if (ep.status !== 'failed') return { error: 'not_failed', status: ep.status }
+          const sellerUid = String(ep.sellerUid || '')
+          const amount = Math.max(0, Math.round(Number(ep.amountDueXOF || 0)))
+          const logRef = db.collection('payout_logs').doc(`pl_manualevp_${eventId}`)
+          const logSnap = await tx.get(logRef)
+          if (logSnap.exists) return { error: 'already', amount: 0 }
+          if (amount <= 0) {
+            tx.set(epRef, { status: 'paid', amountDueXOF: 0, lastPaidAt: Date.now(), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+            return { ok: true, amount: 0 }
+          }
+          if (sellerUid) {
+            const balRef = db.collection('seller_balances').doc(sellerUid)
+            const balSnap = await tx.get(balRef)
+            const balDue = Math.max(0, Number(balSnap.exists ? balSnap.data().amountDueXOF : 0) || 0)
+            tx.set(balRef, { amountDueXOF: Math.max(0, balDue - amount), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+          }
+          tx.set(epRef, {
+            amountDueXOF: 0, paidXOF: FieldValue.increment(amount),
+            status: 'paid', lastPaidAt: Date.now(), updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true })
+          tx.set(logRef, {
+            sellerUid, amount, currency: 'XOF', eventId, eventName: ep.eventName || '',
+            by: caller.uid, byName: caller.email || 'Agent', manual: true, at: Date.now(),
+          })
+          return { ok: true, amount }
+        })
+        if (outcome.error === 'not_found') return res.status(404).json({ error: 'not_found', message: 'Enveloppe de versement introuvable.' })
+        if (outcome.error === 'not_failed') return res.status(409).json({ error: 'not_failed', message: 'Ce versement est reparti en automatique — plus rien à régler à la main.' })
+        if (outcome.error === 'already') return res.status(200).json({ ok: true, alreadyPaid: true, paid: 0 })
+        console.log(`[admin-accounts] ${caller.email} a soldé le versement XOF de l'event ${eventId} (${outcome.amount} FCFA)`)
+        return res.status(200).json({ ok: true, paid: outcome.amount })
       }
 
       default:
