@@ -67,6 +67,73 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── 1.5 Garde ÉVÉNEMENTS + RECETTE de l'organisateur (audit #2/#3/#8) ──
+  // Avant TOUTE mutation : refuser la suppression si l'organisateur a encore des
+  // événements avec des billets VENDUS (sinon ils resteraient en vente « sans
+  // propriétaire » et jamais remboursés) ou de la recette non versée (gelée à
+  // vie faute de destinataire). Il doit d'abord ANNULER ces events (ses acheteurs
+  // sont alors remboursés via le flux audité) et/ou encaisser ses versements.
+  // Fail-closed : on lit seulement, aucune écriture avant ce point.
+  try {
+    const [byCreated, byOrganizer] = await Promise.all([
+      db.collection('events').where('createdBy', '==', uid).get(),
+      db.collection('events').where('organizerId', '==', uid).get(),
+    ])
+    const evMap = new Map()
+    for (const d of [...byCreated.docs, ...byOrganizer.docs]) evMap.set(d.id, d)
+    const blockingEventIds = []
+    const cleanupEventRefs = [] // events sans billet payé → supprimables proprement
+    for (const d of evMap.values()) {
+      const tSnap = await db.collection('tickets').where('eventId', '==', d.id).get()
+      const hasPaidBuyer = tSnap.docs.some(t => {
+        const tk = t.data()
+        return tk.paid === true && tk.revoked !== true && String(tk.userId || '') !== uid
+      })
+      if (hasPaidBuyer && d.data().cancelled !== true) blockingEventIds.push(d.id)
+      else cleanupEventRefs.push({ ref: d.ref, ticketRefs: tSnap.docs.map(t => t.ref) })
+    }
+
+    // Recette non versée : enveloppes event_payouts + solde Stripe interne.
+    let owedXOF = 0
+    try {
+      const pay = await db.collection('event_payouts').where('sellerUid', '==', uid).get()
+      owedXOF = pay.docs.reduce((s, p) => {
+        const d = p.data()
+        return s + ((d.status === 'accumulating' || d.status === 'paying') ? Math.max(0, Number(d.amountDueXOF) || 0) : 0)
+      }, 0)
+    } catch {}
+    let owedCents = 0
+    try {
+      const sb = await db.doc(`seller_balances/${uid}`).get()
+      owedCents = sb.exists ? Math.max(0, Number(sb.data().amountDueCents) || 0) : 0
+    } catch {}
+
+    if (blockingEventIds.length > 0 || owedXOF > 0 || owedCents > 0) {
+      const parts = []
+      if (blockingEventIds.length) parts.push(`${blockingEventIds.length} événement${blockingEventIds.length > 1 ? 's' : ''} avec des billets vendus (annule-${blockingEventIds.length > 1 ? 'les' : 'le'} d'abord — les acheteurs seront remboursés)`)
+      if (owedXOF > 0 || owedCents > 0) parts.push('de la recette non encore versée')
+      return res.status(409).json({
+        error: 'organizer_has_pending_settlement',
+        message: `Ce compte a ${parts.join(' et ')}. Règle-les avant de supprimer le compte.`,
+        eventIds: blockingEventIds, owedXOF, owedCents,
+      })
+    }
+
+    // Aucun blocage : supprimer les events orphelins (annulés / sans billet payé)
+    // + leur registre tickets/ — sinon ils restent « en vente sans propriétaire ».
+    for (const { ref, ticketRefs } of cleanupEventRefs) {
+      for (let i = 0; i < ticketRefs.length; i += 450) {
+        const batch = db.batch()
+        ticketRefs.slice(i, i + 450).forEach(r => batch.delete(r))
+        await batch.commit()
+      }
+      await ref.delete().catch(() => {})
+    }
+  } catch (e) {
+    console.error('[admin-delete-account] garde événements échouée:', e.message)
+    return res.status(500).json({ error: 'event_guard_failed', message: `Vérification des événements de l'organisateur impossible : ${e.message}` })
+  }
+
   // ── 2. Facturation — ANNULER AVANT de supprimer Auth / Firestore ──
   // Si Stripe échoue ou si la référence est incohérente, on ne supprime rien.
   let billing = { canceledIds: [], hadBilling: false }
