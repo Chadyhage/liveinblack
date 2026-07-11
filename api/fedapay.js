@@ -29,6 +29,7 @@ import { requireAuth } from '../lib/verifyAuth.js'
 import { PROVIDER_SUB, computeRenewal } from '../lib/providerSubscription.js'
 import { findGroupTieForEvent, groupTieBuyMessage } from '../lib/groupTicketGuard.js'
 import { providerBillingCurrency } from '../lib/providerBillingRegion.js'
+import { momoCountryFromRegionName } from '../src/data/regions.js'
 
 // Raw body indispensable pour vérifier la signature du webhook.
 export const config = {
@@ -1013,11 +1014,16 @@ async function finalizeFedapayBooking(db, entity) {
       // terminée (lib/eventPayouts.js). status repasse à 'accumulating' si une
       // vente tardive arrive après un versement : le cron paiera le reliquat.
       if (eventId) {
+        // Pays de l'événement figé sur l'enveloppe (à la vente) → le cron paie sur
+        // le numéro Mobile Money de CE pays (un orga peut encaisser dans plusieurs
+        // pays UEMOA). Dérivé de la région de l'event ; le cron a un repli si absent.
+        const evMomoCountry = momoCountryFromRegionName(evTx?.exists ? evTx.data().region : null)
         tx.set(db.collection('event_payouts').doc(String(eventId)), {
           eventId: String(eventId),
           eventName: eventName || '',
           sellerUid: String(sellerUid),
           currency: 'XOF',
+          ...(evMomoCountry ? { momoCountry: evMomoCountry } : {}),
           amountDueXOF: FieldValue.increment(owed),
           status: 'accumulating',
           updatedAt: FieldValue.serverTimestamp(),

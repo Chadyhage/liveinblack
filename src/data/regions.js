@@ -32,6 +32,23 @@ export const XOF_REGION_IDS = regions.filter(r => r.currency === 'XOF').map(r =>
 export function getRegionByName(name) {
   return regions.find((r) => r.name === name) || regions[0]
 }
+
+// Code pays FedaPay (momoCountry) d'une région désignée par son NOM (le champ
+// event.region), son id ou son pays. null si inconnue ou hors zone mobile money
+// (France). Sert à router le versement d'un événement vers le BON numéro Mobile
+// Money (celui du pays de l'événement) — un event à Cotonou paie le numéro béninois.
+export function momoCountryFromRegionName(name) {
+  if (!name) return null
+  const r = regions.find((x) => x.name === name || x.id === name || x.country === name)
+  return r?.momoCountry || null
+}
+// Région (donc son nom lisible) à partir d'un code momoCountry ('tg' → Togo).
+export function regionByMomoCountry(code) {
+  if (!code) return null
+  return regions.find((r) => r.momoCountry === code) || null
+}
+// Régions de la zone mobile money (UEMOA / FedaPay), pour les sélecteurs de numéro.
+export const MOMO_REGIONS = regions.filter((r) => r.momoCountry)
 // Indicatif → code pays FedaPay (pour valider/router un numéro mobile money).
 export function momoCountryFromDial(number) {
   const n = String(number || '').replace(/[\s.-]/g, '')
