@@ -73,8 +73,9 @@ export default function OrganizerPublicStudio() {
   const update = patch => setProfile(current => ({ ...current, ...patch }))
 
   // Zones d'intervention (multi) — pour la recherche par pays + l'affichage.
-  // La zone PRINCIPALE (regionId) reste l'ancre devise/paiement : on la conserve
-  // tant qu'elle est sélectionnée, sinon on bascule sur la 1re zone choisie.
+  // Les zones d'intervention sont du MARKETING (multi-pays où l'organisateur
+  // communique). Elles sont TOTALEMENT SÉPARÉES de regionId, qui est l'ANCRE
+  // DEVISE/PAIEMENT (figée à l'onboarding : EUR/Stripe vs XOF/FedaPay).
   const ZONE_OPTIONS = [{ id:'international', name:'International', flag:'🌍' }, ...regions]
   const zones = normalizeRegionIds(profile.zonesIntervention?.length ? profile.zonesIntervention : [profile.regionId || profile.country]).filter(Boolean)
   function toggleZone(id) {
@@ -82,9 +83,11 @@ export default function OrganizerPublicStudio() {
     let next
     if (id === 'international') next = has ? [] : ['international']
     else { const woInt = zones.filter(z => z !== 'international'); next = has ? woInt.filter(z => z !== id) : [...woInt, id] }
-    const realNext = next.filter(z => z !== 'international')
-    const primary = realNext.includes(profile.regionId) ? profile.regionId : (realNext[0] || profile.regionId || '')
-    update({ zonesIntervention: next, regionId: primary, country: getRegionName(primary) })
+    // On NE touche PLUS regionId/country ici (audit pages #1 CRITIQUE) : avant,
+    // décocher/changer une zone MARKETING recalculait regionId → basculait
+    // SILENCIEUSEMENT la devise EUR↔XOF de tous les futurs événements. La devise
+    // ne doit JAMAIS dépendre d'un choix de communication.
+    update({ zonesIntervention: next })
   }
 
   function chooseImage(kind, file) {

@@ -5,6 +5,7 @@ import { getLocalOrganizerProfiles } from '../utils/organizers'
 import { MessagingSearchBar } from './MessagingActions'
 import { getEntityRegionIds, getRegionName, normalizeGeoText } from '../utils/locations'
 import { getProviderCategories } from '../utils/providerCategories'
+import { getEventEndTimestamp } from '../utils/eventUrgency'
 
 // Recherche globale de l'accueil : cherche À LA FOIS les événements, les
 // organisateurs (annuaire /organisateurs) et les prestataires (annuaire). Le
@@ -84,7 +85,15 @@ export default function HeroSearch() {
   const query = normalizeGeoText(q)
   let results = []
   if (query) {
-    const events = readEvents()
+    // La recherche d'accueil ne doit montrer QUE des événements réellement
+    // publics et à venir (audit pages #6 : avant, elle listait aussi les privés,
+    // annulés, non publiés et passés). Un event privé se trouve via son code.
+    const nowTs = Date.now()
+    const events = readEvents().filter(e =>
+      e && !e.isPrivate && e.cancelled !== true && e._pendingSync !== true
+      && (!e.status || ['published', 'postponed', 'active'].includes(e.status))
+      && (() => { const end = getEventEndTimestamp(e); return !end || end >= nowTs })()
+    )
     // Firestore (remoteProviders) prioritaire sur le cache → subscriptionActive à jour.
     const byId = {}
     for (const p of getAllProviderProfiles()) if (p.userId) byId[p.userId] = p

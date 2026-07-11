@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { getUserId, sendMessage } from '../utils/messaging'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '../utils/eventUrgency'
 import { fmtMoney, eventCurrency } from '../utils/money'
+import { normalizeGeoText } from '../utils/locations'
 import EmptyState from '../components/EmptyState'
 import { MessagingSearchBar } from '../components/MessagingActions'
 import EventHoverMedia from '../components/EventHoverMedia'
@@ -150,11 +151,13 @@ export default function EventsPage() {
   const visibleEvents = allEvents.filter(e => !e.isPrivate || unlockedEvents.includes(String(e.id)))
 
   const filtered = visibleEvents.filter((e) => {
-    const q = search.toLowerCase()
-    const matchSearch =
-      (e.name || '').toLowerCase().includes(q) ||
-      (e.city || '').toLowerCase().includes(q) ||
-      (e.category || '').toLowerCase().includes(q)
+    // Recherche normalisée (accents/casse) sur plus de champs — cohérent avec
+    // HeroSearch et la recherche globale (audit pages #4 : avant, sensible aux
+    // accents et limitée à nom/ville/catégorie).
+    const q = normalizeGeoText(search)
+    const hay = [e.name, e.city, e.category, e.subtitle, e.organizer, e.venue,
+      e.region, ...(e.tags || []), ...(e.artists || []), ...(e.lineup || [])].map(normalizeGeoText).join(' ')
+    const matchSearch = !q || hay.includes(q)
     const matchCategory =
       activeCategory === 'Tous' ||
       (activeCategory === 'Autre' ? !KNOWN_CATEGORIES.includes(e.category) : e.category === activeCategory)

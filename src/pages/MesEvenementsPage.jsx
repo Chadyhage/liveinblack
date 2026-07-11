@@ -720,11 +720,13 @@ export default function MesEvenementsPage() {
     // réservations gratuites) : on lit le doc SERVEUR (source de vérité) pour
     // préserver le nombre de billets déjà vendus par type de place.
     let soldByType = {}
+    let editStoredCurrency = null // devise FIGÉE de l'event existant, à préserver
     if (editingEventId) {
       try {
         const { loadDoc } = await import('../utils/firestore-sync')
         const serverEv = await loadDoc(`events/${editingEventId}`)
         const source = serverEv || createdEvents.find(ev => ev.id === editingEventId)
+        editStoredCurrency = source?.currency || null
         for (const pl of (source?.places || [])) {
           soldByType[pl.type] = Math.max(0, (Number(pl.total) || 0) - (Number(pl.available) || 0))
         }
@@ -753,10 +755,11 @@ export default function MesEvenementsPage() {
       city: venue.city,
       region: form.region || venue.city,
       // Devise de facturation : Togo/Bénin → XOF (FedaPay), France → EUR (Stripe).
-      // Figée à la publication — les prix des places sont saisis dans cette devise.
-      // « 1 organisateur = 1 zone » : la devise vient de la zone de l'organisateur
-      // (orgCurrency) ; à défaut (profil sans zone connue) on retombe sur la région.
-      currency: orgCurrency || regionToCurrency(form.region || venue.city),
+      // FIGÉE à la publication. À l'ÉDITION on PRÉSERVE la devise déjà stockée
+      // (audit devise #2 : la recalculer flippait EUR↔XOF depuis un appareil sans
+      // profil orga en cache → un prix de 20 € devenait « 20 FCFA »). Calculée
+      // UNIQUEMENT à la création : orgCurrency (« 1 org = 1 zone »), à défaut région.
+      currency: editStoredCurrency || orgCurrency || regionToCurrency(form.region || venue.city),
       imageUrl: finalImageUrl,
       videoUrl: finalVideoUrl,
       color: '#c8a96e',
