@@ -3306,8 +3306,8 @@ export default function MessagingPage() {
   // ── Rendu desktop : split-view façon WhatsApp (liste à gauche + conv à droite) ──
   function renderDesktopSplit(rightNode) {
     return (
-      <Layout>
-        <div style={{ display: 'flex', height: 'calc(100dvh - 120px)', maxWidth: 1180, margin: '8px auto 0', borderRadius: 22, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0e0f16', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+      <Layout fluid>
+        <div style={{ display: 'flex', height: 'calc(100dvh - 108px)', width: '100%', overflow: 'hidden', background: '#0e0f16', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <aside style={{ width: 360, flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {renderListPane()}
           </aside>

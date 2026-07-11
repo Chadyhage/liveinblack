@@ -73,7 +73,10 @@ export function getNavItems(role) {
   ]
 }
 
-export default function Layout({ children, hideNav, chatMode }) {
+// fluid : contenu pleine largeur (pas de cap 1320) + pas de footer, MAIS le nav
+// reste visible. Pour les vues « edge-to-edge » qui gardent la navigation
+// (ex. messagerie desktop). chatMode = pleine largeur SANS nav ni footer.
+export default function Layout({ children, hideNav, chatMode, fluid }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
@@ -535,14 +538,14 @@ export default function Layout({ children, hideNav, chatMode }) {
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <main className={chatMode ? 'flex flex-col' : ''} style={chatMode ? { flex: 1 } : {}}>
-        <div key={chatMode ? undefined : location.pathname} style={{ maxWidth: chatMode ? undefined : 1320, margin: '0 auto', width: '100%' }}
-          className={`${chatMode ? '' : 'lib-page '}${!hideNav && !chatMode ? 'pb-28 pt-20 md:pt-8 md:pb-16' : chatMode ? '' : 'pt-20 md:pt-8'}${chatMode ? ' flex-1 flex flex-col' : ''}`}>
+        <div key={chatMode ? undefined : location.pathname} style={{ maxWidth: (chatMode || fluid) ? undefined : 1320, margin: '0 auto', width: '100%' }}
+          className={`${chatMode ? '' : 'lib-page '}${chatMode ? '' : fluid ? 'pt-20 md:pt-8' : !hideNav ? 'pb-28 pt-20 md:pt-8 md:pb-16' : 'pt-20 md:pt-8'}${chatMode ? ' flex-1 flex flex-col' : ''}`}>
           {children}
         </div>
       </main>
 
-      {/* Footer global — masqué en chatMode et sur les vues hideNav (paiement, ticket scanné) */}
-      {!chatMode && !hideNav && (
+      {/* Footer global — masqué en chatMode, hideNav (paiement, ticket scanné) et fluid (messagerie edge-to-edge) */}
+      {!chatMode && !hideNav && !fluid && (
         <footer style={{
           marginTop: 'auto',
           padding: '32px 24px 28px',

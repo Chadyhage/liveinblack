@@ -138,7 +138,9 @@ export default function OnboardingOrganisateur() {
       if (existing) {
         setApp(existing)
         const fd = existing.formData || {}
-        setF(prev => ({ ...prev, ...fd }))
+        // L'e-mail pro d'un client déjà connecté = son e-mail de CONNEXION (décision
+        // produit) : on force la valeur, jamais une saisie libre ni un ancien emailPro.
+        setF(prev => ({ ...prev, ...fd, emailPro: user.email }))
         if (['submitted','under_review','approved'].includes(existing.status)) {
           navigate('/mon-dossier')
         }
@@ -147,7 +149,7 @@ export default function OnboardingOrganisateur() {
         setApp(created)
         // Pré-remplir avec les données transmises depuis MonDossierPage (recréation après suppression)
         const prefill = location.state?.prefill
-        if (prefill) setF(prev => ({ ...prev, ...prefill }))
+        setF(prev => ({ ...prev, ...(prefill || {}), emailPro: user.email }))
       }
     } else {
       // ── Anonymous mode — load or create temp draft ──
@@ -520,7 +522,10 @@ export default function OnboardingOrganisateur() {
 
               {/* Email + Téléphone */}
               <Field label="Email professionnel" required>
-                <input type="email" style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined }} value={f.emailPro} onChange={e => update('emailPro', e.target.value)} placeholder="contact@monclub.fr" disabled={anonMode && !!anonUidRef.current} />
+                {/* Client déjà connecté : on RÉUTILISE son e-mail de connexion (décision
+                    produit) — champ verrouillé, modifiable seulement via Réglages. En mode
+                    anonyme, cet e-mail EST l'identifiant du nouveau compte → éditable. */}
+                <input type="email" style={{ ...S.input, borderColor: errors.emailPro ? '#e05aaa' : undefined, ...(!anonMode ? { opacity: 0.7, cursor: 'not-allowed' } : {}) }} value={f.emailPro} onChange={e => update('emailPro', e.target.value)} placeholder="contact@monclub.fr" disabled={!anonMode || !!anonUidRef.current} />
                 {errors.emailPro && <p style={S.error}>{errors.emailPro}</p>}
                 {errors.emailExists && (
                   <button type="button" onClick={() => navigate('/connexion')} style={{
@@ -528,6 +533,9 @@ export default function OnboardingOrganisateur() {
                     background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10,
                     fontFamily: DM, fontSize: 13, fontWeight: 700, color: '#04120e',
                   }}>Se connecter à ce compte</button>
+                )}
+                {!anonMode && (
+                  <p style={{ fontFamily: DM, fontSize: 11, color: 'rgba(78,232,200,0.75)', marginTop: 4 }}>On utilise ton e-mail de connexion. Pour en changer : Réglages → Changer d'e-mail.</p>
                 )}
                 {anonMode && !errors.emailExists && (
                   anonUidRef.current
