@@ -76,7 +76,9 @@ service cloud.firestore {
             (request.resource.data.get('role', 'client') == 'organisateur' || request.resource.data.get('role', 'client') == 'prestataire')
               ? request.resource.data.get('status', 'onboarding') == 'onboarding'
               : true
-        ));
+        )
+        // #28 : pas de points de fidélité auto-accordés à la création.
+        && request.resource.data.get('points', 0) == 0);
       // Le propriétaire édite son profil MAIS ne peut pas s'octroyer de privilèges :
       //  - jamais role/activeRole = 'agent' (escalade admin) ;
       //  - jamais s'auto-valider (status → 'active' réservé aux agents) ;
@@ -93,7 +95,10 @@ service cloud.firestore {
             && (request.resource.data.get('role', 'client') == resource.data.get('role', 'client')
                 || request.resource.data.get('role', 'client') in resource.data.get('enabledRoles', [request.resource.data.get('role', 'client')]))
             && (!('enabledRoles' in resource.data) || request.resource.data.enabledRoles == resource.data.enabledRoles)
-            && ('agent' in resource.data.get('enabledRoles', []) || !('agent' in request.resource.data.get('enabledRoles', []))));
+            && ('agent' in resource.data.get('enabledRoles', []) || !('agent' in request.resource.data.get('enabledRoles', [])))
+            // #28 : le propriétaire ne peut PAS s'auto-attribuer de points de fidélité
+            // (crédités uniquement au scan par api/tickets 'checkin', Admin SDK).
+            && request.resource.data.get('points', 0) == resource.data.get('points', 0));
       allow delete: if isAgent();
     }
 
@@ -193,11 +198,20 @@ service cloud.firestore {
 
     function canUpdateConversation(before, after) {
       // Les membres continuent à mettre à jour le dernier message. En revanche,
-      // seuls les admins peuvent changer les droits d'administration ou les
-      // sanctions temporaires, ce qui empêche un membre de se réactiver seul.
+      // seuls les admins peuvent changer les droits d'administration, les
+      // sanctions temporaires ou le type. Un membre non-admin ne peut PAS non
+      // plus toucher la liste des membres (#4 : sinon il expulsait un autre
+      // membre en écrivant le doc directement) — SAUF pour se retirer LUI-MÊME
+      // (leaveGroup) : dans ce cas il n'est plus dans participantIds après.
       return before.get('type', '') != 'group'
           || isGroupAdmin(before)
-          || !after.diff(before).affectedKeys().hasAny(['adminIds', 'memberMutes']);
+          || (
+              !after.diff(before).affectedKeys().hasAny(['adminIds', 'memberMutes', 'type'])
+              && (
+                  !after.diff(before).affectedKeys().hasAny(['members', 'participantIds'])
+                  || !(request.auth.uid in after.get('participantIds', []))
+              )
+          );
     }
 
     match /conversations/{id} {
@@ -235,9 +249,25 @@ service cloud.firestore {
     }
 
     // ── Photos partagées dans les conversations (fallback base64) ──────────────
-    // IDs aléatoires non devinables ; pas de champ convId exploitable en règle.
+    // Le doc porte { data, convId, senderId } (MessagingPage). On gate donc par
+    // APPARTENANCE à la conversation (#15/#17 : avant, read+write ouverts à tout
+    // connecté → fuite/altération des images d'autrui). Lecture par get() sur l'id
+    // exact uniquement (le flux ne LISTE jamais la collection).
     match /conv_photos/{id} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isAgent() || (
+          resource.data.get('convId', '') != ''
+          && exists(/databases/$(database)/documents/conversations/$(resource.data.get('convId', '')))
+          && isMemberOf(get(/databases/$(database)/documents/conversations/$(resource.data.get('convId', ''))).data)
+        )
+      );
+      // Création : par un membre de la conversation, à son propre nom.
+      allow create: if isSignedIn()
+        && request.resource.data.get('senderId', '') == request.auth.uid
+        && exists(/databases/$(database)/documents/conversations/$(request.resource.data.convId))
+        && isMemberOf(get(/databases/$(database)/documents/conversations/$(request.resource.data.convId)).data);
+      // Photos write-once : pas de modification/suppression côté client (agent only).
+      allow update, delete: if isAgent();
     }
 
     // ── Réservations finalisées par le webhook Stripe ──────────────────────────
@@ -359,10 +389,22 @@ service cloud.firestore {
 
     // ── Codes d'accès aux événements privés ─────────────────────────────────────
     // Collection plate {code} → { eventId, usedBy }. L'organisateur crée les
-    // codes, le client connecté les valide (lookup O(1)) et marque usedBy.
-    // Lecture/écriture réservée aux connectés (un code est un secret d'accès).
+    // codes ; le client connecté les valide (lookup O(1) par code exact) et marque
+    // usedBy. #6 : AVANT `read` couvrait aussi le LIST → n'importe quel connecté
+    // énumérait TOUS les codes secrets. Désormais : get par code exact seulement
+    // (pas de list), création réservée au propriétaire de l'event, et un client ne
+    // peut que « consommer » un code non utilisé (usedBy null → son propre uid).
     match /event_access_codes/{code} {
-      allow read, write: if isSignedIn();
+      allow get:    if isSignedIn();
+      allow list:   if isAgent();
+      allow create: if isAgent() || isEventOwnerOf(request.resource.data.eventId);
+      allow update: if isAgent()
+        || isEventOwnerOf(resource.data.eventId)
+        || (isSignedIn()
+            && resource.data.get('usedBy', null) == null
+            && request.resource.data.get('usedBy', '') == request.auth.uid
+            && request.resource.data.get('eventId', resource.data.get('eventId', '')) == resource.data.get('eventId', ''));
+      allow delete: if isAgent() || isEventOwnerOf(resource.data.eventId);
     }
 
     // ── Signalements ──────────────────────────────────────────────────────────
@@ -383,17 +425,31 @@ service cloud.firestore {
     match /organizer_profiles/{uid} {
       allow read: if resource.data.status == 'public' || isOwner(uid) || isAgent();
       allow create: if isOwner(uid) || isAgent();
+      // #29 : AVANT, dès qu'UN compteur bougeait de +1 (ex. viewsCount), la
+      // condition OR était vraie et followersCount pouvait prendre N'IMPORTE
+      // QUELLE valeur. Désormais : EXACTEMENT un compteur bouge (de son delta
+      // autorisé) et les DEUX autres restent strictement inchangés.
       allow update: if isOwner(uid) || isAgent() || (
         isSignedIn() && resource.data.status == 'public' &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'followersCount', 'viewsCount', 'eventClicksCount', '_syncedAt'
         ]) &&
-        request.resource.data.followersCount >= 0 &&
+        request.resource.data.get('followersCount', 0) >= 0 &&
         (
-          request.resource.data.followersCount == resource.data.followersCount + 1 ||
-          request.resource.data.followersCount == resource.data.followersCount - 1 ||
-          request.resource.data.viewsCount == resource.data.viewsCount + 1 ||
-          request.resource.data.eventClicksCount == resource.data.eventClicksCount + 1
+          (
+            (request.resource.data.get('followersCount', 0) == resource.data.get('followersCount', 0) + 1
+             || request.resource.data.get('followersCount', 0) == resource.data.get('followersCount', 0) - 1)
+            && request.resource.data.get('viewsCount', 0) == resource.data.get('viewsCount', 0)
+            && request.resource.data.get('eventClicksCount', 0) == resource.data.get('eventClicksCount', 0)
+          ) || (
+            request.resource.data.get('viewsCount', 0) == resource.data.get('viewsCount', 0) + 1
+            && request.resource.data.get('followersCount', 0) == resource.data.get('followersCount', 0)
+            && request.resource.data.get('eventClicksCount', 0) == resource.data.get('eventClicksCount', 0)
+          ) || (
+            request.resource.data.get('eventClicksCount', 0) == resource.data.get('eventClicksCount', 0) + 1
+            && request.resource.data.get('followersCount', 0) == resource.data.get('followersCount', 0)
+            && request.resource.data.get('viewsCount', 0) == resource.data.get('viewsCount', 0)
+          )
         )
       );
       allow delete: if isOwner(uid) || isAgent();
@@ -444,9 +500,14 @@ service cloud.firestore {
     }
 
     // ── Demandes de suppression de compte ─────────────────────────────────────
+    // #18 : AVANT, `write` avec `resource == null` (création) n'exigeait PAS que
+    // le uid de la demande soit celui de l'appelant → on pouvait forger une
+    // demande de suppression AU NOM d'un autre. Désormais la création impose
+    // request.resource.data.uid == soi.
     match /deletion_requests/{id} {
-      allow read:  if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
-      allow write: if isAgent() || (isSignedIn() && (resource == null || resource.data.uid == request.auth.uid));
+      allow read:   if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isAgent() || (isSignedIn() && request.resource.data.get('uid', '') == request.auth.uid);
+      allow update, delete: if isAgent() || (isSignedIn() && resource.data.uid == request.auth.uid);
     }
 
     // Anomalies financières créées uniquement par les webhooks (Admin SDK).
@@ -460,9 +521,21 @@ service cloud.firestore {
     // Lecture PUBLIQUE : la vitrine /prestataires et les pages prestataires sont
     // accessibles sans compte (le doc ne contient que des infos publiées par le
     // prestataire lui-même : nom de page, description, numéro pro, photos).
+    // #5 : le gate abonnement (isProviderVisible) ne teste que subscriptionActive,
+    // et le badge « vérifié » est verified. AVANT, `write: if isOwner` ne validait
+    // aucun champ → un prestataire écrivait providers/{soi} { subscriptionActive:true,
+    // verified:true } via le SDK et apparaissait dans la vitrine SANS payer. Désormais
+    // le propriétaire ne peut jamais FAIRE PASSER ces flags à true : seuls les webhooks
+    // Stripe/FedaPay (Admin SDK, qui contournent ces règles) le peuvent.
     match /providers/{uid} {
-      allow read:  if true;
-      allow write: if isOwner(uid) || isAgent();
+      allow read:   if true;
+      allow create: if isAgent() || (isOwner(uid)
+        && request.resource.data.get('subscriptionActive', false) == false
+        && request.resource.data.get('verified', false) == false);
+      allow update: if isAgent() || (isOwner(uid)
+        && (request.resource.data.get('subscriptionActive', false) == false || resource.data.get('subscriptionActive', false) == true)
+        && (request.resource.data.get('verified', false) == false || resource.data.get('verified', false) == true));
+      allow delete: if isOwner(uid) || isAgent();
     }
 
     // ── Catalogues (lecture publique pour la vitrine) ─────────────────────────
