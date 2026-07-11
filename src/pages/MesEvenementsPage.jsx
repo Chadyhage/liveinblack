@@ -376,7 +376,15 @@ export default function MesEvenementsPage() {
   const onCropComplete = useCallback((_, cap) => setCroppedAreaPixels(cap), [])
 
   // Step 1: Places
-  const [places, setPlaces] = useState([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', included: [] }])
+  // id STABLE par type de place (#1) : le compteur de vendus est apparié sur cet id,
+  // JAMAIS sur le nom (éditable) — sinon renommer un type ré-ouvrait les places déjà
+  // vendues (survente). Généré à la création, préservé à l'édition.
+  const newPlaceId = () => 'p' + Math.random().toString(36).slice(2, 9)
+  const [places, setPlaces] = useState([{ id: newPlaceId(), type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', included: [] }])
+  // Ventes par place (source de vérité = doc event : total - available), renseigné à
+  // l'édition. Alimente les verrous post-vente — AVANT ils lisaient lib_bookings local
+  // (per-device, quasi toujours 0 → verrous inopérants, survente possible, #2).
+  const [soldByPlaceId, setSoldByPlaceId] = useState({})
 
   // Step 2: Venue
   const [venue, setVenue] = useState({ name: '', address: '', city: '', country: '' })
@@ -750,7 +758,9 @@ export default function MesEvenementsPage() {
     // `available` est un compteur vivant décrémenté côté serveur (webhook Stripe,
     // réservations gratuites) : on lit le doc SERVEUR (source de vérité) pour
     // préserver le nombre de billets déjà vendus par type de place.
-    let soldByType = {}
+    // #1 : compteur de vendus apparié sur l'id STABLE de la place, jamais sur le nom.
+    // Renommer un type ne perd donc plus son `available` (fini la survente).
+    let soldById = {}
     let editStoredCurrency = null // devise FIGÉE de l'event existant, à préserver
     if (editingEventId) {
       try {
@@ -758,9 +768,9 @@ export default function MesEvenementsPage() {
         const serverEv = await loadDoc(`events/${editingEventId}`)
         const source = serverEv || createdEvents.find(ev => ev.id === editingEventId)
         editStoredCurrency = source?.currency || null
-        for (const pl of (source?.places || [])) {
-          soldByType[pl.type] = Math.max(0, (Number(pl.total) || 0) - (Number(pl.available) || 0))
-        }
+        ;(source?.places || []).forEach((pl, idx) => {
+          soldById[pl.id || ('p' + idx)] = Math.max(0, (Number(pl.total) || 0) - (Number(pl.available) || 0))
+        })
       } catch {}
     }
 
@@ -810,10 +820,12 @@ export default function MesEvenementsPage() {
       organizer: user?.name || 'Organisateur',
       description: form.description,
       places: places.map((p, i) => ({
+        // id STABLE persisté (#1) : indispensable pour préserver les vendus au renommage.
+        id: p.id || ('p' + i),
         type: p.type || 'Entrée',
         price: Number(p.price) || 0,
-        // Édition : total - (déjà vendus) ; création : tout est disponible
-        available: Math.max(0, (Number(p.qty) || 50) - (soldByType[p.type || 'Entrée'] || 0)),
+        // Édition : total - (déjà vendus, apparié sur l'id) ; création : tout dispo
+        available: Math.max(0, (Number(p.qty) || 50) - (soldById[p.id || ('p' + i)] || 0)),
         total: Number(p.qty) || 50,
         icon: '',
         maxPerAccount: Number(p.maxPerAccount) || 0,
@@ -971,7 +983,8 @@ export default function MesEvenementsPage() {
     setMusicStyles([])
     setAmbiances([])
     setErrors({})
-    setPlaces([{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', included: [] }])
+    setPlaces([{ id: newPlaceId(), type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', included: [] }])
+    setSoldByPlaceId({})
     setVenue({ name: '', address: '', city: '', country: '' })
     setOptions({ playlist: false, preorder: false, qr: true })
     setMenuItems([{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
@@ -1029,7 +1042,15 @@ export default function MesEvenementsPage() {
       city: ev.city || '',
       country: ev.region !== ev.city ? ev.region || '' : '',
     })
-    setPlaces(ev.places?.map(p => ({ type: p.type, price: p.price, qty: p.total, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '', photos: Array.isArray(p.photos) ? p.photos : [], included: Array.isArray(p.included) ? p.included : [] })) || [{ type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', photos: [], included: [] }])
+    // id stable (#1) : réutilise l'id stocké, sinon en dérive un DÉTERMINISTE par
+    // position ('p'+index) pour les vieux events sans id — aligné avec soldByPlaceId
+    // et le recalcul de `available` à la publication.
+    setPlaces(ev.places?.map((p, idx) => ({ id: p.id || ('p' + idx), type: p.type, price: p.price, qty: p.total, maxPerAccount: p.maxPerAccount || 0, groupType: p.groupType || 'solo', groupMin: p.groupMin || '', groupMax: p.groupMax || '', photos: Array.isArray(p.photos) ? p.photos : [], included: Array.isArray(p.included) ? p.included : [] })) || [{ id: newPlaceId(), type: 'Entrée libre', price: 0, qty: 100, maxPerAccount: 0, groupType: 'solo', groupMin: '', groupMax: '', photos: [], included: [] }])
+    // Ventes par place depuis le doc event (total - available) : source de vérité pour
+    // les verrous post-vente (renommer/prix/supprimer/qty), cross-device (#2).
+    const soldMap = {}
+    ;(ev.places || []).forEach((p, idx) => { soldMap[p.id || ('p' + idx)] = Math.max(0, (Number(p.total) || 0) - (Number(p.available) || 0)) })
+    setSoldByPlaceId(soldMap)
     setOptions({ playlist: ev.playlist || false, preorder: ev.preorder || false, qr: true })
     setMenuItems(ev.menu?.length ? ev.menu : [{ name: '', emoji: '', imageUrl: null, price: '', category: 'Boissons', description: '', hasShow: false, showOptions: [], excludedPlaces: [] }])
     setPublishAt(ev.publishAt || '')
@@ -1056,18 +1077,15 @@ export default function MesEvenementsPage() {
     } catch { return 0 }
   }
 
-  // Combien de billets vendus pour une catégorie de place donnée d'un event
-  function getPlaceBookingCount(eventId, placeType) {
-    try {
-      const all = JSON.parse(localStorage.getItem('lib_bookings') || '[]')
-      return all.filter(b => b.eventId === String(eventId) && b.place === placeType).length
-    } catch { return 0 }
-  }
 
   // ── Politique de modification post-publication ──
   // Si l'event est en cours d'édition ET a au moins 1 réservation,
   // certains champs sont verrouillés (date, prix, lieu, etc.)
-  const editingBookingCount = editingEventId ? getEventBookingCount(editingEventId) : 0
+  // #2 : les verrous post-vente s'appuient sur la SOURCE DE VÉRITÉ serveur (ventes
+  // par place depuis le doc event), pas seulement sur lib_bookings local (per-device,
+  // quasi toujours 0 sur l'appareil de l'organisateur). On garde le max des deux.
+  const editSoldTotal = Object.values(soldByPlaceId).reduce((a, b) => a + (Number(b) || 0), 0)
+  const editingBookingCount = editingEventId ? Math.max(getEventBookingCount(editingEventId), editSoldTotal) : 0
   const isLocked = editingBookingCount > 0
   // Précommandes existantes → verrouiller le menu et le toggle précommande
   const hasPreorders = (() => {
@@ -2665,8 +2683,10 @@ export default function MesEvenementsPage() {
             })()}
 
             {places.map((place, i) => {
-              // Cette place a-t-elle déjà été vendue ? (uniquement si on édite un event existant)
-              const placeSoldCount = editingEventId && place.type ? getPlaceBookingCount(editingEventId, place.type) : 0
+              // Cette place a-t-elle déjà été vendue ? Source de vérité = doc event
+              // (total - available), apparié sur l'id STABLE, pas le nom (#1/#2). Ainsi
+              // le verrou tient même après un renommage et sur tout appareil.
+              const placeSoldCount = editingEventId ? (Number(soldByPlaceId[place.id]) || 0) : 0
               const placeHasSales = placeSoldCount > 0
               // Le type et le prix sont verrouillés si vente sur cette place
               const placeTypeLocked = placeHasSales || isReadOnly
@@ -2900,7 +2920,7 @@ export default function MesEvenementsPage() {
             <button
               onClick={() => {
                 if (isReadOnly) return
-                setPlaces(p => [...p, { type: '', price: 0, qty: 50, included: [] }])
+                setPlaces(p => [...p, { id: newPlaceId(), type: '', price: 0, qty: 50, included: [] }])
               }}
               disabled={isReadOnly}
               style={{ ...S.btnGhost, opacity: isReadOnly ? 0.4 : 1, cursor: isReadOnly ? 'not-allowed' : 'pointer' }}
