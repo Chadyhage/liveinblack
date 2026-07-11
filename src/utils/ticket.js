@@ -50,6 +50,12 @@ export function generateTicketToken(booking) {
     // réattribution (screenshot d'un invité révoqué) devient périmé. Absent pour
     // un billet normal → tokens EUR existants inchangés (rétrocompat).
     ...(Number(booking.seatVersion) > 0 ? { sv: Number(booking.seatVersion) } : {}),
+    // nz = nonce d'entrée (#79). Secret serveur ALÉATOIRE tourné à chaque
+    // (ré)attribution, présent uniquement dans la copie du titulaire COURANT. Le
+    // scan (api/tickets checkin) l'exige pour un siège réattribué → un vieux QR
+    // (screenshot d'un invité révoqué) ne l'a pas / l'a périmé et est refusé côté
+    // serveur. Absent d'un billet normal → tokens existants inchangés.
+    ...(booking.entryNonce ? { nz: String(booking.entryNonce) } : {}),
   }
   const sig = computeHash(JSON.stringify(payload) + SECRET)
   try {

@@ -19,6 +19,7 @@
 // billet (anti-marché noir) ; un billet déjà scanné (checkedInAt) est intouchable ;
 // la cible doit être un vrai compte ; tout passe par l'Admin SDK.
 
+import { randomBytes } from 'node:crypto'
 import { getDb, FieldValue } from '../lib/firebaseAdmin.js'
 import { requireAuth } from '../lib/verifyAuth.js'
 import { findGroupTieForEvent } from '../lib/groupTicketGuard.js'
@@ -175,6 +176,14 @@ export default async function handler(req, res) {
       // opération (screenshot d'un invité révoqué) devient périmé au scan.
       const newSeatVersion = (Number(fresh.seatVersion) || 0) + 1
 
+      // #79 : nonce d'entrée tourné à CHAQUE (ré)attribution. Secret ALÉATOIRE
+      // serveur (jamais dans le bundle public → contrairement à seatVersion, un
+      // vieux QR ne peut PAS le deviner ni le forger). Écrit au registre + dans la
+      // copie du SEUL titulaire courant (l'entrant = target). Le scan (checkin)
+      // l'exige pour un siège réattribué → le screenshot d'un invité révoqué (nonce
+      // périmé/absent) est refusé côté SERVEUR, pas seulement à l'affichage.
+      const entryNonce = randomBytes(12).toString('hex')
+
       // Carnets distincts réellement concernés (basés sur le titulaire frais).
       const uids = [...new Set([host, target, curHolder])]
       const refByUid = {}
@@ -196,6 +205,12 @@ export default async function handler(req, res) {
       // 1) Carnet HÔTE : garde le siège, met à jour le pointeur d'attribution.
       const hostSeatUpdated = { ...base, userId: host, assignedTo: action === 'assign' ? target : null, assignedName: targetName, assignedAt, seatVersion: newSeatVersion }
       delete hostSeatUpdated.token
+      // Le nonce ne vit QUE dans la copie de l'entrant. À l'attribution, l'hôte
+      // n'est PAS l'entrant (le siège part à l'invité) → sa copie de gestion ne
+      // porte aucun nonce (sinon l'hôte pourrait aussi entrer = double-copie #73).
+      // À la révocation, l'hôte REDEVIENT l'entrant (target===host) → il le reçoit.
+      delete hostSeatUpdated.entryNonce
+      if (target === host) hostSeatUpdated.entryNonce = entryNonce
       itemsByUid[host] = [...itemsByUid[host].filter(it => it.ticketCode !== ticketCode), hostSeatUpdated]
 
       // 2) Titulaire courant réel (si c'était un invité) : on lui retire sa copie.
@@ -205,7 +220,7 @@ export default async function handler(req, res) {
 
       // 3) Nouveau titulaire invité : on lui dépose sa copie personnelle.
       if (target !== host) {
-        const guestCopy = { ...base, userId: target, assignedByHost: true, seatVersion: newSeatVersion }
+        const guestCopy = { ...base, userId: target, assignedByHost: true, seatVersion: newSeatVersion, entryNonce }
         delete guestCopy.token; delete guestCopy.assignedTo; delete guestCopy.assignedName
         itemsByUid[target] = [...itemsByUid[target].filter(it => it.ticketCode !== ticketCode), guestCopy]
       }
@@ -227,6 +242,7 @@ export default async function handler(req, res) {
         assignedName: action === 'assign' ? targetName : null,
         assignedAt,
         seatVersion: newSeatVersion,
+        entryNonce,
       }, { merge: true })
     })
     } catch (txErr) {
@@ -603,6 +619,21 @@ async function checkinTicket(req, res, caller) {
     const entitlement = await ticketEntryEntitlement(db, ticket, ticketCode)
     if (!entitlement.ok) {
       return res.status(403).json({ error: entitlement.msg || 'Billet non valide — entrée refusée.', notEntitled: true })
+    }
+
+    // #79 : siège de table RÉATTRIBUÉ → exiger le nonce d'entrée courant. Le registre
+    // ne porte un entryNonce QUE si le siège a été (ré)attribué APRÈS le déploiement de
+    // cette garde → un billet normal ou un siège jamais réattribué (pas de nonce) passe
+    // ce contrôle sans condition : aucun blocage des billets existants. Le titulaire
+    // courant a le nonce dans sa copie → dans son QR (clé `nz`) ; un vieux QR (screenshot
+    // d'un invité révoqué) porte un nonce absent ou périmé → refus. Contrairement à
+    // `sv` (signé avec un secret du bundle donc forgeable), le nonce est aléatoire et
+    // n'existe que côté serveur + copie du titulaire courant → INFALSIFIABLE.
+    if (ticket.tableId && ticket.entryNonce) {
+      const presented = String(req.body?.entryNonce || '')
+      if (!presented || presented !== String(ticket.entryNonce)) {
+        return res.status(403).json({ error: 'Siège de table réattribué — ce QR n\'est plus à jour. Le titulaire actuel doit présenter le sien (rouvrir « Mes billets » pour rafraîchir).', notEntitled: true })
+      }
     }
 
     let first = false

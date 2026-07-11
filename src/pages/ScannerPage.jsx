@@ -332,7 +332,7 @@ function ScannerInner({ myAssignments = [] }) {
     return () => unsub()
   }, [showHistory, activeCode, roleByEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function markUsed(code) {
+  function markUsed(code, entryNonce) {
     // Re-read localStorage to catch validations from other scanners/devices
     let persisted = new Set()
     try { persisted = new Set(JSON.parse(localStorage.getItem('lib_used_tickets') || '[]')) } catch {}
@@ -354,7 +354,10 @@ function ScannerInner({ myAssignments = [] }) {
         const r = await fetch('/api/tickets', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-          body: JSON.stringify({ action: 'checkin', ticketCode: code }),
+          // #79 : on transmet le nonce d'entrée lu dans le QR (clé `nz`). Le serveur
+          // l'exige pour un siège de table réattribué → un vieux QR (sans nonce ou
+          // périmé) est refusé côté SERVEUR, pas seulement à l'affichage.
+          body: JSON.stringify({ action: 'checkin', ticketCode: code, entryNonce: entryNonce || undefined }),
         })
         if (r.status === 403) {
           // Le SERVEUR refuse l'entrée (billet non payé / invitation non
@@ -532,6 +535,8 @@ function ScannerInner({ myAssignments = [] }) {
         code: tc,
         status: (isUsed || regUsed) ? 'used' : 'valid',
         ticket: { holder: data.gn || 'Participant', type: data.pl, event: data.en, date: data.ed, price: fmtMoney(data.tp, data.cur) },
+        // #79 : nonce d'entrée lu dans le QR, transmis au serveur au check-in.
+        nonce: data.nz || null,
         cur: data.cur || null,
         preorders: regPo ?? (data.po || []),
         preordersCertified: regPo != null,
@@ -642,7 +647,7 @@ function ScannerInner({ myAssignments = [] }) {
 
   function validateEntry() {
     if (result?.status === 'valid') {
-      markUsed(result.code)
+      markUsed(result.code, result.nonce)
       setResult(r => ({ ...r, status: 'just_validated' }))
     }
   }

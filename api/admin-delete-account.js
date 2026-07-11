@@ -5,6 +5,7 @@
 // (auth/email-already-in-use à la ré-inscription).
 //
 // POST { uid } — réservé super-admin (env) ou compte agent (rôle Firestore).
+import { randomBytes } from 'node:crypto'
 import { getAuth } from 'firebase-admin/auth'
 import { requireAuth } from '../lib/verifyAuth.js'
 import { getDb } from '../lib/firebaseAdmin.js'
@@ -218,17 +219,54 @@ export default async function handler(req, res) {
     }
     // (b) Compte supprimé = TITULAIRE d'un siège d'invité (tableId + hôte différent
     // et toujours présent) → on REND le siège à l'hôte pour qu'il puisse le
-    // réattribuer ; bump seatVersion pour périmer un éventuel QR de l'invité.
+    // réattribuer. On ROTATE le nonce d'entrée #79 (entryNonce) : c'est un second
+    // chemin de réattribution, comme assign/revoke. Sans ça, l'ancien nonce N1
+    // (écrit à l'attribution, conservé par le merge) laisserait l'invité SUPPRIMÉ
+    // forger un QR et entrer (fraude), ET verrouillerait l'HÔTE dont la copie n'a
+    // pas de nonce (son QR serait refusé au scan). seatVersion seul ne suffit pas :
+    // il est signé avec un secret du bundle public → falsifiable. On propage donc
+    // le nouveau nonce + seatVersion dans le carnet de l'hôte (plus bas).
+    const hostSeatPatches = {} // hostUid -> [{ ticketCode, seatVersion, entryNonce }]
     for (const d of asHolder.docs) {
       const t = d.data()
       if (t.tableId && t.hostUid && String(t.hostUid) !== uid && t.cancelled !== true) {
-        writes.push({ ref: d.ref, data: { userId: t.hostUid, assignedTo: null, assignedName: null, seatVersion: (Number(t.seatVersion) || 0) + 1 } })
+        const newSeatVersion = (Number(t.seatVersion) || 0) + 1
+        const entryNonce = randomBytes(12).toString('hex')
+        writes.push({ ref: d.ref, data: { userId: t.hostUid, assignedTo: null, assignedName: null, seatVersion: newSeatVersion, entryNonce } })
+        const key = String(t.hostUid)
+        ;(hostSeatPatches[key] = hostSeatPatches[key] || []).push({ ticketCode: d.id, seatVersion: newSeatVersion, entryNonce })
       }
     }
     for (let i = 0; i < writes.length; i += 450) {
       const batch = db.batch()
       writes.slice(i, i + 450).forEach(w => batch.set(w.ref, w.data, { merge: true }))
       await batch.commit()
+    }
+    // Propager le nouveau nonce + seatVersion dans le carnet user_bookings/{hôte}
+    // (sa copie de gestion du siège) pour que SON QR régénéré porte le nonce à jour
+    // → sinon son entrée serait refusée. Transaction par hôte (lecture-modif-écriture
+    // de l'array items). L'hôte survit (hostUid !== uid supprimé) → jamais de
+    // résurrection du compte purgé.
+    for (const key of Object.keys(hostSeatPatches)) {
+      const patches = hostSeatPatches[key]
+      try {
+        const bRef = db.collection('user_bookings').doc(key)
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(bRef)
+          if (!snap.exists) return
+          const items = Array.isArray(snap.data().items) ? snap.data().items : []
+          let changed = false
+          const next = items.map(it => {
+            const p = patches.find(x => String(x.ticketCode) === String(it.ticketCode))
+            if (!p) return it
+            changed = true
+            const merged = { ...it, userId: key, assignedTo: null, assignedName: null, seatVersion: p.seatVersion, entryNonce: p.entryNonce }
+            delete merged.token
+            return merged
+          })
+          if (changed) tx.set(bRef, { items: next, updatedAt: Date.now() }, { merge: true })
+        })
+      } catch (e) { console.warn('[admin-delete-account] maj carnet hôte (nonce #79) échouée:', e.message) }
     }
   } catch (e) { console.error('[admin-delete-account] réconciliation registre tickets échouée:', e.message) }
 
