@@ -248,12 +248,26 @@ export async function submitApplication(id, formData, candidateNote = '') {
   all[idx] = app
   _saveAll(all)
 
-  // Mettre le compte en 'pending' dans localStorage + Firestore
-  // NB: on n'écrit plus dans pending_validations — le suivi passe uniquement par applications
+  // Mettre le compte en 'pending' — MAIS pas s'il a déjà un rôle pro ACTIF (audit
+  // #7 : demander un 2e rôle mettait TOUT le compte en pending → l'organisateur/
+  // prestataire déjà actif se retrouvait verrouillé hors de son interface). Le
+  // suivi de la 2e candidature passe par `applications`, pas par le status global.
+  let downgradeToPending = true
   try {
-    const { updateAccount } = await import('./accounts')
-    updateAccount(app.uid, { status: 'pending' })
+    const { getAccountById } = await import('./accounts')
+    const acct = getAccountById(app.uid)
+    const roles = Array.isArray(acct?.enabledRoles) ? acct.enabledRoles : []
+    if (acct?.status === 'active' && (roles.includes('organisateur') || roles.includes('prestataire'))) {
+      downgradeToPending = false
+    }
   } catch {}
+
+  if (downgradeToPending) {
+    try {
+      const { updateAccount } = await import('./accounts')
+      updateAccount(app.uid, { status: 'pending' })
+    } catch {}
+  }
 
   // Sync Firestore
   try {
@@ -261,7 +275,7 @@ export async function submitApplication(id, formData, candidateNote = '') {
     if (USE_REAL_FIREBASE) {
       const { doc, setDoc } = await import('firebase/firestore')
       await setDoc(doc(db, 'applications', id), app)
-      await setDoc(doc(db, 'users', app.uid), { status: 'pending' }, { merge: true })
+      if (downgradeToPending) await setDoc(doc(db, 'users', app.uid), { status: 'pending' }, { merge: true })
     }
   } catch {}
 
