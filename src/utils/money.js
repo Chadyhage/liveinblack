@@ -8,20 +8,23 @@
 //   - La devise d'un événement vient de event.currency, sinon de sa région
 //     (Togo/Bénin → XOF) — miroir de lib/fees.js côté serveur.
 
-// Zone XOF/FedaPay (UEMOA). Accepte l'id de région, le code pays ou le nom.
-// Toute région FedaPay ajoutée dans src/data/regions.js est automatiquement XOF.
-const XOF_REGION_KEYS = new Set([
-  'togo', 'tg', 'benin', 'bénin', 'bj',
-  'cote-ivoire', 'côte d’ivoire', 'cote d’ivoire', "cote d'ivoire", 'ci',
-  'senegal', 'sénégal', 'sn',
-  'burkina-faso', 'burkina faso', 'bf',
-  'mali', 'ml',
-  'niger', 'ne',
-  'guinee-bissau', 'guinée-bissau', 'guinee bissau', 'gw',
-])
+// Zone XOF/FedaPay (UEMOA). Accepte l'id de région, le code pays, le nom ou le
+// pays — insensible aux accents/espaces. DÉRIVÉE de src/data/regions.js (champ
+// currency) : une seule source, plus de liste re-codée qui dérive. Ajouter une
+// région FedaPay dans regions.js la rend automatiquement XOF ici.
+import { regions } from '../data/regions.js'
+
+function normKey(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[’']/g, '').replace(/[\s_]+/g, '-').trim().toLowerCase()
+}
+const XOF_REGION_KEYS = new Set(
+  regions.filter(r => r.currency === 'XOF')
+    .flatMap(r => [r.id, r.code, r.name, r.country])
+    .map(normKey)
+)
 export function regionToCurrency(region) {
-  const r = String(region || '').trim().toLowerCase()
-  return XOF_REGION_KEYS.has(r) ? 'XOF' : 'EUR'
+  return XOF_REGION_KEYS.has(normKey(region)) ? 'XOF' : 'EUR'
 }
 
 // Devise d'un événement (ou d'un billet/booking portant currency).

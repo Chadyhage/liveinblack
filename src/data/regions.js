@@ -8,21 +8,26 @@
 // `dial` = indicatif international ; `momoCountry` = code pays FedaPay pour les
 // numéros mobile money (payouts). Les anciens dossiers tagués sur d'autres
 // régions restent affichés (le champ region est une simple chaîne).
+// `currency` est la SOURCE UNIQUE du rail de paiement : 'EUR' → Stripe,
+// 'XOF' → FedaPay/mobile money. money.js (regionToCurrency) et
+// lib/providerBillingRegion.js (facturation) dérivent tous les deux de ce champ
+// — ne PAS re-coder d'ensembles « XOF » ailleurs. Ajouter un pays = renseigner
+// sa `currency` ici, et devise/frais/versement suivent automatiquement.
 export const regions = [
-  { id: 'france',        name: 'France',        country: 'France',        flag: '🇫🇷', code: 'FR', dial: '+33',  momoCountry: null, lat: 46.2, lon: 2.2 },
-  { id: 'togo',          name: 'Togo',          country: 'Togo',          flag: '🇹🇬', code: 'TG', dial: '+228', momoCountry: 'tg', lat: 6.1,  lon: 1.2 },
-  { id: 'benin',         name: 'Bénin',         country: 'Bénin',         flag: '🇧🇯', code: 'BJ', dial: '+229', momoCountry: 'bj', lat: 6.4,  lon: 2.4 },
-  { id: 'cote-ivoire',   name: 'Côte d’Ivoire', country: 'Côte d’Ivoire', flag: '🇨🇮', code: 'CI', dial: '+225', momoCountry: 'ci', lat: 7.5,  lon: -5.5 },
-  { id: 'senegal',       name: 'Sénégal',       country: 'Sénégal',       flag: '🇸🇳', code: 'SN', dial: '+221', momoCountry: 'sn', lat: 14.5, lon: -14.5 },
-  { id: 'burkina-faso',  name: 'Burkina Faso',  country: 'Burkina Faso',  flag: '🇧🇫', code: 'BF', dial: '+226', momoCountry: 'bf', lat: 12.2, lon: -1.6 },
-  { id: 'mali',          name: 'Mali',          country: 'Mali',          flag: '🇲🇱', code: 'ML', dial: '+223', momoCountry: 'ml', lat: 17.6, lon: -4.0 },
-  { id: 'niger',         name: 'Niger',         country: 'Niger',         flag: '🇳🇪', code: 'NE', dial: '+227', momoCountry: 'ne', lat: 17.6, lon: 8.1 },
-  { id: 'guinee-bissau', name: 'Guinée-Bissau', country: 'Guinée-Bissau', flag: '🇬🇼', code: 'GW', dial: '+245', momoCountry: 'gw', lat: 11.8, lon: -15.2 },
+  { id: 'france',        name: 'France',        country: 'France',        flag: '🇫🇷', code: 'FR', dial: '+33',  momoCountry: null, currency: 'EUR', lat: 46.2, lon: 2.2 },
+  { id: 'togo',          name: 'Togo',          country: 'Togo',          flag: '🇹🇬', code: 'TG', dial: '+228', momoCountry: 'tg', currency: 'XOF', lat: 6.1,  lon: 1.2 },
+  { id: 'benin',         name: 'Bénin',         country: 'Bénin',         flag: '🇧🇯', code: 'BJ', dial: '+229', momoCountry: 'bj', currency: 'XOF', lat: 6.4,  lon: 2.4 },
+  { id: 'cote-ivoire',   name: 'Côte d’Ivoire', country: 'Côte d’Ivoire', flag: '🇨🇮', code: 'CI', dial: '+225', momoCountry: 'ci', currency: 'XOF', lat: 7.5,  lon: -5.5 },
+  { id: 'senegal',       name: 'Sénégal',       country: 'Sénégal',       flag: '🇸🇳', code: 'SN', dial: '+221', momoCountry: 'sn', currency: 'XOF', lat: 14.5, lon: -14.5 },
+  { id: 'burkina-faso',  name: 'Burkina Faso',  country: 'Burkina Faso',  flag: '🇧🇫', code: 'BF', dial: '+226', momoCountry: 'bf', currency: 'XOF', lat: 12.2, lon: -1.6 },
+  { id: 'mali',          name: 'Mali',          country: 'Mali',          flag: '🇲🇱', code: 'ML', dial: '+223', momoCountry: 'ml', currency: 'XOF', lat: 17.6, lon: -4.0 },
+  { id: 'niger',         name: 'Niger',         country: 'Niger',         flag: '🇳🇪', code: 'NE', dial: '+227', momoCountry: 'ne', currency: 'XOF', lat: 17.6, lon: 8.1 },
+  { id: 'guinee-bissau', name: 'Guinée-Bissau', country: 'Guinée-Bissau', flag: '🇬🇼', code: 'GW', dial: '+245', momoCountry: 'gw', currency: 'XOF', lat: 11.8, lon: -15.2 },
 ]
 
-// Zone FedaPay / XOF = toutes les régions sauf la France. Source unique pour
-// coordonner devise, paiement mobile money et payout.
-export const XOF_REGION_IDS = regions.filter(r => r.id !== 'france').map(r => r.id)
+// Zone FedaPay / XOF, DÉRIVÉE du champ currency (plus « tout sauf France » :
+// un futur pays EUR hors France serait sinon mal classé). Source unique.
+export const XOF_REGION_IDS = regions.filter(r => r.currency === 'XOF').map(r => r.id)
 
 export function getRegionByName(name) {
   return regions.find((r) => r.name === name) || regions[0]
