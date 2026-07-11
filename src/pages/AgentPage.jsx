@@ -441,8 +441,14 @@ export default function AgentPage() {
     return acc?.isOnline === true && !!acc?.lastSeen && (Date.now() - acc.lastSeen) < 5 * 60 * 1000
   }
 
+  // Pierre tombale RGPD : compte anonymisé après suppression (role/status
+  // 'deleted' + deletedAt). Ce n'est plus un utilisateur → exclu des KPI ET de la
+  // liste des comptes (avant, il gonflait « Comptes total » et s'affichait avec un
+  // badge « DELETED » brut). accountDeletion.js pose ces trois champs.
+  const isTombstone = (a) => a?.role === 'deleted' || a?.status === 'deleted' || !!a?.deletedAt
+  const livingAccounts = accounts.filter(a => !isTombstone(a))
   // Exclure les comptes avec email non vérifié des stats principales
-  const verifiedAccounts  = accounts.filter(a => a.emailVerified !== false)
+  const verifiedAccounts  = livingAccounts.filter(a => a.emailVerified !== false)
   const totalUsers        = verifiedAccounts.length
   const totalActive       = verifiedAccounts.filter(a => a.status === 'active').length
   const totalPrestataires = verifiedAccounts.filter(a => a.role === 'prestataire').length
@@ -547,6 +553,10 @@ export default function AgentPage() {
   const maxDayCount = Math.max(...last30Days.map(d => d.count), 1)
 
   const filtered = accounts.filter(a => {
+    // Pierres tombales RGPD (comptes anonymisés) masquées par défaut — l'historique
+    // des suppressions est dans l'onglet dédié. Visibles seulement si on filtre
+    // explicitement le statut « deleted » (audit), jamais mêlées aux vrais comptes.
+    if (isTombstone(a) && statusFilter !== 'deleted') return false
     const matchSearch = !search ||
       a.name?.toLowerCase().includes(search.toLowerCase()) ||
       a.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -3262,6 +3272,7 @@ export default function AgentPage() {
               {confirmAction.type === 'appSuspend'  && `Suspendre le dossier de ${confirmAction.name} ?`}
               {confirmAction.type === 'markPaid'    && `Confirmer le reversement de ${confirmAction.label || '—'} à ${confirmAction.name} ? (à faire APRÈS avoir envoyé l'argent)`}
               {confirmAction.type === 'markPayoutPaid' && `Confirmer le versement de ${confirmAction.label || '—'} à ${confirmAction.name} ? (à faire APRÈS avoir envoyé l'argent sur son Mobile Money)`}
+              {confirmAction.type === 'approveDeletion' && `Approuver la suppression de ${confirmAction.name} ? Le compte sera anonymisé et son accès supprimé — action IRRÉVERSIBLE.`}
               {confirmAction.type === 'deleteUnverified' && `Supprimer définitivement le compte non vérifié de ${confirmAction.name} ?`}
               {confirmAction.type === 'cleanupExpired' && `Supprimer les ${confirmAction.count} compte(s) non vérifié(s) depuis plus de 7 jours ? (chaque compte sera re-vérifié auprès de Firebase Auth avant suppression)`}
               {confirmAction.type === 'cleanupDuplicates' && `Nettoyer les fiches fantômes des ${confirmAction.count} groupe(s) de doublons ? (seules les entrées SANS compte de connexion Firebase seront supprimées)`}
@@ -3287,6 +3298,24 @@ export default function AgentPage() {
                   if (confirmAction.type === 'appSuspend')  handleAppAction(confirmAction.appId, 'suspended', appNote)
                   if (confirmAction.type === 'markPaid')    { handleMarkPaid(confirmAction.uid, confirmAction.amount, confirmAction.requestId, confirmAction.currency); setConfirmAction(null) }
                   if (confirmAction.type === 'markPayoutPaid') { handleMarkPayoutPaid(confirmAction.ep); setConfirmAction(null) }
+                  if (confirmAction.type === 'approveDeletion') {
+                    const { reqId, note } = confirmAction
+                    ;(async () => {
+                      // try/catch OBLIGATOIRE : resolveDeletionRequest peut jeter (409
+                      // billets vendus / recette non versée, 500 Auth, réseau) — sinon
+                      // l'action la plus destructrice échouait en silence (audit #2).
+                      try {
+                        await resolveDeletionRequest(reqId, 'approved', user.uid, user.name || 'Admin', note)
+                        setDeletionRequests(getAllDeletionRequests())
+                        setDelResNotes(n => ({ ...n, [reqId]: '' }))
+                        showToast('Suppression approuvée — compte anonymisé.')
+                      } catch (e) {
+                        showToast(e?.message || "Suppression impossible (ex : l'organisateur a des billets vendus ou de la recette non versée). Réessaie.", 'error')
+                        setDeletionRequests(getAllDeletionRequests())
+                      }
+                    })()
+                    setConfirmAction(null)
+                  }
                   if (confirmAction.type === 'deleteUnverified') { handleDeleteUnverified(confirmAction.uid); setConfirmAction(null) }
                   if (confirmAction.type === 'cleanupExpired') { handleCleanupExpired(); setConfirmAction(null) }
                   if (confirmAction.type === 'cleanupDuplicates') { handleCleanupDuplicates(); setConfirmAction(null) }
@@ -3666,21 +3695,10 @@ export default function AgentPage() {
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
-                      onClick={async () => {
-                        // try/catch OBLIGATOIRE : resolveDeletionRequest peut jeter
-                        // (409 « l'organisateur a des billets vendus / recette non
-                        // versée », 500 Auth, réseau). Sans ça, l'action la plus
-                        // destructrice du panneau échouait en SILENCE (audit admin #2).
-                        try {
-                          await resolveDeletionRequest(req.id, 'approved', user.uid, user.name || 'Admin', delResNotes[req.id] || '')
-                          setDeletionRequests(getAllDeletionRequests())
-                          setDelResNotes(n => ({ ...n, [req.id]: '' }))
-                          showToast('Suppression approuvée — compte anonymisé.')
-                        } catch (e) {
-                          showToast(e?.message || "Suppression impossible (ex : l'organisateur a des billets vendus ou de la recette non versée). Réessaie.", 'error')
-                          setDeletionRequests(getAllDeletionRequests())
-                        }
-                      }}
+                      // Confirmation OBLIGATOIRE (audit admin #4) : c'est l'action la
+                      // plus destructrice du panneau (anonymisation + suppression Auth,
+                      // irréversible). Elle passait direct au clic. → modal de confirm.
+                      onClick={() => setConfirmAction({ type: 'approveDeletion', reqId: req.id, name: req.userName || req.userEmail || 'ce compte', note: delResNotes[req.id] || '' })}
                       style={{
                         flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer',
                         background: '#c2347f', border: '1px solid rgba(255,255,255,0.14)',
