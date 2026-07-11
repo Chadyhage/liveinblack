@@ -33,6 +33,24 @@ export function isEventOngoingOrStartingWithin(event, nowTs = Date.now(), window
   return start - nowTs <= windowHours * 3600000
 }
 
+// « Ce soir » = SOURCE UNIQUE, alignée sur le badge countdown : un événement est
+// « ce soir » quand sa fiche afficherait « EN COURS », « DANS X MIN », « DANS XH »
+// ou « CE SOIR » — c.-à-d. en cours, OU le MÊME jour calendaire, OU imminent
+// (< 8h). Corrige l'incohérence : une soirée du soir même consultée tôt le matin
+// (> 18h avant le début) portait « CE SOIR » sur sa fiche mais restait hors du
+// carrousel « Réservez pour ce soir » (fenêtre glissante de 18h trop courte).
+// Les événements « DEMAIN » / « J-X » restent exclus.
+export function isEventTonight(event, nowTs = Date.now()) {
+  const start = getEventStartTimestamp(event)
+  const end = getEventEndTimestamp(event)
+  if (!start || !end || event?.cancelled) return false
+  if (start <= nowTs) return end >= nowTs // en cours (traverse minuit inclus)
+  const startDay = new Date(start); startDay.setHours(0, 0, 0, 0)
+  const today = new Date(nowTs); today.setHours(0, 0, 0, 0)
+  if (startDay.getTime() === today.getTime()) return true // même jour → « CE SOIR »
+  return start - nowTs <= 8 * 3600000 // imminent → « DANS XH » (ex. après-minuit proche)
+}
+
 // Libellé court avant la soirée : CE SOIR / DEMAIN / J-3 / DANS 4H… ou null.
 export function getEventCountdown(event, nowTs = Date.now()) {
   if (event?.cancelled) return null

@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { regions } from '../data/regions'
 import { getActiveBoostsByRegion } from '../utils/ticket'
 import { buildRegionalTopThree } from '../../lib/boosts.js'
-import { getEventCountdown, getEventEndTimestamp, isCountdownUrgent, getStockBadge, isEventOngoingOrStartingWithin } from '../utils/eventUrgency'
+import { getEventCountdown, getEventEndTimestamp, isCountdownUrgent, getStockBadge, isEventTonight } from '../utils/eventUrgency'
 import { matchesEntityRegion } from '../utils/locations'
 import { fmtMoney, eventCurrency } from '../utils/money'
 import { getEnabledRoles } from '../utils/accounts'
@@ -640,15 +640,16 @@ export default function HomePage() {
 
   // « Réservez pour ce soir » : soirées du JOUR MÊME, dans la région, où il
   // reste des places. Discovery dernière minute pour les sorties spontanées.
-  // « Ce soir » = soirée à venir dans les ~18 prochaines heures (inclut les
-  // events qui croisent minuit), encore en cours, avec des places. Plus robuste
-  // qu'un « aujourd'hui pile » qui disparaissait au passage de minuit.
+  // « Ce soir » = MÊME définition que le badge de la fiche (isEventTonight) :
+  // en cours, OU le même jour calendaire, OU imminent. Avant, la fenêtre de 18h
+  // excluait un event du soir même consulté tôt le matin (ex. 01h38 pour un
+  // event à 20h = 18,4h) alors que sa fiche affichait « CE SOIR » → incohérence.
   const tonightEvents = (() => {
     const now = Date.now()
     return regionEvents
       .filter(e => isClientDiscoverableEvent(e) && isEventVisible(e) && !isEventClosed(e) && !isEventPast(e))
       .filter(e => remainingPlaces(e) > 0)
-      .filter(e => isEventOngoingOrStartingWithin(e, now, 18))
+      .filter(e => isEventTonight(e, now))
       .sort((a, b) => new Date(`${a.date}T${a.time || '20:00'}`) - new Date(`${b.date}T${b.time || '20:00'}`))
   })()
 
