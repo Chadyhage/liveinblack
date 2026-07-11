@@ -12,6 +12,10 @@ function makeDb(seed) {
       set(data, _opts) { store.set(path, { ...(store.get(path) || {}), ...data }) } }
   }
   return { _store: store,
+    async runTransaction(fn) {
+      const tx = { async get(ref) { return ref.get() }, set(ref, data, opts) { ref.set(data, opts) } }
+      return fn(tx)
+    },
     collection: (name) => ({
       doc: (id) => docRef(`${name}/${id}`),
       where(field, _op, val) {

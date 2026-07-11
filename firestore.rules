@@ -542,6 +542,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── Verrous d'exécution des crons (#72) ───────────────────────────────────
+    // cron_locks/{jobId} — pris/relâchés par le cron (Admin SDK) pour garantir une
+    // seule passe à la fois. Aucun accès client (déjà refusé par défaut, explicité).
+    match /cron_locks/{jobId} {
+      allow read, write: if false;
+    }
+
     // ── Remboursements d'événements annulés (#71) ─────────────────────────────
     // event_refunds/{eventId__paymentRef} — créés par le serveur (cancel_event +
     // webhooks, Admin SDK). Stripe = 'refunded' (auto) ; FedaPay = 'pending_manual'
