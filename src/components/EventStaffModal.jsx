@@ -94,19 +94,11 @@ export default function EventStaffModal({ event, user, onClose }) {
     let cancelled = false
     setSearching(true)
     const t = setTimeout(async () => {
-      let hits = []
-      // Email exact → lookup Firestore (marche même si l'user n'est pas en cache local)
-      if (q.includes('@')) {
-        try {
-          const [{ db }, { collection, query: fsQuery, where, getDocs }] = await Promise.all([
-            import('../firebase'), import('firebase/firestore'),
-          ])
-          const snap = await getDocs(fsQuery(collection(db, 'users'), where('email', '==', q.toLowerCase())))
-          hits = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        } catch { /* hors-ligne → on retombe sur le local */ }
-      }
+      // #8 : l'e-mail n'est plus lisible côté client (déplacé dans un doc privé) → on
+      // ne fait plus de lookup e-mail exact. La recherche staff se fait par NOM ou
+      // PSEUDO (searchUsers, plus bas), qui couvre les contacts/amis de l'organisateur.
       if (cancelled) return
-      setRemoteResults(hits)
+      setRemoteResults([])
       setSearching(false)
     }, 350)
     return () => { cancelled = true; clearTimeout(t) }
@@ -255,7 +247,7 @@ export default function EventStaffModal({ event, user, onClose }) {
                 <input
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder="Nom, pseudo ou email…"
+                  placeholder="Nom ou pseudo…"
                   style={{
                     width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 10,
                     background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)',
@@ -271,7 +263,7 @@ export default function EventStaffModal({ event, user, onClose }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {results.length === 0 ? (
                     <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0', lineHeight: 1.5 }}>
-                      {searching ? 'Recherche…' : <>Aucun membre trouvé. Essaie son <strong>email exact</strong> — il doit avoir un compte LIVEINBLACK.</>}
+                      {searching ? 'Recherche…' : <>Aucun membre trouvé. Cherche par <strong>nom ou pseudo</strong> — la personne doit avoir un compte LIVEINBLACK.</>}
                     </p>
                   ) : results.map(u => (
                     <div key={u.id || u.uid} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 11px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
