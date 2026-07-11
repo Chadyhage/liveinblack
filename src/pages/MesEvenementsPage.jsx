@@ -11,7 +11,7 @@ import { IconHourglass, IconAlert } from '../components/icons'
 import getCroppedImg from '../utils/cropImage'
 import { canCreateEvent, getCreateEventBlockedReason } from '../utils/permissions'
 import { regions, regionByMomoCountry } from '../data/regions'
-import { fmtMoney, eventCurrency, regionToCurrency, currencySymbol, organizerCurrency, payRailLabel } from '../utils/money'
+import { fmtMoney, eventCurrency, regionToCurrency, currencySymbol, payRailLabel } from '../utils/money'
 import { payoutReadyForRegion } from '../utils/payoutMethods'
 import { MUSIC_STYLES, EVENT_TYPES, AMBIANCES } from '../utils/recommendations'
 import { getGuestlist, loadGuestlistRemote, addGuestlistEntry, removeGuestlistEntry } from '../utils/guestlist'
@@ -345,10 +345,6 @@ export default function MesEvenementsPage() {
   const [publishing, setPublishing] = useState(false)
   const [videoUploadPct, setVideoUploadPct] = useState(null)
   const toastTimerRef = useRef(null)
-  // Devise de l'organisateur (« 1 organisateur = 1 zone ») : ancrée à son profil,
-  // source de vérité de la devise de TOUS ses events. null tant qu'inconnue → on
-  // retombe sur la région de l'event (rétro-compat, ne casse pas l'existant).
-  const [orgCurrency, setOrgCurrency] = useState(null)
   // Encaissement configuré ? { cur:'EUR'|'XOF', ready:bool } — null tant qu'inconnu
   // (pas de rappel affiché tant qu'on ne sait pas, pour éviter un faux nudge).
   const [payoutUser, setPayoutUser] = useState(null) // doc users/{uid} (champs paiement) ou null tant qu'inconnu
@@ -439,16 +435,6 @@ export default function MesEvenementsPage() {
     } catch {}
   }, [])
 
-  // Charge la devise de zone de l'organisateur depuis son profil.
-  useEffect(() => {
-    if (!user?.uid) return
-    let cancelled = false
-    import('../utils/organizers').then(({ getOrganizerProfile }) => {
-      const cur = organizerCurrency(getOrganizerProfile(user.uid))
-      if (!cancelled && cur) setOrgCurrency(cur)
-    }).catch(() => {})
-    return () => { cancelled = true }
-  }, [user?.uid])
 
   // Champs de paiement de l'organisateur, lus depuis Firestore (source fiable :
   // stripeChargesEnabled posé par le webhook Connect, payoutMomos par le profil).
@@ -799,12 +785,13 @@ export default function MesEvenementsPage() {
       location: [venue.name, venue.city].filter(Boolean).join(', '),
       city: venue.city,
       region: form.region || venue.city,
-      // Devise de facturation : Togo/Bénin → XOF (FedaPay), France → EUR (Stripe).
-      // FIGÉE à la publication. À l'ÉDITION on PRÉSERVE la devise déjà stockée
-      // (audit devise #2 : la recalculer flippait EUR↔XOF depuis un appareil sans
-      // profil orga en cache → un prix de 20 € devenait « 20 FCFA »). Calculée
-      // UNIQUEMENT à la création : orgCurrency (« 1 org = 1 zone »), à défaut région.
-      currency: editStoredCurrency || orgCurrency || regionToCurrency(form.region || venue.city),
+      // Devise de facturation : suit le PAYS choisi (le bouton Région) de CET
+      // événement — France → EUR (Stripe), Togo/Bénin/… → XOF (FedaPay). Un
+      // organisateur peut faire des events dans plusieurs devises : la devise n'est
+      // donc PAS liée à une « zone unique » de l'orga, mais au pays de l'event.
+      // FIGÉE à la publication ; à l'ÉDITION on PRÉSERVE la devise déjà stockée
+      // (audit devise #2 : la recalculer flippait EUR↔XOF sur un appareil sans cache).
+      currency: editStoredCurrency || regionToCurrency(form.region || venue.city),
       imageUrl: finalImageUrl,
       videoUrl: finalVideoUrl,
       color: '#c8a96e',
@@ -2661,7 +2648,7 @@ export default function MesEvenementsPage() {
             {/* Devise explicite : l'organisateur voit clairement dans quelle devise
                 il fixe ses prix et par quel moyen les billets seront payés. */}
             {(() => {
-              const cur = orgCurrency || regionToCurrency(form.region)
+              const cur = regionToCurrency(form.region)
               const isXof = cur === 'XOF'
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${isXof ? '#4ee8c8' : '#c8a96e'}` }}>
@@ -2728,7 +2715,7 @@ export default function MesEvenementsPage() {
                   </div>
                   <div>
                     <InputField
-                      label={`Prix (${currencySymbol(orgCurrency || regionToCurrency(form.region))})`}
+                      label={`Prix (${currencySymbol(regionToCurrency(form.region))})`}
                       type="number"
                       placeholder="0 = gratuit"
                       value={place.price}
@@ -2865,7 +2852,7 @@ export default function MesEvenementsPage() {
                               >
                                 {!stillInMenu && <option value={inc.name}>{inc.name} (retiré du menu)</option>}
                                 {menuChoices.map(m => (
-                                  <option key={m.name} value={m.name.trim()}>{m.emoji ? `${m.emoji} ` : ''}{m.name.trim()} · {m.price} {currencySymbol(orgCurrency || regionToCurrency(form.region))}</option>
+                                  <option key={m.name} value={m.name.trim()}>{m.emoji ? `${m.emoji} ` : ''}{m.name.trim()} · {m.price} {currencySymbol(regionToCurrency(form.region))}</option>
                                 ))}
                               </select>
                               <input
@@ -3091,7 +3078,7 @@ export default function MesEvenementsPage() {
                       key={i}
                       item={item}
                       index={i}
-                      currency={orgCurrency || regionToCurrency(form.region)}
+                      currency={regionToCurrency(form.region)}
                       placeTypes={places.map(p => p.type).filter(Boolean)}
                       onUpdate={updated => setMenuItems(menuItems.map((m, j) => j === i ? updated : m))}
                       onRemove={i > 0 ? () => setMenuItems(menuItems.filter((_, j) => j !== i)) : null}
