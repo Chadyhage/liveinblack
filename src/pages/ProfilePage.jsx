@@ -5,7 +5,9 @@ import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
-import { fmtMoney } from '../utils/money'
+import { fmtMoney, organizerCurrency } from '../utils/money'
+import { getOrganizerProfile } from '../utils/organizers'
+import PayoutPanel from '../components/PayoutPanel'
 // Wallet retiré : les paiements passent désormais par Stripe
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
@@ -485,6 +487,22 @@ export default function ProfilePage() {
   const [payoutMomoForm, setPayoutMomoForm] = useState(user?.payoutMomo?.number || '')
   const [payoutMsg, setPayoutMsg] = useState(null)
   const [savingPayout, setSavingPayout] = useState(false)
+  // Organisateur détecté par TOUT signal (role / interface active / rôles activés)
+  // — sinon un compte multi-rôles (client + organisateur) ne voyait pas ses
+  // réglages d'encaissement et ne pouvait pas être payé.
+  const isOrganizerAccount = user?.role === 'organisateur'
+    || user?.activeRole === 'organisateur'
+    || (Array.isArray(user?.enabledRoles) && user.enabledRoles.includes('organisateur'))
+  // Devise d'encaissement de l'organisateur : détermine QUELLE méthode montrer.
+  //  - XOF (zone UEMOA) → numéro Mobile Money (versement auto par le cron).
+  //  - EUR (zone Stripe) → connexion du compte bancaire via Stripe Connect.
+  // Source de vérité = la RÉGION DE FACTURATION (organizerCurrency) ; à défaut
+  // (profil pas encore chargé), on retombe sur un artefact déjà posé (numéro momo
+  // = XOF, compte Stripe = EUR), sinon EUR (marché principal).
+  const payoutCurrency = isOrganizerAccount
+    ? (organizerCurrency(getOrganizerProfile(user?.uid))
+        || (user?.payoutMomo?.number ? 'XOF' : user?.stripeAccountId ? 'EUR' : 'EUR'))
+    : null
 
   // Settings — changement d'e-mail (flux avec vérification)
   const [emailForm, setEmailForm] = useState({ newEmail: '', password: '' })
@@ -1433,39 +1451,56 @@ export default function ProfilePage() {
             )}
 
             {/* ── Encaissement des recettes (organisateur) ── */}
-            {user?.role === 'organisateur' && showSection('encaissement') && (
-              <div style={S.card}>
-                <EyebrowLabel text="Encaissement — Mobile Money" />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <p style={{ ...S.bodyText, margin: 0 }}>
-                    À la fin de chaque événement, ta recette (billets − frais de service) est envoyée
-                    automatiquement sur ce numéro Mobile Money. Rien à demander, rien à valider.
-                  </p>
-                  <div>
-                    <FocusInput
-                      label="Numéro Mobile Money (privé)"
-                      type="tel"
-                      placeholder="+228 90 00 00 00"
-                      value={payoutMomoForm}
-                      onChange={e => setPayoutMomoForm(e.target.value)}
-                    />
-                    <p style={hintStyle}>
-                      Numéro d'un pays FedaPay (Togo, Bénin, Côte d'Ivoire, Sénégal, Burkina, Mali,
-                      Niger, Guinée-Bissau) avec son indicatif — Mixx by Yas, Wave, Orange Money,
-                      MTN MoMo, Moov… Ce numéro n'est jamais affiché publiquement : il sert
-                      uniquement à te verser ton argent.
+            {/* La méthode dépend de la zone de facturation : Mobile Money (XOF) ou
+                compte bancaire via Stripe Connect (EUR). Avant, on montrait le champ
+                Mobile Money À TOUT LE MONDE — inutile pour un organisateur EUR, qui
+                n'avait alors AUCUN moyen de connecter sa banque pour être payé. */}
+            {isOrganizerAccount && showSection('encaissement') && (
+              payoutCurrency === 'XOF' ? (
+                <div style={S.card}>
+                  <EyebrowLabel text="Encaissement — Mobile Money" />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <p style={{ ...S.bodyText, margin: 0 }}>
+                      À la fin de chaque événement, ta recette (billets − frais de service) est envoyée
+                      automatiquement sur ce numéro Mobile Money. Rien à demander, rien à valider.
                     </p>
+                    <div>
+                      <FocusInput
+                        label="Numéro Mobile Money (privé)"
+                        type="tel"
+                        placeholder="+228 90 00 00 00"
+                        value={payoutMomoForm}
+                        onChange={e => setPayoutMomoForm(e.target.value)}
+                      />
+                      <p style={hintStyle}>
+                        Numéro d'un pays FedaPay (Togo, Bénin, Côte d'Ivoire, Sénégal, Burkina, Mali,
+                        Niger, Guinée-Bissau) avec son indicatif — Mixx by Yas, Wave, Orange Money,
+                        MTN MoMo, Moov… Ce numéro n'est jamais affiché publiquement : il sert
+                        uniquement à te verser ton argent.
+                      </p>
+                    </div>
+                    {msgBox(payoutMsg)}
+                    <button
+                      onClick={savePayoutMomo}
+                      disabled={savingPayout}
+                      style={{ ...S.btnGold, ...(savingPayout ? S.btnDisabled : {}) }}
+                    >
+                      {savingPayout ? 'Enregistrement…' : 'Enregistrer mon numéro d\'encaissement'}
+                    </button>
                   </div>
-                  {msgBox(payoutMsg)}
-                  <button
-                    onClick={savePayoutMomo}
-                    disabled={savingPayout}
-                    style={{ ...S.btnGold, ...(savingPayout ? S.btnDisabled : {}) }}
-                  >
-                    {savingPayout ? 'Enregistrement…' : 'Enregistrer mon numéro d\'encaissement'}
-                  </button>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <EyebrowLabel text="Encaissement — Compte bancaire" />
+                  <p style={{ ...S.bodyText, margin: '8px 0 12px' }}>
+                    Connecte ton compte bancaire une seule fois via Stripe (identité + RIB,
+                    quelques minutes). Ensuite, la recette de chaque événement t'est reversée
+                    <strong style={{ color: '#4ee8c8' }}> automatiquement</strong>, sans rien à
+                    demander.
+                  </p>
+                  <PayoutPanel uid={user.uid} returnPath="/profil" />
+                </div>
+              )
             )}
 
             {/* ── Qui voit quoi ? ── */}
