@@ -197,6 +197,27 @@ export default async function handler(req, res) {
     await Promise.allSettled(slugs.docs.map(d => d.ref.delete()))
   } catch {}
 
+  // ── 8. Firestore — retirer le membre supprimé des conversations (audit #18) :
+  // sinon il reste « fantôme » dans les groupes ; et si un groupe se retrouve SANS
+  // admin, le promouvoir au membre restant le plus ancien (sinon groupe ingérable).
+  try {
+    const convs = await db.collection('conversations').where('participantIds', 'array-contains', uid).get()
+    for (const c of convs.docs) {
+      const data = c.data()
+      const participantIds = (Array.isArray(data.participantIds) ? data.participantIds : []).filter(id => id !== uid)
+      const members = Array.isArray(data.members) ? data.members.filter(m => String(m.userId || m.id || '') !== uid) : undefined
+      let adminIds = (Array.isArray(data.adminIds) ? data.adminIds : []).filter(id => id !== uid)
+      if (data.type === 'group' && adminIds.length === 0 && participantIds.length > 0) {
+        adminIds = [participantIds[0]]
+      }
+      await c.ref.set({
+        participantIds, adminIds,
+        ...(members !== undefined ? { members } : {}),
+        updatedAt: Date.now(),
+      }, { merge: true }).catch(() => {})
+    }
+  } catch {}
+
   console.log(`[admin-delete-account] ${caller.email} a supprimé ${uid} (${deletedEmail || 'email inconnu'}) — auth:${authDeleted} firestore:${firestoreDeleted} apps:${applicationsDeleted}`)
   return res.status(200).json({ ok: true, authDeleted, deletedEmail, billing, firestoreDeleted, applicationsDeleted })
 }
