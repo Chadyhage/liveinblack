@@ -454,6 +454,18 @@ async function cancelEventFlow(req, res, caller) {
       cancelledAt: FieldValue.serverTimestamp(),
     }, { merge: true })
 
+    // 6) Notification in-app aux acheteurs (#71) — best-effort, en plus de l'e-mail
+    // (audience mobile money qui ne consulte pas toujours sa boîte). Ne bloque pas :
+    // l'annulation + les remboursements ont déjà réussi ci-dessus.
+    try {
+      await pushInAppNotif(db, uids, () => ({
+        type: 'event_cancelled',
+        title: 'Événement annulé',
+        body: `${ev.name || 'Un événement'} a été annulé. Tu seras remboursé(e) automatiquement (ou contacté(e) pour un remboursement mobile money).`,
+        data: { eventId },
+      }))
+    } catch (e) { console.warn('[/api/tickets] notif in-app annulation échouée:', e.message) }
+
     return res.status(200).json({
       ok: true,
       refunds,
@@ -501,10 +513,50 @@ async function postponeEventFlow(req, res, caller) {
       postponedAt: FieldValue.serverTimestamp(),
     }, { merge: true })
 
+    // Notification in-app aux acheteurs (#71) : l'e-mail seul est faible pour une
+    // audience mobile money qui ne consulte pas forcément sa boîte. Best-effort,
+    // ne bloque jamais le report (le report lui-même a déjà réussi ci-dessus).
+    try {
+      const tSnap = await db.collection('tickets').where('eventId', '==', eventId).get()
+      const uids = [...new Set(tSnap.docs.flatMap(d => [d.data().userId, d.data().hostUid]).filter(Boolean).map(String))]
+      const when = newDate + (newTime ? ` · ${newTime}` : '')
+      await pushInAppNotif(db, uids, () => ({
+        type: 'event_postponed',
+        title: 'Événement reporté',
+        body: `${ev.name || 'Un événement'} est reporté au ${when}. Ton billet reste valide.`,
+        data: { eventId },
+      }))
+    } catch (e) { console.warn('[/api/tickets] notif in-app report échouée:', e.message) }
+
     return res.status(200).json({ ok: true, newDate, newTime, previousDate, previousTime })
   } catch (err) {
     console.error('[/api/tickets] postpone_event error:', err)
     return res.status(500).json({ error: err.message || 'Internal error' })
+  }
+}
+
+// Écrit une notification in-app dans notifications/{uid} pour une liste de comptes
+// (read-merge-write par doc, comme createNotification côté client — on ne clobbe
+// pas les notifs existantes du destinataire). Best-effort, par paquets de 10.
+async function pushInAppNotif(db, uids, makeNotif) {
+  const list = Array.isArray(uids) ? uids : []
+  for (let i = 0; i < list.length; i += 10) {
+    await Promise.all(list.slice(i, i + 10).map(async (uid) => {
+      try {
+        const nRef = db.collection('notifications').doc(String(uid))
+        const cur = await nRef.get()
+        const items = cur.exists ? (cur.data().items || []) : []
+        const base = makeNotif(uid) || {}
+        const notif = {
+          id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          read: false,
+          createdAt: Date.now(),
+          data: {},
+          ...base,
+        }
+        await nRef.set({ items: [notif, ...items].slice(0, 50), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+      } catch { /* best-effort par destinataire */ }
+    }))
   }
 }
 

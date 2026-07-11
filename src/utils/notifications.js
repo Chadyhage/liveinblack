@@ -172,4 +172,6 @@ export const NOTIF_CONFIG = {
   organizer_new_media:        { icon: '▣', color: '#e05aaa', label: 'Nouveau média' },
   organizer_event_update:     { icon: '!', color: '#c8a96e', label: 'Mise à jour événement' },
   organizer_almost_full:      { icon: '↑', color: '#e05aaa', label: 'Bientôt complet' },
+  event_postponed:            { icon: '⟳', color: '#c8a96e', label: 'Événement reporté' },
+  event_cancelled:            { icon: '✕', color: '#e05aaa', label: 'Événement annulé' },
 }
