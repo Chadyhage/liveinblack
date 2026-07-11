@@ -118,10 +118,15 @@ service cloud.firestore {
     // ne peut donc pas y planquer role/points/status que les gardes ne relisent
     // pas ici. Ne JAMAIS y écrire le profil complet (un syncDoc(user_private, profil)
     // serait refusé). _syncedAt est ajouté automatiquement par syncDoc().
+    // Le propriétaire écrit son email (+ champs techniques _syncedAt/_migratedAt que
+    // syncDoc/la migration ajoutent). On INTERDIT juste les champs sensibles (rôle/
+    // points/statut) au lieu d'un hasOnly strict — un hasOnly oubliant un champ
+    // technique bloquerait toute mise à jour (bug trouvé en revue : _migratedAt). De
+    // toute façon isAgent()/les gardes anti-escalade ne lisent JAMAIS le rôle ici.
     match /user_private/{uid} {
       allow read:            if isOwner(uid) || isAgent();
       allow create, update:  if isAgent()
-        || (isOwner(uid) && request.resource.data.keys().hasOnly(['email', '_syncedAt', 'updatedAt']));
+        || (isOwner(uid) && !request.resource.data.keys().hasAny(['role', 'activeRole', 'enabledRoles', 'status', 'points']));
       allow delete:          if isOwner(uid) || isAgent();
     }
 
@@ -221,7 +226,10 @@ service cloud.firestore {
       return before.get('type', '') != 'group'
           || isGroupAdmin(before)
           || (
-              !after.diff(before).affectedKeys().hasAny(['adminIds', 'memberMutes', 'type'])
+              // Un membre non-admin ne touche NI la modération NI l'identité du groupe
+              // (nom/avatar) NI le type (revue #11). Il met à jour le dernier message,
+              // et peut se retirer lui-même (members/participantIds → self-leave).
+              !after.diff(before).affectedKeys().hasAny(['adminIds', 'memberMutes', 'type', 'name', 'avatar', 'photo', 'photoUrl'])
               && (
                   !after.diff(before).affectedKeys().hasAny(['members', 'participantIds'])
                   || !(request.auth.uid in after.get('participantIds', []))

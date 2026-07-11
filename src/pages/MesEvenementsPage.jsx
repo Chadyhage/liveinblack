@@ -774,6 +774,21 @@ export default function MesEvenementsPage() {
       } catch {}
     }
 
+    // #5 (revue) : garde symétrique anti-perte de stock. Si une place AVEC des ventes
+    // serveur a DISPARU du tableau (supprimée sur un cache périmé où le verrou UI n'a
+    // pas vu la vente cross-device), publier orphelinerait ses billets. On refuse.
+    if (editingEventId) {
+      const finalIds = new Set(places.map((p, i) => p.id || ('p' + i)))
+      if (Object.entries(soldById).some(([id, sold]) => Number(sold) > 0 && !finalIds.has(id))) {
+        setPublishing(false)
+        setSyncErrorBanner({
+          title: 'Place déjà vendue retirée',
+          message: 'Une place ayant déjà des billets vendus a été supprimée. Recharge la page pour voir les ventes à jour — on ne peut pas retirer une place vendue (ses billets deviendraient orphelins).',
+        })
+        return
+      }
+    }
+
     // ── Options incluses par type de place : STRICTEMENT liées au menu de
     // l'événement (jamais d'option orpheline). On ne garde que les entrées dont
     // l'article existe encore dans le menu validé au moment de la publication.

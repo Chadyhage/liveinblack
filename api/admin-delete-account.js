@@ -17,6 +17,7 @@ const UID_COLLECTIONS = [
   'catalogs', 'providers', 'organizer_profiles',
   'user_boosts', 'used_tickets', 'notifications', 'user_read_status',
   'organizer_follows', 'user_private_access',
+  'user_private', // #8 : l'email PII y vit → doit être purgé (sinon survit à la suppression)
 ]
 
 export default async function handler(req, res) {

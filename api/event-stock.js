@@ -118,8 +118,12 @@ export default async function handler(req, res) {
         const st = await db.collection('event_staff').doc(String(eventId)).get()
         staffRole = st.exists ? ((st.data().roster || {})[caller.uid] || null) : null
       } catch {}
-      const isStaff = isOwner || !!staffRole
-      const isManager = isOwner || staffRole === 'manager'
+      // Rang POS RÉEL, dérivé du roster SERVEUR (jamais de l'actor client) :
+      // owner/manager=3 (annule), serveur=2 (sert + encaisse), scan=1 (sert les
+      // options incluses au scan), dj/client=0 (aucun droit staff). Revue : scan/dj
+      // étaient traités « staff » et pouvaient encaisser → corrigé par ce rang.
+      const rank = isOwner ? 3 : ({ manager: 3, serveur: 2, scan: 1 }[staffRole] || 0)
+      const isStaff = rank >= 1
       const menu = Array.isArray(ev.menu) ? ev.menu : []
       // Prix autoritaire : depuis le menu serveur. Menu configuré mais article inconnu → invalide.
       const menuPrice = (item) => {
@@ -127,7 +131,10 @@ export default async function handler(req, res) {
         const m = menu.find(x => String(x.id || x.name) === String(item.menuItemId) || String(x.name) === String(item.name))
         return m ? (Number(m.price) || 0) : null
       }
-      const STAFF_ONLY = ['paid_at', 'paid_by', 'paid_by_name', 'served_at', 'served_by', 'served_by_name', 'cancelled_at', 'cancelled_by', 'cancellation_reason']
+      const PAY_FIELDS = ['paid_at', 'paid_by', 'paid_by_name']
+      const SERVE_FIELDS = ['served_at', 'served_by', 'served_by_name']
+      const CANCEL_FIELDS = ['cancelled_at', 'cancelled_by', 'cancellation_reason']
+      const ALL_PRIV = [...PAY_FIELDS, ...SERVE_FIELDS, ...CANCEL_FIELDS]
       const isServed = (it) => it && (it.status === 'served' || it.served_at)
 
       const upserts = Array.isArray(ops.upserts) ? ops.upserts : []
@@ -146,38 +153,57 @@ export default async function handler(req, res) {
         const byId = new Map(remote.map(it => [String(it.id), it]))
         const deny = (reason) => { const e = new Error('DENIED'); e.reason = reason; throw e }
 
+        // AJOUT — un non-staff (rang 0) ne pose jamais de champ privilégié, ne dépose
+        // que du 'sent', avec prix menu et sur SA ligne non servie/non payée.
         for (const raw of upserts) {
           const existing = byId.get(String(raw.id))
           const price = menuPrice(raw)
           if (price === null) deny('unknown_menu_item')
           let item = { ...raw, unitPrice: price }
-          if (!isStaff) {
-            for (const k of STAFF_ONLY) delete item[k]
+          if (rank === 0) {
+            for (const k of ALL_PRIV) delete item[k]
+            if (item.status === 'served' || item.status === 'cancelled') item.status = 'sent'
             item.addedBy = caller.uid
             item.addedByRole = 'client'
             if (existing && (existing.addedBy !== caller.uid || isServed(existing) || existing.paid_at)) deny('not_your_item')
           }
           byId.set(String(item.id), existing ? { ...existing, ...item } : item)
         }
+        // insertOnly (matérialisation incluses/précos) = action STAFF (scan) uniquement.
+        // Sinon un client fabriquait des consos « incluses » gratuites (revue #2).
         for (const raw of insertOnly) {
+          if (!isStaff) deny('staff_only')
           if (byId.has(String(raw.id))) continue
           byId.set(String(raw.id), { ...raw, addedBy: raw.addedBy || caller.uid })
         }
+        // Gate par CHAMP (revue critique) : les gardes ne sont plus déléguées au
+        // client. Non-staff = SA ligne non servie/non payée uniquement ; encaisser =
+        // rang≥2 ; servir = rang≥1 ; annuler = rang 3.
+        const touchesAny = (set, keys) => keys.some(k => k in set)
         for (const p of patches) {
           const cur = byId.get(String(p.id)); if (!cur) continue
-          if (p.requireUnserved && isServed(cur)) continue
-          if (p.requireUnpaid && cur.paid_at) continue
           const set = p.set || {}
-          if (STAFF_ONLY.some(k => k in set) && !isStaff) deny('staff_only')
-          if (('cancelled_at' in set) && !isManager) deny('manager_only')
-          if (!isStaff && cur.addedBy !== caller.uid) deny('not_your_item')
+          if (rank === 0) {
+            if (cur.addedBy !== caller.uid) deny('not_your_item')
+            if (isServed(cur) || cur.paid_at) deny('locked')
+          } else {
+            if (p.requireUnserved && isServed(cur)) continue
+            if (p.requireUnpaid && cur.paid_at) continue
+          }
+          if ((touchesAny(set, PAY_FIELDS)) && rank < 2) deny('pay_staff_only')
+          if ((touchesAny(set, SERVE_FIELDS) || set.status === 'served') && rank < 1) deny('serve_staff_only')
+          if ((touchesAny(set, CANCEL_FIELDS) || set.status === 'cancelled') && rank < 3) deny('cancel_manager_only')
           byId.set(String(p.id), { ...cur, ...set })
         }
         const doRemove = (id, guards) => {
           const cur = byId.get(String(id)); if (!cur) return
-          if (guards.requireUnserved && isServed(cur)) return
-          if (guards.requireUnpaid && cur.paid_at) return
-          if (!isStaff && cur.addedBy !== caller.uid) deny('not_your_item')
+          if (rank === 0) {
+            if (cur.addedBy !== caller.uid) deny('not_your_item')
+            if (isServed(cur) || cur.paid_at) deny('locked') // un client ne supprime jamais une ligne servie/payée
+          } else {
+            if (guards.requireUnserved && isServed(cur)) return
+            if (guards.requireUnpaid && cur.paid_at) return
+          }
           byId.delete(String(id))
         }
         for (const id of removeIds) doRemove(id, {})
