@@ -902,9 +902,10 @@ export default function ProfilePage() {
             }
           }).catch(() => {})
         }
-        // Sync Firestore users/{uid}
+        // #8 : le nouvel email vérifié va dans le doc PRIVÉ user_private/{uid}, plus
+        // dans users/ (PII hors du doc public).
         import('../utils/firestore-sync').then(({ syncDoc }) => {
-          syncDoc(`users/${uid}`, { email: firebaseEmail })
+          syncDoc(`user_private/${uid}`, { email: firebaseEmail })
         }).catch(() => {})
       }
     }).catch(() => {})

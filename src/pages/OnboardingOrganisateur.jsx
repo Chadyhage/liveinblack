@@ -303,10 +303,12 @@ export default function OnboardingOrganisateur() {
           }
           const uid = cred.user.uid
           await setDoc(doc(db, 'users', uid), {
-            uid, email: loginEmail, name, phone,
+            // #8 : email PII → user_private/{uid}, plus dans le doc public users/
+            uid, name, phone,
             role: 'client', activeRole: 'client', enabledRoles: ['client'],
             status: 'draft', emailVerified: false, createdAt: Date.now(),
           })
+          setDoc(doc(db, 'user_private', uid), { email: loginEmail }, { merge: true }).catch(() => {})
           updateApplication(app.id, { uid, email: loginEmail, name })
           setApp(prev => ({ ...prev, uid, email: loginEmail, name }))
         } else {

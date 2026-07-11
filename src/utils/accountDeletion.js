@@ -302,6 +302,9 @@ async function _anonymizeAccount(req) {
       deleteDoc(doc(db, 'providers', uid)),
       deleteDoc(doc(db, 'catalogs', uid)),
       deleteDoc(doc(db, 'organizer_profiles', uid)),
+      // #8 : l'email réel vit dans user_private/{uid} → doit être supprimé aussi
+      // (sinon PII résiduelle après « suppression » — viole la règle 3 couches).
+      deleteDoc(doc(db, 'user_private', uid)),
     ])
   } catch {}
 }

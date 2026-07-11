@@ -134,9 +134,10 @@ export default async function handler(req, res) {
         // Le nouvel email n'est pas prouvé : il repart non vérifié (l'admin peut
         // ensuite « Marquer vérifié » ou « Renvoyer la vérification »).
         const user = await auth.updateUser(uid, { email: String(email).toLowerCase(), emailVerified: false })
-        await db.doc(`users/${uid}`).set({
-          email: user.email, emailVerified: false, _syncedAt: Date.now(),
-        }, { merge: true }).catch(() => {})
+        // #8 : email (PII) → doc privé user_private/{uid} ; le flag emailVerified reste
+        // sur users/ (public, non sensible).
+        await db.doc(`users/${uid}`).set({ emailVerified: false, _syncedAt: Date.now() }, { merge: true }).catch(() => {})
+        await db.doc(`user_private/${uid}`).set({ email: user.email, _syncedAt: Date.now() }, { merge: true }).catch(() => {})
         // L'ancien détenteur de la session ne doit pas continuer avec un token
         // qui porte encore l'ancien email.
         await auth.revokeRefreshTokens(uid).catch(() => {})

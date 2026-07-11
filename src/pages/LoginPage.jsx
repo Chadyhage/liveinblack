@@ -80,12 +80,13 @@ async function doEmailLogin(email, password, role = null) {
       const mergedRoles = [...new Set([...(Array.isArray(profile.enabledRoles) ? profile.enabledRoles : []), 'agent'])]
       const agentPatch = {
         role: 'agent', activeRole: 'agent', enabledRoles: mergedRoles,
-        email: cred.user.email,
         name: profile.name || cred.user.displayName || 'Admin',
         emailVerified: true, status: 'active',
       }
       setUserDoc(doc(db, 'users', cred.user.uid), agentPatch, { merge: true }).catch(() => {})
-      return { ...profile, ...agentPatch, uid: cred.user.uid }
+      // #8 : email → doc privé, plus dans users/
+      setUserDoc(doc(db, 'user_private', cred.user.uid), { email: cred.user.email }, { merge: true }).catch(() => {})
+      return { ...profile, ...agentPatch, email: cred.user.email, uid: cred.user.uid }
     }
     // Email réellement vérifié côté Firebase Auth → persister le flag
     // (uniquement si Firebase le confirme — les non-vérifiés entrent quand
@@ -102,12 +103,13 @@ async function doEmailLogin(email, password, role = null) {
   if (isSuperAdmin) {
     const { setDoc } = await import('firebase/firestore')
     const agentObj = {
-      uid: cred.user.uid, name: cred.user.displayName || 'Admin',
-      email: cred.user.email, role: 'agent', activeRole: 'agent',
+      uid: cred.user.uid, name: cred.user.displayName || 'Admin', role: 'agent', activeRole: 'agent',
       enabledRoles: ['agent'], status: 'active', emailVerified: true, createdAt: Date.now(),
     }
     setDoc(doc(db, 'users', cred.user.uid), agentObj).catch(() => {})
-    return agentObj
+    // #8 : email → doc privé, plus dans users/
+    setDoc(doc(db, 'user_private', cred.user.uid), { email: cred.user.email }, { merge: true }).catch(() => {})
+    return { ...agentObj, email: cred.user.email }
   }
   if (!cred.user.emailVerified) {
     const { sendEmailVerification } = await import('firebase/auth')
@@ -252,7 +254,8 @@ async function doEmailRegister(data) {
   }
 
   const userObj = {
-    uid: cred.user.uid, name, email, phone,
+    // #8 : email PII → écrit dans user_private/{uid} (ci-dessous), plus dans users/.
+    uid: cred.user.uid, name, phone,
     phoneNormalized: phone ? phone.replace(/\D/g, '') : '',
     role: baseRole,
     activeRole: baseRole,

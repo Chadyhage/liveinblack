@@ -337,11 +337,9 @@ export function syncUserProfile(uid, userData) {
     id: uid,
     uid, // legacy compat — some docs use uid
     name: userData.name || '',
-    // #8 : l'email est PII et users/ est lisible par tout connecté. Migration staged :
-    // on DOUBLE-ÉCRIT (users/ + user_private/) tant que les lecteurs ne sont pas tous
-    // bascules → aucune casse. Le scrub final (script) retire users/.email, puis un
-    // dernier déploiement retirera cette double-écriture. user_private est la cible.
-    email: userData.email || '',
+    // #8 : l'email (PII) N'EST PLUS écrit dans users/ (lisible par tout connecté) →
+    // uniquement dans user_private/{uid} (owner+agent). Les lecteurs le prennent là,
+    // avec repli sur users/.email pour les comptes pas encore scrubbés.
     avatar: userData.avatar || null,
     username: userData.username || generateUsername(userData.name || userData.email || uid),
   }

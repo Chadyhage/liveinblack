@@ -81,11 +81,14 @@ async function main() {
     }
 
     if (SCRUB && APPLY) {
-      const patch = {}
-      if ('email' in d) patch.email = FieldValue.delete()
-      if ('phone' in d) patch.phone = FieldValue.delete()
-      if ('phoneNormalized' in d) patch.phoneNormalized = FieldValue.delete()
-      if (Object.keys(patch).length) { await db.doc(`users/${uid}`).update(patch); scrubbed++ }
+      // #8 : on ne retire QUE l'email (PII la plus scrapeable) du doc public. Les
+      // champs phone/phoneNormalized restent (garde anti-doublon à l'inscription ;
+      // résiduel mineur — ce sont des numéros d'inscription org/prest, pas un
+      // annuaire d'e-mails). L'email placeholder « deleted_… » n'est jamais présent
+      // sur un vrai compte, donc rien à préserver.
+      if ('email' in d && !String(d.email || '').startsWith('deleted_')) {
+        await db.doc(`users/${uid}`).update({ email: FieldValue.delete() }); scrubbed++
+      }
     }
   }
 

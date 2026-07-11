@@ -421,7 +421,11 @@ export default function OnboardingPrestataire() {
           role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['client', 'prestataire'],
           status: 'draft', emailVerified: false, emailVerificationRequired: true, createdAt: Date.now(),
         }
-        await setDoc(doc(db, 'users', uid), account)
+        // #8 : le doc PUBLIC users/ ne reçoit PAS l'email (PII) → user_private/{uid}.
+        // `account` garde l'email pour la session/local.
+        const { email: _omitEmail, ...accountPublic } = account
+        await setDoc(doc(db, 'users', uid), accountPublic)
+        setDoc(doc(db, 'user_private', uid), { email: loginEmail }, { merge: true }).catch(() => {})
         // Contrairement à l'ancien tunnel, le premier mail part réellement dès
         // la création. En cas de panne temporaire, l'écran final permet de renvoyer.
         try {
