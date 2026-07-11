@@ -178,8 +178,13 @@ export default async function handler(req, res) {
         itemsByUid[target] = [...itemsByUid[target].filter(it => it.ticketCode !== ticketCode), guestCopy]
       }
 
-      // Écritures (une par carnet distinct).
-      uids.forEach(u => {
+      // Écritures (une par carnet distinct). On ne RESSUSCITE pas le carnet d'un
+      // compte supprimé qui ne fait que PERDRE un siège (ancien invité révoqué) :
+      // on n'écrit un carnet inexistant que s'il GAGNE réellement le siège (l'hôte
+      // ou le nouveau titulaire d'une attribution) — audit #11/#20.
+      uids.forEach((u, i) => {
+        const gainingSeat = u === host || (action === 'assign' && u === target)
+        if (!snaps[i].exists && !gainingSeat) return
         tx.set(refByUid[u], { items: itemsByUid[u], updatedAt: FieldValue.serverTimestamp() }, { merge: true })
       })
 
@@ -575,9 +580,15 @@ async function checkinTicket(req, res, caller) {
       const t = fresh.data()
       if (t.checkedInAt) return // déjà scanné (autre porte / retry) → no-op
       holder = t.userId ? String(t.userId) : null
+      // Lire le compte titulaire AVANT toute écriture (transaction = reads first) :
+      // on ne crédite le point QUE si le compte existe encore — sinon un
+      // set(merge:true) RESSUSCITERAIT un compte supprimé (audit #10/#22).
+      let holderExists = false
+      if (holder) holderExists = (await tx.get(db.collection('users').doc(holder))).exists
       tx.set(tRef, { checkedInAt: new Date().toISOString(), checkedInBy: caller.uid }, { merge: true })
-      // Titulaire sans compte (ex: invitation guestlist non réclamée) → pas de point.
-      if (holder) {
+      // Titulaire sans compte (invitation guestlist non réclamée) ou compte supprimé
+      // → check-in enregistré mais AUCUN point (pas de résurrection de doc).
+      if (holder && holderExists) {
         tx.set(db.collection('users').doc(holder), { points: FieldValue.increment(1) }, { merge: true })
       }
       first = true
