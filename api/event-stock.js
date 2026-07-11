@@ -144,6 +144,11 @@ export default async function handler(req, res) {
   }
   const delta = action === 'reserve' ? -q : q
 
+  // Clé de restock partagée avec le webhook checkout.session.expired
+  // (stock_releases/{sessionId}) : rend le 'release' IDEMPOTENT entre la page
+  // d'annulation et le webhook → plus de double restock / survente (audit #6).
+  const releaseKey = action === 'release' ? String(req.body?.releaseKey || '') : ''
+
   try {
     const db = getDb()
     const ref = db.collection('events').doc(String(eventId))
@@ -151,6 +156,14 @@ export default async function handler(req, res) {
       const snap = await tx.get(ref)
       if (!snap.exists) {
         const err = new Error('event_not_found'); err.code = 'event_not_found'; throw err
+      }
+      // Restock déjà effectué pour cette session (par le webhook OU un autre
+      // appel) → ne pas restocker une 2e fois. Lecture DANS la transaction.
+      let relRef = null
+      if (releaseKey) {
+        relRef = db.collection('stock_releases').doc(releaseKey)
+        const relSnap = await tx.get(relRef)
+        if (relSnap.exists) return
       }
       const places = snap.data().places || []
       const idx = places.findIndex(p => p.type === placeType)
@@ -165,6 +178,7 @@ export default async function handler(req, res) {
       const nextAvailable = Math.max(0, Math.min(total || Infinity, available + delta))
       const nextPlaces = places.map((p, i) => i === idx ? { ...p, available: nextAvailable } : p)
       tx.update(ref, { places: nextPlaces })
+      if (relRef) tx.set(relRef, { sessionId: releaseKey, eventId: String(eventId), placeType: String(placeType), qty: q, releasedAt: FieldValue.serverTimestamp(), via: 'cancel_page' }, { merge: true })
     })
     return res.status(200).json({ ok: true })
   } catch (e) {

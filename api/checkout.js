@@ -318,7 +318,7 @@ export default async function handler(req, res) {
         ...(userEmail ? { customer_email: userEmail } : {}),
         success_url: `${origin}/paiement-reussi?session_id={CHECKOUT_SESSION_ID}&booking_id=${encodeURIComponent(bookingId)}`,
         // place_type + qty : pour que /paiement-annule puisse restocker la place réservée plus haut
-        cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}&place_type=${encodeURIComponent(placeType)}&qty=${encodeURIComponent(nQty)}`,
+        cancel_url: `${origin}/paiement-annule?event_id=${encodeURIComponent(eventId)}&place_type=${encodeURIComponent(placeType)}&qty=${encodeURIComponent(nQty)}&session_id={CHECKOUT_SESSION_ID}`,
         metadata: {
           eventId: String(eventId),
           eventName: String(eventName).slice(0, 200),

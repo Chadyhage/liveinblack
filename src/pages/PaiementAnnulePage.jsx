@@ -42,10 +42,14 @@ export default function PaiementAnnulePage() {
     } else if (eventId && placeType && qty) {
       // Stripe : restocker la place réservée avant la session (api/checkout.js
       // décrémente dès la création de la session).
+      // releaseKey = session Stripe → restock IDEMPOTENT partagé avec le webhook
+      // checkout.session.expired (stock_releases/{sessionId}) : évite le double
+      // restock (page d'annulation + webhook) qui causait une survente (audit #6).
+      const sessionId = params.get('session_id')
       import('../utils/apiAuth').then(async ({ authHeaders }) => fetch('/api/event-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-        body: JSON.stringify({ eventId, placeType, qty, action: 'release' }),
+        body: JSON.stringify({ eventId, placeType, qty, action: 'release', ...(sessionId ? { releaseKey: sessionId } : {}) }),
       })).catch(() => {})
     }
     // Nettoyer UNIQUEMENT le panier de CET achat annulé (par event) — surtout pas
