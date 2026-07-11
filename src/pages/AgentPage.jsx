@@ -319,7 +319,7 @@ export default function AgentPage() {
 
         // Reversements vendeurs : soldes dus + demandes de virement en attente
         // + boosts vendus (surveillance des créneaux Top 3 et des conflits)
-        const [balances, payouts, boosts, alerts, paidBookings, refunds, cancellations, eventPayouts] = await Promise.all([
+        const [balances, payouts, boosts, alerts, paidBookings, refunds, cancellations, eventPayouts, reportsRes] = await Promise.all([
           loadCollectionStrict('seller_balances'),
           loadCollectionStrict('payout_requests'),
           loadCollectionStrict('boosts'),
@@ -328,6 +328,7 @@ export default function AgentPage() {
           loadCollectionStrict('event_refunds'),
           loadCollectionStrict('event_cancellations'),
           loadCollectionStrict('event_payouts'),
+          loadCollectionStrict('reports'),
         ])
         // Ventes réelles de la PLATEFORME (docs écrits par les webhooks Stripe/
         // FedaPay). lib_bookings (localStorage) ne contient que les achats faits
@@ -356,6 +357,20 @@ export default function AgentPage() {
         // le surfacer comme « à reverser » exposait à un DOUBLE versement (l'admin
         // paie seller_balances pendant que le cron paie event_payouts). Audit devise.
         if (eventPayouts.ok) setFailedPayouts(eventPayouts.items.filter(p => p.status === 'failed' && Number(p.amountDueXOF || 0) > 0))
+        // Signalements = file de MODÉRATION : doit venir de Firestore (un report
+        // créé sur un autre device/compte était invisible en localStorage seul).
+        // On fusionne avec le cache local, dédup par id, on garde les non traités.
+        if (reportsRes.ok) {
+          try {
+            const local = JSON.parse(localStorage.getItem('lib_reports') || '[]')
+            const byId = {}
+            for (const r of local) if (r?.id) byId[r.id] = r
+            for (const r of reportsRes.items) { const id = r.id || r._docId; if (id) byId[id] = { ...byId[id], ...r, id } }
+            const merged = Object.values(byId)
+            localStorage.setItem('lib_reports', JSON.stringify(merged))
+            setReports(merged.filter(r => !r.handled))
+          } catch { setReports(reportsRes.items.filter(r => !r.handled)) }
+        } else errors.push('signalements')
       } catch {
         errors.push('données générales')
       }
@@ -1113,7 +1128,7 @@ export default function AgentPage() {
             { key: 'dashboard',    label: 'Tableau de bord' },
             { key: 'users',        label: 'Comptes' },
             { key: 'events',       label: 'Événements',    count: allEvents.length },
-            { key: 'dossiers',     label: 'Dossiers',      count: totalAppsSubmitted, alert: totalAppsSubmitted > 0 },
+            { key: 'dossiers',     label: 'Dossiers',      count: totalAllPending, alert: totalAllPending > 0 },
             { key: 'boosts',       label: 'Boosts',        count: adminBoosts.filter(b => !['refunded_conflict', 'cancelled'].includes(b.status) && new Date(b.expiresAt).getTime() > Date.now()).length, alert: adminBoosts.some(b => b.conflict && b.status !== 'refunded_conflict' && b.status !== 'cancelled' && new Date(b.expiresAt).getTime() > Date.now()) },
             { key: 'reversements', label: 'Reversements',  count: payoutRequests.length, alert: payoutRequests.length > 0 },
             { key: 'remboursements', label: 'Remboursements', count: eventRefunds.length, alert: eventRefunds.length > 0 },
@@ -3516,6 +3531,11 @@ export default function AgentPage() {
                         ? `${alert.amountTotal} FCFA`
                         : `${(Number(alert.amountTotal) / 100).toFixed(2)} ${String(alert.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : String(alert.currency || '').toUpperCase()}`}`
                     : null
+                // Contexte « versement auto échoué » (lib/eventPayouts.js) : sans ça
+                // l'alerte était inexploitable (ni event, ni organisateur, ni montant,
+                // ni motif). On lit l'organisateur depuis les comptes chargés.
+                const alertOrga = alert.sellerUid ? accounts.find(a => (a.uid || a.id) === alert.sellerUid) : null
+                const alertDueXOF = alert.amountDue != null ? Math.round(Number(alert.amountDue)) : null
                 return (
                   <div key={alert._docId} style={{ ...CARD, padding: 18, borderColor: 'rgba(224,90,170,.32)', borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
@@ -3526,8 +3546,12 @@ export default function AgentPage() {
                       <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.pink, border: '1px solid rgba(224,90,170,.35)', borderRadius: 999, padding: '4px 8px' }}>À vérifier</span>
                     </div>
                     <div style={{ marginTop: 13, padding: '10px 12px', borderRadius: 9, background: 'rgba(255,255,255,.035)' }}>
+                      {alert.eventName && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 5px' }}>Événement : {alert.eventName}</p>}
+                      {alert.sellerUid && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '0 0 5px' }}>Organisateur : {alertOrga ? getDisplayName(alertOrga) : alert.sellerUid}{alertOrga?.email ? ` · ${alertOrga.email}` : ''}</p>}
                       <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: 0, overflowWrap: 'anywhere' }}>Référence : {reference}</p>
                       {amountLine && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, margin: '5px 0 0' }}>{amountLine}</p>}
+                      {alertDueXOF != null && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.teal, margin: '5px 0 0' }}>À verser : {alertDueXOF.toLocaleString('fr-FR')} FCFA</p>}
+                      {alert.detail && <p style={{ fontFamily: FONTS.mono, fontSize: 10, color: '#f59e0b', margin: '5px 0 0', lineHeight: 1.5 }}>Motif : {String(alert.detail).slice(0, 200)}</p>}
                     </div>
                     <button onClick={() => resolvePaymentAlert(alert._docId)} style={{ marginTop: 13, padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontFamily: FONTS.display, fontWeight: 700, fontSize: 12 }}>Marquer comme examiné</button>
                   </div>
