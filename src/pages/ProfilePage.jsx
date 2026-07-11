@@ -7,7 +7,9 @@ import { useAuth } from '../context/AuthContext'
 import { getUserId } from '../utils/messaging'
 import { fmtMoney, organizerCurrency } from '../utils/money'
 import { getOrganizerProfile } from '../utils/organizers'
+import { momoCountryFromRegionName } from '../data/regions'
 import PayoutPanel from '../components/PayoutPanel'
+import MomoPayoutManager from '../components/MomoPayoutManager'
 // Wallet retiré : les paiements passent désormais par Stripe
 import { ROLES, updateAccount, deleteAccount } from '../utils/accounts'
 import { getApplicationByUser, loadApplicationByUser } from '../utils/applications'
@@ -491,28 +493,26 @@ export default function ProfilePage() {
   const [orgMsg, setOrgMsg] = useState(null)
   const [savingOrg, setSavingOrg] = useState(false)
 
-  // Settings — ENCAISSEMENT organisateur : numéro Mobile Money où le versement
-  // AUTOMATIQUE de la recette part à la fin de chaque événement (users.payoutMomo,
-  // lu par le cron lib/eventPayouts.js). Jamais public.
-  const [payoutMomoForm, setPayoutMomoForm] = useState(user?.payoutMomo?.number || '')
-  const [payoutMsg, setPayoutMsg] = useState(null)
-  const [savingPayout, setSavingPayout] = useState(false)
   // Organisateur détecté par TOUT signal (role / interface active / rôles activés)
   // — sinon un compte multi-rôles (client + organisateur) ne voyait pas ses
   // réglages d'encaissement et ne pouvait pas être payé.
   const isOrganizerAccount = user?.role === 'organisateur'
     || user?.activeRole === 'organisateur'
     || (Array.isArray(user?.enabledRoles) && user.enabledRoles.includes('organisateur'))
-  // Devise d'encaissement de l'organisateur : détermine QUELLE méthode montrer.
-  //  - XOF (zone UEMOA) → numéro Mobile Money (versement auto par le cron).
-  //  - EUR (zone Stripe) → connexion du compte bancaire via Stripe Connect.
-  // Source de vérité = la RÉGION DE FACTURATION (organizerCurrency) ; à défaut
-  // (profil pas encore chargé), on retombe sur un artefact déjà posé (numéro momo
-  // = XOF, compte Stripe = EUR), sinon EUR (marché principal).
-  const payoutCurrency = isOrganizerAccount
-    ? (organizerCurrency(getOrganizerProfile(user?.uid))
-        || (user?.payoutMomo?.number ? 'XOF' : user?.stripeAccountId ? 'EUR' : 'EUR'))
-    : null
+  // Encaissement = ENSEMBLE de méthodes (Stripe EUR + un numéro Mobile Money par
+  // pays UEMOA), gérées par PayoutPanel + MomoPayoutManager. L'ancien champ unique
+  // payoutMomo est migré/effacé par MomoPayoutManager.
+  // Pays UEMOA où l'organisateur a déjà des événements → mis en avant dans le
+  // gestionnaire de numéros Mobile Money (« tu y organises, ajoute un numéro »).
+  const orgEventMomoCountries = isOrganizerAccount ? (() => {
+    try {
+      const evs = JSON.parse(localStorage.getItem('lib_created_events') || '[]')
+      return [...new Set(evs
+        .filter(e => e && (!e.createdBy || e.createdBy === user?.uid || e.organizerId === user?.uid))
+        .map(e => momoCountryFromRegionName(e.region))
+        .filter(Boolean))]
+    } catch { return [] }
+  })() : []
 
   // Settings — changement d'e-mail (flux avec vérification)
   const [emailForm, setEmailForm] = useState({ newEmail: '', password: '' })
@@ -605,13 +605,7 @@ export default function ProfilePage() {
           else setOrgForm(f => f || { publicName: '' })
         })
         .catch(() => setOrgForm(f => f || { publicName: '' }))
-      // Numéro d'encaissement : la vérité est users/{uid}.payoutMomo (cross-device).
-      setPayoutMomoForm(user?.payoutMomo?.number || '')
-      import('../utils/firestore-sync')
-        .then(({ loadDoc }) => loadDoc(`users/${uid}`))
-        .then(remoteUser => {
-          if (remoteUser?.payoutMomo?.number) setPayoutMomoForm(remoteUser.payoutMomo.number)
-        }).catch(() => {})
+      // Les numéros Mobile Money sont gérés par MomoPayoutManager (chargement propre).
     }
   }, [panel, user?.uid, user?.role]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -639,37 +633,7 @@ export default function ProfilePage() {
     }
   }
 
-  // ── Numéro Mobile Money d'encaissement (organisateur) ──────────────────────
-  // Zone UEMOA / FedaPay : l'indicatif (+228 Togo, +229 Bénin, +225 Côte d'Ivoire,
-  // +221 Sénégal, +226 Burkina, +223 Mali, +227 Niger, +245 Guinée-Bissau)
-  // détermine le pays du payout. Vide = effacer.
-  async function savePayoutMomo() {
-    const raw = payoutMomoForm.replace(/[\s.-]/g, '').trim()
-    const { momoCountryFromDial } = await import('../data/regions')
-    const country = raw ? momoCountryFromDial(raw) : null
-    // 8 à 10 chiffres après l'indicatif selon les opérateurs UEMOA.
-    if (raw && (!country || !/^\+\d{3}\d{7,10}$/.test(raw))) {
-      setPayoutMsg({ type: 'error', text: 'Numéro invalide. Utilise le format international d\'un pays FedaPay, ex. +228 90 00 00 00 (Togo), +225 07 00 00 00 00 (Côte d\'Ivoire).' })
-      return
-    }
-    setSavingPayout(true)
-    setPayoutMsg(null)
-    const payoutMomo = raw ? { number: raw, country } : null
-    try {
-      const { updateAccount } = await import('../utils/accounts')
-      updateAccount(user.uid, { payoutMomo })
-      const { syncDocAwaitable } = await import('../utils/firestore-sync')
-      const result = await syncDocAwaitable(`users/${user.uid}`, { payoutMomo })
-      if (!result.ok) throw new Error(result.error || 'sync')
-      if (setUser) setUser({ ...user, payoutMomo })
-      setPayoutMsg({ type: 'success', text: raw
-        ? 'Numéro enregistré. Tes recettes partiront automatiquement sur ce Mobile Money à la fin de chaque événement.'
-        : 'Numéro effacé — tes recettes seront mises en attente jusqu\'à ce que tu en enregistres un.' })
-    } catch (e) {
-      setPayoutMsg({ type: 'error', text: 'Enregistrement impossible — vérifie ta connexion et réessaie.' })
-    }
-    setSavingPayout(false)
-  }
+  // (L'encaissement Mobile Money multi-pays est géré par MomoPayoutManager.)
 
   // ── Name change cooldown (1 fois toutes les 2 semaines) ──
   const NAME_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000 // 14 jours
@@ -1465,52 +1429,31 @@ export default function ProfilePage() {
                 compte bancaire via Stripe Connect (EUR). Avant, on montrait le champ
                 Mobile Money À TOUT LE MONDE — inutile pour un organisateur EUR, qui
                 n'avait alors AUCUN moyen de connecter sa banque pour être payé. */}
+            {/* L'encaissement est un ENSEMBLE de méthodes, pas une seule : un
+                organisateur peut faire des events en euros (Stripe) ET dans
+                plusieurs pays d'Afrique de l'Ouest (un numéro Mobile Money par
+                pays). On montre les deux — chacun sert la zone de ses événements. */}
             {isOrganizerAccount && showSection('encaissement') && (
-              payoutCurrency === 'XOF' ? (
-                <div style={S.card}>
-                  <EyebrowLabel text="Encaissement — Mobile Money" />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <p style={{ ...S.bodyText, margin: 0 }}>
-                      À la fin de chaque événement, ta recette (billets − frais de service) est envoyée
-                      automatiquement sur ce numéro Mobile Money. Rien à demander, rien à valider.
-                    </p>
-                    <div>
-                      <FocusInput
-                        label="Numéro Mobile Money (privé)"
-                        type="tel"
-                        placeholder="+228 90 00 00 00"
-                        value={payoutMomoForm}
-                        onChange={e => setPayoutMomoForm(e.target.value)}
-                      />
-                      <p style={hintStyle}>
-                        Numéro d'un pays FedaPay (Togo, Bénin, Côte d'Ivoire, Sénégal, Burkina, Mali,
-                        Niger, Guinée-Bissau) avec son indicatif — Mixx by Yas, Wave, Orange Money,
-                        MTN MoMo, Moov… Ce numéro n'est jamais affiché publiquement : il sert
-                        uniquement à te verser ton argent.
-                      </p>
-                    </div>
-                    {msgBox(payoutMsg)}
-                    <button
-                      onClick={savePayoutMomo}
-                      disabled={savingPayout}
-                      style={{ ...S.btnGold, ...(savingPayout ? S.btnDisabled : {}) }}
-                    >
-                      {savingPayout ? 'Enregistrement…' : 'Enregistrer mon numéro d\'encaissement'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                 <div>
-                  <EyebrowLabel text="Encaissement — Compte bancaire" />
+                  <EyebrowLabel text="Encaissement — Europe (compte bancaire)" />
                   <p style={{ ...S.bodyText, margin: '8px 0 12px' }}>
-                    Connecte ton compte bancaire une seule fois via Stripe (identité + RIB,
-                    quelques minutes). Ensuite, la recette de chaque événement t'est reversée
-                    <strong style={{ color: '#4ee8c8' }}> automatiquement</strong>, sans rien à
-                    demander.
+                    Pour tes événements en euros. Connecte ton compte bancaire une seule fois via
+                    Stripe (identité + RIB) → la recette de chaque vente t'est reversée
+                    <strong style={{ color: '#4ee8c8' }}> automatiquement</strong>.
                   </p>
                   <PayoutPanel uid={user.uid} returnPath="/profil" />
                 </div>
-              )
+                <div>
+                  <EyebrowLabel text="Encaissement — Afrique de l'Ouest (Mobile Money)" />
+                  <p style={{ ...S.bodyText, margin: '8px 0 12px' }}>
+                    Pour tes événements en FCFA. Un numéro par pays où tu organises : chaque
+                    événement est payé sur le numéro de <strong style={{ color: '#c8a96e' }}>son
+                    pays</strong> (Mixx by Yas, Wave, Orange Money, MTN MoMo, Moov…).
+                  </p>
+                  <MomoPayoutManager uid={user.uid} eventCountries={orgEventMomoCountries} />
+                </div>
+              </div>
             )}
 
             {/* ── Qui voit quoi ? ── */}
