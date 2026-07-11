@@ -746,7 +746,6 @@ async function finalizeFedapayBooking(db, entity) {
   // de billets pour un event disparu — ils seraient invisibles côté acheteur
   // (purge des billets fantômes au login) alors qu'il a été débité. Trace pour
   // revue manuelle + remboursement — même patron que account_deleted_after_payment.
-  // Un event ANNULÉ garde son doc events/ → il ne passe pas par ici.
   if (eventId) {
     const evGuard = await db.collection('events').doc(String(eventId)).get()
     if (!evGuard.exists) {
@@ -758,6 +757,26 @@ async function finalizeFedapayBooking(db, entity) {
         status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
       }, { merge: true })
       console.warn('[fedapay-webhook] paiement reçu pour un event supprimé — revue manuelle:', txnId, eventId)
+      return
+    }
+    // Paiement approuvé APRÈS l'ANNULATION de l'événement (correctif audit #71) :
+    // ne JAMAIS émettre de billet ni créditer le vendeur. FedaPay n'a pas de
+    // remboursement API → on inscrit le paiement dans la LISTE de remboursement
+    // manuel (worklist) + un payment_alert ; l'argent reste gardé (jamais versé).
+    if (evGuard.data().cancelled === true) {
+      try {
+        const { recordFedapayRefund } = await import('../lib/eventRefunds.js')
+        await recordFedapayRefund(db, { eventId: String(eventId), paymentRef: txnId, tickets: [] })
+      } catch (e) {
+        console.error('[fedapay-webhook] worklist remboursement (event annulé) échouée:', txnId, e.message)
+      }
+      await metaRef.set({ status: 'manual_review', reviewReason: 'paid_after_cancel', fulfillStartedAt: null }, { merge: true })
+      await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
+        provider: 'fedapay', transactionId: txnId, bookingId,
+        userId: String(userId || ''), eventId: String(eventId),
+        reason: 'paid_after_cancel', status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+      console.warn('[fedapay-webhook] paiement reçu pour un event ANNULÉ — worklist remboursement manuel:', txnId, eventId)
       return
     }
   }
@@ -933,6 +952,34 @@ async function finalizeFedapayBooking(db, entity) {
   // Les FieldValue.increment ne sont pas idempotents → flag `settled` posé dans
   // la MÊME transaction : un retry après échec partiel ne peut ni doubler ni
   // sauter le crédit. Ledger amountDueXOF SÉPARÉ des centimes EUR.
+  // ── Anti-course annulation (audit #71) : event annulé PENDANT ce webhook ?
+  // Re-lecture APRÈS l'émission des billets → ferme la course avec cancelEventFlow
+  // (si son balayage a manqué ce paiement, son écriture cancelled=true précède
+  // cette re-lecture). FedaPay n'a pas d'API de remboursement → annuler les billets
+  // émis + inscrire le paiement dans la worklist manuelle, NE PAS créditer le vendeur.
+  if (eventId) {
+    const evNow = await db.collection('events').doc(String(eventId)).get()
+    if (evNow.exists && evNow.data().cancelled === true) {
+      try {
+        const cancelBatch = db.batch()
+        for (const t of tickets) cancelBatch.set(db.collection('tickets').doc(t.ticketCode), { cancelled: true, cancelledAt: FieldValue.serverTimestamp() }, { merge: true })
+        await cancelBatch.commit()
+      } catch (e) { console.error('[fedapay-webhook] annulation billets post-course échouée:', e.message) }
+      try {
+        const { recordFedapayRefund } = await import('../lib/eventRefunds.js')
+        await recordFedapayRefund(db, { eventId: String(eventId), paymentRef: txnId, tickets })
+      } catch (e) { console.error('[fedapay-webhook] worklist post-course échouée:', txnId, e.message) }
+      await metaRef.set({ status: 'manual_review', reviewReason: 'paid_during_cancel' }, { merge: true })
+      await db.collection('payment_alerts').doc(`fedapay_${txnId}`).set({
+        provider: 'fedapay', transactionId: txnId, bookingId,
+        userId: String(userId || ''), eventId: String(eventId),
+        reason: 'paid_during_cancel', status: 'manual_review', createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+      console.warn('[fedapay-webhook] event annulé PENDANT le webhook — billets annulés + worklist:', txnId, eventId)
+      return // ne PAS créditer le vendeur pour un event annulé
+    }
+  }
+
   const feeAmount = Math.max(0, Number(meta.feeAmount || 0))
   const sellerUid = meta.sellerUid || ''
   const owed = Math.max(0, paidAmount - feeAmount)
@@ -940,6 +987,13 @@ async function finalizeFedapayBooking(db, entity) {
   await db.runTransaction(async (tx) => {
     const mSnap = await tx.get(metaRef)
     if (mSnap.exists && mSnap.data().settled === true) return
+    // Anti-course annulation (audit #71) : re-lire cancelled DANS la transaction
+    // (sérialisée avec l'écriture de cancelEventFlow). Event annulé au commit → ne
+    // pas créditer le vendeur (le payout d'un event annulé est de toute façon
+    // bloqué par lib/eventPayouts.js ; on garde le ledger juste). Remboursement
+    // acheteur assuré par la garde post-émission / cancelEventFlow.
+    const evTx = eventId ? await tx.get(db.collection('events').doc(String(eventId))) : null
+    if (evTx && evTx.exists && evTx.data().cancelled === true) return
     if (sellerUid && sellerUid !== userId && owed > 0) {
       tx.set(db.collection('seller_balances').doc(String(sellerUid)), {
         sellerUid: String(sellerUid),

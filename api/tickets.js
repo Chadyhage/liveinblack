@@ -22,6 +22,7 @@
 import { getDb, FieldValue } from '../lib/firebaseAdmin.js'
 import { requireAuth } from '../lib/verifyAuth.js'
 import { findGroupTieForEvent } from '../lib/groupTicketGuard.js'
+import { isAdminCaller } from '../lib/adminGuard.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -36,11 +37,17 @@ export default async function handler(req, res) {
   // Suppression d'événement en CASCADE — voir deleteEventCascade plus bas.
   if (action === 'delete_event') return deleteEventCascade(req, res, caller)
 
+  // Annulation d'événement (remboursements) — voir cancelEventFlow plus bas.
+  if (action === 'cancel_event') return cancelEventFlow(req, res, caller)
+
+  // Report d'événement (nouvelle date, billets gardés) — voir postponeEventFlow.
+  if (action === 'postpone_event') return postponeEventFlow(req, res, caller)
+
   // Check-in au scanner (+1 point au titulaire) — voir checkinTicket plus bas.
   if (action === 'checkin') return checkinTicket(req, res, caller)
 
   if (!ticketCode || (action !== 'assign' && action !== 'revoke')) {
-    return res.status(400).json({ error: "Paramètres invalides (action 'assign' | 'revoke' | 'checkin' | 'delete_event')" })
+    return res.status(400).json({ error: "Paramètres invalides (action 'assign' | 'revoke' | 'checkin' | 'delete_event' | 'cancel_event' | 'postpone_event')" })
   }
 
   try {
@@ -301,6 +308,148 @@ async function deleteEventCascade(req, res, caller) {
     return res.status(200).json({ ok: true, purgedTickets: tickets.length, cleanedUsers: uids.length })
   } catch (err) {
     console.error('[/api/tickets] delete_event error:', err)
+    return res.status(500).json({ error: err.message || 'Internal error' })
+  }
+}
+
+// ── Annulation d'événement (#71) ──────────────────────────────────────────────
+// POST /api/tickets { action:'cancel_event', eventId, reason? }
+//
+// Marque l'événement ANNULÉ, rembourse les acheteurs (Stripe = automatique par
+// API ; FedaPay = liste à traiter à la main car pas d'API de remboursement),
+// annule les billets, libère le stock, journalise. Autorisé : organisateur de
+// l'événement OU admin. IDEMPOTENT : rejouable sans double remboursement (garde
+// dans lib/eventRefunds.js). L'entrée au scan est déjà refusée dès que
+// ev.cancelled === true (ticketEntryEntitlement + ScannerPage), et le versement
+// à l'organisateur est déjà bloqué (lib/eventPayouts.js).
+async function cancelEventFlow(req, res, caller) {
+  const eventId = String(req.body?.eventId || '')
+  const reason = String(req.body?.reason || '').slice(0, 500)
+  if (!eventId) return res.status(400).json({ error: 'eventId requis' })
+  try {
+    const db = getDb()
+    const evRef = db.collection('events').doc(eventId)
+    const evSnap = await evRef.get()
+    if (!evSnap.exists) return res.status(404).json({ error: 'Événement introuvable' })
+    const ev = evSnap.data()
+    const isOwner = ev.createdBy === caller.uid || ev.organizerId === caller.uid
+    if (!isOwner && !(await isAdminCaller(db, caller))) {
+      return res.status(403).json({ error: "Seul l'organisateur de cet événement (ou un administrateur) peut l'annuler." })
+    }
+
+    // 1) Marquer l'événement annulé EN PREMIER : coupe immédiatement l'entrée au
+    // scan et bloque le versement, même si la suite échoue partiellement (l'appel
+    // est rejouable pour terminer les remboursements).
+    await evRef.set({
+      cancelled: true,
+      cancelledAt: FieldValue.serverTimestamp(),
+      cancelReason: reason || null,
+      status: 'cancelled',
+    }, { merge: true })
+
+    // 2) Remboursements (Stripe auto / FedaPay worklist) — regroupés par paiement.
+    const tSnap = await db.collection('tickets').where('eventId', '==', eventId).get()
+    const tickets = tSnap.docs.map(d => ({ ref: d.ref, ...d.data() }))
+    const Stripe = (await import('stripe')).default
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-02-25.clover' })
+    const { processEventRefunds } = await import('../lib/eventRefunds.js')
+    const refunds = await processEventRefunds(stripe, db, FieldValue, { eventId, tickets })
+
+    // 3) Annuler les billets (registre + carnets) : cancelled:true → « Mes
+    // billets » affiche annulé + défense en profondeur au scan. Par lots.
+    const toCancel = tickets.filter(t => t.cancelled !== true)
+    for (let i = 0; i < toCancel.length; i += 450) {
+      const batch = db.batch()
+      toCancel.slice(i, i + 450).forEach(t => batch.set(t.ref, { cancelled: true, cancelledAt: FieldValue.serverTimestamp() }, { merge: true }))
+      await batch.commit()
+    }
+    const uids = [...new Set(tickets.flatMap(t => [t.userId, t.hostUid]).filter(Boolean).map(String))]
+    for (let i = 0; i < uids.length; i += 10) {
+      await Promise.all(uids.slice(i, i + 10).map(uid => {
+        const bRef = db.collection('user_bookings').doc(uid)
+        return db.runTransaction(async (tx) => {
+          const snap = await tx.get(bRef)
+          if (!snap.exists) return
+          const items = Array.isArray(snap.data().items) ? snap.data().items : []
+          let changed = false
+          const next = items.map(it => {
+            if (String(it.eventId) === eventId && it.cancelled !== true) { changed = true; return { ...it, cancelled: true } }
+            return it
+          })
+          if (changed) tx.set(bRef, { items: next, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+        })
+      }))
+    }
+
+    // 4) Libérer le stock (available = total) — cohérence d'affichage.
+    if (Array.isArray(ev.places) && ev.places.length) {
+      const released = ev.places.map(p => ({ ...p, available: Math.max(0, Number(p.total) || 0) }))
+      await evRef.set({ places: released }, { merge: true })
+    }
+
+    // 5) Journal d'annulation (audit admin).
+    const stripeRefundedCents = refunds.stripeRefunded.reduce((s, r) => s + (Number(r.amountCents) || 0), 0)
+    await db.collection('event_cancellations').doc(eventId).set({
+      eventId, eventName: ev.name || '', by: caller.uid,
+      reason: reason || null,
+      stripeRefundedCount: refunds.stripeRefunded.length,
+      stripeRefundedCents,
+      fedapayWorklistCount: refunds.fedapayWorklist.length,
+      stripeFailedCount: refunds.stripeFailed.length,
+      orphanCount: refunds.orphans.length,
+      cancelledAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+
+    return res.status(200).json({
+      ok: true,
+      refunds,
+      ticketsCancelled: toCancel.length,
+      stripeRefundedCents,
+    })
+  } catch (err) {
+    console.error('[/api/tickets] cancel_event error:', err)
+    return res.status(500).json({ error: err.message || 'Internal error' })
+  }
+}
+
+// ── Report d'événement (#71) ──────────────────────────────────────────────────
+// POST /api/tickets { action:'postpone_event', eventId, newDate, newTime? }
+//
+// Reporte l'événement : nouvelle date/heure, billets + QR CONSERVÉS (le billet
+// reste valide pour la nouvelle date), on garde l'ancienne date (postponedFrom).
+// Aucun mouvement d'argent. Autorisé : organisateur OU admin.
+async function postponeEventFlow(req, res, caller) {
+  const eventId = String(req.body?.eventId || '')
+  const newDate = String(req.body?.newDate || '')
+  const newTime = req.body?.newTime != null ? String(req.body.newTime).slice(0, 5) : null
+  if (!eventId || !newDate) return res.status(400).json({ error: 'eventId et newDate requis' })
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) return res.status(400).json({ error: 'Date invalide (format attendu AAAA-MM-JJ)' })
+  if (newTime != null && !/^\d{2}:\d{2}$/.test(newTime)) return res.status(400).json({ error: 'Heure invalide (format attendu HH:MM)' })
+  try {
+    const db = getDb()
+    const evRef = db.collection('events').doc(eventId)
+    const evSnap = await evRef.get()
+    if (!evSnap.exists) return res.status(404).json({ error: 'Événement introuvable' })
+    const ev = evSnap.data()
+    const isOwner = ev.createdBy === caller.uid || ev.organizerId === caller.uid
+    if (!isOwner && !(await isAdminCaller(db, caller))) {
+      return res.status(403).json({ error: "Seul l'organisateur de cet événement (ou un administrateur) peut le reporter." })
+    }
+    if (ev.cancelled === true) return res.status(409).json({ error: 'Un événement annulé ne peut pas être reporté.' })
+
+    const previousDate = ev.date || null
+    const previousTime = ev.time || null
+    await evRef.set({
+      date: newDate,
+      ...(newTime != null ? { time: newTime } : {}),
+      status: 'postponed',
+      postponedFrom: { date: previousDate, time: previousTime },
+      postponedAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+
+    return res.status(200).json({ ok: true, newDate, newTime, previousDate, previousTime })
+  } catch (err) {
+    console.error('[/api/tickets] postpone_event error:', err)
     return res.status(500).json({ error: err.message || 'Internal error' })
   }
 }

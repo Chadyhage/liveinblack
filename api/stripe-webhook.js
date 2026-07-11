@@ -266,7 +266,6 @@ async function finalizeBooking(db, session, meta) {
   // de billets pour un event disparu — ils seraient invisibles côté acheteur
   // (purge des billets fantômes au login) alors qu'il a été débité. Trace pour
   // revue manuelle + remboursement — même patron que account_deleted_after_payment.
-  // Un event ANNULÉ garde son doc events/ → il ne passe pas par ici.
   if (eventId) {
     const evGuard = await db.collection('events').doc(String(eventId)).get()
     if (!evGuard.exists) {
@@ -278,6 +277,30 @@ async function finalizeBooking(db, session, meta) {
         currency: session.currency || null, createdAt: FieldValue.serverTimestamp(),
       }, { merge: true })
       console.warn('[webhook] paiement reçu pour un event supprimé — revue manuelle:', session.id, eventId)
+      return
+    }
+    // Paiement finalisé APRÈS l'ANNULATION de l'événement (correctif audit #71) :
+    // la session Checkout était ouverte AVANT l'annulation, l'acheteur paie APRÈS
+    // que cancelEventFlow soit passé (il n'a donc jamais vu ce billet). Ne JAMAIS
+    // émettre de billet ni créditer le vendeur — l'entrée serait refusée au scan
+    // (ev.cancelled) et l'acheteur débité sans contrepartie. On rembourse
+    // AUTOMATIQUEMENT (idempotent) et on trace si le remboursement échoue.
+    if (evGuard.data().cancelled === true) {
+      try {
+        const { refundPostCancellationStripe } = await import('../lib/eventRefunds.js')
+        await refundPostCancellationStripe(stripe, db, { eventId: String(eventId), session })
+        console.warn('[webhook] paiement reçu pour un event ANNULÉ — remboursé automatiquement:', session.id, eventId)
+      } catch (e) {
+        await db.collection('payment_alerts').doc(`postcancel_${session.id}`).set({
+          provider: 'stripe', stripeSessionId: session.id, bookingId,
+          userId: String(userId || ''), eventId: String(eventId),
+          reason: 'paid_after_cancel_refund_failed', status: 'manual_review',
+          error: String(e && e.message || '').slice(0, 300),
+          amountTotal: session.amount_total || null, currency: session.currency || null,
+          createdAt: FieldValue.serverTimestamp(),
+        }, { merge: true })
+        console.error('[webhook] remboursement auto (event annulé) ÉCHOUÉ — revue manuelle:', session.id, e.message)
+      }
       return
     }
   }
@@ -469,6 +492,40 @@ async function finalizeBooking(db, session, meta) {
     }
   }
 
+  // ── Anti-course annulation (audit #71) : l'événement a-t-il été annulé PENDANT
+  // ce webhook (entre la garde initiale et maintenant) ? Cette re-lecture APRÈS
+  // l'émission des billets ferme la course avec cancelEventFlow : si son balayage
+  // a manqué ce paiement (billet émis après sa lecture des billets), alors son
+  // écriture cancelled=true est forcément ANTÉRIEURE à cette re-lecture → on la
+  // voit ici. On annule les billets émis + rembourse, et on NE crédite PAS le
+  // vendeur. Un retry du webhook est capté plus haut par la garde ev.cancelled.
+  if (eventId) {
+    const evNow = await db.collection('events').doc(String(eventId)).get()
+    if (evNow.exists && evNow.data().cancelled === true) {
+      try {
+        const cancelBatch = db.batch()
+        for (const t of tickets) cancelBatch.set(db.collection('tickets').doc(t.ticketCode), { cancelled: true, cancelledAt: FieldValue.serverTimestamp() }, { merge: true })
+        await cancelBatch.commit()
+      } catch (e) { console.error('[webhook] annulation billets post-course échouée:', e.message) }
+      try {
+        const { refundPostCancellationStripe } = await import('../lib/eventRefunds.js')
+        await refundPostCancellationStripe(stripe, db, { eventId: String(eventId), session })
+        console.warn('[webhook] event annulé PENDANT le webhook — billets annulés + remboursés:', session.id, eventId)
+      } catch (e) {
+        await db.collection('payment_alerts').doc(`postcancel_${session.id}`).set({
+          provider: 'stripe', stripeSessionId: session.id, bookingId,
+          userId: String(userId || ''), eventId: String(eventId),
+          reason: 'paid_during_cancel_refund_failed', status: 'manual_review',
+          error: String(e && e.message || '').slice(0, 300),
+          amountTotal: session.amount_total || null, currency: session.currency || null,
+          createdAt: FieldValue.serverTimestamp(),
+        }, { merge: true })
+        console.error('[webhook] remboursement post-course ÉCHOUÉ — revue manuelle:', session.id, e.message)
+      }
+      return // ne PAS créditer le vendeur pour un event annulé
+    }
+  }
+
   // ── Crédit vendeur : EXACTEMENT UNE FOIS ──
   // Les FieldValue.increment ne sont pas idempotents → flag `settled` posé dans la
   // MÊME transaction : un retry après échec partiel ne peut ni doubler ni sauter.
@@ -479,6 +536,14 @@ async function finalizeBooking(db, session, meta) {
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref)
     if (snap.exists && snap.data().settled === true) return
+    // Anti-course annulation (audit #71) : re-lire cancelled DANS la transaction.
+    // Firestore sérialise cette lecture avec l'écriture cancelled=true de
+    // cancelEventFlow → si l'event est annulé au moment du commit, on NE crédite
+    // PAS et on NE pose PAS settled (settled ⟺ crédité, sur lequel s'appuie le
+    // renversement ledger). Le remboursement de l'acheteur est assuré par la garde
+    // post-émission ci-dessus ou par cancelEventFlow ; un retry est capté plus haut.
+    const evTx = eventId ? await tx.get(db.collection('events').doc(String(eventId))) : null
+    if (evTx && evTx.exists && evTx.data().cancelled === true) return
     if (meta.connectMode === 'ledger' && sellerUid && owedCents > 0) {
       tx.set(db.collection('seller_balances').doc(String(sellerUid)), {
         sellerUid: String(sellerUid),
