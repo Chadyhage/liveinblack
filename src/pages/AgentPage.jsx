@@ -30,10 +30,17 @@ const ADMIN_EMAIL = 'hagechady4@gmail.com'
 function useAgentGuard() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  // Agent = rôle 'agent' sous N'IMPORTE QUELLE forme (aligné sur le garde serveur
+  // isAgentCaller). switchActiveRole réécrit `role` quand l'admin change
+  // d'interface : le limiter à `role` éjectait l'admin de son panneau (audit #18).
+  const isAgentUser = !!user && (
+    user.role === 'agent' || user.activeRole === 'agent' ||
+    (Array.isArray(user.enabledRoles) && user.enabledRoles.includes('agent'))
+  )
   useEffect(() => {
-    if (!user || user.role !== 'agent') navigate('/')
+    if (!isAgentUser) navigate('/')
   }, [user])
-  return user?.role === 'agent'
+  return isAgentUser
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -521,7 +528,10 @@ export default function AgentPage() {
       a.name?.toLowerCase().includes(search.toLowerCase()) ||
       a.email?.toLowerCase().includes(search.toLowerCase()) ||
       a.phone?.includes(search)
-    const matchRole   = roleFilter === 'all' || a.role === roleFilter
+    // 'user' et 'client' sont le même rôle (stocké tantôt 'client', tantôt 'user')
+    // — le filtre 'user' doit montrer les deux, sinon les clients disparaissent (audit #12).
+    const matchRole   = roleFilter === 'all'
+      || (roleFilter === 'user' ? (a.role === 'user' || a.role === 'client' || !a.role) : a.role === roleFilter)
     const matchStatus = statusFilter === 'all' || a.status === statusFilter
     return matchSearch && matchRole && matchStatus
   })
@@ -3592,10 +3602,19 @@ export default function AgentPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={async () => {
-                        await resolveDeletionRequest(req.id, 'approved', user.uid, user.name || 'Admin', delResNotes[req.id] || '')
-                        setDeletionRequests(getAllDeletionRequests())
-                        setDelResNotes(n => ({ ...n, [req.id]: '' }))
-                        showToast('Suppression approuvée — compte anonymisé.')
+                        // try/catch OBLIGATOIRE : resolveDeletionRequest peut jeter
+                        // (409 « l'organisateur a des billets vendus / recette non
+                        // versée », 500 Auth, réseau). Sans ça, l'action la plus
+                        // destructrice du panneau échouait en SILENCE (audit admin #2).
+                        try {
+                          await resolveDeletionRequest(req.id, 'approved', user.uid, user.name || 'Admin', delResNotes[req.id] || '')
+                          setDeletionRequests(getAllDeletionRequests())
+                          setDelResNotes(n => ({ ...n, [req.id]: '' }))
+                          showToast('Suppression approuvée — compte anonymisé.')
+                        } catch (e) {
+                          showToast(e?.message || "Suppression impossible (ex : l'organisateur a des billets vendus ou de la recette non versée). Réessaie.", 'error')
+                          setDeletionRequests(getAllDeletionRequests())
+                        }
                       }}
                       style={{
                         flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer',

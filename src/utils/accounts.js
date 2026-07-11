@@ -111,11 +111,20 @@ export async function approveValidation(uid) {
   if (!['client', 'user', 'organisateur', 'prestataire'].includes(resolvedRole)) {
     throw new Error(`Rôle « ${resolvedRole} » non accordable via une validation.`)
   }
+  // Fusionner enabledRoles avec ceux DÉJÀ accordés au compte (audit admin #7) :
+  // sans ça, approuver un rôle SUPPLÉMENTAIRE écrasait le tableau et faisait perdre
+  // les interfaces existantes (ex. un organisateur validé prestataire perdait
+  // organisateur). getAccountById lit le compte courant chargé dans le panneau.
+  const existingAcct = getAccountById(uid) || {}
+  const existingRoles = Array.isArray(existingAcct.enabledRoles) && existingAcct.enabledRoles.length
+    ? existingAcct.enabledRoles
+    : (existingAcct.role ? [existingAcct.role] : [])
+  const mergedEnabledRoles = [...new Set([...existingRoles, ...(pending.enabledRoles || []), resolvedRole])]
   const approved = {
     ...pending,
     role: resolvedRole,
     activeRole: resolvedRole,
-    enabledRoles: pending.enabledRoles?.length ? pending.enabledRoles : [resolvedRole],
+    enabledRoles: mergedEnabledRoles,
     status: 'active',
     approvedAt: Date.now(),
   }

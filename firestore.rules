@@ -361,9 +361,14 @@ service cloud.firestore {
     }
 
     // ── Signalements ──────────────────────────────────────────────────────────
+    // AVANT : write ouvert à tout connecté + ID = Date.now() devinable → n'importe
+    // qui pouvait écraser/supprimer/clôturer un signalement d'abus (falsifier la
+    // file de modération). Désormais : on ne CRÉE que son propre signalement
+    // (fromId = soi), et seul un agent modifie/clôture/supprime (audit admin #1).
     match /reports/{id} {
-      allow read:  if isAgent();
-      allow write: if isSignedIn();
+      allow read:   if isAgent();
+      allow create: if isAgent() || (isSignedIn() && request.resource.data.fromId == request.auth.uid);
+      allow update, delete: if isAgent();
     }
 
     // ── Pages publiques organisateurs ───────────────────────────────────────
