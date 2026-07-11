@@ -1044,17 +1044,16 @@ export default function ProfilePage() {
         }
         deleteAccount(uid)
       }
-      // Clear all local session data for this user
+      // Purger TOUTES les données locales de l'appareil (audit #19 : avant, seules
+      // 4 clés étaient effacées → l'historique de conversations, réservations et
+      // comptes en clair (lib_messages/lib_conversations/lib_bookings/…) restait sur
+      // la machine après suppression du compte). Sur un appareil partagé, un autre
+      // compte re-synchronise ses propres données depuis Firestore à la connexion.
+      try {
+        Object.keys(localStorage).filter(k => k.startsWith('lib_')).forEach(k => localStorage.removeItem(k))
+      } catch {}
       localStorage.removeItem('lib_user')
       localStorage.removeItem('lib_region')
-      // Clear user-specific localStorage keys that are keyed by uid
-      try {
-        const keysToRemove = [
-          `lib_catalog_${uid}`,
-          `lib_wallet_${uid}`,
-        ]
-        keysToRemove.forEach(k => localStorage.removeItem(k))
-      } catch {}
       setUser(null)
       navigate('/accueil')
     } catch (err) {

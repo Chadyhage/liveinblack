@@ -342,8 +342,15 @@ export default function OnboardingPrestataire() {
         // comme « client » avant le paiement, bien qu'un dossier prestataire leur
         // soit déjà rattaché.
         if (user.role !== 'prestataire' && fd.regEmail && existing.uid === user.uid) {
+          // FUSIONNER enabledRoles au lieu de l'écraser (audit #16 : avant, mis à
+          // ['prestataire'] → un compte cumulé perdait ses autres interfaces, ex.
+          // organisateur). On AJOUTE 'prestataire' aux rôles existants.
+          const currentRoles = Array.isArray(user.enabledRoles) && user.enabledRoles.length
+            ? user.enabledRoles
+            : (user.role ? [user.role] : ['client'])
           const accountPatch = {
-            role: 'prestataire', activeRole: 'prestataire', enabledRoles: ['prestataire'], status: 'draft',
+            role: 'prestataire', activeRole: 'prestataire',
+            enabledRoles: [...new Set([...currentRoles, 'prestataire'])], status: 'draft',
           }
           setUser({ ...user, ...accountPatch })
           import('../utils/firestore-sync').then(({ syncDoc }) => {
