@@ -65,7 +65,11 @@ export default function PublicOrganizers() {
       if (!matchesEntityRegion(profile, regionId, ownEvents)) return false
       if (upcomingOnly && !next) return false
       if (!q) return true
-      return [profile.publicName, profile.city, profile.country, profile.shortDescription]
+      // Inclure les zones d'intervention affichées sur la carte (l.147) dans le
+      // foin : sinon taper « Sénégal » ne trouve pas un organisateur qui affiche
+      // pourtant « Paris · Sénégal » (audit recherche, incohérent avec HeroSearch).
+      const zoneNames = normalizeRegionIds(profile.zonesIntervention?.length ? profile.zonesIntervention : [profile.regionId || profile.country]).map(getRegionName)
+      return [profile.publicName, profile.city, profile.country, profile.shortDescription, ...zoneNames]
         .filter(Boolean).map(normalizeGeoText).join(' ').includes(q)
     })
     return list.sort((a, b) => sort === 'recent'

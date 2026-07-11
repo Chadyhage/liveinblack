@@ -193,11 +193,14 @@ export default function PublicPrestatairePage() {
     )
   }
 
-  const socialLinks = SOCIAL_NETWORKS.map(network => ({
+  const allSocialLinks = SOCIAL_NETWORKS.map(network => ({
     ...network,
     url: socialUrl(network.key, profile.socialLinks?.[network.key] || (network.key === 'website' ? profile.website : '')),
   })).filter(network => network.url)
-  const website = socialLinks.find(network => network.key === 'website')?.url || externalUrl(profile.website)
+  const website = allSocialLinks.find(network => network.key === 'website')?.url || externalUrl(profile.website)
+  // Le site web a sa propre ligne « Voir son site web » dans les coordonnées :
+  // on l'EXCLUT des chips sociaux pour ne pas l'afficher deux fois (audit doublon).
+  const socialLinks = allSocialLinks.filter(network => network.key !== 'website')
   const zones = normalizeRegionIds(profile.zonesIntervention).map(getRegionName).filter(Boolean)
   const locationLabel = [profile.city || profile.location, profile.country].filter(Boolean)
     .filter((value, index, all) => all.indexOf(value) === index).join(' · ')
