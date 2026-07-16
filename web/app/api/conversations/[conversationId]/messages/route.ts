@@ -1,0 +1,42 @@
+import { NextResponse } from 'next/server'
+import { z } from 'zod'
+import { auth } from '@/auth'
+import { getMessages, sendMessage } from '@/lib/server/messaging'
+
+// GET : pagination par curseur (`?before=<messageId>&limit=`) — voir
+// lib/server/messaging.ts (getMessages) pour la sémantique exacte du
+// curseur. POST : envoi d'un message texte/image/voix — la validation
+// (vide, >4000 caractères, type, mute, blocage) vit entièrement côté serveur.
+const bodySchema = z.object({
+  type: z.enum(['text', 'image', 'voice']),
+  content: z.string(),
+  replyToMessageId: z.string().min(1).optional(),
+})
+
+export async function GET(req: Request, { params }: { params: Promise<{ conversationId: string }> }) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const { conversationId } = await params
+  const url = new URL(req.url)
+  const before = url.searchParams.get('before') ?? undefined
+  const limitParam = url.searchParams.get('limit')
+  const limit = limitParam ? Number(limitParam) : undefined
+
+  const result = await getMessages({ id: session.user.id }, { conversationId, before, limit })
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  return NextResponse.json({ ok: true, messages: result.messages, hasMore: result.hasMore })
+}
+
+export async function POST(req: Request, { params }: { params: Promise<{ conversationId: string }> }) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const { conversationId } = await params
+  const parsed = bodySchema.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
+
+  const result = await sendMessage({ id: session.user.id }, { conversationId, ...parsed.data })
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  return NextResponse.json({ ok: true, message: result.message })
+}

@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* Design system LIVEINBLACK (voir CLAUDE.md) : surfaces opaques, CTA pleins,
+   pas de glow néon ni de glassmorphism de contenu (blur toléré : nav/header). */
+:root {
+  --obsidian: #04040b;
+  --surface: #0e0f16; /* cartes */
+  --surface-2: #12131c; /* modals/menus */
+  --teal: #4ee8c8;
+  --teal-solid: #3ed6b5; /* CTA teal plein */
+  --gold: #c8a96e;
+  --pink: #e05aaa;
+  --violet: #8b5cf6;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-faint: rgba(255, 255, 255, 0.4);
+
+  --background: var(--obsidian);
+  --foreground: var(--text);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), Inter, sans-serif;
+}
+
+/* Grain texture discret (cf. CLAUDE.md — opacity 0.035) */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
