@@ -1,22 +1,32 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { auth } from '@/auth'
 import { verifyPrivateEventCode } from '@/lib/server/events'
+import { consumeEventAccessCode } from '@/lib/server/eventAccessCodes'
 import { signEventUnlock, unlockCookieName } from '@/lib/server/eventUnlock'
 
 const bodySchema = z.object({ code: z.string().min(1) })
 
 // Vérifie le code d'un événement privé et, si valide, pose un cookie signé
 // (httpOnly) prouvant le déverrouillage — jamais le code/hash lui-même n'est
-// renvoyé au client. Pas de suivi "qui a utilisé quel code" pour l'instant
-// (hors périmètre phase 2, simple porte d'accès sans effet de bord).
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+// renvoyé au client. Deux mécanismes acceptés (#7 phase organisateur) : le
+// code MAÎTRE partagé (réutilisable, `verifyPrivateEventCode`) ou un code
+// INDIVIDUEL à usage unique généré depuis le dashboard organisateur
+// (`consumeEventAccessCode`, lib/server/eventAccessCodes.ts) — le maître est
+// tenté en premier (pas d'écriture), l'individuel en repli (marque le code
+// consommé).
+export async function POST(req: Request, { params }: { params: Promise<{ eventId: string }> }) {
+  const { eventId: id } = await params
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
   }
 
-  const valid = await verifyPrivateEventCode(id, parsed.data.code)
+  let valid = await verifyPrivateEventCode(id, parsed.data.code)
+  if (!valid) {
+    const session = await auth()
+    valid = await consumeEventAccessCode(id, parsed.data.code, session?.user?.id ?? null)
+  }
   if (!valid) {
     return NextResponse.json({ error: 'invalid_code' }, { status: 403 })
   }

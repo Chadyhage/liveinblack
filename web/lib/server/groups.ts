@@ -3,6 +3,7 @@ import { getDb } from '../db/mongoose'
 import Conversation, { type ConversationDoc } from '../models/Conversation'
 import Message from '../models/Message'
 import User from '../models/User'
+import { uploadDataUri } from './cloudinary'
 import {
   toConversationView,
   normalizeObjectId,
@@ -13,18 +14,21 @@ import {
 } from './messaging'
 
 // Port du cycle de vie des groupes de src/utils/messaging.js
-// (createGroup/leaveGroup/deleteGroup/setGroupMemberMute/clearGroupMemberMute)
-// vers le modèle Mongo un-document-par-conversation (lib/models/Conversation.ts)
-// déjà en place pour la messagerie de base (lib/server/messaging.ts, #40).
+// (createGroup/leaveGroup/deleteGroup/setGroupMemberMute/clearGroupMemberMute/
+// updateGroupInfo/handleAddMember/handleRemoveMember/handleSetAdmin) vers le
+// modèle Mongo un-document-par-conversation (lib/models/Conversation.ts) déjà
+// en place pour la messagerie de base (lib/server/messaging.ts, #40).
 //
-// Différence délibérée avec le legacy : `mutedUserIds` est un mute PERMANENT
-// (togglé par un admin), pas une expiration temporisée comme l'ancien
-// `memberMutes: {[memberId]: {untilAtMs,...}}` — voir l'en-tête de
-// lib/models/Conversation.ts, qui fixe déjà ce choix pour ce chantier.
+// Correction (#50) : une précédente version de ce fichier affirmait ICI que
+// "l'admin ajoute/retire un membre" n'existait pas dans le legacy — c'était
+// FAUX (MessagingPage.jsx implémente bel et bien handleAddMember/
+// handleRemoveMember/handleSetAdmin avec UI complète). addMember/removeMember/
+// setMemberRole ci-dessous portent cette capacité fidèlement.
 //
-// Aucune capacité "admin ajoute/retire un membre" n'existe ici, à dessein :
-// le legacy n'avait QUE le départ volontaire (leaveGroup) — jamais de
-// kick/add côté admin. On ne l'invente pas.
+// `memberMuteUntil` (lib/models/Conversation.ts) porte désormais une VRAIE
+// expiration temporisée (comme le `memberMutes: {[memberId]: {untilAtMs,...}}`
+// legacy) — `mutedUserIds` reste un cache d'affichage dérivé, jamais la
+// source de vérité (voir resolveMemberMuteStatus, lib/server/messaging.ts).
 
 // ─────────────────────────── gardes partagées ─────────────────────────────
 
@@ -297,9 +301,13 @@ export async function deleteGroup(caller: MessagingCaller, input: ConversationId
 export interface MuteMemberInput {
   conversationId: string
   targetUserId: string
+  // null = sourdine indéfinie ("jusqu'à réactivation") ; sinon durée en ms
+  // depuis maintenant — voir GROUP_MUTE_DURATIONS (legacy MessagingPage.jsx :
+  // 15 min / 1 h / 8 h / 24 h / 7 jours / indéfini).
+  durationMs: number | null
 }
 
-export type MuteMemberResult = ErrResult | { ok: true }
+export type MuteMemberResult = ErrResult | { ok: true; untilAtMs: number | null }
 
 export async function muteMember(caller: MessagingCaller, input: MuteMemberInput): Promise<MuteMemberResult> {
   await getDb()
@@ -307,6 +315,9 @@ export async function muteMember(caller: MessagingCaller, input: MuteMemberInput
   const conversationId = input.conversationId?.trim()
   const targetUserId = input.targetUserId?.trim()
   if (!conversationId || !targetUserId) return { ok: false, status: 400, error: 'invalid_input' }
+  if (input.durationMs !== null && (!Number.isFinite(input.durationMs) || input.durationMs <= 0)) {
+    return { ok: false, status: 400, error: 'invalid_duration' }
+  }
 
   const guard = await loadGroupAsAdmin(caller, conversationId)
   if (!guard.ok) return guard
@@ -321,13 +332,21 @@ export async function muteMember(caller: MessagingCaller, input: MuteMemberInput
   // silence un autre administrateur"), quel que soit l'admin qui la tente.
   if (target.role === 'admin') return { ok: false, status: 400, error: 'target_is_admin' }
 
+  const untilAtMs = input.durationMs === null ? null : Date.now() + input.durationMs
+  const untilValue = untilAtMs === null ? '' : new Date(untilAtMs).toISOString()
+
   // $addToSet : idempotent, une seconde mise en sourdine du même membre est
-  // un no-op silencieux plutôt qu'une erreur ou un doublon.
-  await Conversation.updateOne({ _id: conversation._id }, { $addToSet: { mutedUserIds: targetUserId } })
-  return { ok: true }
+  // un no-op silencieux plutôt qu'une erreur ou un doublon. memberMuteUntil
+  // est la source de vérité (resolveMemberMuteStatus, messaging.ts) —
+  // mutedUserIds n'est qu'un cache d'affichage tenu à jour en même temps.
+  await Conversation.updateOne(
+    { _id: conversation._id },
+    { $addToSet: { mutedUserIds: targetUserId }, $set: { [`memberMuteUntil.${targetUserId}`]: untilValue } }
+  )
+  return { ok: true, untilAtMs }
 }
 
-export async function unmuteMember(caller: MessagingCaller, input: MuteMemberInput): Promise<MuteMemberResult> {
+export async function unmuteMember(caller: MessagingCaller, input: { conversationId: string; targetUserId: string }): Promise<ErrResult | { ok: true }> {
   await getDb()
 
   const conversationId = input.conversationId?.trim()
@@ -343,6 +362,276 @@ export async function unmuteMember(caller: MessagingCaller, input: MuteMemberInp
   // qui ne validait que le rôle admin de l'appelant, jamais l'état du membre
   // ciblé. C'est muteMember, l'action qui produit un effet NOUVEAU à
   // contrôler, qui porte ces vérifications.
-  await Conversation.updateOne({ _id: guard.conversation._id }, { $pull: { mutedUserIds: targetUserId } })
+  await Conversation.updateOne(
+    { _id: guard.conversation._id },
+    { $pull: { mutedUserIds: targetUserId }, $unset: { [`memberMuteUntil.${targetUserId}`]: '' } }
+  )
   return { ok: true }
+}
+
+// ─────────────────────── addMember / removeMember / setMemberRole ─────────
+
+const MAX_MEMBERS_TOTAL = MAX_OTHER_MEMBERS + 1
+
+export interface AddMemberInput {
+  conversationId: string
+  userId: string
+}
+
+export type AddMemberResult = ErrResult | { ok: true; conversation: ConversationView }
+
+export async function addMember(caller: MessagingCaller, input: AddMemberInput): Promise<AddMemberResult> {
+  await getDb()
+
+  const conversationId = input.conversationId?.trim()
+  const userIdRaw = input.userId?.trim()
+  if (!conversationId || !userIdRaw) return { ok: false, status: 400, error: 'invalid_input' }
+  if (!mongoose.isValidObjectId(userIdRaw)) return { ok: false, status: 404, error: 'user_not_found' }
+  const userId = normalizeObjectId(userIdRaw)
+
+  const guard = await loadGroupAsAdmin(caller, conversationId)
+  if (!guard.ok) return guard
+  const { conversation, members } = guard
+
+  if (members.some((m) => m.userId === userId)) return { ok: false, status: 400, error: 'already_a_member' }
+  if (members.length >= MAX_MEMBERS_TOTAL) return { ok: false, status: 400, error: 'too_many_members' }
+
+  const user = await User.findById(userId).lean()
+  if (!user) return { ok: false, status: 404, error: 'user_not_found' }
+  const memberName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email
+
+  conversation.members!.push({ userId, name: memberName, role: 'member' })
+  conversation.participantIds = conversation.members!.map((m) => m.userId)
+
+  const callerName = await resolveDisplayName(caller.id)
+  const systemContent = `${callerName} a ajouté ${memberName}`
+  const systemMessage = await Message.create({
+    conversationId: String(conversation._id),
+    senderId: caller.id,
+    senderName: callerName,
+    type: 'system',
+    content: systemContent,
+  })
+  conversation.lastMessage = systemContent
+  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
+  conversation.lastSenderId = caller.id
+  await conversation.save()
+
+  return {
+    ok: true,
+    conversation: toConversationView(conversation.toObject({ flattenMaps: true }) as unknown as Parameters<typeof toConversationView>[0]),
+  }
+}
+
+export interface RemoveMemberInput {
+  conversationId: string
+  userId: string
+}
+
+export type RemoveMemberResult = ErrResult | { ok: true }
+
+export async function removeMember(caller: MessagingCaller, input: RemoveMemberInput): Promise<RemoveMemberResult> {
+  await getDb()
+
+  const conversationId = input.conversationId?.trim()
+  const userId = input.userId?.trim()
+  if (!conversationId || !userId) return { ok: false, status: 400, error: 'invalid_input' }
+  // Se retirer soi-même passe par leaveGroup (messaging.ts) — pas ce chemin,
+  // qui suppose une cible DISTINCTE de l'appelant.
+  if (userId === caller.id) return { ok: false, status: 400, error: 'cannot_remove_self' }
+
+  const guard = await loadGroupAsAdmin(caller, conversationId)
+  if (!guard.ok) return guard
+  const { conversation, members } = guard
+
+  const idx = members.findIndex((m) => m.userId === userId)
+  if (idx === -1) return { ok: false, status: 400, error: 'not_a_member' }
+  const removedName = members[idx].name
+
+  conversation.members!.splice(idx, 1)
+  conversation.participantIds = conversation.members!.map((m) => m.userId)
+
+  const callerName = await resolveDisplayName(caller.id)
+  const systemContent = `${removedName} a été retiré du groupe`
+  const systemMessage = await Message.create({
+    conversationId: String(conversation._id),
+    senderId: caller.id,
+    senderName: callerName,
+    type: 'system',
+    content: systemContent,
+  })
+  conversation.lastMessage = systemContent
+  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
+  conversation.lastSenderId = caller.id
+  // Nettoyage : un membre retiré ne doit garder aucune sourdine résiduelle.
+  conversation.mutedUserIds = conversation.mutedUserIds.filter((id) => id !== userId)
+  if (conversation.memberMuteUntil) conversation.memberMuteUntil.delete(userId)
+  await conversation.save()
+
+  return { ok: true }
+}
+
+export interface SetMemberRoleInput {
+  conversationId: string
+  userId: string
+  role: 'admin' | 'member'
+}
+
+export type SetMemberRoleResult = ErrResult | { ok: true }
+
+export async function setMemberRole(caller: MessagingCaller, input: SetMemberRoleInput): Promise<SetMemberRoleResult> {
+  await getDb()
+
+  const conversationId = input.conversationId?.trim()
+  const userId = input.userId?.trim()
+  const role = input.role
+  if (!conversationId || !userId || (role !== 'admin' && role !== 'member')) return { ok: false, status: 400, error: 'invalid_input' }
+
+  const guard = await loadGroupAsAdmin(caller, conversationId)
+  if (!guard.ok) return guard
+  const { conversation, members } = guard
+
+  const target = members.find((m) => m.userId === userId)
+  if (!target) return { ok: false, status: 400, error: 'not_a_member' }
+  if (target.role === role) return { ok: true }
+
+  if (target.role === 'admin' && role === 'member') {
+    const adminCount = members.filter((m) => m.role === 'admin').length
+    // Garde ajoutée délibérément AU-DELÀ du legacy (qui ne la vérifiait
+    // jamais) : un groupe ne doit jamais se retrouver sans AUCUN admin —
+    // sinon plus personne ne peut plus jamais le gérer (rôles, sourdines,
+    // suppression...).
+    if (adminCount <= 1) return { ok: false, status: 400, error: 'only_admin' }
+  }
+
+  target.role = role
+  const callerName = await resolveDisplayName(caller.id)
+  const systemContent = role === 'admin' ? `${callerName} a nommé ${target.name} administrateur` : `${callerName} a retiré le rôle Admin à ${target.name}`
+  const systemMessage = await Message.create({
+    conversationId: String(conversation._id),
+    senderId: caller.id,
+    senderName: callerName,
+    type: 'system',
+    content: systemContent,
+  })
+  conversation.lastMessage = systemContent
+  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
+  conversation.lastSenderId = caller.id
+  await conversation.save()
+  return { ok: true }
+}
+
+// ───────────────────────── renameGroup / setGroupAvatar ────────────────────
+
+export interface RenameGroupInput {
+  conversationId: string
+  name: string
+}
+
+export type RenameGroupResult = ErrResult | { ok: true; name: string }
+
+export async function renameGroup(caller: MessagingCaller, input: RenameGroupInput): Promise<RenameGroupResult> {
+  await getDb()
+
+  const conversationId = input.conversationId?.trim()
+  const name = input.name?.trim()
+  if (!conversationId || !name) return { ok: false, status: 400, error: 'group_name_required' }
+  if (name.length > MAX_GROUP_NAME_LEN) return { ok: false, status: 400, error: 'group_name_too_long' }
+
+  const guard = await loadGroupAsAdmin(caller, conversationId)
+  if (!guard.ok) return guard
+  const { conversation } = guard
+  if (conversation.name === name) return { ok: true, name }
+
+  conversation.name = name
+  const callerName = await resolveDisplayName(caller.id)
+  const systemContent = `${callerName} a renommé le groupe en "${name}"`
+  const systemMessage = await Message.create({
+    conversationId: String(conversation._id),
+    senderId: caller.id,
+    senderName: callerName,
+    type: 'system',
+    content: systemContent,
+  })
+  conversation.lastMessage = systemContent
+  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
+  conversation.lastSenderId = caller.id
+  await conversation.save()
+  return { ok: true, name }
+}
+
+export interface SetGroupAvatarInput {
+  conversationId: string
+  dataUri: string
+}
+
+export type SetGroupAvatarResult = ErrResult | { ok: true; avatar: string }
+
+export async function setGroupAvatar(caller: MessagingCaller, input: SetGroupAvatarInput): Promise<SetGroupAvatarResult> {
+  await getDb()
+
+  const conversationId = input.conversationId?.trim()
+  const dataUri = input.dataUri
+  if (!conversationId || !dataUri) return { ok: false, status: 400, error: 'invalid_input' }
+
+  const guard = await loadGroupAsAdmin(caller, conversationId)
+  if (!guard.ok) return guard
+
+  const uploaded = await uploadDataUri(dataUri, `groups/${String(guard.conversation._id)}`)
+  if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
+
+  await Conversation.updateOne({ _id: guard.conversation._id }, { $set: { avatar: uploaded.url } })
+  return { ok: true, avatar: uploaded.url }
+}
+
+// ───────────────────────────── pinMessage / unpinMessage ───────────────────
+// Épingler un message reste réservé aux ADMINS de groupe — le legacy ne
+// propose jamais cette entrée de menu sur une conversation directe
+// (`amAdmin` conditionne l'item, toujours faux hors groupe).
+
+export interface PinMessageInput {
+  conversationId: string
+  messageId: string
+}
+
+export type PinMessageResult = ErrResult | { ok: true }
+
+export async function pinMessage(caller: MessagingCaller, input: PinMessageInput): Promise<PinMessageResult> {
+  await getDb()
+
+  const conversationId = input.conversationId?.trim()
+  const messageId = input.messageId?.trim()
+  if (!conversationId || !messageId) return { ok: false, status: 400, error: 'invalid_input' }
+  if (!mongoose.isValidObjectId(messageId)) return { ok: false, status: 404, error: 'message_not_found' }
+
+  const guard = await loadGroupAsAdmin(caller, conversationId)
+  if (!guard.ok) return guard
+
+  const message = await Message.findOne({ _id: messageId, conversationId })
+  if (!message) return { ok: false, status: 404, error: 'message_not_found' }
+
+  await Promise.all([
+    Conversation.updateOne({ _id: guard.conversation._id }, { $set: { pinnedMessageId: String(message._id) } }),
+    Message.updateOne({ _id: message._id }, { $set: { pinned: true } }),
+  ])
+  return { ok: true }
+}
+
+export async function unpinMessage(caller: MessagingCaller, input: ConversationIdInput): Promise<PinMessageResult> {
+  await getDb()
+
+  const conversationId = input.conversationId?.trim()
+  if (!conversationId) return { ok: false, status: 400, error: 'invalid_input' }
+
+  const guard = await loadGroupAsAdmin(caller, conversationId)
+  if (!guard.ok) return guard
+
+  const pinnedId = guard.conversation.pinnedMessageId
+  await Conversation.updateOne({ _id: guard.conversation._id }, { $set: { pinnedMessageId: null } })
+  if (pinnedId) await Message.updateOne({ _id: pinnedId }, { $set: { pinned: false } })
+  return { ok: true }
+}
+
+export interface ConversationIdInput {
+  conversationId: string
 }

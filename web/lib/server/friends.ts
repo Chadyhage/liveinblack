@@ -143,7 +143,7 @@ export async function sendFriendRequest(caller: FriendCaller, input: SendFriendR
   await getDb()
 
   const toUserId = input.toUserId?.trim()
-  if (!toUserId) return { ok: false, status: 404, error: 'user_not_found' }
+  if (!toUserId || !mongoose.isValidObjectId(toUserId)) return { ok: false, status: 404, error: 'user_not_found' }
   if (toUserId === caller.id) return { ok: false, status: 400, error: 'cannot_friend_self' }
 
   const [me, target] = await Promise.all([User.findById(caller.id), User.findById(toUserId)])
@@ -258,7 +258,7 @@ export async function removeFriend(caller: FriendCaller, input: FriendUserIdInpu
   await getDb()
 
   const friendUserId = input.friendUserId?.trim()
-  if (!friendUserId) return { ok: false, status: 404, error: 'user_not_found' }
+  if (!friendUserId || !mongoose.isValidObjectId(friendUserId)) return { ok: false, status: 404, error: 'user_not_found' }
 
   const target = await User.findById(friendUserId)
   if (!target) return { ok: false, status: 404, error: 'user_not_found' }
@@ -283,6 +283,42 @@ export async function listFriends(caller: FriendCaller): Promise<FriendListResul
     email: u.email,
   }))
   return { ok: true, friends }
+}
+
+export type SearchUsersResult = { ok: false; status: number; error: string } | { ok: true; users: FriendView[] }
+
+const SEARCH_RESULTS_LIMIT = 20
+
+// Port de src/utils/messaging.js:searchUsers — recherche NOMINATIVE sur toute
+// la base d'utilisateurs (pas seulement les amis), condition nécessaire pour
+// que 'Nouveau message'/'Nouveau groupe' puissent retrouver quelqu'un qui
+// n'est pas encore ami (voir en-tête de fichier : fidélité legacy, la
+// recherche legacy portait sur name/username/email, ici firstName/lastName/
+// email — pas de champ username dans ce modèle). L'appelant lui-même est
+// toujours exclu du résultat.
+export async function searchUsers(caller: FriendCaller, query: string): Promise<SearchUsersResult> {
+  await getDb()
+
+  const q = query?.trim()
+  if (!q) return { ok: true, users: [] }
+
+  // Échappe les métacaractères regex — une requête utilisateur ne doit jamais
+  // être interprétée comme un pattern (DoS via regex, ou simplement un match
+  // inattendu sur '.', '*', etc.).
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const pattern = new RegExp(escaped, 'i')
+
+  const users = await User.find({
+    _id: { $ne: caller.id },
+    $or: [{ firstName: pattern }, { lastName: pattern }, { email: pattern }],
+  })
+    .limit(SEARCH_RESULTS_LIMIT)
+    .lean()
+
+  return {
+    ok: true,
+    users: users.map((u) => ({ userId: String(u._id), name: displayName(u), email: u.email })),
+  }
 }
 
 export async function listMyFriendRequests(caller: FriendCaller): Promise<FriendRequestListResult> {

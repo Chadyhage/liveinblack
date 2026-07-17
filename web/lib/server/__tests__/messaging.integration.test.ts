@@ -98,6 +98,28 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       expect(count).toBe(1)
     })
 
+    it('renvoie les noms des DEUX participants dans members (pas de members stocké pour un type direct)', async () => {
+      // Contrairement à un groupe, une conversation directe ne dénormalise
+      // aucun `members` en base — un oubli de résolution ici fait retomber
+      // l'UI sur un label générique ("Conversation") au lieu du nom de
+      // l'interlocuteur. Vérifié à la fois sur le chemin de création...
+      const a = await seedUser({ firstName: 'Alice', lastName: 'A' })
+      const b = await seedUser({ firstName: 'Bob', lastName: 'B' })
+
+      const created = await createDirectConversation({ id: a.id }, { otherUserId: b.id })
+      expect(created.ok).toBe(true)
+      if (!created.ok) return
+      const createdNames = created.conversation.members.map((m) => m.name).sort()
+      expect(createdNames).toEqual(['Alice A', 'Bob B'].sort())
+
+      // ...et sur le chemin find-or-create (conversation déjà existante).
+      const existing = await createDirectConversation({ id: b.id }, { otherUserId: a.id })
+      expect(existing.ok).toBe(true)
+      if (!existing.ok) return
+      const existingNames = existing.conversation.members.map((m) => m.name).sort()
+      expect(existingNames).toEqual(['Alice A', 'Bob B'].sort())
+    })
+
     it("refuse de se contacter soi-même (cannot_message_self)", async () => {
       const a = await seedUser()
       const result = await createDirectConversation({ id: a.id }, { otherUserId: a.id })
@@ -318,6 +340,45 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       expect(page3.messages.map((m) => m.content)).toEqual(['msg 0'])
     })
 
+    it("renvoie les données du sondage (poll/event_poll) pour un message chargé via l'historique, pas seulement à sa création", async () => {
+      // Régression : createPoll/voteOnPoll (lib/server/polls.ts) renvoient leur
+      // propre vue avec `poll`, mais getMessages (ce fichier) construisait sa
+      // propre vue SANS ce champ — un sondage déjà envoyé redevenait donc
+      // illisible (question/options perdues) dès qu'on rechargeait l'historique
+      // au lieu de recevoir la réponse de création. Vérifié directement contre
+      // le document Mongo (pas via createPoll, pour isoler getMessages seul).
+      const a = await seedUser()
+      const b = await seedUser()
+      const conv = await Conversation.create({ type: 'direct', participantIds: [a.id, b.id] })
+      await Message.create({
+        conversationId: conv.id,
+        senderId: a.id,
+        senderName: 'A',
+        type: 'poll',
+        poll: {
+          pollType: 'poll',
+          question: 'On commande quoi ?',
+          options: [
+            { id: '1', text: 'Pizza', voterIds: [a.id] },
+            { id: '2', text: 'Sushi', voterIds: [] },
+          ],
+        },
+      })
+
+      const result = await getMessages({ id: b.id }, { conversationId: conv.id })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.messages).toHaveLength(1)
+      const [msg] = result.messages
+      expect(msg.type).toBe('poll')
+      expect(msg.poll).not.toBeNull()
+      expect(msg.poll?.question).toBe('On commande quoi ?')
+      expect(msg.poll?.options).toEqual([
+        { id: '1', text: 'Pizza', voterIds: [a.id] },
+        { id: '2', text: 'Sushi', voterIds: [] },
+      ])
+    })
+
     it("refuse un appelant non-participant (404), sans jamais renvoyer le contenu", async () => {
       const a = await seedUser()
       const b = await seedUser()
@@ -346,6 +407,54 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       expect(result.messages).toHaveLength(1)
       expect(result.messages[0].deletedForAll).toBe(true)
       expect(result.messages[0].content).toBeNull()
+    })
+
+    it("readStatus vaut 'read' quand l'autre participant a lu après l'envoi, sinon 'sent'", async () => {
+      const a = await seedUser()
+      const b = await seedUser()
+      const conv = await Conversation.create({ type: 'direct', participantIds: [a.id, b.id] })
+      const msg = await Message.create({ conversationId: conv.id, senderId: a.id, senderName: 'A', type: 'text', content: 'salut' })
+
+      const beforeRead = await getMessages({ id: a.id }, { conversationId: conv.id })
+      expect(beforeRead.ok).toBe(true)
+      if (!beforeRead.ok) return
+      expect(beforeRead.messages[0].readStatus).toBe('sent')
+
+      conv.lastReadAt = new Map([[String(b.id), new Date((msg.get('createdAt') as Date).getTime() + 1000)]])
+      await conv.save()
+
+      const afterRead = await getMessages({ id: a.id }, { conversationId: conv.id })
+      expect(afterRead.ok).toBe(true)
+      if (!afterRead.ok) return
+      expect(afterRead.messages[0].readStatus).toBe('read')
+    })
+
+    it("readStatus reste 'sent' (jamais 'read') si le LECTEUR a désactivé les accusés de lecture, même déjà lu", async () => {
+      const a = await seedUser()
+      const b = await seedUser({ privacy: { readReceipts: false } })
+      const conv = await Conversation.create({ type: 'direct', participantIds: [a.id, b.id] })
+      const msg = await Message.create({ conversationId: conv.id, senderId: a.id, senderName: 'A', type: 'text', content: 'salut' })
+      conv.lastReadAt = new Map([[String(b.id), new Date((msg.get('createdAt') as Date).getTime() + 1000)]])
+      await conv.save()
+
+      const result = await getMessages({ id: a.id }, { conversationId: conv.id })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.messages[0].readStatus).toBe('sent')
+    })
+
+    it("readStatus reste 'sent' (jamais 'read') si l'EXPÉDITEUR a lui-même désactivé les accusés de lecture — réciproque", async () => {
+      const a = await seedUser({ privacy: { readReceipts: false } })
+      const b = await seedUser()
+      const conv = await Conversation.create({ type: 'direct', participantIds: [a.id, b.id] })
+      const msg = await Message.create({ conversationId: conv.id, senderId: a.id, senderName: 'A', type: 'text', content: 'salut' })
+      conv.lastReadAt = new Map([[String(b.id), new Date((msg.get('createdAt') as Date).getTime() + 1000)]])
+      await conv.save()
+
+      const result = await getMessages({ id: a.id }, { conversationId: conv.id })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.messages[0].readStatus).toBe('sent')
     })
   })
 
@@ -459,6 +568,25 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       if (result.ok) return
       expect(result.status).toBe(400)
       expect(result.error).toBe('invalid_emoji')
+    })
+  })
+
+  describe('listMyConversations', () => {
+    it('résout les noms des membres pour PLUSIEURS conversations directes en une seule liste (pas de members stocké en base)', async () => {
+      const a = await seedUser({ firstName: 'Alice', lastName: 'A' })
+      const b = await seedUser({ firstName: 'Bob', lastName: 'B' })
+      const c = await seedUser({ firstName: 'Chloe', lastName: 'C' })
+      const conv1 = await Conversation.create({ type: 'direct', participantIds: [a.id, b.id] })
+      const conv2 = await Conversation.create({ type: 'direct', participantIds: [a.id, c.id] })
+
+      const result = await listMyConversations({ id: a.id })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+
+      const view1 = result.conversations.find((v) => v.id === conv1.id)
+      const view2 = result.conversations.find((v) => v.id === conv2.id)
+      expect(view1?.members.map((m) => m.name).sort()).toEqual(['Alice A', 'Bob B'].sort())
+      expect(view2?.members.map((m) => m.name).sort()).toEqual(['Alice A', 'Chloe C'].sort())
     })
   })
 

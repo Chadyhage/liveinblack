@@ -38,6 +38,17 @@ describe('canCreateEvent', () => {
     expect(canCreateEvent({ activeRole: 'client', status: 'active' })).toBe(false)
     expect(canCreateEvent({ activeRole: 'prestataire', status: 'active' })).toBe(false)
   })
+  it('lit orgStatus en priorité sur le statut de compte global (#7 phase organisateur)', () => {
+    // Un organisateur déjà actif (status global 'active') qui candidate en
+    // plus comme prestataire ne doit PAS perdre l'accès à /mes-evenements
+    // pendant la review du second dossier — orgStatus reste 'active' même
+    // si un futur prestStatus passe à 'pending' séparément.
+    expect(canCreateEvent({ activeRole: 'organisateur', status: 'active', orgStatus: 'active' })).toBe(true)
+    expect(canCreateEvent({ activeRole: 'organisateur', status: 'active', orgStatus: 'pending' })).toBe(false)
+    // Statut global 'pending' mais orgStatus déjà 'active' (compte multi-rôle
+    // dont une autre interface est en cours de review) : orgStatus l'emporte.
+    expect(canCreateEvent({ activeRole: 'organisateur', status: 'pending', orgStatus: 'active' })).toBe(true)
+  })
 })
 
 describe('canProposeServices', () => {
@@ -47,6 +58,10 @@ describe('canProposeServices', () => {
   })
   it('refuse prestataire rejeté', () => {
     expect(canProposeServices({ activeRole: 'prestataire', status: 'rejected' })).toBe(false)
+  })
+  it('lit prestStatus en priorité sur le statut de compte global', () => {
+    expect(canProposeServices({ activeRole: 'prestataire', status: 'active', prestStatus: 'rejected' })).toBe(false)
+    expect(canProposeServices({ activeRole: 'prestataire', status: 'rejected', prestStatus: 'active' })).toBe(true)
   })
 })
 

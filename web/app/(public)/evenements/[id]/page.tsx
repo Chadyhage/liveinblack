@@ -2,19 +2,24 @@ import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { auth } from '@/auth'
 import { getEventById } from '@/lib/server/events'
 import { getPublicOrganizerByUserId } from '@/lib/server/organizers'
 import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
+import { isEventInterested } from '@/lib/server/eventInterests'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
 import UnlockForm from './UnlockForm'
+import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
 
 // Port LECTURE SEULE de src/pages/EventDetailPage.jsx (2861 lignes côté
 // legacy). Explicitement HORS PÉRIMÈTRE ici (déférré aux phases suivantes) :
 // sélection de place + paiement, précommande interactive, code promo, prise
-// de place de groupe, playlist, partage. Ce que ce fichier ajoute par rapport
-// au legacy : méta SEO (aucune n'existait), et l'application RÉELLE (pas
-// seulement UI) du blocage des événements privés — voir lib/server/events.ts.
+// de place de groupe, playlist, partage (le bouton "Partager" du hero legacy
+// n'est pas encore porté — seul le bouton "Intéressé", #6 phase profil, l'est
+// ici). Ce que ce fichier ajoute par rapport au legacy : méta SEO (aucune
+// n'existait), et l'application RÉELLE (pas seulement UI) du blocage des
+// événements privés — voir lib/server/events.ts.
 
 async function resolveEvent(id: string) {
   const cookieStore = await cookies()
@@ -56,7 +61,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   }
 
   const { event } = result
-  const organizerProfile = await getPublicOrganizerByUserId(event.organizerId)
+  const session = await auth()
+  const [organizerProfile, interestState] = await Promise.all([
+    getPublicOrganizerByUserId(event.organizerId),
+    session?.user ? isEventInterested({ id: session.user.id }, { eventId: event.id }) : Promise.resolve({ ok: true as const, interested: false }),
+  ])
   const currency = eventCurrency(event)
   const countdown = getEventCountdown(event)
   const urgent = isCountdownUrgent(event)
@@ -76,6 +85,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.92), transparent 55%)' }} />
+        <div style={{ position: 'absolute', top: 14, right: 14 }}>
+          <EventInterestButtonClient eventId={event.id} initialInterested={interestState.interested} isAuthenticated={Boolean(session?.user)} floating />
+        </div>
         <div style={{ position: 'absolute', left: 20, right: 20, bottom: 16 }}>
           {event.cancelled && (
             <span style={{ display: 'inline-block', marginBottom: 8, fontSize: 11, fontWeight: 800, color: '#fff', background: 'var(--pink)', padding: '4px 10px', borderRadius: 999 }}>ANNULÉ</span>

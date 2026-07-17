@@ -10,6 +10,10 @@ import { getMessages, sendMessage } from '@/lib/server/messaging'
 const bodySchema = z.object({
   type: z.enum(['text', 'image', 'voice']),
   content: z.string(),
+  // Encodée en base64 — présente pour un envoi photo/vocal depuis le
+  // composeur (upload Cloudinary fait SERVEUR, voir sendMessage). Absente si
+  // `content` est déjà une URL (transfert, compat).
+  mediaDataUri: z.string().optional(),
   replyToMessageId: z.string().min(1).optional(),
 })
 

@@ -23,5 +23,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ eventId
     songsRemaining: result.songsRemaining,
     likesRemaining: result.likesRemaining,
     isCheckedIn: result.isCheckedIn,
+    hasTicket: result.hasTicket,
+    ticketCount: result.ticketCount,
   })
 }

@@ -23,6 +23,7 @@ import {
   toggleLike,
   setSongStatus,
   removeSong,
+  removeOwnSong,
   playNow,
   stopNow,
   getPlaylist,
@@ -510,8 +511,9 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
 
         const playlistAfterPlay = await EventPlaylist.findOne({ eventId: event.id }).lean()
         expect(playlistAfterPlay?.nowPlaying?.id).toBe(songId)
-        // playNow ne touche PAS au statut du son.
-        expect(playlistAfterPlay?.songs.find((s) => s.id === songId)?.status).toBe('validated')
+        // playNow marque AUSSI le son "joué" dans la même action (mirrors
+        // PlaylistDJPanel.jsx playNow()).
+        expect(playlistAfterPlay?.songs.find((s) => s.id === songId)?.status).toBe('played')
 
         const stopResult = await stopNow(moderator, { eventId: event.id })
         expect(stopResult.ok).toBe(true)
@@ -580,6 +582,133 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
         expect(second.error).toBe('song_not_found')
       }
     })
+
+    it("refuser le morceau EN COURS retire aussi la bannière nowPlaying (mirrors PlaylistDJPanel.jsx patchStatus ligne 64) ; refuser un AUTRE morceau la laisse intacte", async () => {
+      const { owner, event, songId } = await seedModerationFixture()
+      const author2 = await seedUser()
+      await seedCheckedInTicket(event.id, author2.id)
+      const other = await addSong({ id: author2.id, roles: ['client'] }, { eventId: event.id, title: 'Autre son' })
+      expect(other.ok).toBe(true)
+      if (!other.ok) return
+
+      await playNow({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId })
+
+      const refuseOther = await setSongStatus({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId: other.song.id, status: 'refused' })
+      expect(refuseOther.ok).toBe(true)
+      let playlist = await EventPlaylist.findOne({ eventId: event.id }).lean()
+      expect(playlist?.nowPlaying?.id).toBe(songId) // pas touché : ce n'est pas le son en cours
+
+      const refuseCurrent = await setSongStatus({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId, status: 'refused' })
+      expect(refuseCurrent.ok).toBe(true)
+      playlist = await EventPlaylist.findOne({ eventId: event.id }).lean()
+      expect(playlist?.nowPlaying).toBeNull()
+    })
+
+    it('supprimer le morceau EN COURS retire aussi la bannière nowPlaying (mirrors PlaylistDJPanel.jsx remove() ligne 75)', async () => {
+      const { owner, event, songId } = await seedModerationFixture()
+      await playNow({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId })
+
+      let playlist = await EventPlaylist.findOne({ eventId: event.id }).lean()
+      expect(playlist?.nowPlaying?.id).toBe(songId)
+
+      const removed = await removeSong({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId })
+      expect(removed.ok).toBe(true)
+
+      playlist = await EventPlaylist.findOne({ eventId: event.id }).lean()
+      expect(playlist?.nowPlaying).toBeNull()
+    })
+  })
+
+  // ────────────────────────────── removeOwnSong ───────────────────────────
+
+  describe('removeOwnSong', () => {
+    it("chemin heureux : l'auteur retire l'un de ses propres sons, libérant un slot de quota", async () => {
+      const owner = await seedUser()
+      const event = await seedEvent(owner.id)
+      const holder = await seedUser()
+      await seedCheckedInTicket(event.id, holder.id) // 1 billet → 1 slot
+
+      const added = await addSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, title: 'Son à remplacer' })
+      expect(added.ok).toBe(true)
+      if (!added.ok) return
+
+      const before = await getPlaylist({ id: holder.id, roles: ['client'] }, { eventId: event.id })
+      expect(before.ok).toBe(true)
+      if (before.ok) expect(before.songsRemaining).toBe(0)
+
+      const removed = await removeOwnSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, songId: added.song.id })
+      expect(removed.ok).toBe(true)
+
+      const after = await getPlaylist({ id: holder.id, roles: ['client'] }, { eventId: event.id })
+      expect(after.ok).toBe(true)
+      if (after.ok) expect(after.songsRemaining).toBe(1) // le slot est libéré, sans compteur séparé à maintenir
+
+      // Reproposer un NOUVEAU son ("remplacer") doit maintenant réussir.
+      const replaced = await addSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, title: 'Son de remplacement' })
+      expect(replaced.ok).toBe(true)
+    })
+
+    it("refusé (403 not_song_owner) de retirer le son de QUELQU'UN D'AUTRE", async () => {
+      const owner = await seedUser()
+      const event = await seedEvent(owner.id)
+      const author = await seedUser()
+      await seedCheckedInTicket(event.id, author.id)
+      const added = await addSong({ id: author.id, roles: ['client'] }, { eventId: event.id, title: 'Son A' })
+      expect(added.ok).toBe(true)
+      if (!added.ok) return
+
+      const stranger = await seedUser()
+      const result = await removeOwnSong({ id: stranger.id, roles: ['client'] }, { eventId: event.id, songId: added.song.id })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.status).toBe(403)
+      expect(result.error).toBe('not_song_owner')
+
+      // Même un MODÉRATEUR (owner de l'événement) ne peut pas passer par cette
+      // fonction self-service pour retirer le son de quelqu'un d'autre — c'est
+      // le rôle de removeSong (modération), pas de removeOwnSong.
+      const byOwner = await removeOwnSong({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId: added.song.id })
+      expect(byOwner.ok).toBe(false)
+      if (!byOwner.ok) expect(byOwner.error).toBe('not_song_owner')
+    })
+
+    it('renvoie 404 song_not_found pour un songId inexistant ou déjà supprimé', async () => {
+      const owner = await seedUser()
+      const event = await seedEvent(owner.id)
+      const holder = await seedUser()
+      await seedCheckedInTicket(event.id, holder.id)
+
+      const bogus = await removeOwnSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, songId: 'does-not-exist' })
+      expect(bogus.ok).toBe(false)
+      if (!bogus.ok) {
+        expect(bogus.status).toBe(404)
+        expect(bogus.error).toBe('song_not_found')
+      }
+    })
+
+    it("le PARTICIPANT retirant SON PROPRE morceau alors EN COURS retire aussi la bannière nowPlaying (même garde que removeSong ci-dessus, ligne 75 de PlaylistDJPanel.jsx)", async () => {
+      const owner = await seedUser()
+      const event = await seedEvent(owner.id)
+      const holder = await seedUser()
+      await seedCheckedInTicket(event.id, holder.id)
+
+      const added = await addSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, title: 'Son en cours' })
+      expect(added.ok).toBe(true)
+      if (!added.ok) return
+
+      const played = await playNow({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId: added.song.id })
+      expect(played.ok).toBe(true)
+
+      let playlist = await EventPlaylist.findOne({ eventId: event.id }).lean()
+      expect(playlist?.nowPlaying?.id).toBe(added.song.id)
+
+      const removed = await removeOwnSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, songId: added.song.id })
+      expect(removed.ok).toBe(true)
+
+      playlist = await EventPlaylist.findOne({ eventId: event.id }).lean()
+      expect(playlist?.songs.some((s) => s.id === added.song.id)).toBe(false)
+      expect(playlist?.nowPlaying).toBeNull() // pas de bannière fantôme pointant vers un son qui n'existe plus
+    })
   })
 
   // ────────────────────────────── getPlaylist ─────────────────────────────
@@ -600,6 +729,8 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
       // "cannot like own song" via songsRemaining/likesRemaining exacts.
       const added = await addSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, title: 'Son du holder' })
       expect(added.ok).toBe(true)
+      if (!added.ok) return
+      const holderSongId = added.song.id
 
       // Profil 1 : non-participant (0 billet).
       const strangerView = await getPlaylist({ id: plainStranger.id, roles: ['client'] }, { eventId: event.id })
@@ -609,7 +740,12 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
         expect(strangerView.songsRemaining).toBe(0)
         expect(strangerView.likesRemaining).toBe(5)
         expect(strangerView.isCheckedIn).toBe(false)
+        expect(strangerView.hasTicket).toBe(false)
+        expect(strangerView.ticketCount).toBe(0)
         expect(strangerView.songs.length).toBeGreaterThan(0) // vue publique, visible malgré 0 billet
+        // Anonymisation : un étranger ne voit jamais le vrai nom de l'auteur.
+        const holderSong = strangerView.songs.find((s) => s.id === holderSongId)
+        expect(holderSong?.addedByName).toBe('')
       }
 
       // Profil 2 : titulaire scanné, 2 billets, 1 son déjà ajouté → 1 restant.
@@ -620,6 +756,11 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
         expect(holderView.songsRemaining).toBe(1)
         expect(holderView.likesRemaining).toBe(5)
         expect(holderView.isCheckedIn).toBe(true)
+        expect(holderView.hasTicket).toBe(true)
+        expect(holderView.ticketCount).toBe(2)
+        // Le contributeur voit son PROPRE nom sur son propre son.
+        const ownSong = holderView.songs.find((s) => s.addedBy === holder.id)
+        expect(ownSong?.addedByName).not.toBe('')
       }
 
       // Profil 3 : DJ (roster) — modérateur, mais pas participant lui-même.
@@ -629,7 +770,56 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
         expect(djView.canModerate).toBe(true)
         expect(djView.songsRemaining).toBe(0)
         expect(djView.isCheckedIn).toBe(false)
+        expect(djView.hasTicket).toBe(false)
+        // Anonymisation : même le DJ/l'équipe modératrice ne voit jamais le
+        // vrai nom d'un participant (mirrors PlaylistDJPanel.jsx, qui n'affiche
+        // aucun nom du tout).
+        const holderSongForDj = djView.songs.find((s) => s.addedBy === holder.id)
+        expect(holderSongForDj?.addedByName).toBe('')
       }
+    })
+
+    it("l'auteur d'un son voit toujours son propre nom, quel que soit le statut du son", async () => {
+      const owner = await seedUser()
+      const event = await seedEvent(owner.id)
+      const holder = await seedUser()
+      await seedCheckedInTicket(event.id, holder.id)
+      const added = await addSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, title: 'Mon son' })
+      expect(added.ok).toBe(true)
+      if (!added.ok) return
+
+      const view = await getPlaylist({ id: holder.id, roles: ['client'] }, { eventId: event.id })
+      expect(view.ok).toBe(true)
+      if (view.ok) {
+        const mine = view.songs.find((s) => s.id === added.song.id)
+        expect(mine?.addedByName).toBe(added.song.addedByName)
+        expect(mine?.addedByName.length).toBeGreaterThan(0)
+      }
+    })
+
+    it("nowPlaying s'auto-masque 30 minutes après avoir été posé (mirrors PlaylistSystem.jsx ligne 536 / PlaylistDJPanel.jsx ligne 191)", async () => {
+      const owner = await seedUser()
+      const event = await seedEvent(owner.id)
+      const holder = await seedUser()
+      await seedCheckedInTicket(event.id, holder.id)
+      const added = await addSong({ id: holder.id, roles: ['client'] }, { eventId: event.id, title: 'Vieux son' })
+      expect(added.ok).toBe(true)
+      if (!added.ok) return
+
+      await playNow({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId: added.song.id })
+
+      // Toujours visible juste après avoir été posé.
+      const fresh = await getPlaylist({ id: holder.id, roles: ['client'] }, { eventId: event.id })
+      expect(fresh.ok).toBe(true)
+      if (fresh.ok) expect(fresh.nowPlaying?.id).toBe(added.song.id)
+
+      // On recule artificiellement l'horodatage de 31 minutes (au-delà du
+      // seuil de 30 min) directement en base, sans passer par playNow.
+      await EventPlaylist.updateOne({ eventId: event.id }, { $set: { 'nowPlaying.at': new Date(Date.now() - 31 * 60 * 1000) } })
+
+      const stale = await getPlaylist({ id: holder.id, roles: ['client'] }, { eventId: event.id })
+      expect(stale.ok).toBe(true)
+      if (stale.ok) expect(stale.nowPlaying).toBeNull()
     })
 
     it('reflète nowPlaying après playNow/stopNow', async () => {
@@ -699,12 +889,19 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
 // Un mock de fetch couvre en plus le mapping de champs (invariant sous test,
 // indépendant du réseau) et le cas d'échec réseau (502 search_unavailable).
 describe('searchSongs', () => {
-  it('mappe la réponse iTunes vers {title, artist, previewUrl, cover} uniquement (fetch mocké)', async () => {
+  it('mappe la réponse iTunes vers {title, artist, previewUrl, cover, duration} uniquement (fetch mocké)', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         results: [
-          { trackName: 'Song A', artistName: 'Artist A', previewUrl: 'https://a/preview.m4a', artworkUrl100: 'https://a/art.jpg', trackId: 123 },
+          {
+            trackName: 'Song A',
+            artistName: 'Artist A',
+            previewUrl: 'https://a/preview.m4a',
+            artworkUrl100: 'https://a/art.jpg',
+            trackId: 123,
+            trackTimeMillis: 225000,
+          },
           { trackName: '', artistName: 'No Title Artist' }, // filtré : pas de trackName exploitable
         ],
       }),
@@ -715,8 +912,29 @@ describe('searchSongs', () => {
       const result = await searchSongs({ id: 'caller-1', roles: ['client'] }, { query: 'song a' })
       expect(result.ok).toBe(true)
       if (!result.ok) return
-      expect(result.results).toEqual([{ title: 'Song A', artist: 'Artist A', previewUrl: 'https://a/preview.m4a', cover: 'https://a/art.jpg' }])
+      expect(result.results).toEqual([
+        { title: 'Song A', artist: 'Artist A', previewUrl: 'https://a/preview.m4a', cover: 'https://a/art.jpg', duration: '3:45' },
+      ])
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('itunes.apple.com/search'))
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('renvoie une duration vide si trackTimeMillis est absent (fetch mocké)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        results: [{ trackName: 'Song B', artistName: 'Artist B' }],
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      const result = await searchSongs({ id: 'caller-1', roles: ['client'] }, { query: 'song b' })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.results[0].duration).toBe('')
     } finally {
       vi.unstubAllGlobals()
     }

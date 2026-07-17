@@ -60,3 +60,30 @@ export function emailVerificationEmail(verifyLink: string, site: string = DEFAUL
   `
   return { subject: 'Confirme ton email LIVEINBLACK', html: wrap(inner, site) }
 }
+
+// Port de la section "Adresse e-mail" de ProfilePage.jsx (#6 phase profil) :
+// changer d'email exige de confirmer la NOUVELLE adresse avant que le
+// changement ne prenne effet (verifyBeforeUpdateEmail côté legacy) — email
+// distinct de emailVerificationEmail ci-dessus (copie différente, contexte
+// "je change mon email" et non "j'active mon tout nouveau compte").
+export function emailChangeVerificationEmail(verifyLink: string, site: string = DEFAULT_SITE): Email {
+  const inner = `
+    ${h('Confirme ta nouvelle adresse')}
+    ${p("Tu as demandé à changer l'adresse email de ton compte LIVEINBLACK. Confirme que cette nouvelle adresse est bien la tienne pour finaliser le changement.")}
+    ${btn(verifyLink, 'Confirmer ma nouvelle adresse')}
+    ${p('<span style="color:rgba(255,255,255,0.4);font-size:12px;">Tant que tu n\'as pas confirmé, ton ancienne adresse reste active. Si tu n\'es pas à l\'origine de cette demande, ignore cet email.</span>')}
+  `
+  return { subject: 'Confirme ta nouvelle adresse LIVEINBLACK', html: wrap(inner, site) }
+}
+
+// Port de la notification "candidature reçue" (#7 phase organisateur) —
+// envoyée juste après soumission, avant même la déconnexion en mode anonyme
+// (voir lib/server/applications.ts).
+export function applicationReceivedEmail(email: string, site: string = DEFAULT_SITE): Email {
+  const inner = `
+    ${h('Dossier reçu')}
+    ${p(`Ton dossier de candidature organisateur a bien été transmis à l'équipe LIVEINBLACK. Tu seras contacté à <strong style="color:#fff;">${email}</strong> une fois ton compte validé.`)}
+    ${p('<span style="color:rgba(255,255,255,0.4);font-size:12px;">La validation prend généralement moins de 24 h.</span>')}
+  `
+  return { subject: 'Ton dossier LIVEINBLACK a bien été reçu', html: wrap(inner, site) }
+}

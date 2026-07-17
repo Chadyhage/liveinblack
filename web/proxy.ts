@@ -10,7 +10,7 @@ import { auth } from '@/auth'
 // besoin d'une lecture base à jour) reste dans app/(app)/layout.tsx, pas ici.
 // Renommé `proxy.ts` (Next.js 16 — `middleware.ts` est déprécié).
 
-const AUTH_REQUIRED_PREFIXES = ['/profil', '/messagerie', '/scanner', '/mes-soirees', '/commander', '/mon-dossier']
+const AUTH_REQUIRED_PREFIXES = ['/profil', '/messagerie', '/scanner', '/mes-soirees', '/commander', '/mon-dossier', '/onboarding-organisateur']
 const ORGANISATEUR_OR_AGENT_PREFIXES = ['/mes-evenements']
 const ORGANISATEUR_ONLY_PREFIXES = ['/ma-page-organisateur']
 const SERVICE_ACCESS_PREFIXES = ['/proposer', '/mon-abonnement']
@@ -31,19 +31,26 @@ export const proxy = auth((req) => {
     return NextResponse.redirect(url)
   }
   const redirectHome = () => NextResponse.redirect(new URL('/accueil', req.nextUrl.origin))
+  const redirectToDossier = () => NextResponse.redirect(new URL('/mon-dossier', req.nextUrl.origin))
 
   if (matchesPrefix(pathname, AUTH_REQUIRED_PREFIXES) && !session) {
     return redirectToLogin()
   }
 
+  // Un organisateur dont le dossier est encore en attente (#7 phase
+  // organisateur) est renvoyé vers /mon-dossier plutôt que de voir un
+  // /mes-evenements vide — même comportement que l'OnboardingGuard legacy
+  // (statut 'pending' → accès bloqué en dehors d'une liste d'URLs publiques).
   if (matchesPrefix(pathname, ORGANISATEUR_OR_AGENT_PREFIXES)) {
     if (!session) return redirectToLogin()
     if (activeRole !== 'organisateur' && activeRole !== 'agent') return redirectHome()
+    if (activeRole === 'organisateur' && session.user.orgStatus === 'pending') return redirectToDossier()
   }
 
   if (matchesPrefix(pathname, ORGANISATEUR_ONLY_PREFIXES)) {
     if (!session) return redirectToLogin()
     if (activeRole !== 'organisateur') return redirectHome()
+    if (session.user.orgStatus === 'pending') return redirectToDossier()
   }
 
   if (matchesPrefix(pathname, SERVICE_ACCESS_PREFIXES)) {
@@ -67,6 +74,7 @@ export const config = {
     '/mes-soirees/:path*',
     '/commander/:path*',
     '/mon-dossier/:path*',
+    '/onboarding-organisateur/:path*',
     '/mes-evenements/:path*',
     '/ma-page-organisateur/:path*',
     '/proposer/:path*',

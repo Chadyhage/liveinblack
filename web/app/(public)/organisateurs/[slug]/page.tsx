@@ -1,9 +1,12 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { auth } from '@/auth'
 import { getOrganizerBySlug, getOrganizerEvents } from '@/lib/server/organizers'
+import { isFollowing } from '@/lib/server/organizerFollows'
 import { getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
+import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,14 +17,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: `${organizer.publicName} — LIVEINBLACK`, description: organizer.shortDescription?.slice(0, 160) }
 }
 
-// Port de src/pages/PublicOrganizerPage.jsx (lecture seule — follow/contact/
-// share/signalement différés, écritures hors périmètre phase 2).
+// Port de src/pages/PublicOrganizerPage.jsx — lecture seule + abonnement
+// (#6 phase profil : follow/unfollow via OrganizerFollowButtonClient).
+// Contact/share/signalement restent hors périmètre (phases ultérieures).
 export default async function PublicOrganizerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const organizer = await getOrganizerBySlug(slug)
   if (!organizer) notFound()
 
-  const { upcoming, past } = await getOrganizerEvents(organizer.userId)
+  const session = await auth()
+  const isSelf = session?.user?.id === organizer.userId
+  const [{ upcoming, past }, followState] = await Promise.all([
+    getOrganizerEvents(organizer.userId),
+    session?.user && !isSelf ? isFollowing({ id: session.user.id }, { organizerId: organizer.userId }) : Promise.resolve({ ok: true as const, following: false }),
+  ])
   const zones = getEntityRegionIds(organizer).map(getRegionName).filter(Boolean)
   const visibleMedia = (organizer.media || []).filter((m) => m.visibility !== 'hidden')
   const showLongDescription = organizer.longDescription && organizer.longDescription !== organizer.shortDescription
@@ -49,6 +58,25 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
           {organizer.isVerified && <span style={{ marginLeft: 8, fontSize: 13, color: 'var(--teal)' }}>✓ vérifié</span>}
         </h1>
         {(organizer.city || zones.length > 0) && <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '4px 0 0' }}>{[organizer.city, ...zones].filter(Boolean).join(' · ')}</p>}
+
+        {!isSelf && (
+          <div style={{ marginTop: 14 }}>
+            <OrganizerFollowButtonClient
+              organizerId={organizer.userId}
+              organizerName={organizer.publicName}
+              initialFollowing={followState.following}
+              isAuthenticated={Boolean(session?.user)}
+            />
+            <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 420 }}>
+              En t&apos;abonnant, tu acceptes de partager ton e-mail avec cet organisateur afin de recevoir ses actualités. Tu peux te désabonner à tout moment
+              depuis{' '}
+              <Link href="/profil/organisateurs-suivis" style={{ color: 'var(--teal)' }}>
+                tes organisateurs suivis
+              </Link>
+              .
+            </p>
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
           <KPI value={organizer.followersCount} label="Abonnés" />

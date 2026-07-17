@@ -31,29 +31,35 @@ export interface OrganizerIdInput {
 
 export interface AlertSettings {
   newEvent: boolean
-  cancelled: boolean
+  ticketing: boolean
   almostFull: boolean
+  scheduleChanges: boolean
   newMedia: boolean
+  importantAnnouncements: boolean
 }
 
 export interface UpdateFollowAlertsInput {
   organizerId: string
-  alerts: Partial<AlertSettings>
+  notificationsEnabled?: boolean
+  alerts?: Partial<AlertSettings>
 }
 
 export interface FollowedOrganizerView {
   organizerId: string
+  notificationsEnabled: boolean
   alerts: AlertSettings
   organizerName: string
   organizerSlug: string
   organizerAvatarUrl: string | null
+  organizerCity: string | null
+  organizerCountry: string | null
 }
 
 type ErrResult = { ok: false; status: number; error: string }
 
 export type FollowResult = ErrResult | { ok: true; alreadyFollowing: boolean }
 export type UnfollowResult = ErrResult | { ok: true; wasFollowing: boolean }
-export type UpdateFollowAlertsResult = ErrResult | { ok: true; alerts: AlertSettings }
+export type UpdateFollowAlertsResult = ErrResult | { ok: true; notificationsEnabled: boolean; alerts: AlertSettings }
 export type ListFollowedOrganizersResult = ErrResult | { ok: true; follows: FollowedOrganizerView[] }
 export type IsFollowingResult = { ok: true; following: boolean }
 
@@ -61,19 +67,29 @@ function isDuplicateKeyError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000
 }
 
-type AlertsLike = { newEvent?: boolean | null; cancelled?: boolean | null; almostFull?: boolean | null; newMedia?: boolean | null } | null | undefined
+type AlertsLike = {
+  newEvent?: boolean | null
+  ticketing?: boolean | null
+  almostFull?: boolean | null
+  scheduleChanges?: boolean | null
+  newMedia?: boolean | null
+  importantAnnouncements?: boolean | null
+} | null | undefined
 
 // Les defaults du schéma (`alertSettingsSchema`) sont TOUJOURS appliqués par
 // Mongoose à la création du document — ces fallbacks ne servent qu'à
 // satisfaire TypeScript (`InferSchemaType` type les champs à default comme
 // potentiellement absents) et à couvrir un éventuel document créé hors de ce
-// module (script, migration).
+// module (script, migration). Toutes à true par défaut, comme
+// DEFAULT_NOTIFICATION_SETTINGS côté legacy.
 function toAlertSettings(alerts: AlertsLike): AlertSettings {
   return {
     newEvent: alerts?.newEvent ?? true,
-    cancelled: alerts?.cancelled ?? true,
+    ticketing: alerts?.ticketing ?? true,
     almostFull: alerts?.almostFull ?? true,
-    newMedia: alerts?.newMedia ?? false,
+    scheduleChanges: alerts?.scheduleChanges ?? true,
+    newMedia: alerts?.newMedia ?? true,
+    importantAnnouncements: alerts?.importantAnnouncements ?? true,
   }
 }
 
@@ -190,24 +206,27 @@ export async function updateFollowAlerts(caller: FollowCaller, input: UpdateFoll
   const follow = await OrganizerFollow.findOne({ userId: caller.id, organizerId })
   if (!follow) return { ok: false, status: 404, error: 'not_following' }
 
-  const { alerts } = input
+  const { alerts, notificationsEnabled } = input
   const setFields: Record<string, boolean> = {}
-  if (alerts.newEvent !== undefined) setFields['alerts.newEvent'] = alerts.newEvent
-  if (alerts.cancelled !== undefined) setFields['alerts.cancelled'] = alerts.cancelled
-  if (alerts.almostFull !== undefined) setFields['alerts.almostFull'] = alerts.almostFull
-  if (alerts.newMedia !== undefined) setFields['alerts.newMedia'] = alerts.newMedia
+  if (notificationsEnabled !== undefined) setFields.notificationsEnabled = notificationsEnabled
+  if (alerts?.newEvent !== undefined) setFields['alerts.newEvent'] = alerts.newEvent
+  if (alerts?.ticketing !== undefined) setFields['alerts.ticketing'] = alerts.ticketing
+  if (alerts?.almostFull !== undefined) setFields['alerts.almostFull'] = alerts.almostFull
+  if (alerts?.scheduleChanges !== undefined) setFields['alerts.scheduleChanges'] = alerts.scheduleChanges
+  if (alerts?.newMedia !== undefined) setFields['alerts.newMedia'] = alerts.newMedia
+  if (alerts?.importantAnnouncements !== undefined) setFields['alerts.importantAnnouncements'] = alerts.importantAnnouncements
 
   if (Object.keys(setFields).length === 0) {
     // Corps vide : la route rejette déjà ce cas en 400 avant d'appeler cette
     // fonction. Un appelant direct (tests, futur usage interne) obtient
     // simplement les préférences actuelles, inchangées.
-    return { ok: true, alerts: toAlertSettings(follow.alerts) }
+    return { ok: true, notificationsEnabled: follow.notificationsEnabled ?? true, alerts: toAlertSettings(follow.alerts) }
   }
 
   const updated = await OrganizerFollow.findOneAndUpdate({ _id: follow._id }, { $set: setFields }, { new: true })
   if (!updated) return { ok: false, status: 404, error: 'not_following' }
 
-  return { ok: true, alerts: toAlertSettings(updated.alerts) }
+  return { ok: true, notificationsEnabled: updated.notificationsEnabled ?? true, alerts: toAlertSettings(updated.alerts) }
 }
 
 // ────────────────────────── listMyFollowedOrganizers ────────────────────────
@@ -234,10 +253,13 @@ export async function listMyFollowedOrganizers(caller: FollowCaller): Promise<Li
     const profile = profileByUserId.get(f.organizerId)
     return {
       organizerId: f.organizerId,
+      notificationsEnabled: f.notificationsEnabled ?? true,
       alerts: toAlertSettings(f.alerts),
       organizerName: profile?.publicName ?? '',
       organizerSlug: profile?.slug ?? '',
       organizerAvatarUrl: profile?.avatarUrl ?? null,
+      organizerCity: profile?.city || null,
+      organizerCountry: profile?.country || null,
     }
   })
 

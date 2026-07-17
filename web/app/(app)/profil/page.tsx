@@ -1,24 +1,27 @@
-import { auth, signOut } from '@/auth'
+import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { getMyProfile } from '@/lib/server/profile'
+import { listMyTickets } from '@/lib/server/tickets'
+import ProfilClient from './ProfilClient'
+
+// Server Component : charge le profil complet + le portefeuille de billets
+// via un accès base direct — même convention que app/(app)/messages/page.tsx.
+// Le composant client, lui, ne parle qu'aux routes /api/profil/* pour toute
+// mutation ultérieure.
+export const metadata: Metadata = {
+  title: 'Profil — LIVEINBLACK',
+  robots: { index: false, follow: false },
+}
 
 export default async function ProfilPage() {
   const session = await auth()
+  if (!session?.user) redirect('/connexion')
 
-  return (
-    <main className="mx-auto flex max-w-sm flex-1 flex-col justify-center gap-4 p-8">
-      <h1 className="text-xl font-semibold">Profil (stub phase 1)</h1>
-      <p>Email : {session?.user?.email}</p>
-      <p>Rôle actif : {session?.user?.activeRole}</p>
-      <p>Statut : {session?.user?.status}</p>
-      <form
-        action={async () => {
-          'use server'
-          await signOut({ redirectTo: '/accueil' })
-        }}
-      >
-        <button type="submit" className="rounded bg-black px-3 py-2 text-white">
-          Se déconnecter
-        </button>
-      </form>
-    </main>
-  )
+  const caller = { id: session.user.id }
+  const [profile, ticketsResult] = await Promise.all([getMyProfile(caller), listMyTickets(caller.id)])
+
+  if (!profile) redirect('/connexion')
+
+  return <ProfilClient initialUser={profile} initialTicketGroups={ticketsResult.ok ? ticketsResult.groups : []} />
 }

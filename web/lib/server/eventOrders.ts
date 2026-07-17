@@ -129,10 +129,14 @@ function resolveRank(callerId: string, event: Pick<EventDoc, 'organizerId' | 'cr
   return computeAuthContext(callerId, event, roster).rank
 }
 
-type EventContext = { event: HydratedDocument<EventDoc>; rank: number; role: string }
-type EventContextResult = ErrResult | { ok: true; ctx: EventContext }
+export type EventContext = { event: HydratedDocument<EventDoc>; rank: number; role: string }
+export type EventContextResult = ErrResult | { ok: true; ctx: EventContext }
 
-async function loadEventContext(eventId: string, callerId: string): Promise<EventContextResult> {
+// Exportée (#7 phase organisateur) : lib/server/organizerEvents.ts réutilise
+// EXACTEMENT cette même formule de rang pour les mutations d'événement
+// (create/update/cancel/postpone/delete), plutôt que d'en réinventer une
+// seconde qui pourrait diverger avec le temps.
+export async function loadEventContext(eventId: string, callerId: string): Promise<EventContextResult> {
   const event = await Event.findById(eventId)
   if (!event) return { ok: false, status: 404, error: 'event_not_found' }
   const staffDoc = await EventStaff.findOne({ eventId }).lean()

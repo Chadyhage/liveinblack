@@ -4,6 +4,7 @@ import Message, { type MessageDoc } from '../models/Message'
 import Conversation, { type ConversationDoc } from '../models/Conversation'
 import Event from '../models/Event'
 import User from '../models/User'
+import { assertCanSendInConversation } from './messaging'
 
 // Sondages de conversation (poll + event_poll). Port de `voteOnPoll` /
 // création de sondage côté legacy (src/utils/messaging.js), avec UNE
@@ -54,13 +55,29 @@ export interface MessagePollView {
   senderId: string
   senderName: string
   type: 'poll' | 'event_poll'
+  // Forme complète, alignée sur MessageView (lib/server/messaging.ts) — le
+  // client (MessagesClient.tsx) ajoute directement la réponse de
+  // createPoll/createEventPoll à sa liste de messages typée MessageView[],
+  // sans repasser par getMessages. Une forme partielle ici (déjà rencontré :
+  // `reactions` manquant faisait planter MessageBubble sur
+  // `Object.keys(message.reactions)`) recasse ce même rendu.
+  content: string | null
   poll: {
     pollType: 'poll' | 'event_poll'
     question: string
     options: PollOptionView[]
     event: PollEventSnapshotView | null
   }
+  reactions: Record<string, string[]>
+  readBy: Record<string, string>
+  deletedForAll: boolean
+  pinned: boolean
+  replyToMessageId: string | null
   createdAt: string
+  editedAt: string | null
+  starredByMe: boolean
+  forwardedFrom: { senderName: string; convName: string } | null
+  readStatus: 'sent' | 'read' | null
 }
 
 type ErrResult = { ok: false; status: number; error: string }
@@ -79,6 +96,8 @@ function toMessageView(message: HydratedDocument<MessageDoc>): MessagePollView {
     senderId: message.senderId,
     senderName: message.senderName ?? '',
     type: message.type as 'poll' | 'event_poll',
+    // Toujours null pour un message de type sondage — voir lib/models/Message.ts.
+    content: null,
     poll: {
       pollType: poll.pollType as 'poll' | 'event_poll',
       question: poll.question,
@@ -94,7 +113,26 @@ function toMessageView(message: HydratedDocument<MessageDoc>): MessagePollView {
           }
         : null,
     },
+    // Message qui vient d'être créé : ces champs sont nécessairement à leur
+    // valeur par défaut, jamais renseignables à la création (voir
+    // lib/models/Message.ts) — pas besoin de relire le document pour ça.
+    reactions: {},
+    readBy: {},
+    deletedForAll: false,
+    pinned: false,
+    replyToMessageId: null,
     createdAt: new Date(message.createdAt as unknown as string).toISOString(),
+    // Forme alignée sur messaging.ts:toMessageView (voir commentaire de
+    // MessagePollView ci-dessus) : un message qui vient d'être créé n'a
+    // jamais été édité, épinglé en favori, transféré, ni lu par personne
+    // d'autre — sauf `readStatus`, qui doit malgré tout valoir 'sent' (et non
+    // `null`/`undefined`) pour que le tick d'envoi s'affiche immédiatement
+    // côté expéditeur, sans attendre le prochain rafraîchissement 3s de
+    // getMessages().
+    editedAt: null,
+    starredByMe: false,
+    forwardedFrom: null,
+    readStatus: 'sent',
   }
 }
 
@@ -106,21 +144,20 @@ async function resolveSenderName(callerId: string): Promise<string> {
 
 type ConversationGuardResult = ErrResult | { ok: true; conversation: HydratedDocument<ConversationDoc> }
 
-// Vérif MUTE partagée par tout chemin qui doit avoir "exactement la même
-// autorisation que l'envoi d'un message normal" (voir en-tête de fichier) :
-// créer un sondage, créer un sondage-événement, ET voter. Un seul point de
-// vérité pour ne jamais laisser un des trois chemins diverger silencieusement
-// des deux autres (c'est précisément le bug corrigé ici pour voteOnPoll).
-function isMutedInGroup(conversation: Pick<ConversationDoc, 'type' | 'mutedUserIds'>, callerId: string): boolean {
-  return conversation.type === 'group' && (conversation.mutedUserIds ?? []).includes(callerId)
-}
-
 // Précondition PARTAGÉE par createPoll/createEventPoll : la conversation
 // existe ET l'appelant en est participant. Un id malformé (pas un ObjectId
 // valide) est traité EXACTEMENT comme "n'existe pas" (même 404
 // conversation_not_found) — jamais un id invalide ne doit lever un CastError
 // distinguable d'un 404 normal, qui laisserait un tiers deviner la forme
 // attendue d'un id de conversation.
+//
+// L'autorisation d'ÉCRITURE (sourdine de groupe, blocage direct) passe par
+// assertCanSendInConversation (lib/server/messaging.ts), le MÊME garde
+// partagé par sendMessage/forwardMessage — jamais une vérification propre à
+// ce fichier qui pourrait diverger silencieusement (c'est précisément le bug
+// corrigé ici : une vérification locale à polls.ts ne connaissait ni la
+// sourdine temporisée ni le blocage direct, un compte bloqué pouvait donc
+// créer/voter des sondages dans une conversation directe malgré le blocage).
 async function loadConversationForPost(callerId: string, conversationId: string): Promise<ConversationGuardResult> {
   if (!conversationId || !mongoose.isValidObjectId(conversationId)) {
     return { ok: false, status: 404, error: 'conversation_not_found' }
@@ -132,9 +169,8 @@ async function loadConversationForPost(callerId: string, conversationId: string)
   if (!conversation || !conversation.participantIds.includes(callerId)) {
     return { ok: false, status: 404, error: 'conversation_not_found' }
   }
-  if (isMutedInGroup(conversation, callerId)) {
-    return { ok: false, status: 403, error: 'muted' }
-  }
+  const sendGuard = await assertCanSendInConversation(conversation, callerId)
+  if (!sendGuard.ok) return sendGuard
   return { ok: true, conversation }
 }
 
@@ -321,18 +357,14 @@ export async function voteOnPoll(caller: PollCaller, input: VoteOnPollInput): Pr
     return { ok: false, status: 404, error: 'poll_not_found' }
   }
 
-  // MÊME autorisation que créer un sondage (voir en-tête de fichier) : un
-  // participant muet d'un groupe ne peut pas voter, exactement comme il ne
-  // peut ni créer un sondage (loadConversationForPost) ni envoyer un message
-  // normal (sendMessage, messaging.ts). Ce check était ABSENT ici jusqu'ici —
-  // seul un 404 générique existait pour les non-participants — ce qui
-  // permettait à un participant muet de contourner sa restriction en votant
-  // au lieu de créer/d'envoyer. 403 (pas 404) : l'appelant est déjà confirmé
-  // participant juste au-dessus, donc lui répondre "muted" ne lui apprend
-  // rien qu'il ne sache déjà (il est bien dans la conversation, juste muet).
-  if (isMutedInGroup(conversation, caller.id)) {
-    return { ok: false, status: 403, error: 'muted' }
-  }
+  // MÊME autorisation que créer un sondage/envoyer un message (voir en-tête
+  // de fichier et assertCanSendInConversation, lib/server/messaging.ts) :
+  // sourdine de groupe (y compris temporisée) ET blocage direct. 403 (pas
+  // 404) : l'appelant est déjà confirmé participant juste au-dessus, donc lui
+  // répondre "muted"/"blocked" ne lui apprend rien qu'il ne sache déjà (il
+  // est bien dans la conversation, juste empêché d'y écrire).
+  const sendGuard = await assertCanSendInConversation(conversation, caller.id)
+  if (!sendGuard.ok) return sendGuard
 
   // Vérifié AVANT l'update atomique : un optionId inconnu ne doit PAS
   // atteindre le pipeline, où le $cond de branche "cible" ne matcherait

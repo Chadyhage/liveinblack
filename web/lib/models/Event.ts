@@ -72,6 +72,19 @@ const eventSchema = new Schema(
     publishedAt: { type: Date, default: null },
     closingDate: { type: Date, default: null },
     cancelled: { type: Boolean, default: false },
+    // Message affiché aux détenteurs de billets sur leur billet/le mail
+    // d'annulation (#7 phase organisateur, port de cancelEventWithMessage) —
+    // jamais affiché ailleurs que sur les billets DE CET événement.
+    cancellationMessage: { type: String, default: '' },
+    cancelledAt: { type: Date, default: null },
+    // Report (#7 phase organisateur, port de postpone_event) — conserve la
+    // date/heure D'ORIGINE pour affichage ("reporté depuis...") pendant que
+    // `date`/`time` ci-dessus portent la NOUVELLE date ; les billets déjà
+    // vendus restent valables, aucun remboursement.
+    postponedFrom: {
+      type: new Schema({ date: { type: String, required: true }, time: { type: String, default: '' } }, { _id: false }),
+      default: null,
+    },
 
     location: { type: String, default: '' },
     city: { type: String, default: '' },

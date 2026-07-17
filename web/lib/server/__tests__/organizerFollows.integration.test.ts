@@ -87,10 +87,13 @@ describeIntegration('organizerFollows (intégration, transaction réelle) — ab
 
       const follow = await OrganizerFollow.findOne({ userId: follower.id, organizerId: profile.userId }).lean()
       expect(follow).not.toBeNull()
+      expect(follow?.notificationsEnabled).toBe(true)
       expect(follow?.alerts?.newEvent).toBe(true)
-      expect(follow?.alerts?.cancelled).toBe(true)
+      expect(follow?.alerts?.ticketing).toBe(true)
       expect(follow?.alerts?.almostFull).toBe(true)
-      expect(follow?.alerts?.newMedia).toBe(false)
+      expect(follow?.alerts?.scheduleChanges).toBe(true)
+      expect(follow?.alerts?.newMedia).toBe(true)
+      expect(follow?.alerts?.importantAnnouncements).toBe(true)
 
       // Lecture FRAÎCHE (pas la valeur en mémoire) : c'est bien le document
       // en base qui doit refléter l'incrément.
@@ -252,13 +255,15 @@ describeIntegration('organizerFollows (intégration, transaction réelle) — ab
       const follower = await seedUser()
       await followOrganizer({ id: follower.id }, { organizerId: profile.userId })
 
-      const first = await updateFollowAlerts({ id: follower.id }, { organizerId: profile.userId, alerts: { newMedia: true } })
+      const first = await updateFollowAlerts({ id: follower.id }, { organizerId: profile.userId, alerts: { newMedia: false } })
       expect(first.ok).toBe(true)
       if (!first.ok) return
-      expect(first.alerts.newMedia).toBe(true)
+      expect(first.alerts.newMedia).toBe(false)
       expect(first.alerts.newEvent).toBe(true)
-      expect(first.alerts.cancelled).toBe(true)
+      expect(first.alerts.scheduleChanges).toBe(true)
       expect(first.alerts.almostFull).toBe(true)
+      expect(first.alerts.ticketing).toBe(true)
+      expect(first.alerts.importantAnnouncements).toBe(true)
 
       const second = await updateFollowAlerts(
         { id: follower.id },
@@ -269,14 +274,33 @@ describeIntegration('organizerFollows (intégration, transaction réelle) — ab
       expect(second.alerts.newEvent).toBe(false)
       expect(second.alerts.almostFull).toBe(false)
       // Inchangés depuis le premier appel partiel.
-      expect(second.alerts.cancelled).toBe(true)
-      expect(second.alerts.newMedia).toBe(true)
+      expect(second.alerts.scheduleChanges).toBe(true)
+      expect(second.alerts.newMedia).toBe(false)
 
       const persisted = await OrganizerFollow.findOne({ userId: follower.id, organizerId: profile.userId }).lean()
       expect(persisted?.alerts?.newEvent).toBe(false)
       expect(persisted?.alerts?.almostFull).toBe(false)
-      expect(persisted?.alerts?.cancelled).toBe(true)
-      expect(persisted?.alerts?.newMedia).toBe(true)
+      expect(persisted?.alerts?.scheduleChanges).toBe(true)
+      expect(persisted?.alerts?.newMedia).toBe(false)
+    })
+
+    it('la bascule maîtresse notificationsEnabled se met à jour indépendamment des préférences fines', async () => {
+      const organizerUser = await seedUser()
+      const profile = await seedOrganizerProfile(organizerUser.id)
+      const follower = await seedUser()
+      await followOrganizer({ id: follower.id }, { organizerId: profile.userId })
+
+      const result = await updateFollowAlerts({ id: follower.id }, { organizerId: profile.userId, notificationsEnabled: false })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.notificationsEnabled).toBe(false)
+      // Les préférences fines restent intactes — couper la bascule maîtresse
+      // ne doit jamais effacer les réglages détaillés.
+      expect(result.alerts.newEvent).toBe(true)
+      expect(result.alerts.almostFull).toBe(true)
+
+      const persisted = await OrganizerFollow.findOne({ userId: follower.id, organizerId: profile.userId }).lean()
+      expect(persisted?.notificationsEnabled).toBe(false)
     })
 
     it("rejette si l'appelant ne suit pas cet organisateur (404 not_following)", async () => {

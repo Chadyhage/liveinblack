@@ -98,6 +98,17 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       ])
       expect(result.message.poll.event).toBeNull()
 
+      // Le client (MessagesClient.tsx) ajoute ce message directement dans sa
+      // liste typée MessageView[] (forme de lib/server/messaging.ts) sans
+      // repasser par getMessages — s'il manque un de ces champs, MessageBubble
+      // plante (déjà arrivé : Object.keys(message.reactions) sur undefined).
+      expect(result.message.content).toBeNull()
+      expect(result.message.reactions).toEqual({})
+      expect(result.message.readBy).toEqual({})
+      expect(result.message.deletedForAll).toBe(false)
+      expect(result.message.pinned).toBe(false)
+      expect(result.message.replyToMessageId).toBeNull()
+
       const freshConv = await Conversation.findById(conversation.id).lean()
       expect(freshConv?.lastMessage).toBe('Sondage : On sort où ce soir ?')
       expect(freshConv?.lastSenderId).toBe(alice.id)
@@ -174,6 +185,23 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       expect(result.status).toBe(403)
       expect(result.error).toBe('muted')
     })
+
+    it('refuse un compte bloqué dans une conversation directe (blocked) — même autorisation que sendMessage', async () => {
+      // Régression : loadConversationForPost ne vérifiait auparavant que la
+      // sourdine de groupe, jamais le blocage — un compte bloqué pouvait donc
+      // créer un sondage dans une conversation directe malgré le blocage,
+      // alors que sendMessage refuse déjà ce même cas.
+      const alice = await seedUser()
+      const bob = await seedUser()
+      await User.updateOne({ _id: alice.id }, { $addToSet: { blockedUserIds: bob.id } })
+      const conversation = await seedConversation([alice.id, bob.id])
+
+      const result = await createPoll({ id: bob.id }, { conversationId: conversation.id, question: 'Q ?', options: ['A', 'B'] })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.status).toBe(403)
+      expect(result.error).toBe('blocked')
+    })
   })
 
   describe('createEventPoll', () => {
@@ -241,6 +269,20 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       if (result.ok) return
       expect(result.status).toBe(404)
       expect(result.error).toBe('conversation_not_found')
+    })
+
+    it('refuse un compte bloqué dans une conversation directe (blocked)', async () => {
+      const alice = await seedUser()
+      const bob = await seedUser()
+      await User.updateOne({ _id: alice.id }, { $addToSet: { blockedUserIds: bob.id } })
+      const conversation = await seedConversation([alice.id, bob.id])
+      const event = await seedEvent()
+
+      const result = await createEventPoll({ id: bob.id }, { conversationId: conversation.id, eventId: event.id })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.status).toBe(403)
+      expect(result.error).toBe('blocked')
     })
   })
 
@@ -347,6 +389,31 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       if (result.ok) return
       expect(result.status).toBe(403)
       expect(result.error).toBe('muted')
+
+      const fresh = await Message.findById(messageId).lean()
+      expect(fresh?.poll?.options.every((o) => (o.voterIds ?? []).length === 0)).toBe(true)
+    })
+
+    it('refuse un compte bloqué dans une conversation directe SANS enregistrer aucun vote (blocked)', async () => {
+      // Régression : voteOnPoll ne vérifiait auparavant que la sourdine de
+      // groupe, jamais le blocage direct — un compte bloqué pouvait donc
+      // voter sur un sondage déjà existant dans une conversation directe
+      // malgré le blocage.
+      const alice = await seedUser()
+      const bob = await seedUser()
+      const conversation = await seedConversation([alice.id, bob.id])
+      const created = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Option A', 'Option B'] })
+      expect(created.ok).toBe(true)
+      if (!created.ok) return
+      const messageId = created.message.id
+
+      await User.updateOne({ _id: alice.id }, { $addToSet: { blockedUserIds: bob.id } })
+
+      const result = await voteOnPoll({ id: bob.id }, { messageId, optionId: '0' })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.status).toBe(403)
+      expect(result.error).toBe('blocked')
 
       const fresh = await Message.findById(messageId).lean()
       expect(fresh?.poll?.options.every((o) => (o.voterIds ?? []).length === 0)).toBe(true)

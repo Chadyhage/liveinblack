@@ -1,5 +1,5 @@
 import type { DefaultSession } from 'next-auth'
-import type { Role, AccountStatus } from '@/lib/server/permissions'
+import type { Role, AccountStatus, RoleApprovalStatus } from '@/lib/server/permissions'
 
 declare module 'next-auth' {
   interface Session {
@@ -8,6 +8,8 @@ declare module 'next-auth' {
       roles: Role[]
       activeRole: Role
       status: AccountStatus
+      orgStatus: RoleApprovalStatus
+      prestStatus: RoleApprovalStatus
     } & DefaultSession['user']
   }
 
@@ -15,6 +17,8 @@ declare module 'next-auth' {
     roles: Role[]
     activeRole: Role
     status: AccountStatus
+    orgStatus?: RoleApprovalStatus
+    prestStatus?: RoleApprovalStatus
   }
 }
 
@@ -23,5 +27,7 @@ declare module 'next-auth/jwt' {
     roles?: Role[]
     activeRole?: Role
     status?: AccountStatus
+    orgStatus?: RoleApprovalStatus
+    prestStatus?: RoleApprovalStatus
   }
 }

@@ -26,9 +26,19 @@ const conversationSchema = new Schema(
     members: { type: [memberSchema], default: undefined },
     name: { type: String, default: null },
     avatar: { type: String, default: null },
-    // Mute permanent (togglé par un admin), pas une expiration temporisée —
-    // fidèle au comportement legacy (setGroupMemberMute/clearGroupMemberMute).
+    // Sourdine d'ENVOI (togglée par un admin, empêche le membre d'écrire) —
+    // reflète en permanence l'état "actuellement muté", dérivé de
+    // memberMuteUntil ci-dessous (nettoyé paresseusement à chaque envoi, voir
+    // lib/server/groups.ts). Fidèle au comportement legacy
+    // (setGroupMemberMute/clearGroupMemberMute), mais avec une VRAIE
+    // expiration temporisée cette fois (le premier port avait délibérément
+    // simplifié en mute permanent — voir groups.ts pour le détail).
     mutedUserIds: { type: [String], default: [] },
+    // Échéance de la sourdine de CHAQUE membre muté — chaîne ISO, ou chaîne
+    // vide '' pour "jusqu'à réactivation" (indéfini). Absent d'un membre ⇒
+    // jamais muté. Map de String (pas de Date) pour représenter proprement le
+    // cas indéfini sans sentinelle de date arbitraire.
+    memberMuteUntil: { type: Map, of: String, default: {} },
     lastMessage: { type: String, default: '' },
     lastMessageAt: { type: Date, default: null },
     lastSenderId: { type: String, default: null },
@@ -38,6 +48,19 @@ const conversationSchema = new Schema(
     // conversation) : ici directement sur la conversation, plus simple à lire
     // et à mettre à jour en une seule écriture au marquage "lu".
     lastReadAt: { type: Map, of: Date, default: {} },
+    // Personnalisation PAR PARTICIPANT de la conversation elle-même
+    // (épinglée/masquée dans SA liste, notifications coupées POUR LUI) —
+    // jamais partagée entre participants, contrairement à mutedUserIds
+    // (sourdine d'ENVOI décidée par un admin, qui s'applique à tout le monde).
+    pinnedByUserIds: { type: [String], default: [] },
+    mutedConversationByUserIds: { type: [String], default: [] },
+    hiddenByUserIds: { type: [String], default: [] },
+    // "En train d'écrire" — horodatage de la dernière frappe par
+    // participant, expiré côté lecture (voir getTypingUsers) plutôt que
+    // nettoyé par un job : pas d'infra temps réel dans cette migration
+    // (polling uniquement), donc pas de "stop typing" fiable à la fermeture
+    // d'onglet — une expiration courte côté lecture compense.
+    typingAt: { type: Map, of: Date, default: {} },
   },
   { timestamps: true }
 )

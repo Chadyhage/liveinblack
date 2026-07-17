@@ -154,6 +154,7 @@ export interface SearchSongView {
   artist: string
   previewUrl: string | null
   cover: string | null
+  duration: string
 }
 
 export type SearchSongsResult = ErrResult | { ok: true; results: SearchSongView[] }
@@ -163,9 +164,18 @@ interface ItunesTrack {
   artistName?: string
   previewUrl?: string
   artworkUrl100?: string
+  trackTimeMillis?: number
 }
 interface ItunesSearchResponse {
   results?: ItunesTrack[]
+}
+
+// Mirrors formatMs/fmtMs (PlaylistSystem.jsx:9-13, PlaylistDJPanel.jsx:20) :
+// mm:ss dérivé de trackTimeMillis, chaîne vide si l'API iTunes ne le fournit pas.
+function formatDuration(ms: number | undefined): string {
+  if (!ms) return ''
+  const s = Math.floor(ms / 1000)
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
 // Proxy serveur de l'iTunes Search API (le legacy l'appelait directement
@@ -200,6 +210,7 @@ export async function searchSongs(_caller: PlaylistCaller, input: { query: strin
       artist: t.artistName ?? '',
       previewUrl: t.previewUrl ?? null,
       cover: t.artworkUrl100 ?? null,
+      duration: formatDuration(t.trackTimeMillis),
     }))
 
   return { ok: true, results }
@@ -428,6 +439,14 @@ export async function setSongStatus(
   const result = await EventPlaylist.updateOne({ eventId, 'songs.id': songId }, { $set: { 'songs.$.status': input.status } })
   if (result.matchedCount === 0) return { ok: false, status: 404, error: 'song_not_found' }
 
+  // Mirrors PlaylistDJPanel.jsx patchStatus() ligne 64 : refuser le morceau
+  // actuellement affiché en "En ce moment" retire aussi cette bannière côté
+  // salle — sans ça la salle continuerait de voir un son que le DJ vient de
+  // rejeter. No-op (matchedCount 0) si ce n'est pas le son en cours.
+  if (input.status === 'refused') {
+    await EventPlaylist.updateOne({ eventId, 'nowPlaying.id': songId }, { $set: { nowPlaying: null } })
+  }
+
   return { ok: true }
 }
 
@@ -455,6 +474,49 @@ export async function removeSong(caller: PlaylistCaller, input: { eventId: strin
   // `matchedCount` — pertinent dans son cas car son filtre inclut `songs.id`).
   const result = await EventPlaylist.updateOne({ eventId }, { $pull: { songs: { id: songId } } })
   if (result.modifiedCount === 0) return { ok: false, status: 404, error: 'song_not_found' }
+
+  // Mirrors PlaylistDJPanel.jsx remove() ligne 75 : supprimer le morceau en
+  // cours retire aussi la bannière "En ce moment" — pas de bannière fantôme
+  // pointant vers un son qui n'existe plus.
+  await EventPlaylist.updateOne({ eventId, 'nowPlaying.id': songId }, { $set: { nowPlaying: null } })
+
+  return { ok: true }
+}
+
+// ───────────────────────────── removeOwnSong ────────────────────────────────
+
+// Mirrors PlaylistSystem.jsx removeSong() (lignes 382-394) : un PARTICIPANT
+// retire un de SES PROPRES sons — libère un slot de quota (songsRemaining est
+// recalculé depuis le nombre réel de songs.addedBy === caller.id, donc la
+// suppression augmente mécaniquement songsRemaining sans compteur séparé à
+// maintenir), ce qui permet de "remplacer" un son (supprimer puis en
+// reproposer un autre). AUCUN lien avec la modération DJ (removeSong
+// ci-dessus) : ceci est une action self-service, jamais un pouvoir de retirer
+// le son de quelqu'un d'autre.
+export async function removeOwnSong(caller: PlaylistCaller, input: { eventId: string; songId: string }): Promise<RemoveSongResult> {
+  await getDb()
+
+  const eventId = input.eventId?.trim()
+  const songId = input.songId?.trim()
+  if (!eventId || !songId) return { ok: false, status: 400, error: 'invalid_input' }
+
+  const playlist = await EventPlaylist.findOne({ eventId }).lean()
+  const song = playlist?.songs.find((s) => s.id === songId)
+  if (!playlist || !song) return { ok: false, status: 404, error: 'song_not_found' }
+  if (song.addedBy !== caller.id) return { ok: false, status: 403, error: 'not_song_owner' }
+
+  // L'ownership est RE-vérifié dans le filtre Mongo lui-même (pas seulement
+  // dans la lecture ci-dessus) : la garantie d'atomicité vient de la requête,
+  // pas d'une lecture préalable qui pourrait être périmée.
+  const result = await EventPlaylist.updateOne({ eventId }, { $pull: { songs: { id: songId, addedBy: caller.id } } })
+  if (result.modifiedCount === 0) return { ok: false, status: 404, error: 'song_not_found' }
+
+  // Même garde que removeSong ci-dessus (le DJ a pu poser ce son en "En ce
+  // moment" avant que son auteur ne le retire lui-même) : sans ça, la salle
+  // continuerait de voir la bannière "En ce moment" pointer vers un son qui
+  // n'existe plus nulle part dans la playlist.
+  await EventPlaylist.updateOne({ eventId, 'nowPlaying.id': songId }, { $set: { nowPlaying: null } })
+
   return { ok: true }
 }
 
@@ -477,12 +539,18 @@ export async function playNow(caller: PlaylistCaller, input: { eventId: string; 
   const song = playlist?.songs.find((s) => s.id === songId)
   if (!song) return { ok: false, status: 404, error: 'song_not_found' }
 
-  // Ne touche PAS `song.status` : marquer "joué" est une action explicite et
-  // séparée (setSongStatus), voir commentaire du modèle nowPlaying.
+  // Mirrors PlaylistDJPanel.jsx playNow() (lignes 88-97) : pose `nowPlaying`
+  // ET marque le son "joué" dans la MÊME action — contrairement aux 3 autres
+  // transitions (validé/refusé/joué manuel) qui passent par setSongStatus.
   await EventPlaylist.updateOne(
     { eventId },
-    { $set: { nowPlaying: { id: song.id, title: song.title, artist: song.artist ?? '', cover: song.cover ?? null, at: new Date() } } },
-    { upsert: true }
+    {
+      $set: {
+        nowPlaying: { id: song.id, title: song.title, artist: song.artist ?? '', cover: song.cover ?? null, at: new Date() },
+        'songs.$[s].status': 'played',
+      },
+    },
+    { arrayFilters: [{ 's.id': songId }] }
   )
   return { ok: true }
 }
@@ -515,6 +583,10 @@ export interface NowPlayingView {
   at: string
 }
 
+// 30 minutes — mirrors le seuil d'auto-masquage de la bannière "En ce moment"
+// dans PlaylistSystem.jsx (ligne 536) ET PlaylistDJPanel.jsx (ligne 191).
+const NOW_PLAYING_TTL_MS = 30 * 60 * 1000
+
 export type GetPlaylistResult =
   | ErrResult
   | {
@@ -525,6 +597,8 @@ export type GetPlaylistResult =
       songsRemaining: number
       likesRemaining: number
       isCheckedIn: boolean
+      hasTicket: boolean
+      ticketCount: number
     }
 
 // Vue en lecture seule — accessible à tout appelant AUTHENTIFIÉ, sans gating
@@ -552,23 +626,36 @@ export async function getPlaylist(caller: PlaylistCaller, input: { eventId: stri
   const mySpentLikes = countMySpentLikes(songs, caller.id)
   const likesRemaining = Math.max(0, LIKE_BUDGET - mySpentLikes)
 
-  const nowPlaying: NowPlayingView | null = playlist?.nowPlaying
-    ? {
-        id: playlist.nowPlaying.id,
-        title: playlist.nowPlaying.title,
-        artist: playlist.nowPlaying.artist ?? '',
-        cover: playlist.nowPlaying.cover ?? null,
-        at: new Date(playlist.nowPlaying.at).toISOString(),
-      }
-    : null
+  const nowPlayingExpired = playlist?.nowPlaying ? Date.now() - new Date(playlist.nowPlaying.at).getTime() >= NOW_PLAYING_TTL_MS : false
+  const nowPlaying: NowPlayingView | null =
+    playlist?.nowPlaying && !nowPlayingExpired
+      ? {
+          id: playlist.nowPlaying.id,
+          title: playlist.nowPlaying.title,
+          artist: playlist.nowPlaying.artist ?? '',
+          cover: playlist.nowPlaying.cover ?? null,
+          at: new Date(playlist.nowPlaying.at).toISOString(),
+        }
+      : null
+
+  // Anonymisation (mirrors PlaylistSystem.jsx SongRow ligne 443 : "ajouté par
+  // toi" / "un invité" — AUCUN autre participant ne voit jamais le vrai nom
+  // de qui que ce soit, y compris le DJ/l'équipe modératrice). `addedBy` (un
+  // id, jamais un nom) reste intact pour que le client sache que c'est "moi".
+  const songViews = songs.map((s) => {
+    const view = toSongView(s as PlaylistSong)
+    return s.addedBy === caller.id ? view : { ...view, addedByName: '' }
+  })
 
   return {
     ok: true,
-    songs: songs.map((s) => toSongView(s as PlaylistSong)),
+    songs: songViews,
     nowPlaying,
     canModerate,
     songsRemaining,
     likesRemaining,
     isCheckedIn: hasCheckedIn,
+    hasTicket: ticketCount > 0,
+    ticketCount,
   }
 }

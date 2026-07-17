@@ -54,17 +54,34 @@ const pollSchema = new Schema(
   { _id: false }
 )
 
+// Snapshot minimal du message d'origine transféré — capturé au moment du
+// transfert (jamais re-résolu depuis le message source, qui peut être
+// supprimé ensuite sans casser le libellé « Transféré de … »).
+const forwardedFromSchema = new Schema(
+  {
+    senderName: { type: String, default: '' },
+    convName: { type: String, default: '' },
+  },
+  { _id: false }
+)
+
 const messageSchema = new Schema(
   {
     conversationId: { type: String, required: true, index: true },
     senderId: { type: String, required: true },
     senderName: { type: String, default: '' },
-    type: { type: String, enum: ['text', 'image', 'voice', 'poll', 'event_poll', 'system'], required: true },
-    // content : texte pour 'text'/'system', URL pour 'image'/'voice'. Absent
-    // pour 'poll'/'event_poll', qui utilisent le champ `poll` structuré
-    // ci-dessous plutôt qu'un JSON.stringify dans une string (le legacy
-    // sérialisait le sondage EN TEXTE dans `content` — ici un vrai sous-document,
-    // qui permet une mise à jour atomique ciblée par MongoDB).
+    type: {
+      type: String,
+      enum: ['text', 'image', 'voice', 'poll', 'event_poll', 'story', 'event', 'catalog_item', 'system'],
+      required: true,
+    },
+    // content : texte pour 'text'/'system', URL pour 'image'/'voice', JSON
+    // sérialisé pour 'story'/'event'/'catalog_item' (fidèle au legacy, qui
+    // sérialisait déjà ces trois types en JSON dans `content`). Absent pour
+    // 'poll'/'event_poll', qui utilisent le champ `poll` structuré ci-dessous
+    // plutôt qu'un JSON.stringify dans une string (le legacy sérialisait le
+    // sondage EN TEXTE dans `content` — ici un vrai sous-document, qui permet
+    // une mise à jour atomique ciblée par MongoDB).
     content: { type: String, default: null },
     poll: { type: pollSchema, default: null },
     reactions: { type: Map, of: [String], default: {} },
@@ -73,6 +90,15 @@ const messageSchema = new Schema(
     deletedForUserIds: { type: [String], default: [] },
     pinned: { type: Boolean, default: false },
     replyToMessageId: { type: String, default: null },
+    // Édition (texte uniquement, propriétaire seul) — voir editMessage
+    // (lib/server/messaging.ts). Non-null ⇒ suffixe "(modifié)" côté UI.
+    editedAt: { type: Date, default: null },
+    // Marquage "important" — par utilisateur (chacun ses propres messages
+    // marqués, jamais partagé), voir starMessage/unstarMessage.
+    starredByUserIds: { type: [String], default: [] },
+    // Renseigné uniquement pour un message transféré (handleForward côté
+    // legacy) — jamais recalculé après coup.
+    forwardedFrom: { type: forwardedFromSchema, default: null },
   },
   { timestamps: true }
 )

@@ -88,12 +88,12 @@ export async function checkinTicket(caller: CheckinCaller, input: CheckinInput):
   // volontaire du trou : le serveur devient l'autorité complète.) ──
   if (isEventEnded(event)) return { ok: false, status: 409, error: 'event_ended' }
 
-  // ── Droit à l'entrée : payé, ou place réellement gratuite. Les invitations
-  // guestlist arriveront avec l'outillage organisateur (phase 7) — aucun code
-  // actuel n'émet de billet source:'guestlist', donc rien à vérifier ici pour
-  // l'instant (fail-closed : un tel billet ne serait de toute façon pas admis
-  // tant que son registre n'existe pas). ──
-  if (ticket.paid !== true) {
+  // ── Droit à l'entrée : payé, place réellement gratuite, ou invitation
+  // guestlist (#7 phase organisateur — lib/server/guestlist.ts). Une place de
+  // guestlist peut être n'importe quel type de place (y compris payante :
+  // l'organisateur offre délibérément une table VIP) — seul `source` fait foi
+  // ici, jamais le prix de la place. ──
+  if (ticket.paid !== true && ticket.source !== 'guestlist') {
     if (ticket.stripeSessionId || ticket.fedapayTransactionId) {
       return { ok: false, status: 403, error: 'payment_pending' }
     }

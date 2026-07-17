@@ -394,6 +394,42 @@ export async function revokeSeat(caller: SeatCaller, input: TicketCodeInput): Pr
   return { ok: true, ticket: toSeatView(finalTicket) }
 }
 
+// Invitations EN ATTENTE émises par l'appelant en tant qu'HÔTE, pour un jeu
+// de sièges donné — c'est ce qui permet à TableHostPanel (portefeuille de
+// billets, #6 phase profil) d'afficher un 3ème état par siège ("invitation
+// envoyée à X, en attente de réponse") qui n'existe pas côté legacy (le bind
+// direct par e-mail y était instantané) mais que ce modèle de consentement
+// (#37) introduit nécessairement.
+export async function listOutgoingSeatInvitations(caller: SeatCaller, ticketCodes: string[]): Promise<InvitationListResult> {
+  await getDb()
+  if (ticketCodes.length === 0) return { ok: true, invitations: [] }
+
+  const invitations = await SeatInvitation.find({ hostUid: caller.id, ticketCode: { $in: ticketCodes }, status: 'pending' }).lean()
+  if (invitations.length === 0) return { ok: true, invitations: [] }
+
+  const tickets = await Ticket.find({ ticketCode: { $in: invitations.map((inv) => inv.ticketCode) } }).lean()
+  const ticketByCode = new Map(tickets.map((t) => [t.ticketCode, t]))
+
+  const views: SeatInvitationView[] = invitations.map((inv) => {
+    const ticket = ticketByCode.get(inv.ticketCode)
+    return {
+      id: String(inv._id),
+      ticketCode: inv.ticketCode,
+      eventId: inv.eventId,
+      eventName: ticket?.eventName ?? '',
+      eventDate: ticket?.eventDate ?? '',
+      place: ticket?.place ?? '',
+      hostName: null,
+      targetEmail: inv.targetEmail,
+      status: inv.status,
+      createdAt: new Date(inv.createdAt as unknown as string).toISOString(),
+      respondedAt: inv.respondedAt ? new Date(inv.respondedAt as unknown as string).toISOString() : null,
+    }
+  })
+
+  return { ok: true, invitations: views }
+}
+
 // Départ volontaire par la CIBLE d'un siège qu'elle détient déjà (miroir de
 // revokeSeat, mais déclenché par l'invité lui-même plutôt que par l'hôte).
 export async function leaveSeat(caller: SeatCaller, input: TicketCodeInput): Promise<SeatResult> {

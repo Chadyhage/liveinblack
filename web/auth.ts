@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs'
 import clientPromise from './lib/db/mongodb-client'
 import { getDb } from './lib/db/mongoose'
 import User from './lib/models/User'
-import type { Role, AccountStatus } from './lib/server/permissions'
+import type { Role, AccountStatus, RoleApprovalStatus } from './lib/server/permissions'
 
 // Remplace Firebase Auth. Stratégie JWT obligatoire avec le provider
 // Credentials (Auth.js ne persiste pas de session en base pour ce provider —
@@ -44,6 +44,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           roles: user.roles,
           activeRole: user.activeRole,
           status: user.status,
+          orgStatus: user.orgStatus,
+          prestStatus: user.prestStatus,
         }
       },
     }),
@@ -51,9 +53,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.roles = (user as unknown as { roles: Role[] }).roles
-        token.activeRole = (user as unknown as { activeRole: Role }).activeRole
-        token.status = (user as unknown as { status: AccountStatus }).status
+        const u = user as unknown as { roles: Role[]; activeRole: Role; status: AccountStatus; orgStatus?: RoleApprovalStatus; prestStatus?: RoleApprovalStatus }
+        token.roles = u.roles
+        token.activeRole = u.activeRole
+        token.status = u.status
+        token.orgStatus = u.orgStatus
+        token.prestStatus = u.prestStatus
       }
       return token
     },
@@ -63,6 +68,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.roles = (token.roles as Role[]) || ['client']
         session.user.activeRole = (token.activeRole as Role) || 'client'
         session.user.status = (token.status as AccountStatus) || 'active'
+        session.user.orgStatus = (token.orgStatus as RoleApprovalStatus) || 'none'
+        session.user.prestStatus = (token.prestStatus as RoleApprovalStatus) || 'none'
       }
       return session
     },

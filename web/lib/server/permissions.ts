@@ -7,10 +7,22 @@
 
 export type Role = 'client' | 'organisateur' | 'prestataire' | 'agent'
 export type AccountStatus = 'active' | 'pending' | 'rejected'
+// Statut d'approbation PAR RÔLE (#7 phase organisateur — dossiers
+// candidature) — distinct du statut de compte global ci-dessus. Sans ce
+// champ par rôle, un organisateur déjà actif qui candidate en plus comme
+// prestataire se retrouverait bloqué de SES DEUX interfaces le temps de la
+// review du second dossier (bug corrigé côté legacy, cf. audit #7 de
+// applications.js) — jamais reproduit ici : canCreateEvent/canProposeServices
+// lisent `orgStatus`/`prestStatus` quand disponible, et ne retombent sur le
+// statut de compte global que pour les appelants qui ne le fournissent pas
+// encore (rétro-compatibilité des tests/appels existants).
+export type RoleApprovalStatus = 'none' | 'pending' | 'active' | 'rejected'
 
 export interface PermissionUser {
   activeRole: Role
   status: AccountStatus
+  orgStatus?: RoleApprovalStatus
+  prestStatus?: RoleApprovalStatus
 }
 
 export function canBook(user: PermissionUser | null): boolean {
@@ -21,12 +33,17 @@ export function canBook(user: PermissionUser | null): boolean {
 
 export function canCreateEvent(user: PermissionUser | null): boolean {
   if (!user) return false
-  return (user.activeRole === 'organisateur' || user.activeRole === 'agent') && user.status !== 'pending'
+  if (user.activeRole === 'agent') return true
+  if (user.activeRole !== 'organisateur') return false
+  const effective = user.orgStatus ?? user.status
+  return effective !== 'pending'
 }
 
 export function canProposeServices(user: PermissionUser | null): boolean {
   if (!user) return false
-  return user.activeRole === 'prestataire' && user.status !== 'rejected'
+  if (user.activeRole !== 'prestataire') return false
+  const effective = user.prestStatus ?? user.status
+  return effective !== 'rejected'
 }
 
 export function canOrderServices(user: PermissionUser | null): boolean {
@@ -53,8 +70,11 @@ export function getCreateEventBlockedReason(user: PermissionUser | null): string
   if (!user) return 'Connecte-toi avec un compte organisateur.'
   if (user.activeRole === 'client') return 'Seuls les organisateurs peuvent créer des événements.'
   if (user.activeRole === 'prestataire') return "Les prestataires ne créent pas d'événements. Passe à un compte organisateur."
-  if (user.status === 'pending') return 'Ton compte organisateur est en cours de validation.'
-  if (user.status === 'rejected') return 'Ton compte a été rejeté. Contacte le support.'
+  if (user.activeRole === 'organisateur') {
+    const effective = user.orgStatus ?? user.status
+    if (effective === 'pending') return 'Ton compte organisateur est en cours de validation.'
+    if (effective === 'rejected') return 'Ton compte a été rejeté. Contacte le support.'
+  }
   return null
 }
 

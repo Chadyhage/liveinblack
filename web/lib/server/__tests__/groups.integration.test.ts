@@ -2,7 +2,7 @@
 // (création, départ, suppression, sourdine de membre) — voir lib/server/groups.ts
 // pour le détail de chaque garde et de la sémantique de suppression
 // transactionnelle (conversation + messages, jamais l'un sans l'autre).
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import mongoose from 'mongoose'
 import { createGroup, leaveGroup, deleteGroup, muteMember, unmuteMember } from '../groups'
 import Conversation from '../../models/Conversation'
@@ -243,6 +243,32 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
       expect(remainingMessages).toHaveLength(0)
     })
 
+    it("transaction RÉELLEMENT atomique sur le nettoyage 'groupe vidé' : un crash simulé juste APRÈS la suppression des messages annule aussi la suppression de la conversation", async () => {
+      const a = await seedUser({ firstName: 'Alice', lastName: 'A' })
+      const conv = await seedGroup([{ userId: a.id, name: 'Alice A', role: 'admin' }])
+      await Message.create({ conversationId: conv.id, senderId: a.id, senderName: 'Alice A', type: 'text', content: 'salut' })
+
+      // Même raisonnement que le test équivalent de deleteGroup : laisse la
+      // VRAIE suppression des messages s'exécuter (dans la transaction),
+      // puis simule un crash juste après pour vérifier que
+      // Conversation.deleteOne (groups.ts:229) et Message.deleteMany
+      // (groups.ts:230) sont bien annulés ENSEMBLE, jamais l'un sans l'autre.
+      const originalDeleteMany = Message.deleteMany.bind(Message)
+      const spy = vi.spyOn(Message, 'deleteMany').mockImplementation((async (...args: unknown[]) => {
+        await (originalDeleteMany as (...a: unknown[]) => Promise<unknown>)(...args)
+        throw new Error('boom-simulated-crash-after-message-delete')
+      }) as unknown as typeof Message.deleteMany)
+
+      try {
+        await expect(leaveGroup({ id: a.id }, { conversationId: conv.id })).rejects.toThrow('boom-simulated-crash-after-message-delete')
+      } finally {
+        spy.mockRestore()
+      }
+
+      expect(await Conversation.findById(conv.id).lean()).toBeTruthy()
+      expect(await Message.find({ conversationId: conv.id }).lean()).toHaveLength(1)
+    })
+
     it("refuse un appelant non-membre (conversation_not_found)", async () => {
       const a = await seedUser()
       const b = await seedUser()
@@ -322,6 +348,41 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
       expect(result.status).toBe(404)
       expect(result.error).toBe('conversation_not_found')
     })
+
+    it("transaction RÉELLEMENT atomique : un crash simulé juste APRÈS la suppression des messages annule aussi la suppression de la conversation (pas deux opérations juste séquentielles)", async () => {
+      const a = await seedUser()
+      const b = await seedUser()
+      const conv = await seedGroup([
+        { userId: a.id, name: 'A', role: 'admin' },
+        { userId: b.id, name: 'B', role: 'member' },
+      ])
+      await Message.create({ conversationId: conv.id, senderId: a.id, senderName: 'A', type: 'text', content: 'salut' })
+
+      // Laisse la VRAIE suppression des messages s'exécuter (donc DANS la
+      // transaction, via `{session}`) puis simule un crash juste après. Si
+      // Message.deleteMany participe réellement à LA MÊME transaction que
+      // Conversation.deleteOne (groups.ts:285-286), l'abandon provoqué par ce
+      // crash doit annuler LES DEUX suppressions. Un futur régression qui
+      // retirerait `{session}` de cet appel (ou le sortirait de
+      // session.withTransaction) laisserait le message supprimé pour de bon
+      // malgré l'abandon — cette assertion échouerait alors, là où le seul
+      // scénario "chemin heureux" testé plus haut ne peut pas voir la
+      // différence.
+      const originalDeleteMany = Message.deleteMany.bind(Message)
+      const spy = vi.spyOn(Message, 'deleteMany').mockImplementation((async (...args: unknown[]) => {
+        await (originalDeleteMany as (...a: unknown[]) => Promise<unknown>)(...args)
+        throw new Error('boom-simulated-crash-after-message-delete')
+      }) as unknown as typeof Message.deleteMany)
+
+      try {
+        await expect(deleteGroup({ id: a.id }, { conversationId: conv.id })).rejects.toThrow('boom-simulated-crash-after-message-delete')
+      } finally {
+        spy.mockRestore()
+      }
+
+      expect(await Conversation.findById(conv.id).lean()).toBeTruthy()
+      expect(await Message.find({ conversationId: conv.id }).lean()).toHaveLength(1)
+    })
   })
 
   describe('muteMember / unmuteMember', () => {
@@ -333,13 +394,13 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
         { userId: b.id, name: 'B', role: 'member' },
       ])
 
-      const muted = await muteMember({ id: a.id }, { conversationId: conv.id, targetUserId: b.id })
+      const muted = await muteMember({ id: a.id }, { conversationId: conv.id, targetUserId: b.id, durationMs: null })
       expect(muted.ok).toBe(true)
       let fresh = await Conversation.findById(conv.id).lean()
       expect(fresh?.mutedUserIds).toEqual([b.id])
 
       // Idempotent : une seconde mise en sourdine ne duplique pas l'entrée.
-      const mutedAgain = await muteMember({ id: a.id }, { conversationId: conv.id, targetUserId: b.id })
+      const mutedAgain = await muteMember({ id: a.id }, { conversationId: conv.id, targetUserId: b.id, durationMs: null })
       expect(mutedAgain.ok).toBe(true)
       fresh = await Conversation.findById(conv.id).lean()
       expect(fresh?.mutedUserIds).toEqual([b.id])
@@ -366,7 +427,7 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
         { userId: c.id, name: 'C', role: 'member' },
       ])
 
-      const result = await muteMember({ id: b.id }, { conversationId: conv.id, targetUserId: c.id })
+      const result = await muteMember({ id: b.id }, { conversationId: conv.id, targetUserId: c.id, durationMs: null })
       expect(result.ok).toBe(false)
       if (result.ok) return
       expect(result.status).toBe(403)
@@ -389,7 +450,7 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
         { userId: c.id, name: 'C', role: 'member' },
       ])
 
-      const aTriesB = await muteMember({ id: a.id }, { conversationId: conv.id, targetUserId: b.id })
+      const aTriesB = await muteMember({ id: a.id }, { conversationId: conv.id, targetUserId: b.id, durationMs: null })
       expect(aTriesB.ok).toBe(false)
       if (aTriesB.ok) return
       expect(aTriesB.status).toBe(400)
@@ -397,7 +458,7 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
 
       // Sens inverse : b (admin) qui tente sur a (admin) — même refus, la
       // règle ne dépend pas de QUEL admin est à l'origine de la tentative.
-      const bTriesA = await muteMember({ id: b.id }, { conversationId: conv.id, targetUserId: a.id })
+      const bTriesA = await muteMember({ id: b.id }, { conversationId: conv.id, targetUserId: a.id, durationMs: null })
       expect(bTriesA.ok).toBe(false)
       if (bTriesA.ok) return
       expect(bTriesA.status).toBe(400)
@@ -416,7 +477,7 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
         { userId: b.id, name: 'B', role: 'member' },
       ])
 
-      const result = await muteMember({ id: a.id }, { conversationId: conv.id, targetUserId: outsider.id })
+      const result = await muteMember({ id: a.id }, { conversationId: conv.id, targetUserId: outsider.id, durationMs: null })
       expect(result.ok).toBe(false)
       if (result.ok) return
       expect(result.status).toBe(400)
@@ -492,6 +553,50 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
       // système créés par les deux départs eux-mêmes.
       const remainingMessages = await Message.find({ conversationId: conv.id }).lean()
       expect(remainingMessages).toHaveLength(0)
+    })
+
+    it("le MÊME utilisateur appelle leaveGroup DEUX FOIS EN MÊME TEMPS (double-clic UI) : idempotent, un seul retrait effectif, un seul message système", async () => {
+      const a = await seedUser({ firstName: 'Alice', lastName: 'A' })
+      const b = await seedUser({ firstName: 'Bob', lastName: 'B' })
+      const c = await seedUser({ firstName: 'Chris', lastName: 'C' })
+      const conv = await seedGroup([
+        { userId: a.id, name: 'Alice A', role: 'admin' },
+        { userId: b.id, name: 'Bob B', role: 'member' },
+        { userId: c.id, name: 'Chris C', role: 'member' },
+      ])
+
+      // MÊME appelant (b) deux fois, pas deux membres différents : la
+      // pré-vérification hors transaction (groups.ts:189) réussit pour LES
+      // DEUX appels (b est encore membre au moment où chacun démarre) ; seule
+      // la relecture fraîche DANS la transaction (groups.ts:197) peut
+      // désamorcer la course. L'un des deux retire réellement b ; l'autre
+      // retombe forcément sur la branche idempotente `leavingIndex === -1`
+      // (groups.ts:207-212), jamais testée avant ce cas.
+      const [first, second] = await Promise.all([
+        leaveGroup({ id: b.id }, { conversationId: conv.id }),
+        leaveGroup({ id: b.id }, { conversationId: conv.id }),
+      ])
+
+      expect(first.ok).toBe(true)
+      expect(second.ok).toBe(true)
+      if (!first.ok || !second.ok) return
+      expect(first.deleted).toBe(false)
+      expect(second.deleted).toBe(false)
+
+      const fresh = await Conversation.findById(conv.id).lean()
+      expect(fresh).toBeTruthy()
+      expect(fresh?.members?.map((m) => m.userId).sort()).toEqual([a.id, c.id].sort())
+      expect(fresh?.participantIds.sort()).toEqual([a.id, c.id].sort())
+      // a reste seul admin : b n'était pas admin, aucune auto-promotion à
+      // déclencher ici.
+      expect(fresh?.members?.find((m) => m.userId === a.id)?.role).toBe('admin')
+
+      // b n'a été retiré QU'UNE fois : la branche idempotente ne doit produire
+      // aucun message système ni aucune mutation supplémentaire — un seul
+      // message trace le départ, pas deux.
+      const systemMessages = await Message.find({ conversationId: conv.id, type: 'system' }).lean()
+      expect(systemMessages).toHaveLength(1)
+      expect(systemMessages[0].content).toContain('Bob B')
     })
   })
 })

@@ -123,6 +123,27 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           Commander sur place
         </Link>
 
+        <Link
+          href={`/playlist/${ticket.eventId}`}
+          style={{
+            width: '100%',
+            padding: '13px 0',
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 9,
+            fontSize: 14,
+            fontWeight: 700,
+            color: 'var(--text)',
+            background: 'transparent',
+            border: '1px solid var(--border-strong)',
+            textDecoration: 'none',
+          }}
+        >
+          Playlist de la soirée
+        </Link>
+
         <div style={{ ...cardStyle, padding: 20 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Événement</p>
           <p style={{ fontWeight: 800, fontSize: 24, color: '#fff', textTransform: 'uppercase', lineHeight: 1.2, margin: '0 0 5px', letterSpacing: '0.01em' }}>

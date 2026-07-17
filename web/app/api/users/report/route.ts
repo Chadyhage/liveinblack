@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { reportUser } from '@/lib/server/messaging'
+import { reportUser, listMyReports } from '@/lib/server/messaging'
+
+// GET : mes propres signalements soumis — vue "Bloqués & signalés". Voir
+// lib/server/messaging.ts (listMyReports).
+export async function GET() {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const result = await listMyReports({ id: session.user.id })
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  return NextResponse.json({ ok: true, reports: result.reports })
+}
 
 // max(1000) aligné sur le cap métier réel appliqué par reportUser
 // (lib/server/messaging.ts) — un schéma de route plus permissif que la
