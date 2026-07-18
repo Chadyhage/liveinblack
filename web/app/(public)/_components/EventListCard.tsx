@@ -14,7 +14,7 @@ export default function EventListCard({ event }: { event: PublicEvent }) {
 
   return (
     <Link
-      href={`/evenements/${event.id}`}
+      href={`/events/${event.id}`}
       style={{
         display: 'block',
         flex: '0 0 auto',

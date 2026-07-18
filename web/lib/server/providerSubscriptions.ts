@@ -168,8 +168,8 @@ export async function createStripeSubscriptionCheckout(caller: { id: string; ema
       ],
       metadata: { uid: caller.id, type: 'prestataire_subscription' },
       subscription_data: { metadata: { uid: caller.id, type: 'prestataire_subscription' } },
-      success_url: `${SITE}/proposer-services?sub=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${SITE}/proposer-services?sub=cancel`,
+      success_url: `${SITE}/offer-services?sub=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${SITE}/offer-services?sub=cancel`,
       allow_promotion_codes: true,
       locale: 'fr',
     })
@@ -255,7 +255,7 @@ export async function createFedapaySubscriptionCheckout(caller: { id: string; em
     txn = await createTransaction({
       description: `Abonnement prestataire LIVEINBLACK — ${PROVIDER_SUB.periodDays} jours`,
       amount: PROVIDER_SUB.price,
-      callbackUrl: `${SITE}/proposer-services?sub=retour`,
+      callbackUrl: `${SITE}/offer-services?sub=retour`,
       customer: caller.email ? { email: caller.email } : null,
       metadata: { kind: 'provider_subscription', uid: caller.id },
       reference: ref,
@@ -398,7 +398,7 @@ export async function runSubscriptionReminderCron(): Promise<{ scanned: number; 
         const user = await User.findById(profile.userId).select('email').lean()
         for (const key of due) {
           if (user?.email) {
-            const result = await sendEmail(user.email, subscriptionReminderEmail(key, `${SITE}/proposer-services`))
+            const result = await sendEmail(user.email, subscriptionReminderEmail(key, `${SITE}/offer-services`))
             if (result.ok) emails++
           }
           sent[key] = now

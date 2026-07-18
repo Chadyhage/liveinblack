@@ -83,7 +83,7 @@ export async function startStripeConnectOnboarding(caller: PayoutCaller, input: 
   const user = await User.findById(caller.id)
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
 
-  const returnPath = input.returnPath || '/mes-evenements'
+  const returnPath = input.returnPath || '/my-events'
   const refresh_url = `${input.origin}${returnPath}?connect=refresh`
   const return_url = `${input.origin}${returnPath}?connect=done`
 

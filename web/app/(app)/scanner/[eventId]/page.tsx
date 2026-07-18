@@ -68,7 +68,7 @@ export default async function ScannerEventPage({ params }: { params: Promise<{ e
   if (!session?.user) {
     // Le layout (app) redirige déjà tout visiteur non connecté — garde locale
     // défensive, même convention que CommanderPage.
-    redirect('/connexion')
+    redirect('/login')
   }
 
   await getDb()

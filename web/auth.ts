@@ -17,7 +17,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(clientPromise),
   session: { strategy: 'jwt' },
   pages: {
-    signIn: '/connexion',
+    signIn: '/login',
   },
   providers: [
     Credentials({

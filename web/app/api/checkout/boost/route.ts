@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
+import Boost from '@/lib/models/Boost'
+import PaymentAlert from '@/lib/models/PaymentAlert'
 import { getBoostPlan } from '@/lib/shared/boosts'
 import { getEventEndTimestamp } from '@/lib/shared/eventUrgency'
 import { reserveBoostSlot, releaseBoostSlotIfPending } from '@/lib/server/boostSlots'
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
           },
         ],
         success_url: `${SITE}/boost-active?session_id={CHECKOUT_SESSION_ID}&boost_id=${boostId}`,
-        cancel_url: `${SITE}/evenements/${eventId}?boost_cancelled=1`,
+        cancel_url: `${SITE}/events/${eventId}?boost_cancelled=1`,
         metadata: {
           intent: 'boost',
           eventId,
@@ -90,4 +92,51 @@ export async function POST(req: Request) {
     await releaseBoostSlotIfPending(slotId, boostId)
     return NextResponse.json({ error: 'stripe_error' }, { status: 502 })
   }
+}
+
+// Vérification côté /boost-active. Le webhook Stripe (finalizeBoost) est la
+// SEULE source de vérité pour l'activation — cette route ne fait que relire
+// le statut de paiement Stripe puis regarder si le Boost a déjà été créé
+// (ou si un conflit de créneau a mené à un remboursement automatique).
+export async function GET(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const url = new URL(req.url)
+  const sessionId = url.searchParams.get('session_id')
+  const boostId = url.searchParams.get('boost_id')
+  if (!sessionId || !boostId) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
+
+  const stripeSession = await stripe.checkout.sessions.retrieve(sessionId)
+  if (stripeSession.metadata?.boostId !== boostId || stripeSession.metadata?.userId !== session.user.id) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
+
+  if (stripeSession.payment_status !== 'paid') {
+    return NextResponse.json({ paid: false, paymentStatus: stripeSession.payment_status })
+  }
+
+  await getDb()
+  const meta = stripeSession.metadata
+  const boost = await Boost.findOne({ boostId }).lean()
+
+  let boostStatus: 'active' | 'refunded_conflict' | 'pending' = 'pending'
+  if (boost) boostStatus = boost.status === 'refunded_conflict' ? 'refunded_conflict' : 'active'
+  else {
+    const conflictAlert = await PaymentAlert.findOne({ key: `boost_slot_lost_${boostId}` }).lean()
+    if (conflictAlert) boostStatus = 'refunded_conflict'
+  }
+
+  return NextResponse.json({
+    paid: true,
+    paymentStatus: stripeSession.payment_status,
+    boostStatus,
+    amountTotal: stripeSession.amount_total,
+    metadata: {
+      eventId: meta?.eventId || '',
+      eventName: meta?.eventName || '',
+      position: meta?.position || '',
+      days: meta?.days || '',
+    },
+  })
 }

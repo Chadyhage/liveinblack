@@ -254,7 +254,7 @@ export async function requestEmailChange(caller: ProfileCaller, input: { newEmai
   await user.save()
 
   const token = await issueVerificationToken(newEmail)
-  const verifyLink = `${SITE}/profil/confirmer-email?email=${encodeURIComponent(newEmail)}&token=${token}`
+  const verifyLink = `${SITE}/profile/confirmer-email?email=${encodeURIComponent(newEmail)}&token=${token}`
   const emailResult = await sendEmail(newEmail, emailChangeVerificationEmail(verifyLink, SITE))
   if (!emailResult.ok) {
     // Même choix que register (lib/server/... jamais de rollback pour un

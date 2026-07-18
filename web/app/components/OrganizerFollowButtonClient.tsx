@@ -38,7 +38,7 @@ export default function OrganizerFollowButtonClient({
   const [menuOpen, setMenuOpen] = useState(false)
 
   function goToLogin() {
-    router.push(`/connexion?next=${encodeURIComponent(pathname)}`)
+    router.push(`/login?next=${encodeURIComponent(pathname)}`)
   }
 
   async function follow() {

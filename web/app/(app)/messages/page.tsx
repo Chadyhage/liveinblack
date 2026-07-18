@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default async function MessagesPage() {
   const session = await auth()
-  if (!session?.user) redirect('/connexion')
+  if (!session?.user) redirect('/login')
 
   const caller = { id: session.user.id }
   const [conversationsResult, requestsResult, friendsResult, blockedResult, reportsResult, starredResult] = await Promise.all([

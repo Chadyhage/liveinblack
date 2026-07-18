@@ -332,7 +332,7 @@ function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void
           </button>
         )}
         <Link
-          href={`/evenements/${event.id}`}
+          href={`/events/${event.id}`}
           style={{ padding: '8px 14px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.9)', textDecoration: 'none' }}
         >
           Voir

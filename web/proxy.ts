@@ -10,10 +10,10 @@ import { auth } from '@/auth'
 // besoin d'une lecture base à jour) reste dans app/(app)/layout.tsx, pas ici.
 // Renommé `proxy.ts` (Next.js 16 — `middleware.ts` est déprécié).
 
-const AUTH_REQUIRED_PREFIXES = ['/profil', '/messagerie', '/scanner', '/mes-soirees', '/commander', '/mon-dossier', '/onboarding-organisateur']
-const ORGANISATEUR_OR_AGENT_PREFIXES = ['/mes-evenements']
-const ORGANISATEUR_ONLY_PREFIXES = ['/ma-page-organisateur']
-const SERVICE_ACCESS_PREFIXES = ['/proposer', '/mon-abonnement']
+const AUTH_REQUIRED_PREFIXES = ['/profile', '/messages', '/scanner', '/my-shifts', '/order', '/my-application', '/onboarding-organizer']
+const ORGANISATEUR_OR_AGENT_PREFIXES = ['/my-events']
+const ORGANISATEUR_ONLY_PREFIXES = ['/organizer-studio']
+const SERVICE_ACCESS_PREFIXES = ['/offer-services', '/my-subscription']
 const AGENT_ONLY_PREFIXES = ['/agent']
 
 function matchesPrefix(pathname: string, prefixes: string[]): boolean {
@@ -26,20 +26,20 @@ export const proxy = auth((req) => {
   const activeRole = session?.user?.activeRole
 
   const redirectToLogin = () => {
-    const url = new URL('/connexion', req.nextUrl.origin)
+    const url = new URL('/login', req.nextUrl.origin)
     url.searchParams.set('next', pathname)
     return NextResponse.redirect(url)
   }
-  const redirectHome = () => NextResponse.redirect(new URL('/accueil', req.nextUrl.origin))
-  const redirectToDossier = () => NextResponse.redirect(new URL('/mon-dossier', req.nextUrl.origin))
+  const redirectHome = () => NextResponse.redirect(new URL('/home', req.nextUrl.origin))
+  const redirectToDossier = () => NextResponse.redirect(new URL('/my-application', req.nextUrl.origin))
 
   if (matchesPrefix(pathname, AUTH_REQUIRED_PREFIXES) && !session) {
     return redirectToLogin()
   }
 
   // Un organisateur dont le dossier est encore en attente (#7 phase
-  // organisateur) est renvoyé vers /mon-dossier plutôt que de voir un
-  // /mes-evenements vide — même comportement que l'OnboardingGuard legacy
+  // organisateur) est renvoyé vers /my-application plutôt que de voir un
+  // /my-events vide — même comportement que l'OnboardingGuard legacy
   // (statut 'pending' → accès bloqué en dehors d'une liste d'URLs publiques).
   if (matchesPrefix(pathname, ORGANISATEUR_OR_AGENT_PREFIXES)) {
     if (!session) return redirectToLogin()
@@ -68,17 +68,17 @@ export const proxy = auth((req) => {
 
 export const config = {
   matcher: [
-    '/profil/:path*',
-    '/messagerie/:path*',
+    '/profile/:path*',
+    '/messages/:path*',
     '/scanner/:path*',
-    '/mes-soirees/:path*',
-    '/commander/:path*',
-    '/mon-dossier/:path*',
-    '/onboarding-organisateur/:path*',
-    '/mes-evenements/:path*',
-    '/ma-page-organisateur/:path*',
-    '/proposer/:path*',
-    '/mon-abonnement/:path*',
+    '/my-shifts/:path*',
+    '/order/:path*',
+    '/my-application/:path*',
+    '/onboarding-organizer/:path*',
+    '/my-events/:path*',
+    '/organizer-studio/:path*',
+    '/offer-services/:path*',
+    '/my-subscription/:path*',
     '/agent/:path*',
   ],
 }

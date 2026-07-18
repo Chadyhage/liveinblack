@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
 const NAV_LINKS = [
-  { href: '/evenements', label: 'Événements' },
-  { href: '/prestataires', label: 'Prestataires' },
-  { href: '/organisateurs', label: 'Organisateurs' },
-  { href: '/c-est-quoi', label: "C'est quoi" },
-  { href: '/recherche', label: 'Recherche' },
+  { href: '/events', label: 'Événements' },
+  { href: '/providers', label: 'Prestataires' },
+  { href: '/organizers', label: 'Organisateurs' },
+  { href: '/about', label: "C'est quoi" },
+  { href: '/search', label: 'Recherche' },
 ]
 
 // Nav publique partagée par toutes les pages non-authentifiées. Backdrop-blur
@@ -27,7 +27,7 @@ export default function PublicNav() {
       }}
     >
       <Link
-        href="/accueil"
+        href="/home"
         style={{
           fontSize: 18,
           letterSpacing: '0.08em',
@@ -51,7 +51,7 @@ export default function PublicNav() {
           </Link>
         ))}
         <Link
-          href="/connexion"
+          href="/login"
           style={{
             padding: '9px 18px',
             borderRadius: 999,

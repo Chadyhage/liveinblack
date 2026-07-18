@@ -30,7 +30,7 @@ function GateScreen({ title, message }: { title: string; message: string }) {
       <div style={{ textAlign: 'center', maxWidth: 360 }}>
         <p style={{ fontWeight: 800, fontSize: 22, color: 'var(--pink)', margin: '0 0 10px' }}>{title}</p>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
-        <Link href="/evenements" style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+        <Link href="/events" style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
           ← Retour aux événements
         </Link>
       </div>
@@ -42,7 +42,7 @@ export default async function PlaylistPage({ params }: { params: Promise<{ event
   const { eventId } = await params
 
   const session = await auth()
-  if (!session?.user) redirect('/connexion')
+  if (!session?.user) redirect('/login')
 
   await getDb()
   // Même garde que CommanderPage/ScannerPage : `eventId` est un segment d'URL

@@ -32,7 +32,7 @@ export default function EventInterestButtonClient({
   async function toggle(e: React.MouseEvent) {
     e.stopPropagation()
     if (!isAuthenticated) {
-      router.push(`/connexion?next=${encodeURIComponent(pathname)}`)
+      router.push(`/login?next=${encodeURIComponent(pathname)}`)
       return
     }
     setBusy(true)

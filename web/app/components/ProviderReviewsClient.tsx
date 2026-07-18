@@ -99,7 +99,7 @@ export default function ProviderReviewsClient({
   const { avg, count, dist } = computeReviewStats(reviews)
 
   function goToLogin() {
-    router.push(`/connexion?next=${encodeURIComponent(pathname)}`)
+    router.push(`/login?next=${encodeURIComponent(pathname)}`)
   }
 
   function openForm() {

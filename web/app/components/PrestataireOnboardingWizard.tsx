@@ -240,7 +240,7 @@ export default function PrestataireOnboardingWizard({
           setError('Impossible d’envoyer ton dossier. Réessaie.')
           return
         }
-        router.push('/mon-dossier')
+        router.push('/my-application')
       }
     } finally {
       setBusy(false)
@@ -257,7 +257,7 @@ export default function PrestataireOnboardingWizard({
             Tu seras contacté à <strong style={{ color: '#fff' }}>{submitted.email}</strong> une fois ton compte validé.
           </p>
           <p style={{ fontSize: 13, color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 24px' }}>La validation prend généralement moins de 24 h.</p>
-          <a href="/accueil" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
+          <a href="/home" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
             Retour à l&apos;accueil
           </a>
         </div>

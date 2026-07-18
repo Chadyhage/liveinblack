@@ -97,7 +97,7 @@ export function applicationReceivedEmail(email: string, site: string = DEFAULT_S
 // approve/reject/request_changes. `type` détermine le libellé et, pour
 // l'approbation, le lien de destination (espace organisateur vs prestataire).
 export function applicationApprovedEmail(type: 'organisateur' | 'prestataire', site: string = DEFAULT_SITE): Email {
-  const destination = type === 'organisateur' ? `${site}/mes-evenements` : `${site}/proposer-services`
+  const destination = type === 'organisateur' ? `${site}/my-events` : `${site}/offer-services`
   const inner = `
     ${h('Dossier approuvé')}
     ${p(`Bonne nouvelle : ton dossier de candidature ${APPLICATION_TYPE_LABEL[type]} a été approuvé par l'équipe LIVEINBLACK.`)}
@@ -120,7 +120,7 @@ export function applicationNeedsChangesEmail(type: 'organisateur' | 'prestataire
     ${h('Corrections demandées')}
     ${p(`L'équipe LIVEINBLACK a examiné ton dossier de candidature ${APPLICATION_TYPE_LABEL[type]} et te demande de le compléter avant de pouvoir l'approuver.`)}
     ${p(`<strong style="color:#fff;">À corriger :</strong> ${requestedChanges}`)}
-    ${btn(`${site}/mon-dossier`, 'Corriger mon dossier')}
+    ${btn(`${site}/my-application`, 'Corriger mon dossier')}
   `
   return { subject: 'Corrections demandées sur ton dossier LIVEINBLACK', html: wrap(inner, site) }
 }

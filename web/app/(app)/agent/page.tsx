@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 export default async function AgentPage() {
   const session = await auth()
-  if (!session?.user) redirect('/connexion')
+  if (!session?.user) redirect('/login')
   if (!requireAgent(session.user)) redirect('/')
 
   return <AgentShell />

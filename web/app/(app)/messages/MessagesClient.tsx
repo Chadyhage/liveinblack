@@ -2663,7 +2663,7 @@ function EventCard({ content }: { content: string | null }) {
   const priceLabel = ev.price == null ? null : Number(ev.price) <= 0 ? 'Gratuit' : `dès ${ev.price}€`
   return (
     <a
-      href={clickable ? `/evenements/${ev.id}` : undefined}
+      href={clickable ? `/events/${ev.id}` : undefined}
       style={{ display: 'block', width: 240, borderRadius: 10, overflow: 'hidden', background: 'var(--surface-2)', textDecoration: 'none', cursor: clickable ? 'pointer' : 'default' }}
     >
       <div style={{ position: 'relative' }}>
@@ -2697,7 +2697,7 @@ function CatalogItemCard({ content }: { content: string | null }) {
   const clickable = Boolean(it.providerId)
   return (
     <a
-      href={clickable ? `/prestataires/${encodeURIComponent(it.providerId!)}` : undefined}
+      href={clickable ? `/providers/${encodeURIComponent(it.providerId!)}` : undefined}
       style={{ display: 'block', width: 240, borderRadius: 10, overflow: 'hidden', background: 'var(--surface-2)', textDecoration: 'none', cursor: clickable ? 'pointer' : 'default' }}
     >
       <div style={{ position: 'relative' }}>

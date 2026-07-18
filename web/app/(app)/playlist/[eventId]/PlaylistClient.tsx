@@ -498,7 +498,7 @@ export default function PlaylistClient({
     return (
       <main style={{ maxWidth: 640, margin: '0 auto', padding: '24px 18px 90px' }}>
         <div style={{ marginBottom: 18 }}>
-          <Link href={`/evenements/${eventId}`} style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
+          <Link href={`/events/${eventId}`} style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← {eventName}
           </Link>
         </div>
@@ -536,7 +536,7 @@ export default function PlaylistClient({
       `}</style>
 
       <div style={{ marginBottom: 18 }}>
-        <Link href={`/evenements/${eventId}`} style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
+        <Link href={`/events/${eventId}`} style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
           ← {eventName}
         </Link>
       </div>

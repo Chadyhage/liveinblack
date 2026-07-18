@@ -6,8 +6,9 @@ import { createOrder, releaseOrder } from '@/lib/server/orders'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
+import Ticket from '@/lib/models/Ticket'
 import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
-import { createTransaction, createToken } from '@/lib/server/fedapayClient'
+import { createTransaction, createToken, getTransaction } from '@/lib/server/fedapayClient'
 
 // Remplace la branche `action:'checkout'` de api/fedapay.js (rail XOF, mobile
 // money). Miroir de /api/checkout (Stripe) — mêmes corrections (C07 : les
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     const txn = await createTransaction({
       description: `${event.name} — ${order.placeType}`.slice(0, 200),
       amount: amountTotal,
-      callbackUrl: `${SITE}/paiement-reussi`,
+      callbackUrl: `${SITE}/payment-success`,
       customer: session.user.email ? { email: session.user.email } : null,
       metadata: { orderId },
       reference: orderId,
@@ -91,4 +92,46 @@ export async function POST(req: Request) {
     await releaseOrder(orderId, session.user.id)
     return NextResponse.json({ error: 'fedapay_error' }, { status: 502 })
   }
+}
+
+// Vérification côté /paiement-reussi (retour FedaPay — callback_url unique,
+// pas de order_id porté dans l'URL). Miroir du GET de /api/checkout (Stripe) :
+// on relit le statut chez FedaPay (source de vérité, jamais le query param
+// seul) puis on rapproche via Order.fedapayTxnId.
+export async function GET(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const url = new URL(req.url)
+  const txnId = url.searchParams.get('id')
+  if (!txnId) return NextResponse.json({ error: 'missing_id' }, { status: 400 })
+
+  await getDb()
+  const order = await Order.findOne({ fedapayTxnId: String(txnId) }).lean()
+  if (!order) return NextResponse.json({ error: 'not_found' }, { status: 404 })
+  if (order.userId !== session.user.id) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+
+  let txn
+  try {
+    txn = await getTransaction(txnId)
+  } catch (err) {
+    console.error('[checkout/fedapay][GET] transaction lookup failed:', err)
+    return NextResponse.json({ error: 'fedapay_error' }, { status: 502 })
+  }
+
+  const event = await Event.findById(order.eventId).select('name').lean()
+  const tickets =
+    order.status === 'paid'
+      ? await Ticket.find({ orderId: order._id.toString(), userId: session.user.id }).select('ticketCode').lean()
+      : []
+
+  return NextResponse.json({
+    paid: txn.status === 'approved' || order.status === 'paid',
+    paymentStatus: txn.status,
+    orderId: order._id.toString(),
+    orderStatus: order.status,
+    eventId: order.eventId,
+    eventName: event?.name || '',
+    ticketCount: tickets.length,
+  })
 }

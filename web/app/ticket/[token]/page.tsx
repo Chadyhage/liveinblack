@@ -104,7 +104,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
         </div>
 
         <Link
-          href={`/commander/${ticket.eventId}/${ticket.ticketCode}`}
+          href={`/order/${ticket.eventId}/${ticket.ticketCode}`}
           style={{
             width: '100%',
             padding: '15px 0',

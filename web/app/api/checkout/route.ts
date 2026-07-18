@@ -7,6 +7,7 @@ import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import User from '@/lib/models/User'
 import Order from '@/lib/models/Order'
+import Ticket from '@/lib/models/Ticket'
 import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
 import stripe from '@/lib/server/stripeClient'
 
@@ -122,8 +123,8 @@ export async function POST(req: Request) {
         line_items: lineItems,
         ...(paymentIntentData ? { payment_intent_data: paymentIntentData } : {}),
         customer_email: session.user.email || undefined,
-        success_url: `${SITE}/paiement-reussi?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-        cancel_url: `${SITE}/evenements/${eventId}?paiement=annule`,
+        success_url: `${SITE}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
+        cancel_url: `${SITE}/events/${eventId}?paiement=annule`,
         metadata: { orderId },
         locale: 'fr',
       },
@@ -155,11 +156,19 @@ export async function GET(req: Request) {
   const order = await Order.findById(stripeSession.metadata.orderId).lean()
   if (!order || order.userId !== session.user.id) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
+  const event = await Event.findById(order.eventId).select('name').lean()
+  const tickets =
+    order.status === 'paid'
+      ? await Ticket.find({ orderId: order._id.toString(), userId: session.user.id }).select('ticketCode').lean()
+      : []
+
   return NextResponse.json({
     paid: stripeSession.payment_status === 'paid',
     paymentStatus: stripeSession.payment_status,
     amountTotal: stripeSession.amount_total,
     currency: stripeSession.currency,
     orderStatus: order.status,
+    eventName: event?.name || '',
+    ticketCount: tickets.length,
   })
 }

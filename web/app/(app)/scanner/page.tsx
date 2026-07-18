@@ -40,7 +40,7 @@ const LIST_CAP = 100
 export default async function ScannerIndexPage() {
   const session = await auth()
   if (!session?.user) {
-    redirect('/connexion')
+    redirect('/login')
   }
 
   await getDb()
