@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['**/__tests__/**/*.test.ts'],
-    exclude: ['node_modules', '.next'],
+    exclude: ['**/node_modules/**', '**/.next/**', '**/old/**'],
     // Les tests d'intégration (*.integration.test.ts) partagent une vraie base
     // MongoDB via MONGODB_URI (transactions réelles obligent) — leurs
     // beforeEach purgent les mêmes collections. En parallèle (comportement

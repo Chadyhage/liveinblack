@@ -43,4 +43,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.node_modules_legacy_stale_DELETE_ME
+.node_modules_*
