@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import mongoose from 'mongoose'
 import { getDb } from '../db/mongoose'
 import Event, { type EventDoc } from '../models/Event'
 import { isClientDiscoverableEvent } from '../shared/eventDiscovery'
@@ -51,6 +52,7 @@ export type EventAccessResult =
 // POST /api/events/[id]/unlock après vérification du code). Contrairement au
 // legacy, ceci est appliqué ICI (server), pas seulement caché côté UI.
 export async function getEventById(id: string, opts: { unlocked?: boolean } = {}): Promise<EventAccessResult> {
+  if (!mongoose.isValidObjectId(id)) return { status: 'not_found' }
   await getDb()
   const doc = await Event.findById(id).lean()
   if (!doc) return { status: 'not_found' }
@@ -67,6 +69,7 @@ function hashCode(code: string): string {
 // .select('+privateCodeHash'), jamais dans les requêtes de lecture publiques.
 export async function verifyPrivateEventCode(id: string, code: string): Promise<boolean> {
   if (!code?.trim()) return false
+  if (!mongoose.isValidObjectId(id)) return false
   await getDb()
   const doc = await Event.findById(id).select('+privateCodeHash isPrivate').lean()
   if (!doc || !doc.isPrivate || !doc.privateCodeHash) return false

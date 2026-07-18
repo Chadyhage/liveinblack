@@ -84,6 +84,13 @@ const userSchema = new Schema(
     // ci-dessus qui n'a pas de valeur 'banned' dans ce port.
     disabled: { type: Boolean, default: false },
 
+    // Bumped whenever `disabled` is set to true or the account is anonymisé
+    // (auto-suppression cliente, suppression validée par un agent) — auth.ts
+    // compare cette valeur à celle gravée dans le JWT pour révoquer une
+    // session déjà émise (une stratégie JWT ne revalide sinon jamais le
+    // compte en base entre deux connexions, cf. audit pré-bascule).
+    sessionVersion: { type: Number, default: 0 },
+
     // Stripe Connect (organisateurs éligibles — pays EUR/Connect uniquement).
     // Écrit UNIQUEMENT par le webhook `account.updated`, jamais par le client.
     stripeAccountId: { type: String, default: null },

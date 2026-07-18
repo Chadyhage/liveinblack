@@ -172,9 +172,10 @@ export async function getUserForAgent(userId: string): Promise<GetUserResult> {
 
 export type UserActionResult = { ok: false; status: number; error: string } | { ok: true; user: AgentUserDetail }
 
-// Suspendre bloque uniquement la CONNEXION (voir auth.ts:authorize) — pas de
-// notion de session serveur à révoquer dans ce port (stratégie JWT, cf.
-// auth.ts), contrairement au legacy qui révoquait les refresh tokens Firebase.
+// Suspendre bloque la CONNEXION (voir auth.ts:authorize) ET révoque toute
+// session JWT déjà émise (auth.ts:jwt compare periodiquement sessionVersion
+// à la valeur gravée dans le token) — équivalent fonctionnel de la révocation
+// de refresh tokens Firebase du legacy, adapté à une stratégie JWT.
 export async function setUserDisabled(agent: AgentCaller, userId: string, disabled: boolean): Promise<UserActionResult> {
   await getDb()
 
@@ -185,6 +186,7 @@ export async function setUserDisabled(agent: AgentCaller, userId: string, disabl
   if (user.superAdmin) return { ok: false, status: 403, error: 'protected_account' }
 
   user.disabled = disabled
+  if (disabled) user.sessionVersion = (user.sessionVersion || 0) + 1
   await user.save()
 
   const result = await getUserForAgent(userId)

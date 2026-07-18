@@ -399,6 +399,7 @@ export async function approveDeletion(agent: AgentCaller, requestId: string, not
       user.birthYear = null
       user.gender = null
       user.disabled = true
+      user.sessionVersion = (user.sessionVersion || 0) + 1
       user.roles = ['client']
       user.activeRole = 'client'
       user.orgStatus = 'none'

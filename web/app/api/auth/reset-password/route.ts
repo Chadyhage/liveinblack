@@ -25,7 +25,15 @@ export async function POST(req: Request) {
 
   await getDb()
   const passwordHash = await bcrypt.hash(password, 12)
-  await User.updateOne({ email }, { $set: { passwordHash } })
+  // Un jeton de reset valide prouve la possession de la boîte mail — exactement
+  // la même preuve qu'un clic sur le lien /verify-email. Parité avec le
+  // fallback legacy (src/pages/LoginPage.jsx handleResendVerification) qui
+  // utilisait sendPasswordResetEmail précisément parce qu'il "vérifie aussi
+  // ton email" en même temps. Sans ce complément, un client qui n'a jamais
+  // reçu/cliqué son email de vérification et n'a pas d'entrée "renvoyer
+  // l'email" (#118 gap encore ouvert) resterait bloqué à la connexion
+  // (auth.ts authorize()) même après avoir réinitialisé son mot de passe.
+  await User.updateOne({ email }, { $set: { passwordHash, emailVerifiedAt: new Date() } })
 
   return NextResponse.json({ ok: true })
 }

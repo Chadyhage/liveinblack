@@ -74,6 +74,16 @@ export async function fulfillOrder(
   const seatCount = order.isTable ? order.tableSeats : order.qty
   const tableId = order.isTable ? `tbl_${order._id.toString()}` : null
   const unitMajor = order.unitPriceMinor / (order.currency === 'XOF' ? 1 : 100)
+  const isXof = order.currency === 'XOF'
+  // Précommandes payées à la caisse, portées par le seul seatIndex 0 (voir
+  // plus bas) — leur montant DOIT entrer dans `totalPrice` de ce billet-là,
+  // exactement comme le legacy (src/pages/PaiementReussiPage.jsx :
+  // `totalPrice: pending.unitPriceEUR + tPreorderTotal`) et comme le
+  // documente déjà lib/server/organizerEvents.ts ("agrégé depuis Ticket...
+  // y compris précommandes") pour le revenu affiché au tableau de bord
+  // organisateur — `totalPrice` est la source canonique de cette somme, pas
+  // seulement un doublon d'affichage de `placePrice`.
+  const preorderTotalMajor = order.preorders.reduce((s, p) => s + (p.price / (isXof ? 1 : 100)) * p.qty, 0)
 
   const ticketCodes: string[] = []
   const ticketDocs = []
@@ -88,9 +98,9 @@ export async function fulfillOrder(
       eventDate: event.date,
       place: order.placeType,
       placePrice: unitMajor,
-      totalPrice: unitMajor,
+      totalPrice: seatIndex === 0 ? unitMajor + preorderTotalMajor : unitMajor,
       currency: order.currency,
-      preorders: seatIndex === 0 ? order.preorders.map((p) => ({ name: p.name, price: p.price / (order.currency === 'XOF' ? 1 : 100), qty: p.qty })) : [],
+      preorders: seatIndex === 0 ? order.preorders.map((p) => ({ name: p.name, price: p.price / (isXof ? 1 : 100), qty: p.qty })) : [],
       userId: order.isTable ? order.userId : order.userId,
       hostUid: order.isTable ? order.userId : null,
       tableId,

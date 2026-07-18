@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { createOrganizerEvent, listMyOrganizerEvents } from '@/lib/server/organizerEvents'
+import { canCreateEvent } from '@/lib/server/permissions'
 
 const placeSchema = z.object({
   id: z.string().default(''),
@@ -76,7 +77,14 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
-  if (session.user.activeRole !== 'organisateur' && session.user.activeRole !== 'agent') {
+  // Fidèle à la garde de page (app/(app)/my-events/page.tsx) — celle-ci
+  // bloquait déjà l'ACCÈS À LA PAGE pour un organisateur dont le dossier est
+  // encore 'pending' ou a été 'rejected'/suspendu par un agent (#9 phase
+  // agent/admin), mais cette route restait joignable en direct (n'importe
+  // quel appel API, pas seulement via l'UI) sans revérifier `orgStatus` —
+  // régression trouvée à l'audit : un compte non vetté pouvait publier un
+  // événement payant et encaisser de l'argent réel avant toute revue.
+  if (!canCreateEvent({ activeRole: session.user.activeRole, status: session.user.status, orgStatus: session.user.orgStatus, prestStatus: session.user.prestStatus })) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 

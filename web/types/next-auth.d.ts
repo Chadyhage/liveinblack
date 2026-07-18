@@ -19,6 +19,7 @@ declare module 'next-auth' {
     status: AccountStatus
     orgStatus?: RoleApprovalStatus
     prestStatus?: RoleApprovalStatus
+    sessionVersion: number
   }
 }
 
@@ -29,5 +30,7 @@ declare module 'next-auth/jwt' {
     status?: AccountStatus
     orgStatus?: RoleApprovalStatus
     prestStatus?: RoleApprovalStatus
+    sessionVersion?: number
+    checkedAt?: number
   }
 }

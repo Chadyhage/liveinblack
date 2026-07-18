@@ -89,8 +89,17 @@ export async function startStripeConnectOnboarding(caller: PayoutCaller, input: 
 
   // Compte déjà existant → nouveau lien de reprise, jamais un second compte.
   if (user.stripeAccountId) {
-    const link = await stripe.accountLinks.create({ account: user.stripeAccountId, refresh_url, return_url, type: 'account_onboarding' })
-    return { ok: true, url: link.url }
+    try {
+      const link = await stripe.accountLinks.create({ account: user.stripeAccountId, refresh_url, return_url, type: 'account_onboarding' })
+      return { ok: true, url: link.url }
+    } catch (err) {
+      // Même garde que refundStripeOrder (lib/server/eventRefunds.ts) : une
+      // panne Stripe (clé absente en sandbox, indisponibilité API, compte
+      // Connect invalide) ne doit jamais faire planter la route avec un 500
+      // vide — l'organisateur doit repartir avec un message actionnable.
+      console.error('[organizerPayouts] accountLinks.create failed:', err)
+      return { ok: false, status: 502, error: 'stripe_unavailable' }
+    }
   }
 
   // Résolution du pays ISO-2 : pays déjà connu du compte, sinon le dossier de
@@ -113,23 +122,28 @@ export async function startStripeConnectOnboarding(caller: PayoutCaller, input: 
     return { ok: true, manual: true, country: iso }
   }
 
-  const account = await stripe.accounts.create({
-    type: 'express',
-    country: iso,
-    email: user.email,
-    business_type: 'individual',
-    metadata: { uid: caller.id },
-    capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
-  })
+  try {
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: iso,
+      email: user.email,
+      business_type: 'individual',
+      metadata: { uid: caller.id },
+      capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
+    })
 
-  // stripeAccountId + stripeCountry seulement — stripeChargesEnabled reste
-  // false par défaut (schéma) jusqu'au premier `account.updated` du webhook.
-  user.stripeAccountId = account.id
-  user.stripeCountry = iso
-  await user.save()
+    // stripeAccountId + stripeCountry seulement — stripeChargesEnabled reste
+    // false par défaut (schéma) jusqu'au premier `account.updated` du webhook.
+    user.stripeAccountId = account.id
+    user.stripeCountry = iso
+    await user.save()
 
-  const link = await stripe.accountLinks.create({ account: account.id, refresh_url, return_url, type: 'account_onboarding' })
-  return { ok: true, url: link.url }
+    const link = await stripe.accountLinks.create({ account: account.id, refresh_url, return_url, type: 'account_onboarding' })
+    return { ok: true, url: link.url }
+  } catch (err) {
+    console.error('[organizerPayouts] Stripe Connect account creation failed:', err)
+    return { ok: false, status: 502, error: 'stripe_unavailable' }
+  }
 }
 
 export type RequestManualPayoutResult = ErrResult | { ok: true; requestId: string; amountDueCents: number; amountDueXOF: number }

@@ -253,8 +253,14 @@ export async function requestEmailChange(caller: ProfileCaller, input: { newEmai
   user.pendingEmail = newEmail
   await user.save()
 
+  // Sous /confirmer-email (app/(public)/) et PAS /profile/confirmer-email :
+  // ce lien est cliqué depuis un email, potentiellement hors session active
+  // ou sur un autre appareil — la zone /profile/* exige une session (voir
+  // app/(app)/layout.tsx) et n'a de toute façon aucune page à cette URL, ce
+  // qui rendait le changement d'e-mail impossible à confirmer (régression
+  // trouvée à l'audit).
   const token = await issueVerificationToken(newEmail)
-  const verifyLink = `${SITE}/profile/confirmer-email?email=${encodeURIComponent(newEmail)}&token=${token}`
+  const verifyLink = `${SITE}/confirmer-email?email=${encodeURIComponent(newEmail)}&token=${token}`
   const emailResult = await sendEmail(newEmail, emailChangeVerificationEmail(verifyLink, SITE))
   if (!emailResult.ok) {
     // Même choix que register (lib/server/... jamais de rollback pour un
@@ -364,6 +370,8 @@ export async function deleteAccount(caller: ProfileCaller, input: { currentPassw
   user.pendingEmail = null
   user.birthYear = null
   user.gender = null
+  user.disabled = true
+  user.sessionVersion = (user.sessionVersion || 0) + 1
   await user.save()
 
   return { ok: true }
