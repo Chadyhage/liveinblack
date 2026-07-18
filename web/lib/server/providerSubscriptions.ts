@@ -297,6 +297,42 @@ export async function handleFedapaySubscriptionPayment(uid: string, entity: { id
   await mirrorFedapayStatus(uid, renewal)
 }
 
+// ── Résiliation forcée (agent, avant purge de compte — #9 phase agent/admin) ──
+// Contrairement au reste de ce fichier (déclenché par le prestataire ou par
+// un webhook), cette fonction est appelée par lib/server/agentDeletion.ts
+// AVANT toute mutation destructrice : si Stripe échoue, on ne supprime rien
+// (même prudence fail-closed que le legacy api/admin-delete-account.js). Le
+// rail XOF (FedaPay) n'a pas d'abonnement récurrent à annuler côté
+// prestataire — juste à désactiver le mirroring local, le renouvellement
+// étant déjà manuel.
+export type CancelForDeletionResult = { ok: true; hadActiveSubscription: boolean } | { ok: false; status: number; error: string }
+
+export async function cancelProviderSubscriptionForDeletion(uid: string): Promise<CancelForDeletionResult> {
+  await getDb()
+  const user = await User.findById(uid).lean()
+  if (!user?.prestataireSubActive) return { ok: true, hadActiveSubscription: false }
+
+  if (user.prestataireSubRail === 'stripe' && user.stripeSubscriptionId) {
+    try {
+      await stripe.subscriptions.cancel(user.stripeSubscriptionId)
+    } catch (err) {
+      const code = (err as { code?: string } | null)?.code
+      if (code !== 'resource_missing') {
+        console.error('[providerSubscriptions] cancelProviderSubscriptionForDeletion failed:', err)
+        return { ok: false, status: 502, error: 'stripe_cancel_failed' }
+      }
+    }
+  }
+
+  await User.updateOne(
+    { _id: uid },
+    { $set: { prestataireSubActive: false, prestataireSubStatus: 'canceled' } }
+  )
+  await ProviderProfile.updateOne({ userId: uid }, { $set: { subscriptionActive: false, subscriptionStatus: 'expired' } })
+
+  return { ok: true, hadActiveSubscription: true }
+}
+
 // ── Cron quotidien de rappels (rail XOF uniquement — Stripe se gère lui-même) ──
 const SUB_REMINDER_LOCK_ID = 'provider_sub_reminders'
 const SUB_REMINDER_LOCK_TTL_MS = 15 * 60 * 1000

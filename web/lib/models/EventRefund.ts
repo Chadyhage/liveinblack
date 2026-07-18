@@ -14,6 +14,11 @@ const eventRefundSchema = new Schema(
     amountMinor: { type: Number, default: 0 },
     currency: { type: String, enum: ['EUR', 'XOF'], required: true },
     ledgerReversed: { type: Boolean, default: false },
+    // Audit du remboursement manuel FedaPay (#9 phase agent/admin, panneau
+    // paiements) — l'agent l'exécute lui-même dans le dashboard FedaPay puis
+    // marque cette entrée 'refunded' ici ; ces deux champs tracent qui/quand.
+    completedBy: { type: String, default: null },
+    completedAt: { type: Date, default: null },
   },
   { timestamps: true }
 )

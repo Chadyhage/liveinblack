@@ -37,6 +37,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await bcrypt.compare(password, user.passwordHash)
         if (!valid) return null
 
+        // Compte suspendu par un agent (#9 phase agent/admin) — connexion refusée,
+        // voir lib/server/agentUsers.ts:setUserDisabled.
+        if (user.disabled) return null
+
         return {
           id: String(user._id),
           email: user.email,

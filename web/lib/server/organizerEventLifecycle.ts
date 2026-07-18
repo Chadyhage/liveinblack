@@ -19,10 +19,16 @@ export interface LifecycleCaller {
 
 type ErrResult = { ok: false; status: number; error: string }
 
-async function assertOwner(eventId: string, callerId: string) {
+// `bypassOwnership` (#9 phase agent/admin — annulation admin d'un événement
+// quelconque, jamais implémentée en legacy comme un flux distinct : l'admin
+// tapait directement le MÊME endpoint 'cancel_event' que l'organisateur,
+// simplement autorisé côté serveur pour tout appelant admin) laisse passer
+// n'importe quel eventId sans revérifier organizerId/createdBy — réservé à
+// l'appelant agent (lib/server/agentEvents.ts), jamais exposé à l'organisateur.
+async function assertOwner(eventId: string, callerId: string, bypassOwnership = false) {
   const event = await Event.findById(eventId)
   if (!event) return { ok: false as const, status: 404, error: 'event_not_found' }
-  if (event.organizerId !== callerId && event.createdBy !== callerId) return { ok: false as const, status: 403, error: 'forbidden' }
+  if (!bypassOwnership && event.organizerId !== callerId && event.createdBy !== callerId) return { ok: false as const, status: 403, error: 'forbidden' }
   return { ok: true as const, event }
 }
 
@@ -37,10 +43,15 @@ export type CancelEventResult = ErrResult | { ok: true; refundedCount: number; r
 // remboursement individuel n'annule jamais la décision d'annulation de
 // l'événement elle-même (déjà actée avant la boucle) — il est seulement
 // consigné (PaymentAlert, dans refundStripeOrder) pour intervention manuelle.
-export async function cancelOrganizerEvent(caller: LifecycleCaller, eventId: string, message: string): Promise<CancelEventResult> {
+export async function cancelOrganizerEvent(
+  caller: LifecycleCaller,
+  eventId: string,
+  message: string,
+  opts?: { bypassOwnership?: boolean }
+): Promise<CancelEventResult> {
   await getDb()
 
-  const guard = await assertOwner(eventId, caller.id)
+  const guard = await assertOwner(eventId, caller.id, opts?.bypassOwnership)
   if (!guard.ok) return guard
   const { event } = guard
 

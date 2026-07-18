@@ -13,6 +13,10 @@ const paymentAlertSchema = new Schema(
     sellerUid: { type: String, default: null },
     details: { type: Schema.Types.Mixed, default: {} },
     resolved: { type: Boolean, default: false },
+    // Audit de clôture (#9 phase agent/admin, panneau paiements) — qui/quand
+    // un agent a examiné puis clôturé l'alerte.
+    resolvedBy: { type: String, default: null },
+    resolvedAt: { type: Date, default: null },
   },
   { timestamps: true }
 )

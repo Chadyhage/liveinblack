@@ -2,17 +2,16 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { requireAgent } from '@/lib/server/agentGuard'
-import AgentDossiersClient from '@/app/components/AgentDossiersClient'
+import AgentShell from '@/app/components/AgentShell'
 
-// Port de la partie « Dossiers » de src/pages/AgentPage.jsx (#9 phase
-// agent/admin). `proxy.ts` bloque déjà /agent/:path* aux non-agents côté
-// middleware — cette page revérifie côté serveur (même défense en profondeur
-// que partout ailleurs dans ce port, voir lib/server/agentGuard.ts).
+// Port de src/pages/AgentPage.jsx (#9 phase agent/admin). `proxy.ts` bloque
+// déjà /agent/:path* aux non-agents côté middleware — cette page revérifie
+// côté serveur (même défense en profondeur que partout ailleurs dans ce
+// port, voir lib/server/agentGuard.ts).
 //
-// Le reste du panneau agent (dashboard, users, events, reversements…, #98-107)
-// n'existe pas encore : cette page affiche directement le panneau Dossiers en
-// pleine page plutôt que la coquille à onglets legacy, qui arrivera avec la
-// tâche #107 une fois tous les panneaux construits.
+// Coquille à onglets (#107) assemblant tous les panneaux agent construits
+// séparément (#97-106) — voir app/components/AgentShell.tsx pour le mapping
+// des onglets et les écarts volontaires avec la nav legacy.
 export const metadata: Metadata = {
   title: 'Agent — LIVEINBLACK',
   robots: { index: false, follow: false },
@@ -23,5 +22,5 @@ export default async function AgentPage() {
   if (!session?.user) redirect('/connexion')
   if (!requireAgent(session.user)) redirect('/')
 
-  return <AgentDossiersClient />
+  return <AgentShell />
 }

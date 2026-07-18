@@ -78,6 +78,11 @@ const userSchema = new Schema(
     points: { type: Number, default: 0 },
     lastSeenAt: { type: Date, default: null },
     superAdmin: { type: Boolean, default: false },
+    // Suspension par un agent (#9 phase agent/admin, port de l'action Firebase
+    // Auth `set_disabled` de api/admin-accounts.js) — bloque uniquement la
+    // connexion (voir auth.ts:authorize), distinct du `status` d'approbation
+    // ci-dessus qui n'a pas de valeur 'banned' dans ce port.
+    disabled: { type: Boolean, default: false },
 
     // Stripe Connect (organisateurs éligibles — pays EUR/Connect uniquement).
     // Écrit UNIQUEMENT par le webhook `account.updated`, jamais par le client.

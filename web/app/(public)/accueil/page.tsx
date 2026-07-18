@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { listPublicEvents, type PublicEvent } from '@/lib/server/events'
 import { listPublicProviders, type PublicProvider, type CatalogItem } from '@/lib/server/providers'
+import { getPublicHomepageConfig } from '@/lib/server/agentHomepageConfig'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
 import { eventStartMs } from '@/lib/shared/event-time'
@@ -19,6 +20,14 @@ export const dynamic = 'force-dynamic'
 
 const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=80'
 
+// Accents du carrousel « Actualité » (#9 phase agent/admin, homepage-config) —
+// mêmes couleurs que ACTUALITE_ACCENTS côté agent (lib/models/HomepageConfig.ts).
+const ACTUALITE_ACCENTS: Record<string, { dot: string; soft: string; border: string }> = {
+  teal: { dot: '#4ee8c8', soft: 'rgba(78,232,200,0.14)', border: 'rgba(78,232,200,0.4)' },
+  gold: { dot: '#c8a96e', soft: 'rgba(200,169,110,0.14)', border: 'rgba(200,169,110,0.4)' },
+  pink: { dot: '#e05aaa', soft: 'rgba(224,90,170,0.14)', border: 'rgba(224,90,170,0.4)' },
+}
+
 function firstOfferImage(catalog: CatalogItem[] = []): string | null {
   for (const item of catalog) {
     const image = (item.media || []).find((m) => m?.url && m.type !== 'video')
@@ -28,10 +37,19 @@ function firstOfferImage(catalog: CatalogItem[] = []): string | null {
 }
 
 export default async function AccueilPage() {
-  const [allEvents, providers] = await Promise.all([listPublicEvents(), listPublicProviders()])
+  const [allEvents, providers, actualiteConfig] = await Promise.all([listPublicEvents(), listPublicProviders(), getPublicHomepageConfig()])
 
   const events = [...allEvents].sort((a, b) => eventStartMs(a) - eventStartMs(b)).slice(0, 6)
   const featuredProviders = providers.slice(0, 4)
+
+  // Carrousel éditorial « Actualité » (#9 phase agent/admin) — additif : si la
+  // config est inactive/vide ou qu'aucun événement curé n'est plus découvrable
+  // (allEvents est déjà filtré par isClientDiscoverableEvent), la liste est
+  // vide et la section ci-dessous ne rend rien — jamais de layout cassé, et le
+  // reste de la page (section « À l'affiche » par défaut) n'est jamais affecté.
+  const byId = new Map(allEvents.map((e) => [e.id, e]))
+  const actualiteEvents = actualiteConfig.active ? actualiteConfig.eventIds.map((id) => byId.get(id)).filter((e): e is PublicEvent => Boolean(e)) : []
+  const actualiteAccent = ACTUALITE_ACCENTS[actualiteConfig.accent] ?? ACTUALITE_ACCENTS.teal
 
   return (
     <>
@@ -67,6 +85,65 @@ export default async function AccueilPage() {
           </p>
         </div>
       </section>
+
+      {/* ACTUALITÉ (carrousel éditorial curé par l'agent) */}
+      {actualiteEvents.length > 0 && (
+        <section style={{ padding: '0 22px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: actualiteAccent.soft, border: `1px solid ${actualiteAccent.border}` }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: actualiteAccent.dot }} />
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: actualiteAccent.dot }}>{actualiteConfig.title}</span>
+            </span>
+            {actualiteConfig.subtitle && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{actualiteConfig.subtitle}</span>}
+          </div>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+            {actualiteEvents.map((e) => {
+              const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
+              const min = prices.length ? Math.min(...prices) : null
+              return (
+                <Link
+                  key={e.id}
+                  href={`/evenements/${e.id}`}
+                  className="lb-card"
+                  style={{ ...card, flexShrink: 0, width: 220, overflow: 'hidden', display: 'block', textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
+                    {e.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={e.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: '#0b0d14',
+                        background: actualiteAccent.dot,
+                        padding: '4px 9px',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                      }}
+                    >
+                      À la une
+                    </span>
+                    {min != null && (
+                      <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 11, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>
+                        dès {fmtMoney(min, eventCurrency(e))}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ padding: '12px 14px 14px' }}>
+                    <p style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-.3px', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.name}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ÉVÉNEMENTS À DÉCOUVRIR */}
       <Section eyebrow="À l'affiche" title="Des soirées à découvrir" sub="Explore librement. Pour réserver et garder ton billet, il te suffit d'un compte.">
