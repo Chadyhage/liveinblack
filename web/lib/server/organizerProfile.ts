@@ -7,7 +7,7 @@ import Event from '../models/Event'
 import { uploadDataUri } from './cloudinary'
 import { slugifyOrganizer, validateOrganizerSlugFormat, RESERVED_ORGANIZER_SLUGS } from '../shared/organizerProfileValidation'
 import { normalizeRegionId, normalizeRegionIds } from '../shared/locations'
-import type { SocialNetworkKey } from '../shared/social'
+import { SOCIAL_NETWORKS, type SocialNetworkKey } from '../shared/social'
 
 // Port de la partie ÉCRITURE de OrganizerPublicStudio.jsx (#7 phase
 // organisateur — "Ma page publique"). La lecture publique vit déjà dans
@@ -56,6 +56,19 @@ export interface OrganizerProfileView {
   }>
 }
 
+// `profile.socialLinks` est un SOUS-DOCUMENT Mongoose (pas un objet simple) —
+// le retourner tel quel (comme le faisait une version antérieure de cette
+// fonction) expose une référence circulaire ($__parent) qui fait planter la
+// sérialisation React Server Components ("Maximum call stack size exceeded")
+// dès que ce profil atteint un composant client. Reconstruit champ par champ,
+// exactement comme `media` ci-dessous.
+function toSocialLinks(links: unknown): Record<SocialNetworkKey, string> {
+  const source = (links ?? {}) as Partial<Record<SocialNetworkKey, string>>
+  const result = {} as Record<SocialNetworkKey, string>
+  for (const net of SOCIAL_NETWORKS) result[net.key] = source[net.key] ?? ''
+  return result
+}
+
 function toProfileView(profile: OrganizerProfileDoc): OrganizerProfileView {
   return {
     publicName: profile.publicName,
@@ -64,8 +77,8 @@ function toProfileView(profile: OrganizerProfileDoc): OrganizerProfileView {
     country: profile.country ?? '',
     regionId: profile.regionId ?? '',
     shortDescription: profile.shortDescription ?? '',
-    socialLinks: (profile.socialLinks ?? {}) as Record<SocialNetworkKey, string>,
-    zonesIntervention: profile.zonesIntervention ?? [],
+    socialLinks: toSocialLinks(profile.socialLinks),
+    zonesIntervention: [...(profile.zonesIntervention ?? [])],
     avatarUrl: profile.avatarUrl ?? null,
     bannerUrl: profile.bannerUrl ?? null,
     status: profile.status ?? 'draft',

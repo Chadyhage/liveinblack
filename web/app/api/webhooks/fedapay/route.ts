@@ -3,7 +3,9 @@ import { getDb } from '@/lib/db/mongoose'
 import { verifyWebhookSignature, isApprovedTransactionEvent } from '@/lib/server/fedapayClient'
 import { fulfillOrder } from '@/lib/server/fulfillOrder'
 import { releaseOrder } from '@/lib/server/orders'
+import { handleFedapaySubscriptionPayment } from '@/lib/server/providerSubscriptions'
 import Order from '@/lib/models/Order'
+import User from '@/lib/models/User'
 
 // Remplace la branche `webhook()` de api/fedapay.js (rail XOF). Miroir de
 // /api/webhooks/stripe — même cœur de finalisation partagé (fulfillOrder),
@@ -36,6 +38,16 @@ export async function POST(req: Request) {
   try {
     const { name, entity } = body
     if (isApprovedTransactionEvent(name, entity)) {
+      // Un paiement approuvé peut être un BILLET ou un ABONNEMENT prestataire :
+      // on regarde le registre serveur (User.pendingFedapaySubTxnId) plutôt que
+      // les métadonnées brutes de l'événement pour router vers le bon traitement
+      // (même prudence que le legacy fedapay_txns.kind).
+      const pendingSubUser = await User.findOne({ pendingFedapaySubTxnId: String(entity.id) }).select('_id').lean()
+      if (pendingSubUser) {
+        await handleFedapaySubscriptionPayment(pendingSubUser._id.toString(), entity)
+        return NextResponse.json({ received: true })
+      }
+
       const order = await Order.findOne({ fedapayTxnId: String(entity.id) }).lean()
       if (!order) return NextResponse.json({ received: true, ignored: 'no_matching_order' })
       const result = await fulfillOrder(order._id.toString(), { rail: 'fedapay', paidAmountMinor: entity.amount })

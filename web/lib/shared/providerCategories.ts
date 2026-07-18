@@ -23,6 +23,27 @@ export const PROVIDER_CATEGORIES: ProviderCategory[] = [
   { id: 'autre', label: 'Autres services', singular: 'Service événementiel', icon: 'grid', color: '#94a3b8', description: 'Toute autre activité utile à un événement.' },
 ]
 
+// Port de CATALOG_CATEGORIES (src/utils/services.js) — libellés de
+// catégorie proposés pour un article de catalogue, selon l'activité du
+// prestataire. Legacy avait aussi des clés 'supermarche'/'prestation'
+// (alias historiques de 'food'/'artiste', voir LEGACY_TYPE_ALIASES
+// ci-dessous) — omises ici : cette base Mongo n'a jamais connu ces valeurs,
+// aucun profil ne peut plus avoir prestataireType==='supermarche'.
+export const CATALOG_CATEGORIES: Record<string, string[]> = {
+  salle: ['Location salle', 'Offre formule', 'Service traiteur', 'Autre'],
+  artiste: ['DJ set', 'Concert / live', 'Animation', 'Performance', 'Package', 'Autre'],
+  materiel: ['Sono', 'Lumières', 'Scène / Structure', 'Mobilier', 'Autre'],
+  food: ['Traiteur', 'Boissons', 'Bar / cocktails', 'Food truck', 'Pâtisserie', 'Autre'],
+  photo_video: ['Photographie', 'Video', 'Drone', 'Photobooth', 'Montage', 'Autre'],
+  decoration: ['Decoration', 'Scenographie', 'Fleurs', 'Mobilier decoratif', 'Autre'],
+  securite: ['Securite', 'Accueil', "Controle d'acces", 'Vestiaire', 'Autre'],
+  transport: ['Navette', 'Chauffeur', 'Livraison', 'Montage / logistique', 'Autre'],
+  staff: ['Service', 'Hotes / hotesses', 'Regie', 'Renfort technique', 'Autre'],
+  communication: ['Graphisme', 'Reseaux sociaux', 'Promotion', 'Impression', 'Autre'],
+  bien_etre: ['Maquillage', 'Coiffure', 'Stylisme', 'Preparation', 'Autre'],
+  autre: ['Prestation sur mesure', 'Accompagnement', 'Location', 'Autre'],
+}
+
 const LEGACY_TYPE_ALIASES: Record<string, string> = {
   prestation: 'artiste',
   dj: 'artiste',

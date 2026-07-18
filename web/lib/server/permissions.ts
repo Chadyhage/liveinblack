@@ -36,7 +36,11 @@ export function canCreateEvent(user: PermissionUser | null): boolean {
   if (user.activeRole === 'agent') return true
   if (user.activeRole !== 'organisateur') return false
   const effective = user.orgStatus ?? user.status
-  return effective !== 'pending'
+  // 'rejected' doit bloquer au même titre que 'pending' (symétrique à
+  // canProposeServices ci-dessous) — sans ce check, un organisateur dont le
+  // dossier a été rejeté ou dont le compte a été suspendu par un agent (#9
+  // phase agent/admin) pouvait continuer à créer des événements.
+  return effective !== 'pending' && effective !== 'rejected'
 }
 
 export function canProposeServices(user: PermissionUser | null): boolean {

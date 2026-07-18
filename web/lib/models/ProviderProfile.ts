@@ -70,6 +70,22 @@ const providerProfileSchema = new Schema(
     // URL directe que si subscriptionActive === true (sauf agent ou owner).
     subscriptionActive: { type: Boolean, default: false },
 
+    // Fenêtre d'abonnement (#8 phase prestataire) — source de vérité pour
+    // lib/shared/providerSubscription.ts:deriveSubStatus/dueReminders. EUR
+    // (Stripe) et XOF (FedaPay, renouvellement manuel) écrivent tous les deux
+    // CES mêmes champs, jamais un jeu de champs séparé par rail.
+    subscriptionStartedAt: { type: Date, default: null },
+    subscriptionExpiresAt: { type: Date, default: null },
+    gracePeriodEndsAt: { type: Date, default: null },
+    subscriptionStatus: { type: String, enum: ['none', 'active', 'expiring_soon', 'grace', 'expired'], default: 'none' },
+    // Dédup des rappels du cron XOF — un cycle = une date d'expiration en
+    // vigueur ; un renouvellement change l'expiration → nouveau cycle → les
+    // rappels déjà envoyés ne comptent plus (voir dueReminders/cycleKey).
+    subReminders: {
+      type: new Schema({ cycle: { type: String, default: '' }, sent: { type: Map, of: Number, default: {} } }, { _id: false }),
+      default: () => ({}),
+    },
+
     ratingAvg: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
 
@@ -79,6 +95,7 @@ const providerProfileSchema = new Schema(
 )
 
 providerProfileSchema.index({ name: 'text', description: 'text', city: 'text' })
+providerProfileSchema.index({ subscriptionExpiresAt: 1 })
 
 export type ProviderProfileDoc = InferSchemaType<typeof providerProfileSchema>
 export type ProviderProfileModel = Model<ProviderProfileDoc>

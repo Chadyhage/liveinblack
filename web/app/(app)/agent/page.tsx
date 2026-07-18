@@ -1,14 +1,27 @@
+import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { requireAgent } from '@/lib/server/agentGuard'
+import AgentDossiersClient from '@/app/components/AgentDossiersClient'
 
-// Stub phase 1, uniquement pour prouver que proxy.ts bloque bien /agent
-// aux comptes dont activeRole !== 'agent'. La vraie interface (AgentPage,
-// 4180 lignes côté legacy) arrive en phase 9.
-export default async function AgentStubPage() {
+// Port de la partie « Dossiers » de src/pages/AgentPage.jsx (#9 phase
+// agent/admin). `proxy.ts` bloque déjà /agent/:path* aux non-agents côté
+// middleware — cette page revérifie côté serveur (même défense en profondeur
+// que partout ailleurs dans ce port, voir lib/server/agentGuard.ts).
+//
+// Le reste du panneau agent (dashboard, users, events, reversements…, #98-107)
+// n'existe pas encore : cette page affiche directement le panneau Dossiers en
+// pleine page plutôt que la coquille à onglets legacy, qui arrivera avec la
+// tâche #107 une fois tous les panneaux construits.
+export const metadata: Metadata = {
+  title: 'Agent — LIVEINBLACK',
+  robots: { index: false, follow: false },
+}
+
+export default async function AgentPage() {
   const session = await auth()
-  return (
-    <main className="mx-auto flex max-w-sm flex-1 flex-col justify-center gap-4 p-8">
-      <h1 className="text-xl font-semibold">Espace agent (stub phase 1)</h1>
-      <p>Connecté en tant que {session?.user?.email}, rôle {session?.user?.activeRole}.</p>
-    </main>
-  )
+  if (!session?.user) redirect('/connexion')
+  if (!requireAgent(session.user)) redirect('/')
+
+  return <AgentDossiersClient />
 }

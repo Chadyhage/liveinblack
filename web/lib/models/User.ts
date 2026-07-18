@@ -92,6 +92,35 @@ const userSchema = new Schema(
     // Comptes bloqués par CE compte — le blocage empêche l'envoi de messages
     // dans les deux sens, voir lib/server/messaging.ts.
     blockedUserIds: { type: [String], default: [] },
+
+    // Abonnement prestataire (#8 phase prestataire) — miroir de compte du
+    // statut réellement détenu par `ProviderProfile` (source de vérité, voir
+    // lib/models/ProviderProfile.ts), nécessaire pour les gates qui ne
+    // chargent que `User` (ex. changement de pays de facturation refusé tant
+    // qu'un abonnement est actif). `stripeCustomerId`/`stripeSubscriptionId`
+    // sont un Stripe BILLING classique (abonnement récurrent EUR), sans
+    // rapport avec `stripeAccountId` ci-dessus (Stripe CONNECT organisateur).
+    prestataireSubActive: { type: Boolean, default: false },
+    prestataireSubStatus: { type: String, default: null },
+    prestataireSubEnd: { type: Date, default: null },
+    prestataireSubRail: { type: String, enum: ['stripe', 'fedapay', null], default: null },
+    stripeSubscriptionId: { type: String, default: null },
+    stripeCustomerId: { type: String, default: null },
+
+    // Registre léger pour le webhook FedaPay (rail XOF) : le paiement d'abonnement
+    // est ponctuel (pas d'Order comme pour les billets), donc le webhook retrouve
+    // le compte propriétaire via ce txnId plutôt que de faire confiance aux
+    // métadonnées renvoyées par l'événement (même prudence que legacy
+    // fedapay_txns, voir lib/server/providerSubscriptions.ts).
+    pendingFedapaySubTxnId: { type: String, default: null },
+
+    // Pays de FACTURATION prestataire (rail EUR/Stripe vs XOF/FedaPay) —
+    // délibérément séparé de `ProviderProfile.zonesIntervention` (marketing,
+    // multi-pays) : ne peut changer que hors abonnement actif, voir
+    // lib/server/providerBilling.ts. Remplace la collection Firestore
+    // `provider_billing/{uid}` — un champ suffit, pas besoin d'un document à
+    // part pour cette seule valeur.
+    providerBillingRegionId: { type: String, default: null },
   },
   { timestamps: true }
 )

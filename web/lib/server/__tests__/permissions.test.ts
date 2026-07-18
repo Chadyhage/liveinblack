@@ -38,6 +38,10 @@ describe('canCreateEvent', () => {
     expect(canCreateEvent({ activeRole: 'client', status: 'active' })).toBe(false)
     expect(canCreateEvent({ activeRole: 'prestataire', status: 'active' })).toBe(false)
   })
+  it('refuse un organisateur rejeté ou suspendu (#9 phase agent/admin) — pas seulement en attente', () => {
+    expect(canCreateEvent({ activeRole: 'organisateur', status: 'active', orgStatus: 'rejected' })).toBe(false)
+    expect(canCreateEvent({ activeRole: 'organisateur', status: 'rejected' })).toBe(false)
+  })
   it('lit orgStatus en priorité sur le statut de compte global (#7 phase organisateur)', () => {
     // Un organisateur déjà actif (status global 'active') qui candidate en
     // plus comme prestataire ne doit PAS perdre l'accès à /mes-evenements

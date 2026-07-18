@@ -5,6 +5,7 @@ import { fulfillOrder } from '@/lib/server/fulfillOrder'
 import { releaseOrder } from '@/lib/server/orders'
 import { finalizeBoost } from '@/lib/server/finalizeBoost'
 import { releaseBoostSlotIfPending } from '@/lib/server/boostSlots'
+import { handleStripeSubscriptionCheckoutCompleted, handleStripeSubscriptionEvent } from '@/lib/server/providerSubscriptions'
 import User from '@/lib/models/User'
 import type Stripe from 'stripe'
 
@@ -38,6 +39,10 @@ export async function POST(req: Request) {
           await finalizeBoost(session)
           break
         }
+        if (session.mode === 'subscription' && session.metadata?.type === 'prestataire_subscription') {
+          await handleStripeSubscriptionCheckoutCompleted(session)
+          break
+        }
         const orderId = session.metadata?.orderId
         if (!orderId) break
         const result = await fulfillOrder(orderId, { rail: 'stripe' })
@@ -46,6 +51,13 @@ export async function POST(req: Request) {
           // (retry précédent) est en cours.
           return NextResponse.json({ error: 'fulfillment_in_progress' }, { status: 500 })
         }
+        break
+      }
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as Stripe.Subscription
+        await handleStripeSubscriptionEvent(sub, event.type === 'customer.subscription.deleted')
         break
       }
       case 'checkout.session.expired': {

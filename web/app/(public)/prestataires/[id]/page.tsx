@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getProviderByUserId } from '@/lib/server/providers'
+import { getPublishedReviews, getMyReviewFor } from '@/lib/server/providerReviews'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { fmtMoney } from '@/lib/shared/money'
 import { auth } from '@/auth'
+import ProviderReviewsClient from '@/app/components/ProviderReviewsClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +33,9 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
   const session = await auth()
   const provider = await getProviderByUserId(id, session?.user ? { activeRole: session.user.activeRole, id: session.user.id } : null)
   if (!provider) notFound()
+
+  const isSelf = session?.user?.id === id
+  const [reviews, myReview] = await Promise.all([getPublishedReviews(id), session?.user ? getMyReviewFor({ id: session.user.id }, id) : Promise.resolve(null)])
 
   const categories = getProviderCategories(provider)
   const visibleCatalog = (provider.catalog || []).filter((item) => item.available !== false)
@@ -126,6 +131,8 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
             </div>
           </Section>
         )}
+
+        <ProviderReviewsClient providerId={id} providerName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} initialReviews={reviews} initialMyReview={myReview} />
       </div>
     </main>
   )

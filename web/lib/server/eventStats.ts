@@ -47,7 +47,24 @@ export async function getEventStats(caller: StatsCaller, eventId: string, filter
   if (!guard.ok) return guard
   const { event } = guard
 
-  const tickets = (await Ticket.find({ eventId }).lean()) as unknown as StatsTicket[]
+  // Reconstruit des objets STRICTEMENT simples (pas le lean doc brut) : le
+  // `_id` d'un document `.lean()` reste une vraie instance ObjectId (avec un
+  // toJSON custom) — la faire transiter jusqu'à un composant client via ce
+  // `view` fait planter la sérialisation React Server Components ("Maximum
+  // call stack size exceeded"). `StatsTicket` n'a de toute façon pas besoin
+  // de `_id`.
+  const rawTickets = await Ticket.find({ eventId }).lean()
+  const tickets: StatsTicket[] = rawTickets.map((t) => ({
+    ticketCode: t.ticketCode,
+    place: t.place ?? null,
+    placePrice: t.placePrice ?? null,
+    paid: t.paid ?? null,
+    checkedInAt: t.checkedInAt ? new Date(t.checkedInAt).toISOString() : null,
+    bookedAt: t.bookedAt ? new Date(t.bookedAt).toISOString() : null,
+    userId: t.userId ?? null,
+    revoked: t.revoked ?? null,
+    preorders: (t.preorders ?? []).map((p) => ({ name: p.name, price: p.price ?? null, qty: p.qty ?? null })),
+  }))
   const stats = computeEventStats(event, tickets, { filters })
   const insights = buildEventInsights(stats)
 

@@ -90,3 +90,112 @@ export function validateOrganizerFormData(f: Partial<OrganizerFormData>): FormVa
   if (!step0.ok) return step0
   return validateOrganizerStep1(f)
 }
+
+// ─────────────────────────────── Prestataire ────────────────────────────────
+// Port de la validation de src/pages/OnboardingPrestataire.jsx (#8 phase
+// prestataire). Champs catégorie-spécifiques (artiste/salle/materiel/food)
+// portés tels quels ; AUCUN d'eux n'est réellement obligatoire côté legacy
+// (même `typeArtiste`, marqué "requis" dans le label mais jamais vérifié dans
+// `validate()`) — fidélité delibérée, ne pas "corriger" cette incohérence.
+
+export interface PrestataireFormData {
+  prestataireType: string
+  prestataireTypes: string[]
+  prenom: string
+  nom: string
+  telephoneCode: string
+  telephone: string
+  ville: string
+  pays: string
+  nomCommercial: string
+  nomScene: string
+  siret: string
+  zonesIntervention: string[]
+  description: string
+  specialitesLibre: string
+  typeArtiste: string
+  styles: string
+  anneesExperience: string
+  statutFacturation: string
+  portfolio: string
+  instagram: string
+  besoinstechniques: string
+  adresseLieu: string
+  capaciteLieu: number | null
+  typeLieu: string
+  equipements: string
+  horairesAutorises: string
+  reglesDuLieu: string
+  categoriesMateriel: string
+  inventaire: string
+  conditionsLocation: string
+  politiqueCaution: string
+  typeActiviteFood: string
+  menuBase: string
+  alcoolFood: boolean
+  alcoolFoodAtteste: boolean
+  tarifMin: number | null
+  tarifMax: number | null
+  tarifType: string
+  tarifDevis: boolean
+}
+
+// Étape 0 — "Compte" (identité + coordonnées).
+export function validatePrestataireStep0(f: Partial<PrestataireFormData>): FormValidationResult {
+  if (!f.prenom?.trim()) return { ok: false, error: 'Le prénom est obligatoire.' }
+  if (!f.nom?.trim()) return { ok: false, error: 'Le nom est obligatoire.' }
+  if (!f.telephone?.trim()) return { ok: false, error: 'Le téléphone est obligatoire.' }
+  if (!isValidPhone(f.telephoneCode || '', f.telephone || '')) return { ok: false, error: 'Numéro invalide pour ce pays.' }
+  if (f.siret && !isValidSiret(f.siret)) return { ok: false, error: 'Numéro invalide : SIREN = 9 chiffres, SIRET = 14 chiffres.' }
+  return { ok: true }
+}
+
+// Étape 2 — "Détails" (uniquement la règle conditionnelle alcool/food).
+export function validatePrestataireStep2(f: Partial<PrestataireFormData>): FormValidationResult {
+  if (f.alcoolFood && !f.alcoolFoodAtteste) return { ok: false, error: "Coche l'attestation pour proposer de l'alcool." }
+  return { ok: true }
+}
+
+export function validatePrestataireFormData(f: Partial<PrestataireFormData>): FormValidationResult {
+  const step0 = validatePrestataireStep0(f)
+  if (!step0.ok) return step0
+  return validatePrestataireStep2(f)
+}
+
+// Catégories dont la sélection élargit les documents exigés au-delà de
+// 'identity' — port de getRequiredDocs (src/utils/applications.js). Union
+// across TOUTES les catégories choisies (un prestataire multi-catégories
+// cumule les exigences les plus strictes).
+const BUSINESS_DOC_CATEGORIES = new Set(['salle', 'materiel', 'food', 'securite', 'transport'])
+
+export function getRequiredDocs(type: 'organisateur' | 'prestataire', prestataireTypes: string[] = []): string[] {
+  if (type === 'organisateur') return ['identity']
+  const docs = new Set(['identity'])
+  const selected = new Set(prestataireTypes)
+  if (selected.has('artiste')) docs.add('billing_proof')
+  if ([...selected].some((t) => BUSINESS_DOC_CATEGORIES.has(t))) {
+    docs.add('business_doc')
+    docs.add('insurance')
+  }
+  if (selected.has('salle')) docs.add('exploitation_proof')
+  return [...docs]
+}
+
+// Port de getCompleteness (src/utils/applications.js, #9 phase agent/admin)
+// — indicateur affiché sur la carte/le détail agent, jamais une vraie
+// validation (les champs "requis" au sens de ce score ne bloquent pas la
+// soumission serveur, voir validate*FormData ci-dessus).
+export function getApplicationCompleteness(type: 'organisateur' | 'prestataire', formData: Record<string, unknown>, uploadedDocKeys: string[]): number {
+  const coreFields = type === 'organisateur' ? ['nomCommercial', 'emailPro', 'telephonePro'] : ['prenom', 'nom', 'telephone']
+  const fieldScore = coreFields.filter((f) => formData[f] && String(formData[f]).trim()).length / coreFields.length
+
+  const prestataireTypes = Array.isArray(formData.prestataireTypes)
+    ? (formData.prestataireTypes as string[])
+    : formData.prestataireType
+      ? [String(formData.prestataireType)]
+      : []
+  const requiredDocs = getRequiredDocs(type, prestataireTypes)
+  const docScore = requiredDocs.length > 0 ? uploadedDocKeys.filter((d) => requiredDocs.includes(d)).length / requiredDocs.length : 1
+
+  return Math.round((fieldScore * 0.5 + docScore * 0.5) * 100)
+}
