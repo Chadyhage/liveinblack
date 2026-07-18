@@ -9,18 +9,21 @@ import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlo
 import { isEventInterested } from '@/lib/server/eventInterests'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
+import { isEventEnded } from '@/lib/shared/event-time'
+import { canBook as canBookFn, getBookingBlockedReason } from '@/lib/server/permissions'
 import UnlockForm from './UnlockForm'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
 import AgeVerificationGate from '@/app/components/AgeVerificationGate'
+import EventCheckoutPanel from '@/app/components/EventCheckoutPanel'
 
-// Port LECTURE SEULE de src/pages/EventDetailPage.jsx (2861 lignes côté
-// legacy). Explicitement HORS PÉRIMÈTRE ici (déférré aux phases suivantes) :
-// sélection de place + paiement, précommande interactive, code promo, prise
-// de place de groupe, playlist, partage (le bouton "Partager" du hero legacy
-// n'est pas encore porté — seul le bouton "Intéressé", #6 phase profil, l'est
-// ici). Ce que ce fichier ajoute par rapport au legacy : méta SEO (aucune
-// n'existait), et l'application RÉELLE (pas seulement UI) du blocage des
-// événements privés — voir lib/server/events.ts.
+// Port de src/pages/EventDetailPage.jsx (2861 lignes côté legacy). Explicitement
+// HORS PÉRIMÈTRE ici (déférré) : playlist, partage (le bouton "Partager" du
+// hero legacy n'est pas encore porté — seul le bouton "Intéressé", #6 phase
+// profil, l'est ici). La sélection de place + paiement (#119) est portée par
+// EventCheckoutPanel — voir son en-tête pour le détail des simplifications
+// assumées par rapport au legacy. Ce que ce fichier ajoute par rapport au
+// legacy : méta SEO (aucune n'existait), et l'application RÉELLE (pas
+// seulement UI) du blocage des événements privés — voir lib/server/events.ts.
 
 async function resolveEvent(id: string) {
   const cookieStore = await cookies()
@@ -45,8 +48,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EventDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ paiement?: string }>
+}) {
   const { id } = await params
+  const { paiement } = await searchParams
   const result = await resolveEvent(id)
 
   if (result.status === 'not_found') notFound()
@@ -71,6 +81,36 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const countdown = getEventCountdown(event)
   const urgent = isCountdownUrgent(event)
   const stock = getStockBadge(event)
+
+  const loginHref = `/login?mode=register&next=${encodeURIComponent(`/events/${event.id}`)}`
+  const permissionUser = session?.user
+    ? { activeRole: session.user.activeRole, status: session.user.status, orgStatus: session.user.orgStatus, prestStatus: session.user.prestStatus }
+    : null
+  const canBook = canBookFn(permissionUser)
+  const blockedReason = session?.user ? getBookingBlockedReason(permissionUser) : null
+
+  const soldOut = (event.places?.length ?? 0) > 0 && event.places!.every((p) => (p.available ?? 0) === 0)
+  const bookingDisabledReason = event.cancelled ? 'Événement annulé' : soldOut ? 'Complet' : isEventEnded(event) ? 'Réservations closes' : null
+
+  const checkoutPlaces = (event.places || []).map((p) => ({
+    id: p.id,
+    type: p.type,
+    price: p.price ?? 0,
+    available: p.available ?? 0,
+    total: p.total ?? 0,
+    maxPerAccount: p.maxPerAccount ?? 0,
+    groupType: (p.groupType === 'group' ? 'group' : 'solo') as 'group' | 'solo',
+    groupMin: p.groupMin ?? 0,
+    groupMax: p.groupMax ?? 0,
+    included: p.included ?? [],
+  }))
+  const checkoutMenu = (event.menu || []).map((m) => ({
+    name: m.name,
+    emoji: m.emoji || '',
+    price: m.price ?? 0,
+    description: m.description || '',
+    excludedPlaces: m.excludedPlaces ?? [],
+  }))
 
   return (
     <main style={{ maxWidth: 880, margin: '0 auto', padding: '0 0 60px', width: '100%' }}>
@@ -172,8 +212,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         </Section>
       )}
 
-      {/* PLACES */}
-      {event.places?.length ? (
+      {/* PLACES (lecture seule pour les visiteurs non connectés — la version
+          interactive/cliquable est EventCheckoutPanel ci-dessous, réservée
+          aux utilisateurs connectés) */}
+      {!session?.user && event.places?.length ? (
         <Section title="Places">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
             {event.places.map((place) => {
@@ -202,8 +244,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         </Section>
       ) : null}
 
-      {/* MENU (précommande, affichage seul) */}
-      {event.menu?.length ? (
+      {/* MENU (affichage seul pour les visiteurs non connectés — la
+          précommande interactive vit dans EventCheckoutPanel une fois une
+          place sélectionnée) */}
+      {!session?.user && event.menu?.length ? (
         <Section title="Carte / précommande">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
             {event.menu.map((item) => (
@@ -222,24 +266,36 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         </Section>
       ) : null}
 
-      {/* CTA */}
-      <div style={{ padding: '24px 22px 0', textAlign: 'center' }}>
-        {(event.minAge || 0) >= 18 ? (
-          <AgeVerificationGate
-            minAge={event.minAge || 18}
-            href={`/login?mode=register&next=${encodeURIComponent(`/events/${event.id}`)}`}
-            label="Se connecter pour réserver"
-          />
-        ) : (
-          <Link
-            href={`/login?mode=register&next=${encodeURIComponent(`/events/${event.id}`)}`}
-            style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 999, fontSize: 14, fontWeight: 700, color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
-          >
-            Se connecter pour réserver
-          </Link>
-        )}
-        <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 10 }}>La réservation en ligne arrive dans une prochaine étape de la migration.</p>
-      </div>
+      {/* RÉSERVATION */}
+      {session?.user ? (
+        <EventCheckoutPanel
+          eventId={event.id}
+          eventMinAge={event.minAge || 0}
+          currency={currency}
+          places={checkoutPlaces}
+          menu={checkoutMenu}
+          preorderEnabled={Boolean(event.preorder)}
+          bookingDisabledReason={bookingDisabledReason}
+          canBook={canBook}
+          blockedReason={blockedReason}
+          loginHref={loginHref}
+          paymentCancelled={paiement === 'annule'}
+        />
+      ) : checkoutPlaces.length > 0 ? (
+        <div style={{ padding: '24px 22px 0', textAlign: 'center' }}>
+          {(event.minAge || 0) >= 18 ? (
+            <AgeVerificationGate minAge={event.minAge || 18} href={loginHref} label="Se connecter pour réserver" />
+          ) : (
+            <Link
+              href={loginHref}
+              style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 999, fontSize: 14, fontWeight: 700, color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
+            >
+              Se connecter pour réserver
+            </Link>
+          )}
+          <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 10 }}>Connecte-toi avec un compte client pour réserver une place.</p>
+        </div>
+      ) : null}
     </main>
   )
 }

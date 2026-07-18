@@ -1,16 +1,21 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import ConnexionForm from './ConnexionForm'
+import AuthForm from './AuthForm'
 
-// Stub phase 1 : prouve que Credentials + JWT fonctionnent de bout en bout.
-// Le vrai design (AuthModal, inscription multi-étapes) arrive avec les
-// pages qu'il concerne (phase 2+). `useSearchParams` (dans ConnexionForm)
-// exige une frontière Suspense pour ne pas bloquer le pré-rendu statique.
-export default function ConnexionPage() {
+// Port de src/pages/LoginPage.jsx (#118) — remplace le stub Phase 1
+// (Credentials/JWT only, voir git history). `useSearchParams` (dans
+// AuthForm) exige une frontière Suspense pour ne pas bloquer le
+// pré-rendu statique.
+export const metadata: Metadata = {
+  title: 'Connexion / Inscription — LIVEINBLACK',
+  robots: { index: false, follow: false },
+}
+
+export default function LoginPage() {
   return (
-    <main className="mx-auto flex max-w-sm flex-1 flex-col justify-center gap-4 p-8">
-      <h1 className="text-xl font-semibold">Connexion</h1>
+    <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <Suspense fallback={null}>
-        <ConnexionForm />
+        <AuthForm />
       </Suspense>
     </main>
   )

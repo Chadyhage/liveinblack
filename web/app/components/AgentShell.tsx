@@ -65,8 +65,14 @@ export default function AgentShell() {
       }
     }
     run()
+    // Rafraîchi périodiquement (même intervalle que le heartbeat de présence
+    // de MessagesClient.tsx) — sans ça, une action de modération faite dans
+    // l'onglet Dossiers ne se reflète jamais sur ce badge de nav tant que le
+    // shell reste monté.
+    const interval = setInterval(run, 15000)
     return () => {
       cancelled = true
+      clearInterval(interval)
     }
   }, [])
 
@@ -84,8 +90,10 @@ export default function AgentShell() {
       }
     }
     run()
+    const interval = setInterval(run, 15000)
     return () => {
       cancelled = true
+      clearInterval(interval)
     }
   }, [])
 

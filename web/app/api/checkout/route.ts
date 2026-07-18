@@ -64,7 +64,6 @@ export async function POST(req: Request) {
   const order = orderResult.order
   const orderId = order._id.toString()
 
-  const place = event.places?.find((p) => p.id === placeId)
   const seatCount = isTable ? 1 : qty
   const lineItems: Array<{
     price_data: { currency: string; product_data: { name: string }; unit_amount: number }

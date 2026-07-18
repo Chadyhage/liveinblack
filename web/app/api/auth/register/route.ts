@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   })
 
   const token = await issueVerificationToken(email)
-  const verifyLink = `${SITE}/verifier-email?email=${encodeURIComponent(email)}&token=${token}`
+  const verifyLink = `${SITE}/verify-email?email=${encodeURIComponent(email)}&token=${token}`
   const emailResult = await sendEmail(email, emailVerificationEmail(verifyLink, SITE))
   if (!emailResult.ok) {
     // Le compte est créé même si l'email échoue à partir — l'utilisateur peut

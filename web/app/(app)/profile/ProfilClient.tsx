@@ -853,6 +853,7 @@ function DangerZoneCard() {
   const [password, setPassword] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingSubmitted, setPendingSubmitted] = useState(false)
 
   async function handleDelete() {
     setDeleting(true)
@@ -863,6 +864,16 @@ function DangerZoneCard() {
       if (!res.ok || !data.ok) {
         setError(errorMessage(data.error))
         setDeleting(false)
+        return
+      }
+      if (data.pending) {
+        // Organisateur/prestataire avec un dossier approuvé : la demande part
+        // en revue agent (app/api/profil/supprimer-compte/route.ts), le
+        // compte reste actif et connecté en attendant la réponse.
+        setDeleting(false)
+        setShowConfirm(false)
+        setPassword('')
+        setPendingSubmitted(true)
         return
       }
       await signOut({ redirect: false })
@@ -877,19 +888,29 @@ function DangerZoneCard() {
     <div style={cardStyle}>
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 16px' }} />
       <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Zone de danger</p>
-      <button
-        onClick={() => setShowConfirm(true)}
-        style={{ padding: '11px 18px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.4)', background: 'transparent', color: '#e05aaa', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-      >
-        Supprimer mon compte
-      </button>
+
+      {pendingSubmitted ? (
+        <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.35)', background: 'rgba(224,90,170,0.08)' }}>
+          <p style={{ fontSize: 13, color: '#fff', fontWeight: 700, margin: '0 0 4px' }}>Demande de suppression envoyée</p>
+          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+            Ta demande de suppression a été transmise à l&apos;équipe LIVEINBLACK. Ton compte reste actif en attendant sa validation.
+          </p>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowConfirm(true)}
+          style={{ padding: '11px 18px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.4)', background: 'transparent', color: '#e05aaa', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+        >
+          Supprimer mon compte
+        </button>
+      )}
 
       {showConfirm && (
         <ConfirmModal
           title="Supprimer mon compte"
           body={
             <>
-              Cette action est <strong style={{ color: '#e05aaa' }}>irréversible</strong>. Ton compte, tes billets et ton solde ne seront plus accessibles.
+              Cette action est <strong style={{ color: '#e05aaa' }}>irréversible</strong>. Ton compte, tes billets et ton solde ne seront plus accessibles. Si tu es organisateur ou prestataire avec un dossier validé, ta demande sera d&apos;abord transmise à l&apos;équipe pour revue.
             </>
           }
           confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}

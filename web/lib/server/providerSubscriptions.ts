@@ -174,6 +174,9 @@ export async function createStripeSubscriptionCheckout(caller: { id: string; ema
       locale: 'fr',
     })
     return { ok: true, url: session.url! }
+  } catch (err) {
+    console.error('[createStripeSubscriptionCheckout] Stripe session creation failed:', err)
+    return { ok: false, status: 502, error: 'stripe_error' }
   } finally {
     await CronLock.deleteOne({ _id: lockId })
   }

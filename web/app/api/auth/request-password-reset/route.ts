@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   const user = await User.findOne({ email }).lean()
   if (user) {
     const token = await issueVerificationToken(email, 60 * 60 * 1000) // 1h, plus court qu'une vérification email
-    const resetLink = `${SITE}/reinitialiser-mot-de-passe?email=${encodeURIComponent(email)}&token=${token}`
+    const resetLink = `${SITE}/reset-password?email=${encodeURIComponent(email)}&token=${token}`
     const result = await sendEmail(email, passwordResetEmail(resetLink, SITE))
     if (!result.ok) console.error('[request-password-reset] email failed for', email, result.error)
   }

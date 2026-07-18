@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { listPublicEvents, type PublicEvent } from '@/lib/server/events'
-import { listPublicProviders, type PublicProvider, type CatalogItem } from '@/lib/server/providers'
+import { listPublicProviders, type CatalogItem } from '@/lib/server/providers'
 import { getPublicHomepageConfig } from '@/lib/server/agentHomepageConfig'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'

@@ -8,7 +8,7 @@ import { MongoClient } from 'mongodb'
 const MONGODB_URI = process.env.MONGODB_URI
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __mongoClientPromise: Promise<MongoClient> | undefined
 }
 

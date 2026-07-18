@@ -12,6 +12,7 @@ const PUBLIC_LIST_CAP = 300
 export type PublicEvent = Omit<EventDoc, never> & { id: string }
 
 function toPublicEvent(doc: Record<string, unknown>): PublicEvent {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to exclude it from `rest`
   const { _id, __v, ...rest } = doc as { _id: unknown; __v?: number } & Record<string, unknown>
   return { ...(rest as EventDoc), id: String(_id) }
 }
