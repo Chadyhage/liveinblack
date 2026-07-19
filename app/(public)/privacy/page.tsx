@@ -49,11 +49,11 @@ Pour toute question relative à vos données personnelles, vous pouvez nous cont
       title: 'Durée de conservation',
       body: null,
       list: [
-        { label: 'Données de compte actif', value: 'tant que le compte est actif + 1 an après dernière connexion' },
-        { label: 'Données de transaction (factures)', value: '10 ans (obligation comptable)' },
-        { label: 'Documents de candidature', value: '5 ans après refus ou désactivation' },
-        { label: 'Logs techniques', value: '12 mois maximum' },
-        { label: 'Cookies analytiques', value: '13 mois maximum (recommandation CNIL)' },
+        { label: 'Données de compte actif', value: "tant que le compte est actif ; en cas d'inactivité prolongée ou sur simple demande, le compte est anonymisé (voir article 07 « Droit à l'effacement »)" },
+        { label: 'Données de transaction (factures)', value: 'au moins 10 ans (obligation comptable — art. L123-22 du Code de commerce)' },
+        { label: 'Documents de candidature', value: 'purge automatique 180 jours après un brouillon jamais soumis, ou 5 ans après un refus' },
+        { label: 'Logs techniques', value: "jusqu'à 12 mois (objectif de rétention appliqué au niveau de l'infrastructure d'hébergement)" },
+        { label: 'Cookies analytiques', value: "jusqu'à 13 mois maximum (recommandation CNIL), le cas échéant — à ce jour aucun cookie de mesure d'audience n'est déposé (voir notre Politique de cookies)" },
       ],
     },
     {
@@ -68,18 +68,22 @@ Pour toute question relative à vos données personnelles, vous pouvez nous cont
     {
       n: '06',
       title: 'Transferts hors UE',
-      body: `Certains de nos sous-traitants (notamment Vercel, Google et Stripe) sont basés aux États-Unis. Ces transferts sont encadrés par les clauses contractuelles types (CCT) approuvées par la Commission européenne et par la certification au Data Privacy Framework lorsque applicable.`,
+      body: `Certains de nos sous-traitants (notamment Vercel, MongoDB Atlas, Cloudinary, Stripe et Resend) sont basés aux États-Unis. Ces transferts sont encadrés par les clauses contractuelles types (CCT) approuvées par la Commission européenne et par la certification au Data Privacy Framework lorsque applicable.`,
     },
     {
       n: '07',
       title: 'Vos droits',
       body: 'Conformément aux articles 15 à 22 du RGPD, vous disposez des droits suivants :',
       list: [
-        { label: "Droit d'accès", value: 'obtenir la confirmation que vos données sont traitées et en recevoir une copie' },
+        { label: "Droit d'accès", value: "obtenir la confirmation que vos données sont traitées et en recevoir une copie — en libre-service, à tout moment, via « Télécharger mes données » dans votre profil (voir section 08 ci-dessous)" },
         { label: 'Droit de rectification', value: 'corriger des données inexactes ou incomplètes' },
-        { label: "Droit à l'effacement (« droit à l'oubli »)", value: 'demander la suppression de vos données' },
+        {
+          label: "Droit à l'effacement (« droit à l'oubli »)",
+          value:
+            "demander la suppression de vos données ; les données sans obligation légale de conservation sont supprimées, celles couvertes par une obligation comptable ou une piste d'audit (factures, transactions) sont anonymisées et conservées pour la seule durée légale requise, conformément à l'article 17.3 du RGPD",
+        },
         { label: 'Droit à la limitation', value: 'demander de geler temporairement le traitement' },
-        { label: 'Droit à la portabilité', value: 'recevoir vos données dans un format lisible et les transférer' },
+        { label: 'Droit à la portabilité', value: "recevoir vos données dans un format lisible par machine (JSON) et les transférer — via le même téléchargement en libre-service que le droit d'accès" },
         { label: "Droit d'opposition", value: 'vous opposer au traitement pour motifs légitimes' },
         { label: 'Droit de retirer votre consentement', value: 'à tout moment, sans affecter la licéité passée' },
         { label: 'Droit de définir des directives post-mortem', value: 'sur le sort de vos données après votre décès' },
@@ -88,7 +92,9 @@ Pour toute question relative à vos données personnelles, vous pouvez nous cont
     {
       n: '08',
       title: 'Comment exercer vos droits',
-      body: `Pour exercer vos droits, écrivez-nous à : ${LEGAL.contactEmail}
+      body: `Droit d'accès et droit à la portabilité : téléchargez vous-même une copie complète de vos données personnelles (profil, billets, commandes, messages envoyés, amis, avis, événements suivis, dossier organisateur/prestataire le cas échéant…) au format JSON, à tout moment et sans délai, depuis votre profil → Paramètres du compte → « Mes données ».
+
+Pour tous les autres droits (rectification, effacement, limitation, opposition, retrait du consentement, directives post-mortem), ou si le téléchargement en libre-service ne suffit pas à votre demande, écrivez-nous à : ${LEGAL.contactEmail}
 
 Nous nous engageons à répondre sous 1 mois maximum (prolongeable de 2 mois en cas de demande complexe).
 
@@ -104,8 +110,9 @@ ${LEGAL.authority.url}`,
       body: `Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données contre la perte, l'accès non autorisé, la divulgation ou la destruction :
 
 • Chiffrement des données en transit (HTTPS/TLS)
-• Mots de passe stockés sous forme chiffrée et non réversible
-• Authentification Firebase avec contrôles d'accès stricts
+• Mots de passe hachés avec bcrypt (jamais stockés en clair ni réversibles)
+• Authentification par session JWT avec cookies de session sécurisés (httpOnly, secure), contrôles d'accès par rôle vérifiés côté serveur
+• Base de données hébergée sur MongoDB Atlas, chiffrée au repos
 • Paiements via Stripe (certifié PCI-DSS niveau 1)
 • Sauvegardes régulières
 

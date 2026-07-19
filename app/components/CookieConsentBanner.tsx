@@ -121,22 +121,27 @@ export default function CookieConsentBanner() {
 
         .cc-btn-refuse {
           background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          color: rgba(255,255,255,0.75);
+          border: 1px solid rgba(255,255,255,0.22);
+          color: rgba(255,255,255,0.88);
         }
         .cc-btn-refuse:hover {
-          background: rgba(255,255,255,0.12);
-          border-color: rgba(255,255,255,0.2);
-          color: rgba(255,255,255,0.92);
+          background: rgba(255,255,255,0.14);
+          border-color: rgba(255,255,255,0.3);
+          color: rgba(255,255,255,0.98);
+        }
+        .cc-btn-refuse:active {
+          transform: scale(0.97);
         }
 
         .cc-btn-accept {
-          background: rgba(255,255,255,0.92);
-          border: 1px solid transparent;
-          color: #0a0a12;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.22);
+          color: rgba(255,255,255,0.88);
         }
         .cc-btn-accept:hover {
-          background: #fff;
+          background: rgba(255,255,255,0.14);
+          border-color: rgba(255,255,255,0.3);
+          color: rgba(255,255,255,0.98);
         }
         .cc-btn-accept:active {
           transform: scale(0.97);
@@ -160,7 +165,7 @@ export default function CookieConsentBanner() {
           </p>
           <div className="cc-actions">
             <button className="cc-btn cc-btn-refuse" onClick={() => dismiss('refused')}>
-              Continuer sans préférences
+              Tout refuser
             </button>
             <button className="cc-btn cc-btn-accept" onClick={() => dismiss('accepted')}>
               Accepter les préférences

@@ -19,10 +19,34 @@ import {
 } from '../profile'
 import { issueVerificationToken } from '../../auth/verification-tokens'
 import User from '../../models/User'
+import Application from '../../models/Application'
+import OrganizerProfile from '../../models/OrganizerProfile'
+import ProviderProfile from '../../models/ProviderProfile'
+import Conversation from '../../models/Conversation'
+import Message from '../../models/Message'
+import FriendRequest from '../../models/FriendRequest'
+import Friendship from '../../models/Friendship'
+import OrganizerFollow from '../../models/OrganizerFollow'
+import EventInterest from '../../models/EventInterest'
+import Review from '../../models/Review'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
 const TEST_URI = process.env.MONGODB_URI || ''
+
+const ALL_MODELS: mongoose.Model<unknown>[] = [
+  User,
+  Application,
+  OrganizerProfile,
+  ProviderProfile,
+  Conversation,
+  Message,
+  FriendRequest,
+  Friendship,
+  OrganizerFollow,
+  EventInterest,
+  Review,
+]
 
 beforeAll(async () => {
   if (!RUN_INTEGRATION) return
@@ -37,7 +61,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   if (!RUN_INTEGRATION) return
-  await User.deleteMany({})
+  await Promise.all(ALL_MODELS.map((m) => m.deleteMany({})))
 })
 
 async function seedUser(overrides: Record<string, unknown> = {}) {
@@ -276,6 +300,77 @@ describeIntegration('profile (intégration, vraie base) — paramètres du compt
 
       const fresh = await User.findById(alice.id).lean()
       expect(fresh?.email).toBe(alice.email)
+    })
+
+    // Régression RGPD critique : deleteAccount n'anonymisait AUPARAVANT que le
+    // document User lui-même, laissant le nom/prénom d'un compte auto-supprimé
+    // traîner dans toutes les collections dénormalisées ci-dessous — le SEUL
+    // chemin de suppression pour un client/agent/organisateur-prestataire pas
+    // encore actif (voir app/api/profil/supprimer-compte/route.ts : un dossier
+    // déjà approuvé passe par approveDeletion à la place). Couvre désormais la
+    // même cascade PII que approveDeletion via lib/server/accountPurge.ts.
+    it("scrube l'identité dénormalisée d'Alice à travers messages, conversations, demandes d'amis, follows, intérêts et avis (cascade partagée avec approveDeletion)", async () => {
+      const alice = await seedUser({ firstName: 'Alice', lastName: 'Dupont' })
+      const bob = await seedUser({ firstName: 'Bob', lastName: 'B' })
+
+      const conv = await Conversation.create({ type: 'direct', participantIds: [alice.id, bob.id] })
+      await Message.create({ conversationId: String(conv._id), senderId: alice.id, senderName: 'Alice Dupont', type: 'text', content: 'Salut' })
+      await FriendRequest.create({ fromId: alice.id, fromName: 'Alice Dupont', toId: bob.id, status: 'pending' })
+      await OrganizerFollow.create({ userId: alice.id, organizerId: bob.id })
+      await EventInterest.create({ userId: alice.id, eventId: 'ev-scrub-test' })
+      await Review.create({ providerId: bob.id, providerName: 'Bob', authorId: alice.id, authorName: 'Alice Dupont', rating: 4, comment: 'Bien' })
+
+      const result = await deleteAccount({ id: alice.id }, { currentPassword: 'correct-password' })
+      expect(result.ok).toBe(true)
+
+      const freshMessage = await Message.findOne({ conversationId: String(conv._id), senderId: alice.id }).lean()
+      expect(freshMessage?.senderName).toBe('Compte supprimé')
+
+      const freshConv = await Conversation.findById(conv._id).lean()
+      expect(freshConv?.participantIds).toEqual([bob.id])
+
+      expect(await FriendRequest.countDocuments({ $or: [{ fromId: alice.id }, { toId: alice.id }] })).toBe(0)
+      expect(await OrganizerFollow.countDocuments({ userId: alice.id })).toBe(0)
+      expect(await EventInterest.countDocuments({ userId: alice.id })).toBe(0)
+
+      const freshReview = await Review.findOne({ authorId: alice.id }).lean()
+      expect(freshReview).not.toBeNull()
+      expect(freshReview?.rating).toBe(4)
+      expect(freshReview?.authorName).toBe('Utilisateur supprimé')
+    })
+
+    // "Bug legacy déjà corrigé une fois, ne pas le réintroduire" (CLAUDE.md) —
+    // pour un organisateur/prestataire dont orgStatus/prestStatus N'EST PAS
+    // encore 'active', son dossier Application (brouillon ou soumis) et son
+    // OrganizerProfile/ProviderProfile "brouillon" (créé au premier accès au
+    // studio, cf. getOrCreateMyOrganizerProfile) contiennent nom commercial,
+    // téléphone et pièces d'identité (Cloudinary) — ils doivent être purgés au
+    // même titre que pour un compte approuvé passant par approveDeletion.
+    it("purge le dossier de candidature et le profil brouillon d'un organisateur pas encore actif", async () => {
+      const alice = await seedUser({
+        firstName: 'Alice',
+        lastName: 'Dupont',
+        phone: '+33600000000',
+        roles: ['organisateur'],
+        activeRole: 'organisateur',
+        orgStatus: 'pending',
+      })
+      await Application.create({
+        userId: alice.id,
+        type: 'organisateur',
+        status: 'submitted',
+        formData: { nomCommercial: 'Club Neon', telephone: '+33600000000' },
+        documents: {
+          identity: [{ name: 'cni.jpg', url: 'https://res.cloudinary.com/liveinblack/image/upload/v1/scrub-test/cni-alice.jpg', size: 1024 }],
+        },
+      })
+      await OrganizerProfile.create({ userId: alice.id, publicName: 'Club Neon', slug: `club-neon-scrub-${alice.id}`, status: 'draft', proPhone: '+33600000000' })
+
+      const result = await deleteAccount({ id: alice.id }, { currentPassword: 'correct-password' })
+      expect(result.ok).toBe(true)
+
+      expect(await Application.findOne({ userId: alice.id }).lean()).toBeNull()
+      expect(await OrganizerProfile.findOne({ userId: alice.id }).lean()).toBeNull()
     })
   })
 })

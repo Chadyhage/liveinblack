@@ -8,11 +8,11 @@
 // Le moteur est un SINGLETON module : la musique continue quand on navigue
 // entre les pages (l'UI AmbientMusicPlayer est démontée/remontée, pas le son).
 //
-// NB: le port legacy gate cette persistance derrière le consentement cookies
-// ("préférences fonctionnelles"). Cette brique n'existe pas encore dans le
-// port Next (cf. tâche #109, en cours en parallèle) — on utilise donc
-// localStorage directement ici, comme le reste des pages déjà portées
-// (profil, wallet…). À reconnecter au consentement quand #109 atterrit.
+// La persistance (volume + dernier disque) est gatée derrière le consentement
+// cookies ("préférences fonctionnelles", cf. lib/shared/cookieConsent.ts) :
+// tant que l'utilisateur n'a pas accepté, l'écriture est un no-op silencieux.
+
+import { getFunctionalPreference, setFunctionalPreference } from '@/lib/shared/cookieConsent'
 
 export interface Disc {
   id: string
@@ -60,7 +60,7 @@ const ACTIVE_MP3S: Record<string, string> = {
 function readPreference(key: string, fallback: string) {
   if (typeof window === 'undefined') return fallback
   try {
-    return window.localStorage.getItem(key) ?? fallback
+    return getFunctionalPreference(key, fallback) ?? fallback
   } catch {
     return fallback
   }
@@ -68,7 +68,9 @@ function readPreference(key: string, fallback: string) {
 function writePreference(key: string, value: string) {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(key, value)
+    // No-op silencieux tant que l'utilisateur n'a pas accepté les préférences
+    // fonctionnelles (cf. lib/shared/cookieConsent.ts:allowsFunctionalPreferences).
+    setFunctionalPreference(key, value)
   } catch {
     // stockage indisponible (navigation privée, quota…) — silencieux, comme le legacy
   }

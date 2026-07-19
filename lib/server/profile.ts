@@ -1,11 +1,14 @@
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
+import mongoose from 'mongoose'
 import { getDb } from '../db/mongoose'
 import User, { NAME_COOLDOWN_DAYS } from '../models/User'
 import { uploadDataUri } from './cloudinary'
 import { issueVerificationToken, consumeVerificationToken } from '../auth/verification-tokens'
 import { emailChangeVerificationEmail } from './email-templates'
 import { sendEmail } from './email'
+import { scrubAccountPII } from './accountPurge'
+import { isValidPhone } from '../shared/applicationValidation'
 
 // Port de la section "Paramètres du compte" de ProfilePage.jsx (#6 phase
 // profil) — identité, démographie facultative, avatar, confidentialité,
@@ -32,6 +35,7 @@ export interface MyProfileView {
   email: string
   pendingEmail: string | null
   avatarUrl: string | null
+  phone: string
   birthYear: number | null
   gender: string | null
   nameChangedAt: string | null
@@ -53,6 +57,7 @@ export async function getMyProfile(caller: ProfileCaller): Promise<MyProfileView
     email: user.email,
     pendingEmail: user.pendingEmail ?? null,
     avatarUrl: user.avatarUrl ?? null,
+    phone: user.phone ?? '',
     birthYear: user.birthYear ?? null,
     gender: user.gender ?? null,
     nameChangedAt: user.nameChangedAt ? new Date(user.nameChangedAt).toISOString() : null,
@@ -153,6 +158,53 @@ export async function updateDemographics(
   if (!updated) return { ok: false, status: 404, error: 'user_not_found' }
 
   return { ok: true, birthYear: updated.birthYear ?? null, gender: updated.gender ?? null }
+}
+
+// ──────────────────────────────── updatePhone ────────────────────────────────
+// Art. 16 RGPD (droit de rectification) — jusqu'ici seul un agent pouvait
+// corriger un numéro erroné (lib/server/agentUsers.ts:updateUserFields, sans
+// validation de format). Ce numéro est aussi partagé avec d'autres
+// utilisateurs via la messagerie (contact pro, voir
+// lib/server/messaging.ts:getContactPhone), donc une correction en
+// libre-service est nécessaire. Même validation que les formulaires
+// d'onboarding organisateur/prestataire (isValidPhone,
+// lib/shared/applicationValidation.ts — dialCode + numéro national séparés,
+// jamais une regex maison réinventée ici) et même règle anti-doublon que
+// l'inscription (normalizePhone + blocage uniquement sur les comptes déjà
+// vérifiés, voir app/api/auth/register/route.ts) pour ne pas laisser deux
+// comptes actifs revendiquer le même numéro.
+
+export type UpdatePhoneResult = ErrResult | { ok: true; phone: string }
+
+function normalizePhoneDigits(phone: string) {
+  return phone.replace(/\D/g, '')
+}
+
+export async function updatePhone(caller: ProfileCaller, input: { dialCode: string; phone: string }): Promise<UpdatePhoneResult> {
+  await getDb()
+
+  const dialCode = input.dialCode?.trim()
+  const rawNumber = input.phone?.trim()
+  if (!dialCode || !rawNumber) return { ok: false, status: 400, error: 'phone_required' }
+  if (!isValidPhone(dialCode, rawNumber)) return { ok: false, status: 400, error: 'invalid_phone' }
+
+  const national = rawNumber.replace(/^0+/, '')
+  const normalizedPhone = `${dialCode}${national}`.replace(/\s/g, '')
+
+  const normalizedDigits = normalizePhoneDigits(normalizedPhone)
+  if (normalizedDigits.length >= 6) {
+    const verifiedWithPhone = await User.find(
+      { _id: { $ne: caller.id }, phone: { $exists: true, $ne: '' }, emailVerifiedAt: { $ne: null } },
+      { phone: 1 }
+    ).lean()
+    const phoneTaken = verifiedWithPhone.some((u) => normalizePhoneDigits(u.phone || '') === normalizedDigits)
+    if (phoneTaken) return { ok: false, status: 409, error: 'phone_taken' }
+  }
+
+  const updated = await User.findByIdAndUpdate(caller.id, { $set: { phone: normalizedPhone } }, { new: true })
+  if (!updated) return { ok: false, status: 404, error: 'user_not_found' }
+
+  return { ok: true, phone: updated.phone ?? '' }
 }
 
 // ──────────────────────────────── updateAvatar ──────────────────────────────
@@ -354,7 +406,18 @@ export async function changePassword(caller: ProfileCaller, input: { currentPass
 // Le compte devient définitivement injoignable (mot de passe remplacé par un
 // hash aléatoire jamais reconstituable) et son identité publique est vidée,
 // sans casser l'intégrité référentielle du reste de l'application.
-
+//
+// C'est le chemin emprunté par TOUT client, TOUT agent, et tout organisateur/
+// prestataire dont orgStatus/prestStatus n'est PAS encore 'active' (voir la
+// gate dans app/api/profil/supprimer-compte/route.ts — un dossier déjà
+// approuvé passe par une revue agent, lib/server/agentDeletion.ts:
+// approveDeletion, qui anonymise le MÊME compte plus tard). Les deux chemins
+// partagent la purge des doublons dénormalisés d'identité à travers le reste
+// de l'app (messages, conversations, demandes d'amis, signalements, avis,
+// sièges de table, dossier de candidature, vitrine publique brouillon...) via
+// scrubAccountPII (lib/server/accountPurge.ts) — sans cette purge partagée,
+// le nom/téléphone/pièces d'identité d'un compte "juste" auto-supprimé
+// continuaient de traîner dans des dizaines de documents tiers.
 export type DeleteAccountResult = ErrResult | { ok: true }
 
 export async function deleteAccount(caller: ProfileCaller, input: { currentPassword: string }): Promise<DeleteAccountResult> {
@@ -366,19 +429,31 @@ export async function deleteAccount(caller: ProfileCaller, input: { currentPassw
   const validPassword = await bcrypt.compare(input.currentPassword ?? '', user.passwordHash)
   if (!validPassword) return { ok: false, status: 403, error: 'invalid_password' }
 
-  const unusableHash = await bcrypt.hash(`deleted:${crypto.randomUUID()}`, 12)
-  user.email = `deleted-${String(user._id)}@liveinblack.invalid`
-  user.passwordHash = unusableHash
-  user.firstName = ''
-  user.lastName = ''
-  user.phone = ''
-  user.avatarUrl = null
-  user.pendingEmail = null
-  user.birthYear = null
-  user.gender = null
-  user.disabled = true
-  user.sessionVersion = (user.sessionVersion || 0) + 1
-  await user.save()
+  // Transaction : soit la cascade PII + l'anonymisation du compte s'appliquent
+  // ensemble, soit rien — jamais un compte à moitié anonymisé si une étape
+  // échoue en cours de route (même exigence que approveDeletion).
+  const session = await mongoose.startSession()
+  try {
+    await session.withTransaction(async () => {
+      await scrubAccountPII(caller.id, session)
+
+      const unusableHash = await bcrypt.hash(`deleted:${crypto.randomUUID()}`, 12)
+      user.email = `deleted-${String(user._id)}@liveinblack.invalid`
+      user.passwordHash = unusableHash
+      user.firstName = ''
+      user.lastName = ''
+      user.phone = ''
+      user.avatarUrl = null
+      user.pendingEmail = null
+      user.birthYear = null
+      user.gender = null
+      user.disabled = true
+      user.sessionVersion = (user.sessionVersion || 0) + 1
+      await user.save({ session })
+    })
+  } finally {
+    await session.endSession()
+  }
 
   return { ok: true }
 }

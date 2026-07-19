@@ -24,11 +24,9 @@ Sur ${LEGAL.domain}, nous utilisons à la fois des "cookies" classiques et des t
       title: 'Cookies strictement nécessaires',
       body: 'Ces cookies sont indispensables au fonctionnement du site et ne peuvent pas être désactivés. Ils sont déposés automatiquement, sans consentement préalable, conformément à la directive ePrivacy.',
       list: [
-        { label: 'lib_user', value: 'session de connexion (Firebase Auth)' },
-        { label: 'lib_bookings', value: 'historique de vos billets (stockage local)' },
-        { label: 'lib_conversations', value: 'cache de vos conversations (stockage local)' },
+        { label: 'authjs.session-token', value: 'session de connexion sécurisée (__Secure-authjs.session-token en production)' },
+        { label: 'evu_{eventId}', value: 'déverrouillage d’un événement privé après saisie du code d’accès' },
         { label: 'lib_cookie_consent', value: 'mémorise votre choix de consentement aux cookies' },
-        { label: 'firebase auth tokens', value: 'jetons de sécurité pour votre authentification' },
       ],
     },
     {

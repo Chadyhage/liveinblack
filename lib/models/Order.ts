@@ -57,6 +57,26 @@ const orderSchema = new Schema(
   { timestamps: true }
 )
 
+// Purge automatique (RGPD — minimisation des données) des holds de checkout
+// EXPIRÉS ET JAMAIS PAYÉS uniquement : index TTL PARTIEL sur `expiresAt`,
+// filtré à `status: 'expired'`. Le filtre partiel est réévalué par le
+// moniteur TTL de Mongo à CHAQUE passage contre l'état ACTUEL du document
+// (pas figé à l'insertion) — un Order qui passe en 'paid' avant que le
+// TTL ne s'exécute sort donc automatiquement du champ du filtre, aucun
+// risque de supprimer une commande payée quelle que soit sa valeur
+// `expiresAt` d'origine (celle-ci ne compte que pré-paiement, cf.
+// lib/server/orders.ts). Ne cible QUE 'expired' — jamais 'pending'
+// (peut encore aboutir), 'paid' ou 'cancelled' (statut légitime distinct).
+// Délai de grâce : 30 jours après expiresAt (qui est déjà +30min après
+// création, cf. ORDER_TTL_MS) — largement suffisant pour toute
+// investigation/litige sur un hold jamais payé, sans accumulation
+// indéfinie de données sensibles (stripeSessionId, fedapayTxnId,
+// montants, codes promo).
+orderSchema.index(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 60 * 60 * 24 * 30, partialFilterExpression: { status: 'expired' } }
+)
+
 export type OrderDoc = InferSchemaType<typeof orderSchema>
 export type OrderModel = Model<OrderDoc>
 

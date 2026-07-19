@@ -66,6 +66,30 @@ const applicationSchema = new Schema(
 // "candidature après rejet").
 applicationSchema.index({ userId: 1, type: 1 }, { unique: true })
 
+// Purge automatique (RGPD — minimisation des données) des dossiers ABANDONNÉS
+// UNIQUEMENT — deux index TTL PARTIELS, chacun scopé à un seul statut via
+// partialFilterExpression (réévalué par le moniteur TTL contre l'état ACTUEL
+// du document à chaque passage, jamais figé à l'insertion — un brouillon
+// soumis ou un dossier réexaminé sort donc automatiquement du filtre avant
+// suppression). Jamais 'pending'/'under_review'/'needs_changes'/
+// 'resubmitted'/'approved'/'suspended'.
+//   - 'draft' : jamais soumis, purgé 180 jours après la dernière modification
+//     (`updatedAt`, mis à jour à chaque sauvegarde de brouillon) — délai
+//     court car aucune relation de candidature n'existe encore tant que rien
+//     n'est soumis (cf. commentaire en tête de fichier).
+//   - 'rejected' : purgé 5 ans après le refus (`rejectedAt`) — aligné sur la
+//     durée annoncée dans la politique de confidentialité publique
+//     ("Documents de candidature : 5 ans après refus ou désactivation",
+//     app/(public)/privacy/page.tsx) ; ne pas modifier l'un sans l'autre.
+applicationSchema.index(
+  { updatedAt: 1 },
+  { expireAfterSeconds: 60 * 60 * 24 * 180, partialFilterExpression: { status: 'draft' } }
+)
+applicationSchema.index(
+  { rejectedAt: 1 },
+  { expireAfterSeconds: 60 * 60 * 24 * 365 * 5, partialFilterExpression: { status: 'rejected' } }
+)
+
 export type ApplicationDoc = InferSchemaType<typeof applicationSchema>
 export type ApplicationModel = Model<ApplicationDoc>
 

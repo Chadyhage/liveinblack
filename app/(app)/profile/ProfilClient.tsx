@@ -6,6 +6,7 @@ import { signOut } from 'next-auth/react'
 import TicketWalletPanel, { type TicketWalletGroupView } from './TicketWallet'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
+import { regions } from '@/lib/shared/regions'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -20,6 +21,7 @@ export interface ProfilUser {
   email: string
   pendingEmail: string | null
   avatarUrl: string | null
+  phone: string
   birthYear: number | null
   gender: string | null
   nameChangedAt: string | null
@@ -41,6 +43,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   name_cooldown_active: 'Tu as déjà renommé ton compte récemment, réessaie plus tard.',
   invalid_birth_year: 'Année de naissance invalide.',
   invalid_gender: 'Genre invalide.',
+  phone_required: 'Le numéro de téléphone est obligatoire',
+  invalid_phone: 'Numéro de téléphone invalide pour ce pays',
+  phone_taken: 'Ce numéro de téléphone est déjà utilisé par un compte actif',
   invalid_password: 'Mot de passe actuel incorrect',
   invalid_email: 'Adresse e-mail invalide',
   same_email: "C'est déjà ton adresse e-mail actuelle",
@@ -404,10 +409,11 @@ function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (
 
   const entries: SettingEntry[] = useMemo(
     () => [
-      { id: 'identite', keywords: ['nom', 'prenom', 'identite', 'demographie', 'age', 'genre'], render: (ctx) => <IdentityCard {...ctx} /> },
+      { id: 'identite', keywords: ['nom', 'prenom', 'identite', 'demographie', 'age', 'genre', 'telephone', 'numero', 'phone'], render: (ctx) => <IdentityCard {...ctx} /> },
       { id: 'goûts', keywords: ['gouts', 'preferences', 'recommandations', 'musique', 'artiste'], render: (ctx) => <PreferencesCard {...ctx} /> },
       { id: 'visibilite', keywords: ['qui voit quoi', 'visibilite', 'confidentialite'], render: (ctx) => <VisibilityCard {...ctx} /> },
       { id: 'confidentialite', keywords: ['confidentialite', 'prive', 'en ligne', 'lecture', 'photo'], render: (ctx) => <PrivacyCard {...ctx} /> },
+      { id: 'mes donnees', keywords: ['exporter', 'telecharger', 'donnees', 'rgpd', 'export', 'portabilite', 'acces'], render: () => <DataExportCard /> },
       { id: 'email', keywords: ['email', 'e-mail', 'mail', 'adresse'], render: (ctx) => <EmailCard {...ctx} /> },
       { id: 'mot de passe', keywords: ['mot de passe', 'password', 'securite'], render: (ctx) => <PasswordCard email={ctx.user.email} /> },
       { id: 'danger', keywords: ['supprimer', 'suppression', 'compte', 'danger'], render: () => <DangerZoneCard /> },
@@ -460,11 +466,30 @@ function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {
   return <p style={{ fontSize: 12.5, color: kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: '10px 0 0' }}>{text}</p>
 }
 
+// Le téléphone est stocké côté serveur comme un seul champ combiné
+// (indicatif + numéro national, ex. "+33612345678", même forme que
+// l'inscription — voir AuthForm.tsx / lib/server/profile.ts:updatePhone).
+// Ce helper le rescinde pour préremplir le sélecteur d'indicatif + le champ
+// numéro à l'ouverture de la carte.
+function splitPhone(phone: string): { dialCode: string; number: string } {
+  if (!phone) return { dialCode: regions[0].dial, number: '' }
+  const match = [...regions].sort((a, b) => b.dial.length - a.dial.length).find((r) => phone.startsWith(r.dial))
+  if (!match) return { dialCode: regions[0].dial, number: phone }
+  return { dialCode: match.dial, number: phone.slice(match.dial.length) }
+}
+
 function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser) => void }) {
   const [firstName, setFirstName] = useState(user.firstName)
   const [lastName, setLastName] = useState(user.lastName)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null)
+
+  const initialPhone = splitPhone(user.phone)
+  const [dialCode, setDialCode] = useState(initialPhone.dialCode)
+  const [phoneNumber, setPhoneNumber] = useState(initialPhone.number)
+  const [phoneSaving, setPhoneSaving] = useState(false)
+  const [phoneMsg, setPhoneMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null)
+  const phoneChanged = dialCode !== initialPhone.dialCode || phoneNumber.trim() !== initialPhone.number
 
   const [birthYear, setBirthYear] = useState(user.birthYear ? String(user.birthYear) : '')
   const [gender, setGender] = useState(user.gender ?? '')
@@ -504,6 +529,34 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       setMsg({ text: 'Une erreur est survenue, réessaie', kind: 'err' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function savePhone() {
+    setPhoneSaving(true)
+    setPhoneMsg(null)
+    try {
+      const res = await fetch('/api/profil/telephone', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dialCode, phone: phoneNumber }) })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        setPhoneMsg({ text: errorMessage(data.error), kind: 'err' })
+      } else {
+        setUser({ ...user, phone: data.phone })
+        // Le serveur normalise le numéro (retire le 0 initial, voir
+        // lib/server/profile.ts:updatePhone) — sans réaligner les champs
+        // locaux dessus, phoneChanged resterait vrai après un enregistrement
+        // réussi (le champ garderait le 0 tapé par l'utilisateur) et le
+        // bouton resterait actif à tort.
+        const saved = splitPhone(data.phone)
+        setDialCode(saved.dialCode)
+        setPhoneNumber(saved.number)
+        setPhoneMsg({ text: 'Numéro mis à jour', kind: 'ok' })
+        setTimeout(() => setPhoneMsg(null), 3000)
+      }
+    } catch {
+      setPhoneMsg({ text: 'Une erreur est survenue, réessaie', kind: 'err' })
+    } finally {
+      setPhoneSaving(false)
     }
   }
 
@@ -550,6 +603,27 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
         {saving ? 'Enregistrement…' : 'Enregistrer le nom'}
       </button>
       {msg && <Toast text={msg.text} kind={msg.kind} />}
+
+      <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
+
+      <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Téléphone</label>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <select value={dialCode} onChange={(e) => setDialCode(e.target.value)} style={{ ...inputStyle, maxWidth: 110, cursor: 'pointer' }}>
+          {regions.map((r) => (
+            <option key={r.id} value={r.dial}>
+              {r.flag} {r.dial}
+            </option>
+          ))}
+        </select>
+        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="06 00 00 00 00" style={{ ...inputStyle, flex: 1 }} />
+      </div>
+      <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
+        Utilisé pour te contacter et partagé avec les organisateurs/prestataires avec qui tu échanges en messagerie.
+      </p>
+      <button onClick={savePhone} disabled={phoneSaving || !phoneChanged} style={primaryBtn(phoneSaving || !phoneChanged)}>
+        {phoneSaving ? 'Enregistrement…' : 'Enregistrer le téléphone'}
+      </button>
+      {phoneMsg && <Toast text={phoneMsg.text} kind={phoneMsg.kind} />}
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
@@ -691,6 +765,62 @@ function PrivacyCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilU
         value={user.privacy.personalizedRecommendations}
         onChange={(v) => toggle('personalizedRecommendations', v)}
       />
+    </div>
+  )
+}
+
+// ────────────────────────────────── DataExportCard ───────────────────────────
+// Art. 15 (droit d'accès) + Art. 20 (droit à la portabilité) RGPD —
+// "Télécharger mes données" self-service, voir app/api/profil/export/route.ts
+// + lib/server/dataExport.ts pour la portée exacte de l'export.
+
+function DataExportCard() {
+  const [downloading, setDownloading] = useState(false)
+  const [msg, setMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null)
+
+  async function download() {
+    setDownloading(true)
+    setMsg(null)
+    try {
+      const res = await fetch('/api/profil/export')
+      if (!res.ok) {
+        setMsg({ text: 'Téléchargement impossible, réessaie.', kind: 'err' })
+        return
+      }
+      const blob = await res.blob()
+      const disposition = res.headers.get('Content-Disposition') || ''
+      const match = disposition.match(/filename="([^"]+)"/)
+      const filename = match?.[1] || 'liveinblack-mes-donnees.json'
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      setMsg({ text: 'Téléchargement lancé.', kind: 'ok' })
+      setTimeout(() => setMsg(null), 3000)
+    } catch {
+      setMsg({ text: 'Téléchargement impossible, réessaie.', kind: 'err' })
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  return (
+    <div style={cardStyle}>
+      <EyebrowLabel>Mes données</EyebrowLabel>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
+        Télécharge une copie de toutes les données personnelles associées à ton compte (profil, billets, commandes,
+        messages que tu as envoyés, amis, avis, événements suivis…) au format JSON — droit d&apos;accès et droit à la
+        portabilité (articles 15 et 20 du RGPD).
+      </p>
+      <button onClick={download} disabled={downloading} style={primaryBtn(downloading)}>
+        {downloading ? 'Préparation…' : 'Télécharger mes données'}
+      </button>
+      {msg && <Toast text={msg.text} kind={msg.kind} />}
     </div>
   )
 }

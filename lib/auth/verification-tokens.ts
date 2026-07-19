@@ -11,12 +11,40 @@ const adapter = MongoDBAdapter(clientPromise)
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
+// `verification_tokens` est une collection gérée par @auth/mongodb-adapter,
+// PAS un modèle Mongoose — pas d'autoIndex ici (contrairement à Boost.ts /
+// Application.ts), donc rien ne crée l'index TTL tout seul. La vérification
+// d'expiration au moment de la consommation (consumeVerificationToken
+// ci-dessous) empêche déjà d'UTILISER un jeton expiré, mais un jeton jamais
+// consommé (lien email jamais cliqué) restait accumulé indéfiniment en base
+// (RGPD — minimisation des données). `createIndex` est idempotent côté Mongo
+// (no-op si l'index existe déjà avec la même définition) ; on met quand même
+// le résultat en cache par process pour éviter un aller-retour réseau à
+// chaque émission de jeton, avec retente au prochain appel en cas d'échec.
+let ttlIndexPromise: Promise<void> | null = null
+function ensureVerificationTokenTTLIndex(): Promise<void> {
+  if (!ttlIndexPromise) {
+    ttlIndexPromise = (async () => {
+      const client = await clientPromise
+      await client
+        .db()
+        .collection('verification_tokens')
+        .createIndex({ expires: 1 }, { name: 'expires_ttl', expireAfterSeconds: 0 })
+    })().catch((err) => {
+      ttlIndexPromise = null
+      throw err
+    })
+  }
+  return ttlIndexPromise
+}
+
 export function generateToken(): string {
   return randomBytes(32).toString('hex')
 }
 
 export async function issueVerificationToken(email: string, ttlMs = ONE_DAY_MS): Promise<string> {
   const token = generateToken()
+  await ensureVerificationTokenTTLIndex()
   await adapter.createVerificationToken?.({
     identifier: email,
     token,

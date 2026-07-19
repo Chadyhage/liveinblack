@@ -4,25 +4,11 @@ import mongoose from 'mongoose'
 import { getDb } from '../db/mongoose'
 import DeletionRequest from '../models/DeletionRequest'
 import User from '../models/User'
-import Application from '../models/Application'
 import Event from '../models/Event'
 import Ticket from '../models/Ticket'
 import EventPayout from '../models/EventPayout'
 import SellerBalance from '../models/SellerBalance'
 import PayoutRequest from '../models/PayoutRequest'
-import OrganizerProfile from '../models/OrganizerProfile'
-import ProviderProfile from '../models/ProviderProfile'
-import GroupMembership from '../models/GroupMembership'
-import Friendship from '../models/Friendship'
-import FriendRequest from '../models/FriendRequest'
-import OrganizerFollow from '../models/OrganizerFollow'
-import EventInterest from '../models/EventInterest'
-import SeatInvitation from '../models/SeatInvitation'
-import Conversation from '../models/Conversation'
-import Message from '../models/Message'
-import Report from '../models/Report'
-import Review from '../models/Review'
-import ReviewReport from '../models/ReviewReport'
 import EventOrder from '../models/EventOrder'
 import EventOrderLog from '../models/EventOrderLog'
 import EventPlaylist from '../models/EventPlaylist'
@@ -30,6 +16,7 @@ import EventStaff from '../models/EventStaff'
 import PromoCode from '../models/PromoCode'
 import EventAccessCode from '../models/EventAccessCode'
 import { cancelProviderSubscriptionForDeletion } from './providerSubscriptions'
+import { scrubAccountPII } from './accountPurge'
 import { eventEffectiveEndMs } from '../shared/event-time'
 import type { EventLike } from '../shared/event-types'
 
@@ -265,21 +252,21 @@ export async function approveDeletion(agent: AgentCaller, requestId: string, not
   const session = await mongoose.startSession()
   try {
     await session.withTransaction(async () => {
-      // 1. Vitrines publiques — aucune valeur financière/d'audit, retirées
-      //    entièrement (RGPD, symétrique du legacy deleteDoc providers/catalogs/
-      //    organizer_profiles).
-      await OrganizerProfile.deleteOne({ userId: uid }, { session })
-      await ProviderProfile.deleteOne({ userId: uid }, { session })
+      // 1. Cascade PII partagée avec lib/server/profile.ts:deleteAccount (voir
+      //    lib/server/accountPurge.ts) : vitrines publiques (OrganizerProfile/
+      //    ProviderProfile), dossier de candidature (Application), registre
+      //    anti-hoarding de groupe, sièges de table détenus dans un événement
+      //    d'un AUTRE organisateur, invitations de siège en attente, relations
+      //    sociales, messagerie, identité dénormalisée sur signalements/avis.
+      await scrubAccountPII(uid, session)
 
-      // 2. Dossier de candidature — purement personnel (identité publique
-      //    vivait dans les profils ci-dessus, jamais dans Application).
-      await Application.deleteMany({ userId: uid }, { session })
-
-      // 3. Événements de l'organisateur — l'audit ci-dessus a déjà exclu tout
-      //    blocage (billets vendus sur un événement à venir non annulé).
-      //    ATTENTION : les événements listés ici sont relus une seconde fois,
-      //    DANS la transaction, pour rester cohérents avec le reste de la
-      //    purge même si l'audit a été calculé quelques millisecondes plus tôt.
+      // 2. Événements DE l'organisateur supprimé — spécifique à ce chemin
+      //    (dépend de l'audit de blocage ci-dessus, propre à la revue agent) ;
+      //    un compte pas encore actif ne peut de toute façon pas avoir créé
+      //    d'événement. ATTENTION : les événements listés ici sont relus une
+      //    seconde fois, DANS la transaction, pour rester cohérents avec le
+      //    reste de la purge même si l'audit a été calculé quelques
+      //    millisecondes plus tôt.
       const events = await Event.find({ $or: [{ createdBy: uid }, { organizerId: uid }] })
         .session(session)
         .lean()
@@ -305,87 +292,7 @@ export async function approveDeletion(agent: AgentCaller, requestId: string, not
         }
       }
 
-      // 4. Registre anti-hoarding des places de groupe — pur index, aucune
-      //    valeur propre (Ticket reste la source de vérité de la place).
-      await GroupMembership.deleteMany({ userId: uid }, { session })
-
-      // 5. Sièges de table détenus dans un événement d'un AUTRE organisateur
-      //    (#79, registre anti-fraude) — hors de portée de la garde ci-dessus,
-      //    qui ne couvre que les événements DE l'utilisateur supprimé. Hôte
-      //    supprimé → sièges révoqués (plus personne pour gérer la table).
-      //    Invité supprimé → siège rendu à l'hôte, seatVersion/entryNonce
-      //    roulés pour invalider l'ancien QR (même logique que #79 côté legacy).
-      const hostedTickets = await Ticket.find({ hostUid: uid, revoked: { $ne: true } }).session(session)
-      for (const t of hostedTickets) {
-        t.revoked = true
-        await t.save({ session })
-      }
-      const heldSeats = await Ticket.find({ userId: uid, hostUid: { $ne: null }, revoked: { $ne: true } }).session(session)
-      for (const t of heldSeats) {
-        if (!t.hostUid || t.hostUid === uid) continue
-        t.userId = t.hostUid
-        t.assignedTo = null
-        t.assignedName = null
-        t.seatVersion = (t.seatVersion || 0) + 1
-        t.entryNonce = crypto.randomBytes(12).toString('hex')
-        await t.save({ session })
-      }
-      // Nom affiché au titulaire ACTUEL d'un siège que le compte supprimé
-      // continue de tenir (assignedTo === uid, hôte différent) : scrubé.
-      await Ticket.updateMany({ assignedTo: uid }, { $set: { assignedName: 'Compte supprimé' } }, { session })
-
-      // 6. Invitations de siège en attente émises par l'hôte supprimé —
-      //    annulées (rien à attribuer sans hôte).
-      await SeatInvitation.updateMany({ hostUid: uid, status: 'pending' }, { $set: { status: 'cancelled', respondedAt: now } }, { session })
-
-      // 7. Relations sociales — aucune valeur financière/d'audit.
-      await Friendship.deleteMany({ $or: [{ userAId: uid }, { userBId: uid }] }, { session })
-      await FriendRequest.deleteMany({ $or: [{ fromId: uid }, { toId: uid }] }, { session })
-      await OrganizerFollow.deleteMany({ $or: [{ userId: uid }, { organizerId: uid }] }, { session })
-      await EventInterest.deleteMany({ userId: uid }, { session })
-
-      // 8. Messagerie — retirer le membre supprimé de chaque conversation
-      //    (jamais supprimer la conversation : l'historique appartient aussi
-      //    aux AUTRES participants) ; promouvoir un nouvel admin si un groupe
-      //    se retrouve sans aucun (même règle que le legacy #18).
-      const conversations = await Conversation.find({ participantIds: uid }).session(session)
-      for (const conv of conversations) {
-        conv.participantIds = conv.participantIds.filter((id) => id !== uid)
-        if (conv.members) {
-          const idx = conv.members.findIndex((m) => m.userId === uid)
-          if (idx !== -1) {
-            const wasAdmin = conv.members[idx].role === 'admin'
-            conv.members.splice(idx, 1)
-            if (conv.type === 'group' && wasAdmin && conv.members.length > 0 && !conv.members.some((m) => m.role === 'admin')) {
-              conv.members[0].role = 'admin'
-            }
-          }
-        }
-        conv.mutedUserIds = conv.mutedUserIds.filter((id) => id !== uid)
-        conv.pinnedByUserIds = conv.pinnedByUserIds.filter((id) => id !== uid)
-        conv.hiddenByUserIds = conv.hiddenByUserIds.filter((id) => id !== uid)
-        conv.mutedConversationByUserIds = conv.mutedConversationByUserIds.filter((id) => id !== uid)
-        conv.lastReadAt?.delete(uid)
-        conv.typingAt?.delete(uid)
-
-        if (conv.participantIds.length === 0) {
-          await Conversation.deleteOne({ _id: conv._id }, { session })
-          await Message.deleteMany({ conversationId: String(conv._id) }, { session })
-        } else {
-          await conv.save({ session })
-        }
-      }
-      await Message.updateMany({ senderId: uid }, { $set: { senderName: 'Compte supprimé' } }, { session })
-
-      // 9. Signalements / avis — jamais supprimés (traçabilité de modération
-      //    / note publique conservée), seule l'identité dénormalisée affichée
-      //    est scrubée.
-      await Report.updateMany({ fromId: uid }, { $set: { fromName: 'Compte supprimé' } }, { session })
-      await Report.updateMany({ targetId: uid }, { $set: { targetName: 'Compte supprimé' } }, { session })
-      await Review.updateMany({ authorId: uid }, { $set: { authorName: 'Utilisateur supprimé' } }, { session })
-      await ReviewReport.updateMany({ reporterId: uid }, { $set: { reporterName: '' } }, { session })
-
-      // 10. Le compte — ANONYMISÉ, jamais supprimé en dur (voir l'en-tête de
+      // 3. Le compte — ANONYMISÉ, jamais supprimé en dur (voir l'en-tête de
       //     fichier). Mêmes champs que lib/server/profile.ts:deleteAccount,
       //     étendus aux champs spécifiques organisateur/prestataire de ce port.
       const unusableHash = await bcrypt.hash(`deleted:${crypto.randomUUID()}`, 12)
