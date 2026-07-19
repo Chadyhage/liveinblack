@@ -1,5 +1,8 @@
-// Jeu de données de test pour vérifier manuellement les pages de la phase 2
-// (accueil, événements, détail, prestataires, organisateurs, recherche).
+// Jeu de données de test pour vérifier manuellement l'app en local : un
+// compte connectable par rôle (mot de passe commun ci-dessous), un
+// organisateur/prestataire réels (liés à un vrai User, pas un id fictif),
+// 3 événements (public à venir, privé, complet), un billet déjà en poche
+// pour le client.
 // Usage : npm run seed (nécessite MONGODB_URI dans .env.local — écrit sur
 // CETTE base, ne jamais pointer vers une base de production).
 // Note : les variables d'env (.env.local) sont chargées via le flag Node
@@ -7,11 +10,17 @@
 // ES modules sont hoistés et s'exécuteraient avant tout chargement en code,
 // capturant MONGODB_URI à `undefined` dans lib/db/mongoose.ts.
 import crypto from 'node:crypto'
+import bcrypt from 'bcryptjs'
 import { getDb } from '../lib/db/mongoose'
+import User from '../lib/models/User'
 import Event from '../lib/models/Event'
 import ProviderProfile from '../lib/models/ProviderProfile'
 import OrganizerProfile from '../lib/models/OrganizerProfile'
 import Boost from '../lib/models/Boost'
+import Ticket from '../lib/models/Ticket'
+import { generateUniqueTicketCode } from '../lib/server/ticketCode'
+
+const DEV_PASSWORD = 'DevTest1234!'
 
 function hashCode(code: string): string {
   return crypto.createHash('sha256').update(code.trim().toUpperCase()).digest('hex')
@@ -25,10 +34,74 @@ function inDays(n: number): string {
 async function main() {
   await getDb()
 
-  await Promise.all([Event.deleteMany({}), ProviderProfile.deleteMany({}), OrganizerProfile.deleteMany({}), Boost.deleteMany({})])
+  await Promise.all([
+    User.deleteMany({ email: { $regex: /@liveinblack\.dev$/ } }),
+    Event.deleteMany({}),
+    ProviderProfile.deleteMany({}),
+    OrganizerProfile.deleteMany({}),
+    Boost.deleteMany({}),
+    Ticket.deleteMany({}),
+  ])
+
+  const passwordHash = await bcrypt.hash(DEV_PASSWORD, 12)
+  const now = new Date()
+
+  const client = await User.create({
+    email: 'client@liveinblack.dev',
+    passwordHash,
+    firstName: 'Ama',
+    lastName: 'Client',
+    phone: '+228 90 11 22 33',
+    roles: ['client'],
+    activeRole: 'client',
+    status: 'active',
+    emailVerifiedAt: now,
+    points: 30,
+  })
+
+  const organizerUser = await User.create({
+    email: 'organisateur@liveinblack.dev',
+    passwordHash,
+    firstName: 'Kwame',
+    lastName: 'Organisateur',
+    phone: '+228 90 00 00 00',
+    roles: ['organisateur'],
+    activeRole: 'organisateur',
+    status: 'active',
+    orgStatus: 'active',
+    emailVerifiedAt: now,
+  })
+
+  const providerUser = await User.create({
+    email: 'prestataire@liveinblack.dev',
+    passwordHash,
+    firstName: 'Koffi',
+    lastName: 'DJ',
+    phone: '+228 91 23 45 67',
+    roles: ['prestataire'],
+    activeRole: 'prestataire',
+    status: 'active',
+    prestStatus: 'active',
+    emailVerifiedAt: now,
+    prestataireSubActive: true,
+  })
+
+  const agentUser = await User.create({
+    email: 'agent@liveinblack.dev',
+    passwordHash,
+    firstName: 'Agent',
+    lastName: 'LIB',
+    roles: ['agent'],
+    activeRole: 'agent',
+    status: 'active',
+    emailVerifiedAt: now,
+  })
+
+  const organizerId = String(organizerUser._id)
+  const providerId = String(providerUser._id)
 
   const organizer = await OrganizerProfile.create({
-    userId: 'seed-organizer-1',
+    userId: organizerId,
     publicName: 'Obsidian Nights',
     slug: 'obsidian-nights',
     shortDescription: "Le collectif qui fait vibrer Lomé depuis 2022.",
@@ -48,8 +121,8 @@ async function main() {
     proPhone: '+228 90 00 00 00',
   })
 
-  const provider = await ProviderProfile.create({
-    userId: 'seed-provider-1',
+  await ProviderProfile.create({
+    userId: providerId,
     name: 'DJ Koffi',
     headline: 'DJ Afrobeat / Amapiano — 10 ans d’expérience',
     description: "Résident de plusieurs clubs à Lomé, DJ Koffi mixe afrobeat, amapiano et hip-hop pour tout type d'événement.",
@@ -95,7 +168,7 @@ async function main() {
     imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1200&q=80',
     color: '#c8a96e',
     places: [
-      { id: 'p1', type: 'Entrée standard', price: 5000, available: 120, total: 200, maxPerAccount: 4 },
+      { id: 'p1', type: 'Entrée standard', price: 5000, available: 119, total: 200, maxPerAccount: 4 },
       { id: 'p2', type: 'VIP', price: 15000, available: 3, total: 20, maxPerAccount: 2 },
       { id: 'p3', type: 'Table VIP (groupe)', price: 100000, available: 2, total: 5, maxPerAccount: 1, groupType: 'group', groupMin: 4, groupMax: 8 },
     ],
@@ -111,8 +184,8 @@ async function main() {
     minAge: 18,
     userCreated: true,
     isPrivate: false,
-    createdBy: organizer.userId,
-    organizerId: organizer.userId,
+    createdBy: organizerId,
+    organizerId,
     organizerName: organizer.publicName,
     organizer: organizer.publicName,
   })
@@ -135,8 +208,8 @@ async function main() {
     userCreated: true,
     isPrivate: true,
     privateCodeHash: hashCode('SECRET2026'),
-    createdBy: organizer.userId,
-    organizerId: organizer.userId,
+    createdBy: organizerId,
+    organizerId,
     organizerName: organizer.publicName,
     organizer: organizer.publicName,
   })
@@ -159,8 +232,8 @@ async function main() {
     minAge: 18,
     userCreated: true,
     isPrivate: false,
-    createdBy: organizer.userId,
-    organizerId: organizer.userId,
+    createdBy: organizerId,
+    organizerId,
     organizerName: organizer.publicName,
     organizer: organizer.publicName,
   })
@@ -172,16 +245,37 @@ async function main() {
     region: 'togo',
     price: 9.99,
     days: 7,
-    userId: organizer.userId,
+    userId: organizerId,
     purchasedAt: new Date(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     status: 'active',
   })
 
-  console.log('Seed OK:')
-  console.log('  - organizer:', organizer.slug)
-  console.log('  - provider:', provider.userId)
-  console.log('  - event public:', String(eventUpcoming._id))
+  // Un billet déjà en poche pour le client (place standard, non scanné) —
+  // pour tester le portefeuille billets, la page /ticket/[token] et le
+  // scanner sans avoir à repasser par tout le tunnel d'achat.
+  const ticketCode = await generateUniqueTicketCode()
+  await Ticket.create({
+    ticketCode,
+    eventId: String(eventUpcoming._id),
+    eventName: eventUpcoming.name,
+    eventDate: eventUpcoming.date,
+    place: 'Entrée standard',
+    placePrice: 5000,
+    totalPrice: 5000,
+    currency: 'XOF',
+    userId: String(client._id),
+    paid: true,
+    source: 'paid',
+    bookedAt: now,
+  })
+
+  console.log('Seed OK — mot de passe commun pour tous les comptes ci-dessous :', DEV_PASSWORD)
+  console.log('  - client:', client.email)
+  console.log('  - organisateur:', organizerUser.email, '(organizer profile:', organizer.slug + ')')
+  console.log('  - prestataire:', providerUser.email)
+  console.log('  - agent:', agentUser.email)
+  console.log('  - event public à venir:', String(eventUpcoming._id), '— 1 billet déjà émis pour le client')
   console.log('  - event privé (code: SECRET2026)')
   process.exit(0)
 }
