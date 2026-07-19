@@ -29,6 +29,35 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
   const missingParams = !email || !token
   const [state, setState] = useState<State>(missingParams ? 'error' : 'loading')
 
+  // Renvoyer l'email de vérification depuis cet écran d'erreur — même
+  // route/pattern anti-énumération que celui de AuthForm.tsx (écran "vérifie
+  // ton email" post-inscription).
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSent, setResendSent] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const id = setTimeout(() => setResendCooldown((s) => s - 1), 1000)
+    return () => clearTimeout(id)
+  }, [resendCooldown])
+
+  async function handleResend() {
+    if (resendLoading || resendCooldown > 0 || !email) return
+    setResendLoading(true)
+    try {
+      await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      })
+      setResendSent(true)
+      setResendCooldown(30)
+    } finally {
+      setResendLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (missingParams) return
     let cancelled = false
@@ -90,8 +119,27 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
               Lien invalide ou expiré
             </h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
-              Ce lien de vérification n&apos;est plus valable. Reconnecte-toi pour en recevoir un nouveau.
+              Ce lien de vérification n&apos;est plus valable.{email ? ' Tu peux en demander un nouveau ci-dessous.' : ' Reconnecte-toi pour en recevoir un nouveau.'}
             </p>
+
+            {email && (
+              <div style={{ marginTop: 18 }}>
+                {resendSent && (
+                  <p style={{ fontSize: 12.5, color: COLORS.teal, margin: '0 0 10px', lineHeight: 1.5 }}>
+                    Si un compte existe avec cette adresse et n&apos;est pas encore vérifié, un nouvel email vient de partir.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendLoading || resendCooldown > 0}
+                  style={{ fontSize: 12.5, fontWeight: 600, color: resendCooldown > 0 ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.65)', background: 'none', border: 'none', cursor: resendLoading || resendCooldown > 0 ? 'default' : 'pointer', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
+                >
+                  {resendLoading ? 'Envoi…' : resendCooldown > 0 ? `Renvoyer à nouveau dans ${resendCooldown}s` : "Renvoyer l'email de vérification"}
+                </button>
+              </div>
+            )}
+
             <div style={{ marginTop: 28 }}>
               <button onClick={() => router.push('/login')} style={btnSolid('#c8a96e', '#141007')}>Retour à la connexion</button>
             </div>

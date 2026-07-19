@@ -1,7 +1,13 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { listPublicProviders } from '@/lib/server/providers'
 import { getProviderCategories, getProviderCategory, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
 import { normalizeGeoText } from '@/lib/shared/locations'
+
+export const metadata: Metadata = {
+  title: 'Prestataires — LIVEINBLACK',
+  description: 'Trouvez DJ, lieux, traiteurs et autres prestataires événementiels et contactez-les directement sur LIVEINBLACK.',
+}
 
 export const dynamic = 'force-dynamic'
 

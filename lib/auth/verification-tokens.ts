@@ -31,3 +31,14 @@ export async function consumeVerificationToken(email: string, token: string): Pr
   if (found.expires.getTime() < Date.now()) return false
   return true
 }
+
+// Supprime tous les jetons en attente pour cet email avant d'en émettre un
+// nouveau (utilisé par resend-verification) : l'adaptateur MongoDB
+// d'Auth.js n'a pas de notion d'unicité par `identifier`, createVerificationToken
+// se contente d'un insertOne — sans ce nettoyage, redemander l'email plusieurs
+// fois empilerait des jetons dupliqués (tous valides jusqu'à expiration) dans
+// `verification_tokens` au lieu de n'en laisser qu'un seul actif.
+export async function invalidateVerificationTokens(email: string): Promise<void> {
+  const client = await clientPromise
+  await client.db().collection('verification_tokens').deleteMany({ identifier: email })
+}

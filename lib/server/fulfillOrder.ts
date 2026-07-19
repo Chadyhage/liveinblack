@@ -32,7 +32,10 @@ export type FulfillResult =
 
 export async function fulfillOrder(
   orderId: string,
-  opts: { rail: 'stripe' | 'fedapay'; paidAmountMinor?: number }
+  // 'free' = appelé SYNCHRONE par lib/server/freeCheckout.ts (jamais par un
+  // webhook) — total déjà vérifié à zéro par l'appelant, pas de vérification
+  // de montant à faire ici (contrairement à 'fedapay').
+  opts: { rail: 'stripe' | 'fedapay' | 'free'; paidAmountMinor?: number }
 ): Promise<FulfillResult> {
   const order = await Order.findById(orderId)
   if (!order) return { status: 'order_not_found' }
@@ -107,7 +110,7 @@ export async function fulfillOrder(
       seatIndex: order.isTable ? seatIndex : null,
       revoked: false,
       paid: true,
-      source: opts.rail === 'stripe' ? 'stripe-webhook' : 'fedapay-webhook',
+      source: opts.rail === 'stripe' ? 'stripe-webhook' : opts.rail === 'fedapay' ? 'fedapay-webhook' : 'free',
       stripeSessionId: order.stripeSessionId || null,
       fedapayTransactionId: order.fedapayTxnId || null,
       promoCode: order.promoCode || null,

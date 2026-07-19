@@ -17,6 +17,12 @@ const bodySchema = z.object({
   phone: z.string().trim().max(30).optional(),
 })
 
+// Normalise un numéro de téléphone pour comparaison (garde uniquement les
+// chiffres) — même logique que normalizePhone() dans old/src/utils/accounts.js.
+function normalizePhone(phone: string) {
+  return phone.replace(/\D/g, '')
+}
+
 export async function POST(req: Request) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
@@ -29,6 +35,22 @@ export async function POST(req: Request) {
   const existing = await User.findOne({ email }).lean()
   if (existing) {
     return NextResponse.json({ error: 'email_taken' }, { status: 409 })
+  }
+
+  // Doublon téléphone : fidèle à doEmailRegister (old/src/pages/LoginPage.jsx)
+  // — le blocage ne s'applique QUE si le compte détenteur du numéro est
+  // vérifié (emailVerifiedAt posé). Un ghost account (jamais vérifié) ne doit
+  // pas verrouiller un numéro pour toujours.
+  const normalizedPhone = phone ? normalizePhone(phone) : ''
+  if (normalizedPhone.length >= 6) {
+    const verifiedWithPhone = await User.find(
+      { phone: { $exists: true, $ne: '' }, emailVerifiedAt: { $ne: null } },
+      { phone: 1 }
+    ).lean()
+    const phoneTaken = verifiedWithPhone.some((u) => normalizePhone(u.phone || '') === normalizedPhone)
+    if (phoneTaken) {
+      return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+    }
   }
 
   const passwordHash = await bcrypt.hash(password, 12)

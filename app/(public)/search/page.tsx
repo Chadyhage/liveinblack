@@ -1,10 +1,16 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { listPublicEvents } from '@/lib/server/events'
 import { listPublicProviders } from '@/lib/server/providers'
 import { listPublicOrganizers } from '@/lib/server/organizers'
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import EventListCard from '../_components/EventListCard'
+
+export const metadata: Metadata = {
+  title: 'Recherche — LIVEINBLACK',
+  description: 'Recherchez événements, prestataires et organisateurs en un seul endroit sur LIVEINBLACK.',
+}
 
 export const dynamic = 'force-dynamic'
 

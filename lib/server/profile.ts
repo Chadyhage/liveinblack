@@ -80,7 +80,13 @@ const NAME_COOLDOWN_MS = NAME_COOLDOWN_DAYS * 24 * 60 * 60 * 1000
 // [firstName,lastName].join(' ')), jamais un champ `name` redondant. Le
 // COOLDOWN de 14 jours, lui, est fidèle au comportement legacy.
 
-export type UpdateNameResult = ErrResult | { ok: true; firstName: string; lastName: string; nextChangeAllowedAt: string }
+// name_cooldown_active porte `nextChangeAllowedAt` (même champ que la réponse
+// de succès ci-dessous) — sans ça le client n'a aucun moyen de dire à
+// l'utilisateur QUAND il pourra réessayer, seulement qu'il ne peut pas.
+export type UpdateNameResult =
+  | ErrResult
+  | { ok: false; status: 403; error: 'name_cooldown_active'; nextChangeAllowedAt: string }
+  | { ok: true; firstName: string; lastName: string; nextChangeAllowedAt: string }
 
 export async function updateName(caller: ProfileCaller, input: { firstName: string; lastName: string }): Promise<UpdateNameResult> {
   await getDb()
@@ -96,7 +102,7 @@ export async function updateName(caller: ProfileCaller, input: { firstName: stri
   if (user.nameChangedAt) {
     const nextAllowedMs = new Date(user.nameChangedAt).getTime() + NAME_COOLDOWN_MS
     if (Date.now() < nextAllowedMs) {
-      return { ok: false, status: 403, error: 'name_cooldown_active' }
+      return { ok: false, status: 403, error: 'name_cooldown_active', nextChangeAllowedAt: new Date(nextAllowedMs).toISOString() }
     }
   }
 

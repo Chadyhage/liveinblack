@@ -8,11 +8,16 @@ import { fmtMoney } from '@/lib/shared/money'
 // (sélecteur de place + table/groupe, stepper de quantité, précommande, code
 // promo, bouton Payer). Ce que ce composant NE reproduit PAS du legacy, et
 // pourquoi :
-//  - le flux « billet gratuit » (création directe côté client, sans Stripe) —
-//    le nouveau backend n'a aucune route qui crée un billet sans passer par
-//    /api/checkout(/fedapay), qui refuse (`nothing_to_pay`) un panier à 0 sans
-//    frais. Reproduire ce flux aurait exigé d'inventer une route serveur hors
-//    périmètre de cette tâche.
+//  - le flux « billet gratuit » (création directe côté client, sans Stripe) EST
+//    reproduit, mais via un endpoint serveur dédié plutôt qu'une écriture
+//    client directe : quand le total calculé pour la sélection courante est
+//    0 (place non-groupe à prix 0, sans précommande payante), le bouton
+//    Payer appelle /api/checkout/free (lib/server/freeCheckout.ts) au lieu de
+//    /api/checkout(/fedapay) — le billet est émis SYNCHRONE côté serveur
+//    (createOrder() + fulfillOrder() directement, sans Stripe/FedaPay), avec
+//    les mêmes gardes que le legacy (1 place gratuite par compte et par
+//    événement, table de groupe gratuite refusée). Le tunnel payant normal
+//    reste inchangé pour toute sélection dont le total est non nul.
 //  - le pas-à-pas « place → précommande → confirmation » en 3 écrans + la
 //    modale de récap final : ici tout tient sur un seul panneau (place,
 //    précommande, promo, total) et le bouton Payer déclenche directement
@@ -93,6 +98,12 @@ const ERROR_MESSAGES: Record<string, string> = {
   order_creation_failed: 'Une erreur est survenue — réessaye dans un instant.',
   internal_error: 'Une erreur est survenue — réessaye dans un instant.',
   auth_required: 'Ta session a expiré — reconnecte-toi pour continuer.',
+  // /api/checkout/free (lib/server/freeCheckout.ts) uniquement :
+  already_free: 'Tu as déjà réservé ta place gratuite pour cet événement — une seule par compte.',
+  free_qty_exceeds_one: 'Une seule place gratuite par compte et par événement.',
+  free_table_not_supported: "Cette place de groupe n'a pas de tarif — contacte l'organisateur.",
+  not_free: "Cette sélection n'est en réalité pas gratuite — réessaye pour continuer avec le paiement.",
+  refunded_cancelled_event: 'Cet événement a été annulé.',
 }
 const GENERIC_ERROR = 'Une erreur est survenue — réessaye dans un instant.'
 
@@ -223,15 +234,24 @@ export default function EventCheckoutPanel({
       .filter((item) => (preorderQty[item.name] || 0) > 0)
       .map((item) => ({ name: item.name, qty: preorderQty[item.name] }))
 
-    const body = {
-      eventId,
-      placeId: selectedPlace.id,
-      qty: isGroup ? 1 : qty,
-      isTable: isGroup,
-      promoCode: promoApplied || null,
-      preorders,
-    }
-    const endpoint = currency === 'XOF' ? '/api/checkout/fedapay' : '/api/checkout'
+    // Sélection réellement gratuite (place non-groupe à prix 0, sans
+    // précommande payante) : /api/checkout/free émet le billet SYNCHRONE côté
+    // serveur (lib/server/freeCheckout.ts) — pas de Stripe/FedaPay. Le serveur
+    // revérifie ce total de façon autoritaire (jamais confiance au calcul
+    // client) : toute autre sélection passe par le tunnel payant normal.
+    const isFreeSelection = grandTotal === 0 && !isGroup
+
+    const body = isFreeSelection
+      ? { eventId, placeId: selectedPlace.id, qty, isTable: false, preorders }
+      : {
+          eventId,
+          placeId: selectedPlace.id,
+          qty: isGroup ? 1 : qty,
+          isTable: isGroup,
+          promoCode: promoApplied || null,
+          preorders,
+        }
+    const endpoint = isFreeSelection ? '/api/checkout/free' : currency === 'XOF' ? '/api/checkout/fedapay' : '/api/checkout'
 
     try {
       const res = await fetch(endpoint, {
@@ -239,8 +259,9 @@ export default function EventCheckoutPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null
-      if (!res.ok || !data?.url) {
+      const data = (await res.json().catch(() => null)) as { url?: string; orderId?: string; error?: string } | null
+      const success = isFreeSelection ? Boolean(data?.orderId) : Boolean(data?.url)
+      if (!res.ok || !success) {
         setSubmitting(false)
         const code = data?.error
         if (code === 'auth_required') {
@@ -257,7 +278,14 @@ export default function EventCheckoutPanel({
         }
         return
       }
-      window.location.assign(data.url)
+      if (isFreeSelection) {
+        // Billet déjà émis — direction la page de confirmation, qui reconnaît
+        // order_id + free=true et affiche l'état "success" sans interroger
+        // Stripe/FedaPay (voir GET /api/checkout et PaymentSuccessClient.tsx).
+        router.push(`/payment-success?order_id=${encodeURIComponent(data!.orderId as string)}&free=true`)
+        return
+      }
+      window.location.assign(data!.url as string)
     } catch {
       setSubmitting(false)
       setCheckoutError('Connexion impossible — réessaye dans un instant.')

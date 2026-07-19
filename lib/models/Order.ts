@@ -40,7 +40,7 @@ const orderSchema = new Schema(
     sellerUid: { type: String, default: null },
     connectMode: { type: String, enum: ['auto', 'ledger', 'none'], default: 'none' },
 
-    rail: { type: String, enum: ['stripe', 'fedapay'], required: true },
+    rail: { type: String, enum: ['stripe', 'fedapay', 'free'], required: true },
     stripeSessionId: { type: String, default: null, index: true },
     fedapayTxnId: { type: String, default: null, index: true },
 

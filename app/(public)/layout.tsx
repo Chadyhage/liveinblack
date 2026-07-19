@@ -1,4 +1,5 @@
 import PublicNav from './_components/PublicNav'
+import AmbientMusicPlayer from '@/app/components/AmbientMusicPlayer'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,6 +15,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     >
       <PublicNav />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>{children}</div>
+      <AmbientMusicPlayer />
     </div>
   )
 }

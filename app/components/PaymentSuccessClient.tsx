@@ -13,6 +13,10 @@ import { useRouter } from 'next/navigation'
 // /evenements/[id]?paiement=annule (voir app/api/checkout/route.ts) — seul
 // FedaPay ramène ici un paiement abandonné/refusé (callback_url unique),
 // d'où l'état "cancelled" qui reprend le texte de PaiementAnnulePage.jsx.
+// Place gratuite (rail 'free', lib/server/freeCheckout.ts) : pas de webhook —
+// le billet est déjà émis au moment où cette page se charge, /api/checkout
+// (avec order_id au lieu de session_id) répond donc "paid" dès le premier
+// appel, sans polling.
 
 const COLORS = {
   teal: '#4ee8c8',
@@ -56,15 +60,18 @@ export default function PaymentSuccessClient({
   sessionId,
   fedapayTxnId,
   fedapayClose,
+  freeOrderId,
 }: {
   sessionId: string | null
   fedapayTxnId: string | null
   fedapayClose: boolean
+  freeOrderId: string | null
 }) {
   const router = useRouter()
   const isFedapay = !sessionId && !!fedapayTxnId
+  const isFree = !sessionId && !fedapayTxnId && !!freeOrderId
 
-  const missingParams = !sessionId && !fedapayTxnId
+  const missingParams = !sessionId && !fedapayTxnId && !freeOrderId
   const [state, setState] = useState<State>(missingParams ? 'error' : 'loading')
   const [ticketCount, setTicketCount] = useState(0)
   const [eventName, setEventName] = useState('')
@@ -117,7 +124,21 @@ export default function PaymentSuccessClient({
         return { result: 'pending', data }
       }
 
-      const { result, data } = isFedapay ? await checkFedapay() : await checkStripe()
+      // Rail 'free' : le billet est déjà émis SYNCHRONE avant même que cette
+      // page ne se charge (pas de webhook à attendre) — orderStatus est donc
+      // 'paid' dès ce premier appel dans l'immense majorité des cas. 'cancelled'
+      // reste possible dans la fenêtre ultra-rare où l'événement a été annulé
+      // pendant le traitement (voir lib/server/freeCheckout.ts).
+      async function checkFree(): Promise<{ result: State; data?: Record<string, unknown> }> {
+        const res = await fetch(`/api/checkout?order_id=${encodeURIComponent(freeOrderId as string)}`)
+        if (!res.ok) return { result: 'error' }
+        const data = await res.json()
+        if (data.orderStatus === 'paid') return { result: 'success', data }
+        if (data.orderStatus === 'cancelled') return { result: 'cancelled', data }
+        return { result: 'pending', data }
+      }
+
+      const { result, data } = isFedapay ? await checkFedapay() : isFree ? await checkFree() : await checkStripe()
       if (cancelled) return
 
       if (data) {
@@ -134,7 +155,7 @@ export default function PaymentSuccessClient({
       setState(result)
     })()
     return () => { cancelled = true }
-  }, [sessionId, fedapayTxnId, fedapayClose, isFedapay, missingParams, attempt])
+  }, [sessionId, fedapayTxnId, fedapayClose, freeOrderId, isFedapay, isFree, missingParams, attempt])
 
   // Auto-refresh borné : tant que « en attente », on re-vérifie tout seul
   // toutes les 3,5 s (jusqu'à 5 fois) — le webhook finit en général en

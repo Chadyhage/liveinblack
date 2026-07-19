@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
@@ -223,7 +223,37 @@ export default function AuthForm() {
   const [regError, setRegError] = useState('')
   const [registeredEmail, setRegisteredEmail] = useState('')
 
+  // Renvoyer l'email de vérification (écran "Vérifie ton email" post-inscription)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSent, setResendSent] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+
   const pwdStrength = checkPasswordStrength(regPwd)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const id = setTimeout(() => setResendCooldown((s) => s - 1), 1000)
+    return () => clearTimeout(id)
+  }, [resendCooldown])
+
+  // Anti-énumération : POST /api/auth/resend-verification renvoie toujours
+  // {ok:true}, qu'un compte existe, soit déjà vérifié, ou non — message de
+  // succès générique, jamais de confirmation/infirmation explicite.
+  async function handleResendVerification() {
+    if (resendLoading || resendCooldown > 0) return
+    setResendLoading(true)
+    try {
+      await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: registeredEmail.trim().toLowerCase() }),
+      })
+      setResendSent(true)
+      setResendCooldown(30)
+    } finally {
+      setResendLoading(false)
+    }
+  }
 
   function switchMode(m: Mode) {
     setMode(m)
@@ -231,6 +261,8 @@ export default function AuthForm() {
     setLoginError('')
     setRegError('')
     setRegisteredEmail('')
+    setResendSent(false)
+    setResendCooldown(0)
   }
 
   function chooseRole(role: RegRole) {
@@ -324,7 +356,9 @@ export default function AuthForm() {
         return
       }
       const body = await res.json().catch(() => ({}))
-      if (res.status === 409 || body?.error === 'email_taken') {
+      if (body?.error === 'phone_taken') {
+        setRegError('Ce numéro de téléphone est déjà utilisé par un compte actif.')
+      } else if (res.status === 409 || body?.error === 'email_taken') {
         setRegError('Cet email est déjà utilisé par un compte actif.')
       } else if (res.status === 400) {
         setRegError('Le mot de passe doit contenir au moins 8 caractères.')
@@ -364,6 +398,21 @@ export default function AuthForm() {
             ))}
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>L&apos;email peut arriver dans les spams ou courriers indésirables.</p>
+
+          {resendSent && (
+            <p style={{ fontSize: 12.5, color: 'var(--teal)', margin: 0, lineHeight: 1.5 }}>
+              Si un compte existe avec cette adresse et n&apos;est pas encore vérifié, un nouvel email vient de partir.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={handleResendVerification}
+            disabled={resendLoading || resendCooldown > 0}
+            style={{ fontSize: 12.5, fontWeight: 600, color: resendCooldown > 0 ? 'var(--text-faint)' : 'var(--text-muted)', background: 'none', border: 'none', cursor: resendLoading || resendCooldown > 0 ? 'default' : 'pointer', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
+          >
+            {resendLoading ? 'Envoi…' : resendCooldown > 0 ? `Renvoyer à nouveau dans ${resendCooldown}s` : "Renvoyer l'email de vérification"}
+          </button>
+
           <button
             type="button"
             onClick={() => {

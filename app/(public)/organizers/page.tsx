@@ -1,6 +1,12 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { listPublicOrganizers } from '@/lib/server/organizers'
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
+
+export const metadata: Metadata = {
+  title: 'Organisateurs — LIVEINBLACK',
+  description: "Découvrez les organisateurs d'événements et de soirées et suivez ceux qui font la nuit sur LIVEINBLACK.",
+}
 
 export const dynamic = 'force-dynamic'
 

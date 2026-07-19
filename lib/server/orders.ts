@@ -32,7 +32,8 @@ export type CreateOrderInput = {
   isTable: boolean
   promoCode?: string | null
   preorders?: Array<{ name: string; qty: number }>
-  rail: 'stripe' | 'fedapay'
+  /** 'free' = lib/server/freeCheckout.ts — place gratuite, aucun rail de paiement à choisir (H07/H08 restent appliqués identiquement). */
+  rail: 'stripe' | 'fedapay' | 'free'
   /** Le caller (route API) a déjà vérifié le cookie de déverrouillage si l'event est privé. */
   privateAccessVerified?: boolean
 }

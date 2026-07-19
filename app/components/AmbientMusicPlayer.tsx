@@ -95,6 +95,18 @@ function Vinyl({ size = 30, color = '#e05aaa', spinning, arm = false }: { size?:
 // que HIDE_ON dans le legacy MusicPlayer.jsx / MusicPlayerGate d'App.jsx.
 const HIDE_ON = ['/messages', '/scanner']
 
+// Masqué sur les pages « vitrine » publiques (landing anonyme, prestataires,
+// organisateurs, à propos, connexion, inscriptions) : ces pages ont leur
+// propre univers marketing et le disque flottait par-dessus le contenu.
+// Port fidèle de MusicPlayerGate.onPublicShowcase dans le legacy App.jsx —
+// /accueil (non connecté) → /home, /prestataires → /providers,
+// /organisateurs → /organizers, /c-est-quoi → /about, /connexion → /login,
+// /inscription-organisateur|prestataire → /organizer-signup, /provider-signup.
+// Le layout public (public)/layout.tsx ne sert que les visiteurs anonymes
+// (cf. commentaire de (public)/home/page.tsx), donc pas besoin de re-vérifier
+// `user` ici comme le fait legacy pour /accueil.
+const HIDE_ON_PUBLIC_SHOWCASE = ['/providers', '/organizers', '/about', '/login', '/organizer-signup', '/provider-signup', '/home']
+
 const SEEN_KEY = 'lib_ambiance_seen'
 
 interface SearchResult {
@@ -159,6 +171,7 @@ export default function AmbientMusicPlayer() {
   }, [open])
 
   if (HIDE_ON.some((p) => pathname?.startsWith(p))) return null
+  if (HIDE_ON_PUBLIC_SHOWCASE.some((p) => pathname?.startsWith(p))) return null
 
   const current = DISCS.find((d) => d.id === st.discId) || DISCS[0]
   const accent = current.color

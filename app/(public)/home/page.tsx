@@ -1,10 +1,17 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { listPublicEvents, type PublicEvent } from '@/lib/server/events'
 import { listPublicProviders, type CatalogItem } from '@/lib/server/providers'
 import { getPublicHomepageConfig } from '@/lib/server/agentHomepageConfig'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
 import { eventStartMs } from '@/lib/shared/event-time'
+
+export const metadata: Metadata = {
+  title: 'LIVEINBLACK — La marketplace de la nuit et de l’événementiel',
+  description:
+    "Découvrez les soirées, prestataires et organisateurs du moment et réservez votre billet en quelques clics sur LIVEINBLACK.",
+}
 
 // Événements/prestataires changent en continu (nouvelles publications,
 // stock) — sans dépendance à cookies()/searchParams, Next.js prérendrait
@@ -256,6 +263,23 @@ export default async function AccueilPage() {
         </div>
       </Section>
 
+      {/* COMMENT ÇA MARCHE */}
+      <Section eyebrow="Simple" title="Comment ça marche">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 14 }}>
+          {[
+            ['1', 'Découvre une soirée', 'Parcours les événements près de chez toi.'],
+            ['2', 'Réserve ton billet', 'En quelques secondes, paiement sécurisé.'],
+            ['3', 'Présente ton QR', "Scan à l'entrée, et c'est parti."],
+          ].map(([n, t, d]) => (
+            <div key={n} style={{ ...card, padding: '20px 18px', position: 'relative' }}>
+              <span style={{ position: 'absolute', top: 14, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(78,232,200,.14)' }}>{n}</span>
+              <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{t}</p>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
       {/* ORGANISATEURS + PRESTATAIRES */}
       <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
@@ -279,6 +303,27 @@ export default async function AccueilPage() {
             </ul>
             <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--gold)', color: '#04120e' }}>Devenir prestataire</Link>
           </div>
+        </div>
+      </Section>
+
+      {/* CE QUE TON COMPTE DÉBLOQUE */}
+      <Section eyebrow="Encore plus" title="Ce que ton compte débloque">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: 14 }}>
+          {[
+            { t: 'Des points à chaque sortie', d: "Cumule un point par billet scanné à l'entrée — bientôt échangeables contre réductions, accès prioritaire et offres exclusives." },
+            { t: 'Recommandations perso', d: 'Des soirées selon ta ville, tes styles musicaux préférés et ce que tu as déjà réservé.' },
+            { t: 'Événements privés', d: 'Certaines soirées sont sur invitation. Un code te donne accès.', cta: true },
+          ].map((c) => (
+            <div key={c.t} style={{ ...card, padding: 20 }}>
+              <p style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>{c.t}</p>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '7px 0 0', lineHeight: 1.5 }}>{c.d}</p>
+              {c.cta && (
+                <Link href="/events" style={{ ...btnGhost, padding: '9px 16px', fontSize: 12.5, marginTop: 12 }}>
+                  J&apos;ai un code
+                </Link>
+              )}
+            </div>
+          ))}
         </div>
       </Section>
 

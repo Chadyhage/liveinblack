@@ -35,6 +35,10 @@ const SUPPORT_EMAIL = 'hagechady@liveinblack.com'
 const ERROR_MESSAGES: Record<string, string> = {
   name_required: 'Le prénom / nom est obligatoire',
   name_too_long: 'Ce nom est trop long',
+  // Fallback générique si jamais nextChangeAllowedAt manque dans la réponse —
+  // errorMessage() ci-dessous construit un message daté à partir de ce champ
+  // quand il est présent (voir updateName dans lib/server/profile.ts).
+  name_cooldown_active: 'Tu as déjà renommé ton compte récemment, réessaie plus tard.',
   invalid_birth_year: 'Année de naissance invalide.',
   invalid_gender: 'Genre invalide.',
   invalid_password: 'Mot de passe actuel incorrect',
@@ -48,7 +52,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   upload_failed: 'Envoi impossible, réessaie',
 }
 
-function errorMessage(code: string): string {
+function errorMessage(code: string, data?: { nextChangeAllowedAt?: string }): string {
+  if (code === 'name_cooldown_active' && data?.nextChangeAllowedAt) {
+    const formatted = new Date(data.nextChangeAllowedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    return `Tu pourras renommer ton compte à partir du ${formatted}.`
+  }
   return ERROR_MESSAGES[code] || 'Une erreur est survenue, réessaie'
 }
 
@@ -484,7 +492,8 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       const res = await fetch('/api/profil/nom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName }) })
       const data = await res.json()
       if (!res.ok || !data.ok) {
-        setMsg({ text: errorMessage(data.error), kind: 'err' })
+        setMsg({ text: errorMessage(data.error, data), kind: 'err' })
+        if (data.error === 'name_cooldown_active') setOnCooldown(true)
       } else {
         setUser({ ...user, firstName: data.firstName, lastName: data.lastName, nameChangedAt: new Date().toISOString() })
         setOnCooldown(true)

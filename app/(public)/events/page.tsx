@@ -1,10 +1,16 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { listPublicEvents, type PublicEvent } from '@/lib/server/events'
 import { getBoostedEventIds } from '@/lib/server/boosts'
 import { normalizeGeoText } from '@/lib/shared/locations'
 import { isEventTonight } from '@/lib/shared/eventUrgency'
 import EventListCard from '../_components/EventListCard'
 import EventRow from '../_components/EventRow'
+
+export const metadata: Metadata = {
+  title: 'Événements — LIVEINBLACK',
+  description: 'Parcourez tous les événements et soirées à venir et réservez votre billet sur LIVEINBLACK.',
+}
 
 // Port de src/pages/EventsPage.jsx : rangées style Netflix par catégorie +
 // recherche texte. Simplification assumée : recherche en formulaire GET
