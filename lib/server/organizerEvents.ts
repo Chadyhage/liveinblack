@@ -7,6 +7,7 @@ import { loadEventContext } from './eventOrders'
 import { hashCode } from './events'
 import { regionToCurrency, eventCurrency } from '../shared/money'
 import { getRegionByName } from '../shared/regions'
+import { notifyNewEvent } from './organizerFollowNotifications'
 
 // Port de la partie CRÉATION/ÉDITION de src/pages/MesEvenementsPage.jsx (#7
 // phase organisateur — wizard 5 étapes). Contrairement au legacy (verrouillage
@@ -206,6 +207,29 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
     organizerName: callerName,
     organizer: callerName,
   })
+
+  // Alerte `newEvent` aux abonnés — port de old/api/send-email.js:
+  // notifyFollowers, mêmes deux exclusions ("Limite V1 assumée" du legacy) :
+  // un événement PRIVÉ ne notifie jamais (les abonnés n'y ont pas
+  // nécessairement accès) ; un événement à publication DIFFÉRÉE (publishAt
+  // futur) ne notifie pas non plus à l'instant de la création — seule une
+  // publication IMMÉDIATE déclenche l'email ici. Ne doit jamais faire
+  // échouer la création de l'événement : erreur avalée, jamais propagée.
+  if (!event.isPrivate && !event.publishAt) {
+    try {
+      await notifyNewEvent(caller.id, callerName, {
+        id: String(event._id),
+        name: event.name,
+        dateDisplay: event.dateDisplay,
+        date: event.date,
+        time: event.time,
+        location: event.location,
+        city: event.city,
+      })
+    } catch (err) {
+      console.error('[organizerEvents] notifyNewEvent failed:', err)
+    }
+  }
 
   return { ok: true, eventId: String(event._id) }
 }

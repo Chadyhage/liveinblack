@@ -6,6 +6,7 @@ import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { fmtMoney } from '@/lib/shared/money'
 import { auth } from '@/auth'
 import ProviderReviewsClient from '@/app/components/ProviderReviewsClient'
+import ProviderCatalogInquiry from '@/app/components/ProviderCatalogInquiry'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,9 +26,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: `${provider.name} — LIVEINBLACK`, description: provider.description?.slice(0, 160) }
 }
 
-// Port de src/pages/PublicPrestatairePage.jsx (lecture seule — la modale
-// "Demander ce service" qui envoie un message est différée, la messagerie
-// n'existe pas encore côté nouvelle stack).
+// Port de src/pages/PublicPrestatairePage.jsx. La modale "Demander ce
+// service" (ProviderCatalogInquiry, un composant client par item de
+// catalogue) était restée différée à l'origine, faute de messagerie côté
+// nouvelle stack — elle existe désormais (voir lib/server/messaging.ts),
+// fermant cette intégration qui restait morte côté client.
 export default async function PublicPrestatairePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const session = await auth()
@@ -106,28 +109,54 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
         {visibleCatalog.length > 0 && (
           <Section title="Catalogue">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
-              {visibleCatalog.map((item) => (
-                <div key={item.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
-                  {item.media?.[0]?.url && (
-                    <div style={{ aspectRatio: '4/3', position: 'relative' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.media[0].url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  )}
-                  <div style={{ padding: '12px 14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                      <span style={{ fontSize: 13.5, fontWeight: 700 }}>{item.name}</span>
-                      {item.price != null && (
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
-                          {fmtMoney(item.price, item.currency || provider.catalogCurrency)}
-                          {item.unit ? ` / ${item.unit}` : ''}
-                        </span>
+              {visibleCatalog.map((item) => {
+                // Même règle que getOfferMedia (legacy PublicPrestatairePage.jsx) :
+                // la vignette de l'image d'aperçu privilégie une image, jamais
+                // une vidéo, avec repli sur le premier média quel qu'il soit.
+                const inquiryImage = item.media?.find((m) => m.type !== 'video')?.url || item.media?.[0]?.url || null
+                return (
+                  <div key={item.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+                    {item.media?.[0]?.url && (
+                      <div style={{ aspectRatio: '4/3', position: 'relative' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.media[0].url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
+                    <div style={{ padding: '12px 14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontSize: 13.5, fontWeight: 700 }}>{item.name}</span>
+                        {item.price != null && (
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
+                            {fmtMoney(item.price, item.currency || provider.catalogCurrency)}
+                            {item.unit ? ` / ${item.unit}` : ''}
+                          </span>
+                        )}
+                      </div>
+                      {item.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '6px 0 0' }}>{item.description}</p>}
+                      {!isSelf && (
+                        <div style={{ marginTop: 12 }}>
+                          <ProviderCatalogInquiry
+                            providerId={provider.userId}
+                            providerName={provider.name}
+                            isAuthenticated={Boolean(session?.user)}
+                            catalogDefaultCurrency={provider.catalogCurrency}
+                            item={{
+                              id: item.id,
+                              name: item.name,
+                              description: item.description,
+                              price: item.price,
+                              currency: item.currency,
+                              unit: item.unit,
+                              category: item.category,
+                              image: inquiryImage,
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
-                    {item.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '6px 0 0' }}>{item.description}</p>}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </Section>
         )}

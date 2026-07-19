@@ -51,6 +51,14 @@ export interface EventInterestItemView {
 export type ListMyEventInterestsResult = ErrResult | { ok: true; items: EventInterestItemView[] }
 export type IsEventInterestedResult = { ok: true; interested: boolean }
 
+// ─────────────────────── listActiveInterestSignals ──────────────────────────
+// Résout le signal comportemental consommé par lib/shared/recommendations.ts
+// (équivalent du journal de vues locales `lib_reco_views_{uid}` du legacy,
+// mais persistant/cross-device puisqu'il vient d'EventInterest plutôt que de
+// `localStorage`). Ne renvoie que les champs de scoring (musicStyles) — pas
+// la vue complète (`toInterestedEventView`) qui sert à l'affichage de
+// /profil/evenements-interesses.
+
 function toInterestedEventView(ev: {
   _id: unknown
   name: string
@@ -170,4 +178,26 @@ export async function listMyEventInterests(caller: EventInterestCaller): Promise
   })
 
   return { ok: true, items }
+}
+
+export interface InterestSignalView {
+  eventId: string
+  musicStyles: string[]
+}
+
+export async function listActiveInterestSignals(caller: EventInterestCaller): Promise<InterestSignalView[]> {
+  await getDb()
+
+  const interests = await EventInterest.find({ userId: caller.id, status: 'active' }).select('eventId').lean()
+  if (interests.length === 0) return []
+
+  const eventIds = interests.map((i) => i.eventId)
+  const events = await Event.find({ _id: { $in: eventIds } })
+    .select('musicStyles')
+    .lean()
+
+  return events.map((ev) => ({
+    eventId: String(ev._id),
+    musicStyles: (ev.musicStyles as string[] | undefined) ?? [],
+  }))
 }

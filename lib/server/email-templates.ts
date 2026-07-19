@@ -147,3 +147,88 @@ export function subscriptionReminderEmail(reminderKey: string, renewUrl: string,
   `
   return { subject: `${copy.title} — LIVEINBLACK`, html: wrap(inner, site) }
 }
+
+function escapeHtml(s: string): string {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+// Port de la LIVRAISON email des alertes d'abonnement organisateur (#44,
+// lib/server/organizerFollowNotifications.ts) — jusqu'ici hors périmètre
+// (voir l'ancien en-tête de lib/server/organizerFollows.ts). Contrairement au
+// legacy (src/utils/organizers.js:startOrganizerNotificationBridge), qui ne
+// déclenchait que des notifications IN-APP côté client (+ un unique email
+// « nouvel événement », cf. old/api/send-email.js:notifyFollowers) et
+// s'appuyait sur Firebase Cloud Messaging pour le push — non porté dans cette
+// migration (architecture polling-only, jamais de push/WebSocket) — email est
+// ici le SEUL canal de livraison, comme pour les rappels d'abonnement
+// prestataire ci-dessus.
+
+export interface FollowedEventSummary {
+  id: string
+  name: string
+  dateDisplay?: string | null
+  date?: string | null
+  time?: string | null
+  location?: string | null
+  city?: string | null
+}
+
+// Email « nouvel événement » — port direct de newEventEmail (old/lib/email-
+// templates.js), même copie/structure, adressé aux abonnés (jamais aux
+// acheteurs).
+export function organizerNewEventEmail(event: FollowedEventSummary, organizerName: string, site: string = DEFAULT_SITE): Email {
+  const name = escapeHtml(organizerName || 'Un organisateur que tu suis')
+  const evName = escapeHtml(event.name || 'Nouvel événement')
+  const when = [event.dateDisplay || event.date, event.time].filter(Boolean).map((v) => escapeHtml(String(v))).join(' · ')
+  const where = [event.location, event.city].filter(Boolean).map((v) => escapeHtml(String(v))).join(', ')
+  const inner = `
+    ${h(evName, '#c8a96e')}
+    ${p(`<strong style="color:#ffffff;">${name}</strong> vient d'annoncer un nouvel événement sur LIVEINBLACK.`)}
+    ${when ? p(`<strong style="color:rgba(255,255,255,0.85);">Quand :</strong> ${when}`) : ''}
+    ${where ? p(`<strong style="color:rgba(255,255,255,0.85);">Où :</strong> ${where}`) : ''}
+    ${btn(`${site}/events/${encodeURIComponent(event.id)}`, "Voir l'événement et réserver")}
+    ${p(`<span style="color:rgba(255,255,255,0.4);font-size:12px;">Tu reçois cet email parce que tu es abonné à ${name} sur LIVEINBLACK. Tu peux te désabonner ou régler tes alertes à tout moment depuis <a href="${site}/profile/followed-organizers" style="color:rgba(78,232,200,0.7);">tes organisateurs suivis</a>.</span>`)}
+  `
+  return { subject: `${organizerName || 'LIVEINBLACK'} annonce : ${event.name || 'nouvel événement'}`, html: wrap(inner, site) }
+}
+
+// Email « changement de programmation » (annulation / report) — port adapté
+// de eventCancelledEmail/eventPostponedEmail (old/lib/email-templates.js),
+// même déclencheurs que le bridge in-app legacy (`event.cancelled` OU
+// `event.postponed`, alerte `scheduleChanges` dans les deux cas — voir le
+// commentaire au-dessus de voteOnPoll pour l'esprit "un seul garde couvre
+// plusieurs variantes du même type", même principe ici), mais adressé aux
+// ABONNÉS (information) et non aux acheteurs (qui ont leur propre flux de
+// remboursement/billet — lib/server/eventRefunds.ts — hors périmètre de ce
+// module).
+export function organizerScheduleChangeEmail(
+  event: FollowedEventSummary,
+  organizerName: string,
+  kind: 'cancelled' | 'postponed',
+  extra: { previousWhen?: string; newWhen?: string } = {},
+  site: string = DEFAULT_SITE
+): Email {
+  const name = escapeHtml(organizerName || 'Un organisateur que tu suis')
+  const evName = escapeHtml(event.name || 'un événement')
+  if (kind === 'cancelled') {
+    const when = [event.dateDisplay || event.date, event.time].filter(Boolean).map((v) => escapeHtml(String(v))).join(' · ')
+    const inner = `
+      ${h('Événement annulé', '#e05aaa')}
+      ${p(`<strong style="color:#ffffff;">${name}</strong> a annulé « ${evName} »${when ? ` (${when})` : ''}.`)}
+      ${btn(`${site}/events`, "Découvrir d'autres événements", '#4ee8c8')}
+      ${p(`<span style="color:rgba(255,255,255,0.4);font-size:12px;">Tu reçois cet email parce que tu es abonné à ${name} sur LIVEINBLACK. Règle tes alertes depuis <a href="${site}/profile/followed-organizers" style="color:rgba(78,232,200,0.7);">tes organisateurs suivis</a>.</span>`)}
+    `
+    return { subject: `Annulé : ${event.name || 'un événement'}`, html: wrap(inner, site) }
+  }
+  const oldW = escapeHtml(extra.previousWhen || '')
+  const newW = escapeHtml(extra.newWhen || '')
+  const inner = `
+    ${h('Événement reporté', '#c8a96e')}
+    ${p(`<strong style="color:#ffffff;">${name}</strong> a reporté « ${evName} » à une nouvelle date.`)}
+    ${oldW ? p(`<span style="color:rgba(255,255,255,0.5);text-decoration:line-through;">${oldW}</span>`) : ''}
+    ${newW ? p(`<strong style="color:#4ee8c8;">Nouvelle date : ${newW}</strong>`) : ''}
+    ${btn(`${site}/events/${encodeURIComponent(event.id)}`, "Voir l'événement", '#4ee8c8')}
+    ${p(`<span style="color:rgba(255,255,255,0.4);font-size:12px;">Tu reçois cet email parce que tu es abonné à ${name} sur LIVEINBLACK. Règle tes alertes depuis <a href="${site}/profile/followed-organizers" style="color:rgba(78,232,200,0.7);">tes organisateurs suivis</a>.</span>`)}
+  `
+  return { subject: `Reporté : ${event.name || 'un événement'}`, html: wrap(inner, site) }
+}

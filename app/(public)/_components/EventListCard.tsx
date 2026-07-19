@@ -5,7 +5,13 @@ import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/share
 
 // Carte utilisée dans les rangées catégorie d'/evenements (équivalent
 // EventCard/EventPoster du legacy, fusionnés en un seul composant).
-export default function EventListCard({ event }: { event: PublicEvent }) {
+//
+// `reason` (optionnel) : badge "pourquoi cette recommandation" — port du
+// badge violet discret de la section "Nos recommandations pour toi" de
+// HomePage.jsx (voir lib/shared/recommendations.ts). Absent pour tout usage
+// non personnalisé (visiteur anonyme, rangées catégorie normales) : aucun
+// changement visuel pour ces cas.
+export default function EventListCard({ event, reason }: { event: PublicEvent; reason?: string }) {
   const prices = (event.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
   const min = prices.length ? Math.min(...prices) : null
   const countdown = getEventCountdown(event)
@@ -52,6 +58,32 @@ export default function EventListCard({ event }: { event: PublicEvent }) {
         {stock && (
           <span style={{ position: 'absolute', bottom: 8, left: 8, fontSize: 10, fontWeight: 800, color: '#fff', background: stock.color, padding: '3px 8px', borderRadius: 999 }}>
             {stock.label}
+          </span>
+        )}
+        {reason && (
+          <span
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              maxWidth: 'calc(100% - 16px)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              fontSize: 9.5,
+              fontWeight: 700,
+              color: '#e5d8ff',
+              background: 'rgba(5,6,10,0.88)',
+              padding: '4px 9px',
+              borderRadius: 999,
+              border: '1px solid rgba(139,92,246,0.5)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span aria-hidden="true" style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--violet)', flexShrink: 0 }} />
+            {reason}
           </span>
         )}
         {min != null && (

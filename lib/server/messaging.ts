@@ -535,7 +535,21 @@ export async function getMessages(caller: MessagingCaller, input: GetMessagesInp
 
 // ────────────────────────────── sendMessage ───────────────────────────────
 
-const SENDABLE_TYPES = ['text', 'image', 'voice'] as const
+// 'catalog_item' rejoint enfin ce type sendable : fermait un intégration
+// morte laissée par la migration — le bouton "Demander ce service" côté
+// client (app/(public)/providers/[id]/page.tsx +
+// ProviderCatalogInquiry.tsx) et l'affichage `CatalogItemCard` côté
+// MessagesClient.tsx existaient déjà tous les deux, mais le serveur
+// refusait systématiquement ce type ('invalid_type') faute d'avoir jamais
+// été ajouté ici. Contrairement à 'text'/'image'/'voice', le CONTENU d'un
+// message 'catalog_item' n'est JAMAIS pris depuis `input.content` (voir
+// sendMessage) : c'est une frontière de confiance réelle — un client
+// pourrait sinon forger un JSON prétendant représenter n'importe quelle
+// offre (nom/prix arbitraires, voire une offre d'un AUTRE prestataire) dans
+// une conversation qu'il contrôle. Le serveur reconstruit donc lui-même le
+// payload depuis le VRAI catalogue Mongo du destinataire, à partir du seul
+// `catalogItemId` fourni.
+const SENDABLE_TYPES = ['text', 'image', 'voice', 'catalog_item'] as const
 type SendableType = (typeof SENDABLE_TYPES)[number]
 
 export interface SendMessageInput {
@@ -544,10 +558,15 @@ export interface SendMessageInput {
   // 'text' : contenu brut. 'image'/'voice' : soit `content` est déjà une URL
   // (compat), soit `mediaDataUri` porte le média encodé en base64 — dans ce
   // second cas, l'upload Cloudinary est fait ICI, jamais côté client (le
-  // client n'a pas de clé API Cloudinary).
+  // client n'a pas de clé API Cloudinary). 'catalog_item' : `content` est
+  // IGNORÉ, voir `catalogItemId` ci-dessous.
   content: string
   mediaDataUri?: string
   replyToMessageId?: string | null
+  // 'catalog_item' UNIQUEMENT : id d'un item du catalogue Mongo du DESTINATAIRE
+  // de la conversation directe (jamais un id arbitraire d'un autre
+  // prestataire — voir sendMessage pour la vérification d'appartenance).
+  catalogItemId?: string
 }
 
 export type SendMessageResult = ErrResult | { ok: true; message: MessageView }
@@ -595,7 +614,52 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
   const type = input.type as SendableType
 
   let content = (input.content ?? '').trim()
-  if (type !== 'text' && !content && input.mediaDataUri) {
+  if (type === 'catalog_item') {
+    // Toujours une conversation DIRECTE : "Demander ce service" (legacy
+    // PublicPrestatairePage.jsx:sendServiceInquiry) crée/retrouve une
+    // conversation directe avec le prestataire AVANT d'y envoyer ce message —
+    // jamais un item de catalogue partagé dans un groupe (hors périmètre de
+    // ce correctif, voir ShareToChatModal côté legacy).
+    if (conversation.type !== 'direct') return { ok: false, status: 400, error: 'invalid_type' }
+    const catalogItemId = input.catalogItemId?.trim()
+    if (!catalogItemId) return { ok: false, status: 400, error: 'invalid_input' }
+
+    const otherId = conversation.participantIds.find((id) => id !== caller.id)
+    const provider = otherId ? await ProviderProfile.findOne({ userId: otherId }).lean() : null
+    // `available !== false` : même filtre que `visibleCatalog` côté page
+    // publique (app/(public)/providers/[id]/page.tsx) — un item retiré/masqué
+    // par le prestataire ne doit pas devenir référençable via un
+    // catalogItemId forgé une fois qu'il n'a plus de bouton "Demander ce
+    // service" dans l'UI.
+    const item = provider?.catalog?.find((i) => i.id === catalogItemId && i.available !== false)
+    // Le VRAI point de la vérification : `provider` est dérivé de L'AUTRE
+    // PARTICIPANT de LA conversation ciblée, jamais d'un `providerId` fourni
+    // par le client — un item appartenant à un AUTRE prestataire que celui de
+    // cette conversation ne peut donc jamais matcher ici, quel que soit le
+    // catalogItemId soumis.
+    if (!provider || !item) return { ok: false, status: 404, error: 'catalog_item_not_found' }
+
+    const media = item.media?.find((m) => m.type !== 'video') ?? item.media?.[0]
+    const rawDescription = item.description ?? ''
+    // Plafonné : contrairement à name/price/unit/category (bornés par nature
+    // ou déjà courts), une description prestataire n'a pas de plafond ferme
+    // à l'écriture (voir addCatalogItem) — sans ce cap, un item avec une très
+    // longue description pourrait faire dépasser la limite de 2000
+    // caractères ci-dessous et transformer un item par ailleurs valide en
+    // erreur `message_too_long` surprenante pour l'appelant.
+    const description = rawDescription.length > 400 ? `${rawDescription.slice(0, 400)}…` : rawDescription
+    content = JSON.stringify({
+      providerId: otherId,
+      providerName: provider.name || '',
+      itemId: item.id,
+      name: item.name,
+      description,
+      price: item.price ?? null,
+      unit: item.unit || '',
+      category: item.category || '',
+      image: media?.url ?? null,
+    })
+  } else if (type !== 'text' && !content && input.mediaDataUri) {
     const uploaded = await uploadDataUri(input.mediaDataUri, `messages/${String(conversation._id)}`)
     if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
     content = uploaded.url

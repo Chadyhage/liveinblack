@@ -119,7 +119,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 500))}
                 rows={4}
-                placeholder="Ex : Nous sommes au regret de vous annoncer l'annulation de cet événement pour cause de force majeure. Un remboursement intégral vous sera versé automatiquement."
+                placeholder="Ex : Nous sommes au regret de vous annoncer l'annulation de cet événement pour cause de force majeure. Le remboursement du prix de votre billet vous sera versé automatiquement (hors frais de service, non remboursables)."
                 style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#0b0c12', color: '#fff', resize: 'vertical' }}
               />
             </label>

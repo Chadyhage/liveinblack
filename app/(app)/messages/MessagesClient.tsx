@@ -397,6 +397,37 @@ export default function MessagesClient({
   // troisième argument (snapshot serveur), jamais `window`.
   const isDesktop = useSyncExternalStore(subscribeToDesktopQuery, getDesktopSnapshot, getDesktopServerSnapshot)
 
+  // ─── Deep-link depuis une page externe (ex. "Demander ce service" sur la
+  // page publique d'un prestataire, voir ProviderCatalogInquiry.tsx) : la
+  // conversation vient d'être créée côté serveur juste avant la navigation
+  // vers /messages?conversationId=…, donc déjà présente dans la liste que
+  // renverra refreshConversations — appelée ici immédiatement (sans attendre
+  // le premier tick du polling ci-dessous) pour éviter un en-tête de thread
+  // vide le temps que la liste initiale (chargée côté serveur AVANT cette
+  // création) rattrape son retard. Lu depuis `window.location.search`
+  // (jamais `useSearchParams`, absent de tout le reste de ce composant) —
+  // exécuté une seule fois au montage, puis retiré de l'URL pour qu'un
+  // rafraîchissement de page ne rouvre pas indéfiniment la même conversation.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const conversationId = params.get('conversationId')
+    if (!conversationId) return
+    openConversation(conversationId)
+    params.delete('conversationId')
+    const rest = params.toString()
+    window.history.replaceState(null, '', rest ? `${window.location.pathname}?${rest}` : window.location.pathname)
+
+    let cancelled = false
+    async function run() {
+      const res = await apiFetch<{ conversations: ConversationView[] }>('/api/conversations')
+      if (!cancelled && res.ok) setConversations(res.data.conversations)
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   // ─── Polling : conversations, amis, messages, frappe, présence ───
   const refreshConversations = useCallback(async () => {
     const res = await apiFetch<{ conversations: ConversationView[] }>('/api/conversations')

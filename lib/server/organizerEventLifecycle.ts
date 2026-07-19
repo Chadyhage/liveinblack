@@ -6,6 +6,7 @@ import PromoCode from '../models/PromoCode'
 import EventAccessCode from '../models/EventAccessCode'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
+import { notifyScheduleChange } from './organizerFollowNotifications'
 
 // Port des flux "annuler" / "reporter" / "supprimer" de
 // src/pages/MesEvenementsPage.jsx (#7 phase organisateur). Seul le
@@ -60,6 +61,22 @@ export async function cancelOrganizerEvent(
     event.cancellationMessage = message?.trim().slice(0, 500) || ''
     event.cancelledAt = new Date()
     await event.save()
+
+    // Alerte `scheduleChanges` aux abonnés — dans le `if (!event.cancelled)`
+    // pour ne partir qu'UNE fois (un rappel de cancelOrganizerEvent sur un
+    // événement déjà annulé ne doit jamais renotifier, même logique
+    // d'idempotence que notifyEventBuyers côté legacy pour l'annulation).
+    // Jamais bloquant pour l'annulation elle-même (déjà actée ci-dessus).
+    try {
+      await notifyScheduleChange(
+        event.organizerId,
+        event.organizerName || '',
+        { id: String(event._id), name: event.name, dateDisplay: event.dateDisplay, date: event.date, time: event.time, location: event.location, city: event.city },
+        'cancelled'
+      )
+    } catch (err) {
+      console.error('[organizerEventLifecycle] notifyScheduleChange (cancelled) failed:', err)
+    }
   }
 
   const paidOrders = await Order.find({ eventId, status: 'paid' })
@@ -101,10 +118,30 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   if (!event.postponedFrom) {
     event.postponedFrom = { date: event.date, time: event.time }
   }
+  const previousWhen = [event.date, event.time].filter(Boolean).join(' · ')
   event.date = input.date
   if (input.time?.trim()) event.time = input.time
+  const newWhen = [event.date, event.time].filter(Boolean).join(' · ')
 
   await event.save()
+
+  // Alerte `scheduleChanges` aux abonnés — un report se renotifie à CHAQUE
+  // appel (jamais idempotent comme l'annulation) : un 2e report vers une
+  // autre date est une NOUVELLE information pour l'abonné, exactement comme
+  // notifyEventBuyers côté legacy pour le report des acheteurs. Jamais
+  // bloquant pour le report lui-même (déjà acté ci-dessus).
+  try {
+    await notifyScheduleChange(
+      event.organizerId,
+      event.organizerName || '',
+      { id: String(event._id), name: event.name, dateDisplay: event.dateDisplay, date: event.date, time: event.time, location: event.location, city: event.city },
+      'postponed',
+      { previousWhen, newWhen }
+    )
+  } catch (err) {
+    console.error('[organizerEventLifecycle] notifyScheduleChange (postponed) failed:', err)
+  }
+
   return { ok: true }
 }
 

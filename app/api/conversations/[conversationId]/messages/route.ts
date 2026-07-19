@@ -5,16 +5,21 @@ import { getMessages, sendMessage } from '@/lib/server/messaging'
 
 // GET : pagination par curseur (`?before=<messageId>&limit=`) — voir
 // lib/server/messaging.ts (getMessages) pour la sémantique exacte du
-// curseur. POST : envoi d'un message texte/image/voix — la validation
-// (vide, >4000 caractères, type, mute, blocage) vit entièrement côté serveur.
+// curseur. POST : envoi d'un message texte/image/voix/item-catalogue — la
+// validation (vide, >4000 caractères, type, mute, blocage, et pour
+// 'catalog_item' l'appartenance réelle de `catalogItemId` au catalogue du
+// destinataire) vit entièrement côté serveur (sendMessage).
 const bodySchema = z.object({
-  type: z.enum(['text', 'image', 'voice']),
+  type: z.enum(['text', 'image', 'voice', 'catalog_item']),
   content: z.string(),
   // Encodée en base64 — présente pour un envoi photo/vocal depuis le
   // composeur (upload Cloudinary fait SERVEUR, voir sendMessage). Absente si
   // `content` est déjà une URL (transfert, compat).
   mediaDataUri: z.string().optional(),
   replyToMessageId: z.string().min(1).optional(),
+  // 'catalog_item' UNIQUEMENT : `content` est ignoré côté serveur pour ce
+  // type, le payload réel est reconstruit depuis ce seul id — voir sendMessage.
+  catalogItemId: z.string().min(1).optional(),
 })
 
 export async function GET(req: Request, { params }: { params: Promise<{ conversationId: string }> }) {
