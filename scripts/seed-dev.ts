@@ -2,7 +2,8 @@
 // compte connectable par rôle (mot de passe commun ci-dessous), un
 // organisateur/prestataire réels (liés à un vrai User, pas un id fictif),
 // 3 événements (public à venir, privé, complet), un billet déjà en poche
-// pour le client.
+// pour le client, une conversation avec des messages, et deux candidatures
+// en attente (organisateur + prestataire) pour tester la file de l'agent.
 // Usage : npm run seed (nécessite MONGODB_URI dans .env.local — écrit sur
 // CETTE base, ne jamais pointer vers une base de production).
 // Note : les variables d'env (.env.local) sont chargées via le flag Node
@@ -18,6 +19,9 @@ import ProviderProfile from '../lib/models/ProviderProfile'
 import OrganizerProfile from '../lib/models/OrganizerProfile'
 import Boost from '../lib/models/Boost'
 import Ticket from '../lib/models/Ticket'
+import Conversation from '../lib/models/Conversation'
+import Message from '../lib/models/Message'
+import Application from '../lib/models/Application'
 import { generateUniqueTicketCode } from '../lib/server/ticketCode'
 
 const DEV_PASSWORD = 'DevTest1234!'
@@ -41,6 +45,9 @@ async function main() {
     OrganizerProfile.deleteMany({}),
     Boost.deleteMany({}),
     Ticket.deleteMany({}),
+    Conversation.deleteMany({}),
+    Message.deleteMany({}),
+    Application.deleteMany({}),
   ])
 
   const passwordHash = await bcrypt.hash(DEV_PASSWORD, 12)
@@ -270,6 +277,100 @@ async function main() {
     bookedAt: now,
   })
 
+  // Conversation directe client <-> organisateur, avec quelques messages —
+  // pour tester /messages (liste, thread, lastMessage/lastReadAt) sans avoir
+  // à en créer une à la main.
+  const conversation = await Conversation.create({
+    type: 'direct',
+    participantIds: [String(client._id), organizerId],
+    lastMessage: 'Avec plaisir, à très vite !',
+    lastMessageAt: now,
+    lastSenderId: organizerId,
+    lastReadAt: { [organizerId]: now },
+  })
+  await Message.create([
+    {
+      conversationId: String(conversation._id),
+      senderId: String(client._id),
+      senderName: `${client.firstName} ${client.lastName}`.trim(),
+      type: 'text',
+      content: "Salut ! Il reste des places VIP pour Afro Nation Lomé ?",
+      createdAt: new Date(now.getTime() - 2 * 60 * 1000),
+    },
+    {
+      conversationId: String(conversation._id),
+      senderId: organizerId,
+      senderName: organizer.publicName,
+      type: 'text',
+      content: 'Avec plaisir, à très vite !',
+      createdAt: now,
+    },
+  ])
+
+  // Deux candidatures EN ATTENTE (une organisateur, une prestataire),
+  // portées par de nouveaux comptes candidats distincts des comptes
+  // "déjà actifs" ci-dessus — pour tester la file de dossiers de l'agent
+  // (/agent, onglet Dossiers) sans avoir à repasser par tout le tunnel
+  // d'inscription.
+  const orgCandidate = await User.create({
+    email: 'candidat-organisateur@liveinblack.dev',
+    passwordHash,
+    firstName: 'Sena',
+    lastName: 'Candidat',
+    phone: '+228 90 55 66 77',
+    roles: ['organisateur'],
+    activeRole: 'organisateur',
+    status: 'active',
+    orgStatus: 'pending',
+    emailVerifiedAt: now,
+  })
+  await Application.create({
+    userId: String(orgCandidate._id),
+    type: 'organisateur',
+    status: 'submitted',
+    formData: {
+      nomCommercial: 'Sena Events',
+      ville: 'Lomé',
+      pays: 'Togo',
+      description: "Collectif organisant des soirées afro/amapiano à Lomé depuis 1 an, souhaite rejoindre LIVEINBLACK pour sa première billetterie en ligne.",
+      instagram: 'https://instagram.com/senaevents',
+    },
+    documents: {},
+    auditLog: [{ action: 'submitted', by: String(orgCandidate._id), byName: 'Sena Events', at: now, note: '' }],
+    submittedAt: now,
+  })
+
+  const prestCandidate = await User.create({
+    email: 'candidat-prestataire@liveinblack.dev',
+    passwordHash,
+    firstName: 'Yawa',
+    lastName: 'Traiteur',
+    phone: '+228 91 77 88 99',
+    roles: ['prestataire'],
+    activeRole: 'prestataire',
+    status: 'active',
+    prestStatus: 'pending',
+    emailVerifiedAt: now,
+  })
+  await Application.create({
+    userId: String(prestCandidate._id),
+    type: 'prestataire',
+    status: 'submitted',
+    formData: {
+      prenom: 'Yawa',
+      nom: 'Traiteur',
+      telephoneCode: '+228',
+      telephone: '91778899',
+      ville: 'Lomé',
+      pays: 'Togo',
+      prestataireTypes: ['food'],
+      description: 'Traiteur événementiel spécialisé en cuisine togolaise et internationale pour soirées privées et événements.',
+    },
+    documents: {},
+    auditLog: [{ action: 'submitted', by: String(prestCandidate._id), byName: 'Yawa Traiteur', at: now, note: '' }],
+    submittedAt: now,
+  })
+
   console.log('Seed OK — mot de passe commun pour tous les comptes ci-dessous :', DEV_PASSWORD)
   console.log('  - client:', client.email)
   console.log('  - organisateur:', organizerUser.email, '(organizer profile:', organizer.slug + ')')
@@ -277,6 +378,9 @@ async function main() {
   console.log('  - agent:', agentUser.email)
   console.log('  - event public à venir:', String(eventUpcoming._id), '— 1 billet déjà émis pour le client')
   console.log('  - event privé (code: SECRET2026)')
+  console.log('  - conversation client <-> organisateur avec 2 messages')
+  console.log('  - candidature organisateur en attente:', orgCandidate.email)
+  console.log('  - candidature prestataire en attente:', prestCandidate.email)
   process.exit(0)
 }
 
