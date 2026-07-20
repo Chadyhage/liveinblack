@@ -13,9 +13,17 @@ import ScannerClient, { type MenuItemView } from './ScannerClient'
 // Outil STAFF, plus strict qu'une page ticket-holder normale : rang ≥ 1
 // (scan/serveur/manager/propriétaire/agent) requis pour même voir l'UI de
 // scan, pas seulement pour ses actions individuelles.
-export const metadata: Metadata = {
-  title: 'Scanner — LIVEINBLACK',
-  robots: { index: false, follow: false },
+// Titre dynamique (nom de l'événement) pour distinguer plusieurs onglets
+// scanner ouverts sur des événements différents — même pattern que
+// app/(public)/events/[id]/page.tsx.
+export async function generateMetadata({ params }: { params: Promise<{ eventId: string }> }): Promise<Metadata> {
+  const { eventId } = await params
+  await getDb()
+  const event = mongoose.isValidObjectId(eventId) ? await Event.findById(eventId).select('name').lean() : null
+  return {
+    title: event ? `Scanner — ${event.name} — LIVEINBLACK` : 'Scanner — LIVEINBLACK',
+    robots: { index: false, follow: false },
+  }
 }
 
 // Voir le commentaire équivalent dans CommanderPage — `available` n'existe
@@ -54,7 +62,7 @@ function GateScreen({ title, message }: { title: string; message: string }) {
         <p style={{ fontWeight: 800, fontSize: 22, color: 'var(--pink)', margin: '0 0 10px' }}>{title}</p>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
         <Link href="/scanner" style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
-          ← Retour à la liste des événements
+          ← Événements
         </Link>
       </div>
     </main>

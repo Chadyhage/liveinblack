@@ -10,6 +10,14 @@ type Phase = 'entering' | 'visible' | 'leaving'
 // conforme CNIL : boutons "Accepter"/"Refuser" de poids visuel équivalent,
 // choix mémorisé 6 mois (localStorage + cookie de secours), pas de croix
 // trompeuse, pas de "tout accepter" surdimensionné.
+//
+// Bandeau plein largeur ancré au bord bas du viewport (pas une carte
+// flottante centrée) : sur /home, une carte flottante assez haute pour
+// contenir titre + description + actions recouvrait entièrement les CTA du
+// hero ("Créer mon compte", "Découvrir les événements", "Se connecter") au
+// premier chargement. En largeur pleine et sur une seule ligne (texte à
+// gauche, actions à droite) dès que l'écran est assez large, la hauteur
+// occupée reste minimale et ne chevauche plus le contenu de la page.
 export default function CookieConsentBanner() {
   const [visible, setVisible] = useState(false)
   const [phase, setPhase] = useState<Phase>('entering')
@@ -38,55 +46,55 @@ export default function CookieConsentBanner() {
       <style>{`
         .cc-root {
           position: fixed;
-          left: 50%; bottom: 20px;
-          transform: translateX(-50%) translateY(24px);
-          opacity: 0;
+          left: 0; right: 0; bottom: 0;
+          transform: translateY(100%);
           z-index: 999;
-          width: calc(100% - 32px);
-          max-width: 460px;
-          border-radius: 16px;
-          overflow: hidden;
-          transition: transform 0.5s cubic-bezier(0.22,0.9,0.3,1),
-                      opacity 0.5s cubic-bezier(0.22,0.9,0.3,1);
+          transition: transform 0.4s cubic-bezier(0.22,0.9,0.3,1);
         }
         .cc-root.cc-visible {
-          transform: translateX(-50%) translateY(0);
-          opacity: 1;
+          transform: translateY(0);
         }
         .cc-root.cc-leaving {
-          transform: translateX(-50%) translateY(16px);
-          opacity: 0;
-          transition-duration: 0.35s;
-        }
-
-        .cc-stripe {
-          height: 1px;
-          background: rgba(255,255,255,0.08);
+          transform: translateY(100%);
+          transition-duration: 0.3s;
         }
 
         .cc-body {
           background: #12131c;
-          border: 1px solid rgba(255,255,255,0.10);
-          border-top: none;
-          box-shadow: 0 24px 64px rgba(0,0,0,0.55);
-          padding: 20px 22px 18px;
+          border-top: 1px solid rgba(255,255,255,0.10);
+          box-shadow: 0 -16px 40px rgba(0,0,0,0.5);
+          padding: 14px 22px;
+        }
+
+        .cc-inner {
+          max-width: 1120px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+
+        .cc-text {
+          flex: 1 1 240px;
+          min-width: 240px;
         }
 
         .cc-title {
           font-family: Inter, system-ui, sans-serif;
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
           color: rgba(255,255,255,0.92);
-          margin: 0 0 8px 0;
+          margin: 0 0 4px 0;
           letter-spacing: 0.01em;
         }
 
         .cc-desc {
           font-family: Inter, system-ui, sans-serif;
-          font-size: 13px;
+          font-size: 12.5px;
           color: rgba(255,255,255,0.5);
-          margin: 0 0 16px 0;
-          line-height: 1.6;
+          margin: 0;
+          line-height: 1.5;
         }
         .cc-desc strong {
           color: rgba(255,255,255,0.72);
@@ -104,17 +112,18 @@ export default function CookieConsentBanner() {
         .cc-actions {
           display: flex;
           gap: 8px;
+          flex-shrink: 0;
         }
 
         .cc-btn {
-          flex: 1;
-          min-height: 44px;
-          padding: 12px 16px;
+          min-height: 40px;
+          padding: 10px 18px;
           border-radius: 10px;
           cursor: pointer;
           font-family: Inter, system-ui, sans-serif;
           font-size: 13px;
           font-weight: 600;
+          white-space: nowrap;
           transition: all 0.2s ease;
           outline: none;
         }
@@ -153,23 +162,26 @@ export default function CookieConsentBanner() {
         aria-labelledby="cookie-consent-title"
         className={`cc-root ${phase === 'leaving' ? 'cc-leaving' : phase === 'visible' ? 'cc-visible' : ''}`}
       >
-        <div className="cc-stripe" />
         <div className="cc-body">
-          <p id="cookie-consent-title" className="cc-title">
-            Cookies & vie privée
-          </p>
-          <p className="cc-desc">
-            Nécessaires au service : connexion, sécurité et billets. Tu peux aussi autoriser la mémorisation de tes préférences d’ambiance.{' '}
-            <strong>Aucun traçage publicitaire ni audience tierce.</strong>{' '}
-            <Link href="/cookies">En savoir plus</Link>
-          </p>
-          <div className="cc-actions">
-            <button className="cc-btn cc-btn-refuse" onClick={() => dismiss('refused')}>
-              Tout refuser
-            </button>
-            <button className="cc-btn cc-btn-accept" onClick={() => dismiss('accepted')}>
-              Accepter les préférences
-            </button>
+          <div className="cc-inner">
+            <div className="cc-text">
+              <p id="cookie-consent-title" className="cc-title">
+                Cookies & vie privée
+              </p>
+              <p className="cc-desc">
+                Nécessaires au service : connexion, sécurité et billets. Tu peux aussi autoriser la mémorisation de tes préférences d’ambiance.{' '}
+                <strong>Aucun traçage publicitaire ni audience tierce.</strong>{' '}
+                <Link href="/cookies">En savoir plus</Link>
+              </p>
+            </div>
+            <div className="cc-actions">
+              <button className="cc-btn cc-btn-refuse" onClick={() => dismiss('refused')}>
+                Tout refuser
+              </button>
+              <button className="cc-btn cc-btn-accept" onClick={() => dismiss('accepted')}>
+                Tout accepter
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -38,6 +38,11 @@ export default function CameraScanner({ active, onScan }: CameraScannerProps) {
   const streamRef = useRef<MediaStream | null>(null)
   const frameRef = useRef<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Distingue "permission caméra en attente" (rectangle noir vide sans aucun
+  // texte, sinon) de "flux prêt" — évite qu'un clic sur "Activer la caméra"
+  // ne bascule instantanément vers "Désactiver la caméra" sans aucun retour
+  // visuel tant que getUserMedia() n'a pas résolu.
+  const [ready, setReady] = useState(false)
 
   // Arrête tout flux/rAF en cours. Référencé depuis l'effet ET depuis sa
   // fonction de nettoyage — volontairement sans dépendance externe (ne touche
@@ -74,6 +79,7 @@ export default function CameraScanner({ active, onScan }: CameraScannerProps) {
       // corps synchrone de l'effet (évite les rendus en cascade, cf. règle
       // react-hooks/set-state-in-effect).
       setError(null)
+      setReady(false)
       let stream: MediaStream
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -104,6 +110,7 @@ export default function CameraScanner({ active, onScan }: CameraScannerProps) {
       video.srcObject = stream
       try {
         await video.play()
+        if (!cancelled) setReady(true)
       } catch {
         // Lecture refusée/interrompue (ex. composant démonté entre-temps) —
         // le nettoyage de l'effet a déjà (ou va) tout arrêter.
@@ -171,6 +178,11 @@ export default function CameraScanner({ active, onScan }: CameraScannerProps) {
           <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Caméra en pause</p>
         </div>
       )}
+      {active && !ready && !error && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Connexion à la caméra…</p>
+        </div>
+      )}
       {active && error && (
         <div
           style={{
@@ -180,7 +192,9 @@ export default function CameraScanner({ active, onScan }: CameraScannerProps) {
             alignItems: 'center',
             justifyContent: 'center',
             padding: 20,
-            background: 'rgba(4,4,11,0.9)',
+            // var(--obsidian) à 90% d'opacité, exprimé avec le token plutôt
+            // qu'une valeur rgba() codée en dur correspondant par coïncidence.
+            background: 'color-mix(in srgb, var(--obsidian) 90%, transparent)',
           }}
         >
           <p style={{ fontSize: 13, color: 'var(--pink)', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>{error}</p>

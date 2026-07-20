@@ -95,7 +95,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   item_not_found: 'Cette ligne de commande est introuvable — elle a peut-être déjà été retirée.',
   ticket_not_found: 'Billet introuvable.',
   forbidden: 'Action non autorisée.',
-  locked: 'Cet article a déjà été servi ou payé — modification impossible.',
+  locked: 'Cet article a déjà été servi, payé ou annulé — modification impossible.',
   bad_response: 'Réponse du serveur illisible — réessaie.',
 }
 
@@ -107,7 +107,7 @@ function errorMessageFor(code: string | undefined): string {
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'rgba(200,169,110,0.14)' },
   served: { label: 'Servi', color: 'var(--teal)', bg: 'rgba(78,232,200,0.16)' },
-  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.08)' },
+  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
 }
 
 function isLocked(item: OrderItem): boolean {
@@ -126,6 +126,20 @@ function isLocked(item: OrderItem): boolean {
 // pouvoir retomber sur le bouton "Ajouter".
 function findEditableLine(items: OrderItem[], menuItemName: string, currentUserId: string): OrderItem | undefined {
   return items.find((i) => i.menuItemId === menuItemName && i.kind === 'order' && i.addedBy === currentUserId && !isLocked(i))
+}
+
+// Ligne (verrouillée) qui explique pourquoi le contrôle +/- vient de
+// disparaître pour cet article, plutôt que de laisser le client face à un
+// bouton "Ajouter" qui réapparaît silencieusement comme si rien n'avait
+// jamais été commandé.
+function findLockedOwnLine(items: OrderItem[], menuItemName: string, currentUserId: string): OrderItem | undefined {
+  return items.find((i) => i.menuItemId === menuItemName && i.kind === 'order' && i.addedBy === currentUserId && isLocked(i))
+}
+
+function lockedLineLabel(item: OrderItem): string {
+  if (item.paidAt) return 'Déjà payé — non modifiable'
+  if (item.servedAt) return 'Déjà servi — non modifiable'
+  return 'Annulé — non modifiable'
 }
 
 function groupByCategory(menu: MenuItemView[]): Array<[string, MenuItemView[]]> {
@@ -222,7 +236,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
       if (data.noop) {
         // La ligne a été servie/payée/annulée par le staff entre-temps — l'état
         // local optimiste n'est plus fiable, on force un re-fetch immédiat.
-        showNotice('Cet article a déjà été servi — modification impossible.')
+        showNotice('Cet article a déjà été servi, payé ou annulé — modification impossible.')
         void fetchOrders()
         return
       }
@@ -248,7 +262,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
         return
       }
       if (data.noop) {
-        showNotice('Cet article a déjà été servi — modification impossible.')
+        showNotice('Cet article a déjà été servi, payé ou annulé — modification impossible.')
         void fetchOrders()
         return
       }
@@ -294,7 +308,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
         </div>
 
         {notice && (
-          <div style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 12, padding: '10px 14px' }}>
+          <div role="status" aria-live="polite" style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 12, padding: '10px 14px' }}>
             <p style={{ fontSize: 13, color: 'var(--gold)', margin: 0 }}>{notice}</p>
           </div>
         )}
@@ -302,7 +316,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
         {hasOwnItems && (
           <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
             <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 12px' }}>
-              Ma commande
+              Commande de ce billet
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {items.map((item) => {
@@ -346,6 +360,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {catItems.map((menuItem) => {
                       const editable = findEditableLine(items, menuItem.name, currentUserId)
+                      const lockedLine = !editable ? findLockedOwnLine(items, menuItem.name, currentUserId) : undefined
                       const busy = busyKey === menuItem.name
                       return (
                         <div
@@ -374,6 +389,8 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                                 <span style={{ minWidth: 18, textAlign: 'center', fontWeight: 700 }}>{editable.quantity}</span>
                                 <StepButton label="+" disabled={busy} onClick={() => handleStep(menuItem, editable, 1)} />
                               </div>
+                            ) : lockedLine ? (
+                              <span style={{ fontSize: 11.5, color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{lockedLineLabel(lockedLine)}</span>
                             ) : (
                               <button
                                 type="button"
@@ -386,7 +403,8 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                                   fontSize: 13,
                                   fontWeight: 700,
                                   color: '#fff',
-                                  background: busy ? 'rgba(143,86,255,0.5)' : 'linear-gradient(180deg,#8f56ff,#7a3bf2)',
+                                  background: 'var(--violet)',
+                                  opacity: busy ? 0.5 : 1,
                                   cursor: busy ? 'default' : 'pointer',
                                 }}
                               >
@@ -405,25 +423,29 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
         </section>
       </div>
 
-      <div
-        style={{
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 40,
-          background: 'var(--surface-2)',
-          borderTop: '1px solid var(--border-strong)',
-          padding: '14px 16px',
-        }}
-      >
-        <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>À régler au bar</span>
-          <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(total, currency)}</span>
+      {hasOwnItems && (
+        <div
+          style={{
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 40,
+            background: 'var(--surface-2)',
+            borderTop: '1px solid var(--border-strong)',
+            padding: '14px 16px',
+          }}
+        >
+          <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>À régler au bar</span>
+            <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(total, currency)}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div
+        role="status"
+        aria-live="polite"
         style={{
           position: 'fixed',
           bottom: 74,

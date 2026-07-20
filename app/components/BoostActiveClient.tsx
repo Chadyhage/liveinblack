@@ -9,10 +9,12 @@ import { useRouter } from 'next/navigation'
 // Cette page ne fait qu'attendre/relire ce statut via
 // GET /api/checkout/boost, jamais générer le boost elle-même.
 
-const COLORS = { pink: '#e05aaa', gold: '#c8a96e', muted: 'rgba(255,255,255,0.42)', dim: 'rgba(255,255,255,0.22)' }
+// Couleurs alignées sur les custom properties de app/globals.css (:root) —
+// jamais de hex/rgba dupliqués ici, voir CLAUDE.md.
+const COLORS = { pink: 'var(--pink)', gold: 'var(--gold)', muted: 'rgba(255,255,255,0.42)', dim: 'rgba(255,255,255,0.22)' }
 const CARD: React.CSSProperties = {
-  background: '#12131c',
-  border: '1px solid rgba(255,255,255,0.10)',
+  background: 'var(--surface-2)',
+  border: '1px solid var(--border)',
   borderRadius: 20,
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
@@ -146,12 +148,19 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
               {errorMsg}
             </p>
-            <a
-              href="mailto:hagechady@liveinblack.com?subject=Probl%C3%A8me%20de%20boost"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 24, padding: '13px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700, background: '#c8a96e', border: 'none', color: '#141007', textDecoration: 'none' }}>
-              <IconMail size={15} color="#141007" />
-              Contacter le support
-            </a>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
+              <a
+                href="mailto:hagechady@liveinblack.com?subject=Probl%C3%A8me%20de%20boost"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700, background: COLORS.gold, border: 'none', color: '#141007', textDecoration: 'none' }}>
+                <IconMail size={15} color="#141007" />
+                Contacter le support
+              </a>
+              <button
+                onClick={() => router.push('/my-events')}
+                style={{ padding: '13px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>
+                Retour à mes événements
+              </button>
+            </div>
           </>
         )}
       </div>

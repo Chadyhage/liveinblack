@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 
 const NAV_LINKS = [
@@ -10,7 +13,14 @@ const NAV_LINKS = [
 
 // Nav publique partagée par toutes les pages non-authentifiées. Backdrop-blur
 // toléré par le design system (CLAUDE.md) même si le contenu, lui, reste opaque.
+//
+// Sous 720px, `.lb-navlink` passe en `display:none` sans aucun remplacement
+// auparavant — impossible de naviguer vers Prestataires/Organisateurs/C'est
+// quoi/Recherche depuis un mobile. Le bouton hamburger + tiroir ci-dessous
+// reprend exactement les mêmes liens pour ce cas.
 export default function PublicNav() {
+  const [mobileOpen, setMobileOpen] = useState(false)
+
   return (
     <header
       style={{
@@ -52,6 +62,7 @@ export default function PublicNav() {
         ))}
         <Link
           href="/login"
+          className="lb-navlink"
           style={{
             padding: '9px 18px',
             borderRadius: 999,
@@ -64,10 +75,100 @@ export default function PublicNav() {
         >
           Connexion
         </Link>
+        <Link
+          href="/login"
+          className="lb-navlink-mobile"
+          style={{
+            padding: '8px 14px',
+            borderRadius: 999,
+            background: 'var(--teal-solid)',
+            color: '#04120e',
+            fontSize: 12.5,
+            fontWeight: 700,
+            textDecoration: 'none',
+          }}
+        >
+          Connexion
+        </Link>
+        <button
+          type="button"
+          className="lb-navlink-mobile lb-burger"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-expanded={mobileOpen}
+          aria-controls="lb-mobile-menu"
+          aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 10,
+            border: '1px solid var(--border-strong)',
+            background: 'var(--surface)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: 'var(--text)',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            {mobileOpen ? (
+              <>
+                <line x1="5" y1="5" x2="19" y2="19" />
+                <line x1="19" y1="5" x2="5" y2="19" />
+              </>
+            ) : (
+              <>
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </>
+            )}
+          </svg>
+        </button>
       </nav>
+
+      {mobileOpen && (
+        <nav
+          id="lb-mobile-menu"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'var(--surface-2)',
+            borderBottom: '1px solid var(--border)',
+            boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
+          }}
+        >
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              style={{
+                padding: '14px 22px',
+                color: 'var(--text)',
+                textDecoration: 'none',
+                fontSize: 14.5,
+                fontWeight: 600,
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      )}
+
       <style>{`
         .lb-navlink { display: none }
-        @media (min-width: 720px) { .lb-navlink { display: inline-block } }
+        .lb-navlink-mobile { display: inline-flex }
+        @media (min-width: 720px) {
+          .lb-navlink { display: inline-block }
+          .lb-navlink-mobile { display: none }
+        }
       `}</style>
     </header>
   )

@@ -570,7 +570,7 @@ export default function AgentDossiersClient() {
               group.length === 1 ? (
                 <AppCard key={group[0].id} app={group[0]} onClick={() => setSelectedId(group[0].id)} />
               ) : (
-                <div key={group[0].userEmail || group[0].userId} style={{ ...cardStyle, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div key={group[0].userEmail || group[0].userId} style={{ ...cardStyle, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Même compte · plusieurs activités</span>
                     <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{group.length} dossiers</span>
@@ -674,8 +674,8 @@ function AppCard({ app, compact, onClick }: { app: ApplicationSummary; compact?:
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: compact ? 13 : 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.displayName}</span>
-          <span style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: `${STATUS_COLOR[app.status]}22`, color: STATUS_COLOR[app.status] }}>{STATUS_LABEL[app.status]}</span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: compact ? 13 : 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.displayName}</span>
+          <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: `${STATUS_COLOR[app.status]}22`, color: STATUS_COLOR[app.status] }}>{STATUS_LABEL[app.status]}</span>
         </div>
         <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>
           {typeLabel} · {app.userEmail} · {dateLabel}
@@ -794,7 +794,7 @@ function DetailPanel({
                         Voir →
                       </a>
                     ) : (
-                      <span style={{ color: 'var(--text-faint)' }}>Local</span>
+                      <span style={{ color: 'var(--text-faint)' }}>Fichier indisponible</span>
                     )}
                   </div>
                 ))}

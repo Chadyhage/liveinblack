@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { getProviderByUserId } from '@/lib/server/providers'
 import { getPublishedReviews, getMyReviewFor } from '@/lib/server/providerReviews'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
+import { REGION_OPTIONS } from '@/lib/shared/locations'
 import { fmtMoney } from '@/lib/shared/money'
 import { auth } from '@/auth'
 import ProviderReviewsClient from '@/app/components/ProviderReviewsClient'
@@ -96,7 +97,9 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
             {[provider.city || provider.location, provider.country].filter(Boolean).join(', ')}
           </p>
           {provider.zonesIntervention?.length ? (
-            <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>Intervient : {provider.zonesIntervention.join(', ')}</p>
+            <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>
+              Intervient : {provider.zonesIntervention.map((z) => { const r = REGION_OPTIONS.find((o) => o.id === z); return r ? `${r.flag} ${r.name}` : z }).join(', ')}
+            </p>
           ) : null}
           {provider.website && (
             <a href={provider.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--teal)', display: 'block', marginTop: 6, textDecoration: 'none' }}>

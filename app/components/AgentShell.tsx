@@ -47,6 +47,7 @@ export default function AgentShell() {
   const [tab, setTab] = useState<TabKey>('dashboard')
   const [pendingDossiers, setPendingDossiers] = useState(0)
   const [openReports, setOpenReports] = useState(0)
+  const [pendingDeletions, setPendingDeletions] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -97,7 +98,28 @@ export default function AgentShell() {
     }
   }, [])
 
-  const badges: Partial<Record<TabKey, number>> = { dossiers: pendingDossiers, reports: openReports }
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      try {
+        const res = await fetch('/api/agent/deletion-requests')
+        const data = await res.json()
+        if (!cancelled && res.ok && data.ok) {
+          setPendingDeletions((data.requests as unknown[]).length)
+        }
+      } catch {
+        // idem
+      }
+    }
+    run()
+    const interval = setInterval(run, 15000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [])
+
+  const badges: Partial<Record<TabKey, number>> = { dossiers: pendingDossiers, reports: openReports, deletions: pendingDeletions }
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -134,8 +156,9 @@ export default function AgentShell() {
         </div>
       </div>
 
-      <div style={{ padding: '12px 16px 0', maxWidth: 760, margin: '0 auto' }}>
+      <div style={{ padding: '12px 16px 0', maxWidth: 760, margin: '0 auto', position: 'relative' }}>
         <div
+          className="agent-shell-tabs"
           style={{
             display: 'flex',
             gap: 6,
@@ -144,6 +167,7 @@ export default function AgentShell() {
             border: '1px solid var(--border)',
             borderRadius: 12,
             overflowX: 'auto',
+            scrollbarWidth: 'none',
           }}
         >
           {TABS.map((t) => {
@@ -153,6 +177,7 @@ export default function AgentShell() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
+                aria-label={count > 0 ? `${t.label}, ${count} en attente` : undefined}
                 style={{
                   flexShrink: 0,
                   display: 'inline-flex',
@@ -189,6 +214,22 @@ export default function AgentShell() {
             )
           })}
         </div>
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 4,
+            bottom: 4,
+            right: 16,
+            width: 28,
+            borderRadius: '0 12px 12px 0',
+            background: 'linear-gradient(90deg, transparent, var(--surface))',
+            pointerEvents: 'none',
+          }}
+        />
+        <style>{`
+          .agent-shell-tabs::-webkit-scrollbar { display: none; }
+        `}</style>
       </div>
 
       <div key={tab}>

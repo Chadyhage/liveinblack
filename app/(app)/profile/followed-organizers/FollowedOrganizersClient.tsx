@@ -45,8 +45,17 @@ const ALERT_LABELS: { key: keyof AlertSettings; label: string }[] = [
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18 }
 
+const DEFAULT_ALERTS: AlertSettings = {
+  newEvent: true,
+  ticketing: true,
+  almostFull: true,
+  scheduleChanges: true,
+  newMedia: true,
+  importantAnnouncements: true,
+}
+
 export default function FollowedOrganizersClient({ initialFollows, suggestions }: { initialFollows: FollowedOrganizerView[]; suggestions: OrganizerSuggestion[] }) {
-  const [follows, setFollows] = useState(initialFollows);
+  const [follows, setFollows] = useState(initialFollows)
 
   function remove(organizerId: string) {
     setFollows((list) => list.filter((f) => f.organizerId !== organizerId))
@@ -54,6 +63,29 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
 
   function patch(organizerId: string, next: Partial<Pick<FollowedOrganizerView, 'notificationsEnabled' | 'alerts'>>) {
     setFollows((list) => list.map((f) => (f.organizerId === organizerId ? { ...f, ...next } : f)))
+  }
+
+  // Suivre depuis "Organisateurs à suivre" ne renvoie que l'ID côté API — la
+  // carte de suggestion connaît déjà nom/slug/ville, donc on les réutilise
+  // pour insérer directement l'entrée ici plutôt que de re-fetch la liste.
+  function addFollow(s: OrganizerSuggestion) {
+    setFollows((list) =>
+      list.some((f) => f.organizerId === s.organizerId)
+        ? list
+        : [
+            ...list,
+            {
+              organizerId: s.organizerId,
+              notificationsEnabled: true,
+              alerts: DEFAULT_ALERTS,
+              organizerName: s.name,
+              organizerSlug: s.slug,
+              organizerAvatarUrl: null,
+              organizerCity: s.city,
+              organizerCountry: s.country,
+            },
+          ]
+    )
   }
 
   return (
@@ -92,18 +124,20 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
         {suggestions.length > 0 && (
           <div>
             <h2 style={{ fontSize: 'clamp(22px,4vw,34px)', fontWeight: 800, margin: '0 0 12px' }}>Organisateurs à suivre</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 12 }}>
-              {suggestions.map((s) => (
-                <div key={s.organizerId} style={{ ...cardStyle, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div>
-                    <Link href={`/organizers/${s.slug}`} style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
-                      {s.name}
-                    </Link>
-                    {(s.city || s.country) && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,280px))', gap: 12 }}>
+              {suggestions
+                .filter((s) => !follows.some((f) => f.organizerId === s.organizerId))
+                .map((s) => (
+                  <div key={s.organizerId} style={{ ...cardStyle, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div>
+                      <Link href={`/organizers/${s.slug}`} style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
+                        {s.name}
+                      </Link>
+                      {(s.city || s.country) && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
+                    </div>
+                    <OrganizerFollowButtonClient organizerId={s.organizerId} organizerName={s.name} initialFollowing={false} isAuthenticated compact onFollow={() => addFollow(s)} />
                   </div>
-                  <OrganizerFollowButtonClient organizerId={s.organizerId} organizerName={s.name} initialFollowing={false} isAuthenticated compact />
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         )}
@@ -185,8 +219,8 @@ function FollowCard({
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#fff', cursor: 'pointer' }}>
-          <input type="checkbox" checked={follow.notificationsEnabled} onChange={toggleMaster} disabled={savingMaster} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#fff', cursor: savingMaster ? 'default' : 'pointer' }}>
+          <AlertCheckbox checked={follow.notificationsEnabled} onChange={toggleMaster} disabled={savingMaster} />
           Notifications de cet organisateur
         </label>
         <button onClick={() => setExpanded((v) => !v)} style={{ background: 'transparent', border: 'none', color: 'var(--teal)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
@@ -197,14 +231,48 @@ function FollowCard({
       {expanded && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 8, marginTop: 12 }}>
           {ALERT_LABELS.map(({ key, label }) => (
-            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#fff', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '9px 12px', cursor: 'pointer' }}>
-              <input type="checkbox" checked={follow.alerts[key]} onChange={() => toggleAlert(key)} />
+            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: '#fff', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '9px 12px', cursor: 'pointer' }}>
+              <AlertCheckbox checked={follow.alerts[key]} onChange={() => toggleAlert(key)} />
               {label}
             </label>
           ))}
         </div>
       )}
     </section>
+  )
+}
+
+// Remplace les <input type="checkbox"> natifs (accent bleu par défaut du
+// navigateur) par une case cochable stylée sur le design system teal/gold —
+// cohérent avec PrivacyToggle (ProfilClient.tsx) utilisé dans le même
+// parcours "Paramètres du compte".
+function AlertCheckbox({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      disabled={disabled}
+      aria-pressed={checked}
+      style={{
+        width: 18,
+        height: 18,
+        borderRadius: 5,
+        border: checked ? 'none' : '1px solid var(--border-strong)',
+        background: checked ? 'var(--teal-solid)' : 'transparent',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: disabled ? 'default' : 'pointer',
+        flexShrink: 0,
+        padding: 0,
+      }}
+    >
+      {checked && (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#04120e" strokeWidth={3}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+      )}
+    </button>
   )
 }
 

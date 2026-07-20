@@ -21,6 +21,7 @@ export default function OrganizerFollowButtonClient({
   compact = false,
   appearance = 'default',
   onUnfollow,
+  onFollow,
 }: {
   organizerId: string
   organizerName: string
@@ -29,6 +30,7 @@ export default function OrganizerFollowButtonClient({
   compact?: boolean
   appearance?: FollowAppearance
   onUnfollow?: () => void
+  onFollow?: () => void
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -51,6 +53,7 @@ export default function OrganizerFollowButtonClient({
         setError('Action impossible.')
       } else {
         setFollowing(true)
+        onFollow?.()
       }
     } catch {
       setError('Action impossible.')

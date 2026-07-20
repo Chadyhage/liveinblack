@@ -68,7 +68,7 @@ export type FormValidationResult = { ok: true } | { ok: false; error: string }
 // Étape 0 — "Informations de l'établissement".
 export function validateOrganizerStep0(f: Partial<OrganizerFormData>): FormValidationResult {
   if (!f.nomCommercial?.trim()) return { ok: false, error: "Le nom de l'établissement est obligatoire." }
-  if (!isValidSiret(f.siret || '')) return { ok: false, error: 'Numéro SIRET/SIREN invalide (ou saisis des zéros si tu n’en as pas).' }
+  if (!isValidSiret(f.siret || '')) return { ok: false, error: 'Numéro SIRET/SIREN invalide (ou saisis au moins 3 zéros si tu n’en as pas).' }
   if (!isValidEmail(f.emailPro || '')) return { ok: false, error: 'Adresse e-mail professionnelle invalide.' }
   if (!isValidPhone(f.telephoneProCode || '', f.telephonePro || '')) return { ok: false, error: 'Numéro de téléphone professionnel invalide.' }
   if (!f.noFixedAddress && !f.adresseEtablissement?.trim()) return { ok: false, error: "L'adresse de l'établissement est obligatoire (ou coche « pas de lieu fixe »)." }
@@ -142,11 +142,13 @@ export interface PrestataireFormData {
 
 // Étape 0 — "Compte" (identité + coordonnées).
 export function validatePrestataireStep0(f: Partial<PrestataireFormData>): FormValidationResult {
-  if (!f.prenom?.trim()) return { ok: false, error: 'Le prénom est obligatoire.' }
-  if (!f.nom?.trim()) return { ok: false, error: 'Le nom est obligatoire.' }
-  if (!f.telephone?.trim()) return { ok: false, error: 'Le téléphone est obligatoire.' }
-  if (!isValidPhone(f.telephoneCode || '', f.telephone || '')) return { ok: false, error: 'Numéro invalide pour ce pays.' }
-  if (f.siret && !isValidSiret(f.siret)) return { ok: false, error: 'Numéro invalide : SIREN = 9 chiffres, SIRET = 14 chiffres.' }
+  const errors: string[] = []
+  if (!f.prenom?.trim()) errors.push('Le prénom est obligatoire.')
+  if (!f.nom?.trim()) errors.push('Le nom est obligatoire.')
+  if (!f.telephone?.trim()) errors.push('Le téléphone est obligatoire.')
+  else if (!isValidPhone(f.telephoneCode || '', f.telephone || '')) errors.push('Numéro invalide pour ce pays.')
+  if (f.siret && !isValidSiret(f.siret)) errors.push('Numéro invalide : SIREN = 9 chiffres, SIRET = 14 chiffres.')
+  if (errors.length > 0) return { ok: false, error: errors.join(' ') }
   return { ok: true }
 }
 

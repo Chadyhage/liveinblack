@@ -33,10 +33,10 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
         overflow: 'hidden',
       }}
     >
-      <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}33, var(--obsidian))` }}>
+      <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
         {event.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
         {countdown && (
           <span
@@ -55,36 +55,40 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
             {countdown}
           </span>
         )}
-        {stock && (
-          <span style={{ position: 'absolute', bottom: 8, left: 8, fontSize: 10, fontWeight: 800, color: '#fff', background: stock.color, padding: '3px 8px', borderRadius: 999 }}>
-            {stock.label}
-          </span>
-        )}
-        {reason && (
-          <span
-            style={{
-              position: 'absolute',
-              bottom: 8,
-              right: 8,
-              maxWidth: 'calc(100% - 16px)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: 9.5,
-              fontWeight: 700,
-              color: '#e5d8ff',
-              background: 'rgba(5,6,10,0.88)',
-              padding: '4px 9px',
-              borderRadius: 999,
-              border: '1px solid rgba(139,92,246,0.5)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <span aria-hidden="true" style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--violet)', flexShrink: 0 }} />
-            {reason}
-          </span>
+        {(stock || reason) && (
+          <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+            {stock ? (
+              <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, color: '#fff', background: stock.color, padding: '3px 8px', borderRadius: 999 }}>
+                {stock.label}
+              </span>
+            ) : (
+              <span />
+            )}
+            {reason && (
+              <span
+                style={{
+                  minWidth: 0,
+                  flexShrink: 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  fontSize: 9.5,
+                  fontWeight: 700,
+                  color: '#e5d8ff',
+                  background: 'rgba(5,6,10,0.88)',
+                  padding: '4px 9px',
+                  borderRadius: 999,
+                  border: '1px solid rgba(139,92,246,0.5)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span aria-hidden="true" style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--violet)', flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{reason}</span>
+              </span>
+            )}
+          </div>
         )}
         {min != null && (
           <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '3px 8px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>

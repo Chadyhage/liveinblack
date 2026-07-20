@@ -43,12 +43,30 @@ export default function AgentReportsClient() {
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
   const [filter, setFilter] = useState<FilterKey>('open')
+  const [search, setSearch] = useState('')
 
   const [activeId, setActiveId] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const [toast, setToast] = useState<ToastState | null>(null)
+
+  // Comptes des deux tuiles de filtre — chargés indépendamment de la liste
+  // affichée (qui ne couvre que le filtre actif) pour que les deux tuiles
+  // affichent un chiffre, comme Dossiers/Paiements.
+  const [counts, setCounts] = useState<{ open: number; handled: number } | null>(null)
+
+  async function loadCounts() {
+    try {
+      const [openRes, handledRes] = await Promise.all([fetch('/api/agent/reports?status=open'), fetch('/api/agent/reports?status=handled')])
+      const [openData, handledData] = await Promise.all([openRes.json(), handledRes.json()])
+      if (openRes.ok && openData.ok && handledRes.ok && handledData.ok) {
+        setCounts({ open: (openData.reports as unknown[]).length, handled: (handledData.reports as unknown[]).length })
+      }
+    } catch {
+      // Comptes non-critiques — les tuiles restent alors sans chiffre.
+    }
+  }
 
   function showToast(message: string, kind: ToastState['kind']) {
     setToast({ message, kind })
@@ -92,7 +110,32 @@ export default function AgentReportsClient() {
     }
   }, [filter])
 
-  const sorted = useMemo(() => [...reports].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), [reports])
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      try {
+        const [openRes, handledRes] = await Promise.all([fetch('/api/agent/reports?status=open'), fetch('/api/agent/reports?status=handled')])
+        const [openData, handledData] = await Promise.all([openRes.json(), handledRes.json()])
+        if (!cancelled && openRes.ok && openData.ok && handledRes.ok && handledData.ok) {
+          setCounts({ open: (openData.reports as unknown[]).length, handled: (handledData.reports as unknown[]).length })
+        }
+      } catch {
+        // idem
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const sorted = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    const list = term
+      ? reports.filter((r) => r.targetName.toLowerCase().includes(term) || r.fromName.toLowerCase().includes(term) || r.reason.toLowerCase().includes(term))
+      : reports
+    return [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [reports, search])
 
   async function handleMark(id: string) {
     setBusyId(id)
@@ -110,7 +153,7 @@ export default function AgentReportsClient() {
       showToast('Signalement marqué comme traité', 'success')
       setActiveId(null)
       setNote('')
-      await loadList(filter)
+      await Promise.all([loadList(filter), loadCounts()])
     } finally {
       setBusyId(null)
     }
@@ -120,7 +163,7 @@ export default function AgentReportsClient() {
 
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Signalements d&apos;utilisateurs</h1>
           {openCount ? (
@@ -160,10 +203,30 @@ export default function AgentReportsClient() {
                   textAlign: 'left',
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? f.color : 'var(--text-faint)' }}>{f.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: active ? f.color : 'var(--text-faint)' }}>{counts ? counts[f.key] : '—'}</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? f.color : 'var(--text-faint)' }}>{f.label}</div>
               </button>
             )
           })}
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          <input
+            style={{ ...inputStyle, ...(search ? { paddingRight: 34 } : null) }}
+            placeholder="Rechercher (signalé, signalant, motif…)"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              type="button"
+              aria-label="Effacer la recherche"
+              onClick={() => setSearch('')}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              ×
+            </button>
+          )}
         </div>
 
         {listLoading ? (
@@ -244,7 +307,7 @@ export default function AgentReportsClient() {
                       <button
                         onClick={() => handleMark(r.id)}
                         disabled={busyId === r.id}
-                        style={{ flex: 1, padding: '9px 12px', borderRadius: 10, cursor: busyId === r.id ? 'wait' : 'pointer', background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12.5, fontWeight: 700, opacity: busyId === r.id ? 0.6 : 1 }}
+                        style={{ flex: 1, padding: '9px 12px', borderRadius: 10, cursor: busyId === r.id ? 'wait' : 'pointer', background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12.5, fontWeight: 700, opacity: busyId === r.id ? 0.6 : 1 }}
                       >
                         {busyId === r.id ? '…' : 'Confirmer'}
                       </button>
@@ -253,7 +316,7 @@ export default function AgentReportsClient() {
                 ) : (
                   <button
                     onClick={() => setActiveId(r.id)}
-                    style={{ padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: '#3ed6b5', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12, fontWeight: 700 }}
+                    style={{ padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12, fontWeight: 700 }}
                   >
                     Marquer comme traité
                   </button>

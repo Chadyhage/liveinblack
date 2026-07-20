@@ -37,16 +37,16 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
     <div style={{ padding: '28px 22px 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
       <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 16px' }}>Prestataires</h1>
 
-      <form action="/providers" method="get" style={{ display: 'flex', gap: 8, maxWidth: 420, marginBottom: 18 }}>
+      <form action="/providers" method="get" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxWidth: 420, marginBottom: 18 }}>
         {category && <input type="hidden" name="categorie" value={category} />}
         <input
           type="text"
           name="q"
           defaultValue={search}
           placeholder="Rechercher un prestataire, une ville…"
-          style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5 }}
+          style={{ flex: '1 1 220px', minWidth: 0, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5 }}
         />
-        <button type="submit" style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>
+        <button type="submit" style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>
           Chercher
         </button>
       </form>
@@ -82,7 +82,23 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.coverUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   )}
-                  <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 10,
+                      left: 10,
+                      maxWidth: 'calc(100% - 20px)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      color: '#fff',
+                      background: `${pc.color}cc`,
+                      padding: '4px 9px',
+                      borderRadius: 999,
+                    }}
+                  >
                     {pc.label}
                     {categories.length > 1 ? ` +${categories.length - 1}` : ''}
                   </span>

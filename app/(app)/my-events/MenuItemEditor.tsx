@@ -72,7 +72,7 @@ const labelStyle: React.CSSProperties = {
 }
 
 const cardStyle: React.CSSProperties = {
-  background: '#0e0f16',
+  background: 'var(--surface)',
   border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: 12,
   boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
@@ -91,13 +91,21 @@ function Toggle({ value, onChange, disabled = false }: { value: boolean; onChang
   return (
     <div
       onClick={disabled ? undefined : onChange}
+      onKeyDown={(e) => {
+        if (disabled) return
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onChange()
+        }
+      }}
       role="switch"
       aria-checked={value}
+      tabIndex={disabled ? -1 : 0}
       style={{
         width: 44,
         height: 24,
         borderRadius: 12,
-        background: value ? '#4ee8c8' : 'rgba(255,255,255,0.08)',
+        background: value ? 'var(--teal)' : 'rgba(255,255,255,0.08)',
         position: 'relative',
         cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'background 0.2s',
@@ -123,7 +131,7 @@ function Toggle({ value, onChange, disabled = false }: { value: boolean; onChang
 }
 
 function focusTeal(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
-  e.target.style.borderColor = '#4ee8c8'
+  e.target.style.borderColor = 'var(--teal)'
   e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)'
 }
 function blurDefault(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {

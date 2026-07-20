@@ -10,10 +10,10 @@ import { useRouter } from 'next/navigation'
 // PaymentSuccessClient.tsx (même carte, mêmes tons) pour rester cohérent avec
 // le reste des pages de confirmation « one-shot » de cette migration.
 
-const COLORS = { teal: '#4ee8c8', pink: '#e05aaa' }
+const COLORS = { teal: 'var(--teal)', pink: 'var(--pink)' }
 const CARD: React.CSSProperties = {
-  background: '#12131c',
-  border: '1px solid rgba(255,255,255,0.10)',
+  background: 'var(--surface-2)',
+  border: '1px solid var(--border)',
   borderRadius: 20,
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
@@ -22,12 +22,17 @@ const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
   border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
 })
 
-type State = 'loading' | 'success' | 'error'
+type State = 'loading' | 'success' | 'error' | 'missing'
 
 export default function VerifyEmailClient({ email, token }: { email: string | null; token: string | null }) {
   const router = useRouter()
   const missingParams = !email || !token
-  const [state, setState] = useState<State>(missingParams ? 'error' : 'loading')
+  // Distingue la visite directe de /verify-email sans aucun paramètre (lien
+  // jamais cliqué) du cas d'un lien partiellement malformé ou réellement
+  // expiré/invalide (renvoyé par l'API) — ces deux derniers gardent le
+  // libellé "lien invalide ou expiré".
+  const noParamsAtAll = !email && !token
+  const [state, setState] = useState<State>(noParamsAtAll ? 'missing' : missingParams ? 'error' : 'loading')
 
   // Renvoyer l'email de vérification depuis cet écran d'erreur — même
   // route/pattern anti-énumération que celui de AuthForm.tsx (écran "vérifie
@@ -83,7 +88,7 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
   return (
     <main style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
       <style>{`@keyframes lib-verify-spin { to { transform: rotate(360deg) } }`}</style>
-      <div style={{ ...CARD, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: 'center' }}>
+      <div role="status" aria-live="polite" style={{ ...CARD, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: 'center' }}>
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-verify-spin 0.9s linear infinite' }} />
@@ -101,11 +106,11 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
             <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>
               Email vérifié
             </h1>
-            <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>
-              Ton adresse email est confirmée, tu peux te connecter.
+            <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55, overflowWrap: 'break-word' }}>
+              {email ? <>L&apos;adresse {email} est confirmée, tu peux te connecter.</> : 'Ton adresse email est confirmée, tu peux te connecter.'}
             </p>
             <div style={{ marginTop: 28 }}>
-              <button onClick={() => router.push('/login')} style={btnSolid('#3ed6b5', '#04120e')}>Se connecter</button>
+              <button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#04120e')}>Se connecter</button>
             </div>
           </>
         )}
@@ -135,13 +140,30 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
                   disabled={resendLoading || resendCooldown > 0}
                   style={{ fontSize: 12.5, fontWeight: 600, color: resendCooldown > 0 ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.65)', background: 'none', border: 'none', cursor: resendLoading || resendCooldown > 0 ? 'default' : 'pointer', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
                 >
-                  {resendLoading ? 'Envoi…' : resendCooldown > 0 ? `Renvoyer à nouveau dans ${resendCooldown}s` : "Renvoyer l'email de vérification"}
+                  {resendLoading ? 'Envoi…' : resendCooldown > 0 ? `Renvoyer dans ${resendCooldown}s` : "Renvoyer l'email de vérification"}
                 </button>
               </div>
             )}
 
             <div style={{ marginTop: 28 }}>
-              <button onClick={() => router.push('/login')} style={btnSolid('#c8a96e', '#141007')}>Retour à la connexion</button>
+              <button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</button>
+            </div>
+          </>
+        )}
+
+        {state === 'missing' && (
+          <>
+            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
+            </div>
+            <h1 style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
+              Lien de vérification introuvable
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+              Cette page s&apos;utilise uniquement depuis le lien reçu par email. Reconnecte-toi pour en recevoir un nouveau.
+            </p>
+            <div style={{ marginTop: 28 }}>
+              <button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</button>
             </div>
           </>
         )}

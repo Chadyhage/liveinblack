@@ -139,6 +139,15 @@ export default function AgentDeletionClient() {
     setConfirmApprove(false)
   }
 
+  useEffect(() => {
+    if (!selectedId) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeDetail()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [selectedId])
+
   const term = search.trim().toLowerCase()
   const filtered = term
     ? requests.filter((r) => r.userName.toLowerCase().includes(term) || r.userEmail.toLowerCase().includes(term) || r.reason.toLowerCase().includes(term))
@@ -277,15 +286,15 @@ function RequestCard({ request, onClick }: { request: DeletionRequestSummary; on
   return (
     <button
       onClick={onClick}
-      style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left', width: '100%', borderLeft: '3px solid #ef4444' }}
+      style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left', width: '100%', borderLeft: '3px solid var(--pink)' }}
     >
-      <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#ef4444', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
+      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--pink)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
         {(request.userName || request.userEmail || '?').charAt(0).toUpperCase()}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{request.userName || request.userEmail}</span>
-          <span style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: 'rgba(239,68,68,0.14)', color: '#ef4444' }}>{ROLE_LABEL[request.userRole] || request.userRole || '—'}</span>
+          <span style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: 'rgba(224,90,170,0.14)', color: 'var(--pink)' }}>{ROLE_LABEL[request.userRole] || request.userRole || '—'}</span>
         </div>
         <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>
           {request.userEmail} · Demandé le {fmtDateTime(request.requestedAt)}
@@ -326,7 +335,7 @@ function DetailPanel({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <h2 style={{ fontSize: 19, fontWeight: 800, color: '#fff', margin: 0 }}>{detail.userName || detail.userEmail}</h2>
-          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: 'rgba(239,68,68,0.16)', color: '#ef4444', fontWeight: 700 }}>En attente</span>
+          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: 'var(--pink)', fontWeight: 700 }}>En attente</span>
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>
           {detail.userEmail} · {ROLE_LABEL[detail.userRole] || detail.userRole || '—'} · Demandé le {fmtDateTime(detail.requestedAt)}
@@ -339,10 +348,10 @@ function DetailPanel({
       </div>
 
       {hasBlockers && (
-        <div style={{ padding: '12px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.28)', borderRadius: 10 }}>
-          <p style={{ fontSize: 11, fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Bloque l’approbation</p>
+        <div style={{ padding: '12px 14px', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.28)', borderRadius: 10 }}>
+          <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Bloque l’approbation</p>
           {detail.audit.blockers.map((b, i) => (
-            <p key={i} style={{ fontSize: 12.5, color: 'rgba(239,68,68,0.9)', margin: '0 0 5px', lineHeight: 1.5 }}>
+            <p key={i} style={{ fontSize: 12.5, color: 'rgba(224,90,170,0.9)', margin: '0 0 5px', lineHeight: 1.5 }}>
               • {b.label}
             </p>
           ))}
@@ -383,9 +392,10 @@ function DetailPanel({
             Approuver la suppression (irréversible)
           </button>
 
+          <label style={{ fontSize: 11, color: 'var(--text-faint)', display: 'block', marginBottom: -2 }}>Note pour l&apos;utilisateur (optionnel, visible si refusé)</label>
           <textarea
             style={{ ...inputStyle, minHeight: 60 }}
-            placeholder="Note pour l'utilisateur (optionnel, visible si refusé)…"
+            placeholder="Ex : merci de préciser la raison de ta demande…"
             value={rejectNote}
             onChange={(e) => setRejectNote(e.target.value)}
             disabled={actionBusy || rejecting}

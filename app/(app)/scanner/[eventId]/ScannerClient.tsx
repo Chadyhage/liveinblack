@@ -62,6 +62,7 @@ interface CheckinTicketView {
   currency: string
   preorders: { name: string; price: number; qty: number }[]
   guestName: string | null
+  holderName: string | null
 }
 
 // ─────────────────────────── contrats de réponse HTTP ───────────────────────
@@ -90,6 +91,8 @@ interface PaySuccessResponse {
   itemCount: number
 }
 type CancelSuccessResponse = { ok: true; noop: true } | { ok: true; noop?: false; item: OrderItem }
+type UpdateQuantitySuccessResponse = { ok: true; noop: true } | { ok: true; noop?: false; item: OrderItem }
+type RemoveSuccessResponse = { ok: true; noop: true } | { ok: true; noop?: false }
 
 async function parseJson<T>(res: Response): Promise<T | ApiErrorResponse> {
   try {
@@ -130,7 +133,7 @@ const ORDER_ERROR_MESSAGES: Record<string, string> = {
   unknown_menu_item: "Cet article n'est plus disponible au menu.",
   ticket_not_found: 'Billet introuvable pour cet événement.',
   not_your_ticket: "Ce billet ne t'appartient pas.",
-  item_not_found: 'Cette ligne est introuvable — elle a peut-être déjà été retirée.',
+  item_not_found: 'Cette ligne de commande est introuvable — elle a peut-être déjà été retirée.',
   item_cancelled: 'Cette ligne a été annulée — impossible de la servir.',
   serve_staff_only: 'Seul le staff peut marquer un article comme servi.',
   pay_staff_only: 'Seul un serveur, un manager ou le propriétaire peut encaisser.',
@@ -155,7 +158,22 @@ function orderErrorMessage(code: string | undefined): string {
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'rgba(200,169,110,0.14)' },
   served: { label: 'Servi', color: 'var(--teal)', bg: 'rgba(78,232,200,0.16)' },
-  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.08)' },
+  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
+}
+
+function isLocked(item: OrderItem): boolean {
+  return Boolean(item.servedAt) || Boolean(item.paidAt) || item.status === 'cancelled'
+}
+
+// Ligne du billet actuellement affiché encore modifiable par un ajout du
+// staff (kind commande normale, pas encore servie/payée/annulée) — même
+// principe que findEditableLine côté CommanderClient, mais sans filtre
+// `addedBy` : côté staff, update-quantity et remove n'imposent aucune
+// restriction de propriété au-delà du verrou (voir lib/server/eventOrders.ts,
+// rank >= 1), donc n'importe quel membre du staff peut ajuster une ligne déjà
+// ajoutée par un collègue plutôt que d'en créer une nouvelle en double.
+function findEditableLine(items: OrderItem[], menuItemName: string): OrderItem | undefined {
+  return items.find((i) => i.menuItemId === menuItemName && i.kind === 'order' && !isLocked(i))
 }
 
 // Un QR encode toujours l'URL COMPLÈTE de la page billet
@@ -198,18 +216,19 @@ const sectionTitleStyle: React.CSSProperties = {
   fontWeight: 700,
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
-  color: 'var(--text-faint)',
+  color: 'var(--text-muted)',
   margin: '0 0 12px',
 }
 
 const primaryButtonStyle = (disabled: boolean): React.CSSProperties => ({
-  padding: '9px 18px',
+  padding: '8px 16px',
   borderRadius: 999,
   border: 'none',
   fontSize: 13,
   fontWeight: 700,
   color: '#fff',
-  background: disabled ? 'rgba(143,86,255,0.5)' : 'linear-gradient(180deg,#8f56ff,#7a3bf2)',
+  background: 'var(--violet)',
+  opacity: disabled ? 0.5 : 1,
   cursor: disabled ? 'default' : 'pointer',
 })
 
@@ -224,6 +243,21 @@ const secondaryButtonStyle = (disabled: boolean): React.CSSProperties => ({
   cursor: disabled ? 'default' : 'pointer',
 })
 
+// Variante teal du bouton secondaire pour les actions "métier" (Servir) —
+// visuellement distinctes des actions de navigation légère (Scanner un autre
+// billet, Activer/Désactiver la caméra) qui gardent secondaryButtonStyle.
+const serveButtonStyle = (disabled: boolean): React.CSSProperties => ({
+  padding: '8px 16px',
+  borderRadius: 999,
+  border: '1px solid rgba(78,232,200,0.4)',
+  fontSize: 12.5,
+  fontWeight: 700,
+  color: 'var(--teal)',
+  background: disabled ? 'rgba(255,255,255,0.03)' : 'rgba(78,232,200,0.1)',
+  cursor: disabled ? 'default' : 'pointer',
+  minWidth: 64,
+})
+
 const dangerButtonStyle = (disabled: boolean): React.CSSProperties => ({
   padding: '8px 16px',
   borderRadius: 999,
@@ -231,7 +265,7 @@ const dangerButtonStyle = (disabled: boolean): React.CSSProperties => ({
   fontSize: 12.5,
   fontWeight: 700,
   color: '#fff',
-  background: disabled ? 'rgba(194,52,127,0.5)' : '#c2347f',
+  background: disabled ? 'rgba(224,90,170,0.5)' : 'var(--pink)',
   cursor: disabled ? 'default' : 'pointer',
 })
 
@@ -246,7 +280,28 @@ const inputStyle: React.CSSProperties = {
   fontSize: 14,
 }
 
+// <label> visuellement masqué mais lu par les lecteurs d'écran — le
+// placeholder seul disparaît dès que l'utilisateur commence à taper.
+const SR_ONLY_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0,0,0,0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+}
+
 type Mode = 'scan' | 'service'
+
+// Clé sessionStorage (par événement) mémorisant le billet en cours de
+// service — permet de survivre à un rechargement accidentel du navigateur
+// sans perdre le contexte et devoir rescanner/ressaisir le code.
+function serviceSessionKey(eventId: string): string {
+  return `liveinblack:scanner:${eventId}:ticketCode`
+}
 
 export default function ScannerClient({ eventId, eventName, currency, menu, rank }: ScannerClientProps) {
   const [mode, setMode] = useState<Mode>('scan')
@@ -254,6 +309,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
   const [manualCode, setManualCode] = useState('')
   const [checkinBusy, setCheckinBusy] = useState(false)
   const [checkinError, setCheckinError] = useState<string | null>(null)
+  const [checkinErrorCode, setCheckinErrorCode] = useState<string | undefined>(undefined)
   const [checkinResult, setCheckinResult] = useState<CheckinSuccessResponse | null>(null)
 
   const [ticketCode, setTicketCode] = useState<string | null>(null)
@@ -326,6 +382,12 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       setCancellingItemId(null)
       setCancelDrafts({})
       setMode('service')
+      try {
+        sessionStorage.setItem(serviceSessionKey(eventId), code)
+      } catch {
+        // sessionStorage indisponible (navigation privée stricte...) — pas
+        // bloquant, juste pas de reprise possible après rechargement.
+      }
 
       // Best-effort : matérialise précommandes/inclus AVANT le premier fetch
       // pour qu'ils apparaissent immédiatement plutôt qu'au prochain tick de
@@ -362,12 +424,16 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         })
         const data = await parseJson<CheckinSuccessResponse>(res)
         if (!res.ok || !('ok' in data) || !data.ok) {
-          setCheckinError(checkinErrorMessage('error' in data ? data.error : undefined))
+          const code = 'error' in data ? data.error : undefined
+          setCheckinErrorCode(code)
+          setCheckinError(checkinErrorMessage(code))
           return
         }
+        setCheckinErrorCode(undefined)
         setCheckinResult(data)
         await enterServiceMode(data.ticket.ticketCode)
       } catch {
+        setCheckinErrorCode(undefined)
         setCheckinError('Connexion impossible — réessaie.')
       } finally {
         setCheckinBusy(false)
@@ -396,11 +462,41 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
     setItems([])
     setCheckinResult(null)
     setCheckinError(null)
+    setCheckinErrorCode(undefined)
     setManualCode('')
     setScanning(false)
     setCancellingItemId(null)
     setCancelDrafts({})
+    try {
+      sessionStorage.removeItem(serviceSessionKey(eventId))
+    } catch {
+      // voir enterServiceMode — best-effort.
+    }
   }
+
+  // Reprise après un rechargement accidentel en plein mode service : un
+  // billet mémorisé en sessionStorage pour CET événement rouvre directement
+  // le mode service (sans repasser par un check-in, purement une reprise
+  // d'affichage) plutôt que de renvoyer le staff en mode scan et lui faire
+  // perdre le contexte du billet en cours.
+  useEffect(() => {
+    let cancelled = false
+    async function restore() {
+      let savedCode: string | null = null
+      try {
+        savedCode = sessionStorage.getItem(serviceSessionKey(eventId))
+      } catch {
+        return
+      }
+      if (!savedCode || cancelled) return
+      await enterServiceMode(savedCode)
+    }
+    void restore()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restauration au montage uniquement, `enterServiceMode` est stable (deps eventId/fetchOrders).
+  }, [])
 
   async function handleAddItem(menuItem: MenuItemView) {
     if (!ticketCode) return
@@ -423,6 +519,75 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
     } finally {
       setBusyKey((prev) => (prev === key ? null : prev))
     }
+  }
+
+  // Ajuste la quantité d'une ligne déjà ajoutée par le staff (n'importe
+  // lequel — voir findEditableLine) plutôt que de créer une nouvelle ligne à
+  // chaque clic sur "Ajouter" pour le même article.
+  async function handleSetQuantity(menuItem: MenuItemView, item: OrderItem, quantity: number) {
+    const key = `add:${menuItem.name}`
+    setBusyKey(key)
+    try {
+      const res = await fetch('/api/event-orders/update-quantity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId, itemId: item.id, quantity }),
+      })
+      const data = await parseJson<UpdateQuantitySuccessResponse>(res)
+      if (!res.ok || !('ok' in data) || !data.ok) {
+        pushToast(orderErrorMessage('error' in data ? data.error : undefined))
+        return
+      }
+      if (data.noop) {
+        // La ligne a été servie/payée/annulée entre-temps par un autre
+        // membre du staff — l'état local optimiste n'est plus fiable.
+        showNotice('Cet article a déjà été servi, payé ou annulé — modification impossible.')
+        if (ticketCode) void fetchOrders(ticketCode)
+        return
+      }
+      setItems((prev) => prev.map((i) => (i.id === item.id ? data.item : i)))
+    } catch {
+      pushToast('Connexion impossible — réessaie.')
+    } finally {
+      setBusyKey((prev) => (prev === key ? null : prev))
+    }
+  }
+
+  async function handleRemoveLine(menuItem: MenuItemView, item: OrderItem) {
+    const key = `add:${menuItem.name}`
+    setBusyKey(key)
+    try {
+      const res = await fetch('/api/event-orders/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId, itemId: item.id }),
+      })
+      const data = await parseJson<RemoveSuccessResponse>(res)
+      if (!res.ok || !('ok' in data) || !data.ok) {
+        pushToast(orderErrorMessage('error' in data ? data.error : undefined))
+        return
+      }
+      if (data.noop) {
+        showNotice('Cet article a déjà été servi, payé ou annulé — modification impossible.')
+        if (ticketCode) void fetchOrders(ticketCode)
+        return
+      }
+      setItems((prev) => prev.filter((i) => i.id !== item.id))
+    } catch {
+      pushToast('Connexion impossible — réessaie.')
+    } finally {
+      setBusyKey((prev) => (prev === key ? null : prev))
+    }
+  }
+
+  function handleStep(menuItem: MenuItemView, editable: OrderItem | undefined, delta: number) {
+    if (!editable) {
+      if (delta > 0) void handleAddItem(menuItem)
+      return
+    }
+    const next = editable.quantity + delta
+    if (next <= 0) void handleRemoveLine(menuItem, editable)
+    else void handleSetQuantity(menuItem, editable, next)
   }
 
   async function handleServe(item: OrderItem) {
@@ -454,6 +619,10 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
   async function handlePay() {
     if (!ticketCode) return
+    // Action financière potentiellement conséquente et immédiate (pas de
+    // brouillon) — une confirmation explicite évite qu'un mistap n'encaisse
+    // tout le ticket, symétrique du motif écrit déjà exigé pour annuler.
+    if (!window.confirm(`Confirmer l'encaissement de ${fmtMoney(unpaidTotal, currency)} ?`)) return
     setBusyKey('pay')
     try {
       const res = await fetch('/api/event-orders/pay', {
@@ -477,10 +646,10 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
   async function handleCancel(item: OrderItem) {
     const reason = (cancelDrafts[item.id] ?? '').trim()
-    if (!reason) {
-      pushToast("Indique un motif avant de confirmer l'annulation.")
-      return
-    }
+    // Garde-fou silencieux : inatteignable en usage normal, le bouton
+    // "Confirmer" est déjà désactivé tant que le motif est vide (voir le
+    // rendu ci-dessous) — pas de toast ici, juste un filet de sécurité.
+    if (!reason) return
     const key = `cancel:${item.id}`
     setBusyKey(key)
     try {
@@ -543,7 +712,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         </div>
 
         {notice && (
-          <div style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 12, padding: '10px 14px' }}>
+          <div role="status" aria-live="polite" style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 16, padding: '10px 14px' }}>
             <p style={{ fontSize: 13, color: 'var(--gold)', margin: 0 }}>{notice}</p>
           </div>
         )}
@@ -551,8 +720,13 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         {mode === 'scan' ? (
           <>
             {checkinError && (
-              <div style={{ background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 12, padding: '10px 14px' }}>
-                <p style={{ fontSize: 13, color: 'var(--pink)', margin: 0 }}>{checkinError}</p>
+              <div role="alert" aria-live="assertive" style={{ background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 16, padding: '10px 14px' }}>
+                <p style={{ fontSize: 13, color: 'var(--pink)', margin: checkinErrorCode === 'auth_required' ? '0 0 8px' : 0 }}>{checkinError}</p>
+                {checkinErrorCode === 'auth_required' && (
+                  <Link href="/login" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+                    Se reconnecter
+                  </Link>
+                )}
               </div>
             )}
 
@@ -575,11 +749,19 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 }}
                 style={{ display: 'flex', gap: 8 }}
               >
+                <label htmlFor="scanner-manual-code" style={SR_ONLY_STYLE}>
+                  Code du billet
+                </label>
                 <input
+                  id="scanner-manual-code"
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value)}
                   placeholder="Code du billet"
-                  style={inputStyle}
+                  style={{
+                    ...inputStyle,
+                    textTransform: 'uppercase',
+                    ...(checkinError ? { border: '1px solid var(--pink)' } : {}),
+                  }}
                   autoCapitalize="characters"
                 />
                 <button type="submit" disabled={checkinBusy || !manualCode.trim()} style={primaryButtonStyle(checkinBusy || !manualCode.trim())}>
@@ -605,8 +787,8 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 <div style={{ textAlign: 'center', marginBottom: 10 }}>
                   <div
                     style={{
-                      width: 56,
-                      height: 56,
+                      width: 64,
+                      height: 64,
                       borderRadius: '50%',
                       margin: '0 auto 10px',
                       background: checkinResult.alreadyCheckedIn ? 'rgba(200,169,110,0.10)' : 'rgba(78,232,200,0.10)',
@@ -617,11 +799,11 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                     }}
                   >
                     {checkinResult.alreadyCheckedIn ? (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth={2}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5-6a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     ) : (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={2.5}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal-solid)" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                     )}
@@ -632,7 +814,12 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                       fontWeight: 800,
                       margin: 0,
                       letterSpacing: '-0.3px',
-                      color: checkinResult.alreadyCheckedIn ? 'var(--gold)' : 'var(--teal)',
+                      // --teal-solid ici (pas --teal) : le badge "Servi" d'une
+                      // ligne de commande, plus bas sur cette même page, utilise
+                      // déjà --teal — deux informations différentes (validité
+                      // d'entrée vs statut d'un article) méritent des teintes
+                      // légèrement distinctes plutôt que la même partout.
+                      color: checkinResult.alreadyCheckedIn ? 'var(--gold)' : 'var(--teal-solid)',
                     }}
                   >
                     {checkinResult.alreadyCheckedIn ? 'Déjà entré' : 'Billet valide'}
@@ -641,6 +828,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 <p style={{ fontSize: 13.5, color: 'var(--text)', margin: '0 0 4px' }}>
                   {checkinResult.ticket.place} · {fmtMoney(checkinResult.ticket.totalPrice, checkinResult.ticket.currency)}
                 </p>
+                {checkinResult.ticket.holderName && (
+                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Titulaire : {checkinResult.ticket.holderName}</p>
+                )}
                 {checkinResult.ticket.guestName && (
                   <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Invité : {checkinResult.ticket.guestName}</p>
                 )}
@@ -649,8 +839,8 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                     Précommandes : {checkinResult.ticket.preorders.map((p) => `${p.name} ×${p.qty}`).join(', ')}
                   </p>
                 )}
-                <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>
-                  {checkinResult.pointAwarded ? 'Point de fidélité crédité au titulaire.' : 'Aucun point de fidélité crédité.'}
+                <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>
+                  {checkinResult.pointAwarded ? 'Point de fidélité crédité au titulaire.' : 'Pas de point de fidélité pour ce scan.'}
                 </p>
               </section>
             )}
@@ -664,8 +854,18 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   {items.map((item) => {
                     const meta = STATUS_META[item.status]
                     const canServe = item.status === 'sent'
-                    const canCancel = rank === 3 && item.status !== 'cancelled'
+                    // Reflète EXACTEMENT la condition serveur de cancelOrderItem
+                    // (lib/server/eventOrders.ts) : seul un item déjà payé ou déjà
+                    // annulé est un no-op — un item déjà SERVI reste annulable
+                    // (ex. erreur de service à corriger), donc pas exclu ici.
+                    const canCancel = rank === 3 && item.status !== 'cancelled' && !item.paidAt
                     const isCancelling = cancellingItemId === item.id
+                    const serveKey = `serve:${item.id}`
+                    const cancelKey = `cancel:${item.id}`
+                    // Une action en cours sur CETTE ligne (Servir en vol) doit
+                    // bloquer l'ouverture du formulaire d'annulation concurrent
+                    // sur la même ligne, pas seulement son propre bouton.
+                    const rowBusy = busyKey === serveKey || busyKey === cancelKey
                     return (
                       <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
@@ -673,45 +873,72 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                             {item.name} <span style={{ color: 'var(--text-faint)', fontWeight: 500 }}>×{item.quantity}</span>
                           </p>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
                             <span style={{ fontSize: 10.5, fontWeight: 700, color: meta.color, background: meta.bg, padding: '3px 9px', borderRadius: 999, whiteSpace: 'nowrap' }}>
                               {meta.label}
                             </span>
+                            {item.paidAt && (
+                              <span
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: 700,
+                                  color: 'var(--teal-solid)',
+                                  background: 'rgba(62,214,181,0.16)',
+                                  padding: '3px 9px',
+                                  borderRadius: 999,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                Payé
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           {canServe && (
                             <button
                               type="button"
-                              disabled={busyKey === `serve:${item.id}`}
+                              disabled={busyKey === serveKey}
                               onClick={() => void handleServe(item)}
-                              style={secondaryButtonStyle(busyKey === `serve:${item.id}`)}
+                              style={serveButtonStyle(busyKey === serveKey)}
                             >
-                              {busyKey === `serve:${item.id}` ? '…' : 'Servir'}
+                              {busyKey === serveKey ? '…' : 'Servir'}
                             </button>
                           )}
                           {canCancel && (
-                            <button type="button" onClick={() => setCancellingItemId(isCancelling ? null : item.id)} style={secondaryButtonStyle(false)}>
+                            <button
+                              type="button"
+                              disabled={rowBusy}
+                              onClick={() => setCancellingItemId(isCancelling ? null : item.id)}
+                              style={secondaryButtonStyle(rowBusy)}
+                            >
                               Annuler
                             </button>
                           )}
                         </div>
                         {isCancelling && (
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <input
-                              value={cancelDrafts[item.id] ?? ''}
-                              onChange={(e) => setCancelDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                              placeholder="Motif de l'annulation"
-                              style={inputStyle}
-                            />
-                            <button
-                              type="button"
-                              disabled={!(cancelDrafts[item.id] ?? '').trim() || busyKey === `cancel:${item.id}`}
-                              onClick={() => void handleCancel(item)}
-                              style={dangerButtonStyle(!(cancelDrafts[item.id] ?? '').trim() || busyKey === `cancel:${item.id}`)}
-                            >
-                              {busyKey === `cancel:${item.id}` ? '…' : 'Confirmer'}
-                            </button>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <label htmlFor={`cancel-reason-${item.id}`} style={SR_ONLY_STYLE}>
+                                Motif de l&apos;annulation
+                              </label>
+                              <input
+                                id={`cancel-reason-${item.id}`}
+                                value={cancelDrafts[item.id] ?? ''}
+                                onChange={(e) => setCancelDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                                placeholder="Motif de l'annulation"
+                                style={inputStyle}
+                              />
+                              <button
+                                type="button"
+                                disabled={!(cancelDrafts[item.id] ?? '').trim() || busyKey === cancelKey}
+                                onClick={() => void handleCancel(item)}
+                                style={dangerButtonStyle(!(cancelDrafts[item.id] ?? '').trim() || busyKey === cancelKey)}
+                              >
+                                {busyKey === cancelKey ? '…' : 'Confirmer'}
+                              </button>
+                            </div>
+                            <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Motif obligatoire.</p>
                           </div>
                         )}
                       </div>
@@ -722,7 +949,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             </section>
 
             <section>
-              <h2 style={sectionTitleStyle}>Ajouter au menu</h2>
+              <h2 style={{ ...sectionTitleStyle, marginBottom: 18 }}>Ajouter au menu</h2>
               {menu.length === 0 ? (
                 <div style={{ ...cardStyle, padding: '40px 20px', textAlign: 'center' }}>
                   <p style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px' }}>Aucune carte disponible</p>
@@ -739,6 +966,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                         {catItems.map((menuItem) => {
                           const key = `add:${menuItem.name}`
                           const busy = busyKey === key
+                          const editable = findEditableLine(items, menuItem.name)
                           return (
                             <div
                               key={menuItem.name}
@@ -757,9 +985,17 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                 {menuItem.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
                                 <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: '4px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>
                               </div>
-                              <button type="button" disabled={busy} onClick={() => void handleAddItem(menuItem)} style={primaryButtonStyle(busy)}>
-                                {busy ? '…' : 'Ajouter'}
-                              </button>
+                              {editable ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                                  <StepButton label="−" disabled={busy} onClick={() => handleStep(menuItem, editable, -1)} />
+                                  <span style={{ minWidth: 18, textAlign: 'center', fontWeight: 700 }}>{editable.quantity}</span>
+                                  <StepButton label="+" disabled={busy} onClick={() => handleStep(menuItem, editable, 1)} />
+                                </div>
+                              ) : (
+                                <button type="button" disabled={busy} onClick={() => void handleAddItem(menuItem)} style={primaryButtonStyle(busy)}>
+                                  {busy ? '…' : 'Ajouter'}
+                                </button>
+                              )}
                             </div>
                           )
                         })}
@@ -773,7 +1009,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         )}
       </div>
 
-      {mode === 'service' && (
+      {mode === 'service' && items.length > 0 && (
         <div
           style={{
             position: 'fixed',
@@ -807,9 +1043,11 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       )}
 
       <div
+        role="status"
+        aria-live="polite"
         style={{
           position: 'fixed',
-          bottom: mode === 'service' ? 74 : 16,
+          bottom: mode === 'service' && items.length > 0 ? 74 : 16,
           left: 0,
           right: 0,
           display: 'flex',
@@ -841,5 +1079,31 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         ))}
       </div>
     </main>
+  )
+}
+
+function StepButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      style={{
+        width: 30,
+        height: 30,
+        borderRadius: '50%',
+        border: '1px solid var(--border-strong)',
+        background: disabled ? 'rgba(255,255,255,0.03)' : 'var(--surface-2)',
+        color: 'var(--text)',
+        fontSize: 16,
+        fontWeight: 700,
+        cursor: disabled ? 'default' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {label}
+    </button>
   )
 }

@@ -29,15 +29,15 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
     <div style={{ padding: '28px 22px 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
       <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 16px' }}>Organisateurs</h1>
 
-      <form action="/organizers" method="get" style={{ display: 'flex', gap: 8, maxWidth: 420, marginBottom: 24 }}>
+      <form action="/organizers" method="get" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxWidth: 420, marginBottom: 24 }}>
         <input
           type="text"
           name="q"
           defaultValue={search}
           placeholder="Rechercher un organisateur, une ville…"
-          style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5 }}
+          style={{ flex: '1 1 220px', minWidth: 0, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5 }}
         />
-        <button type="submit" style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>
+        <button type="submit" style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>
           Chercher
         </button>
       </form>

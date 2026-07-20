@@ -78,6 +78,12 @@ export default function AgentHomepageConfigClient() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
+  // Dernier brouillon connu du serveur (chargement ou enregistrement réussi)
+  // — sert uniquement à détecter les modifications non enregistrées (bandeau
+  // d'avertissement ci-dessous), jamais affiché tel quel.
+  const [savedDraft, setSavedDraft] = useState<Draft | null>(null)
+  const dirty = loaded && savedDraft !== null && JSON.stringify(draft) !== JSON.stringify(savedDraft)
+
   useEffect(() => {
     let cancelled = false
     async function run() {
@@ -88,13 +94,15 @@ export default function AgentHomepageConfigClient() {
         const data = await res.json()
         if (!res.ok || !data.ok) throw new Error('load_failed')
         if (!cancelled) {
-          setDraft({
+          const loadedDraft: Draft = {
             active: Boolean(data.config.active),
             title: data.config.title ?? DEFAULT_TITLE,
             subtitle: data.config.subtitle ?? DEFAULT_SUBTITLE,
             accent: ACCENT_BY_KEY[data.config.accent as Accent] ? data.config.accent : 'teal',
             eventIds: Array.isArray(data.config.eventIds) ? data.config.eventIds.map(String) : [],
-          })
+          }
+          setDraft(loadedDraft)
+          setSavedDraft(loadedDraft)
           setCandidateEvents(data.candidateEvents ?? [])
           setSelectedLabels(data.selectedEventLabels ?? {})
         }
@@ -168,6 +176,8 @@ export default function AgentHomepageConfigClient() {
         setMsg({ ok: false, text: "Échec de l'enregistrement : réessaie." })
         return
       }
+      setSavedDraft(clean)
+      setDraft(clean)
       setMsg({ ok: true, text: "Enregistré. Le carrousel est à jour sur l'accueil." })
     } catch {
       setMsg({ ok: false, text: "Échec de l'enregistrement : réessaie." })
@@ -183,21 +193,34 @@ export default function AgentHomepageConfigClient() {
 
   if (!loaded) {
     return (
-      <div style={{ ...cardStyle, padding: '28px 18px', textAlign: 'center' }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Chargement de la configuration…</span>
-      </div>
+      <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+          <div style={{ ...cardStyle, padding: '28px 18px', textAlign: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Chargement de la configuration…</span>
+          </div>
+        </div>
+      </main>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {loadError && (
-        <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)' }}>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
-            Lecture impossible — la configuration ci-dessous peut être incomplète. Recharge la page pour réessayer.
-          </p>
-        </div>
-      )}
+    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Actualité</h1>
+
+        {loadError && (
+          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
+              Lecture impossible — la configuration ci-dessous peut être incomplète. Recharge la page pour réessayer.
+            </p>
+          </div>
+        )}
+
+        {dirty && (
+          <div style={{ ...cardStyle, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.06)', padding: '10px 14px' }}>
+            <p style={{ fontSize: 12.5, color: 'var(--gold)', margin: 0, fontWeight: 700 }}>Modifications non enregistrées — pense à cliquer sur « Enregistrer ».</p>
+          </div>
+        )}
 
       <div style={cardStyle}>
         <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: '#fff' }}>Carrousel « Actualité »</h3>
@@ -273,10 +296,12 @@ export default function AgentHomepageConfigClient() {
         <div>
           <span style={labelStyle}>Titre</span>
           <input style={inputStyle} value={draft.title} maxLength={80} onChange={(e) => patch({ title: e.target.value })} placeholder="L'actu du moment" />
+          <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)', marginTop: 4, textAlign: 'right' }}>{draft.title.length}/80</span>
         </div>
         <div>
           <span style={labelStyle}>Sous-titre</span>
           <input style={inputStyle} value={draft.subtitle} maxLength={140} onChange={(e) => patch({ subtitle: e.target.value })} placeholder="Les temps forts à ne pas manquer" />
+          <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)', marginTop: 4, textAlign: 'right' }}>{draft.subtitle.length}/140</span>
         </div>
       </div>
 
@@ -291,7 +316,14 @@ export default function AgentHomepageConfigClient() {
             {eventIds.map((id, i) => {
               const ev = byId.get(id)
               return (
-                <div key={id} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  key={id}
+                  style={
+                    ev
+                      ? { background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10 }
+                      : { background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 10, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10 }
+                  }
+                >
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-faint)', width: 18, textAlign: 'center' }}>{i + 1}</span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     {ev ? (
@@ -393,7 +425,8 @@ export default function AgentHomepageConfigClient() {
         </button>
         {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.ok ? '#4ee8c8' : '#ff9ed2' }}>{msg.text}</span>}
       </div>
-    </div>
+      </div>
+    </main>
   )
 }
 

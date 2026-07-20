@@ -40,18 +40,48 @@ const secondaryBtn: React.CSSProperties = {
 }
 
 const TYPE_LABEL: Record<'organisateur' | 'prestataire', string> = { organisateur: 'Dossier organisateur', prestataire: 'Dossier prestataire' }
+const TYPE_CONTEXT: Record<'organisateur' | 'prestataire', string> = {
+  organisateur: 'Ce dossier te permet de créer et gérer tes propres événements.',
+  prestataire: 'Ce dossier te permet de proposer tes services (DJ, salle, traiteur…) aux organisateurs et clients.',
+}
 const SUCCESS_PATH: Record<'organisateur' | 'prestataire', string> = { organisateur: '/my-events', prestataire: '/offer-services' }
 const SUCCESS_LABEL: Record<'organisateur' | 'prestataire', string> = { organisateur: 'Aller à mes événements', prestataire: 'Aller à mon espace prestataire' }
+const SUPPORT_EMAIL = 'hagechady@liveinblack.com'
 
-function ApplicationCard({ type, application }: { type: 'organisateur' | 'prestataire'; application: ApplicationView | null }) {
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function SupportLink() {
+  return (
+    <a href={`mailto:${SUPPORT_EMAIL}?subject=Question%20sur%20mon%20dossier`} style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
+      Une question ? Contacte le support
+    </a>
+  )
+}
+
+function ApplicationCard({ type, application, roleStatus, id }: { type: 'organisateur' | 'prestataire'; application: ApplicationView | null; roleStatus: 'none' | 'pending' | 'active' | 'rejected'; id: string }) {
   const editPath = `/onboarding-${type}`
 
   return (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <section id={id} style={{ display: 'flex', flexDirection: 'column', gap: 10, scrollMarginTop: 20 }}>
       <h2 style={{ fontSize: 13, fontWeight: 800, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{TYPE_LABEL[type]}</h2>
 
-      {!application && (
+      {!application && roleStatus === 'active' && (
+        <div style={{ ...cardStyle, border: '1px solid rgba(78,232,200,0.35)' }}>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: '0 0 8px' }}>Compte déjà actif</p>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
+            Ton interface {type} est active, mais aucun dossier de candidature n&apos;est associé à ce compte (activation manuelle). Aucune action n&apos;est requise.
+          </p>
+          <Link href={SUCCESS_PATH[type]} style={primaryBtn}>
+            {SUCCESS_LABEL[type]}
+          </Link>
+        </div>
+      )}
+
+      {!application && roleStatus !== 'active' && (
         <div style={cardStyle}>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 6px' }}>{TYPE_CONTEXT[type]}</p>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '0 0 16px' }}>Tu n&apos;as pas encore de dossier de candidature {type}.</p>
           <Link href={editPath} style={secondaryBtn}>
             Commencer ma candidature
@@ -69,19 +99,25 @@ function ApplicationCard({ type, application }: { type: 'organisateur' | 'presta
       )}
 
       {application && ['submitted', 'under_review', 'resubmitted'].includes(application.status) && (
-        <div style={{ ...cardStyle, border: '1px solid rgba(200,169,110,0.3)' }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--gold)', margin: '0 0 8px' }}>Dossier verrouillé — en attente de validation</p>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+        <div style={{ ...cardStyle, border: '1px solid rgba(139,92,246,0.35)' }}>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--violet)', margin: '0 0 8px' }}>Dossier verrouillé — en attente de validation</p>
+          {application.submittedAt && (
+            <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Envoyé le {formatDate(application.submittedAt)}</p>
+          )}
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
             Notre équipe examine ton dossier. Le statut ci-dessus sera mis à jour dès qu&apos;une décision sera prise. Si des corrections sont nécessaires, tu pourras
             le modifier et le renvoyer.
           </p>
+          <SupportLink />
         </div>
       )}
 
       {application?.status === 'needs_changes' && (
-        <div style={{ ...cardStyle, border: '1px solid rgba(200,169,110,0.4)' }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--gold)', margin: '0 0 8px' }}>Corrections requises</p>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>{application.requestedChanges}</p>
+        <div style={{ ...cardStyle, border: '1px solid rgba(245,158,11,0.4)' }}>
+          <p style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', margin: '0 0 8px' }}>Corrections requises</p>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
+            {application.requestedChanges || 'Aucun motif détaillé fourni.'}
+          </p>
           <Link href={editPath} style={primaryBtn}>
             Corriger mon dossier
           </Link>
@@ -91,10 +127,18 @@ function ApplicationCard({ type, application }: { type: 'organisateur' | 'presta
       {application?.status === 'rejected' && (
         <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)' }}>
           <p style={{ fontSize: 16, fontWeight: 800, color: '#e05aaa', margin: '0 0 8px' }}>Dossier refusé</p>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>{application.rejectionReason}</p>
-          <Link href={editPath} style={primaryBtn}>
-            Soumettre un nouveau dossier
-          </Link>
+          {application.rejectedAt && (
+            <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Le {formatDate(application.rejectedAt)}</p>
+          )}
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
+            {application.rejectionReason || 'Aucun motif détaillé fourni.'}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <Link href={editPath} style={primaryBtn}>
+              Soumettre un nouveau dossier
+            </Link>
+            <SupportLink />
+          </div>
         </div>
       )}
 
@@ -127,9 +171,22 @@ export default async function MonDossierPage() {
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 60px' }}>
       <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#fff', margin: 0 }}>Mon dossier</h1>
-        <ApplicationCard type="organisateur" application={organisateur} />
-        <ApplicationCard type="prestataire" application={prestataire} />
+        <div>
+          <Link href="/profile" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+            ← Mon profil
+          </Link>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#fff', margin: '8px 0 0' }}>Mon dossier</h1>
+        </div>
+        <nav style={{ display: 'flex', gap: 16 }}>
+          <a href="#organisateur" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+            ↓ Dossier organisateur
+          </a>
+          <a href="#prestataire" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+            ↓ Dossier prestataire
+          </a>
+        </nav>
+        <ApplicationCard id="organisateur" type="organisateur" application={organisateur} roleStatus={session.user.orgStatus} />
+        <ApplicationCard id="prestataire" type="prestataire" application={prestataire} roleStatus={session.user.prestStatus} />
       </div>
     </main>
   )

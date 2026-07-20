@@ -66,13 +66,28 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
 ]
 
 const ROLE_LABEL: Record<Role, string> = { client: 'Client', organisateur: 'Organisateur', prestataire: 'Prestataire', agent: 'Agent' }
-const ROLE_COLOR: Record<Role, string> = { client: '#8b8f9c', organisateur: 'var(--gold)', prestataire: '#e05aaa', agent: 'var(--gold)' }
 
-function statusLabel(u: UserSummary): { label: string; color: string } {
-  if (u.disabled) return { label: 'DÉSACTIVÉ', color: '#8b8f9c' }
-  if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)' }
-  if (u.status === 'rejected') return { label: 'REFUSÉ', color: '#e05aaa' }
-  return { label: 'ACTIF', color: 'var(--teal)' }
+// Bordure/fond précalculés (plutôt que `${color}55`/`${color}22` en template
+// string) : les couleurs en `var(--*)` ne supportent pas la concaténation
+// d'un canal alpha hexadécimal — ça produit une chaîne CSS invalide et le
+// badge perd silencieusement sa pastille/bordure (voir Badge() ci-dessous).
+interface BadgeColors {
+  color: string
+  border: string
+  bg: string
+}
+const ROLE_BADGE: Record<Role, BadgeColors> = {
+  client: { color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' },
+  organisateur: { color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' },
+  prestataire: { color: '#e05aaa', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' },
+  agent: { color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' },
+}
+
+function statusLabel(u: UserSummary): { label: string } & BadgeColors {
+  if (u.disabled) return { label: 'DÉSACTIVÉ', color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' }
+  if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' }
+  if (u.status === 'rejected') return { label: 'REFUSÉ', color: '#e05aaa', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' }
+  return { label: 'ACTIF', color: 'var(--teal)', border: 'rgba(78,232,200,0.35)', bg: 'rgba(78,232,200,0.14)' }
 }
 
 function fmtDate(iso: string | null): string {
@@ -84,9 +99,9 @@ const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 13.5, outline: 'none' }
 const sectionTitleStyle: React.CSSProperties = { fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 10px' }
 
-function Badge({ label, color }: { label: string; color: string }) {
+function Badge({ label, color, border, bg }: { label: string } & BadgeColors) {
   return (
-    <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 8, border: `1px solid ${color}55`, background: `${color}22`, color, letterSpacing: '0.04em' }}>
+    <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 8, border: `1px solid ${border}`, background: bg, color, letterSpacing: '0.04em' }}>
       {label}
     </span>
   )
@@ -184,6 +199,15 @@ export default function AgentUsersClient() {
     setEditField(null)
     setConfirmDisable(false)
   }
+
+  useEffect(() => {
+    if (!selectedId) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeDetail()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [selectedId])
 
   useEffect(() => {
     if (!selectedId) return
@@ -291,7 +315,19 @@ export default function AgentUsersClient() {
           </div>
         )}
 
-        <input style={inputStyle} placeholder="Nom, email, téléphone…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div style={{ position: 'relative' }}>
+          <input style={{ ...inputStyle, ...(search ? { paddingRight: 34 } : null) }} placeholder="Nom, email, téléphone…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          {search && (
+            <button
+              type="button"
+              aria-label="Effacer la recherche"
+              onClick={() => setSearch('')}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              ×
+            </button>
+          )}
+        </div>
 
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
           {ROLE_FILTERS.map((f) => (
@@ -301,7 +337,7 @@ export default function AgentUsersClient() {
               style={{
                 flexShrink: 0,
                 padding: '4px 10px',
-                borderRadius: 4,
+                borderRadius: 999,
                 fontSize: 10.5,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
@@ -324,7 +360,7 @@ export default function AgentUsersClient() {
               style={{
                 flexShrink: 0,
                 padding: '3px 8px',
-                borderRadius: 4,
+                borderRadius: 999,
                 fontSize: 10.5,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
@@ -342,7 +378,7 @@ export default function AgentUsersClient() {
             style={{
               flexShrink: 0,
               padding: '3px 8px',
-              borderRadius: 4,
+              borderRadius: 999,
               fontSize: 10.5,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
@@ -350,12 +386,14 @@ export default function AgentUsersClient() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 5,
-              background: onlineOnly ? 'rgba(34,197,94,0.14)' : 'transparent',
-              border: onlineOnly ? '1px solid rgba(34,197,94,0.5)' : '1px solid var(--border)',
-              color: onlineOnly ? '#22c55e' : 'var(--text-faint)',
+              background: onlineOnly ? 'rgba(78,232,200,0.14)' : 'transparent',
+              border: onlineOnly ? '1px solid rgba(78,232,200,0.5)' : '1px solid var(--border)',
+              color: onlineOnly ? 'var(--teal)' : 'var(--text-faint)',
             }}
           >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: onlineOnly ? '#22c55e' : 'rgba(255,255,255,0.25)' }} /> En ligne{onlineOnly ? ' ✕' : ''}
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: onlineOnly ? 'var(--teal)' : 'rgba(255,255,255,0.25)' }} />
+            En ligne
+            {onlineOnly && <span style={{ marginLeft: 2, opacity: 0.75 }}>✕</span>}
           </button>
         </div>
 
@@ -397,7 +435,7 @@ export default function AgentUsersClient() {
                     >
                       {(u.displayName || '?').charAt(0).toUpperCase()}
                     </div>
-                    {u.online && <span style={{ position: 'absolute', bottom: 1, right: 1, width: 9, height: 9, borderRadius: '50%', background: '#22c55e', border: '2px solid var(--obsidian)' }} />}
+                    {u.online && <span style={{ position: 'absolute', bottom: 1, right: 1, width: 9, height: 9, borderRadius: '50%', background: 'var(--teal)', border: '2px solid var(--obsidian)' }} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.displayName}</p>
@@ -408,8 +446,8 @@ export default function AgentUsersClient() {
                     </p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                    <Badge label={ROLE_LABEL[u.role]} color={ROLE_COLOR[u.role]} />
-                    <Badge label={st.label} color={st.color} />
+                    <Badge label={ROLE_LABEL[u.role]} {...ROLE_BADGE[u.role]} />
+                    <Badge label={st.label} color={st.color} border={st.border} bg={st.bg} />
                   </div>
                 </button>
               )
@@ -525,8 +563,8 @@ function DetailPanel({
           <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '2px 0 0' }}>{detail.email}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
-          <Badge label={ROLE_LABEL[detail.role]} color={ROLE_COLOR[detail.role]} />
-          <Badge label={st.label} color={st.color} />
+          <Badge label={ROLE_LABEL[detail.role]} {...ROLE_BADGE[detail.role]} />
+          <Badge label={st.label} color={st.color} border={st.border} bg={st.bg} />
         </div>
       </div>
 
@@ -585,6 +623,7 @@ function DetailPanel({
                   <button
                     onClick={() => setEditField(null)}
                     disabled={editBusy}
+                    aria-label="Annuler"
                     style={{ padding: '0 14px', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: '1px solid var(--border-strong)', color: 'rgba(255,255,255,0.7)', fontSize: 15 }}
                   >
                     ×
@@ -639,7 +678,7 @@ function DetailPanel({
             {confirmDisable && (
               <ConfirmModal
                 title={`Suspendre le compte de ${detail.displayName} ?`}
-                color="#c2347f"
+                color="var(--pink)"
                 busy={actionBusy}
                 onCancel={() => setConfirmDisable(false)}
                 onConfirm={() => onSetDisabled(true)}

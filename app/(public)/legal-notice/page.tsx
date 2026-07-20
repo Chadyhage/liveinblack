@@ -21,8 +21,7 @@ ${LEGAL_DISPLAY.sirenDisplay !== "SIREN en cours d'attribution" ? `SIREN : ${LEG
 ${LEGAL.rcs || ''}
 ${LEGAL.vatNumber ? `N° TVA intracommunautaire : ${LEGAL.vatNumber}` : ''}
 
-Adresse : ${LEGAL_DISPLAY.addressDisplay}
-
+${LEGAL.address.street || LEGAL.address.city ? `Adresse : ${LEGAL_DISPLAY.addressDisplay}\n` : ''}
 ${LEGAL.director.role} : ${LEGAL.director.name}
 Directeur de la publication : ${LEGAL.director.name}`
         .replace(/\n\n+/g, '\n\n')

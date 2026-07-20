@@ -247,6 +247,15 @@ export default function AmbientMusicPlayer() {
           .amp-spin { animation: none; }
           .amp-press, .amp-tonearm { transition: none; }
         }
+        /* Sur petit écran, réduit l'emprise du bouton flottant pour limiter le
+           chevauchement avec le contenu scrollable en dessous (ex. le texte de
+           stock du panneau de réservation, EventCheckoutPanel.tsx). */
+        @media (max-width: 480px) {
+          .amp-trigger {
+            width: 48px !important;
+            height: 48px !important;
+          }
+        }
         .mp-btn-card {
           position: relative;
           display: flex;
@@ -604,6 +613,7 @@ export default function AmbientMusicPlayer() {
         <button
           onClick={togglePanel}
           title="Ambiance musicale"
+          className="amp-trigger"
           style={{
             position: 'relative',
             width: 64,

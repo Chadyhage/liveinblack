@@ -39,21 +39,55 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-      <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: '16px 18px', cursor: 'pointer' }} onClick={() => setShowFees((v) => !v)}>
-        <p style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 8px' }}>
-          Revenus billetterie + précommandes
-        </p>
-        {[...byCurrency.entries()].map(([currency, totals]) => (
-          <p key={currency} style={{ font: '600 26px Inter, sans-serif', color: '#fff', margin: '0 0 2px' }}>
-            {formatMoney(totals.revenue, currency)}
-          </p>
-        ))}
+      <button
+        type="button"
+        aria-expanded={showFees}
+        onClick={() => setShowFees((v) => !v)}
+        style={{
+          border: '1px solid var(--border)',
+          borderRadius: 16,
+          background: 'var(--surface)',
+          padding: '16px 18px',
+          cursor: 'pointer',
+          textAlign: 'left',
+          font: 'inherit',
+          color: 'inherit',
+          width: '100%',
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '0 0 8px' }}>
+          <span style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+            Revenus billetterie + précommandes
+          </span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--text-muted)"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0, transform: showFees ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+            aria-hidden="true"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </span>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {[...byCurrency.entries()].map(([currency, totals]) => (
+            <span key={currency} style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ font: '600 26px Inter, sans-serif', color: '#fff' }}>{formatMoney(totals.revenue, currency)}</span>
+              {byCurrency.size > 1 && <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-faint)' }}>{currency}</span>}
+            </span>
+          ))}
+        </span>
         {showFees && (
-          <p style={{ font: '500 11.5px Inter, sans-serif', color: 'var(--text-faint)', lineHeight: 1.6, margin: '8px 0 0' }}>
+          <span style={{ display: 'block', font: '500 11.5px Inter, sans-serif', color: 'var(--text-faint)', lineHeight: 1.6, margin: '8px 0 0' }}>
             Frais de service (5 % + 0,49 € par billet, plafonné à 2,50 € — ou 5 % + 300 FCFA, plafonné à 1 500 FCFA) payés par l&rsquo;acheteur. Tu conserves 100 % du prix affiché.
-          </p>
+          </span>
         )}
-      </div>
+      </button>
       <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: '16px 18px' }}>
         <p style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 8px' }}>Billets émis</p>
         <p style={{ font: '600 26px Inter, sans-serif', color: '#fff', margin: 0 }}>{totalTickets}</p>

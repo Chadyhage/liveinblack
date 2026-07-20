@@ -76,7 +76,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   }
 
   return (
-    <div style={{ padding: '28px 0 60px' }}>
+    <div style={{ padding: '28px 0 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
       <div style={{ padding: '0 22px', marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 16px' }}>Événements</h1>
         <form action="/events" method="get" style={{ display: 'flex', gap: 8, maxWidth: 420 }}>
@@ -84,9 +84,10 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
             type="text"
             name="q"
             defaultValue={search}
-            placeholder="Rechercher un événement, une ville, un style…"
+            placeholder="Événement, ville, style…"
             style={{
               flex: 1,
+              minWidth: 0,
               padding: '11px 14px',
               borderRadius: 10,
               border: '1px solid var(--border-strong)',
@@ -135,12 +136,15 @@ function SearchResults({
   )
   if (results.length === 0) {
     return (
-      <p style={{ padding: '0 22px', color: 'var(--text-muted)' }}>
-        Aucun résultat pour « {query} ».{' '}
-        <Link href="/events" style={{ color: 'var(--teal)' }}>
+      <div style={{ margin: '0 22px', padding: 30, textAlign: 'center', maxWidth: 460, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
+        <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: 0 }}>Aucun résultat pour « {query} ».</p>
+        <Link
+          href="/events"
+          style={{ marginTop: 16, display: 'inline-block', padding: '13px 24px', borderRadius: 999, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}
+        >
           Voir tous les événements
         </Link>
-      </p>
+      </div>
     )
   }
   return (
@@ -183,7 +187,7 @@ function CategoryRails({
       {byCategory.map(({ category, events: catEvents }) => (
         <EventRow key={category} title={category} events={sortByScore(catEvents, scores)} reasons={reasons} />
       ))}
-      <EventRow title="Autres soirées" events={sortByScore(others, scores)} reasons={reasons} />
+      <EventRow title="Plus d'événements" events={sortByScore(others, scores)} reasons={reasons} />
     </>
   )
 }

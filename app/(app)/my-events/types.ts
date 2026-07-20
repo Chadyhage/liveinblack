@@ -9,6 +9,7 @@ export interface OrganizerEventView {
   time: string
   cancelled: boolean
   postponed: boolean
+  publishAt: string | null
   isPrivate: boolean
   imageUrl: string | null
   videoUrl: string | null

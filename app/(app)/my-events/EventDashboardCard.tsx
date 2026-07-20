@@ -17,11 +17,19 @@ const ACTIONS: { key: EventActionKey; label: string; color: string }[] = [
   { key: 'duplicate', label: 'Dupliquer', color: 'var(--violet)' },
   { key: 'edit', label: 'Modifier', color: 'var(--gold)' },
   { key: 'postpone', label: 'Reporter', color: 'var(--gold)' },
-  { key: 'delete', label: 'Supprimer', color: '#e05aaa' },
+  { key: 'delete', label: 'Supprimer / Annuler', color: '#e05aaa' },
 ]
+
+function statusBadge(event: OrganizerEventView): { label: string; background: string; color: string } {
+  if (event.cancelled) return { label: 'Annulé', background: 'var(--pink)', color: '#fff' }
+  if (event.postponed) return { label: 'Reporté', background: 'var(--gold)', color: 'var(--obsidian)' }
+  if (event.publishAt && new Date(event.publishAt).getTime() > Date.now()) return { label: 'Programmé', background: 'var(--violet)', color: '#fff' }
+  return { label: 'Publié', background: 'var(--teal)', color: 'var(--obsidian)' }
+}
 
 export default function EventDashboardCard({ event, onAction }: { event: OrganizerEventView; onAction: (action: EventActionKey, event: OrganizerEventView) => void }) {
   const actions = ACTIONS.filter((a) => a.key !== 'codes' || event.isPrivate)
+  const badge = statusBadge(event)
 
   return (
     <article
@@ -49,11 +57,11 @@ export default function EventDashboardCard({ event, onAction }: { event: Organiz
             font: '700 10px Inter, sans-serif',
             letterSpacing: '.05em',
             textTransform: 'uppercase',
-            color: 'var(--obsidian)',
-            background: 'var(--teal)',
+            color: badge.color,
+            background: badge.background,
           }}
         >
-          Publié
+          {badge.label}
         </span>
       </div>
       <div style={{ padding: '14px 16px 16px' }}>

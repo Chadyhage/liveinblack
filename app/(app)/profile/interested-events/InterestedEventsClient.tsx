@@ -81,7 +81,7 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
               <HeartOutline />
             </div>
             <p style={{ fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 6px' }}>Aucun événement sauvegardé</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Sur une fiche événement, touche Intéressé pour le retrouver ici.</p>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Sur une fiche événement, clique sur Intéressé pour le retrouver ici.</p>
           </div>
         ) : (
           <>

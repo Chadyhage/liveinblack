@@ -1,10 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface AccessCodesModalProps {
   event: { id: string; name: string }
   onClose: () => void
+}
+
+interface AccessCodeItem {
+  code: string
+  usedBy: string | null
+  usedAt: string | null
+  createdAt: string
+}
+
+interface AccessCodesListResponse {
+  ok: true
+  codes: AccessCodeItem[]
 }
 
 interface AccessCodesGenerateResponse {
@@ -40,11 +52,41 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
   const [codes, setCodes] = useState<string[] | null>(null)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
   const [allCopied, setAllCopied] = useState(false)
+  const [loadingExisting, setLoadingExisting] = useState(true)
+  const [qtyClampedMsg, setQtyClampedMsg] = useState('')
+
+  // Charge les codes déjà générés à l'ouverture — sans ça, rouvrir la modale
+  // plus tard ne permettait plus que d'en générer de nouveaux (les codes déjà
+  // distribués devenaient invisibles/impossibles à recopier).
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      try {
+        const res = await fetch(`/api/organizer-events/${event.id}/access-codes`)
+        const data = (await res.json().catch(() => null)) as (AccessCodesListResponse & ApiErrorResponse) | null
+        if (cancelled) return
+        if (res.ok && data?.ok && data.codes.length > 0) {
+          setCodes(data.codes.map((c) => c.code))
+        }
+      } finally {
+        if (!cancelled) setLoadingExisting(false)
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [event.id])
 
   async function generateCodes() {
     if (generating) return
     const parsed = Number(qty)
-    const count = Number.isFinite(parsed) && parsed > 0 ? Math.min(100, Math.floor(parsed)) : 10
+    const wasInvalid = !Number.isFinite(parsed) || parsed <= 0
+    const requested = wasInvalid ? 10 : Math.floor(parsed)
+    const count = Math.min(100, requested)
+    if (requested > 100) setQtyClampedMsg('Limité à 100 codes par génération — 100 codes seront générés.')
+    else if (wasInvalid && qty.trim() !== '') setQtyClampedMsg('Quantité invalide — 10 codes seront générés par défaut.')
+    else setQtyClampedMsg('')
     setGenerating(true)
     setError('')
     try {
@@ -134,7 +176,11 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
           </p>
         </div>
 
-        {!codes ? (
+        {loadingExisting ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
+            <Spinner size={20} color="rgba(255,255,255,0.6)" />
+          </div>
+        ) : !codes ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
@@ -143,7 +189,10 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
               <input
                 type="number"
                 value={qty}
-                onChange={(e) => setQty(e.target.value)}
+                onChange={(e) => {
+                  setQty(e.target.value)
+                  setQtyClampedMsg('')
+                }}
                 placeholder="10"
                 min={1}
                 max={100}
@@ -160,6 +209,7 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
                 }}
               />
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>100 codes maximum par génération</p>
+              {qtyClampedMsg && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--gold)', marginTop: 4 }}>{qtyClampedMsg}</p>}
             </div>
             {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{error}</p>}
             <div style={{ display: 'flex', gap: 8 }}>

@@ -35,7 +35,7 @@ describe('computePayoutGapLabel', () => {
       ],
       { stripeChargesEnabled: true, momos: {} }
     )
-    expect(label).toBe('un numéro Mobile Money pour Togo · un numéro Mobile Money pour Bénin')
+    expect(label).toBe('un numéro Mobile Money pour Togo et un numéro Mobile Money pour Bénin')
   })
 
   it('ne signale pas un pays dont le numéro est déjà configuré', () => {
@@ -54,6 +54,6 @@ describe('computePayoutGapLabel', () => {
       ],
       { stripeChargesEnabled: false, momos: {} }
     )
-    expect(label).toBe('ton compte bancaire (événements en euros) · un numéro Mobile Money pour Togo')
+    expect(label).toBe('ton compte bancaire (événements en euros) et un numéro Mobile Money pour Togo')
   })
 })

@@ -4,12 +4,23 @@ import { useRouter } from 'next/navigation'
 
 // Port du bouton retour de src/components/LegalPageLayout.jsx
 // (navigate(-1) → router.back()).
+// Fallback vers /home si la page a été ouverte directement (favori, nouvel
+// onglet, lien externe) et qu'il n'y a donc pas d'historique de navigation
+// dans l'app — sinon router.back() peut ne rien faire ou sortir du site.
 export default function LegalBackButton() {
   const router = useRouter()
 
+  const handleClick = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push('/home')
+    }
+  }
+
   return (
     <button
-      onClick={() => router.back()}
+      onClick={handleClick}
       aria-label="Retour"
       style={{
         width: 32,

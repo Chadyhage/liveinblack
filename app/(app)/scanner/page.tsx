@@ -78,7 +78,14 @@ export default async function ScannerIndexPage() {
     collect(extraEvents)
   }
 
-  const events = Array.from(eventsById.values()).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+  // Outil utilisé le soir même pour trouver "l'événement de ce soir" : tri
+  // croissant (le plus proche en premier), pas décroissant.
+  // Outil utilisé le soir même pour trouver "l'événement de ce soir" : tri
+  // croissant (le plus proche en premier), pas décroissant.
+  const events = Array.from(eventsById.values()).sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0))
+  // 'en-CA' formate en YYYY-MM-DD, exactement le format de stockage de
+  // `ev.date` — comparaison directe possible pour détecter "ce soir".
+  const todayStr = new Date().toLocaleDateString('en-CA')
 
   return (
     <main style={{ minHeight: '100vh', padding: '28px 16px 60px' }}>
@@ -104,32 +111,65 @@ export default async function ScannerIndexPage() {
           >
             <p style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px' }}>Aucun événement à scanner</p>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
-              Tu n&apos;as pour l&apos;instant aucun rôle staff sur un événement.
+              Tu n&apos;as pour l&apos;instant aucun rôle staff sur un événement. Demande à l&apos;organisateur de
+              l&apos;événement de t&apos;ajouter comme staff depuis son espace organisateur.
             </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {events.map((ev) => (
-              <Link
-                key={ev.id}
-                href={`/scanner/${ev.id}`}
-                style={{
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 12,
-                  padding: '14px 16px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: 12,
-                  textDecoration: 'none',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-                }}
-              >
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{ev.name}</span>
-                <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>{ev.dateDisplay}</span>
-              </Link>
-            ))}
+            {/* Pas de className Tailwind — juste un sélecteur :hover, impossible
+                à exprimer avec un objet style={{}} inline ; même pattern que
+                CookieConsentBanner.tsx/AmbientMusicPlayer.tsx. */}
+            <style>{`
+              .scanner-event-link:hover {
+                background: var(--surface-2);
+                border-color: var(--border-strong);
+              }
+            `}</style>
+            {events.map((ev) => {
+              const isToday = ev.date === todayStr
+              return (
+                <Link
+                  key={ev.id}
+                  href={`/scanner/${ev.id}`}
+                  className="scanner-event-link"
+                  aria-label={`Scanner ${ev.name}`}
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 12,
+                    padding: '14px 16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 12,
+                    textDecoration: 'none',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{ev.name}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {isToday && (
+                      <span
+                        style={{
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          color: 'var(--teal)',
+                          background: 'rgba(78,232,200,0.14)',
+                          padding: '3px 9px',
+                          borderRadius: 999,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        Ce soir
+                      </span>
+                    )}
+                    <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>{ev.dateDisplay}</span>
+                  </span>
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>

@@ -67,7 +67,17 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 22px 60px' }}>
         {error && <p style={{ color: 'var(--pink)', fontSize: 13 }}>{error}</p>}
-        {!data && !error && <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Chargement…</p>}
+        {!data && !error && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '20px 0' }}>
+            <svg width={16} height={16} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
+              <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="var(--text-muted)" strokeWidth={3} strokeLinecap="round">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+              </path>
+            </svg>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0 }}>Chargement…</p>
+          </div>
+        )}
 
         {data && data.ticketCount === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>

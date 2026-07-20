@@ -6,6 +6,7 @@ import { SOCIAL_NETWORKS, type SocialNetworkKey } from '@/lib/shared/social'
 import { regions } from '@/lib/shared/regions'
 import { normalizeRegionIds, getRegionName } from '@/lib/shared/locations'
 import { MOMO_REGIONS } from '@/lib/shared/payoutMomoValidation'
+import { fmtMoney } from '@/lib/shared/money'
 
 // Port de OrganizerPublicStudio.jsx + PayoutPanel.jsx + MomoPayoutManager.jsx
 // (#7 phase organisateur, tâche #81). Contrairement au legacy (cropper
@@ -100,6 +101,7 @@ export default function StudioClient({
   const [uploading, setUploading] = useState<'avatar' | 'banner' | 'gallery' | ''>('')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [events, setEvents] = useState<{ id: string; name: string }[]>([])
+  const [linkCopied, setLinkCopied] = useState(false)
 
   useEffect(() => {
     fetch('/api/organizer-events')
@@ -213,7 +215,14 @@ export default function StudioClient({
   const regionCurrency = regions.find((r) => r.id === profile.regionId)?.currency ?? 'EUR'
 
   return (
-    <main style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 20px 100px' }}>
+    <>
+      <style>{`
+        .studio-profile-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr); gap: 16px; margin-bottom: 16px; }
+        @media (max-width: 720px) {
+          .studio-profile-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+      <main style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 20px 100px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 18, marginBottom: 20, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ font: '300 40px Inter, sans-serif', color: '#fff', margin: 0 }}>Ma page publique</h1>
@@ -223,8 +232,8 @@ export default function StudioClient({
           style={{
             padding: '10px 14px',
             borderRadius: 10,
-            border: '1px solid rgba(78,232,200,0.35)',
-            background: 'rgba(78,232,200,0.1)',
+            border: profile.status === 'public' ? '1px solid rgba(78,232,200,0.35)' : '1px solid var(--border-strong)',
+            background: profile.status === 'public' ? 'rgba(78,232,200,0.1)' : 'rgba(255,255,255,0.05)',
             color: profile.status === 'public' ? 'var(--teal)' : 'var(--text-muted)',
             fontSize: 11.5,
             fontWeight: 700,
@@ -236,6 +245,8 @@ export default function StudioClient({
 
       {message && (
         <div
+          role="status"
+          aria-live="polite"
           style={{
             padding: '12px 14px',
             marginBottom: 14,
@@ -264,10 +275,14 @@ export default function StudioClient({
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)', marginBottom: 16, flexWrap: 'wrap' }}>
         <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{publicUrl}</span>
         <button
-          onClick={() => navigator.clipboard?.writeText(publicUrl)}
+          onClick={() => {
+            navigator.clipboard?.writeText(publicUrl)
+            setLinkCopied(true)
+            setTimeout(() => setLinkCopied(false), 2000)
+          }}
           style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 11.5, cursor: 'pointer' }}
         >
-          Copier le lien
+          {linkCopied ? 'Copié ✓' : 'Copier le lien'}
         </button>
         {profile.status === 'public' && (
           <Link href={`/organizers/${slug}`} style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 700, textDecoration: 'none' }}>
@@ -276,7 +291,7 @@ export default function StudioClient({
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(300px, 0.65fr)', gap: 16, marginBottom: 16 }}>
+      <div className="studio-profile-grid">
         {/* Informations publiques */}
         <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
           <h2 style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: '0 0 16px' }}>Informations publiques</h2>
@@ -286,7 +301,7 @@ export default function StudioClient({
               <div style={{ width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', background: '#12151d', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 32, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
@@ -305,12 +320,13 @@ export default function StudioClient({
                   style={{ display: 'none' }}
                 />
               </label>
+              <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '4px 0 0' }}>Image 10 Mo max.</p>
             </div>
             <div>
               <div style={{ height: 100, borderRadius: 8, overflow: 'hidden', background: '#10131d' }}>
                 {profile.bannerUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.bannerUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={profile.bannerUrl} alt={`Bannière de ${profile.publicName}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 )}
               </div>
               <label style={{ display: 'inline-block', marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 11, cursor: 'pointer' }}>
@@ -327,6 +343,7 @@ export default function StudioClient({
                   style={{ display: 'none' }}
                 />
               </label>
+              <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '4px 0 0' }}>Image 10 Mo max.</p>
             </div>
           </div>
 
@@ -371,12 +388,12 @@ export default function StudioClient({
                 })}
               </div>
               <p style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>
-                Sélectionne tous les pays où tu organises — les visiteurs pourront te trouver en cherchant l&rsquo;un d&rsquo;eux. C&rsquo;est du marketing : ça ne change JAMAIS ta devise ni ton mode de paiement.
+                Sélectionne tous les pays où tu organises — les visiteurs pourront te trouver en cherchant l&rsquo;un d&rsquo;eux. C&rsquo;est du marketing : ça ne change JAMAIS ta devise ni ton mode de paiement. Choisir un pays précis désélectionne « International » (les deux ne se cumulent pas).
               </p>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(200,169,110,0.28)', background: 'rgba(200,169,110,0.06)' }}>
-                <span style={{ fontSize: 18 }}>{regionCurrency === 'XOF' ? '📱' : '💳'}</span>
+                <span aria-hidden="true" style={{ fontSize: 18 }}>{regionCurrency === 'XOF' ? '📱' : '💳'}</span>
                 <div>
                   <p style={{ font: '700 12.5px Inter, sans-serif', color: 'var(--gold)', margin: 0 }}>
                     {getRegionName(profile.regionId) || profile.country || '—'} · {regionCurrency === 'XOF' ? 'FCFA (XOF)' : 'Euro (€)'}
@@ -397,6 +414,7 @@ export default function StudioClient({
                 placeholder="Présente ton univers en quelques phrases."
                 style={inputStyle}
               />
+              <span style={{ fontSize: 10.5, color: 'var(--text-faint)', justifySelf: 'end' }}>{profile.shortDescription.length}/500</span>
             </label>
             <div style={{ gridColumn: '1 / -1' }}>
               <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Réseaux sociaux</span>
@@ -425,7 +443,7 @@ export default function StudioClient({
         <aside style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
           <h2 style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: '0 0 16px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
-            <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : undefined }} />
+            <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(78,232,200,0.12), rgba(200,169,110,0.12))' }} />
             <div style={{ padding: 16 }}>
               <div style={{ width: 64, height: 64, marginTop: -32, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
@@ -452,6 +470,7 @@ export default function StudioClient({
           <button onClick={save} disabled={saving} style={saveButtonStyle(saving)}>
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </button>
+          <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textAlign: 'center', margin: '6px 0 0' }}>Enregistre l&rsquo;ensemble de ton profil, y compris les informations publiques.</p>
         </aside>
       </div>
 
@@ -460,7 +479,7 @@ export default function StudioClient({
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
           <div>
             <h2 style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Images 10 Mo max. Vidéos 8 Mo max. Maximum conseillé : 12 médias.</p>
+            <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Images 10 Mo max. Vidéos 8 Mo max. 12 médias au maximum recommandé pour une page lisible (non bloquant).</p>
           </div>
           <label style={{ padding: '10px 16px', borderRadius: 10, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
             {uploading === 'gallery' ? 'Envoi…' : '+ Ajouter un média'}
@@ -519,13 +538,18 @@ export default function StudioClient({
                   Visible publiquement
                 </label>
                 <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
-                  <button onClick={() => void moveMedia(index, -1)} disabled={index === 0} style={mediaActionStyle}>
+                  <button onClick={() => void moveMedia(index, -1)} disabled={index === 0} aria-label="Déplacer vers la gauche" style={mediaActionStyle}>
                     ←
                   </button>
-                  <button onClick={() => void moveMedia(index, 1)} disabled={index === profile.media.length - 1} style={mediaActionStyle}>
+                  <button onClick={() => void moveMedia(index, 1)} disabled={index === profile.media.length - 1} aria-label="Déplacer vers la droite" style={mediaActionStyle}>
                     →
                   </button>
-                  <button onClick={() => void removeMedia(item.id)} style={{ ...mediaActionStyle, color: 'var(--pink)' }}>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Supprimer définitivement ce média de ta page ?')) void removeMedia(item.id)
+                    }}
+                    style={{ ...mediaActionStyle, color: 'var(--pink)' }}
+                  >
                     Supprimer
                   </button>
                 </div>
@@ -536,7 +560,8 @@ export default function StudioClient({
       </section>
 
       <PayoutSection initialStatus={initialPayoutStatus} initialMomos={initialMomos} />
-    </main>
+      </main>
+    </>
   )
 }
 
@@ -592,6 +617,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
   const [addSel, setAddSel] = useState('')
   const [savingMomos, setSavingMomos] = useState(false)
   const [momoMessage, setMomoMessage] = useState('')
+  const [momoErrorCountry, setMomoErrorCountry] = useState<string | null>(null)
 
   const due = status.amountDueCents > 0 || status.amountDueXOF > 0
 
@@ -658,13 +684,20 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
   async function saveMomos() {
     setSavingMomos(true)
     setMomoMessage('')
+    setMomoErrorCountry(null)
     const payload: Record<string, string> = {}
     for (const c of openCountries) if (momos[c]?.trim()) payload[c] = momos[c].trim()
     try {
       const res = await fetch('/api/organizers/me/payout-momos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ momos: payload }) })
       const data = await res.json()
       if (!res.ok || !data.ok) {
-        setMomoMessage(typeof data.error === 'string' ? data.error : 'Numéro invalide.')
+        const errorText = typeof data.error === 'string' ? data.error : 'Numéro invalide.'
+        setMomoMessage(errorText)
+        // Le message serveur cite le nom du pays en échec (ex. "Numéro
+        // invalide pour Togo...") — on le retrouve pour surligner le bon
+        // encart quand plusieurs pays sont ouverts en même temps.
+        const failedRegion = MOMO_REGIONS.find((r) => r.momoCountry && errorText.includes(r.name))
+        setMomoErrorCountry(failedRegion?.momoCountry ?? null)
         setSavingMomos(false)
         return
       }
@@ -690,9 +723,15 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           <>
             <p style={{ fontSize: 13, color: '#fff', margin: '0 0 8px' }}>Réglé par virement / mobile money (hors Stripe Connect).</p>
             {due ? (
-              <button onClick={requestPayout} disabled={requesting} style={{ ...saveButtonStyle(requesting), width: 'auto', padding: '10px 18px', marginTop: 0 }}>
-                {requesting ? 'Envoi…' : 'Demander un reversement'}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div>
+                  {status.amountDueCents > 0 && <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{fmtMoney(status.amountDueCents / 100, 'EUR')}</p>}
+                  {status.amountDueXOF > 0 && <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{fmtMoney(status.amountDueXOF, 'XOF')}</p>}
+                </div>
+                <button onClick={requestPayout} disabled={requesting} style={{ ...saveButtonStyle(requesting), width: 'auto', padding: '10px 18px', marginTop: 0 }}>
+                  {requesting ? 'Envoi…' : 'Demander un reversement'}
+                </button>
+              </div>
             ) : (
               <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Aucun solde à reverser pour l&rsquo;instant.</p>
             )}
@@ -725,13 +764,20 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           {openCountries.map((code) => {
             const region = MOMO_REGIONS.find((r) => r.momoCountry === code)
             if (!region) return null
+            const hasError = momoErrorCountry === code
             return (
-              <div key={code} style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.02)' }}>
+              <div key={code} style={{ border: hasError ? '1px solid var(--pink)' : '1px solid var(--border)', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.02)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
                     {region.flag} {region.name}
                   </span>
-                  <button onClick={() => removeCountry(code)} aria-label="Retirer" style={{ background: 'none', border: 0, color: 'var(--text-faint)', fontSize: 18, cursor: 'pointer' }}>
+                  <button
+                    onClick={() => {
+                      if (!momos[code]?.trim() || window.confirm(`Retirer ${region.name} ? Le numéro saisi pour ce pays sera perdu.`)) removeCountry(code)
+                    }}
+                    aria-label="Retirer"
+                    style={{ background: 'none', border: 0, color: 'var(--text-faint)', fontSize: 18, cursor: 'pointer' }}
+                  >
                     ×
                   </button>
                 </div>
@@ -740,7 +786,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                   placeholder={`${region.dial} 90 00 00 00`}
                   value={momos[code] || ''}
                   onChange={(e) => setMomos((m) => ({ ...m, [code]: e.target.value }))}
-                  style={inputStyle}
+                  style={{ ...inputStyle, ...(hasError ? { borderColor: 'var(--pink)' } : {}) }}
                 />
               </div>
             )

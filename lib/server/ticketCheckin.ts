@@ -33,6 +33,10 @@ export interface CheckinTicketView {
   currency: string
   preorders: { name: string; price: number; qty: number }[]
   guestName: string | null
+  // Nom du titulaire du COMPTE (jamais l'invité nommé) — permet au staff de
+  // recouper visuellement avec une pièce d'identité à l'entrée même quand
+  // `guestName` est absent (billet non transféré à un invité).
+  holderName: string | null
 }
 
 export type CheckinResult =
@@ -137,6 +141,19 @@ export async function checkinTicket(caller: CheckinCaller, input: CheckinInput):
     await session.endSession()
   }
 
+  // Nom du titulaire du compte, indépendamment du crédit de point ci-dessus
+  // (lu même pour un billet gratuit/invitation, jamais seulement quand
+  // `pointAwarded`) — best-effort : un titulaire supprimé entre-temps ne doit
+  // jamais faire échouer un check-in déjà accordé.
+  let holderName: string | null = null
+  if (ticket.userId) {
+    const holderUser = await User.findById(ticket.userId).select('firstName lastName').lean()
+    if (holderUser) {
+      const fullName = `${holderUser.firstName ?? ''} ${holderUser.lastName ?? ''}`.trim()
+      holderName = fullName || null
+    }
+  }
+
   return {
     ok: true,
     alreadyCheckedIn,
@@ -151,6 +168,7 @@ export async function checkinTicket(caller: CheckinCaller, input: CheckinInput):
       currency: ticket.currency,
       preorders: ticket.preorders.map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1 })),
       guestName: ticket.guestName ?? null,
+      holderName,
     },
   }
 }

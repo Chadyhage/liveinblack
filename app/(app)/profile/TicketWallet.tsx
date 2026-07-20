@@ -12,6 +12,10 @@ import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel
 
 export interface TicketWalletItemView {
   ticketCode: string
+  // Jeton SIGNÉ (lib/server/ticketToken.ts) — c'est celui-ci qu'il faut mettre
+  // dans le lien/QR vers /ticket/[token], jamais ticketCode brut (que
+  // /ticket/[token] rejette avec "Billet invalide").
+  ticketToken: string
   place: string
   placePrice: number
   totalPrice: number
@@ -303,7 +307,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
           <div style={{ display: 'flex', gap: 8 }}>
             <a
               href={contactSupportMailto()}
-              style={{ padding: '8px 14px', borderRadius: 8, background: '#c2347f', color: '#fff', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}
+              style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--pink)', color: '#fff', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}
             >
               Contacter le support
             </a>
@@ -475,7 +479,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
             transform: 'translateX(-50%)',
             padding: '6px 14px',
             borderRadius: 999,
-            background: toast.kind === 'ok' ? 'var(--teal-solid)' : '#c2347f',
+            background: toast.kind === 'ok' ? 'var(--teal-solid)' : 'var(--pink)',
             color: toast.kind === 'ok' ? '#04120e' : '#fff',
             fontSize: 11.5,
             fontWeight: 700,
@@ -506,6 +510,11 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                   <p style={{ fontSize: 13, color: '#fff', margin: 0, fontWeight: 600 }}>Place {i + 1}</p>
                   <p style={{ fontSize: 11.5, margin: '1px 0 0', color: seat.assignedTo ? 'var(--teal)' : pendingEmail ? 'var(--gold)' : 'var(--text-faint)' }}>
                     {seat.assignedTo ? `Attribuée à ${seat.assignedName || 'un invité'}` : pendingEmail ? `Invitation envoyée à ${pendingEmail}` : 'Libre — à toi'}
+                    {seat.assignedTo && (
+                      <span style={{ marginLeft: 6, color: seat.checkedInAt ? 'var(--pink)' : 'var(--text-faint)' }}>
+                        · {seat.checkedInAt ? 'Entré' : 'Pas encore entré'}
+                      </span>
+                    )}
                   </p>
                 </div>
                 {seat.assignedTo ? (
@@ -589,7 +598,6 @@ function PremiumTicketCard({
   inactive: boolean
   inactiveLabel: string
 }) {
-  const [showQr, setShowQr] = useState(false)
   const [showIncluded, setShowIncluded] = useState(false)
   const [included, setIncluded] = useState<IncludedItem[] | null>(null)
   const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
@@ -597,7 +605,7 @@ function PremiumTicketCard({
   const [flashMsg, setFlashMsg] = useState<string | null>(null)
   const qrExportRef = useRef<HTMLCanvasElement>(null)
 
-  const ticketUrl = `${SITE}/ticket/${ticket.ticketCode}`
+  const ticketUrl = `${SITE}/ticket/${ticket.ticketToken}`
   const countdown = event ? countdownLabel(event.date) : null
   const preorderTotal = ticket.preorders.reduce((sum, p) => sum + p.price * p.qty, 0)
 
@@ -729,10 +737,11 @@ function PremiumTicketCard({
             </>
           ) : (
             <>
-              <div style={{ background: '#fff', padding: 8, borderRadius: 8, cursor: 'pointer' }} onClick={() => setShowQr((v) => !v)}>
+              <div style={{ background: '#fff', padding: 8, borderRadius: 8 }}>
                 <QRCodeCanvas value={ticketUrl} size={84} level="H" />
               </div>
               <p style={{ fontSize: 10, color: 'var(--text-faint)', letterSpacing: '0.04em', margin: 0 }}>{ticket.ticketCode}</p>
+              <p style={{ fontSize: 9, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>Usage unique</p>
             </>
           )}
         </div>
@@ -763,21 +772,14 @@ function PremiumTicketCard({
         </div>
       )}
 
-      {showQr && !inactive && (
-        <div style={{ padding: '0 16px 16px', textAlign: 'center' }}>
-          <div style={{ background: '#fff', display: 'inline-block', padding: 16, borderRadius: 12 }}>
-            <QRCodeCanvas value={ticketUrl} size={200} level="H" />
-          </div>
-          <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '8px 0 0' }}>Présente ce code à l&apos;entrée · usage unique</p>
-        </div>
-      )}
-
       {showIncluded && (
         <div style={{ padding: '0 16px 16px' }}>
           {included === null ? (
             <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Chargement…</p>
           ) : included.length === 0 ? (
-            <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucune option incluse.</p>
+            <div style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--surface)' }}>
+              <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Aucune option incluse.</p>
+            </div>
           ) : (
             <>
               {included.map((it) => (
@@ -802,7 +804,6 @@ function PremiumTicketCard({
         ) : (
           <>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <ActionBtn onClick={() => setShowQr((v) => !v)}>{showQr ? 'Réduire le QR' : 'Afficher le QR'}</ActionBtn>
               <ActionBtn onClick={handleDownload} disabled={downloadState === 'busy'}>
                 {downloadState === 'busy' ? 'Préparation…' : downloadState === 'ok' ? 'Billet téléchargé' : 'Télécharger le billet'}
               </ActionBtn>

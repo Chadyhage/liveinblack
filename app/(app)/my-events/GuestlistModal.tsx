@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { fmtMoney } from '@/lib/shared/money'
 
 interface EventPlace {
   id: string
@@ -9,7 +10,7 @@ interface EventPlace {
 }
 
 interface GuestlistModalProps {
-  event: { id: string; name: string; places: EventPlace[] }
+  event: { id: string; name: string; places: EventPlace[]; currency: 'EUR' | 'XOF' }
   onClose: () => void
 }
 
@@ -71,6 +72,8 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState<{ ticketCode: string; guestName: string } | null>(null)
+  const [waSentCode, setWaSentCode] = useState<string | null>(null)
 
   const loadEntries = useCallback(async () => {
     try {
@@ -111,6 +114,17 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
     } finally {
       setAdding(false)
     }
+  }
+
+  function askRemoveGuest(ticketCode: string, guestName: string) {
+    setConfirmRemove({ ticketCode, guestName })
+  }
+
+  async function doConfirmRemoveGuest() {
+    if (!confirmRemove) return
+    const { ticketCode } = confirmRemove
+    setConfirmRemove(null)
+    await handleRemoveGuest(ticketCode)
   }
 
   async function handleRemoveGuest(ticketCode: string) {
@@ -239,7 +253,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
               >
                 {event.places.map((place) => (
                   <option key={place.id} value={place.id}>
-                    {place.type} (offert, {place.price})
+                    {place.type} — normalement {fmtMoney(place.price, event.currency)}, offert à l&apos;invité
                   </option>
                 ))}
               </select>
@@ -342,12 +356,22 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                       href={waLink}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        setWaSentCode(entry.ticketCode)
+                        setTimeout(() => {
+                          setWaSentCode((prev) => (prev === entry.ticketCode ? null : prev))
+                        }, 2000)
+                      }}
                       style={{
                         flex: 1,
                         padding: 9,
                         borderRadius: 10,
                         textAlign: 'center',
                         textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 5,
                         background: 'rgba(34,197,94,0.14)',
                         border: '1px solid rgba(34,197,94,0.35)',
                         color: '#22c55e',
@@ -356,11 +380,14 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                         fontWeight: 600,
                       }}
                     >
-                      WhatsApp
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.33 4.95L2.05 22l5.29-1.39a9.9 9.9 0 004.7 1.2h.01c5.46 0 9.91-4.45 9.91-9.9C22 6.45 17.5 2 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.63-.6-2.87-1.24-4.74-4.13-4.88-4.32-.14-.19-1.17-1.55-1.17-2.96 0-1.4.74-2.09 1-2.38.26-.28.57-.35.76-.35.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.16-.29.36-.42.49-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.44.12.6-.07.16-.19.68-.79.87-1.06.19-.28.37-.23.62-.14.26.09 1.63.77 1.91.91.28.14.47.21.54.33.07.12.07.68-.17 1.36z" />
+                      </svg>
+                      {waSentCode === entry.ticketCode ? 'Ouvert' : 'WhatsApp'}
                     </a>
                     {!entry.checkedInAt && (
                       <button
-                        onClick={() => handleRemoveGuest(entry.ticketCode)}
+                        onClick={() => askRemoveGuest(entry.ticketCode, guestName)}
                         title="Retirer"
                         aria-label="Retirer"
                         style={{
@@ -391,6 +418,51 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
           Chaque invité reçoit un billet réel (gratuit) à ce lien — il le présente à l&apos;entrée, le videur le scanne comme n&apos;importe quel billet.
         </p>
       </div>
+
+      {/* Confirmation de retrait */}
+      {confirmRemove && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 3010, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setConfirmRemove(null)}
+        >
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: 360,
+              background: '#12131c',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 16,
+              padding: 22,
+              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}
+          >
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>Retirer cet invité ?</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
+              <strong style={{ color: '#fff' }}>{confirmRemove.guestName}</strong> n&apos;aura plus accès à ce billet. Tu pourras le réinviter à tout moment.
+            </p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+              <button
+                onClick={() => setConfirmRemove(null)}
+                style={{ flex: 1, padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600 }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={doConfirmRemoveGuest}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'var(--pink)', border: '1px solid transparent', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 700 }}
+              >
+                Retirer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -107,6 +107,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
   const [busyCode, setBusyCode] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [form, setForm] = useState<FormState>({ code: '', type: 'percent', value: '', maxUses: '', expiresAt: '' })
+  const [confirmRemove, setConfirmRemove] = useState<PromoCode | null>(null)
   // L'horloge murale (Date.now()) ne doit jamais être lue pendant le rendu
   // (impur) — lecture unique via l'initialiseur paresseux de useState (même
   // pattern que ProfilClient.tsx:onCooldown), suffisant le temps d'une
@@ -220,6 +221,17 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
     }
   }
 
+  function askRemove(p: PromoCode) {
+    setConfirmRemove(p)
+  }
+
+  async function doConfirmRemove() {
+    if (!confirmRemove) return
+    const p = confirmRemove
+    setConfirmRemove(null)
+    await removeCode(p)
+  }
+
   return (
     <div
       role="dialog"
@@ -234,7 +246,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
-            <h2 style={{ font: '28px Bebas Neue, Impact, sans-serif', letterSpacing: '.03em', margin: 0 }}>Codes promo</h2>
+            <h2 style={{ font: `700 28px ${FONT}`, letterSpacing: '.03em', margin: 0, color: '#fff' }}>Codes promo</h2>
             <p style={{ font: `500 12px ${FONT}`, color: 'rgba(255,255,255,.5)', margin: '5px 0 0' }}>
               {event.name} · réduction appliquée <strong style={{ color: 'rgba(255,255,255,.75)' }}>par billet</strong>
             </p>
@@ -242,14 +254,22 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
           <button
             onClick={onClose}
             aria-label="Fermer"
-            style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.05)', color: '#fff', fontSize: 19, cursor: 'pointer', flexShrink: 0 }}
+            style={{ flexShrink: 0, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}
           >
             ×
           </button>
         </div>
 
         {loading ? (
-          <p style={{ marginTop: 18, color: 'rgba(255,255,255,.45)', font: `500 13px ${FONT}` }}>Chargement…</p>
+          <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width={16} height={16} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
+              <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth={3} strokeLinecap="round">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+              </path>
+            </svg>
+            <p style={{ color: 'rgba(255,255,255,.45)', font: `500 13px ${FONT}`, margin: 0 }}>Chargement…</p>
+          </div>
         ) : loadError ? (
           <p style={{ marginTop: 18, color: '#ff9ed2', font: `500 13px ${FONT}` }}>Impossible de charger les codes promo — vérifie ta connexion.</p>
         ) : (
@@ -279,6 +299,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                     style={inputStyle}
                     type="number"
                     min="1"
+                    max={form.type === 'percent' ? '99' : undefined}
                     placeholder={form.type === 'percent' ? 'Ex. 20' : 'Ex. 1000'}
                     value={form.value}
                     onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
@@ -370,7 +391,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                         {p.active === false ? 'Réactiver' : 'Désactiver'}
                       </button>
                       <button
-                        onClick={() => removeCode(p)}
+                        onClick={() => askRemove(p)}
                         disabled={rowBusy || saving}
                         style={{
                           padding: '8px 12px',
@@ -397,6 +418,57 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
           </>
         )}
       </div>
+
+      {/* Confirmation de suppression */}
+      {confirmRemove && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            e.stopPropagation()
+            setConfirmRemove(null)
+          }}
+          style={{ position: 'fixed', inset: 0, zIndex: 3010, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: 360,
+              background: '#12131c',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 16,
+              padding: 22,
+              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}
+          >
+            <p style={{ font: `700 17px ${FONT}`, color: '#fff', margin: 0 }}>Supprimer ce code promo ?</p>
+            <p style={{ font: `500 13.5px ${FONT}`, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
+              <strong style={{ color: '#fff' }}>{confirmRemove.code}</strong> sera définitivement supprimé, y compris son historique d&apos;utilisation ({Number(confirmRemove.usedCount) || 0}{' '}
+              utilisation{(Number(confirmRemove.usedCount) || 0) > 1 ? 's' : ''}). Pour le retirer sans perdre l&apos;historique, utilise plutôt « Désactiver ».
+            </p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+              <button
+                onClick={() => setConfirmRemove(null)}
+                style={{ flex: 1, padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', font: `600 13.5px ${FONT}` }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={doConfirmRemove}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px ${FONT}` }}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -62,6 +62,106 @@ function Spinner() {
   return <span style={spinnerStyle} />
 }
 
+// Glyphe distinct par catégorie (PROVIDER_CATEGORIES[].icon) — auparavant un
+// unique pictogramme maison/toit s'affichait pour toutes les catégories.
+function CategoryIcon({ icon, size = 23 }: { icon: string; size?: number }) {
+  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  switch (icon) {
+    case 'mic':
+      return (
+        <svg {...common}>
+          <rect x="9" y="2" width="6" height="11" rx="3" />
+          <path d="M5 10a7 7 0 0 0 14 0" />
+          <path d="M12 19v3M8 22h8" />
+        </svg>
+      )
+    case 'speaker':
+      return (
+        <svg {...common}>
+          <rect x="4" y="3" width="16" height="18" rx="2" />
+          <circle cx="12" cy="15" r="4" />
+          <circle cx="12" cy="7" r="1.2" />
+        </svg>
+      )
+    case 'cart':
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="20" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="18" cy="20" r="1.3" fill="currentColor" stroke="none" />
+          <path d="M2 3h2l2.4 12.2a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 2-1.6L21 7H6" />
+        </svg>
+      )
+    case 'camera':
+      return (
+        <svg {...common}>
+          <rect x="3" y="7" width="18" height="13" rx="2" />
+          <path d="M8 7l1.6-2.5A2 2 0 0 1 11.3 3.5h1.4a2 2 0 0 1 1.7 1L16 7" />
+          <circle cx="12" cy="13.5" r="3.4" />
+        </svg>
+      )
+    case 'sparkle':
+      return (
+        <svg {...common}>
+          <path d="M12 3l1.6 5.2L19 10l-5.4 1.8L12 17l-1.6-5.2L5 10l5.4-1.8L12 3z" />
+        </svg>
+      )
+    case 'shield':
+      return (
+        <svg {...common}>
+          <path d="M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z" />
+        </svg>
+      )
+    case 'truck':
+      return (
+        <svg {...common}>
+          <path d="M3 7h11v9H3z" />
+          <path d="M14 11h4l3 3v2h-7z" />
+          <circle cx="7.5" cy="18" r="1.6" />
+          <circle cx="17.5" cy="18" r="1.6" />
+        </svg>
+      )
+    case 'users':
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+          <circle cx="17" cy="9" r="2.4" />
+          <path d="M15.5 14a5 5 0 0 1 4.5 5" />
+        </svg>
+      )
+    case 'megaphone':
+      return (
+        <svg {...common}>
+          <path d="M3 10v4h3l7 4V6L6 10H3z" />
+          <path d="M14 9a3 3 0 0 1 0 6" />
+        </svg>
+      )
+    case 'heart':
+      return (
+        <svg {...common}>
+          <path d="M12 20s-7-4.4-9.3-8.6A5 5 0 0 1 12 6a5 5 0 0 1 9.3 5.4C19 15.6 12 20 12 20z" />
+        </svg>
+      )
+    case 'grid':
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="7" height="7" rx="1.4" />
+          <rect x="14" y="3" width="7" height="7" rx="1.4" />
+          <rect x="3" y="14" width="7" height="7" rx="1.4" />
+          <rect x="14" y="14" width="7" height="7" rx="1.4" />
+        </svg>
+      )
+    case 'building':
+    default:
+      return (
+        <svg {...common}>
+          <path d="M4 20V8l8-4 8 4v12" />
+          <path d="M8 20v-5h8v5" />
+        </svg>
+      )
+  }
+}
+
 function Field({ label, helper, children }: { label: string; helper?: string; children: React.ReactNode }) {
   return (
     <label style={{ display: 'block' }}>
@@ -197,6 +297,10 @@ export default function ProposerServicesClient({
 }) {
   const router = useRouter()
   const [profile, setProfile] = useState(initialProfile)
+  // Port de hasUnsavedProfileChanges (ProposerServicesPage.jsx) : baseline mise
+  // à jour uniquement après une sauvegarde réussie (« Enregistrer ma page »)
+  // ou un upload avatar/couverture (déjà persisté serveur), jamais à chaque frappe.
+  const [savedProfile, setSavedProfile] = useState(initialProfile)
   const [subscription, setSubscription] = useState(initialSubscription)
   const [tab, setTab] = useState<'profil' | 'catalogue' | 'avis'>('profil')
   const [message, setMessage] = useState('')
@@ -211,6 +315,8 @@ export default function ProposerServicesClient({
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<NewItemForm | null>(null)
   const [mediaUploading, setMediaUploading] = useState(false)
+  const [confirmRemoveItem, setConfirmRemoveItem] = useState<CatalogItemView | null>(null)
+  const [removingItem, setRemovingItem] = useState(false)
 
   const [reviews, setReviews] = useState(initialReviews)
   const [replyFor, setReplyFor] = useState<string | null>(null)
@@ -228,6 +334,21 @@ export default function ProposerServicesClient({
   const catalogDefaultCurrency = subscription.currency
   const catalogCategories = [...new Set(providerTypes.flatMap((t) => CATALOG_CATEGORIES[t] || CATALOG_CATEGORIES.autre || []))]
   const billingRegion = regions.find((r) => r.id === subscription.billingRegionId) || null
+
+  function comparableProfile(p: ProviderProfileView) {
+    return JSON.stringify({
+      name: (p.name || '').trim(),
+      headline: (p.headline || '').trim(),
+      description: (p.description || '').trim(),
+      city: (p.city || '').trim(),
+      regionId: p.regionId,
+      website: (p.socialLinks.website || p.website || '').trim(),
+      socialLinks: p.socialLinks,
+      prestataireTypes: p.prestataireTypes,
+      zonesIntervention: p.zonesIntervention,
+    })
+  }
+  const hasUnsavedProfileChanges = comparableProfile(profile) !== comparableProfile(savedProfile)
 
   function notify(text: string) {
     setMessage(text)
@@ -288,6 +409,7 @@ export default function ProposerServicesClient({
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error()
       setProfile(data.profile)
+      setSavedProfile(data.profile)
       notify('Image enregistrée sur ta page.')
     } catch {
       notify('Envoi impossible — réessaie.')
@@ -321,6 +443,7 @@ export default function ProposerServicesClient({
         return
       }
       setProfile(data.profile)
+      setSavedProfile(data.profile)
       notify('Ta page a été enregistrée.')
     } catch {
       notify('Enregistrement impossible — vérifie ta connexion.')
@@ -460,14 +583,17 @@ export default function ProposerServicesClient({
     if (res.ok && data.ok) setProfile(data.profile)
   }
 
-  async function removeItem(item: CatalogItemView) {
-    if (!window.confirm(`Supprimer « ${item.name} » du catalogue ?`)) return
-    const res = await fetch(`/api/providers/me/catalog/${item.id}`, { method: 'DELETE' })
+  async function confirmDeleteItem() {
+    if (!confirmRemoveItem) return
+    setRemovingItem(true)
+    const res = await fetch(`/api/providers/me/catalog/${confirmRemoveItem.id}`, { method: 'DELETE' })
     const data = await res.json()
     if (res.ok && data.ok) {
       setProfile(data.profile)
       notify('Offre supprimée.')
     }
+    setRemovingItem(false)
+    setConfirmRemoveItem(null)
   }
 
   async function handleOfferMedia(itemId: string | null, file: File | undefined) {
@@ -562,14 +688,24 @@ export default function ProposerServicesClient({
           .provider-catalog-item{flex-wrap:wrap}
           .provider-catalog-actions{width:100%;justify-content:flex-start!important}
         }
+        .provider-tab-short{display:none}
+        @media(max-width:480px){
+          /* Le lecteur de musique flottant (AmbientMusicPlayer) reste fixed
+             en bas à droite (right:14, bottom ~134px sur mobile) — on
+             réserve assez de padding en bas de page pour qu'aucun contenu
+             (champ de formulaire, bouton Supprimer d'une offre) ne se
+             retrouve jamais derrière lui en fin de défilement. */
+          .provider-workspace{padding-bottom:190px}
+          .provider-tab-full{display:none}
+          .provider-tab-short{display:inline}
+          .provider-catalog-header{flex-direction:column;align-items:stretch!important}
+          .provider-catalog-header button{width:100%}
+        }
       `}</style>
       <main className="provider-workspace">
         <header className="provider-workspace-header">
           <div style={{ width: 52, height: 52, borderRadius: 15, display: 'grid', placeItems: 'center', background: `${category.color}16`, border: `1px solid ${category.color}44`, color: category.color }}>
-            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-              <path d="M4 20V8l8-4 8 4v12" />
-              <path d="M8 20v-5h8v5" />
-            </svg>
+            <CategoryIcon icon={category.icon} />
           </div>
           <div style={{ flex: 1, minWidth: 200 }}>
             <h1 style={{ fontFamily: FONT, fontSize: 25, letterSpacing: '-.5px', margin: 0 }}>Mon espace prestataire</h1>
@@ -649,7 +785,7 @@ export default function ProposerServicesClient({
             Pays de facturation : {billingRegion ? `${billingRegion.flag} ${billingRegion.name}` : 'à renseigner'}
           </span>
           {subscription.canChangeBilling ? (
-            <select value={subscription.billingRegionId} onChange={(e) => handleBillingRegionChange(e.target.value)} style={{ ...input, minHeight: 32, width: 'auto', padding: '4px 10px', fontSize: 12 }}>
+            <select aria-label="Pays de facturation" value={subscription.billingRegionId} onChange={(e) => handleBillingRegionChange(e.target.value)} style={{ ...input, minHeight: 32, width: 'auto', padding: '4px 10px', fontSize: 12 }}>
               {regions.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.flag} {r.name}
@@ -661,24 +797,35 @@ export default function ProposerServicesClient({
           )}
         </div>
 
+        {/* Port du lien legacy vers la page détaillée de l'abonnement (durée,
+            historique, résiliation) — absent de ce bandeau jusqu'ici. */}
+        <button type="button" onClick={() => router.push('/my-subscription')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, background: 'none', border: 'none', color: C.teal, fontFamily: FONT, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+          Détails et historique de mon abonnement →
+        </button>
+
         {message && (
-          <div role="status" style={{ ...card, padding: '12px 14px', marginTop: 12, borderColor: 'rgba(200,169,110,.35)' }}>
+          // position:'sticky' — un message déclenché depuis un onglet
+          // (ex. erreur de validation catalogue) reste visible même si
+          // l'utilisateur a déjà scrollé, au lieu de rester bloqué en haut
+          // de page hors du champ de vision.
+          <div role="status" style={{ ...card, position: 'sticky', top: 12, zIndex: 30, padding: '12px 14px', marginTop: 12, borderColor: 'rgba(200,169,110,.35)' }}>
             <p style={{ fontFamily: FONT, fontSize: 12.5, color: '#fff', margin: 0 }}>{message}</p>
           </div>
         )}
 
         <div style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
           {[
-            { id: 'profil' as const, label: 'Ma page publique' },
-            { id: 'catalogue' as const, label: `Catalogue (${profile.catalog.length})` },
-            { id: 'avis' as const, label: 'Mes avis' },
+            { id: 'profil' as const, label: 'Ma page publique', shortLabel: 'Ma page' },
+            { id: 'catalogue' as const, label: `Catalogue (${profile.catalog.length})`, shortLabel: `Catalogue (${profile.catalog.length})` },
+            { id: 'avis' as const, label: 'Mes avis', shortLabel: 'Mes avis' },
           ].map((item) => (
             <button
               key={item.id}
               onClick={() => setTab(item.id)}
               style={{ flex: 1, minHeight: 42, borderRadius: 10, border: '1px solid transparent', background: tab === item.id ? 'rgba(255,255,255,.10)' : 'transparent', color: tab === item.id ? '#fff' : 'rgba(255,255,255,.5)', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700 }}
             >
-              {item.label}
+              <span className="provider-tab-full">{item.label}</span>
+              <span className="provider-tab-short">{item.shortLabel}</span>
             </button>
           ))}
         </div>
@@ -688,6 +835,21 @@ export default function ProposerServicesClient({
             <section style={{ ...card, padding: 18 }}>
               <h2 style={{ fontFamily: FONT, fontSize: 20, margin: '0 0 5px' }}>Informations publiques</h2>
               <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.42)', lineHeight: 1.5, margin: '0 0 18px' }}>Ce sont les informations que les clients et organisateurs verront.</p>
+              {hasUnsavedProfileChanges && (
+                <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'rgba(200,169,110,.10)', border: '1px solid rgba(200,169,110,.38)', color: 'rgba(255,255,255,.88)' }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 9, display: 'grid', placeItems: 'center', flexShrink: 0, color: C.gold, background: 'rgba(200,169,110,.12)', border: '1px solid rgba(200,169,110,.28)' }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 9v4" />
+                      <path d="M12 17h.01" />
+                      <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong style={{ display: 'block', fontFamily: FONT, fontSize: 13.5, color: C.gold, marginBottom: 3 }}>Modifications non enregistrées</strong>
+                    <p style={{ fontFamily: FONT, fontSize: 12.5, lineHeight: 1.45, color: 'rgba(255,255,255,.64)', margin: 0 }}>Clique sur « Enregistrer ma page » pour que ces changements soient visibles sur ta page publique.</p>
+                  </div>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <Field label="Nom de la page">
                   <input style={input} value={profile.name} onChange={(e) => update({ name: e.target.value })} placeholder="Nom commercial ou nom de scène" />
@@ -723,7 +885,7 @@ export default function ProposerServicesClient({
                     <input style={input} value={profile.socialLinks.website || profile.website || ''} onChange={(e) => update({ website: e.target.value, socialLinks: { ...profile.socialLinks, website: e.target.value } })} placeholder="https://tonsite.com" />
                   </Field>
                 </div>
-                <Field label="Pays de base" helper="Affiché avec ta ville sur ta page publique. Il ne modifie jamais ta facturation.">
+                <Field label="Pays de base" helper="Un seul pays de référence, affiché avec ta ville (pas d'option « International » ici). Il ne modifie jamais ta facturation.">
                   <select style={input} value={profile.regionId} onChange={(e) => handlePrimaryRegionChange(e.target.value)}>
                     {regions.map((r) => (
                       <option key={r.id} value={r.id}>
@@ -754,17 +916,20 @@ export default function ProposerServicesClient({
                     ))}
                   </div>
                 </Field>
-                <button onClick={handleSaveProfile} disabled={saving || Boolean(uploading)} style={{ ...primaryButton, alignSelf: 'flex-start', ...(saving || uploading ? disabledButton : null) }}>
-                  {uploading ? (
-                    <>
-                      <Spinner /> Envoi de l&rsquo;image…
-                    </>
-                  ) : saving ? (
-                    'Enregistrement…'
-                  ) : (
-                    'Enregistrer ma page'
-                  )}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <button onClick={handleSaveProfile} disabled={saving || Boolean(uploading)} style={{ ...primaryButton, alignSelf: 'flex-start', ...(saving || uploading ? disabledButton : null) }}>
+                    {uploading ? (
+                      <>
+                        <Spinner /> Envoi de l&rsquo;image…
+                      </>
+                    ) : saving ? (
+                      'Enregistrement…'
+                    ) : (
+                      'Enregistrer ma page'
+                    )}
+                  </button>
+                  {hasUnsavedProfileChanges && <span style={{ fontFamily: FONT, fontSize: 12, color: C.gold }}>À enregistrer pour publier les changements</span>}
+                </div>
               </div>
             </section>
 
@@ -814,7 +979,7 @@ export default function ProposerServicesClient({
 
         {tab === 'catalogue' && (
           <section>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 13 }}>
+            <div className="provider-catalog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 13 }}>
               <div>
                 <h2 style={{ fontFamily: FONT, fontSize: 21, margin: 0 }}>Mon catalogue</h2>
                 <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.42)', margin: '4px 0 0' }}>Les tarifs sont indicatifs. Le client te contacte ensuite pour tout organiser avec toi.</p>
@@ -834,7 +999,7 @@ export default function ProposerServicesClient({
                     <input style={input} value={newItem.name} onChange={(e) => setNewItem((c) => ({ ...c, name: e.target.value }))} placeholder="DJ set 3 heures, location de salle…" />
                   </Field>
                   <div className="provider-fields-two">
-                    <Field label="Tarif indicatif" helper="Laisse vide pour « Tarif sur demande ».">
+                    <Field label="Tarif indicatif" helper="Laisse vide (ou saisis 0) pour afficher « Tarif sur demande ».">
                       <input type="number" min="0" style={input} value={newItem.price} onChange={(e) => setNewItem((c) => ({ ...c, price: e.target.value }))} placeholder="Optionnel" />
                     </Field>
                     <Field label="Devise">
@@ -897,10 +1062,13 @@ export default function ProposerServicesClient({
                         <input style={input} value={editingItem.name} onChange={(e) => setEditingItem((c) => (c ? { ...c, name: e.target.value } : c))} />
                         <div className="provider-fields-two">
                           <input type="number" min="0" style={input} value={editingItem.price} onChange={(e) => setEditingItem((c) => (c ? { ...c, price: e.target.value } : c))} placeholder="Tarif sur demande" />
-                          <select style={input} value={editingItem.currency} onChange={(e) => setEditingItem((c) => (c ? { ...c, currency: e.target.value } : c))} aria-label="Devise du tarif">
-                            <option value="EUR">€</option>
-                            <option value="XOF">FCFA</option>
-                          </select>
+                          <label style={{ display: 'block' }}>
+                            <span style={{ display: 'block', fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>Devise</span>
+                            <select style={input} value={editingItem.currency} onChange={(e) => setEditingItem((c) => (c ? { ...c, currency: e.target.value } : c))}>
+                              <option value="EUR">€</option>
+                              <option value="XOF">FCFA</option>
+                            </select>
+                          </label>
                           <select style={input} value={editingItem.unit} onChange={(e) => setEditingItem((c) => (c ? { ...c, unit: e.target.value } : c))}>
                             <option value="">Aucune unité</option>
                             {['heure', 'soirée', 'jour', 'personne', 'unité', 'lot', 'forfait'].map((v) => (
@@ -947,6 +1115,11 @@ export default function ProposerServicesClient({
                               />
                             </label>
                           )}
+                          {item.media.length < 4 && !mediaUploading && (
+                            <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.35)', margin: '6px 0 0' }}>
+                              JPG, PNG, WEBP, MP4, WEBM ou MOV. Privilégie des fichiers légers pour un envoi rapide.
+                            </p>
+                          )}
                         </div>
 
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -966,23 +1139,33 @@ export default function ProposerServicesClient({
                       </div>
                     </div>
                   ) : (
-                    <article key={item.id} className="provider-catalog-item" style={{ ...card, padding: 16, display: 'flex', alignItems: 'center', gap: 14, opacity: item.available === false ? 0.58 : 1 }}>
-                      {item.media[0] &&
-                        (item.media[0].type === 'video' ? (
-                          <video src={item.media[0].url} preload="metadata" muted playsInline style={{ width: 96, height: 74, borderRadius: 10, objectFit: 'cover', background: '#05060b', flexShrink: 0 }} />
+                    <article key={item.id} className="provider-catalog-item" style={{ ...card, padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+                      {/* display:'contents' — l'opacité réduite d'une offre masquée ne
+                          doit couvrir que la vignette/les infos, jamais les boutons
+                          d'action (ex. « Publier » ne doit pas paraître désactivé). */}
+                      <div style={{ display: 'contents', opacity: item.available === false ? 0.58 : 1 }}>
+                        {item.media[0] ? (
+                          item.media[0].type === 'video' ? (
+                            <video src={item.media[0].url} preload="metadata" muted playsInline style={{ width: 96, height: 74, borderRadius: 10, objectFit: 'cover', background: '#05060b', flexShrink: 0 }} />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={item.media[0].url} alt="" style={{ width: 96, height: 74, borderRadius: 10, objectFit: 'cover', background: '#05060b', flexShrink: 0 }} />
+                          )
                         ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.media[0].url} alt="" style={{ width: 96, height: 74, borderRadius: 10, objectFit: 'cover', background: '#05060b', flexShrink: 0 }} />
-                        ))}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <h3 style={{ fontFamily: FONT, fontSize: 17, margin: 0 }}>{item.name}</h3>
-                          <span style={{ padding: '3px 9px', borderRadius: 8, fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'rgba(255,255,255,.5)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.07)' : 'rgba(78,232,200,.12)', border: `1px solid ${item.available === false ? 'rgba(255,255,255,.14)' : 'rgba(78,232,200,.35)'}` }}>
-                            {item.available === false ? 'Masquée' : 'Publiée'}
-                          </span>
+                          <div style={{ width: 96, height: 74, borderRadius: 10, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,.22)', flexShrink: 0 }}>
+                            <CategoryIcon icon={category.icon} size={22} />
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <h3 style={{ fontFamily: FONT, fontSize: 17, margin: 0, wordBreak: 'break-word' }}>{item.name}</h3>
+                            <span style={{ padding: '3px 9px', borderRadius: 8, fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'rgba(255,255,255,.5)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.07)' : 'rgba(78,232,200,.12)', border: `1px solid ${item.available === false ? 'rgba(255,255,255,.14)' : 'rgba(78,232,200,.35)'}` }}>
+                              {item.available === false ? 'Masquée' : 'Publiée'}
+                            </span>
+                          </div>
+                          <p style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 800, color: C.gold, margin: '6px 0 0' }}>{Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}</p>
+                          {item.description && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.46)', lineHeight: 1.5, margin: '6px 0 0' }}>{item.description}</p>}
                         </div>
-                        <p style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 800, color: C.gold, margin: '6px 0 0' }}>{Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}</p>
-                        {item.description && <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.46)', lineHeight: 1.5, margin: '6px 0 0' }}>{item.description}</p>}
                       </div>
                       <div className="provider-catalog-actions" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         <button onClick={() => void toggleItem(item)} style={secondaryButton}>
@@ -991,7 +1174,12 @@ export default function ProposerServicesClient({
                         <button onClick={() => startEdit(item)} style={secondaryButton}>
                           Modifier
                         </button>
-                        <button onClick={() => void removeItem(item)} style={{ ...secondaryButton, color: '#ff9ed2', border: '1px solid rgba(224,90,170,.55)', background: 'rgba(224,90,170,.14)' }}>
+                        <button onClick={() => setConfirmRemoveItem(item)} style={{ ...secondaryButton, color: '#ff9ed2', border: '1px solid rgba(224,90,170,.55)', background: 'rgba(224,90,170,.14)' }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          </svg>
                           Supprimer
                         </button>
                       </div>
@@ -1175,6 +1363,32 @@ export default function ProposerServicesClient({
           </section>
         )}
       </main>
+
+      {confirmRemoveItem && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,.72)', backdropFilter: 'blur(8px)' }} onClick={() => !removingItem && setConfirmRemoveItem(null)} />
+          <div style={{ position: 'relative', width: 'min(100%, 420px)', ...card, padding: 22 }}>
+            <h3 style={{ fontFamily: FONT, fontSize: 20, letterSpacing: '-.4px', margin: '0 0 8px', color: '#fff' }}>Supprimer cette offre ?</h3>
+            <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              « {confirmRemoveItem.name} » sera retirée de ton catalogue. Cette action est définitive.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmRemoveItem(null)} disabled={removingItem} style={secondaryButton}>
+                Annuler
+              </button>
+              <button onClick={() => void confirmDeleteItem()} disabled={removingItem} style={{ ...primaryButton, background: '#c2347f', boxShadow: 'none', ...(removingItem ? disabledButton : null) }}>
+                {removingItem ? (
+                  <>
+                    <Spinner /> Suppression…
+                  </>
+                ) : (
+                  'Supprimer'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { BOOST_PLANS, getBoostPlan } from '@/lib/shared/boosts'
+import { fmtMoney } from '@/lib/shared/money'
 
 interface BoostModalProps {
   event: { id: string; name: string; region: string }
@@ -44,8 +45,11 @@ const CHECKOUT_ERROR_MESSAGES: Record<string, string> = {
   event_not_found: 'Événement introuvable.',
 }
 
+// Les boosts sont réglés uniquement en euros (rail Stripe) quelle que soit la
+// devise de l'événement — voir CHECKOUT_ERROR_MESSAGES et le commentaire sur
+// BOOST_PLANS. On réutilise `fmtMoney` partagé plutôt qu'un formateur local.
 function formatPrice(price: number): string {
-  return `${price.toFixed(2).replace('.', ',')} €`
+  return fmtMoney(price, 'EUR')
 }
 
 function RankIcon({ position, size = 20 }: { position: number; size?: number }) {

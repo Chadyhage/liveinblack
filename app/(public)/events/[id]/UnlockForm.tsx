@@ -30,19 +30,28 @@ export default function UnlockForm({ eventId }: { eventId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, maxWidth: 340, margin: '18px auto 0' }}>
-      <input
-        type="text"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        placeholder="Code d'accès"
-        style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)' }}
-        required
-      />
-      <button type="submit" disabled={loading} style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, cursor: 'pointer' }}>
-        {loading ? '…' : 'Valider'}
-      </button>
-      {error && <p style={{ position: 'absolute', marginTop: 50, fontSize: 13, color: 'var(--pink)' }}>{error}</p>}
-    </form>
+    <div style={{ maxWidth: 340, margin: '18px auto 0' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value.toUpperCase())
+            setError(null)
+          }}
+          placeholder="Code d'accès"
+          style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: `1px solid ${error ? 'var(--pink)' : 'var(--border-strong)'}`, background: 'var(--surface)', color: 'var(--text)', textTransform: 'uppercase' }}
+          required
+        />
+        <button type="submit" disabled={loading} style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, cursor: 'pointer' }}>
+          {loading ? '…' : 'Valider'}
+        </button>
+      </form>
+      {error && (
+        <p role="alert" aria-live="assertive" style={{ marginTop: 10, fontSize: 13, color: 'var(--pink)' }}>
+          {error}
+        </p>
+      )}
+    </div>
   )
 }

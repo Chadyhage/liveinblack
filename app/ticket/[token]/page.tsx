@@ -44,7 +44,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>
             Ce QR code n&apos;est pas reconnu, a été falsifié, ou n&apos;est plus à jour.
           </p>
-          <div style={{ background: 'var(--surface)', border: '1px solid rgba(224,90,170,0.20)', borderRadius: 16, padding: '10px 16px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid rgba(224,90,170,0.20)', borderRadius: 16, padding: '10px 16px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
@@ -52,6 +52,22 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
               <p style={{ fontSize: 11, color: 'rgba(224,90,170,0.75)', margin: 0, letterSpacing: '0.04em' }}>Signature invalide · LIVEINBLACK</p>
             </div>
           </div>
+          <Link
+            href="/"
+            style={{
+              display: 'inline-block',
+              padding: '12px 24px',
+              borderRadius: 12,
+              fontSize: 13.5,
+              fontWeight: 700,
+              color: 'var(--text)',
+              background: 'transparent',
+              border: '1px solid var(--border-strong)',
+              textDecoration: 'none',
+            }}
+          >
+            Retour à l&apos;accueil
+          </Link>
         </div>
       </main>
     )

@@ -105,7 +105,7 @@ export default function AgentDashboardClient() {
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 style={{ font: '800 24px Inter, sans-serif', color: '#fff', margin: 0 }}>Tableau de bord</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Tableau de bord</h1>
 
         {error && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -125,9 +125,9 @@ export default function AgentDashboardClient() {
 
               <div style={{ ...cardStyle, borderColor: 'rgba(200,169,110,0.30)', borderLeft: '3px solid rgba(200,169,110,0.6)', marginBottom: 10 }}>
                 <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>Revenus plateforme</p>
-                <p style={{ font: '300 42px Inter, sans-serif', color: 'var(--gold)', margin: '6px 0 0', lineHeight: 1 }}>{fmtMoney(stats.revenue.platformRevenueEUR, 'EUR')}</p>
+                <p style={{ fontSize: 42, fontWeight: 300, color: 'var(--gold)', margin: '6px 0 0', lineHeight: 1 }}>{fmtMoney(stats.revenue.platformRevenueEUR, 'EUR')}</p>
                 {stats.revenue.ticketFeeRevenueXOF > 0 && (
-                  <p style={{ font: '300 24px Inter, sans-serif', color: 'var(--teal)', margin: '6px 0 0', lineHeight: 1 }}>+ {fmtMoney(stats.revenue.ticketFeeRevenueXOF, 'XOF')}</p>
+                  <p style={{ fontSize: 24, fontWeight: 300, color: 'var(--teal)', margin: '6px 0 0', lineHeight: 1 }}>+ {fmtMoney(stats.revenue.ticketFeeRevenueXOF, 'XOF')}</p>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
                   <div>
@@ -147,22 +147,22 @@ export default function AgentDashboardClient() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 <div style={{ ...cardStyle, padding: 12 }}>
                   <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Volume encaissé</p>
-                  <p style={{ font: '300 22px Inter, sans-serif', color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>{fmtMoney(stats.revenue.gmvTicketsEUR + stats.revenue.gmvBoosts, 'EUR')}</p>
+                  <p style={{ fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>{fmtMoney(stats.revenue.gmvTicketsEUR + stats.revenue.gmvBoosts, 'EUR')}</p>
                   {stats.revenue.gmvTicketsXOF > 0 && (
-                    <p style={{ font: '300 15px Inter, sans-serif', color: 'var(--teal)', margin: '3px 0 0', lineHeight: 1 }}>+ {fmtMoney(stats.revenue.gmvTicketsXOF, 'XOF')}</p>
+                    <p style={{ fontSize: 15, fontWeight: 300, color: 'var(--teal)', margin: '3px 0 0', lineHeight: 1 }}>+ {fmtMoney(stats.revenue.gmvTicketsXOF, 'XOF')}</p>
                   )}
                   <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '3px 0 0' }}>Ventes en ligne (webhooks)</p>
                 </div>
                 <div style={{ ...cardStyle, padding: 12 }}>
                   <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Billets payés</p>
-                  <p style={{ font: '300 22px Inter, sans-serif', color: 'var(--teal)', margin: '3px 0 0', lineHeight: 1 }}>{stats.tickets.totalSold}</p>
+                  <p style={{ fontSize: 22, fontWeight: 300, color: 'var(--teal)', margin: '3px 0 0', lineHeight: 1 }}>{stats.tickets.totalSold}</p>
                   <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '3px 0 0' }}>
                     {stats.tickets.recentSold30d} vente{stats.tickets.recentSold30d !== 1 ? 's' : ''} ces 30j
                   </p>
                 </div>
                 <div style={{ ...cardStyle, padding: 12 }}>
                   <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Events publiés</p>
-                  <p style={{ font: '300 22px Inter, sans-serif', color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>{stats.events.totalPublished}</p>
+                  <p style={{ fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>{stats.events.totalPublished}</p>
                   <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '3px 0 0' }}>{stats.events.upcoming} à venir</p>
                 </div>
               </div>
@@ -173,7 +173,7 @@ export default function AgentDashboardClient() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[
                   { label: `Comptes total${stats.community.newAccountsThisMonth > 0 ? ` · +${stats.community.newAccountsThisMonth} ce mois` : ''}`, value: stats.community.totalUsers, color: 'var(--teal)' },
-                  { label: 'Connectés', value: stats.community.totalOnline, color: '#22c55e' },
+                  { label: 'Connectés', value: stats.community.totalOnline, color: 'var(--teal)' },
                   { label: 'Prestataires', value: stats.community.totalPrestataires, color: 'var(--gold)' },
                   {
                     label: 'En attente',
@@ -184,7 +184,7 @@ export default function AgentDashboardClient() {
                 ].map((s) => (
                   <div key={s.label} style={{ ...cardStyle, padding: 16, borderColor: s.alert ? '#e05aaa55' : 'var(--border)' }}>
                     <p style={{ fontSize: 10, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>{s.label}</p>
-                    <p style={{ font: '300 38px Inter, sans-serif', color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
+                    <p style={{ fontSize: 38, fontWeight: 300, color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
                   </div>
                 ))}
               </div>
@@ -231,27 +231,45 @@ export default function AgentDashboardClient() {
 }
 
 function SignupBars({ days }: { days: { date: string; count: number }[] }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const max = Math.max(...days.map((d) => d.count), 1)
+  const active = activeIndex != null ? days[activeIndex] : null
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 60, marginBottom: 6 }}>
-      {days.map((d) => {
-        const h = (d.count / max) * 100
-        return (
-          <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-            <div
+    <div>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: 2, height: 60, marginBottom: 6, borderBottom: '1px solid var(--border)' }}>
+        {days.map((d, i) => {
+          const h = (d.count / max) * 100
+          return (
+            <button
+              key={d.date}
+              type="button"
+              onClick={() => setActiveIndex((cur) => (cur === i ? null : i))}
               title={`${d.count} compte${d.count > 1 ? 's' : ''} le ${fmtDay(d.date)}`}
-              style={{
-                width: '100%',
-                minHeight: 2,
-                height: `${Math.max(h, 4)}%`,
-                background: d.count > 0 ? 'linear-gradient(180deg, rgba(78,232,200,0.85) 0%, rgba(78,232,200,0.30) 100%)' : 'rgba(255,255,255,0.04)',
-                borderRadius: 1,
-                transition: 'height 0.4s',
-              }}
-            />
-          </div>
-        )
-      })}
+              aria-label={`${fmtDay(d.date)} : ${d.count} compte${d.count > 1 ? 's' : ''}`}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  minHeight: 2,
+                  height: `${Math.max(h, 4)}%`,
+                  background:
+                    activeIndex === i
+                      ? 'var(--teal)'
+                      : d.count > 0
+                        ? 'linear-gradient(180deg, rgba(78,232,200,0.85) 0%, rgba(78,232,200,0.30) 100%)'
+                        : 'rgba(255,255,255,0.04)',
+                  borderRadius: 1,
+                  transition: 'height 0.4s',
+                }}
+              />
+            </button>
+          )
+        })}
+      </div>
+      <p style={{ fontSize: 10.5, color: active ? '#fff' : 'var(--text-faint)', margin: 0, minHeight: 14 }}>
+        {active ? `${fmtDay(active.date)} — ${active.count} compte${active.count > 1 ? 's' : ''}` : 'Touche une barre pour voir le détail du jour.'}
+      </p>
     </div>
   )
 }

@@ -87,9 +87,9 @@ export function getStockBadge(event: EventLike | null | undefined): StockBadge |
   const totalCap = places.reduce((s, p) => s + (Number(p.total) || 0), 0)
   const avail = places.reduce((s, p) => s + (Number(p.available) || 0), 0)
   if (totalCap === 0) return null
-  if (avail === 0) return { label: 'COMPLET', color: '#e05aaa' }
-  if (avail <= 5) return { label: `${avail} PLACE${avail > 1 ? 'S' : ''}`, color: '#e05aaa' }
+  if (avail === 0) return { label: 'COMPLET', color: 'var(--pink)' }
+  if (avail <= 5) return { label: `${avail} PLACE${avail > 1 ? 'S' : ''}`, color: 'var(--pink)' }
   const fill = Math.round(((totalCap - avail) / totalCap) * 100)
-  if (fill >= 80) return { label: 'BIENTÔT COMPLET', color: '#c8a96e' }
+  if (fill >= 80) return { label: 'BIENTÔT COMPLET', color: 'var(--gold)' }
   return null
 }

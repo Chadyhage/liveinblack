@@ -24,7 +24,7 @@ import { validatePrestataireStep0, validatePrestataireStep2, getRequiredDocs, ty
 // ici — fidèle au legacy, l'étape "Finaliser" ne fait qu'informer du prix ;
 // l'activation réelle se fait depuis /proposer-services après approbation.
 
-const STEPS = ['Compte', 'Activités', 'Détails', 'Fonctionnement', 'Documents', 'Finaliser']
+const STEPS = ['Identité', 'Activités', 'Détails', 'Fonctionnement', 'Documents', 'Finaliser']
 
 const EMPTY_FORM: PrestataireFormData = {
   prestataireType: 'autre',
@@ -128,6 +128,7 @@ export default function PrestataireOnboardingWizard({
   const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
   const [regPasswordConfirm, setRegPasswordConfirm] = useState('')
+  const [showRegPwd, setShowRegPwd] = useState(false)
   const [documents, setDocuments] = useState<Record<string, DocState[]>>({})
   const [candidateNote, setCandidateNote] = useState(initialCandidateNote ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -282,7 +283,6 @@ export default function PrestataireOnboardingWizard({
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
               Étape {step + 1} / {STEPS.length} — {STEPS[step]}
             </span>
-            <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{progress}%</span>
           </div>
           <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--gold)' }} />
@@ -315,7 +315,7 @@ export default function PrestataireOnboardingWizard({
               </div>
               <div>
                 <label style={labelStyle}>Ville</label>
-                <input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris" />
+                <input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
               </div>
               <div>
                 <label style={labelStyle}>Pays</label>
@@ -337,7 +337,22 @@ export default function PrestataireOnboardingWizard({
                   </div>
                   <div>
                     <label style={labelStyle}>Mot de passe</label>
-                    <input style={inputStyle} type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder="Minimum 8 caractères" />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        style={{ ...inputStyle, paddingRight: 56 }}
+                        type={showRegPwd ? 'text' : 'password'}
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        placeholder="Minimum 8 caractères"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegPwd((v) => !v)}
+                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                      >
+                        {showRegPwd ? 'Cacher' : 'Voir'}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label style={labelStyle}>Confirmer le mot de passe</label>
@@ -366,8 +381,8 @@ export default function PrestataireOnboardingWizard({
                 <input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} />
               </div>
               {types.includes('artiste') && (
-                <div>
-                  <label style={labelStyle}>Nom de scène</label>
+                <div style={{ padding: 10, borderRadius: 10, background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.2)' }}>
+                  <label style={labelStyle}>Nom de scène (visible car « Artiste » est sélectionné)</label>
                   <input style={inputStyle} value={form.nomScene} onChange={(e) => set('nomScene', e.target.value)} />
                 </div>
               )}
@@ -499,6 +514,17 @@ export default function PrestataireOnboardingWizard({
                 </div>
               )}
 
+              {types.filter((t) => !['artiste', 'salle', 'materiel', 'food'].includes(t)).length > 0 && (
+                <p style={{ fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.5, margin: 0 }}>
+                  Pas de champs spécifiques pour{' '}
+                  {types
+                    .filter((t) => !['artiste', 'salle', 'materiel', 'food'].includes(t))
+                    .map((t) => PROVIDER_CATEGORIES.find((c) => c.id === t)?.label || t)
+                    .join(', ')}{' '}
+                  — la description libre renseignée à l&apos;étape précédente suffit.
+                </p>
+              )}
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: 0 }}>Tarifs</p>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#fff' }}>
@@ -603,7 +629,7 @@ export default function PrestataireOnboardingWizard({
                 Continuer
               </button>
             ) : (
-              <button onClick={handleSubmit} disabled={busy} style={{ ...primaryBtn(busy), flex: 1 }}>
+              <button onClick={handleSubmit} disabled={busy || missingDocs.length > 0} style={{ ...primaryBtn(busy || missingDocs.length > 0), flex: 1 }}>
                 {busy ? 'Envoi…' : mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
               </button>
             )}
@@ -611,7 +637,7 @@ export default function PrestataireOnboardingWizard({
         </div>
 
         <p style={{ fontSize: 11, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
-          {mode === 'anonymous' ? 'Brouillon enregistré sur cet appareil' : 'Sauvegarde automatique activée'}
+          {mode === 'anonymous' ? 'Rien n’est encore enregistré : termine et envoie ta demande pour ne rien perdre.' : 'Sauvegarde automatique activée'}
         </p>
       </div>
     </main>
@@ -634,12 +660,37 @@ function DocUpload({
   onRemove: (key: string, index: number) => void
 }) {
   const files = documents[docKey] || []
+  const inputId = `doc-upload-${docKey}`
   return (
     <div>
       <label style={labelStyle}>
         {label} {required && <span style={{ color: 'var(--gold)' }}>*</span>}
       </label>
-      <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={(e) => onChange(docKey, e.target.files)} style={{ fontSize: 12.5, color: 'var(--text-muted)' }} />
+      <label
+        htmlFor={inputId}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '9px 16px',
+          borderRadius: 10,
+          border: '1px solid var(--border-strong)',
+          background: 'var(--surface-2)',
+          color: 'var(--text-muted)',
+          fontSize: 12.5,
+          cursor: 'pointer',
+        }}
+      >
+        Choisir un fichier
+      </label>
+      <input
+        id={inputId}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        multiple
+        onChange={(e) => onChange(docKey, e.target.files)}
+        style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+      />
       {files.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
           {files.map((f, i) => (

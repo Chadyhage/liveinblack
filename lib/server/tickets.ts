@@ -1,7 +1,7 @@
 import { getDb } from '../db/mongoose'
 import Ticket from '../models/Ticket'
 import Event from '../models/Event'
-import { verifyTicketToken, extractTicketCode } from './ticketToken'
+import { verifyTicketToken, extractTicketCode, signTicketToken } from './ticketToken'
 
 // Contrairement au legacy (payload d'affichage embarqué dans le jeton, pensé
 // pour fonctionner hors-ligne avec Firestore), l'affichage vient ici
@@ -65,6 +65,10 @@ export async function getTicketDisplay(token: string): Promise<TicketDisplay | n
 
 export interface TicketWalletItemView {
   ticketCode: string
+  // Jeton SIGNÉ (lib/server/ticketToken.ts) — c'est lui, et non ticketCode
+  // brut, qui doit alimenter le lien/QR vers /ticket/[token] (getTicketDisplay
+  // exige un jeton signé, cf. commentaire de toWalletItemView ci-dessous).
+  ticketToken: string
   place: string
   placePrice: number
   totalPrice: number
@@ -115,6 +119,8 @@ export type ListMyTicketsResult = { ok: true; groups: TicketWalletGroupView[] }
 function toWalletItemView(
   ticket: {
     ticketCode: string
+    seatVersion?: number | null
+    entryNonce?: string | null
     place?: string | null
     placePrice?: number | null
     totalPrice?: number | null
@@ -134,6 +140,11 @@ function toWalletItemView(
 ): TicketWalletItemView {
   return {
     ticketCode: ticket.ticketCode,
+    ticketToken: signTicketToken({
+      ticketCode: ticket.ticketCode,
+      seatVersion: ticket.seatVersion ?? 0,
+      entryNonce: ticket.entryNonce ?? null,
+    }),
     place: ticket.place ?? '',
     placePrice: ticket.placePrice ?? 0,
     totalPrice: ticket.totalPrice ?? 0,

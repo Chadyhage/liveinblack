@@ -48,6 +48,21 @@ export default function AgentBoostsClient() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
+  async function load() {
+    setLoading(true)
+    setError(false)
+    try {
+      const res = await fetch('/api/agent/boosts')
+      const body = await res.json()
+      if (!res.ok || !body.ok) throw new Error('load_failed')
+      setData({ active: body.active, conflicts: body.conflicts, expired: body.expired, totalRevenue: body.totalRevenue })
+    } catch {
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
     async function run() {
@@ -71,63 +86,75 @@ export default function AgentBoostsClient() {
   }, [])
 
   return (
-    <div style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {error && (
-        <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page.</p>
-        </div>
-      )}
+    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Boosts</h1>
 
-      {loading ? (
-        <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
-      ) : !data ? null : (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {[
-              { label: 'Boosts actifs', value: String(data.active.length), color: 'var(--teal)' },
-              { label: 'Conflits à traiter', value: String(data.conflicts.length), color: data.conflicts.length > 0 ? '#dc3232' : 'var(--text-muted)' },
-              { label: 'Revenus boosts', value: fmtMoney(data.totalRevenue, 'EUR'), color: 'var(--gold)' },
-            ].map((k) => (
-              <div key={k.label} style={{ ...cardStyle, textAlign: 'center' }}>
-                <p style={{ fontSize: 22, fontWeight: 800, color: k.color, margin: 0 }}>{k.value}</p>
-                <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '3px 0 0' }}>{k.label}</p>
-              </div>
-            ))}
+        {error && (
+          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page.</p>
+            <button onClick={load} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5, flexShrink: 0 }}>
+              Recharger
+            </button>
           </div>
+        )}
 
-          {data.conflicts.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#ff8c8c', margin: 0 }}>Conflits — action requise</p>
-              {data.conflicts.map((b) => (
-                <BoostCard key={b.id} b={b} />
-              ))}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Actifs ({data.active.length})</p>
-            {data.active.length === 0 ? (
-              <div style={{ ...cardStyle, padding: 26, textAlign: 'center' }}>
-                <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Aucun boost actif</p>
-              </div>
-            ) : (
-              data.active.filter((b) => !b.conflict).map((b) => <BoostCard key={b.id} b={b} />)
-            )}
-          </div>
-
-          {data.expired.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Expirés ({data.expired.length})</p>
-              {data.expired.slice(0, 10).map((b) => (
-                <div key={b.id} style={{ opacity: 0.55 }}>
-                  <BoostCard b={b} />
+        {loading ? (
+          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+        ) : !data ? null : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {[
+                { label: 'Boosts actifs', value: String(data.active.length), color: 'var(--teal)' },
+                { label: 'Conflits à traiter', value: String(data.conflicts.length), color: data.conflicts.length > 0 ? '#dc3232' : 'var(--text-muted)' },
+                { label: 'Revenus boosts', value: fmtMoney(data.totalRevenue, 'EUR'), color: 'var(--gold)' },
+              ].map((k) => (
+                <div key={k.label} style={{ ...cardStyle, textAlign: 'center' }}>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: k.color, margin: 0 }}>{k.value}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '3px 0 0' }}>{k.label}</p>
                 </div>
               ))}
             </div>
-          )}
-        </>
-      )}
-    </div>
+
+            {data.conflicts.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#ff8c8c', margin: 0 }}>Conflits — action requise</p>
+                {data.conflicts.map((b) => (
+                  <BoostCard key={b.id} b={b} />
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Actifs ({data.active.length})</p>
+              {data.active.length === 0 ? (
+                <div style={{ ...cardStyle, padding: 26, textAlign: 'center' }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Aucun boost actif</p>
+                </div>
+              ) : (
+                data.active.filter((b) => !b.conflict).map((b) => <BoostCard key={b.id} b={b} />)
+              )}
+            </div>
+
+            {data.expired.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Expirés ({data.expired.length})</p>
+                {data.expired.slice(0, 10).map((b) => (
+                  <div key={b.id} style={{ opacity: 0.55 }}>
+                    <BoostCard b={b} />
+                  </div>
+                ))}
+                {data.expired.length > 10 && (
+                  <p style={{ fontSize: 11.5, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
+                    + {data.expired.length - 10} boost{data.expired.length - 10 > 1 ? 's' : ''} expiré{data.expired.length - 10 > 1 ? 's' : ''} supplémentaire{data.expired.length - 10 > 1 ? 's' : ''} non affiché{data.expired.length - 10 > 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </main>
   )
 }
 

@@ -37,6 +37,11 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
 
   return (
     <main style={{ maxWidth: 960, margin: '0 auto', padding: '0 0 60px', width: '100%' }}>
+      <div style={{ padding: '14px 22px 0' }}>
+        <Link href="/organizers" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          ← Organisateurs
+        </Link>
+      </div>
       <div style={{ position: 'relative', height: 200, margin: '14px 22px 0', borderRadius: 18, overflow: 'hidden', background: 'linear-gradient(135deg, rgba(139,92,246,.3), var(--obsidian))' }}>
         {organizer.bannerUrl && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -68,8 +73,8 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
               isAuthenticated={Boolean(session?.user)}
             />
             <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 420 }}>
-              En t&apos;abonnant, tu acceptes de partager ton e-mail avec cet organisateur afin de recevoir ses actualités. Tu peux te désabonner à tout moment
-              depuis{' '}
+              En t&apos;abonnant, tu acceptes de partager ton e-mail avec cet organisateur afin de recevoir ses actualités. Tu peux personnaliser tes alertes ou
+              te désabonner à tout moment depuis{' '}
               <Link href="/profile/followed-organizers" style={{ color: 'var(--teal)' }}>
                 tes organisateurs suivis
               </Link>

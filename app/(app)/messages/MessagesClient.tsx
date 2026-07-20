@@ -1157,7 +1157,7 @@ export default function MessagesClient({
     const lookup = await apiFetch<{ user: { id: string } }>(`/api/users/lookup?email=${encodeURIComponent(email)}`)
     if (!lookup.ok) {
       pushToast(errorMessageFor(lookup.error))
-      return
+      return false
     }
     const res = await apiFetch<{ status: string }>('/api/friends/requests', {
       method: 'POST',
@@ -1166,10 +1166,11 @@ export default function MessagesClient({
     })
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
-      return
+      return false
     }
     pushToast(res.data.status === 'friends' ? 'Vous êtes maintenant amis !' : 'Demande envoyée.')
     refreshFriendData()
+    return true
   }
 
   async function handleFriendRequestAction(requestId: string, action: 'accept' | 'decline' | 'cancel') {
@@ -1369,6 +1370,7 @@ export default function MessagesClient({
                     e.preventDefault()
                     setConvContextMenu({ conversationId: conv.id, x: e.clientX, y: e.clientY })
                   }}
+                  aria-label={`Ouvrir la conversation avec ${label}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1850,7 +1852,9 @@ export default function MessagesClient({
       {panel === 'newDirect' && (
         <NewDirectModal friends={friends} onPick={handleStartDirectConversation} onEmail={handleStartDirectConversationByEmail} onClose={() => setPanel('none')} />
       )}
-      {panel === 'newGroup' && <NewGroupModal friends={friends} onCreate={handleCreateGroup} onClose={() => setPanel('none')} />}
+      {panel === 'newGroup' && (
+        <NewGroupModal friends={friends} onCreate={handleCreateGroup} onClose={() => setPanel('none')} onGoToFriends={() => setPanel('friends')} />
+      )}
       {panel === 'friends' && (
         <FriendsPanel
           received={received}
@@ -2363,7 +2367,7 @@ function MessageRow({
             transition: 'box-shadow 0.3s',
           }}
         >
-          <MessageContent message={message} members={members} onVote={onVote} />
+          <MessageContent message={message} members={members} onVote={onVote} currentUserId={currentUserId} />
         </div>
 
         {reactionEntries.length > 0 && (
@@ -2417,7 +2421,17 @@ function MessageRow({
   )
 }
 
-function MessageContent({ message, members, onVote }: { message: MessageView; members: ConversationMember[]; onVote: (messageId: string, optionId: string) => void }) {
+function MessageContent({
+  message,
+  members,
+  onVote,
+  currentUserId,
+}: {
+  message: MessageView
+  members: ConversationMember[]
+  onVote: (messageId: string, optionId: string) => void
+  currentUserId: string
+}) {
   if (message.deletedForAll) return <span style={{ fontSize: 12.5, color: 'var(--text-faint)', fontStyle: 'italic' }}>Message supprimé</span>
 
   if (message.type === 'text') {
@@ -2430,7 +2444,7 @@ function MessageContent({ message, members, onVote }: { message: MessageView; me
   }
   if (message.type === 'image') return <ImageBubble content={message.content} createdAt={message.createdAt} />
   if (message.type === 'voice') return <VoiceBubble content={message.content} />
-  if (message.type === 'poll' || message.type === 'event_poll') return <PollCard message={message} onVote={onVote} />
+  if (message.type === 'poll' || message.type === 'event_poll') return <PollCard message={message} onVote={onVote} currentUserId={currentUserId} />
   if (message.type === 'story') return <StoryCard content={message.content} />
   if (message.type === 'event') return <EventCard content={message.content} />
   if (message.type === 'catalog_item') return <CatalogItemCard content={message.content} />
@@ -2619,7 +2633,7 @@ function VoiceBubble({ content }: { content: string | null }) {
   )
 }
 
-function PollCard({ message, onVote }: { message: MessageView; onVote: (messageId: string, optionId: string) => void }) {
+function PollCard({ message, onVote, currentUserId }: { message: MessageView; onVote: (messageId: string, optionId: string) => void; currentUserId: string }) {
   const poll = message.poll
   if (!poll) return <span style={{ fontSize: 13, color: 'var(--text-faint)' }}>Sondage indisponible.</span>
   const totalVotes = poll.options.reduce((s, o) => s + o.voterIds.length, 0)
@@ -2630,18 +2644,23 @@ function PollCard({ message, onVote }: { message: MessageView; onVote: (messageI
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {poll.options.map((opt) => {
           const pct = totalVotes ? Math.round((opt.voterIds.length / totalVotes) * 100) : 0
+          const votedByMe = opt.voterIds.includes(currentUserId)
           return (
             <button
               key={opt.id}
               type="button"
               onClick={() => onVote(message.id, opt.id)}
+              aria-label={`Voter pour ${opt.text}`}
+              aria-pressed={votedByMe}
               style={{
                 position: 'relative',
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 6,
                 padding: '8px 10px',
                 borderRadius: 8,
-                border: '1px solid var(--border-strong)',
+                border: votedByMe ? '1px solid var(--teal)' : '1px solid var(--border-strong)',
                 background: 'rgba(255,255,255,0.05)',
                 color: 'var(--text)',
                 fontSize: 12.5,
@@ -2650,8 +2669,11 @@ function PollCard({ message, onVote }: { message: MessageView; onVote: (messageI
                 overflow: 'hidden',
               }}
             >
-              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(78,232,200,0.1)' }} />
-              <span style={{ position: 'relative' }}>{opt.text}</span>
+              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(78,232,200,0.22)' }} />
+              <span style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {votedByMe && <span style={{ color: 'var(--teal)' }}>✓</span>}
+                {opt.text}
+              </span>
               <span style={{ position: 'relative', color: 'var(--teal)', fontWeight: 700 }}>{opt.voterIds.length}</span>
             </button>
           )
@@ -2906,6 +2928,14 @@ function DropdownMenu({ items, onClose }: { items: { label: string; onClick: () 
 }
 
 function ModalShell({ title, onClose, wide, children }: { title: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}
@@ -2925,7 +2955,25 @@ function ModalShell({ title, onClose, wide, children }: { title: string; onClose
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
         }}
       >
-        <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 14px', color: 'var(--text)' }}>{title}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: 'var(--text)' }}>{title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: 20,
+              lineHeight: 1,
+              cursor: 'pointer',
+              padding: 4,
+            }}
+          >
+            ×
+          </button>
+        </div>
         {children}
       </div>
     </div>
@@ -2942,7 +2990,14 @@ function ModalActions({ onCancel, onConfirm, confirmLabel, disabled }: { onCance
         type="button"
         onClick={onConfirm}
         disabled={disabled}
-        style={{ ...smallButtonStyle, background: disabled ? 'rgba(62,214,181,0.4)' : 'var(--teal-solid)', color: '#04120e', border: 'none', fontWeight: 700, cursor: disabled ? 'default' : 'pointer' }}
+        style={{
+          ...smallButtonStyle,
+          background: disabled ? 'var(--border-strong)' : 'var(--teal-solid)',
+          color: disabled ? 'var(--text-faint)' : '#04120e',
+          border: 'none',
+          fontWeight: 700,
+          cursor: disabled ? 'default' : 'pointer',
+        }}
       >
         {confirmLabel}
       </button>
@@ -3016,10 +3071,12 @@ function NewGroupModal({
   friends,
   onCreate,
   onClose,
+  onGoToFriends,
 }: {
   friends: FriendView[]
   onCreate: (name: string, memberIds: string[], avatarDataUrl: string | null) => void
   onClose: () => void
+  onGoToFriends: () => void
 }) {
   const [step, setStep] = useState<1 | 2>(1)
   const [name, setName] = useState('')
@@ -3097,7 +3154,15 @@ function NewGroupModal({
             <span style={{ fontSize: 13, color: 'var(--text)' }}>{f.name}</span>
           </label>
         ))}
-        {filtered.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami trouvé.</p>}
+        {filtered.length === 0 && friends.length === 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+            <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Tu n&apos;as pas encore d&apos;amis. Ajoute-en pour pouvoir créer un groupe.</p>
+            <button type="button" onClick={onGoToFriends} style={smallButtonStyle}>
+              Ajouter un ami
+            </button>
+          </div>
+        )}
+        {filtered.length === 0 && friends.length > 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami trouvé.</p>}
       </div>
       <ModalActions onCancel={onClose} onConfirm={() => setStep(2)} confirmLabel="Suivant" disabled={!name.trim() || memberIds.size === 0} />
     </ModalShell>
@@ -3121,7 +3186,7 @@ function FriendsPanel({
   newFriendIds: Set<string>
   onDismissNew: (userId: string) => void
   onAction: (requestId: string, action: 'accept' | 'decline' | 'cancel') => void
-  onSend: (email: string) => void
+  onSend: (email: string) => Promise<boolean>
   onRemove: (friendUserId: string) => void
   onClose: () => void
 }) {
@@ -3133,9 +3198,11 @@ function FriendsPanel({
         <button
           type="button"
           onClick={() => {
-            if (email.trim()) {
-              onSend(email.trim())
-              setEmail('')
+            const trimmed = email.trim()
+            if (trimmed) {
+              onSend(trimmed).then((success) => {
+                if (success) setEmail('')
+              })
             }
           }}
           style={smallButtonStyle}
@@ -3434,7 +3501,7 @@ function ContactPanelModal({
           {online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}
         </p>
         {phone && (
-          <a href={`tel:${phone}`} style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}>
+          <a href={`tel:${phone.replace(/\s+/g, '')}`} style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}>
             {phone}
           </a>
         )}
@@ -3497,7 +3564,7 @@ function StarredModal({
   return (
     <ModalShell title="Messages importants" onClose={onClose} wide>
       {messages.length === 0 && (
-        <EmptyState icon="★" title="Aucun message important" subtitle="Maintiens un message (ou clic droit) → « Marquer important »" />
+        <EmptyState icon="★" title="Aucun message important" subtitle="Appui long (ou clic droit) sur un message → « Marquer important »" />
       )}
       {messages.map((m) => (
         <div key={m.id} style={rowStyle}>
@@ -3599,6 +3666,17 @@ function PollDraftModal({
   onSubmit: () => void
   onClose: () => void
 }) {
+  const normalized = draft.options.map((o) => o.trim().toLowerCase())
+  const duplicateIndexes = new Set<number>()
+  normalized.forEach((val, i) => {
+    if (!val) return
+    if (normalized.indexOf(val) !== i) {
+      duplicateIndexes.add(i)
+      duplicateIndexes.add(normalized.indexOf(val))
+    }
+  })
+  const hasBlankOption = normalized.some((val) => !val)
+  const hasDuplicate = duplicateIndexes.size > 0
   return (
     <ModalShell title="Nouveau sondage" onClose={onClose}>
       <input value={draft.question} onChange={(e) => onChange({ ...draft, question: e.target.value })} placeholder="Question" style={inputStyle} autoFocus />
@@ -3612,9 +3690,10 @@ function PollDraftModal({
             onChange({ ...draft, options: next })
           }}
           placeholder={`Option ${i + 1}`}
-          style={inputStyle}
+          style={{ ...inputStyle, border: duplicateIndexes.has(i) ? '1px solid var(--pink)' : inputStyle.border }}
         />
       ))}
+      {hasDuplicate && <p style={{ fontSize: 11.5, color: 'var(--pink)', margin: '-6px 0 10px' }}>Deux options ne peuvent pas être identiques.</p>}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         {draft.options.length < 6 && (
           <button type="button" onClick={() => onChange({ ...draft, options: [...draft.options, ''] })} style={smallButtonStyle}>
@@ -3627,7 +3706,7 @@ function PollDraftModal({
           </button>
         )}
       </div>
-      <ModalActions onCancel={onClose} onConfirm={onSubmit} confirmLabel="Envoyer" />
+      <ModalActions onCancel={onClose} onConfirm={onSubmit} confirmLabel="Envoyer" disabled={!draft.question.trim() || hasBlankOption || hasDuplicate} />
     </ModalShell>
   )
 }

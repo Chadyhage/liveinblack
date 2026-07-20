@@ -37,5 +37,6 @@ export function computePayoutGapLabel(events: PayoutGapEvent[], inputs: PayoutGa
     const region = regions.find((r) => r.momoCountry === country)
     parts.push(`un numéro Mobile Money pour ${region?.name || country}`)
   }
-  return parts.join(' · ')
+  if (parts.length <= 1) return parts.join('')
+  return `${parts.slice(0, -1).join(', ')} et ${parts[parts.length - 1]}`
 }

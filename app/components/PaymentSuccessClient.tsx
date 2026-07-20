@@ -18,16 +18,18 @@ import { useRouter } from 'next/navigation'
 // (avec order_id au lieu de session_id) répond donc "paid" dès le premier
 // appel, sans polling.
 
+// Couleurs alignées sur les custom properties de app/globals.css (:root) —
+// jamais de hex/rgba dupliqués ici, voir CLAUDE.md.
 const COLORS = {
-  teal: '#4ee8c8',
-  pink: '#e05aaa',
-  gold: '#c8a96e',
-  violet: '#8b5cf6',
+  teal: 'var(--teal)',
+  pink: 'var(--pink)',
+  gold: 'var(--gold)',
+  violet: 'var(--violet)',
   muted: 'rgba(255,255,255,0.55)',
 }
 const CARD: React.CSSProperties = {
-  background: '#12131c',
-  border: '1px solid rgba(255,255,255,0.10)',
+  background: 'var(--surface-2)',
+  border: '1px solid var(--border)',
   borderRadius: 20,
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
@@ -197,7 +199,7 @@ export default function PaymentSuccessClient({
             </h1>
             <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>{successMsg}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <button onClick={() => router.push('/profile')} style={btnSolid('#3ed6b5', '#04120e')}>Voir mes billets</button>
+              <button onClick={() => router.push('/profile')} style={btnSolid('var(--teal-solid)', '#04120e')}>Voir mes billets</button>
               <button onClick={() => router.push('/events')} style={btnGhostS}>Découvrir d&apos;autres événements</button>
             </div>
           </>
@@ -241,7 +243,7 @@ export default function PaymentSuccessClient({
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
               {eventId && (
-                <button onClick={() => router.push(`/events/${eventId}`)} style={btnSolid('#c8a96e', '#141007')}>
+                <button onClick={() => router.push(`/events/${eventId}`)} style={btnSolid(COLORS.gold, '#141007')}>
                   Retourner à l&apos;événement
                 </button>
               )}
@@ -260,7 +262,7 @@ export default function PaymentSuccessClient({
             </h1>
             <p style={{ fontSize: 14, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>{errorMsg}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <button onClick={copySupport} style={{ ...btnSolid('#c8a96e', '#141007'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+              <button onClick={copySupport} style={{ ...btnSolid(COLORS.gold, '#141007'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
                 <IconMail size={16} color="#141007" />
                 {copied ? 'Adresse copiée' : "Copier l'email du support"}
               </button>

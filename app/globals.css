@@ -33,6 +33,15 @@ body {
   font-family: var(--font-inter), Inter, sans-serif;
 }
 
+/* Checkboxes/radios natifs du navigateur détonnent avec le thème teal/gold
+   (rendu par défaut clair/anguleux) — accent-color les aligne sur le design
+   system sans avoir à styliser un composant custom partout où ils sont
+   utilisés (organizer-studio, wizards d'inscription, etc.). */
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--teal);
+}
+
 /* Grain texture discret (cf. CLAUDE.md — opacity 0.035) */
 body::after {
   content: '';

@@ -58,16 +58,16 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
   return (
     <div style={{ padding: '28px 22px 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
       <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 16px' }}>Recherche</h1>
-      <form action="/search" method="get" style={{ display: 'flex', gap: 8, maxWidth: 480, marginBottom: 28 }}>
+      <form action="/search" method="get" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxWidth: 480, marginBottom: 28 }}>
         <input
           type="text"
           name="q"
           defaultValue={query}
           placeholder="Événements, organisateurs, prestataires…"
-          style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5 }}
+          style={{ flex: '1 1 220px', minWidth: 0, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5 }}
           autoFocus
         />
-        <button type="submit" style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>
+        <button type="submit" style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>
           Chercher
         </button>
       </form>
@@ -75,7 +75,15 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
       {!query ? (
         <p style={{ color: 'var(--text-muted)' }}>Tape un mot-clé pour rechercher un événement, un organisateur ou un prestataire.</p>
       ) : totalResults === 0 ? (
-        <p style={{ color: 'var(--text-muted)' }}>Aucun résultat pour « {query} ».</p>
+        <div>
+          <p style={{ color: 'var(--text-muted)', margin: '0 0 14px' }}>Aucun résultat pour « {query} ».</p>
+          <Link
+            href="/events"
+            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 10, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, textDecoration: 'none' }}
+          >
+            Parcourir les événements
+          </Link>
+        </div>
       ) : (
         <>
           {matchedEvents.length > 0 && (

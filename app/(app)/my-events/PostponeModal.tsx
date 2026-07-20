@@ -22,6 +22,15 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
       setError('Choisis une nouvelle date.')
       return
     }
+    const newDateTime = new Date(`${date}T${time || '00:00'}`)
+    if (Number.isNaN(newDateTime.getTime()) || newDateTime.getTime() <= Date.now()) {
+      setError('La nouvelle date doit être dans le futur.')
+      return
+    }
+    if (date === event.date && time === event.time) {
+      setError("La nouvelle date/heure doit être différente de l'actuelle.")
+      return
+    }
     setBusy(true)
     setError('')
     try {
@@ -76,6 +85,7 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
             <input
               type="date"
               value={date}
+              min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setDate(e.target.value)}
               style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#0b0c12', color: '#fff' }}
             />

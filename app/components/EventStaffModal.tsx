@@ -131,6 +131,17 @@ function RoleBadge({ role }: { role: string }) {
   )
 }
 
+function Spinner({ size = 16, color = 'rgba(255,255,255,0.6)' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
+      <path d="M21 12a9 9 0 00-9-9" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+      </path>
+    </svg>
+  )
+}
+
 function IconAlert({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
@@ -311,7 +322,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
           maxWidth: 480,
           maxHeight: '88vh',
           overflowY: 'auto',
-          background: '#12131c',
+          background: 'var(--surface-2)',
           border: '1px solid rgba(255,255,255,0.10)',
           borderRadius: 20,
           padding: 22,
@@ -350,7 +361,10 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
         </div>
 
         {loading ? (
-          <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.45)', textAlign: 'center', padding: '20px 0', margin: 0 }}>Chargement…</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '20px 0' }}>
+            <Spinner />
+            <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>Chargement…</p>
+          </div>
         ) : loadError ? (
           <p style={{ fontFamily: FONT, fontSize: 13, color: '#ff9ed2', textAlign: 'center', padding: '20px 0', margin: 0 }}>
             Impossible de charger l&apos;équipe — vérifie ta connexion.
@@ -408,7 +422,9 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               />
 
               {/* Résultats */}
-              {query.trim().length >= 2 && (
+              {query.trim().length > 0 && query.trim().length < 2 ? (
+                <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0' }}>Tape au moins 2 caractères.</p>
+              ) : query.trim().length >= 2 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {visibleResults.length === 0 ? (
                     <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0', lineHeight: 1.5 }}>
@@ -457,7 +473,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                     ))
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Message */}
@@ -560,7 +576,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               position: 'relative',
               width: '100%',
               maxWidth: 360,
-              background: '#12131c',
+              background: 'var(--surface-2)',
               border: '1px solid rgba(255,255,255,0.12)',
               borderRadius: 16,
               padding: 22,
@@ -584,7 +600,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   border: '1px solid rgba(224,90,170,0.35)',
                 }}
               >
-                <IconAlert size={18} color="#e05aaa" />
+                <IconAlert size={18} color="var(--pink)" />
               </span>
               <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>Retirer de l&apos;équipe ?</p>
             </div>
@@ -618,7 +634,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   padding: '11px',
                   borderRadius: 12,
                   cursor: busy ? 'not-allowed' : 'pointer',
-                  background: busy ? 'rgba(255,255,255,0.07)' : '#c2347f',
+                  background: busy ? 'rgba(255,255,255,0.07)' : 'var(--pink)',
                   border: busy ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
                   color: busy ? 'rgba(255,255,255,0.35)' : '#fff',
                   fontFamily: FONT,

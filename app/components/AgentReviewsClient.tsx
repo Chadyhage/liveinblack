@@ -198,13 +198,13 @@ export default function AgentReviewsClient() {
 
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div>
+      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Modération des avis prestataires</h1>
           {reportedCount > 0 && (
-            <p style={{ fontSize: 12.5, color: '#e05aaa', margin: '4px 0 0', fontWeight: 700 }}>
+            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {reportedCount} signalé{reportedCount > 1 ? 's' : ''}
-            </p>
+            </span>
           )}
         </div>
 
@@ -217,28 +217,65 @@ export default function AgentReviewsClient() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input
-            style={{ ...inputStyle, flex: '1 1 220px' }}
-            placeholder="Rechercher (prestataire, auteur, texte...)"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} style={{ ...inputStyle, width: 'auto' }}>
-            <option value="all">Tous statuts</option>
-            <option value="reported">Signalés</option>
-            <option value="published">Publiés</option>
-            <option value="hidden">Masqués</option>
-            <option value="deleted">Supprimés</option>
-          </select>
-          <select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value as typeof ratingFilter)} style={{ ...inputStyle, width: 'auto' }}>
-            <option value="all">Toutes notes</option>
-            {[5, 4, 3, 2, 1].map((n) => (
-              <option key={n} value={n}>
-                {n} étoile{n > 1 ? 's' : ''}
-              </option>
-            ))}
-          </select>
+        <input
+          style={inputStyle}
+          placeholder="Rechercher (prestataire, auteur, texte...)"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {(
+            [
+              { key: 'all' as const, label: 'Tous statuts' },
+              { key: 'reported' as const, label: 'Signalés' },
+              { key: 'published' as const, label: 'Publiés' },
+              { key: 'hidden' as const, label: 'Masqués' },
+              { key: 'deleted' as const, label: 'Supprimés' },
+            ]
+          ).map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setStatusFilter(f.key)}
+              style={{
+                padding: '7px 12px',
+                borderRadius: 999,
+                cursor: 'pointer',
+                fontSize: 10,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                border: statusFilter === f.key ? '1px solid rgba(200,169,110,0.45)' : '1px solid var(--border)',
+                background: statusFilter === f.key ? 'rgba(200,169,110,0.15)' : 'var(--surface)',
+                color: statusFilter === f.key ? 'var(--gold)' : 'var(--text-faint)',
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {(['all', '5', '4', '3', '2', '1'] as const).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setRatingFilter(n)}
+              style={{
+                padding: '7px 12px',
+                borderRadius: 999,
+                cursor: 'pointer',
+                fontSize: 10,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                border: ratingFilter === n ? '1px solid rgba(200,169,110,0.45)' : '1px solid var(--border)',
+                background: ratingFilter === n ? 'rgba(200,169,110,0.15)' : 'var(--surface)',
+                color: ratingFilter === n ? 'var(--gold)' : 'var(--text-faint)',
+              }}
+            >
+              {n === 'all' ? 'Toutes notes' : `${n} étoile${n !== '1' ? 's' : ''}`}
+            </button>
+          ))}
         </div>
 
         {listLoading ? (
@@ -342,7 +379,7 @@ function ReviewCard({
             <span style={{ fontWeight: 400, color: 'var(--text-faint)', fontSize: 12 }}> — avis de {review.authorName}</span>
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
-            <Stars value={review.rating} size={13} />
+            <Stars value={review.rating} size={16} />
             {review.verified && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)' }}>vérifié</span>}
             <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{fmtDate(review.createdAt)}</span>
           </div>
@@ -355,8 +392,12 @@ function ReviewCard({
           )}
           <span style={{ padding: '3px 9px', borderRadius: 999, background: meta.bg, border: `1px solid ${meta.border}`, fontSize: 10.5, fontWeight: 700, color: meta.color }}>
             {meta.label}
-            {review.hiddenBy === 'auto' ? ' (auto)' : ''}
           </span>
+          {review.hiddenBy === 'auto' && (
+            <span style={{ padding: '3px 9px', borderRadius: 999, background: 'rgba(139,92,246,0.14)', border: '1px solid rgba(139,92,246,0.4)', fontSize: 10.5, fontWeight: 700, color: 'var(--violet)' }}>
+              auto
+            </span>
+          )}
         </div>
       </div>
 

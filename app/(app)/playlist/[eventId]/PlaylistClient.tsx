@@ -100,7 +100,7 @@ const STATUS_BADGE: Record<PlaylistSong['status'], { label: string; color: strin
 }
 
 const STATUS_ACTION_LABEL: Record<PlaylistSong['status'], string> = {
-  pending: 'remis en attente',
+  pending: 'Remis en attente',
   validated: 'Validé',
   refused: 'Refusé',
   played: 'Joué',
@@ -496,7 +496,7 @@ export default function PlaylistClient({
   // panneau de gestion, billet ou non.
   if (!canModerate && !hasTicket) {
     return (
-      <main style={{ maxWidth: 640, margin: '0 auto', padding: '24px 18px 90px' }}>
+      <main style={{ maxWidth: 640, minWidth: 0, width: '100%', margin: '0 auto', padding: '24px 18px 90px' }}>
         <div style={{ marginBottom: 18 }}>
           <Link href={`/events/${eventId}`} style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← {eventName}
@@ -527,7 +527,7 @@ export default function PlaylistClient({
   }
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: '24px 18px 90px' }}>
+    <main style={{ maxWidth: 640, minWidth: 0, width: '100%', margin: '0 auto', padding: '24px 18px 90px' }}>
       <style>{`
         @keyframes lbBar1 { from { height: 5px } to { height: 18px } }
         @keyframes lbBar2 { from { height: 14px } to { height: 6px } }
@@ -625,7 +625,7 @@ export default function PlaylistClient({
             gap: 10,
           }}
         >
-          <span>Aperçu équipe — les participants, eux, doivent avoir leur billet scanné à l&apos;entrée pour proposer un son.</span>
+          <span>Aperçu équipe — un vrai participant doit avoir son billet scanné à l&apos;entrée pour proposer un son.</span>
           <button type="button" onClick={() => setPreviewMode(false)} style={{ ...ghostButtonStyle, flexShrink: 0 }}>
             Retour modération
           </button>
@@ -758,7 +758,7 @@ export default function PlaylistClient({
               <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{moderationTab === 'all' ? 'Aucun son proposé pour l’instant' : 'Aucun son dans ce filtre'}</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>
                 {moderationTab === 'all'
-                  ? 'Les propositions des participants apparaîtront ici. Tu peux aussi ajouter tes propres sons.'
+                  ? 'Les propositions des participants apparaîtront ici. Utilise la recherche ci-dessus pour ajouter le premier son.'
                   : 'Change de filtre pour voir les autres sons.'}
               </p>
             </div>
@@ -1192,6 +1192,7 @@ function SearchResultsList({
                 type="button"
                 onClick={() => onTogglePreview(previewKey, r.previewUrl)}
                 disabled={!r.previewUrl}
+                aria-label={playing ? `Mettre en pause l'extrait de ${r.title}` : `Écouter un extrait de ${r.title}`}
                 style={{
                   width: 36,
                   height: 36,
@@ -1254,6 +1255,7 @@ function SongRow({
         type="button"
         onClick={() => song.previewUrl && onTogglePreview(previewKey, song.previewUrl)}
         disabled={!song.previewUrl}
+        aria-label={playing ? `Mettre en pause l'extrait de ${song.title}` : `Écouter un extrait de ${song.title}`}
         style={{
           width: 42,
           height: 42,
@@ -1334,6 +1336,7 @@ function DjSongRow({
         type="button"
         onClick={() => song.previewUrl && onTogglePreview(previewKey, song.previewUrl)}
         disabled={!song.previewUrl}
+        aria-label={playing ? `Mettre en pause l'extrait de ${song.title}` : `Écouter un extrait de ${song.title}`}
         style={{
           width: 42,
           height: 42,

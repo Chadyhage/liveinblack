@@ -88,7 +88,7 @@ export default async function AccueilPage() {
             <Link href="/events" style={btnGhost}>Découvrir les événements</Link>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 18 }}>
-            Déjà un compte ? <Link href="/login" style={{ color: 'rgba(255,255,255,.85)', fontWeight: 700, textDecoration: 'underline' }}>Se connecter</Link>
+            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Se connecter</Link>
           </p>
         </div>
       </section>
@@ -117,7 +117,7 @@ export default async function AccueilPage() {
                   <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
                     {e.imageUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={e.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={e.imageUrl} alt={e.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     )}
                     <span
                       style={{
@@ -158,7 +158,7 @@ export default async function AccueilPage() {
           <EmptyCard text="De nouvelles soirées arrivent très vite." ctaHref="/events" ctaLabel="Voir la page événements" />
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
               {events.map((e) => {
                 const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
                 const min = prices.length ? Math.min(...prices) : null
@@ -167,7 +167,7 @@ export default async function AccueilPage() {
                     <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
                       {e.imageUrl && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={e.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={e.imageUrl} alt={e.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                       )}
                       {min != null && (
                         <span style={{ position: 'absolute', top: 10, right: 10, fontSize: 11, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>
@@ -196,7 +196,7 @@ export default async function AccueilPage() {
           <EmptyCard text="Les premiers prestataires arrivent très vite." ctaHref="/providers" ctaLabel="Voir l'annuaire" />
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
               {featuredProviders.map((p) => {
                 const categories = getProviderCategories(p)
                 const pc = categories[0] || getProviderCategory(p.prestataireType)
@@ -212,7 +212,7 @@ export default async function AccueilPage() {
                         {pc.label}
                         {categories.length > 1 ? ` +${categories.length - 1}` : ''}
                       </span>
-                      <div style={{ position: 'absolute', left: 12, bottom: -20, width: 46, height: 46, borderRadius: '50%', border: '2px solid #0b0d16', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, color: 'var(--obsidian)' }}>
+                      <div style={{ position: 'absolute', left: 12, bottom: -20, width: 46, height: 46, borderRadius: '50%', border: '2px solid var(--obsidian)', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, color: 'var(--obsidian)' }}>
                         {p.photoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -339,7 +339,7 @@ export default async function AccueilPage() {
             <Link href="/events" style={btnGhost}>Découvrir les événements</Link>
           </div>
           <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 24 }}>
-            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
+            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Se connecter</Link>
           </p>
         </div>
       </section>

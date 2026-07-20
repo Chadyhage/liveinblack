@@ -238,7 +238,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
         <button
           onClick={startCreate}
           style={{ textAlign: 'left', padding: 16, borderRadius: 14, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.08)', cursor: 'pointer' }}
@@ -406,6 +406,20 @@ function GuestlistModalWithPlaces({ event, onClose }: { event: OrganizerEventVie
     }
   }, [event.id])
 
-  if (!places) return null
-  return <GuestlistModal event={{ id: event.id, name: event.name, places }} onClose={onClose} />
+  if (!places) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
+        <div style={{ position: 'relative', width: 40, height: 40 }} aria-label="Chargement de la guestlist">
+          <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
+            <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round">
+              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+            </path>
+          </svg>
+        </div>
+      </div>
+    )
+  }
+  return <GuestlistModal event={{ id: event.id, name: event.name, places, currency: event.currency }} onClose={onClose} />
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { fmtMoney } from '@/lib/shared/money'
+import AgeGateModal from './AgeGateModal'
 
 // Port INTERACTIF de la section « Réservation » de src/pages/EventDetailPage.jsx
 // (sélecteur de place + table/groupe, stepper de quantité, précommande, code
@@ -122,6 +123,8 @@ function isPromoRelatedError(code: string | null | undefined): boolean {
   return code === 'promo_makes_ticket_free' || code.toLowerCase().includes('promo')
 }
 
+const MAX_PREORDER_ITEM_QTY = 20
+
 function Spinner({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
@@ -192,7 +195,7 @@ export default function EventCheckoutPanel({
   }
 
   function updatePreorder(name: string, delta: number) {
-    setPreorderQty((prev) => ({ ...prev, [name]: Math.max(0, (prev[name] || 0) + delta) }))
+    setPreorderQty((prev) => ({ ...prev, [name]: Math.min(MAX_PREORDER_ITEM_QTY, Math.max(0, (prev[name] || 0) + delta)) }))
   }
 
   function applyPromo() {
@@ -357,20 +360,21 @@ export default function EventCheckoutPanel({
         {places.map((place) => {
           const isSelected = selectedPlaceId === place.id
           const soldOut = place.available <= 0
+          const placeDisabled = soldOut || Boolean(blockedReason)
           return (
             <button
               key={place.id}
               type="button"
-              onClick={() => !soldOut && selectPlace(place.id)}
-              disabled={soldOut}
+              onClick={() => !placeDisabled && selectPlace(place.id)}
+              disabled={placeDisabled}
               style={{
                 textAlign: 'left',
-                cursor: soldOut ? 'not-allowed' : 'pointer',
+                cursor: placeDisabled ? 'not-allowed' : 'pointer',
                 background: 'var(--surface)',
                 border: `1px solid ${isSelected ? 'var(--gold)' : 'var(--border)'}`,
                 borderRadius: 12,
                 padding: 16,
-                opacity: soldOut ? 0.55 : 1,
+                opacity: placeDisabled ? 0.55 : 1,
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -449,7 +453,7 @@ export default function EventCheckoutPanel({
               (promoApplied ? (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                    Code {promoApplied} — appliqué au paiement
+                    Code {promoApplied} — sera vérifié au paiement
                     <button
                       onClick={removePromo}
                       style={{ background: 'none', border: 'none', color: 'var(--pink)', cursor: 'pointer', fontSize: 11, fontWeight: 700, padding: 0 }}
@@ -471,6 +475,7 @@ export default function EventCheckoutPanel({
                         if (e.key === 'Enter') applyPromo()
                       }}
                       placeholder="TON CODE"
+                      aria-label="Code promo"
                       autoFocus
                       style={{
                         flex: 1,
@@ -558,7 +563,7 @@ export default function EventCheckoutPanel({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                       <StepperButton onClick={() => updatePreorder(item.name, -1)} disabled={q === 0} label="−" variant="ghost" />
                       <span style={{ fontSize: 14, fontWeight: 700, color: q > 0 ? 'var(--gold)' : 'var(--text-faint)', width: 16, textAlign: 'center' }}>{q}</span>
-                      <StepperButton onClick={() => updatePreorder(item.name, 1)} label="+" variant="solid" />
+                      <StepperButton onClick={() => updatePreorder(item.name, 1)} disabled={q >= MAX_PREORDER_ITEM_QTY} label="+" variant="solid" />
                     </div>
                   </div>
                 )
@@ -603,8 +608,8 @@ export default function EventCheckoutPanel({
           )}
 
           {checkoutError && (
-            <div style={{ background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,50,50,0.30)', borderRadius: 12, padding: '12px 14px' }}>
-              <p style={{ fontSize: 13, color: '#ffb4b4', margin: 0, lineHeight: 1.5 }}>{checkoutError}</p>
+            <div role="alert" style={{ background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.30)', borderRadius: 12, padding: '12px 14px' }}>
+              <p style={{ fontSize: 13, color: 'var(--pink)', margin: 0, lineHeight: 1.5 }}>{checkoutError}</p>
             </div>
           )}
 
@@ -634,45 +639,7 @@ export default function EventCheckoutPanel({
         </div>
       )}
 
-      {showAgeModal && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setShowAgeModal(false)}
-        >
-          <div
-            style={{ background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: 20, padding: '28px 24px', width: '100%', maxWidth: 380, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p style={{ fontSize: 21, fontWeight: 700, color: 'var(--text)', margin: '0 0 16px' }}>Réservé aux {eventMinAge} ans et plus</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px', lineHeight: 1.6 }}>
-              Une pièce d&apos;identité pourra être demandée à l&apos;entrée. En continuant, tu confirmes avoir {eventMinAge} ans ou plus.
-            </p>
-            <button
-              onClick={confirmAge}
-              style={{
-                padding: '13px 20px',
-                background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
-                border: '1px solid var(--border-strong)',
-                borderRadius: 12,
-                fontSize: 14,
-                fontWeight: 700,
-                color: '#fff',
-                cursor: 'pointer',
-                width: '100%',
-                boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
-              }}
-            >
-              J&apos;ai compris
-            </button>
-            <button
-              onClick={() => setShowAgeModal(false)}
-              style={{ marginTop: 8, padding: '12px 20px', background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: 12, fontSize: 13, fontWeight: 600, color: 'var(--text)', cursor: 'pointer', width: '100%' }}
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
+      {showAgeModal && <AgeGateModal minAge={eventMinAge} onConfirm={confirmAge} onCancel={() => setShowAgeModal(false)} />}
     </section>
   )
 }

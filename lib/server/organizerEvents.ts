@@ -100,6 +100,7 @@ export interface OrganizerEventView {
   time: string
   cancelled: boolean
   postponed: boolean
+  publishAt: string | null
   isPrivate: boolean
   imageUrl: string | null
   videoUrl: string | null
@@ -386,6 +387,7 @@ export async function listMyOrganizerEvents(caller: OrganizerEventCaller): Promi
         time: e.time ?? '',
         cancelled: Boolean(e.cancelled),
         postponed: Boolean(e.postponedFrom),
+        publishAt: e.publishAt ? new Date(e.publishAt).toISOString() : null,
         isPrivate: Boolean(e.isPrivate),
         imageUrl: e.imageUrl ?? null,
         videoUrl: e.videoUrl ?? null,

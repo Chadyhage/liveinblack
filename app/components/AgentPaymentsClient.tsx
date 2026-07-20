@@ -93,6 +93,23 @@ function fmtDate(iso: string): string {
   return `${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
 }
 
+// `details` vient de sources d'alerte hétérogènes (webhook Stripe/FedaPay,
+// cron de versement…) sans schéma commun exhaustif à mapper vers des
+// libellés — on affiche donc chaque paire clé/valeur lisiblement (clé
+// humanisée, valeur brute) plutôt qu'un blob JSON.stringify() d'un bloc.
+function humanizeDetailKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/^./, (c) => c.toUpperCase())
+}
+function fmtDetailValue(value: unknown): string {
+  if (value == null) return '—'
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
 interface ToastState {
   message: string
   kind: 'success' | 'error'
@@ -268,7 +285,7 @@ export default function AgentPaymentsClient() {
 
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Paiements</h1>
 
         {loadError && (
@@ -333,8 +350,6 @@ export default function AgentPaymentsClient() {
             border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
             color: '#fff',
             fontSize: 13,
-            maxWidth: '90vw',
-            textAlign: 'center',
           }}
         >
           {toast.message}
@@ -586,7 +601,15 @@ function AlertsSection({ alerts, setConfirm }: { alerts: PaymentAlertView[]; set
                   {a.sellerEmail ? ` · ${a.sellerEmail}` : ''}
                 </p>
               )}
-              {Object.keys(a.details).length > 0 && <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: 0, overflowWrap: 'anywhere' }}>Détails : {JSON.stringify(a.details)}</p>}
+              {Object.keys(a.details).length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {Object.entries(a.details).map(([key, value]) => (
+                    <p key={key} style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: 0, overflowWrap: 'anywhere' }}>
+                      {humanizeDetailKey(key)} : {fmtDetailValue(value)}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
             <button style={{ marginTop: 13, width: 'auto', padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: 'var(--teal)', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--obsidian)', fontWeight: 700, fontSize: 12 }} onClick={() => setConfirm({ type: 'resolveAlert', alertId: a.id, label: ALERT_REASON_LABEL[a.reason] || a.reason })}>
               Marquer comme examiné

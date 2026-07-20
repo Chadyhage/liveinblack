@@ -113,7 +113,12 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '28px 16px 48px' }}>
+    <main className="profile-main" style={{ minHeight: '100vh', padding: '28px 16px 48px' }}>
+      <style>{`
+        @media (max-width: 480px) {
+          .profile-main { padding-bottom: 120px; }
+        }
+      `}</style>
       <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <AvatarUpload user={user} setUser={setUser} />
@@ -372,7 +377,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                 }}
               />
             </div>
-            <input type="range" min={0.8} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--gold)', marginBottom: 18 }} />
+            <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--gold)', marginBottom: 18 }} />
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setCropSrc(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer' }}>
                 Annuler
@@ -426,7 +431,13 @@ function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (
   const filtered = tokens.length === 0 ? entries : entries.filter((e) => tokens.every((t) => e.keywords.some((k) => normalizeQuery(k).includes(t)) || normalizeQuery(e.id).includes(t)))
 
   return (
-    <main style={{ minHeight: '100vh', padding: '20px 16px 48px' }}>
+    <main className="profile-settings" style={{ minHeight: '100vh', padding: '20px 16px 48px' }}>
+      <style>{`
+        @media (max-width: 480px) {
+          .profile-settings { padding-bottom: 120px; }
+          .profile-demo-row { flex-direction: column; }
+        }
+      `}</style>
       <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={onBack} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 22, cursor: 'pointer', padding: '4px 8px 4px 0' }} aria-label="Retour">
@@ -439,7 +450,7 @@ function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher un réglage — nom, e-mail, mot de passe…"
-          style={inputStyle}
+          style={{ ...inputStyle, textOverflow: 'ellipsis' }}
         />
 
         {filtered.length === 0 ? (
@@ -466,6 +477,44 @@ function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {
   return <p style={{ fontSize: 12.5, color: kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: '10px 0 0' }}>{text}</p>
 }
 
+// Champ mot de passe avec bouton "Voir"/"Cacher" — même pattern que
+// /login (AuthForm.tsx), pour que les champs mot de passe de /profile aient
+// la même affordance que ceux de la connexion/inscription.
+function PasswordField({
+  value,
+  onChange,
+  placeholder,
+  style,
+  autoFocus,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+  style?: React.CSSProperties
+  autoFocus?: boolean
+}) {
+  const [show, setShow] = useState(false)
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        autoFocus={autoFocus}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        type={show ? 'text' : 'password'}
+        placeholder={placeholder}
+        style={{ ...inputStyle, ...style, paddingRight: 56 }}
+      />
+      <button
+        type="button"
+        onClick={() => setShow((v) => !v)}
+        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        {show ? 'Cacher' : 'Voir'}
+      </button>
+    </div>
+  )
+}
+
 // Le téléphone est stocké côté serveur comme un seul champ combiné
 // (indicatif + numéro national, ex. "+33612345678", même forme que
 // l'inscription — voir AuthForm.tsx / lib/server/profile.ts:updatePhone).
@@ -474,8 +523,13 @@ function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {
 function splitPhone(phone: string): { dialCode: string; number: string } {
   if (!phone) return { dialCode: regions[0].dial, number: '' }
   const match = [...regions].sort((a, b) => b.dial.length - a.dial.length).find((r) => phone.startsWith(r.dial))
-  if (!match) return { dialCode: regions[0].dial, number: phone }
-  return { dialCode: match.dial, number: phone.slice(match.dial.length) }
+  if (!match) return { dialCode: regions[0].dial, number: phone.trim() }
+  // Le numéro brut stocké côté serveur peut contenir un espace juste après
+  // l'indicatif (ex. "+228 90 11 22 33") — sans trim ici, phoneChanged
+  // comparerait un phoneNumber initial non-trimmé à sa version trim()ée et ne
+  // serait jamais égal, laissant le bouton "Enregistrer le téléphone" actif
+  // dès le chargement de la page.
+  return { dialCode: match.dial, number: phone.slice(match.dial.length).trim() }
 }
 
 function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser) => void }) {
@@ -615,7 +669,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
             </option>
           ))}
         </select>
-        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="06 00 00 00 00" style={{ ...inputStyle, flex: 1 }} />
+        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro sans l'indicatif" style={{ ...inputStyle, flex: 1 }} />
       </div>
       <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
         Utilisé pour te contacter et partagé avec les organisateurs/prestataires avec qui tu échanges en messagerie.
@@ -627,7 +681,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+      <div className="profile-demo-row" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <select value={birthYear} onChange={(e) => setBirthYear(e.target.value)} style={inputStyle}>
           <option value="">Année de naissance —</option>
           {yearOptions.map((y) => (
@@ -891,7 +945,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
           <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Nouvelle adresse e-mail</label>
           <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} type="email" style={{ ...inputStyle, marginBottom: 10 }} />
           <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Mot de passe actuel (requis)</label>
-          <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} type="password" style={{ ...inputStyle, marginBottom: 12 }} />
+          <PasswordField value={currentPassword} onChange={setCurrentPassword} placeholder="Mot de passe actuel" style={{ marginBottom: 12 }} />
           <button onClick={submit} disabled={saving || !newEmail || !currentPassword} style={primaryBtn(saving || !newEmail || !currentPassword)}>
             {saving ? 'Envoi…' : 'Envoyer le lien de vérification'}
           </button>
@@ -956,8 +1010,8 @@ function PasswordCard({ email }: { email: string }) {
   return (
     <div style={cardStyle}>
       <EyebrowLabel>Sécurité — Mot de passe</EyebrowLabel>
-      <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} type="password" placeholder="Mot de passe actuel" style={{ ...inputStyle, marginBottom: 10 }} />
-      <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} type="password" placeholder="Minimum 8 caractères" style={{ ...inputStyle, marginBottom: strength ? 6 : 10 }} />
+      <PasswordField value={currentPassword} onChange={setCurrentPassword} placeholder="Mot de passe actuel" style={{ marginBottom: 10 }} />
+      <PasswordField value={newPassword} onChange={setNewPassword} placeholder="Minimum 8 caractères" style={{ marginBottom: strength ? 6 : 10 }} />
       {strength && (
         <div style={{ marginBottom: 10 }}>
           <div style={{ height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: 4 }}>
@@ -966,12 +1020,11 @@ function PasswordCard({ email }: { email: string }) {
           <span style={{ fontSize: 10.5, color: strength.color, fontWeight: 700 }}>FORCE : {strength.label}</span>
         </div>
       )}
-      <input
+      <PasswordField
         value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-        type="password"
+        onChange={setConfirmPassword}
         placeholder="Confirmer le nouveau mot de passe"
-        style={{ ...inputStyle, marginBottom: 12, border: mismatch ? '1px solid #e05aaa' : inputStyle.border }}
+        style={{ marginBottom: 12, border: mismatch ? '1px solid #e05aaa' : inputStyle.border }}
       />
       <button onClick={submit} disabled={saving || !currentPassword || !newPassword || !confirmPassword} style={primaryBtn(saving || !currentPassword || !newPassword || !confirmPassword)}>
         {saving ? 'Mise à jour…' : 'Mettre à jour le mot de passe'}
@@ -1058,7 +1111,7 @@ function DangerZoneCard() {
           onConfirm={handleDelete}
         >
           <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', margin: '0 0 6px' }}>Confirme avec ton mot de passe</label>
-          <input autoFocus type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+          <PasswordField value={password} onChange={setPassword} placeholder="Mot de passe" autoFocus />
           {error && <p style={{ fontSize: 12, color: '#e05aaa', margin: '8px 0 0' }}>{error}</p>}
         </ConfirmModal>
       )}
@@ -1072,7 +1125,7 @@ const FAQ = [
   { q: 'Comment réserver un billet ?', a: 'Va sur l’onglet Événements, sélectionne la soirée de ton choix et clique sur Réservation. Choisis ton type de place et confirme.' },
   { q: 'Puis-je annuler ma réservation ?', a: 'Les réservations sont fermes et définitives. En cas d’annulation d’événement par l’organisateur, un remboursement sera traité sous 5 jours ouvrés.' },
   { q: 'Comment utiliser mes points ?', a: 'Tu gagnes 1 point par ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs (accès prioritaire, réductions, cadeaux).' },
-  { q: 'Comment créer un événement ?', a: "Rends-toi dans 'Mes Événements & Créations' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
+  { q: 'Comment créer un événement ?', a: "Rends-toi dans 'Mes Événements' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
 ]
 
 function SupportPanel({ onBack }: { onBack: () => void }) {

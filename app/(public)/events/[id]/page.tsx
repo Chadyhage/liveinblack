@@ -115,12 +115,15 @@ export default async function EventDetailPage({
   return (
     <main style={{ maxWidth: 880, margin: '0 auto', padding: '0 0 60px', width: '100%' }}>
       <div style={{ padding: '18px 22px 0', fontSize: 12.5, color: 'var(--text-faint)' }}>
-        {event.city && <span>{event.city} · </span>}
-        <span>{event.name}</span>
+        <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>
+          Événements
+        </Link>
+        {event.city && <span> · {event.city}</span>}
+        <span> · {event.name}</span>
       </div>
 
       {/* HERO */}
-      <div style={{ position: 'relative', margin: '14px 22px 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}33, var(--obsidian))` }}>
+      <div style={{ position: 'relative', margin: '14px 22px 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
         {event.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -133,7 +136,7 @@ export default async function EventDetailPage({
           {event.cancelled && (
             <span style={{ display: 'inline-block', marginBottom: 8, fontSize: 11, fontWeight: 800, color: '#fff', background: 'var(--pink)', padding: '4px 10px', borderRadius: 999 }}>ANNULÉ</span>
           )}
-          <h1 style={{ fontSize: 'clamp(22px, 5vw, 34px)', fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>{event.name}</h1>
+          <h1 style={{ fontSize: 'clamp(22px, 5vw, 34px)', fontWeight: 800, margin: 0, letterSpacing: '-0.5px', textShadow: '0 2px 12px rgba(0,0,0,0.55)' }}>{event.name}</h1>
           {event.subtitle && <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '6px 0 0' }}>{event.subtitle}</p>}
           {event.tags?.length ? (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
@@ -184,10 +187,27 @@ export default async function EventDetailPage({
       <Section title="Organisateur">
         {organizerProfile ? (
           <Link href={`/organizers/${organizerProfile.slug}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', background: 'var(--surface)', flexShrink: 0 }}>
-              {organizerProfile.avatarUrl && (
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                background: 'var(--surface)',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                fontSize: 15,
+                color: 'var(--text-muted)',
+              }}
+            >
+              {organizerProfile.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={organizerProfile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                organizerProfile.publicName?.[0]?.toUpperCase() || '?'
               )}
             </div>
             <span style={{ fontSize: 14, fontWeight: 700 }}>{organizerProfile.publicName}</span>
@@ -217,6 +237,9 @@ export default async function EventDetailPage({
           aux utilisateurs connectés) */}
       {!session?.user && event.places?.length ? (
         <Section title="Places">
+          {bookingDisabledReason && (
+            <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--pink)', margin: '0 0 12px' }}>Réservations fermées — {bookingDisabledReason}</p>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
             {event.places.map((place) => {
               const fillPct = place.total > 0 ? Math.round(((place.total - place.available) / place.total) * 100) : 0
@@ -283,7 +306,11 @@ export default async function EventDetailPage({
         />
       ) : checkoutPlaces.length > 0 ? (
         <div style={{ padding: '24px 22px 0', textAlign: 'center' }}>
-          {(event.minAge || 0) >= 18 ? (
+          {bookingDisabledReason ? (
+            <p style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 999, fontSize: 14, fontWeight: 700, color: 'var(--text-faint)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+              {bookingDisabledReason}
+            </p>
+          ) : (event.minAge || 0) >= 18 ? (
             <AgeVerificationGate minAge={event.minAge || 18} href={loginHref} label="Se connecter pour réserver" />
           ) : (
             <Link
@@ -293,7 +320,13 @@ export default async function EventDetailPage({
               Se connecter pour réserver
             </Link>
           )}
-          <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 10 }}>Connecte-toi avec un compte client pour réserver une place.</p>
+          {!bookingDisabledReason && (
+            <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 10 }}>Connecte-toi avec un compte client pour réserver une place.</p>
+          )}
+        </div>
+      ) : !session?.user ? (
+        <div style={{ padding: '24px 22px 0', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>La billetterie n&apos;est pas encore disponible pour cet événement.</p>
         </div>
       ) : null}
     </main>

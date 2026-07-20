@@ -81,12 +81,14 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
         <button onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}>
           ×
         </button>
-        <h2 style={{ font: '700 22px Inter, sans-serif', color: '#fff', margin: '0 0 14px' }}>Supprimer l&rsquo;événement ?</h2>
+        <h2 style={{ font: '700 22px Inter, sans-serif', color: '#fff', margin: '0 0 14px' }}>
+          {phase === 'confirm' ? "Supprimer l’événement ?" : "Annuler l’événement ?"}
+        </h2>
 
         {phase === 'confirm' ? (
           <>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 18px' }}>
-              Cette action est irréversible. L&rsquo;événement sera retiré de la liste.
+              Cette action est irréversible s&rsquo;il n&rsquo;y a aucune réservation. S&rsquo;il y en a déjà, l&rsquo;événement sera annulé et remboursé plutôt que supprimé.
             </p>
             {error && <p style={{ color: 'var(--pink)', fontSize: 12.5, marginBottom: 12 }}>{error}</p>}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -100,7 +102,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
               <button
                 onClick={attemptDelete}
                 disabled={busy}
-                style={{ padding: '12px 0', borderRadius: 12, border: 'none', background: '#c2347f', color: '#fff', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}
+                style={{ padding: '12px 0', borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}
               >
                 {busy ? 'Suppression…' : 'Supprimer'}
               </button>
@@ -141,7 +143,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
               <button
                 onClick={confirmCancel}
                 disabled={busy}
-                style={{ padding: '12px 0', borderRadius: 12, border: 'none', background: '#c2347f', color: '#fff', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}
+                style={{ padding: '12px 0', borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}
               >
                 {busy ? 'Annulation en cours…' : "Confirmer l'annulation"}
               </button>

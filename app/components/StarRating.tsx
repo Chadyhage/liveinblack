@@ -44,7 +44,7 @@ export function StarInput({ value = 0, onChange, size = 30 }: { value?: number; 
           aria-checked={value === i}
           aria-label={`${i} étoile${i > 1 ? 's' : ''}`}
           onClick={() => onChange?.(i)}
-          style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', lineHeight: 0 }}
+          style={{ background: 'none', border: 'none', padding: 7, cursor: 'pointer', lineHeight: 0 }}
         >
           <StarIcon size={size} fill={value >= i ? 'full' : 'empty'} />
         </button>

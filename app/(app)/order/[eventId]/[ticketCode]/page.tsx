@@ -18,9 +18,17 @@ import CommanderClient, { type MenuItemView, type OrderItem } from './CommanderC
 // une vraie frontière de sécurité). Ici, un non-propriétaire ne reçoit JAMAIS
 // les données événement/prix/menu dans le payload de page, pas même
 // brièvement.
-export const metadata: Metadata = {
-  title: 'Commander — LIVEINBLACK',
-  robots: { index: false, follow: false },
+// Titre dynamique (nom de l'événement) pour distinguer plusieurs onglets
+// commande ouverts sur des événements différents — même pattern que
+// app/(public)/events/[id]/page.tsx.
+export async function generateMetadata({ params }: { params: Promise<{ eventId: string; ticketCode: string }> }): Promise<Metadata> {
+  const { eventId } = await params
+  await getDb()
+  const event = mongoose.isValidObjectId(eventId) ? await Event.findById(eventId).select('name').lean() : null
+  return {
+    title: event ? `Commander — ${event.name} — LIVEINBLACK` : 'Commander — LIVEINBLACK',
+    robots: { index: false, follow: false },
+  }
 }
 
 // Les commandes sur place n'ouvrent que 3h avant le début de l'événement.
@@ -58,12 +66,21 @@ function GateScreen({
   message,
   backHref,
   backLabel = 'Retour',
+  variant = 'error',
 }: {
   title: string
   message: string
   backHref: string
   backLabel?: string
+  // 'notice' : pas une erreur, juste "pas encore" (ex. fenêtre de commande pas
+  // encore ouverte) — icône horloge + teinte gold, jamais la même que les
+  // vrais cas d'erreur (billet introuvable/révoqué, événement terminé...) qui
+  // gardent le rose + point d'exclamation.
+  variant?: 'error' | 'notice'
 }) {
+  const accent = variant === 'notice' ? 'var(--gold)' : 'var(--pink)'
+  const accentBg = variant === 'notice' ? 'rgba(200,169,110,0.08)' : 'rgba(224,90,170,0.08)'
+  const accentBorder = variant === 'notice' ? 'rgba(200,169,110,0.35)' : 'rgba(224,90,170,0.35)'
   return (
     <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
       <div style={{ textAlign: 'center', maxWidth: 360 }}>
@@ -73,18 +90,24 @@ function GateScreen({
             height: 72,
             borderRadius: '50%',
             margin: '0 auto 22px',
-            background: 'rgba(224,90,170,0.08)',
-            border: '2px solid rgba(224,90,170,0.35)',
+            background: accentBg,
+            border: `2px solid ${accentBorder}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-          </svg>
+          {variant === 'notice' ? (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75V12l3.75 2.25M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          )}
         </div>
-        <p style={{ fontWeight: 800, fontSize: 22, color: 'var(--pink)', margin: '0 0 10px' }}>{title}</p>
+        <p style={{ fontWeight: 800, fontSize: 22, color: accent, margin: '0 0 10px' }}>{title}</p>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
         <Link href={backHref} style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
           ← {backLabel}
@@ -139,22 +162,13 @@ export default async function CommanderPage({
     )
   }
 
-  // Gate 4 — commandes pas encore ouvertes (fenêtre : 3h avant le début).
-  if (isOrderingWindowClosed(event)) {
-    return (
-      <GateScreen
-        title="Pas encore ouvert"
-        message="Les commandes sur place ouvrent le soir de l'événement, peu avant le début."
-        backHref={`/events/${eventId}`}
-        backLabel="Voir l'événement"
-      />
-    )
-  }
-
-  // Gate 5 — propriété du billet, vérifiée ICI côté serveur avec une lecture
+  // Gate 4 — propriété du billet, vérifiée ICI côté serveur avec une lecture
   // base fraîche (jamais seulement côté client comme le faisait le legacy).
   // Un billet révoqué (siège réattribué, remboursement...) est traité comme
   // non reconnu, à l'identique de getTicketDisplay (lib/server/tickets.ts).
+  // Volontairement AVANT la Gate 5 (fenêtre de commande) : un code billet
+  // erroné/mal tapé doit toujours révéler "Billet non reconnu", jamais un
+  // trompeur "Pas encore ouvert" qui laisserait croire qu'il suffit d'attendre.
   if (!ticket || ticket.eventId !== eventId || ticket.revoked || String(ticket.userId) !== session.user.id) {
     return (
       <GateScreen
@@ -162,6 +176,21 @@ export default async function CommanderPage({
         message="Ce billet n'est pas rattaché à ton compte. Ouvre-le depuis Mes billets pour commander."
         backHref="/profile"
         backLabel="Retour au profil"
+      />
+    )
+  }
+
+  // Gate 5 — commandes pas encore ouvertes (fenêtre : 3h avant le début). Pas
+  // une vraie erreur (juste "trop tôt") : variant 'notice' (gold + horloge),
+  // jamais le rose/exclamation des cas 2-4 ci-dessus.
+  if (isOrderingWindowClosed(event)) {
+    return (
+      <GateScreen
+        variant="notice"
+        title="Pas encore ouvert"
+        message="Les commandes sur place ouvrent le soir de l'événement, peu avant le début."
+        backHref={`/events/${eventId}`}
+        backLabel="Voir l'événement"
       />
     )
   }

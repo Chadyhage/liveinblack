@@ -218,7 +218,7 @@ export default function AgentEventsClient() {
                   color: active ? 'var(--gold)' : 'var(--text-faint)',
                 }}
               >
-                {f.label} {count > 0 && <span style={{ marginLeft: 4, opacity: 0.7 }}>{count}</span>}
+                {f.label} <span style={{ marginLeft: 4, opacity: 0.7 }}>{count}</span>
               </button>
             )
           })}
@@ -275,6 +275,7 @@ export default function AgentEventsClient() {
 
 function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void }) {
   const statusStyle = STATUS_STYLE[event.status]
+  const [expanded, setExpanded] = useState(false)
   return (
     <div style={{ ...cardStyle, padding: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
       <div
@@ -315,14 +316,33 @@ function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void
           {event.dateDisplay || event.date} {event.city ? `· ${event.city}` : ''} · {event.organizerName || event.organizer || '—'}
         </p>
         {event.cancelled && (
-          <p style={{ fontSize: 11, color: 'rgba(255,140,140,0.85)', margin: '4px 0 0', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            Annulé{event.cancelledAt ? ` le ${fmtCancelledAt(event.cancelledAt)}` : ''}
-            {event.cancellationMessage ? ` — « ${event.cancellationMessage} »` : ' — aucun message aux participants'}
-          </p>
+          <>
+            <p
+              style={{
+                fontSize: 11,
+                color: 'rgba(255,140,140,0.85)',
+                margin: '4px 0 0',
+                lineHeight: 1.45,
+                ...(expanded ? null : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }),
+              }}
+            >
+              Annulé{event.cancelledAt ? ` le ${fmtCancelledAt(event.cancelledAt)}` : ''}
+              {event.cancellationMessage ? ` — « ${event.cancellationMessage} »` : ' — aucun message aux participants'}
+            </p>
+            {event.cancellationMessage && (
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                style={{ marginTop: 2, padding: 0, border: 'none', background: 'transparent', color: 'var(--text-faint)', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                {expanded ? 'Voir moins' : 'Voir plus'}
+              </button>
+            )}
+          </>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 14, flexShrink: 0 }}>
         {event.status === 'upcoming' && (
           <button
             onClick={onCancel}
