@@ -112,7 +112,7 @@ export default function TabsSection() {
               fontWeight: 700,
               textDecoration: 'none',
               color: current.id === 'organizer' ? '#fff' : '#04120e',
-              background: current.id === 'organizer' ? 'linear-gradient(180deg, #8f56ff, #7a3bf2)' : current.color,
+              background: current.id === 'organizer' ? 'var(--violet-cta)' : current.color,
             }}
           >
             {current.cta}

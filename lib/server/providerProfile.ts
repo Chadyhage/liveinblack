@@ -3,11 +3,11 @@ import { getDb } from '../db/mongoose'
 import ProviderProfile, { type ProviderProfileDoc } from '../models/ProviderProfile'
 import Application from '../models/Application'
 import User from '../models/User'
-import { uploadDataUri } from './cloudinary'
+import { IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { getProviderBillingContext } from './providerBilling'
 import { normalizeRegionId, normalizeRegionIds, getRegionName } from '../shared/locations'
 import { normalizeProviderTypes, getPrimaryProviderType } from '../shared/providerCategories'
-import { SOCIAL_NETWORKS, type SocialNetworkKey } from '../shared/social'
+import { SOCIAL_NETWORKS, socialUrl, type SocialNetworkKey } from '../shared/social'
 
 // Remplace la partie ÉCRITURE de ProposerServicesPage.jsx (#8 phase
 // prestataire — profil + catalogue). Miroir volontaire de
@@ -238,13 +238,16 @@ export async function updateProviderProfile(caller: ProfileCaller, input: Update
   // socialLinks.website, toujours synchronisés) — compat lecture ancienne,
   // voir ProposerServicesPage.jsx.
   if (input.website !== undefined) {
-    const website = input.website.trim()
+    const website = socialUrl('website', input.website) ?? ''
     profile.website = website
     profile.socialLinks = { ...(profile.socialLinks ?? {}), website } as typeof profile.socialLinks
   }
   if (input.socialLinks !== undefined) {
-    profile.socialLinks = { ...(profile.socialLinks ?? {}), ...input.socialLinks } as typeof profile.socialLinks
-    if (input.socialLinks.website !== undefined) profile.website = input.socialLinks.website.trim()
+    const sanitizedLinks = Object.fromEntries(
+      Object.entries(input.socialLinks).map(([key, value]) => [key, socialUrl(key, value) ?? ''])
+    )
+    profile.socialLinks = { ...(profile.socialLinks ?? {}), ...sanitizedLinks } as typeof profile.socialLinks
+    if (input.socialLinks.website !== undefined) profile.website = sanitizedLinks.website ?? ''
   }
 
   await profile.save()
@@ -263,7 +266,9 @@ export async function uploadProviderProfileMedia(caller: ProfileCaller, kind: Pr
   const profile = await ProviderProfile.findOne({ userId: caller.id })
   if (!profile) return { ok: false, status: 404, error: 'profile_not_found' }
 
-  const uploaded = await uploadDataUri(dataUri, `provider-media/${caller.id}/${kind}`)
+  const uploaded = await uploadDataUri(dataUri, `provider-media/${caller.id}/${kind}`, {
+    allowedMimeTypes: IMAGE_MIME_TYPES,
+  })
   if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
 
   if (kind === 'avatar') profile.photoUrl = uploaded.url
@@ -382,7 +387,9 @@ export async function addCatalogItemMedia(caller: ProfileCaller, itemId: string,
   if (!item) return { ok: false, status: 404, error: 'item_not_found' }
   if (item.media.length >= MAX_CATALOG_ITEM_MEDIA) return { ok: false, status: 409, error: 'media_limit_reached' }
 
-  const uploaded = await uploadDataUri(dataUri, `provider-catalog/${caller.id}/${itemId}`)
+  const uploaded = await uploadDataUri(dataUri, `provider-catalog/${caller.id}/${itemId}`, {
+    allowedMimeTypes: [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES],
+  })
   if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
 
   const isVideo = dataUri.startsWith('data:video')

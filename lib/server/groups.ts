@@ -3,7 +3,7 @@ import { getDb } from '../db/mongoose'
 import Conversation, { type ConversationDoc } from '../models/Conversation'
 import Message from '../models/Message'
 import User from '../models/User'
-import { uploadDataUri } from './cloudinary'
+import { IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
 import {
   toConversationView,
   normalizeObjectId,
@@ -577,7 +577,9 @@ export async function setGroupAvatar(caller: MessagingCaller, input: SetGroupAva
   const guard = await loadGroupAsAdmin(caller, conversationId)
   if (!guard.ok) return guard
 
-  const uploaded = await uploadDataUri(dataUri, `groups/${String(guard.conversation._id)}`)
+  const uploaded = await uploadDataUri(dataUri, `groups/${String(guard.conversation._id)}`, {
+    allowedMimeTypes: IMAGE_MIME_TYPES,
+  })
   if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
 
   await Conversation.updateOne({ _id: guard.conversation._id }, { $set: { avatar: uploaded.url } })

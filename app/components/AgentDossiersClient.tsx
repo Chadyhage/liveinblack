@@ -426,6 +426,15 @@ export default function AgentDossiersClient() {
     }
   }, [selectedId])
 
+  useEffect(() => {
+    if (!selectedId) return
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') closeDetail()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedId])
+
   const activeSection = SECTIONS.find((s) => s.key === section) || SECTIONS[0]
 
   const filteredBySection = useMemo(() => applications.filter((a) => activeSection.statuses.includes(a.status)), [applications, activeSection])
@@ -590,6 +599,14 @@ export default function AgentDossiersClient() {
           <div onClick={closeDetail} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
           <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto', background: 'var(--surface-2)', borderRadius: '16px 16px 0 0', padding: '18px 20px 32px' }}>
             <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
+            <button
+              type="button"
+              onClick={closeDetail}
+              aria-label="Fermer le dossier"
+              style={{ position: 'absolute', top: 12, right: 14, width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}
+            >
+              ×
+            </button>
             {detailLoading || !detail ? (
               <p style={{ fontSize: 13, color: 'var(--text-faint)', textAlign: 'center', padding: '40px 0' }}>Chargement…</p>
             ) : (

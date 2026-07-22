@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 const NAV_LINKS = [
   { href: '/events', label: 'Événements' },
@@ -20,6 +21,17 @@ const NAV_LINKS = [
 // reprend exactement les mêmes liens pour ce cas.
 export default function PublicNav() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const pathname = usePathname()
+  const onLoginPage = pathname === '/login'
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [mobileOpen])
 
   return (
     <header
@@ -60,36 +72,40 @@ export default function PublicNav() {
             {link.label}
           </Link>
         ))}
-        <Link
-          href="/login"
-          className="lb-navlink"
-          style={{
-            padding: '9px 18px',
-            borderRadius: 999,
-            background: 'var(--teal-solid)',
-            color: '#04120e',
-            fontSize: 13,
-            fontWeight: 700,
-            textDecoration: 'none',
-          }}
-        >
-          Connexion
-        </Link>
-        <Link
-          href="/login"
-          className="lb-navlink-mobile"
-          style={{
-            padding: '8px 14px',
-            borderRadius: 999,
-            background: 'var(--teal-solid)',
-            color: '#04120e',
-            fontSize: 12.5,
-            fontWeight: 700,
-            textDecoration: 'none',
-          }}
-        >
-          Connexion
-        </Link>
+        {!onLoginPage && (
+          <>
+            <Link
+              href="/login"
+              className="lb-navlink"
+              style={{
+                padding: '9px 18px',
+                borderRadius: 999,
+                background: 'var(--teal-solid)',
+                color: '#04120e',
+                fontSize: 13,
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Connexion
+            </Link>
+            <Link
+              href="/login"
+              className="lb-navlink-mobile"
+              style={{
+                padding: '8px 14px',
+                borderRadius: 999,
+                background: 'var(--teal-solid)',
+                color: '#04120e',
+                fontSize: 12.5,
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Connexion
+            </Link>
+          </>
+        )}
         <button
           type="button"
           className="lb-navlink-mobile lb-burger"

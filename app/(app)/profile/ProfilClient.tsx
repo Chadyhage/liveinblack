@@ -325,7 +325,9 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
   return (
     <>
       <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFileChange} />
-      <div
+      <button
+        type="button"
+        aria-label="Changer la photo de profil"
         onClick={() => fileInputRef.current?.click()}
         style={{
           width: 80,
@@ -340,10 +342,12 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           fontWeight: 800,
           color: 'var(--gold)',
           position: 'relative',
+          border: 'none',
+          padding: 0,
         }}
       >
         {!user.avatarUrl && initial}
-      </div>
+      </button>
 
       {cropSrc && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
@@ -358,6 +362,8 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
               onPointerLeave={onPointerUp}
               style={{ width: PREVIEW, height: PREVIEW, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 16px', position: 'relative', background: '#000', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
             >
+              {/* Image locale temporaire : le canvas de recadrage lit naturalWidth/naturalHeight. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 ref={imgRef}
                 src={cropSrc}
@@ -376,6 +382,24 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                   userSelect: 'none',
                 }}
               />
+            </div>
+            <div role="group" aria-label="Repositionner la photo" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
+              {[
+                { label: 'Déplacer la photo vers la gauche', glyph: '←', dx: -6, dy: 0 },
+                { label: 'Déplacer la photo vers le haut', glyph: '↑', dx: 0, dy: -6 },
+                { label: 'Déplacer la photo vers le bas', glyph: '↓', dx: 0, dy: 6 },
+                { label: 'Déplacer la photo vers la droite', glyph: '→', dx: 6, dy: 0 },
+              ].map((control) => (
+                <button
+                  key={control.label}
+                  type="button"
+                  aria-label={control.label}
+                  onClick={() => setOffset((current) => ({ x: current.x + control.dx, y: current.y + control.dy }))}
+                  style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: '#fff', cursor: 'pointer', fontSize: 17 }}
+                >
+                  {control.glyph}
+                </button>
+              ))}
             </div>
             <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--gold)', marginBottom: 18 }} />
             <div style={{ display: 'flex', gap: 10 }}>

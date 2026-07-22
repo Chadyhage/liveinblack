@@ -72,15 +72,15 @@ const labelStyle: React.CSSProperties = {
 }
 const btnPrimary: React.CSSProperties = {
   padding: '14px 24px',
-  background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+  background: 'var(--teal-solid)',
   border: '1px solid var(--border-strong)',
   borderRadius: 12,
   fontSize: 15,
   fontWeight: 700,
-  color: '#fff',
+  color: '#04120e',
   cursor: 'pointer',
   width: '100%',
-  boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
+  boxShadow: '0 6px 20px rgba(78,232,200,0.22)',
 }
 const btnGold: React.CSSProperties = {
   padding: '14px 24px',
@@ -114,8 +114,8 @@ const FocusInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLIn
       }}
       style={{
         ...inputStyle,
-        borderColor: focused ? 'var(--violet)' : 'var(--border-strong)',
-        boxShadow: focused ? '0 0 0 3px rgba(139,92,246,0.16)' : 'none',
+        borderColor: focused ? 'var(--teal)' : 'var(--border-strong)',
+        boxShadow: focused ? '0 0 0 3px var(--focus-ring)' : 'none',
         ...style,
       }}
     />
@@ -225,12 +225,13 @@ export default function AuthForm() {
   const [forgotSubmitted, setForgotSubmitted] = useState(false)
   const [forgotError, setForgotError] = useState('')
   const forgotEmailRef = useRef<HTMLInputElement>(null)
+  const forgotModalRef = useRef<HTMLDivElement>(null)
 
   // Register
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [regEmail, setRegEmail] = useState('')
-  const [dialCode, setDialCode] = useState('+33')
+  const [dialCode, setDialCode] = useState('+228')
   const [phone, setPhone] = useState('')
   const [regPwd, setRegPwd] = useState('')
   const [regPwdConfirm, setRegPwdConfirm] = useState('')
@@ -259,6 +260,21 @@ export default function AuthForm() {
     forgotEmailRef.current?.focus()
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') closeForgotModal()
+      if (e.key !== 'Tab') return
+
+      const focusable = forgotModalRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      )
+      if (!focusable?.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
@@ -352,6 +368,11 @@ export default function AuthForm() {
   async function handleForgotSubmit(e: React.FormEvent) {
     e.preventDefault()
     setForgotError('')
+    if (!EMAIL_RE.test(forgotEmail.trim())) {
+      setForgotError('Saisis une adresse email valide.')
+      forgotEmailRef.current?.focus()
+      return
+    }
     setForgotLoading(true)
     try {
       await fetch('/api/auth/request-password-reset', {
@@ -430,7 +451,7 @@ export default function AuthForm() {
               <path d="M2 7l10 7 10-7" />
             </svg>
           </div>
-          <h2 style={{ fontWeight: 700, fontSize: 22, color: 'var(--text)', margin: 0 }}>Vérifie ton email</h2>
+          <h2 style={{ fontWeight: 700, fontSize: 22, color: 'var(--text)', margin: 0 }}>Confirme ton inscription</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0, overflowWrap: 'break-word' }}>
             Un lien de confirmation a été envoyé à <span style={{ color: 'var(--text)' }}>{registeredEmail}</span>.
           </p>
@@ -797,7 +818,7 @@ export default function AuthForm() {
           aria-labelledby="forgot-modal-title"
           style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
         >
-          <div onClick={(e) => e.stopPropagation()} style={{ ...cardStyle, padding: '32px 28px', maxWidth: 400, width: '100%' }}>
+          <div ref={forgotModalRef} onClick={(e) => e.stopPropagation()} style={{ ...cardStyle, padding: '32px 28px', maxWidth: 400, width: '100%' }}>
             {!forgotSubmitted ? (
               <>
                 <h2 id="forgot-modal-title" style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
@@ -807,9 +828,23 @@ export default function AuthForm() {
                 <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div>
                     <label style={labelStyle} htmlFor="forgot-email">Email</label>
-                    <FocusInput ref={forgotEmailRef} id="forgot-email" name="email" type="email" autoComplete="email" placeholder="ton@email.com" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
+                    <FocusInput
+                      ref={forgotEmailRef}
+                      id="forgot-email"
+                      name="email"
+                      type="text"
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder="ton@email.com"
+                      disabled={forgotLoading}
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      aria-invalid={Boolean(forgotError)}
+                      aria-describedby={forgotError ? 'forgot-email-error' : undefined}
+                      style={forgotError ? { borderColor: 'var(--pink)' } : undefined}
+                    />
                   </div>
-                  {forgotError && <p style={errorText}>{forgotError}</p>}
+                  {forgotError && <p id="forgot-email-error" role="alert" style={errorText}>{forgotError}</p>}
                   <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                     <button type="button" onClick={closeForgotModal} style={{ flex: 1, padding: '13px 16px', borderRadius: 12, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text)', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
                       Annuler

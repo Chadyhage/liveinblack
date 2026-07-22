@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { uploadDataUri } from '@/lib/server/cloudinary'
+import { IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, uploadDataUri } from '@/lib/server/cloudinary'
 
 // Upload générique pour le wizard événement (#7 phase organisateur — affiche,
 // vidéo d'aperçu, photos de place, images d'articles de menu). Volontairement
@@ -23,7 +23,9 @@ export async function POST(req: Request) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
 
-  const result = await uploadDataUri(parsed.data.dataUri, `organizer-events/${session.user.id}`)
+  const result = await uploadDataUri(parsed.data.dataUri, `organizer-events/${session.user.id}`, {
+    allowedMimeTypes: [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES],
+  })
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 })
   return NextResponse.json({ ok: true, url: result.url })
 }

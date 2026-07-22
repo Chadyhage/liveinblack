@@ -1,7 +1,31 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://firebasestorage.googleapis.com https://images.unsplash.com",
+  "media-src 'self' blob: https://res.cloudinary.com",
+  "connect-src 'self' https://itunes.apple.com",
+  "font-src 'self' data:",
+].join('; ');
+
+const securityHeaders = [
+  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=(), browsing-topics=()' },
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+];
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   turbopack: {
     root: path.join(__dirname),
   },
@@ -11,6 +35,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'firebasestorage.googleapis.com' }, // URLs pré-migration (phase 10)
       { protocol: 'https', hostname: 'images.unsplash.com' }, // hero PublicLanding (legacy)
     ],
+  },
+  async headers() {
+    return [{ source: '/(.*)', headers: securityHeaders }];
   },
   // Renommage FR -> EN de toutes les routes (voir CLAUDE.md / mapping de
   // migration) : redirections permanentes (308) pour ne casser aucun lien

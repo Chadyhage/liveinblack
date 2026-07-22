@@ -22,7 +22,7 @@ const STATUSES = ['pending', 'approved', 'rejected'] as const
 
 const deletionRequestSchema = new Schema(
   {
-    userId: { type: String, required: true, index: true },
+    userId: { type: String, required: true },
     reason: { type: String, required: true },
     requestedAt: { type: Date, required: true, default: () => new Date() },
     status: { type: String, enum: STATUSES, default: 'pending', index: true },

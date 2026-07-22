@@ -6,6 +6,7 @@ import User from '@/lib/models/User'
 import { issueVerificationToken } from '@/lib/auth/verification-tokens'
 import { emailVerificationEmail } from '@/lib/server/email-templates'
 import { sendEmail } from '@/lib/server/email'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -29,6 +30,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
   }
   const { email, password, firstName, lastName, phone } = parsed.data
+
+  const rateLimit = await checkRateLimit({
+    scope: 'auth-register-ip',
+    identifier: getRequestIp(req),
+    limit: 10,
+    windowMs: 60 * 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+    )
+  }
 
   await getDb()
 

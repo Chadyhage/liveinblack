@@ -121,7 +121,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
               <button
                 onClick={() => router.push('/my-events')}
-                style={{ padding: '14px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14.5, fontWeight: 700, background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
+                style={{ padding: '14px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14.5, fontWeight: 700, background: 'var(--violet-cta)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
                 Voir mes événements
               </button>
               <button

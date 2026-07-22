@@ -125,7 +125,7 @@ export default function AgeGateModal({
           onClick={onConfirm}
           style={{
             padding: '13px 20px',
-            background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+            background: 'var(--violet-cta)',
             border: '1px solid var(--border-strong)',
             borderRadius: 12,
             fontSize: 14,

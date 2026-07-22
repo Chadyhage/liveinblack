@@ -6,6 +6,7 @@ import clientPromise from './lib/db/mongodb-client'
 import { getDb } from './lib/db/mongoose'
 import User from './lib/models/User'
 import type { Role, AccountStatus, RoleApprovalStatus } from './lib/server/permissions'
+import { checkRateLimit, getRequestIp } from './lib/server/rateLimit'
 
 const SESSION_REVALIDATE_INTERVAL_MS = 5 * 60 * 1000
 
@@ -27,10 +28,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: 'Email', type: 'email' },
         password: { label: 'Mot de passe', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const email = String(credentials?.email || '').trim().toLowerCase()
         const password = String(credentials?.password || '')
         if (!email || !password) return null
+
+        const loginLimit = await checkRateLimit({
+          scope: 'auth-login',
+          identifier: `${getRequestIp(request)}:${email}`,
+          limit: 10,
+          windowMs: 15 * 60 * 1000,
+        })
+        if (!loginLimit.allowed) return null
 
         await getDb()
         const user = await User.findOne({ email }).lean()

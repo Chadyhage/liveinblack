@@ -293,7 +293,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
 
   return (
     <main style={{ minHeight: '100vh', padding: '28px 16px 110px' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
           <Link href="/profile" style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← Retour
@@ -436,7 +436,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
             padding: '14px 16px',
           }}
         >
-          <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>À régler au bar</span>
             <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(total, currency)}</span>
           </div>

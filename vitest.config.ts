@@ -1,12 +1,20 @@
 import { defineConfig } from 'vitest/config'
-import tsconfigPaths from 'vite-tsconfig-paths'
+
+const integrationTestsEnabled = Boolean(process.env.MONGODB_URI)
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    tsconfigPaths: true,
+  },
   test: {
     environment: 'node',
     include: ['**/__tests__/**/*.test.ts'],
-    exclude: ['**/node_modules/**', '**/.next/**', '**/old/**'],
+    exclude: [
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/old/**',
+      ...(!integrationTestsEnabled ? ['**/*.integration.test.ts'] : []),
+    ],
     // Les tests d'intégration (*.integration.test.ts) partagent une vraie base
     // MongoDB via MONGODB_URI (transactions réelles obligent) — leurs
     // beforeEach purgent les mêmes collections. En parallèle (comportement

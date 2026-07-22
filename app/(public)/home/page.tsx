@@ -291,7 +291,7 @@ export default async function AccueilPage() {
                 <li key={f} style={featItem}><span style={{ color: 'var(--violet)' }}>◆</span> {f}</li>
               ))}
             </ul>
-            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff' }}>Créer un espace organisateur</Link>
+            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: '#fff' }}>Créer un espace organisateur</Link>
           </div>
           <div style={{ ...card, padding: 24, borderLeft: '3px solid rgba(200,169,110,.75)' }}>
             <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: 0 }}>Prestataire</p>

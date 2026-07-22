@@ -217,7 +217,7 @@ export default function PaymentSuccessClient({
               On finalise {eventName ? '« ' + eventName + ' »' : 'ta réservation'}. Tes billets arrivent dans <strong style={{ color: '#fff' }}>Mes billets</strong> d&apos;ici quelques instants — inutile de repayer.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <button onClick={() => router.push('/profile')} style={{ ...btnSolid('linear-gradient(180deg, #8f56ff, #7a3bf2)', '#fff'), border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Voir mes billets</button>
+              <button onClick={() => router.push('/profile')} style={{ ...btnSolid('var(--violet-cta)', '#fff'), border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Voir mes billets</button>
               <button onClick={() => setAttempt((a) => a + 1)} style={btnGhostS}>Vérifier maintenant</button>
             </div>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 14 }}>

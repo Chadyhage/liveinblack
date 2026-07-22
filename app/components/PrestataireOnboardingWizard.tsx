@@ -24,7 +24,7 @@ import { validatePrestataireStep0, validatePrestataireStep2, getRequiredDocs, ty
 // ici — fidèle au legacy, l'étape "Finaliser" ne fait qu'informer du prix ;
 // l'activation réelle se fait depuis /proposer-services après approbation.
 
-const STEPS = ['Identité', 'Activités', 'Détails', 'Fonctionnement', 'Documents', 'Finaliser']
+const STEPS = ['Compte', 'Activités', 'Détails', 'Fonctionnement', 'Documents', 'Finaliser']
 
 const EMPTY_FORM: PrestataireFormData = {
   prestataireType: 'autre',

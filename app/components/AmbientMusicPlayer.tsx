@@ -235,7 +235,7 @@ export default function AmbientMusicPlayer() {
   }
 
   return (
-    <div style={{ position: 'fixed', right: 14, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 86px)', zIndex: 45, fontFamily: 'Inter, sans-serif' }}>
+    <div className="amp-root" style={{ position: 'fixed', right: 14, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 86px)', zIndex: 45, fontFamily: 'Inter, sans-serif' }}>
       <style>{`
         .amp-spin { animation: amp-spin 2.4s linear infinite; }
         @keyframes amp-spin { to { transform: rotate(360deg); } }
@@ -251,10 +251,7 @@ export default function AmbientMusicPlayer() {
            chevauchement avec le contenu scrollable en dessous (ex. le texte de
            stock du panneau de réservation, EventCheckoutPanel.tsx). */
         @media (max-width: 480px) {
-          .amp-trigger {
-            width: 48px !important;
-            height: 48px !important;
-          }
+          .amp-root { display: none !important; }
         }
         .mp-btn-card {
           position: relative;

@@ -146,7 +146,7 @@ export async function checkinTicket(caller: CheckinCaller, input: CheckinInput):
   // `pointAwarded`) — best-effort : un titulaire supprimé entre-temps ne doit
   // jamais faire échouer un check-in déjà accordé.
   let holderName: string | null = null
-  if (ticket.userId) {
+  if (ticket.userId && ticket.source !== 'guestlist') {
     const holderUser = await User.findById(ticket.userId).select('firstName lastName').lean()
     if (holderUser) {
       const fullName = `${holderUser.firstName ?? ''} ${holderUser.lastName ?? ''}`.trim()

@@ -5,6 +5,7 @@ import User from '@/lib/models/User'
 import { issueVerificationToken, invalidateVerificationTokens } from '@/lib/auth/verification-tokens'
 import { emailVerificationEmail } from '@/lib/server/email-templates'
 import { sendEmail } from '@/lib/server/email'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -24,6 +25,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
   }
   const { email } = parsed.data
+
+  const [ipLimit, emailLimit] = await Promise.all([
+    checkRateLimit({ scope: 'verification-resend-ip', identifier: getRequestIp(req), limit: 10, windowMs: 15 * 60 * 1000 }),
+    checkRateLimit({ scope: 'verification-resend-email', identifier: email, limit: 3, windowMs: 15 * 60 * 1000 }),
+  ])
+  if (!ipLimit.allowed || !emailLimit.allowed) {
+    const retryAfterSeconds = Math.max(ipLimit.retryAfterSeconds, emailLimit.retryAfterSeconds)
+    return NextResponse.json(
+      { error: 'rate_limited' },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } }
+    )
+  }
 
   await getDb()
   const user = await User.findOne({ email }).lean()

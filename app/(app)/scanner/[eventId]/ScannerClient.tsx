@@ -690,7 +690,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
   return (
     <main style={{ minHeight: '100vh', padding: '28px 16px 110px' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
             <Link href="/scanner" style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
@@ -1022,19 +1022,18 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             padding: '14px 16px',
           }}
         >
-          <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <div>
               <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>À encaisser</span>
               <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(unpaidTotal, currency)}</span>
             </div>
             {rank >= 2 && (
-              // Pas de garde côté client sur `unpaidTotal <= 0` : un ticket
-              // avec seulement des lignes `included` (prix 0) reste
-              // légitimement payable côté serveur (payable ne filtre que
-              // kind !== 'preorder', pas le prix) — seul `busyKey` protège
-              // contre un double-clic ; le cas réellement vide retombe sur
-              // le message `nothing_to_pay` déjà mappé ci-dessus.
-              <button type="button" disabled={busyKey === 'pay'} onClick={() => void handlePay()} style={primaryButtonStyle(busyKey === 'pay')}>
+              <button
+                type="button"
+                disabled={busyKey === 'pay' || unpaidTotal <= 0}
+                onClick={() => void handlePay()}
+                style={primaryButtonStyle(busyKey === 'pay' || unpaidTotal <= 0)}
+              >
                 {busyKey === 'pay' ? '…' : 'Marquer payé'}
               </button>
             )}

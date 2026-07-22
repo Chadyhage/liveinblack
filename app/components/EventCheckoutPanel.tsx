@@ -411,7 +411,7 @@ export default function EventCheckoutPanel({
                 </ul>
               )}
               <span style={{ display: 'inline-block', marginTop: 10, fontSize: 10.5, fontWeight: 700, color: isSelected ? 'var(--gold)' : 'var(--text-faint)' }}>
-                {isSelected ? '✓ Choisi' : soldOut ? '' : 'Choisir'}
+                {isSelected ? '✓ Choisi' : soldOut ? 'Complet' : 'Choisir'}
               </span>
             </button>
           )
@@ -430,9 +430,9 @@ export default function EventCheckoutPanel({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Quantité</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <StepperButton onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} label="−" variant="ghost" />
+                  <StepperButton onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} label="−" ariaLabel={`Diminuer la quantité de ${selectedPlace.type}`} variant="ghost" />
                   <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--gold)', width: 18, textAlign: 'center' }}>{qty}</span>
-                  <StepperButton onClick={() => setQty((q) => Math.min(maxQty, q + 1))} disabled={qty >= maxQty} label="+" variant="solid" />
+                  <StepperButton onClick={() => setQty((q) => Math.min(maxQty, q + 1))} disabled={qty >= maxQty} label="+" ariaLabel={`Augmenter la quantité de ${selectedPlace.type}`} variant="solid" />
                 </div>
               </div>
             ) : (
@@ -561,9 +561,9 @@ export default function EventCheckoutPanel({
                       <p style={{ fontSize: 12, color: 'var(--gold)', margin: '2px 0 0' }}>{fmtMoney(item.price, currency)}</p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                      <StepperButton onClick={() => updatePreorder(item.name, -1)} disabled={q === 0} label="−" variant="ghost" />
+                      <StepperButton onClick={() => updatePreorder(item.name, -1)} disabled={q === 0} label="−" ariaLabel={`Diminuer la quantité de ${item.name}`} variant="ghost" />
                       <span style={{ fontSize: 14, fontWeight: 700, color: q > 0 ? 'var(--gold)' : 'var(--text-faint)', width: 16, textAlign: 'center' }}>{q}</span>
-                      <StepperButton onClick={() => updatePreorder(item.name, 1)} disabled={q >= MAX_PREORDER_ITEM_QTY} label="+" variant="solid" />
+                      <StepperButton onClick={() => updatePreorder(item.name, 1)} disabled={q >= MAX_PREORDER_ITEM_QTY} label="+" ariaLabel={`Augmenter la quantité de ${item.name}`} variant="solid" />
                     </div>
                   </div>
                 )
@@ -644,10 +644,11 @@ export default function EventCheckoutPanel({
   )
 }
 
-function StepperButton({ onClick, disabled, label, variant }: { onClick: () => void; disabled?: boolean; label: string; variant: 'ghost' | 'solid' }) {
+function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onClick: () => void; disabled?: boolean; label: string; ariaLabel: string; variant: 'ghost' | 'solid' }) {
   return (
     <button
       type="button"
+      aria-label={ariaLabel}
       onClick={onClick}
       disabled={disabled}
       style={{

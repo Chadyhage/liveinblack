@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { getCookieConsent, saveCookieConsent, type CookieConsentValue } from '@/lib/shared/cookieConsent'
 
@@ -21,6 +21,7 @@ type Phase = 'entering' | 'visible' | 'leaving'
 export default function CookieConsentBanner() {
   const [visible, setVisible] = useState(false)
   const [phase, setPhase] = useState<Phase>('entering')
+  const bannerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -32,6 +33,23 @@ export default function CookieConsentBanner() {
     }, 800)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    if (!visible || !bannerRef.current) return
+    const banner = bannerRef.current
+    const updateHeight = () => {
+      document.documentElement.style.setProperty('--cookie-consent-height', `${Math.ceil(banner.getBoundingClientRect().height)}px`)
+    }
+    updateHeight()
+    document.body.classList.add('lb-cookie-consent-visible')
+    const observer = new ResizeObserver(updateHeight)
+    observer.observe(banner)
+    return () => {
+      observer.disconnect()
+      document.body.classList.remove('lb-cookie-consent-visible')
+      document.documentElement.style.removeProperty('--cookie-consent-height')
+    }
+  }, [visible])
 
   if (!visible) return null
 
@@ -127,6 +145,11 @@ export default function CookieConsentBanner() {
           transition: all 0.2s ease;
           outline: none;
         }
+        .cc-btn:focus-visible {
+          outline: 2px solid var(--teal) !important;
+          outline-offset: 3px !important;
+          box-shadow: var(--focus-ring) !important;
+        }
 
         .cc-btn-refuse {
           background: rgba(255,255,255,0.08);
@@ -143,13 +166,13 @@ export default function CookieConsentBanner() {
         }
 
         .cc-btn-accept {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.22);
+          background: rgba(78,232,200,0.08);
+          border: 1px solid rgba(78,232,200,0.42);
           color: rgba(255,255,255,0.88);
         }
         .cc-btn-accept:hover {
-          background: rgba(255,255,255,0.14);
-          border-color: rgba(255,255,255,0.3);
+          background: rgba(78,232,200,0.14);
+          border-color: rgba(78,232,200,0.65);
           color: rgba(255,255,255,0.98);
         }
         .cc-btn-accept:active {
@@ -158,8 +181,9 @@ export default function CookieConsentBanner() {
       `}</style>
 
       <div
-        role="dialog"
-        aria-labelledby="cookie-consent-title"
+        ref={bannerRef}
+        role="region"
+        aria-label="Choix de confidentialité et de cookies"
         className={`cc-root ${phase === 'leaving' ? 'cc-leaving' : phase === 'visible' ? 'cc-visible' : ''}`}
       >
         <div className="cc-body">

@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prototype historique gelé et artefacts d'audit locaux.
+    "old/**",
+    "tmp/**",
+    ".pnpm-store/**",
   ]),
 ]);
 

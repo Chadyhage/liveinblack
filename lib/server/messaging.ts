@@ -5,7 +5,7 @@ import Message, { type MessageDoc } from '../models/Message'
 import User from '../models/User'
 import ProviderProfile from '../models/ProviderProfile'
 import Report from '../models/Report'
-import { uploadDataUri } from './cloudinary'
+import { AUDIO_MIME_TYPES, IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
 
 // Port de src/utils/messaging.js vers un modèle Mongo un-document-par-message
 // (voir lib/models/Message.ts). Ferme l'audit C10 : le legacy stockait TOUS
@@ -660,7 +660,9 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
       image: media?.url ?? null,
     })
   } else if (type !== 'text' && !content && input.mediaDataUri) {
-    const uploaded = await uploadDataUri(input.mediaDataUri, `messages/${String(conversation._id)}`)
+    const uploaded = await uploadDataUri(input.mediaDataUri, `messages/${String(conversation._id)}`, {
+      allowedMimeTypes: type === 'voice' ? AUDIO_MIME_TYPES : IMAGE_MIME_TYPES,
+    })
     if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
     content = uploaded.url
   }

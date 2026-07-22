@@ -360,7 +360,7 @@ export default function PreferencesModal({
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>Tes préférences sont enregistrées.</p>
             <button
               onClick={onClose}
-              style={{ padding: '13px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff', fontSize: 14, fontWeight: 700 }}
+              style={{ padding: '13px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 700 }}
             >
               Fermer
             </button>
@@ -424,7 +424,7 @@ export default function PreferencesModal({
                 type="button"
                 onClick={goNext}
                 disabled={saving}
-                style={{ flex: 1, padding: '15px 24px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)', color: '#fff', fontSize: 14, fontWeight: 700 }}
+                style={{ flex: 1, padding: '15px 24px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 700 }}
               >
                 {isLast ? 'Terminer' : hasValue ? 'Continuer' : 'Passer cette étape'}
               </button>

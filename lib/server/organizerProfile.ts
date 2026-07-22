@@ -4,7 +4,7 @@ import OrganizerProfile, { type OrganizerProfileDoc } from '../models/OrganizerP
 import Application from '../models/Application'
 import User from '../models/User'
 import Event from '../models/Event'
-import { uploadDataUri } from './cloudinary'
+import { IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { slugifyOrganizer, validateOrganizerSlugFormat, RESERVED_ORGANIZER_SLUGS } from '../shared/organizerProfileValidation'
 import { normalizeRegionId, normalizeRegionIds } from '../shared/locations'
 import { SOCIAL_NETWORKS, type SocialNetworkKey } from '../shared/social'
@@ -269,7 +269,9 @@ export async function uploadOrganizerProfileMedia(caller: ProfileCaller, input: 
   const profile = await OrganizerProfile.findOne({ userId: caller.id })
   if (!profile) return { ok: false, status: 404, error: 'profile_not_found' }
 
-  const uploaded = await uploadDataUri(input.dataUri, `organizer-media/${caller.id}/${input.kind}`)
+  const uploaded = await uploadDataUri(input.dataUri, `organizer-media/${caller.id}/${input.kind}`, {
+    allowedMimeTypes: input.kind === 'gallery' ? [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES] : IMAGE_MIME_TYPES,
+  })
   if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
 
   if (input.kind === 'avatar') {

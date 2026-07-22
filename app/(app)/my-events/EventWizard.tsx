@@ -207,7 +207,7 @@ const S = {
   } as React.CSSProperties,
   btnPrimary: {
     padding: '13px 20px',
-    background: 'linear-gradient(180deg, #8f56ff, #7a3bf2)',
+    background: 'var(--violet-cta)',
     border: '1px solid rgba(255,255,255,0.14)',
     borderRadius: 12,
     fontFamily: 'Inter, sans-serif',
@@ -1076,6 +1076,8 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button
+          type="button"
+          aria-label={step === 0 ? 'Fermer la création d’événement' : 'Revenir à l’étape précédente'}
           onClick={() => (step === 0 ? requestClose() : setStep((s) => s - 1))}
           style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
         >

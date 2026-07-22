@@ -18,25 +18,29 @@ export type SocialNetworkKey = (typeof SOCIAL_NETWORKS)[number]['key']
 
 export function socialUrl(key: string, value: string | null | undefined): string | null {
   const raw = String(value || '').trim()
-  if (!raw) return null
-  if (/^https?:\/\//i.test(raw)) return raw
+  if (!raw || raw.length > 500 || /[\u0000-\u001f\u007f]/.test(raw)) return null
+  let candidate: string
+  if (/^https?:\/\//i.test(raw)) candidate = raw
   // On tolère « www.… » ou « instagram.com/… » collés sans protocole.
-  if (/^[\w-]+\.[a-z]{2,}(\/|$)/i.test(raw)) return `https://${raw}`
-  const handle = raw.replace(/^@+/, '').replace(/^\/+/, '')
-  switch (key) {
-    case 'instagram':
-      return `https://instagram.com/${handle}`
-    case 'tiktok':
-      return `https://tiktok.com/@${handle}`
-    case 'facebook':
-      return `https://facebook.com/${handle}`
-    case 'x':
-      return `https://x.com/${handle}`
-    case 'youtube':
-      return `https://youtube.com/@${handle}`
-    case 'linkedin':
-      return `https://www.linkedin.com/company/${handle}`
-    default:
-      return `https://${handle}`
+  else if (/^[\w-]+\.[a-z]{2,}(\/|$)/i.test(raw)) candidate = `https://${raw}`
+  else {
+    const handle = raw.replace(/^@+/, '').replace(/^\/+/, '')
+    switch (key) {
+      case 'instagram': candidate = `https://instagram.com/${handle}`; break
+      case 'tiktok': candidate = `https://tiktok.com/@${handle}`; break
+      case 'facebook': candidate = `https://facebook.com/${handle}`; break
+      case 'x': candidate = `https://x.com/${handle}`; break
+      case 'youtube': candidate = `https://youtube.com/@${handle}`; break
+      case 'linkedin': candidate = `https://www.linkedin.com/company/${handle}`; break
+      default: candidate = `https://${handle}`
+    }
+  }
+
+  try {
+    const url = new URL(candidate)
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    return url.toString()
+  } catch {
+    return null
   }
 }

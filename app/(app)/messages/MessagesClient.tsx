@@ -1766,7 +1766,7 @@ export default function MessagesClient({
                             fontWeight: 700,
                             fontSize: 13,
                             color: '#fff',
-                            background: busy ? 'rgba(143,86,255,0.5)' : 'linear-gradient(180deg,#8f56ff,#7a3bf2)',
+                            background: busy ? 'rgba(143,86,255,0.5)' : 'var(--violet-cta)',
                             cursor: busy ? 'default' : 'pointer',
                           }}
                         >
@@ -1782,7 +1782,7 @@ export default function MessagesClient({
                             height: 42,
                             borderRadius: '50%',
                             border: 'none',
-                            background: 'linear-gradient(180deg,#8f56ff,#7a3bf2)',
+                            background: 'var(--violet-cta)',
                             color: '#fff',
                             cursor: 'pointer',
                             flexShrink: 0,
@@ -2059,6 +2059,7 @@ function IconButton({ title, onClick, children }: { title: string; onClick: () =
     <button
       type="button"
       title={title}
+      aria-label={title}
       onClick={onClick}
       style={{
         position: 'relative',

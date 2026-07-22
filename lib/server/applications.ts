@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs'
 import { getDb } from '../db/mongoose'
 import User from '../models/User'
 import Application, { type ApplicationDoc } from '../models/Application'
-import { uploadDataUri } from './cloudinary'
+import { DOCUMENT_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { applicationReceivedEmail } from './email-templates'
 import { sendEmail } from './email'
 import { validateOrganizerFormData, type OrganizerFormData, validatePrestataireFormData, type PrestataireFormData, getRequiredDocs } from '../shared/applicationValidation'
@@ -135,7 +135,9 @@ async function uploadApplicationDocuments(userId: string, appId: string, documen
   for (const [key, files] of Object.entries(documents)) {
     const list: ApplicationDocumentView[] = []
     for (const file of files) {
-      const result = await uploadDataUri(file.dataUri, `applications/${userId}/${appId}/${key}`)
+      const result = await uploadDataUri(file.dataUri, `applications/${userId}/${appId}/${key}`, {
+        allowedMimeTypes: DOCUMENT_MIME_TYPES,
+      })
       if (!result.ok) return { ok: false, status: 400, error: result.error }
       list.push({ name: file.name, url: result.url, size: file.dataUri.length, uploadedAt: new Date().toISOString() })
     }

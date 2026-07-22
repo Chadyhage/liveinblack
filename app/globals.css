@@ -11,11 +11,29 @@
   --gold: #c8a96e;
   --pink: #e05aaa;
   --violet: #8b5cf6;
+  --violet-cta: linear-gradient(180deg, #8f56ff, #7a3bf2); /* CTA principal auth/paiement — hex historique distinct de --violet, conservé pour fidélité legacy */
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.18);
   --text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.6);
-  --text-faint: rgba(255, 255, 255, 0.4);
+  --text-faint: rgba(255, 255, 255, 0.52);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --z-nav: 40;
+  --z-floating: 45;
+  --z-sheet: 200;
+  --z-modal: 3000;
+  --focus-ring: 0 0 0 3px rgba(78, 232, 200, 0.35);
 
   --background: var(--obsidian);
   --foreground: var(--text);
@@ -31,6 +49,29 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-inter), Inter, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Les styles inline historiques retirent souvent l'outline. Cette règle
+   restaure un indicateur clavier commun sur tous les contrôles, y compris
+   quand un composant définit outline:none localement. */
+:where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
+  outline: 2px solid var(--teal) !important;
+  outline-offset: 3px !important;
+  box-shadow: var(--focus-ring) !important;
+}
+
+:where(button, input, select, textarea):disabled {
+  cursor: not-allowed !important;
+}
+
+body.lb-cookie-consent-visible {
+  padding-bottom: var(--cookie-consent-height, 0px);
 }
 
 /* Checkboxes/radios natifs du navigateur détonnent avec le thème teal/gold
@@ -51,4 +92,15 @@ body::after {
   z-index: 9999;
   opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

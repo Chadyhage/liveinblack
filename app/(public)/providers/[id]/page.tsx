@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { getProviderByUserId } from '@/lib/server/providers'
 import { getPublishedReviews, getMyReviewFor } from '@/lib/server/providerReviews'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
@@ -8,6 +9,7 @@ import { fmtMoney } from '@/lib/shared/money'
 import { auth } from '@/auth'
 import ProviderReviewsClient from '@/app/components/ProviderReviewsClient'
 import ProviderCatalogInquiry from '@/app/components/ProviderCatalogInquiry'
+import { socialUrl } from '@/lib/shared/social'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,10 +45,19 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
 
   const categories = getProviderCategories(provider)
   const visibleCatalog = (provider.catalog || []).filter((item) => item.available !== false)
-  const socialEntries = Object.entries(provider.socialLinks || {}).filter(([key, value]) => key !== 'website' && value)
+  const socialEntries = Object.entries(provider.socialLinks || {})
+    .filter(([key]) => key !== 'website')
+    .map(([key, value]) => [key, socialUrl(key, value)] as const)
+    .filter((entry): entry is readonly [string, string] => Boolean(entry[1]))
+  const websiteUrl = socialUrl('website', provider.website)
 
   return (
     <main style={{ maxWidth: 880, margin: '0 auto', padding: '0 0 60px', width: '100%' }}>
+      <div style={{ padding: '18px 22px 0' }}>
+        <Link href="/providers" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          ← Prestataires
+        </Link>
+      </div>
       <div style={{ position: 'relative', height: 180, margin: '14px 22px 0', borderRadius: 18, overflow: 'hidden', background: `linear-gradient(135deg, ${categories[0]?.color || '#8b5cf6'}33, var(--obsidian))` }}>
         {provider.coverUrl && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -101,8 +112,8 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
               Intervient : {provider.zonesIntervention.map((z) => { const r = REGION_OPTIONS.find((o) => o.id === z); return r ? `${r.flag} ${r.name}` : z }).join(', ')}
             </p>
           ) : null}
-          {provider.website && (
-            <a href={provider.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--teal)', display: 'block', marginTop: 6, textDecoration: 'none' }}>
+          {websiteUrl && (
+            <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--teal)', display: 'block', marginTop: 6, textDecoration: 'none' }}>
               {provider.website}
             </a>
           )}
