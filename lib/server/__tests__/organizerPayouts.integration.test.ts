@@ -75,12 +75,18 @@ describeIntegration('organizerPayouts (intégration, vraie base) — Stripe Conn
     accountsCreate.mockResolvedValue({ id: 'acct_123' })
     accountLinksCreate.mockResolvedValue({ url: 'https://connect.stripe.test/onboarding/acct_123' })
 
-    const result = await startStripeConnectOnboarding({ id: userId }, { origin: 'https://liveinblack.test' })
+    const result = await startStripeConnectOnboarding({ id: userId }, {})
     expect(result.ok).toBe(true)
     if (!result.ok || 'manual' in result) return
     expect(result.url).toBe('https://connect.stripe.test/onboarding/acct_123')
     expect(accountsCreate).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'express', country: 'FR', metadata: { uid: userId }, business_type: 'individual' })
+    )
+    expect(accountLinksCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refresh_url: 'https://liveinblack.com/my-events?connect=refresh',
+        return_url: 'https://liveinblack.com/my-events?connect=done',
+      })
     )
 
     const user = await User.findById(userId).lean()
@@ -98,7 +104,7 @@ describeIntegration('organizerPayouts (intégration, vraie base) — Stripe Conn
     const userId = await seedUser()
     await Application.create({ userId, type: 'organisateur', status: 'approved', formData: { pays: 'Togo' } })
 
-    const result = await startStripeConnectOnboarding({ id: userId }, { origin: 'https://liveinblack.test' })
+    const result = await startStripeConnectOnboarding({ id: userId }, {})
     expect(result.ok).toBe(true)
     if (!result.ok || !('manual' in result)) return
     expect(result.manual).toBe(true)
@@ -118,12 +124,18 @@ describeIntegration('organizerPayouts (intégration, vraie base) — Stripe Conn
     const userId = await seedUser({ stripeAccountId: 'acct_existing', stripeCountry: 'FR' })
     accountLinksCreate.mockResolvedValue({ url: 'https://connect.stripe.test/resume' })
 
-    const result = await startStripeConnectOnboarding({ id: userId }, { origin: 'https://liveinblack.test' })
+    const result = await startStripeConnectOnboarding({ id: userId }, { returnPath: '/organizer-studio' })
     expect(result.ok).toBe(true)
     if (!result.ok || 'manual' in result) return
     expect(result.url).toBe('https://connect.stripe.test/resume')
     expect(accountsCreate).not.toHaveBeenCalled()
-    expect(accountLinksCreate).toHaveBeenCalledWith(expect.objectContaining({ account: 'acct_existing' }))
+    expect(accountLinksCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        account: 'acct_existing',
+        refresh_url: 'https://liveinblack.com/organizer-studio?connect=refresh',
+        return_url: 'https://liveinblack.com/organizer-studio?connect=done',
+      })
+    )
   })
 
   it('refuse une demande de reversement manuel si rien n’est dû', async () => {

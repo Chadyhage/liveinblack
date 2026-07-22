@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
+import { safeInternalPath } from '@/lib/shared/safeNavigation'
 
 // Port de src/pages/LoginPage.jsx (#118). La distinction legacy
 // role==='user' vs role==='client' n'existe plus côté backend (un seul rôle
@@ -193,7 +194,7 @@ function withNext(path: string, next: string | null) {
 export default function AuthForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = searchParams.get('next')
+  const next = safeInternalPath(searchParams.get('next'), '') || null
   const initialRole = searchParams.get('role')
 
   const [mode, setMode] = useState<Mode>(searchParams.get('mode') === 'register' ? 'register' : 'login')

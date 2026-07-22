@@ -6,20 +6,26 @@ import PaymentAlert from '../models/PaymentAlert'
 import { isFedapayConfigured, createPayout, startPayout, getPayout } from './fedapayClient'
 import { getEventEndTimestamp } from '../shared/eventUrgency'
 
-// Port de lib/eventPayouts.js — versement organisateur (rail FedaPay/XOF
-// uniquement ; Stripe Connect 'auto' est réglé par Stripe lui-même au moment
-// du paiement, pas par ce cron). L'ARGENT NE PART JAMAIS avant la fin de
-// l'événement + une marge de sécurité.
-//
-// Portage volontairement resserré sur le chemin principal (scan → gate fin
-// d'événement → résolution du numéro mobile money → envoi → finalisation) ;
-// la récupération avancée d'un payout bloqué après crash (>48h) et le
-// réarmement en libre-service (rearmFailedPayouts) du legacy sont documentés
-// comme suite possible plutôt que portés maintenant, faute d'UI organisateur
-// pour renseigner un numéro mobile money à ce stade de la migration (phase 7).
+// Versement organisateur FedaPay/XOF. Stripe Connect est réglé directement par
+// Stripe. Un reversement FedaPay déjà créé est toujours rapproché avant toute
+// nouvelle tentative afin qu'un timeout réseau ne provoque jamais un doublon.
 const PAYOUT_LOCK_ID = 'event_payouts'
 const LOCK_TTL_MS = 15 * 60 * 1000
 const END_BUFFER_MS = 6 * 60 * 60 * 1000 // 6h après la fin de l'événement
+const PAYOUT_PENDING_ALERT_MS = 48 * 60 * 60 * 1000
+
+const SUCCESSFUL_PAYOUT_STATUSES = new Set(['sent', 'processed', 'transferred', 'paid', 'successful', 'succeeded'])
+const FAILED_PAYOUT_STATUSES = new Set(['failed', 'declined', 'canceled', 'cancelled', 'expired'])
+
+export type PayoutResolution = 'succeeded' | 'failed' | 'pending'
+export type PayoutReconciliationResult = 'paid' | 'failed' | 'waiting' | 'ignored'
+
+export function classifyFedapayPayoutStatus(status: unknown): PayoutResolution {
+  const normalized = String(status || '').trim().toLowerCase()
+  if (SUCCESSFUL_PAYOUT_STATUSES.has(normalized)) return 'succeeded'
+  if (FAILED_PAYOUT_STATUSES.has(normalized)) return 'failed'
+  return 'pending'
+}
 
 async function acquirePayoutLock(now: number): Promise<boolean> {
   try {
@@ -39,13 +45,161 @@ async function releasePayoutLock(): Promise<void> {
   await CronLock.deleteOne({ _id: PAYOUT_LOCK_ID })
 }
 
-async function markFailed(ep: EventPayoutDoc & { _id: unknown }, reason: string, code: string): Promise<void> {
-  await EventPayout.updateOne({ _id: ep._id }, { $set: { status: 'failed', failReason: reason, failCode: code, pendingPayoutId: null } })
+async function markFailed(
+  ep: EventPayoutDoc & { _id: unknown },
+  reason: string,
+  code: string,
+  expected: Record<string, unknown> = {}
+): Promise<boolean> {
+  const updated = await EventPayout.updateOne(
+    { _id: ep._id, ...expected },
+    { $set: { status: 'failed', failReason: reason, failCode: code, pendingPayoutId: null, claimedAmount: 0 } }
+  )
+  if (updated.modifiedCount !== 1) return false
+
   await PaymentAlert.updateOne(
     { key: `payout_${ep.eventId}` },
     { $set: { reason: 'auto_payout_failed', eventId: ep.eventId, sellerUid: ep.sellerUid, details: { code } } },
     { upsert: true }
   )
+  return true
+}
+
+async function flagUncertainPayout(ep: EventPayoutDoc & { _id: unknown }, payoutId: string, code: string): Promise<void> {
+  await PaymentAlert.updateOne(
+    { key: `payout_${ep.eventId}` },
+    {
+      $set: {
+        reason: 'auto_payout_reconciliation_required',
+        eventId: ep.eventId,
+        sellerUid: ep.sellerUid,
+        details: { code, payoutId },
+      },
+    },
+    { upsert: true }
+  )
+}
+
+async function settleSuccessfulPayout(
+  ep: EventPayoutDoc & { _id: unknown },
+  payoutId: string,
+  remoteStatus: string,
+  now: number
+): Promise<PayoutReconciliationResult> {
+  if (Number(ep.claimedAmount) <= 0) {
+    await EventPayout.updateOne(
+      { _id: ep._id, status: 'paying', pendingPayoutId: payoutId },
+      {
+        $set: {
+          status: 'failed',
+          failReason: 'montant du reversement envoyé impossible à rapprocher automatiquement',
+          failCode: 'payout_amount_unknown',
+          pendingPayoutId: null,
+          lastPayoutId: payoutId,
+          lastPayoutStatus: remoteStatus,
+          lastPayoutAt: new Date(now),
+          lastReconciledAt: new Date(now),
+        },
+      }
+    )
+    await flagUncertainPayout(ep, payoutId, 'payout_amount_unknown')
+    return 'failed'
+  }
+
+  const updated = await EventPayout.updateOne(
+    { _id: ep._id, status: 'paying', pendingPayoutId: payoutId },
+    [
+      {
+        $set: {
+          amountDueXOF: { $max: [0, { $subtract: ['$amountDueXOF', '$claimedAmount'] }] },
+          pendingPayoutId: null,
+          claimedAmount: 0,
+          lastPayoutId: payoutId,
+          lastPayoutStatus: remoteStatus,
+          lastPayoutAt: new Date(now),
+          lastReconciledAt: new Date(now),
+          failReason: null,
+          failCode: null,
+        },
+      },
+      { $set: { status: { $cond: [{ $gt: ['$amountDueXOF', 0] }, 'accumulating', 'paid'] } } },
+    ]
+  )
+  if (updated.modifiedCount !== 1) return 'ignored'
+  await PaymentAlert.deleteOne({ key: `payout_${ep.eventId}` })
+  return 'paid'
+}
+
+async function applyRemotePayoutStatus(
+  ep: EventPayoutDoc & { _id: unknown },
+  payoutId: string,
+  status: unknown,
+  now: number
+): Promise<PayoutReconciliationResult> {
+  const remoteStatus = String(status || 'unknown').trim().toLowerCase()
+  const resolution = classifyFedapayPayoutStatus(remoteStatus)
+
+  if (resolution === 'succeeded') {
+    return settleSuccessfulPayout(ep, payoutId, remoteStatus, now)
+  }
+
+  if (resolution === 'failed') {
+    const updated = await EventPayout.updateOne(
+      { _id: ep._id, status: 'paying', pendingPayoutId: payoutId },
+      {
+        $set: {
+          status: 'failed',
+          failReason: 'FedaPay a refusé ou annulé le reversement',
+          failCode: 'payout_rejected',
+          pendingPayoutId: null,
+          claimedAmount: 0,
+          lastPayoutId: payoutId,
+          lastPayoutStatus: remoteStatus,
+          lastReconciledAt: new Date(now),
+        },
+      }
+    )
+    if (updated.modifiedCount !== 1) return 'ignored'
+    await PaymentAlert.updateOne(
+      { key: `payout_${ep.eventId}` },
+      {
+        $set: {
+          reason: 'auto_payout_failed',
+          eventId: ep.eventId,
+          sellerUid: ep.sellerUid,
+          details: { code: 'payout_rejected', payoutId, remoteStatus },
+        },
+      },
+      { upsert: true }
+    )
+    return 'failed'
+  }
+
+  await EventPayout.updateOne(
+    { _id: ep._id, status: 'paying', pendingPayoutId: payoutId },
+    { $set: { lastPayoutId: payoutId, lastPayoutStatus: remoteStatus, lastReconciledAt: new Date(now) } }
+  )
+  return 'waiting'
+}
+
+export async function reconcileEventPayout(
+  payoutId: number | string,
+  reportedStatus?: unknown,
+  now: number = Date.now()
+): Promise<PayoutReconciliationResult> {
+  const normalizedId = String(payoutId)
+  const ep = await EventPayout.findOne({ status: 'paying', pendingPayoutId: normalizedId })
+  if (!ep) return 'ignored'
+
+  const status = reportedStatus === undefined ? (await getPayout(normalizedId)).status : reportedStatus
+  return applyRemotePayoutStatus(ep, normalizedId, status, now)
+}
+
+function countReconciliation(out: ProcessPayoutsResult, result: PayoutReconciliationResult): void {
+  if (result === 'paid') out.paid++
+  else if (result === 'failed') out.failed++
+  else if (result === 'waiting') out.waiting++
+  else out.skipped++
 }
 
 export type ProcessPayoutsResult = { scanned: number; paid: number; failed: number; waiting: number; skipped: number; locked: number }
@@ -67,6 +221,27 @@ export async function processEventPayouts(now: number = Date.now()): Promise<Pro
     const envelopes = await EventPayout.find({ status: { $in: ['accumulating', 'paying'] } })
     for (const ep of envelopes) {
       out.scanned++
+
+      if (ep.status === 'paying') {
+        const payoutId = ep.pendingPayoutId ? String(ep.pendingPayoutId) : null
+        if (!payoutId) {
+          if (await markFailed(ep, 'reversement incomplet sans identifiant FedaPay', 'payout_state_invalid', { status: 'paying' })) out.failed++
+          else out.skipped++
+          continue
+        }
+
+        try {
+          countReconciliation(out, await reconcileEventPayout(payoutId, undefined, now))
+        } catch (err) {
+          console.error('[eventPayouts] payout reconciliation failed:', err)
+          out.waiting++
+          const updatedAt = ep.updatedAt instanceof Date ? ep.updatedAt.getTime() : now
+          if (now - updatedAt >= PAYOUT_PENDING_ALERT_MS) {
+            await flagUncertainPayout(ep, payoutId, 'payout_reconciliation_timeout')
+          }
+        }
+        continue
+      }
 
       const event = await Event.findById(ep.eventId).lean()
       if (!event || event.cancelled) {
@@ -107,6 +282,7 @@ export async function processEventPayouts(now: number = Date.now()): Promise<Pro
       )
       if (!claim) continue
 
+      let payoutId: string | null = null
       try {
         const payout = await createPayout({
           amount: claim.claimedAmount,
@@ -115,34 +291,37 @@ export async function processEventPayouts(now: number = Date.now()): Promise<Pro
           metadata: { eventId: ep.eventId },
           reference: `payout_${ep._id}`,
         })
-        await EventPayout.updateOne({ _id: ep._id }, { $set: { pendingPayoutId: String(payout.id) } })
-        await startPayout(payout.id, { number, country: ep.momoCountry })
-
-        const fresh = await getPayout(payout.id)
-        if (['sent', 'processed', 'transferred'].includes(String(fresh.status))) {
-          await EventPayout.updateOne(
-            { _id: ep._id },
-            [
-              {
-                $set: {
-                  amountDueXOF: { $max: [0, { $subtract: ['$amountDueXOF', claim.claimedAmount] }] },
-                  pendingPayoutId: null,
-                },
-              },
-              { $set: { status: { $cond: [{ $gt: ['$amountDueXOF', 0] }, 'accumulating', 'paid'] } } },
-            ]
-          )
-          out.paid++
-        } else if (['failed', 'declined'].includes(String(fresh.status))) {
-          await markFailed(ep, 'FedaPay a refusé le versement', 'payout_rejected')
-          out.failed++
-        } else {
-          out.waiting++ // suivi par le prochain passage du cron ou le webhook payout.sent/failed
+        payoutId = String(payout.id)
+        const stored = await EventPayout.updateOne(
+          { _id: ep._id, status: 'paying', pendingPayoutId: null },
+          {
+            $set: {
+              pendingPayoutId: payoutId,
+              lastPayoutId: payoutId,
+              lastPayoutStatus: String(payout.status || 'created'),
+              lastReconciledAt: new Date(now),
+            },
+          }
+        )
+        if (stored.modifiedCount !== 1) {
+          await flagUncertainPayout(ep, payoutId, 'payout_not_persisted')
+          out.skipped++
+          continue
         }
+
+        await startPayout(payout.id, { number, country: ep.momoCountry })
+        countReconciliation(out, await reconcileEventPayout(payoutId, undefined, now))
       } catch (err) {
         console.error('[eventPayouts] createPayout/startPayout failed:', err)
-        await markFailed(ep, 'erreur technique FedaPay', 'payout_error')
-        out.failed++
+        if (!payoutId) {
+          if (await markFailed(ep, 'erreur technique avant la création du reversement FedaPay', 'payout_create_error', { status: 'paying', pendingPayoutId: null })) out.failed++
+          else out.skipped++
+        } else {
+          // L'appel de démarrage a pu réussir côté FedaPay malgré un timeout.
+          // On conserve donc l'identifiant et on rapproche au prochain cron.
+          await flagUncertainPayout(ep, payoutId, 'payout_start_or_status_unknown')
+          out.waiting++
+        }
       }
     }
     return out

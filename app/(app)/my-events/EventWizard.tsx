@@ -5,6 +5,7 @@ import { regions } from '@/lib/shared/regions'
 import { regionToCurrency, currencySymbol, payRailLabel } from '@/lib/shared/money'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEditor'
+import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 
 // Port du wizard de création/édition d'événement en 5 étapes
 // (src/pages/MesEvenementsPage.jsx, vue 'create' — lignes ~2140-3274 pour le
@@ -14,9 +15,9 @@ import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEdito
 // rapport de tâche) :
 // - Les photos de place sont redimensionnées côté client (canvas, 1280px
 //   max, JPEG q0.85). L'affiche dispose du recadrage panoramique attendu.
-// - La vidéo d'aperçu est plafonnée à ~8 Mo (contrainte de
-//   `uploadDataUri` côté serveur, phase antérieure) au lieu de 30 Mo en
-//   legacy.
+// - La vidéo d'aperçu conserve la limite legacy de 30 Mo et part directement
+//   vers Cloudinary via un upload signé pour ne pas traverser la limite de
+//   corps des fonctions serveur.
 // - Upload immédiat à la sélection du fichier (affiche/vidéo/photos), comme
 //   l'avatar de profil déjà porté — pas d'upload différé à la publication.
 // - Pas d'avertissement d'encaissement (Stripe/Momo) dans le wizard : déjà
@@ -509,6 +510,18 @@ async function uploadMedia(dataUri: string): Promise<string> {
   return data.url
 }
 
+async function registerUploadedVideo(file: File): Promise<string> {
+  const upload = await uploadPublicMedia(file, 'event')
+  const res = await fetch('/api/organizer-events/media', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ upload }),
+  })
+  const data = (await res.json().catch(() => null)) as { ok?: boolean; url?: string; error?: string } | null
+  if (!res.ok || !data?.ok || !data.url) throw new Error(data?.error || 'upload_failed')
+  return data.url
+}
+
 // Associe chaque champ de payload (clés de `buildPayload`) à l'étape du
 // wizard où il est saisi, pour pouvoir ramener l'organisateur au bon endroit
 // quand le serveur renvoie une erreur de validation par champ (`invalid_body`
@@ -809,17 +822,18 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       setErrors((err) => ({ ...err, video: 'Format invalide — MP4, WEBM ou MOV uniquement' }))
       return
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setErrors((err) => ({ ...err, video: 'Vidéo trop lourde — 8 Mo maximum dans cette version.' }))
+    if (file.size > 30_000_000) {
+      setErrors((err) => ({ ...err, video: 'Vidéo trop lourde — 30 Mo maximum.' }))
       return
     }
     setErrors((err) => ({ ...err, video: '' }))
     setVideoUploading(true)
     try {
-      const dataUrl = await readFileAsDataUrl(file)
-      setVideoPreview(dataUrl)
+      const localPreview = URL.createObjectURL(file)
+      setVideoPreview(localPreview)
       setVideoName(file.name || 'Vidéo d’aperçu')
-      const url = await uploadMedia(dataUrl)
+      const url = await registerUploadedVideo(file)
+      URL.revokeObjectURL(localPreview)
       setVideoUrl(url)
       setVideoPreview(url)
     } catch {

@@ -164,5 +164,5 @@ export function verifyWebhookSignature(rawBody: string | Buffer, header: string 
   if (!match) return false
 
   const age = Math.floor(Date.now() / 1000) - timestamp
-  return age <= SIGNATURE_TOLERANCE_S
+  return Math.abs(age) <= SIGNATURE_TOLERANCE_S
 }

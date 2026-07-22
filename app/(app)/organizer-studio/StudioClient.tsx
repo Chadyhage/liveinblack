@@ -8,6 +8,8 @@ import { normalizeRegionIds, getRegionName } from '@/lib/shared/locations'
 import { MOMO_REGIONS } from '@/lib/shared/payoutMomoValidation'
 import { fmtMoney } from '@/lib/shared/money'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
+import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
+import type { PublicMediaUploadReference } from '@/lib/shared/publicMediaUploads'
 
 // Port de OrganizerPublicStudio.jsx + PayoutPanel.jsx + MomoPayoutManager.jsx
 // (#7 phase organisateur, tâche #81). Avatar et bannière passent par le
@@ -168,14 +170,17 @@ export default function StudioClient({
     setSaving(false)
   }
 
-  async function uploadData(kind: 'avatar' | 'banner' | 'gallery', dataUri: string) {
+  async function uploadData(
+    kind: 'avatar' | 'banner' | 'gallery',
+    media: { dataUri: string } | { upload: PublicMediaUploadReference }
+  ) {
     setUploading(kind)
     setMessage(null)
     try {
       const res = await fetch('/api/organizers/me/media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind, dataUri }),
+        body: JSON.stringify({ kind, ...media }),
       })
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'upload_failed')
@@ -188,8 +193,20 @@ export default function StudioClient({
   }
 
   async function upload(kind: 'gallery', file: File) {
-    const dataUri = file.type.startsWith('video') ? await readAsDataUri(file) : await resizeImageToDataUri(file)
-    await uploadData(kind, dataUri)
+    const isVideo = file.type.startsWith('video/')
+    if (isVideo) {
+      if (!['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type)) {
+        return setMessage({ type: 'error', text: 'Utilise une vidéo MP4, WEBM ou MOV.' })
+      }
+      if (file.size > 30_000_000) return setMessage({ type: 'error', text: 'La vidéo doit faire 30 Mo maximum.' })
+      await uploadData(kind, { upload: await uploadPublicMedia(file, 'organizer-gallery') })
+      return
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      return setMessage({ type: 'error', text: 'Utilise une image JPG, PNG ou WEBP.' })
+    }
+    if (file.size > 10_000_000) return setMessage({ type: 'error', text: "L'image doit faire 10 Mo maximum." })
+    await uploadData(kind, { dataUri: await resizeImageToDataUri(file) })
   }
 
   async function prepareCrop(kind: 'avatar' | 'banner', file: File) {
@@ -578,7 +595,7 @@ export default function StudioClient({
           outputWidth={crop.kind === 'avatar' ? 640 : 1280}
           circular={crop.kind === 'avatar'}
           onCancel={() => setCrop(null)}
-          onConfirm={async (dataUri) => { await uploadData(crop.kind, dataUri); setCrop(null) }}
+          onConfirm={async (dataUri) => { await uploadData(crop.kind, { dataUri }); setCrop(null) }}
         />
       )}
     </>

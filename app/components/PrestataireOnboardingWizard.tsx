@@ -158,14 +158,20 @@ export default function PrestataireOnboardingWizard({
     })
   }
 
-  async function handleFileChange(key: string, fileList: FileList | null) {
-    if (!fileList || fileList.length === 0) return
+  async function handleFileChange(key: string, files: File[]) {
+    if (files.length === 0 || uploadingDocs) return
+    const categoryCount = documents[key]?.length ?? 0
+    const totalCount = Object.values(documents).reduce((total, entries) => total + entries.length, 0)
+    if (categoryCount + files.length > 5) return setError('Maximum 5 fichiers par catégorie.')
+    if (totalCount + files.length > 10) return setError('Maximum 10 fichiers pour le dossier complet.')
+
     setError(null)
     setUploadingDocs(true)
     try {
-      const entries: DocState[] = []
-      for (const file of Array.from(fileList)) entries.push(await uploadApplicationDocument(file))
-      setDocuments((current) => ({ ...current, [key]: [...(current[key] || []), ...entries] }))
+      for (const file of files) {
+        const entry = await uploadApplicationDocument(file)
+        setDocuments((current) => ({ ...current, [key]: [...(current[key] || []), entry] }))
+      }
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Impossible d’envoyer le document.')
     } finally {
@@ -665,7 +671,7 @@ function DocUpload({
   required?: boolean
   docKey: string
   documents: Record<string, DocState[]>
-  onChange: (key: string, files: FileList | null) => void
+  onChange: (key: string, files: File[]) => void
   onRemove: (key: string, index: number) => void
 }) {
   const files = documents[docKey] || []
@@ -697,13 +703,17 @@ function DocUpload({
         type="file"
         accept=".pdf,.jpg,.jpeg,.png"
         multiple
-        onChange={(e) => onChange(docKey, e.target.files)}
+        onChange={(e) => {
+          const selected = Array.from(e.currentTarget.files || [])
+          e.currentTarget.value = ''
+          void onChange(docKey, selected)
+        }}
         style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
       />
       {files.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
           {files.map((f, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
+            <div key={f.publicId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
               <span>{f.name}</span>
               <button onClick={() => onRemove(docKey, i)} style={{ background: 'transparent', border: 'none', color: '#e05aaa', cursor: 'pointer', fontSize: 12 }}>
                 Retirer

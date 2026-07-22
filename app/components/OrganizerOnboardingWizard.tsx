@@ -105,14 +105,20 @@ export default function OrganizerOnboardingWizard({
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  async function handleFileChange(key: string, fileList: FileList | null) {
-    if (!fileList || fileList.length === 0) return
+  async function handleFileChange(key: string, files: File[]) {
+    if (files.length === 0 || uploadingDocs) return
+    const categoryCount = documents[key]?.length ?? 0
+    const totalCount = Object.values(documents).reduce((total, entries) => total + entries.length, 0)
+    if (categoryCount + files.length > 5) return setError('Maximum 5 fichiers par catégorie.')
+    if (totalCount + files.length > 10) return setError('Maximum 10 fichiers pour le dossier complet.')
+
     setError(null)
     setUploadingDocs(true)
     try {
-      const entries: DocState[] = []
-      for (const file of Array.from(fileList)) entries.push(await uploadApplicationDocument(file))
-      setDocuments((current) => ({ ...current, [key]: [...(current[key] || []), ...entries] }))
+      for (const file of files) {
+        const entry = await uploadApplicationDocument(file)
+        setDocuments((current) => ({ ...current, [key]: [...(current[key] || []), entry] }))
+      }
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Impossible d’envoyer le document.')
     } finally {
@@ -527,7 +533,7 @@ function DocUpload({
   required?: boolean
   docKey: string
   documents: Record<string, DocState[]>
-  onChange: (key: string, files: FileList | null) => void
+  onChange: (key: string, files: File[]) => void
   onRemove: (key: string, index: number) => void
 }) {
   const files = documents[docKey] || []
@@ -538,12 +544,22 @@ function DocUpload({
       </label>
       <label style={{ display: 'inline-block', padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}>
         + Ajouter un fichier
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={(e) => onChange(docKey, e.target.files)} style={{ display: 'none' }} />
+        <input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          multiple
+          onChange={(e) => {
+            const selected = Array.from(e.currentTarget.files || [])
+            e.currentTarget.value = ''
+            void onChange(docKey, selected)
+          }}
+          style={{ display: 'none' }}
+        />
       </label>
       {files.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
           {files.map((f, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+            <div key={f.publicId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 9, color: 'var(--text-faint)', textTransform: 'uppercase' }}>
                   {f.format}

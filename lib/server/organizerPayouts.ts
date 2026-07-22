@@ -5,6 +5,10 @@ import SellerBalance from '../models/SellerBalance'
 import PayoutRequest from '../models/PayoutRequest'
 import stripe from './stripeClient'
 import { isStripeConnectCountry, resolveCountryISO } from '../shared/fees'
+import { safeInternalPath } from '../shared/safeNavigation'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+const CONNECT_RETURN_PATHS = new Set(['/my-events', '/organizer-studio'])
 
 // Port de la partie STRIPE CONNECT de api/connect.js + du panneau
 // PayoutPanel.jsx (#7 phase organisateur) — CÔTÉ ORGANISATEUR uniquement
@@ -71,7 +75,6 @@ export async function getPayoutStatus(caller: PayoutCaller): Promise<GetPayoutSt
 }
 
 export interface StartOnboardingInput {
-  origin: string
   returnPath?: string
 }
 
@@ -83,9 +86,14 @@ export async function startStripeConnectOnboarding(caller: PayoutCaller, input: 
   const user = await User.findById(caller.id)
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
 
-  const returnPath = input.returnPath || '/my-events'
-  const refresh_url = `${input.origin}${returnPath}?connect=refresh`
-  const return_url = `${input.origin}${returnPath}?connect=done`
+  const candidatePath = safeInternalPath(input.returnPath, '/my-events')
+  const returnPath = CONNECT_RETURN_PATHS.has(candidatePath) ? candidatePath : '/my-events'
+  const refreshUrl = new URL(returnPath, SITE)
+  refreshUrl.searchParams.set('connect', 'refresh')
+  const returnUrl = new URL(returnPath, SITE)
+  returnUrl.searchParams.set('connect', 'done')
+  const refresh_url = refreshUrl.toString()
+  const return_url = returnUrl.toString()
 
   // Compte déjà existant → nouveau lien de reprise, jamais un second compte.
   if (user.stripeAccountId) {

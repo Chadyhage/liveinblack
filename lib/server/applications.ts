@@ -179,7 +179,7 @@ async function uploadApplicationDocuments(
       }
 
       const reference = file as ApplicationDocumentUploadReference
-      if (!verifyApplicationUploadReference(reference, expectedUploadOwner)) {
+      if (!(await verifyApplicationUploadReference(reference, expectedUploadOwner))) {
         return { ok: false, status: 400, error: 'invalid_document_upload' }
       }
       list.push({

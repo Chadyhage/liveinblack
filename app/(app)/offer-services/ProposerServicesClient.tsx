@@ -11,6 +11,7 @@ import { fmtMoney } from '@/lib/shared/money'
 import { REVIEW_REPORT_REASONS, computeReviewStats } from '@/lib/shared/reviews'
 import { Stars } from '@/app/components/StarRating'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
+import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 
 // Port de ProposerServicesPage.jsx + MyProviderReviews.jsx (#8 phase
 // prestataire, tâche #91). Contrairement au legacy (facturation chargée
@@ -604,13 +605,18 @@ export default function ProposerServicesClient({
     const isImage = file.type.startsWith('image/')
     const isVideo = file.type.startsWith('video/')
     if (!isImage && !isVideo) return notify('Utilise une photo JPG, PNG, WEBP ou une vidéo MP4, WEBM, MOV.')
+    if (isVideo && !['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type)) return notify('Utilise une vidéo MP4, WEBM ou MOV.')
+    if (isVideo && file.size > 30_000_000) return notify('La vidéo doit faire 30 Mo maximum.')
+    if (isImage && file.size > 10_000_000) return notify("L'image doit faire 10 Mo maximum.")
     setMediaUploading(true)
     try {
-      const dataUri = isVideo ? await readAsDataUri(file) : await resizeImageToDataUri(file, 1280)
+      const media = isVideo
+        ? { upload: await uploadPublicMedia(file, 'provider-catalog') }
+        : { dataUri: await resizeImageToDataUri(file, 1280) }
       const res = await fetch(`/api/providers/me/catalog/${itemId}/media`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataUri }),
+        body: JSON.stringify(media),
       })
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'upload_failed')

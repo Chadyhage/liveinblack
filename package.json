@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "seed": "node --env-file=.env.local --import tsx scripts/seed-dev.ts"
+    "seed": "node --env-file=.env.local --import tsx scripts/seed-dev.ts",
+    "cloudinary:setup": "node --import tsx scripts/setup-cloudinary-private-preset.ts",
+    "migrate:private-documents": "node --import tsx scripts/migrate-application-documents-private.ts"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.2",

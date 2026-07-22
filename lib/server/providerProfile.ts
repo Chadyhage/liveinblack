@@ -8,6 +8,8 @@ import { getProviderBillingContext } from './providerBilling'
 import { normalizeRegionId, normalizeRegionIds, getRegionName } from '../shared/locations'
 import { normalizeProviderTypes, getPrimaryProviderType } from '../shared/providerCategories'
 import { SOCIAL_NETWORKS, socialUrl, type SocialNetworkKey } from '../shared/social'
+import { verifyPublicMediaUploadReference } from './publicMediaUpload'
+import type { PublicMediaUploadReference } from '../shared/publicMediaUploads'
 
 // Remplace la partie ÉCRITURE de ProposerServicesPage.jsx (#8 phase
 // prestataire — profil + catalogue). Miroir volontaire de
@@ -377,7 +379,11 @@ export async function deleteCatalogItem(caller: ProfileCaller, itemId: string): 
 
 const MAX_CATALOG_ITEM_MEDIA = 4
 
-export async function addCatalogItemMedia(caller: ProfileCaller, itemId: string, dataUri: string): Promise<CatalogResult> {
+export async function addCatalogItemMedia(
+  caller: ProfileCaller,
+  itemId: string,
+  media: { dataUri: string } | { upload: PublicMediaUploadReference }
+): Promise<CatalogResult> {
   await getDb()
 
   const profile = await ProviderProfile.findOne({ userId: caller.id })
@@ -387,13 +393,23 @@ export async function addCatalogItemMedia(caller: ProfileCaller, itemId: string,
   if (!item) return { ok: false, status: 404, error: 'item_not_found' }
   if (item.media.length >= MAX_CATALOG_ITEM_MEDIA) return { ok: false, status: 409, error: 'media_limit_reached' }
 
-  const uploaded = await uploadDataUri(dataUri, `provider-catalog/${caller.id}/${itemId}`, {
-    allowedMimeTypes: [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES],
-  })
-  if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
+  let url: string
+  let isVideo: boolean
+  if ('upload' in media) {
+    const verified = await verifyPublicMediaUploadReference(media.upload, caller.id, 'provider-catalog')
+    if (!verified.ok) return { ok: false, status: 400, error: 'invalid_media_upload' }
+    url = verified.url
+    isVideo = verified.resourceType === 'video'
+  } else {
+    const uploaded = await uploadDataUri(media.dataUri, `provider-catalog/${caller.id}/${itemId}`, {
+      allowedMimeTypes: [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES],
+    })
+    if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
+    url = uploaded.url
+    isVideo = media.dataUri.startsWith('data:video')
+  }
 
-  const isVideo = dataUri.startsWith('data:video')
-  item.media.push({ url: uploaded.url, type: isVideo ? 'video' : 'image' } as (typeof item.media)[number])
+  item.media.push({ url, type: isVideo ? 'video' : 'image' } as (typeof item.media)[number])
 
   await profile.save()
   return { ok: true, profile: toProfileView(profile) }

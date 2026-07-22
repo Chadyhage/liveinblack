@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { uploadOrganizerProfileMedia, reorderOrganizerMedia } from '@/lib/server/organizerProfile'
+import { publicMediaUploadReferenceSchema } from '@/lib/shared/publicMediaUploads'
 
 const uploadSchema = z.object({
   kind: z.enum(['avatar', 'banner', 'gallery']),
-  dataUri: z.string().min(1),
-})
+  dataUri: z.string().min(1).max(4_000_000).optional(),
+  upload: publicMediaUploadReferenceSchema.optional(),
+}).refine((input) => Boolean(input.dataUri) !== Boolean(input.upload), 'Un seul média est attendu.')
 
 const reorderSchema = z.object({ order: z.array(z.string()).min(1) })
 

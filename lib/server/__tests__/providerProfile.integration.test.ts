@@ -238,10 +238,10 @@ describeIntegration('Catalogue', () => {
     const itemId = created.profile.catalog[0].id
 
     for (let i = 0; i < 4; i++) {
-      const r = await addCatalogItemMedia({ id: userId }, itemId, TINY_PNG)
+      const r = await addCatalogItemMedia({ id: userId }, itemId, { dataUri: TINY_PNG })
       expect(r.ok).toBe(true)
     }
-    const fifth = await addCatalogItemMedia({ id: userId }, itemId, TINY_PNG)
+    const fifth = await addCatalogItemMedia({ id: userId }, itemId, { dataUri: TINY_PNG })
     expect(fifth.ok).toBe(false)
     if (fifth.ok) return
     expect(fifth.error).toBe('media_limit_reached')
@@ -253,8 +253,8 @@ describeIntegration('Catalogue', () => {
     const created = await addCatalogItem({ id: userId }, { name: 'Article' })
     if (!created.ok) throw new Error('setup failed')
     const itemId = created.profile.catalog[0].id
-    await addCatalogItemMedia({ id: userId }, itemId, TINY_PNG)
-    await addCatalogItemMedia({ id: userId }, itemId, TINY_PNG)
+    await addCatalogItemMedia({ id: userId }, itemId, { dataUri: TINY_PNG })
+    await addCatalogItemMedia({ id: userId }, itemId, { dataUri: TINY_PNG })
 
     const result = await removeCatalogItemMedia({ id: userId }, itemId, 0)
     expect(result.ok).toBe(true)

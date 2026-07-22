@@ -5,6 +5,8 @@ import Application from '../models/Application'
 import User from '../models/User'
 import Event from '../models/Event'
 import { IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, uploadDataUri } from './cloudinary'
+import { verifyPublicMediaUploadReference } from './publicMediaUpload'
+import type { PublicMediaUploadReference } from '../shared/publicMediaUploads'
 import { slugifyOrganizer, validateOrganizerSlugFormat, RESERVED_ORGANIZER_SLUGS } from '../shared/organizerProfileValidation'
 import { normalizeRegionId, normalizeRegionIds } from '../shared/locations'
 import { SOCIAL_NETWORKS, type SocialNetworkKey } from '../shared/social'
@@ -255,7 +257,8 @@ export type MediaKind = 'avatar' | 'banner' | 'gallery'
 
 export interface UploadMediaInput {
   kind: MediaKind
-  dataUri: string
+  dataUri?: string
+  upload?: PublicMediaUploadReference
 }
 
 export type UploadMediaResult = ErrResult | { ok: true; profile: OrganizerProfileView }
@@ -269,20 +272,35 @@ export async function uploadOrganizerProfileMedia(caller: ProfileCaller, input: 
   const profile = await OrganizerProfile.findOne({ userId: caller.id })
   if (!profile) return { ok: false, status: 404, error: 'profile_not_found' }
 
-  const uploaded = await uploadDataUri(input.dataUri, `organizer-media/${caller.id}/${input.kind}`, {
-    allowedMimeTypes: input.kind === 'gallery' ? [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES] : IMAGE_MIME_TYPES,
-  })
-  if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
+  let uploadedUrl: string
+  let isVideo: boolean
+  if (input.upload) {
+    const verified = await verifyPublicMediaUploadReference(input.upload, caller.id, 'organizer-gallery')
+    if (!verified.ok) return { ok: false, status: 400, error: 'invalid_media_upload' }
+    if (input.kind !== 'gallery' && verified.resourceType === 'video') {
+      return { ok: false, status: 400, error: 'invalid_media_type' }
+    }
+    uploadedUrl = verified.url
+    isVideo = verified.resourceType === 'video'
+  } else if (input.dataUri) {
+    const uploaded = await uploadDataUri(input.dataUri, `organizer-media/${caller.id}/${input.kind}`, {
+      allowedMimeTypes: input.kind === 'gallery' ? [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES] : IMAGE_MIME_TYPES,
+    })
+    if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
+    uploadedUrl = uploaded.url
+    isVideo = input.dataUri.startsWith('data:video')
+  } else {
+    return { ok: false, status: 400, error: 'invalid_input' }
+  }
 
   if (input.kind === 'avatar') {
-    profile.avatarUrl = uploaded.url
+    profile.avatarUrl = uploadedUrl
   } else if (input.kind === 'banner') {
-    profile.bannerUrl = uploaded.url
+    profile.bannerUrl = uploadedUrl
   } else {
-    const isVideo = input.dataUri.startsWith('data:video')
     profile.media.push({
       id: `org-media-${crypto.randomBytes(6).toString('hex')}`,
-      url: uploaded.url,
+      url: uploadedUrl,
       type: isVideo ? 'video' : 'image',
       title: '',
       description: '',

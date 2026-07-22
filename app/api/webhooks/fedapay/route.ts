@@ -6,6 +6,7 @@ import { releaseOrder } from '@/lib/server/orders'
 import { handleFedapaySubscriptionPayment } from '@/lib/server/providerSubscriptions'
 import Order from '@/lib/models/Order'
 import User from '@/lib/models/User'
+import { reconcileEventPayout } from '@/lib/server/eventPayouts'
 
 // Remplace la branche `webhook()` de api/fedapay.js (rail XOF). Miroir de
 // /api/webhooks/stripe — même cœur de finalisation partagé (fulfillOrder),
@@ -14,6 +15,16 @@ import User from '@/lib/models/User'
 type FedapayWebhookBody = {
   name: string
   entity: { id: number | string; status?: string; amount?: number }
+}
+
+function isFedapayWebhookBody(value: unknown): value is FedapayWebhookBody {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as { name?: unknown; entity?: { id?: unknown } }
+  return (
+    typeof candidate.name === 'string' &&
+    Boolean(candidate.entity) &&
+    (typeof candidate.entity?.id === 'string' || typeof candidate.entity?.id === 'number')
+  )
 }
 
 export async function POST(req: Request) {
@@ -26,17 +37,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_signature' }, { status: 400 })
   }
 
-  let body: FedapayWebhookBody
+  let parsed: unknown
   try {
-    body = JSON.parse(rawBody)
+    parsed = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
   }
+  if (!isFedapayWebhookBody(parsed)) {
+    return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
+  }
+  const body = parsed
 
   await getDb()
 
   try {
     const { name, entity } = body
+    if (name.startsWith('payout.')) {
+      const payout = await reconcileEventPayout(entity.id, entity.status)
+      return NextResponse.json({ received: true, payout })
+    }
+
     if (isApprovedTransactionEvent(name, entity)) {
       // Un paiement approuvé peut être un BILLET ou un ABONNEMENT prestataire :
       // on regarde le registre serveur (User.pendingFedapaySubTxnId) plutôt que
@@ -62,9 +82,6 @@ export async function POST(req: Request) {
       const order = await Order.findOne({ fedapayTxnId: String(entity.id) }).lean()
       if (order) await releaseOrder(order._id.toString(), null)
     }
-    // Les événements `payout.*` sont traités par le module de versement
-    // (lib/server/eventPayouts.ts) — non câblé sur ce webhook pour l'instant.
-
     return NextResponse.json({ received: true })
   } catch (err) {
     console.error('[webhooks/fedapay] handler error:', err)

@@ -10,7 +10,7 @@ import { auth } from '@/auth'
 // besoin d'une lecture base à jour) reste dans app/(app)/layout.tsx, pas ici.
 // Renommé `proxy.ts` (Next.js 16 — `middleware.ts` est déprécié).
 
-const AUTH_REQUIRED_PREFIXES = ['/profile', '/messages', '/scanner', '/my-shifts', '/order', '/my-application', '/onboarding-organizer']
+const AUTH_REQUIRED_PREFIXES = ['/profile', '/messages', '/scanner', '/my-shifts', '/order', '/my-application', '/onboarding-organizer', '/onboarding-provider', '/playlist']
 const ORGANISATEUR_OR_AGENT_PREFIXES = ['/my-events']
 const ORGANISATEUR_ONLY_PREFIXES = ['/organizer-studio']
 const SERVICE_ACCESS_PREFIXES = ['/offer-services', '/my-subscription']
@@ -75,6 +75,8 @@ export const config = {
     '/order/:path*',
     '/my-application/:path*',
     '/onboarding-organizer/:path*',
+    '/onboarding-provider/:path*',
+    '/playlist/:path*',
     '/my-events/:path*',
     '/organizer-studio/:path*',
     '/offer-services/:path*',

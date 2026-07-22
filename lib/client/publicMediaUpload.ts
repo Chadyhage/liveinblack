@@ -1,9 +1,11 @@
 import {
-  APPLICATION_DOCUMENT_MAX_BYTES,
-  APPLICATION_DOCUMENT_FORMATS,
-  APPLICATION_DOCUMENT_MIME_TYPES,
-  type ApplicationDocumentUploadReference,
-} from '../shared/applicationDocuments'
+  PUBLIC_MEDIA_IMAGE_MAX_BYTES,
+  PUBLIC_MEDIA_MIME_TYPES,
+  PUBLIC_MEDIA_VIDEO_MAX_BYTES,
+  PUBLIC_MEDIA_FORMATS,
+  type PublicMediaPurpose,
+  type PublicMediaUploadReference,
+} from '../shared/publicMediaUploads'
 
 type SignatureResponse = {
   ok: true
@@ -12,9 +14,10 @@ type SignatureResponse = {
     apiKey: string
     timestamp: number
     folder: string
-    deliveryType: 'authenticated'
+    deliveryType: 'upload'
     allowedFormats: string
     uploadPreset: string
+    resourceType: 'image' | 'video'
     signature: string
     intentToken: string
   }
@@ -31,21 +34,22 @@ type CloudinaryUploadResponse = {
   error?: { message?: string }
 }
 
-export async function uploadApplicationDocument(file: File): Promise<ApplicationDocumentUploadReference> {
-  if (!APPLICATION_DOCUMENT_MIME_TYPES.includes(file.type as (typeof APPLICATION_DOCUMENT_MIME_TYPES)[number])) {
-    throw new Error('Format non accepté. Utilise PDF, JPG ou PNG.')
+export async function uploadPublicMedia(file: File, purpose: PublicMediaPurpose): Promise<PublicMediaUploadReference> {
+  if (!PUBLIC_MEDIA_MIME_TYPES.includes(file.type as (typeof PUBLIC_MEDIA_MIME_TYPES)[number])) {
+    throw new Error('Format de média non accepté.')
   }
-  if (file.size <= 0 || file.size > APPLICATION_DOCUMENT_MAX_BYTES) {
-    throw new Error('Le fichier dépasse la limite de 10 Mo.')
+  const maxBytes = file.type.startsWith('video/') ? PUBLIC_MEDIA_VIDEO_MAX_BYTES : PUBLIC_MEDIA_IMAGE_MAX_BYTES
+  if (file.size <= 0 || file.size > maxBytes) {
+    throw new Error(file.type.startsWith('video/') ? 'La vidéo dépasse 30 Mo.' : 'L’image dépasse 10 Mo.')
   }
 
-  const signResponse = await fetch('/api/applications/documents/sign', {
+  const signResponse = await fetch('/api/uploads/media/sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: file.name, contentType: file.type, size: file.size }),
+    body: JSON.stringify({ purpose, contentType: file.type, size: file.size }),
   })
   const signed = (await signResponse.json().catch(() => null)) as SignatureResponse | null
-  if (!signResponse.ok || !signed?.ok) throw new Error('Impossible de préparer l’envoi du document.')
+  if (!signResponse.ok || !signed?.ok) throw new Error('Impossible de préparer l’envoi du média.')
 
   const body = new FormData()
   body.append('file', file)
@@ -59,17 +63,17 @@ export async function uploadApplicationDocument(file: File): Promise<Application
 
   const uploadResponse = await fetch(signed.upload.uploadUrl, { method: 'POST', body })
   const uploaded = (await uploadResponse.json().catch(() => null)) as CloudinaryUploadResponse | null
-  if (!uploadResponse.ok || !uploaded) {
-    throw new Error(uploaded?.error?.message || 'Échec de l’envoi du document.')
-  }
+  if (!uploadResponse.ok || !uploaded) throw new Error(uploaded?.error?.message || 'Échec de l’envoi du média.')
 
+  const format = uploaded.format?.toLowerCase()
   if (
     !uploaded.public_id ||
-    !uploaded.format ||
-    !APPLICATION_DOCUMENT_FORMATS.includes(uploaded.format.toLowerCase() as (typeof APPLICATION_DOCUMENT_FORMATS)[number]) ||
-    uploaded.resource_type !== 'image' ||
-    uploaded.type !== 'authenticated' ||
+    !format ||
+    !PUBLIC_MEDIA_FORMATS.includes(format as (typeof PUBLIC_MEDIA_FORMATS)[number]) ||
+    uploaded.resource_type !== signed.upload.resourceType ||
+    uploaded.type !== 'upload' ||
     !uploaded.bytes ||
+    uploaded.bytes > maxBytes ||
     !uploaded.version ||
     !uploaded.signature
   ) {
@@ -77,11 +81,10 @@ export async function uploadApplicationDocument(file: File): Promise<Application
   }
 
   return {
-    name: file.name,
     publicId: uploaded.public_id,
-    format: uploaded.format.toLowerCase() as ApplicationDocumentUploadReference['format'],
-    resourceType: 'image',
-    deliveryType: 'authenticated',
+    format: format as PublicMediaUploadReference['format'],
+    resourceType: signed.upload.resourceType,
+    deliveryType: 'upload',
     bytes: uploaded.bytes,
     version: uploaded.version,
     signature: uploaded.signature,

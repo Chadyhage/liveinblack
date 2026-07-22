@@ -26,7 +26,9 @@ describe('verifyWebhookSignature', () => {
 
   it('rejetée au-delà de la tolérance anti-replay (5 min)', () => {
     const oldTs = Math.floor(Date.now() / 1000) - 3600
+    const futureTs = Math.floor(Date.now() / 1000) + 3600
     expect(verifyWebhookSignature(payload, signedHeader(payload, secret, oldTs), secret)).toBe(false)
+    expect(verifyWebhookSignature(payload, signedHeader(payload, secret, futureTs), secret)).toBe(false)
   })
 })
 

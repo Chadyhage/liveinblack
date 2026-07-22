@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db/mongoose'
 import User from '@/lib/models/User'
 import { consumeVerificationToken } from '@/lib/auth/verification-tokens'
 import { isPasswordPolicyCompliant } from '@/lib/shared/passwordPolicy'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
 const bodySchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -18,6 +19,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
   }
   const { email, token, password } = parsed.data
+
+  const limit = await checkRateLimit({
+    scope: 'reset-password',
+    identifier: `${getRequestIp(req)}:${email}`,
+    limit: 8,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds), 'Cache-Control': 'no-store' } }
+    )
+  }
 
   await getDb()
   const user = await User.findOne({ email }).select('_id').lean()
@@ -43,5 +57,5 @@ export async function POST(req: Request) {
     { $set: { passwordHash, emailVerifiedAt: new Date() }, $inc: { sessionVersion: 1 } }
   )
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } })
 }

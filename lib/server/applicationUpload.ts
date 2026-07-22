@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import cloudinary from './cloudinary'
 import {
+  APPLICATION_DOCUMENT_MAX_BYTES,
   APPLICATION_DOCUMENT_FORMATS,
   type ApplicationDocumentUploadReference,
 } from '../shared/applicationDocuments'
@@ -20,6 +21,7 @@ type CloudinaryCredentials = {
   cloudName: string
   apiKey: string
   apiSecret: string
+  uploadPreset: string
 }
 
 export type ApplicationUploadSignatureResult =
@@ -32,6 +34,7 @@ export type ApplicationUploadSignatureResult =
       folder: string
       deliveryType: 'authenticated'
       allowedFormats: string
+      uploadPreset: string
       signature: string
       intentToken: string
     }
@@ -40,8 +43,9 @@ function credentials(): CloudinaryCredentials | null {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim() || ''
   const apiKey = process.env.CLOUDINARY_API_KEY?.trim() || ''
   const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim() || ''
-  if (!cloudName || !apiKey || !apiSecret) return null
-  return { cloudName, apiKey, apiSecret }
+  const uploadPreset = process.env.CLOUDINARY_PRIVATE_UPLOAD_PRESET?.trim() || ''
+  if (!cloudName || !apiKey || !apiSecret || !uploadPreset) return null
+  return { cloudName, apiKey, apiSecret, uploadPreset }
 }
 
 function tokenSecret(): string | null {
@@ -102,6 +106,7 @@ export function createApplicationUploadSignature(owner: string): ApplicationUplo
       folder,
       timestamp,
       type: deliveryType,
+      upload_preset: config.uploadPreset,
     },
     config.apiSecret
   )
@@ -114,15 +119,16 @@ export function createApplicationUploadSignature(owner: string): ApplicationUplo
     folder,
     deliveryType,
     allowedFormats: ALLOWED_FORMATS_PARAM,
+    uploadPreset: config.uploadPreset,
     signature,
     intentToken,
   }
 }
 
-export function verifyApplicationUploadReference(
+export async function verifyApplicationUploadReference(
   reference: ApplicationDocumentUploadReference,
   expectedOwner: string
-): boolean {
+): Promise<boolean> {
   const config = credentials()
   const intent = readIntentToken(reference.intentToken)
   if (!config || !intent || intent.owner !== expectedOwner) return false
@@ -132,7 +138,26 @@ export function verifyApplicationUploadReference(
     { public_id: reference.publicId, version: reference.version },
     config.apiSecret
   )
-  return equalSecret(reference.signature.toLowerCase(), expectedSignature.toLowerCase())
+  if (!equalSecret(reference.signature.toLowerCase(), expectedSignature.toLowerCase())) return false
+
+  try {
+    const resource = await cloudinary.api.resource(reference.publicId, {
+      resource_type: 'image',
+      type: 'authenticated',
+    })
+    return (
+      resource.public_id === reference.publicId &&
+      resource.resource_type === 'image' &&
+      resource.type === 'authenticated' &&
+      Number(resource.version) === reference.version &&
+      Number(resource.bytes) === reference.bytes &&
+      Number(resource.bytes) > 0 &&
+      Number(resource.bytes) <= APPLICATION_DOCUMENT_MAX_BYTES &&
+      String(resource.format || '').toLowerCase() === reference.format
+    )
+  } catch {
+    return false
+  }
 }
 
 export function createApplicationDocumentDownloadUrl(document: {
