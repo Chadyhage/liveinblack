@@ -7,7 +7,15 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
-import { listUsersForAgent, getUserForAgent, setUserDisabled, forceVerifyEmail, updateUserFields, type AgentCaller } from '../agentUsers'
+import {
+  listUsersForAgent,
+  getUserForAgent,
+  setUserDisabled,
+  forceVerifyEmail,
+  updateUserEmail,
+  updateUserFields,
+  type AgentCaller,
+} from '../agentUsers'
 import User from '../../models/User'
 import OrganizerProfile from '../../models/OrganizerProfile'
 import ProviderProfile from '../../models/ProviderProfile'
@@ -198,6 +206,46 @@ describeIntegration('agentUsers (intégration, vraie base) — #9 phase agent/ad
       expect(result.ok).toBe(false)
       if (result.ok) return
       expect(result.status).toBe(404)
+    })
+  })
+
+  describe('updateUserEmail', () => {
+    it('change l’identifiant, exige une nouvelle vérification et révoque les sessions', async () => {
+      const target = await seedUser({
+        email: 'ancienne@test.com',
+        pendingEmail: 'attente@test.com',
+        emailVerifiedAt: new Date(),
+        sessionVersion: 2,
+      })
+
+      const result = await updateUserEmail(String(target._id), ' Nouvelle@Test.com ')
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.user.email).toBe('nouvelle@test.com')
+      expect(result.user.emailVerified).toBe(false)
+
+      const fresh = await User.findById(target._id).lean()
+      expect(fresh?.pendingEmail).toBeNull()
+      expect(fresh?.sessionVersion).toBe(3)
+    })
+
+    it('refuse une adresse déjà utilisée', async () => {
+      const target = await seedUser({ email: 'cible@test.com' })
+      await seedUser({ email: 'prise@test.com' })
+
+      const result = await updateUserEmail(String(target._id), 'prise@test.com')
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('email_taken')
+    })
+
+    it('protège le compte super-admin', async () => {
+      const target = await seedUser({ superAdmin: true })
+
+      const result = await updateUserEmail(String(target._id), 'nouveau@test.com')
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('protected_account')
     })
   })
 })

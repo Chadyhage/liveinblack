@@ -11,8 +11,7 @@ import type { getMySubscriptionOverview } from '@/lib/server/providerSubscriptio
 // d'infos, note du mode de paiement, historique des paiements) que le
 // legacy, mais réutilise les fonctions serveur et la logique pure déjà
 // utilisées par ProposerServicesClient.tsx (#91) plutôt que d'en dupliquer
-// le calcul. Voir page.tsx pour l'écart de fidélité assumé sur l'historique
-// des paiements (aucun équivalent Mongo à `subscription_payments`).
+// le calcul. L'historique vient du registre webhook Mongo, jamais du client.
 
 type SubscriptionOverview = Awaited<ReturnType<typeof getMySubscriptionOverview>>
 
@@ -36,6 +35,10 @@ function daysUntil(value: string | null | undefined): number {
   if (!value) return 0
   const ms = new Date(value).getTime() - Date.now()
   return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)))
+}
+
+function fmtPaymentAmount(amountMinor: number, currency: 'EUR' | 'XOF'): string {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency, maximumFractionDigits: currency === 'XOF' ? 0 : 2 }).format(currency === 'EUR' ? amountMinor / 100 : amountMinor)
 }
 
 function InfoTile({ label, value, accent }: { label: string; value: string; accent?: string }) {
@@ -182,7 +185,21 @@ export default function MonAbonnementClient({ profile, subscription }: { profile
         <section style={{ ...card, padding: 18, marginTop: 16 }}>
           <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, margin: '0 0 4px' }}>Historique des paiements</h2>
           <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '0 0 4px' }}>Tes reçus d&rsquo;abonnement.</p>
-          <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)' }}>L&rsquo;historique détaillé n&rsquo;est pas encore disponible ici. Contacte le support si tu as besoin d&rsquo;un reçu.</p>
+          {subscription.payments.length === 0 ? (
+            <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', margin: '16px 0 0' }}>Aucun paiement confirmé dans cet historique.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: 8, marginTop: 16 }}>
+              {subscription.payments.map((payment) => (
+                <div key={payment.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '12px 13px', borderRadius: 11, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.07)' }}>
+                  <div>
+                    <p style={{ margin: 0, fontFamily: FONT, fontSize: 13, fontWeight: 700 }}>{fmtPaymentAmount(payment.amountMinor, payment.currency)}</p>
+                    <p style={{ margin: '3px 0 0', fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.48)' }}>{fmtDate(payment.paidAt)} · {payment.rail === 'stripe' ? 'Carte bancaire' : 'FedaPay'}</p>
+                  </div>
+                  {payment.receiptUrl ? <a href={payment.receiptUrl} target="_blank" rel="noopener noreferrer" style={{ color: C.teal, fontFamily: FONT, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Voir le reçu</a> : <span style={{ color: C.teal, fontFamily: FONT, fontSize: 10.5, fontWeight: 800 }}>PAYÉ</span>}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
     </>

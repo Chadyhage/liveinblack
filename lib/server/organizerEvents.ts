@@ -8,6 +8,7 @@ import { hashCode } from './events'
 import { regionToCurrency, eventCurrency } from '../shared/money'
 import { getRegionByName } from '../shared/regions'
 import { notifyNewEvent } from './organizerFollowNotifications'
+import { normalizeShowOptions, type ShowOption } from '../shared/showOptions'
 
 // Port de la partie CRÉATION/ÉDITION de src/pages/MesEvenementsPage.jsx (#7
 // phase organisateur — wizard 5 étapes). Contrairement au legacy (verrouillage
@@ -15,8 +16,8 @@ import { notifyNewEvent } from './organizerFollowNotifications'
 // signalé comme une lacune : "rien n'empêche un client malveillant de POSTer
 // un payload direct avec les champs verrouillés changés quand même"), CE
 // FICHIER revérifie et RE-APPLIQUE chaque règle de verrouillage côté serveur,
-// à partir des VRAIS compteurs de vente (Order, jamais du nombre envoyé par
-// le client) — un appel qui tente de changer un champ verrouillé voit
+// à partir des VRAIS compteurs de stock de l'événement (jamais du nombre
+// envoyé par le client) — un appel qui tente de changer un champ verrouillé voit
 // simplement sa valeur ignorée (silencieusement restaurée à l'ancienne),
 // jamais une erreur bloquante : c'est la même sensation UX que le legacy
 // (champ visuellement désactivé), avec la vraie frontière de sécurité en plus.
@@ -48,8 +49,9 @@ export interface MenuItemInput {
   price?: number
   category?: string
   description?: string
+  available?: boolean
   hasShow?: boolean
-  showOptions?: string[]
+  showOptions?: Array<ShowOption | string>
   excludedPlaces?: string[]
 }
 
@@ -108,6 +110,7 @@ export interface OrganizerEventView {
   region: string
   currency: 'EUR' | 'XOF'
   soldCount: number
+  totalCapacity: number
   ticketCount: number
   revenue: number
 }
@@ -136,6 +139,14 @@ function assignStablePlaceIds(places: PlaceInput[]): (PlaceInput & { available: 
 // post-vente, bug legacy explicitement corrigé ici).
 function placeConsumed(place: { total?: number | null; available?: number | null }): number {
   return Math.max(0, (place.total ?? 0) - (place.available ?? 0))
+}
+
+function normalizeMenuItems(menu: MenuItemInput[] | null | undefined): MenuItemInput[] {
+  return (menu || []).map((item) => ({
+    ...item,
+    available: item.available !== false,
+    showOptions: item.hasShow ? normalizeShowOptions(item.showOptions) : [],
+  }))
 }
 
 function toEventDates(date: string) {
@@ -195,7 +206,9 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
     places,
     playlist: Boolean(input.playlist),
     preorder: Boolean(input.preorder),
-    menu: input.preorder ? input.menu || [] : null,
+    // Le menu reste nécessaire quand une consommation est incluse dans une
+    // place, même si la précommande payante est désactivée.
+    menu: input.menu ? normalizeMenuItems(input.menu) : null,
     artists: input.artists || [],
     dj: input.dj || '',
     performers: input.performers || [],
@@ -306,7 +319,7 @@ export async function updateOrganizerEvent(caller: OrganizerEventCaller, eventId
   // (approximation volontaire de "précommande réelle passée" — un contrôle
   // plus fin par item nécessiterait de croiser EventOrder, hors périmètre de
   // cette passe).
-  if (!locked && input.menu !== undefined) event.menu = (event.preorder ? input.menu : null) as typeof event.menu
+  if (!locked && input.menu !== undefined) event.menu = (input.menu ? normalizeMenuItems(input.menu) : null) as typeof event.menu
 
   // Places : fusion par id STABLE, jamais par index ni par nom — une place
   // avec des ventes garde type/prix/plancher-de-quantité/groupe verrouillés ;
@@ -361,8 +374,7 @@ export async function listMyOrganizerEvents(caller: OrganizerEventCaller): Promi
     { $match: { eventId: { $in: eventIds }, status: 'paid' } },
     { $group: { _id: '$eventId', sold: { $sum: '$qty' } } },
   ])
-  const soldByEventId = new Map(soldRows.map((r) => [r._id as string, r.sold as number]))
-
+  const soldByEventId = new Map(soldRows.map((row) => [row._id as string, row.sold as number]))
   // Revenu/nombre de billets affichés sur les lignes "Terminé" du tableau de
   // bord — agrégé depuis Ticket (source canonique des ventes RÉELLES, y
   // compris précommandes), pas depuis Order (qui ne verrait pas certains
@@ -394,7 +406,8 @@ export async function listMyOrganizerEvents(caller: OrganizerEventCaller): Promi
         city: e.city ?? '',
         region: e.region ?? '',
         currency: eventCurrency(e),
-        soldCount: soldByEventId.get(String(e._id)) ?? 0,
+        soldCount: Math.max(soldByEventId.get(String(e._id)) ?? 0, (e.places || []).reduce((sum, place) => sum + placeConsumed(place), 0)),
+        totalCapacity: (e.places || []).reduce((sum, place) => sum + Math.max(0, place.total ?? 0), 0),
         ticketCount: ticketStats?.ticketCount ?? 0,
         revenue: ticketStats?.revenue ?? 0,
       }
@@ -523,7 +536,7 @@ export async function getMyOrganizerEventDetail(caller: OrganizerEventCaller, ev
       })),
       playlist: Boolean(event.playlist),
       preorder: Boolean(event.preorder),
-      menu: (event.menu as MenuItemInput[] | null) ?? null,
+      menu: event.menu ? normalizeMenuItems(event.menu as MenuItemInput[]) : null,
       artists: event.artists ?? [],
       dj: event.dj ?? '',
       performers: event.performers ?? [],

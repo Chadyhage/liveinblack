@@ -105,7 +105,7 @@ const HIDE_ON = ['/messages', '/scanner']
 // Le layout public (public)/layout.tsx ne sert que les visiteurs anonymes
 // (cf. commentaire de (public)/home/page.tsx), donc pas besoin de re-vérifier
 // `user` ici comme le fait legacy pour /accueil.
-const HIDE_ON_PUBLIC_SHOWCASE = ['/providers', '/organizers', '/about', '/login', '/organizer-signup', '/provider-signup', '/home']
+const HIDE_ON_PUBLIC_SHOWCASE = ['/providers', '/organizers', '/about', '/login', '/organizer-signup', '/provider-signup']
 
 const SEEN_KEY = 'lib_ambiance_seen'
 
@@ -251,7 +251,12 @@ export default function AmbientMusicPlayer() {
            chevauchement avec le contenu scrollable en dessous (ex. le texte de
            stock du panneau de réservation, EventCheckoutPanel.tsx). */
         @media (max-width: 480px) {
-          .amp-root { display: none !important; }
+          .amp-root {
+            right: 10px !important;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + var(--cookie-consent-height, 0px) + 18px) !important;
+          }
+          .amp-trigger { width: 52px !important; height: 52px !important; }
+          .mp-chip { display: none !important; }
         }
         .mp-btn-card {
           position: relative;

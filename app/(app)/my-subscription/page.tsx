@@ -14,11 +14,8 @@ import MonAbonnementClient from './MonAbonnementClient'
 // et la même logique pure (lib/shared/providerSubscription.ts) que le
 // dashboard, sans dupliquer aucun calcul.
 //
-// Écart de fidélité assumé : l'historique des paiements du legacy lisait la
-// collection Firestore `subscription_payments`, qui n'a aucun équivalent
-// Mongo dans cette codebase (aucun modèle, aucune écriture webhook). Plutôt
-// que d'inventer des données, cette section affiche un état honnête
-// "indisponible" — voir MonAbonnementClient.tsx.
+// L'historique est alimenté exclusivement par les webhooks confirmés Stripe
+// et FedaPay, puis filtré par l'identité de la session côté serveur.
 export const metadata: Metadata = {
   title: 'Mon abonnement — LIVEINBLACK',
   robots: { index: false, follow: false },

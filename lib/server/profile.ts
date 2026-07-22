@@ -4,11 +4,16 @@ import mongoose from 'mongoose'
 import { getDb } from '../db/mongoose'
 import User, { NAME_COOLDOWN_DAYS } from '../models/User'
 import { uploadDataUri } from './cloudinary'
-import { issueVerificationToken, consumeVerificationToken } from '../auth/verification-tokens'
+import {
+  issueVerificationToken,
+  consumeVerificationToken,
+  invalidateVerificationTokens,
+} from '../auth/verification-tokens'
 import { emailChangeVerificationEmail } from './email-templates'
 import { sendEmail } from './email'
 import { scrubAccountPII } from './accountPurge'
 import { isValidPhone } from '../shared/applicationValidation'
+import { isPasswordPolicyCompliant } from '../shared/passwordPolicy'
 
 // Port de la section "Paramètres du compte" de ProfilePage.jsx (#6 phase
 // profil) — identité, démographie facultative, avatar, confidentialité,
@@ -317,7 +322,8 @@ export async function requestEmailChange(caller: ProfileCaller, input: { newEmai
   // app/(app)/layout.tsx) et n'a de toute façon aucune page à cette URL, ce
   // qui rendait le changement d'e-mail impossible à confirmer (régression
   // trouvée à l'audit).
-  const token = await issueVerificationToken(newEmail)
+  await invalidateVerificationTokens(caller.id, newEmail, 'change-email')
+  const token = await issueVerificationToken(caller.id, newEmail, 'change-email')
   const verifyLink = `${SITE}/confirmer-email?email=${encodeURIComponent(newEmail)}&token=${token}`
   const emailResult = await sendEmail(newEmail, emailChangeVerificationEmail(verifyLink, SITE))
   if (!emailResult.ok) {
@@ -336,8 +342,13 @@ export type CancelEmailChangeResult = ErrResult | { ok: true }
 
 export async function cancelEmailChangeRequest(caller: ProfileCaller): Promise<CancelEmailChangeResult> {
   await getDb()
-  const updated = await User.findByIdAndUpdate(caller.id, { $set: { pendingEmail: null } })
-  if (!updated) return { ok: false, status: 404, error: 'user_not_found' }
+  const user = await User.findById(caller.id)
+  if (!user) return { ok: false, status: 404, error: 'user_not_found' }
+
+  const pendingEmail = user.pendingEmail
+  user.pendingEmail = null
+  await user.save()
+  if (pendingEmail) await invalidateVerificationTokens(caller.id, pendingEmail, 'change-email')
   return { ok: true }
 }
 
@@ -354,11 +365,11 @@ export async function confirmEmailChange(input: { email: string; token: string }
   const email = input.email?.trim().toLowerCase()
   if (!email || !input.token) return { ok: false, status: 400, error: 'invalid_input' }
 
-  const valid = await consumeVerificationToken(email, input.token)
-  if (!valid) return { ok: false, status: 400, error: 'invalid_or_expired_token' }
-
   const user = await User.findOne({ pendingEmail: email })
   if (!user) return { ok: false, status: 404, error: 'no_pending_change' }
+
+  const valid = await consumeVerificationToken(String(user._id), email, 'change-email', input.token)
+  if (!valid) return { ok: false, status: 400, error: 'invalid_or_expired_token' }
 
   // Re-vérifié au moment de la confirmation (pas seulement à la demande) :
   // quelqu'un d'autre a pu prendre cette adresse entre-temps.
@@ -368,6 +379,7 @@ export async function confirmEmailChange(input: { email: string; token: string }
   user.email = email
   user.pendingEmail = null
   user.emailVerifiedAt = new Date()
+  user.sessionVersion = (user.sessionVersion || 0) + 1
   await user.save()
 
   return { ok: true, email }
@@ -380,7 +392,7 @@ export type ChangePasswordResult = ErrResult | { ok: true }
 export async function changePassword(caller: ProfileCaller, input: { currentPassword: string; newPassword: string }): Promise<ChangePasswordResult> {
   await getDb()
 
-  if (!input.newPassword || input.newPassword.length < 8) return { ok: false, status: 400, error: 'password_too_short' }
+  if (!isPasswordPolicyCompliant(input.newPassword || '')) return { ok: false, status: 400, error: 'password_too_short' }
 
   const user = await User.findById(caller.id)
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
@@ -389,6 +401,7 @@ export async function changePassword(caller: ProfileCaller, input: { currentPass
   if (!validPassword) return { ok: false, status: 403, error: 'invalid_password' }
 
   user.passwordHash = await bcrypt.hash(input.newPassword, 12)
+  user.sessionVersion = (user.sessionVersion || 0) + 1
   await user.save()
 
   return { ok: true }

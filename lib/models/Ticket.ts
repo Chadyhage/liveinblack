@@ -11,6 +11,9 @@ const preorderLineSchema = new Schema(
     name: { type: String, required: true },
     price: { type: Number, default: 0 }, // résolu serveur au moment de la commande, jamais depuis le client
     qty: { type: Number, default: 1 },
+    showOptionId: { type: String, default: null },
+    showLabel: { type: String, default: null },
+    showInfo: { type: String, default: null },
   },
   { _id: false }
 )

@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { submitOrganizerApplication } from '@/lib/server/applications'
-
-const documentEntrySchema = z.object({ name: z.string().min(1), dataUri: z.string().min(1) })
+import { checkRateLimit } from '@/lib/server/rateLimit'
+import { applicationDocumentsSchema } from '@/lib/shared/applicationDocuments'
 
 const bodySchema = z.object({
   formData: z.object({
@@ -27,13 +27,16 @@ const bodySchema = z.object({
     alcoolAtteste: z.boolean().default(false),
     description: z.string().trim().default(''),
   }),
-  documents: z.record(z.string(), z.array(documentEntrySchema)),
+  documents: applicationDocumentsSchema,
   candidateNote: z.string().trim().max(1000).optional(),
 })
 
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const limit = await checkRateLimit({ scope: 'organizer-application-submit', identifier: session.user.id, limit: 5, windowMs: 60 * 60 * 1000 })
+  if (!limit.allowed) return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } })
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })

@@ -17,6 +17,7 @@ export interface OrganizerEventView {
   region: string
   currency: 'EUR' | 'XOF'
   soldCount: number
+  totalCapacity: number
   ticketCount: number
   revenue: number
 }

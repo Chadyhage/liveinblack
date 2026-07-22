@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 
 // Port de src/pages/OnSiteOrderPage.jsx (partie interactive uniquement — les
@@ -22,6 +23,9 @@ export interface OrderItem {
   name: string
   quantity: number
   unitPriceMinor: number
+  showOptionId: string | null
+  showLabel: string | null
+  showInfo: string | null
   ticketId: string
   addedBy: string
   addedByName: string | null
@@ -40,6 +44,8 @@ export interface OrderItem {
 
 export interface MenuItemView {
   name: string
+  emoji: string
+  imageUrl: string | null
   price: number
   category: string
   description: string
@@ -325,6 +331,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                   <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                     <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
                       {item.name} <span style={{ color: 'var(--text-faint)', fontWeight: 500 }}>×{item.quantity}</span>
+                      {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
@@ -377,7 +384,8 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                             boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                           }}
                         >
-                          <div style={{ minWidth: 0 }}>
+                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 10, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 21 }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={44} height={44} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
+                          <div style={{ minWidth: 0, flex: 1 }}>
                             <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
                             {menuItem.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
                             <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: '4px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>

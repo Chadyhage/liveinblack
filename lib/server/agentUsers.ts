@@ -3,13 +3,20 @@ import User from '../models/User'
 import OrganizerProfile from '../models/OrganizerProfile'
 import ProviderProfile from '../models/ProviderProfile'
 import type { Role, AccountStatus } from './permissions'
+import {
+  issueVerificationToken,
+  invalidateAllVerificationTokens,
+  invalidateVerificationTokens,
+} from '../auth/verification-tokens'
+import { emailVerificationEmail, passwordResetEmail } from './email-templates'
+import { sendEmail } from './email'
 
 // Gestion des comptes utilisateurs côté agent (#9 phase agent/admin), port de
 // la section « Comptes » de src/pages/AgentPage.jsx (tab === 'users') et des
 // actions api/admin-accounts.js qui touchaient Firebase Auth : verify_email,
-// send_verification (non porté, voir plus bas), set_disabled, update_email
-// (non porté — seuls firstName/lastName/phone sont éditables ici, voir la
-// tâche #99). `mark_payout_paid` appartient à un autre panneau (#102).
+// send_verification, set_disabled et update_email. La réinitialisation du mot
+// de passe envoie un lien à usage unique au lieu de définir un secret connu
+// de l'agent. `mark_payout_paid` appartient à un autre panneau (#102).
 //
 // Le contrôle « l'appelant est bien un agent » se fait à la couche route
 // (requireAgent, lib/server/agentGuard.ts) — comme partout ailleurs dans ce
@@ -19,6 +26,7 @@ import type { Role, AccountStatus } from './permissions'
 // lib/server/applications.ts.
 
 const ONLINE_WINDOW_MS = 5 * 60 * 1000 // fenêtre « en ligne » du legacy (isUserOnline, AgentPage.jsx)
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 export interface AgentCaller {
   id: string
@@ -201,6 +209,7 @@ export async function forceVerifyEmail(userId: string): Promise<UserActionResult
 
   user.emailVerifiedAt = new Date()
   await user.save()
+  await invalidateVerificationTokens(String(user._id), user.email, 'verify-email')
 
   const result = await getUserForAgent(userId)
   return result.ok ? { ok: true, user: result.user } : { ok: false, status: result.status, error: result.error }
@@ -210,6 +219,87 @@ export interface UpdateUserFieldsInput {
   firstName?: string
   lastName?: string
   phone?: string
+}
+
+export async function updateUserEmail(userId: string, email: string): Promise<UserActionResult> {
+  await getDb()
+
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) return { ok: false, status: 400, error: 'invalid_email' }
+
+  const user = await User.findById(userId)
+  if (!user) return { ok: false, status: 404, error: 'user_not_found' }
+  if (user.superAdmin) return { ok: false, status: 403, error: 'protected_account' }
+  if (normalizedEmail === user.email) return { ok: false, status: 400, error: 'same_email' }
+
+  const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: user._id } }).lean()
+  if (existing) return { ok: false, status: 409, error: 'email_taken' }
+
+  // Un lien ancien ne doit jamais redevenir valable si une adresse est
+  // réutilisée. Le jeton est aussi lié à l'ID du compte, mais ce nettoyage
+  // réduit encore la surface d'attaque et les données conservées.
+  await Promise.all([
+    invalidateAllVerificationTokens(String(user._id), user.email),
+    invalidateAllVerificationTokens(String(user._id), normalizedEmail),
+  ])
+
+  user.email = normalizedEmail
+  user.pendingEmail = null
+  user.emailVerifiedAt = null
+  user.sessionVersion = (user.sessionVersion || 0) + 1
+
+  try {
+    await user.save()
+  } catch (error) {
+    if ((error as { code?: number }).code === 11000) return { ok: false, status: 409, error: 'email_taken' }
+    throw error
+  }
+
+  const result = await getUserForAgent(userId)
+  return result.ok ? { ok: true, user: result.user } : { ok: false, status: result.status, error: result.error }
+}
+
+export type UserEmailActionResult =
+  | { ok: false; status: number; error: string }
+  | { ok: true; sentTo: string }
+
+export async function sendUserVerificationEmail(userId: string): Promise<UserEmailActionResult> {
+  await getDb()
+
+  const user = await User.findById(userId).select('email emailVerifiedAt').lean()
+  if (!user) return { ok: false, status: 404, error: 'user_not_found' }
+  if (user.emailVerifiedAt) return { ok: false, status: 409, error: 'already_verified' }
+
+  const subjectId = String(user._id)
+  await invalidateVerificationTokens(subjectId, user.email, 'verify-email')
+  const token = await issueVerificationToken(subjectId, user.email, 'verify-email')
+  const verifyLink = `${SITE}/verify-email?email=${encodeURIComponent(user.email)}&token=${token}`
+  const result = await sendEmail(user.email, emailVerificationEmail(verifyLink, SITE))
+  if (!result.ok) {
+    await invalidateVerificationTokens(subjectId, user.email, 'verify-email')
+    return { ok: false, status: 503, error: 'email_delivery_failed' }
+  }
+
+  return { ok: true, sentTo: user.email }
+}
+
+export async function sendUserPasswordResetEmail(userId: string): Promise<UserEmailActionResult> {
+  await getDb()
+
+  const user = await User.findById(userId).select('email').lean()
+  if (!user) return { ok: false, status: 404, error: 'user_not_found' }
+
+  const subjectId = String(user._id)
+  await invalidateVerificationTokens(subjectId, user.email, 'reset-password')
+  const token = await issueVerificationToken(subjectId, user.email, 'reset-password', 60 * 60 * 1000)
+  const resetLink = `${SITE}/reset-password?email=${encodeURIComponent(user.email)}&token=${token}`
+  const result = await sendEmail(user.email, passwordResetEmail(resetLink, SITE))
+  if (!result.ok) {
+    await invalidateVerificationTokens(subjectId, user.email, 'reset-password')
+    return { ok: false, status: 503, error: 'email_delivery_failed' }
+  }
+
+  return { ok: true, sentTo: user.email }
 }
 
 export async function updateUserFields(userId: string, fields: UpdateUserFieldsInput): Promise<UserActionResult> {

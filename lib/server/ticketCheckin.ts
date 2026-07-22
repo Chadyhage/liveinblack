@@ -31,7 +31,7 @@ export interface CheckinTicketView {
   place: string
   totalPrice: number
   currency: string
-  preorders: { name: string; price: number; qty: number }[]
+  preorders: { name: string; price: number; qty: number; showLabel: string | null; showInfo: string | null }[]
   guestName: string | null
   // Nom du titulaire du COMPTE (jamais l'invité nommé) — permet au staff de
   // recouper visuellement avec une pièce d'identité à l'entrée même quand
@@ -166,7 +166,7 @@ export async function checkinTicket(caller: CheckinCaller, input: CheckinInput):
       place: ticket.place,
       totalPrice: ticket.totalPrice,
       currency: ticket.currency,
-      preorders: ticket.preorders.map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1 })),
+      preorders: ticket.preorders.map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1, showLabel: p.showLabel ?? null, showInfo: p.showInfo ?? null })),
       guestName: ticket.guestName ?? null,
       holderName,
     },

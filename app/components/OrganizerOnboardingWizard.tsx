@@ -4,7 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { regions } from '@/lib/shared/regions'
+import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { validateOrganizerStep0, validateOrganizerStep1, type OrganizerFormData } from '@/lib/shared/applicationValidation'
+import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
+import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
 
 // Port de src/pages/OnboardingOrganisateur.jsx (#7 phase organisateur) — 4
 // étapes (Établissement/Activité/Revenus/Documents), utilisé À LA FOIS par
@@ -71,19 +74,7 @@ function IconEye({ open, size = 15 }: { open: boolean; size?: number }) {
   )
 }
 
-function fileToDataUri(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-interface DocState {
-  name: string
-  dataUri: string
-}
+type DocState = ApplicationDocumentUploadReference
 
 export default function OrganizerOnboardingWizard({
   mode,
@@ -106,6 +97,7 @@ export default function OrganizerOnboardingWizard({
   const [error, setError] = useState<string | null>(null)
   const [emailTaken, setEmailTaken] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [uploadingDocs, setUploadingDocs] = useState(false)
   const [submitted, setSubmitted] = useState<{ emailPro: string } | null>(null)
   const [autosaveState, setAutosaveState] = useState<'idle' | 'saved' | 'error'>('idle')
 
@@ -115,11 +107,17 @@ export default function OrganizerOnboardingWizard({
 
   async function handleFileChange(key: string, fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return
-    const entries: DocState[] = []
-    for (const file of Array.from(fileList)) {
-      entries.push({ name: file.name, dataUri: await fileToDataUri(file) })
+    setError(null)
+    setUploadingDocs(true)
+    try {
+      const entries: DocState[] = []
+      for (const file of Array.from(fileList)) entries.push(await uploadApplicationDocument(file))
+      setDocuments((current) => ({ ...current, [key]: [...(current[key] || []), ...entries] }))
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Impossible d’envoyer le document.')
+    } finally {
+      setUploadingDocs(false)
     }
-    setDocuments((d) => ({ ...d, [key]: [...(d[key] || []), ...entries] }))
   }
   function removeDoc(key: string, index: number) {
     setDocuments((d) => ({ ...d, [key]: (d[key] || []).filter((_, i) => i !== index) }))
@@ -133,7 +131,8 @@ export default function OrganizerOnboardingWizard({
       if (!result.ok) return setError(result.error)
       if (mode === 'anonymous') {
         if (!regEmail.trim() || !regEmail.includes('@')) return setError('Adresse e-mail invalide.')
-        if (regPassword.length < 8) return setError('Le mot de passe doit faire au moins 8 caractères.')
+        const passwordErrors = getPasswordPolicyErrors(regPassword)
+        if (passwordErrors.length > 0) return setError(passwordErrors[0])
         if (regPassword !== regPasswordConfirm) return setError('Les mots de passe ne correspondent pas.')
       }
     }
@@ -495,8 +494,8 @@ export default function OrganizerOnboardingWizard({
                 Continuer
               </button>
             ) : (
-              <button onClick={handleSubmit} disabled={busy} style={{ ...primaryBtn(busy), flex: 1 }}>
-                {busy ? 'Envoi…' : mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
+              <button onClick={handleSubmit} disabled={busy || uploadingDocs} style={{ ...primaryBtn(busy || uploadingDocs), flex: 1 }}>
+                {uploadingDocs ? 'Envoi des documents…' : busy ? 'Envoi…' : mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
               </button>
             )}
           </div>
@@ -508,8 +507,8 @@ export default function OrganizerOnboardingWizard({
             : autosaveState === 'error'
               ? 'Échec de la dernière sauvegarde automatique — vérifie ta connexion.'
               : autosaveState === 'saved'
-                ? 'Brouillon sauvegardé automatiquement.'
-                : 'Sauvegarde automatique activée'}
+                ? 'Brouillon sauvegardé.'
+                : 'Le brouillon sera sauvegardé quand tu cliqueras sur Continuer.'}
         </p>
       </div>
     </main>
@@ -546,14 +545,9 @@ function DocUpload({
           {files.map((f, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                {f.dataUri.startsWith('data:image') ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={f.dataUri} alt={`Aperçu de ${f.name}`} style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
-                ) : (
-                  <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 10, color: 'var(--text-faint)' }}>
-                    PDF
-                  </span>
-                )}
+                <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 9, color: 'var(--text-faint)', textTransform: 'uppercase' }}>
+                  {f.format}
+                </span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
               </span>
               <button onClick={() => onRemove(docKey, i)} style={{ background: 'transparent', border: 'none', color: '#e05aaa', cursor: 'pointer', fontSize: 12, flexShrink: 0 }}>

@@ -9,10 +9,8 @@ import { getPlaylist } from '@/lib/server/playlist'
 import PlaylistClient from './PlaylistClient'
 
 // Port de src/components/PlaylistSystem.jsx + PlaylistDJPanel.jsx (#47).
-// Contrairement à la page détail événement publique
-// (app/(public)/evenements/[id]/page.tsx, qui déclare explicitement la
-// playlist hors périmètre), cette page est authentifiée et vit sous (app) —
-// même architecture que /commander/[eventId]/[ticketCode] et /scanner/[eventId]
+// Cette page, reliée depuis le détail public de l'événement, est authentifiée
+// et vit sous (app) — même architecture que /order/[eventId]/[ticketCode] et /scanner/[eventId]
 // (Server Component pour le gate + chargement initial privilégié, composant
 // client pour toute l'interactivité/polling). Accessible à TOUT utilisateur
 // connecté : lib/server/playlist.ts (getPlaylist) n'exige aucune participation

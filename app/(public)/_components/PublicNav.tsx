@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const NAV_LINKS = [
+  { href: '/home', label: 'Accueil' },
   { href: '/events', label: 'Événements' },
   { href: '/providers', label: 'Prestataires' },
   { href: '/organizers', label: 'Organisateurs' },
   { href: '/about', label: "C'est quoi" },
+  { href: '/events#access-code', label: "J'ai un code" },
   { href: '/search', label: 'Recherche' },
 ]
 
@@ -88,6 +90,21 @@ export default function PublicNav() {
               }}
             >
               Connexion
+            </Link>
+            <Link
+              href="/login?mode=register"
+              className="lb-navlink"
+              style={{
+                padding: '9px 18px',
+                borderRadius: 999,
+                border: '1px solid var(--border-strong)',
+                color: 'var(--text)',
+                fontSize: 13,
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Créer un compte
             </Link>
             <Link
               href="/login"
@@ -181,9 +198,9 @@ export default function PublicNav() {
       <style>{`
         .lb-navlink { display: none }
         .lb-navlink-mobile { display: inline-flex }
-        @media (min-width: 720px) {
+        @media (min-width: 1100px) {
           .lb-navlink { display: inline-block }
-          .lb-navlink-mobile { display: none }
+          .lb-navlink-mobile { display: none !important }
         }
       `}</style>
     </header>

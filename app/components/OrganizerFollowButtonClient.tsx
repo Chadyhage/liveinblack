@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 
 // Port de src/components/OrganizerFollowButton.jsx — utilisé sur la page
@@ -38,6 +38,23 @@ export default function OrganizerFollowButtonClient({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setMenuOpen(false)
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [menuOpen])
 
   function goToLogin() {
     router.push(`/login?next=${encodeURIComponent(pathname)}`)
@@ -106,14 +123,23 @@ export default function OrganizerFollowButtonClient({
       : { ...base, background: 'var(--teal-solid)', color: '#04120e' }
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      <button onClick={handleClick} disabled={busy} style={style} aria-label={following ? `Se désabonner de ${organizerName}` : `Suivre ${organizerName}`}>
+    <div ref={rootRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={busy}
+        style={style}
+        aria-label={following ? `Gérer l’abonnement à ${organizerName}` : `Suivre ${organizerName}`}
+        aria-expanded={following ? menuOpen : undefined}
+        aria-haspopup={following ? 'menu' : undefined}
+      >
         {following && <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#6feedd', marginRight: 7 }} />}
         {following ? 'Abonné(e)' : "S'abonner"}
       </button>
 
       {menuOpen && following && (
         <div
+          role="menu"
           style={{
             position: 'absolute',
             bottom: '100%',
@@ -128,6 +154,8 @@ export default function OrganizerFollowButtonClient({
           }}
         >
           <button
+            type="button"
+            role="menuitem"
             onClick={unfollow}
             style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', border: 'none', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
           >

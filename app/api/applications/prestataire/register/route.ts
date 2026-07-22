@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { registerAndSubmitPrestataireApplication } from '@/lib/server/applications'
-
-const documentEntrySchema = z.object({ name: z.string().min(1), dataUri: z.string().min(1) })
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
+import { isPasswordPolicyCompliant } from '@/lib/shared/passwordPolicy'
+import { applicationDocumentsSchema } from '@/lib/shared/applicationDocuments'
 
 // Mode ANONYME (route /inscription-prestataire, sans session) — crée le
 // compte ET soumet la candidature en un seul appel, même convention que
@@ -10,7 +11,7 @@ const documentEntrySchema = z.object({ name: z.string().min(1), dataUri: z.strin
 // ensuite via signIn('credentials', ...) avec l'email/mot de passe fournis.
 const bodySchema = z.object({
   email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).max(128).refine(isPasswordPolicyCompliant),
   formData: z.object({
     prestataireType: z.string().trim().default(''),
     prestataireTypes: z.array(z.string()).default([]),
@@ -52,13 +53,33 @@ const bodySchema = z.object({
     tarifType: z.string().trim().default(''),
     tarifDevis: z.boolean().default(false),
   }),
-  documents: z.record(z.string(), z.array(documentEntrySchema)),
+  documents: applicationDocumentsSchema,
   candidateNote: z.string().trim().max(1000).optional(),
 })
 
 export async function POST(req: Request) {
+  const ipLimit = await checkRateLimit({
+    scope: 'provider-application-register-ip',
+    identifier: getRequestIp(req),
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  })
+  if (!ipLimit.allowed) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(ipLimit.retryAfterSeconds) } })
+  }
+
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
+
+  const emailLimit = await checkRateLimit({
+    scope: 'provider-application-register-email',
+    identifier: parsed.data.email,
+    limit: 3,
+    windowMs: 24 * 60 * 60 * 1000,
+  })
+  if (!emailLimit.allowed) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(emailLimit.retryAfterSeconds) } })
+  }
 
   const result = await registerAndSubmitPrestataireApplication(parsed.data)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })

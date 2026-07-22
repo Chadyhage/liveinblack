@@ -18,7 +18,7 @@ export default cloudinary
 // qualité 0.78) ou une note vocale de quelques minutes ; au-delà, on refuse
 // plutôt que de laisser un appelant pousser un fichier arbitrairement gros à
 // travers une route JSON.
-const MAX_DATA_URI_LENGTH = 8_500_000
+const MAX_DATA_URI_LENGTH = 13_500_000
 const DEFAULT_MAX_BYTES = 6_000_000
 
 export const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const
@@ -26,11 +26,12 @@ export const VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'] a
 export const AUDIO_MIME_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/webm', 'audio/ogg', 'audio/wav'] as const
 export const DOCUMENT_MIME_TYPES = ['application/pdf', ...IMAGE_MIME_TYPES] as const
 
-type CloudinaryResourceType = 'image' | 'video' | 'raw'
+export type CloudinaryResourceType = 'image' | 'video' | 'raw'
 
 export interface UploadPolicy {
   allowedMimeTypes?: readonly string[]
   maxBytes?: number
+  deliveryType?: 'upload' | 'authenticated'
 }
 
 export type ValidatedDataUri = {
@@ -59,7 +60,18 @@ export function validateDataUri(dataUri: string, policy: UploadPolicy = {}): Val
   return { mimeType, bytes, resourceType }
 }
 
-export type UploadDataUriResult = { ok: true; url: string } | { ok: false; error: 'invalid_data_uri' | 'file_too_large' | 'upload_failed' }
+export type UploadDataUriResult =
+  | {
+      ok: true
+      url: string
+      publicId: string
+      format: string
+      resourceType: CloudinaryResourceType
+      deliveryType: 'upload' | 'authenticated'
+      version: number
+      bytes: number
+    }
+  | { ok: false; error: 'invalid_data_uri' | 'file_too_large' | 'upload_failed' }
 
 export async function uploadDataUri(dataUri: string, folder: string, policy: UploadPolicy = {}): Promise<UploadDataUriResult> {
   if (dataUri.length > MAX_DATA_URI_LENGTH) return { ok: false, error: 'file_too_large' }
@@ -67,8 +79,25 @@ export async function uploadDataUri(dataUri: string, folder: string, policy: Upl
   if (!validated) return { ok: false, error: 'invalid_data_uri' }
 
   try {
-    const res = await cloudinary.uploader.upload(dataUri, { folder, resource_type: validated.resourceType })
-    return { ok: true, url: res.secure_url }
+    const deliveryType = policy.deliveryType ?? 'upload'
+    const res = await cloudinary.uploader.upload(dataUri, {
+      folder,
+      resource_type: validated.resourceType,
+      type: deliveryType,
+    })
+    const fallbackFormat = validated.mimeType === 'image/jpeg' ? 'jpg' : validated.mimeType.split('/')[1]
+    return {
+      ok: true,
+      url: res.secure_url,
+      publicId: res.public_id,
+      format: res.format || fallbackFormat,
+      resourceType: res.resource_type === 'image' || res.resource_type === 'video' || res.resource_type === 'raw'
+        ? res.resource_type
+        : validated.resourceType,
+      deliveryType,
+      version: res.version,
+      bytes: res.bytes || validated.bytes,
+    }
   } catch {
     return { ok: false, error: 'upload_failed' }
   }

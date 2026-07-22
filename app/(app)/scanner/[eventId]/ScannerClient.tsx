@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import CameraScanner from './CameraScanner'
 
@@ -21,6 +22,9 @@ export interface OrderItem {
   name: string
   quantity: number
   unitPriceMinor: number
+  showOptionId: string | null
+  showLabel: string | null
+  showInfo: string | null
   ticketId: string
   addedBy: string
   addedByName: string | null
@@ -39,6 +43,8 @@ export interface OrderItem {
 
 export interface MenuItemView {
   name: string
+  emoji: string
+  imageUrl: string | null
   price: number
   category: string
   description: string
@@ -60,7 +66,7 @@ interface CheckinTicketView {
   place: string
   totalPrice: number
   currency: string
-  preorders: { name: string; price: number; qty: number }[]
+  preorders: { name: string; price: number; qty: number; showLabel: string | null; showInfo: string | null }[]
   guestName: string | null
   holderName: string | null
 }
@@ -835,9 +841,10 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Invité : {checkinResult.ticket.guestName}</p>
                 )}
                 {checkinResult.ticket.preorders.length > 0 && (
-                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>
-                    Précommandes : {checkinResult.ticket.preorders.map((p) => `${p.name} ×${p.qty}`).join(', ')}
-                  </p>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 6px' }}>
+                    <p style={{ margin: '0 0 3px' }}>Précommandes :</p>
+                    {checkinResult.ticket.preorders.map((p, index) => <p key={`${p.name}-${index}`} style={{ margin: '2px 0' }}>{p.name} ×{p.qty}{p.showLabel ? <span style={{ color: 'var(--teal)' }}> · Show : {p.showLabel}{p.showInfo ? ` (${p.showInfo})` : ''}</span> : null}</p>)}
+                  </div>
                 )}
                 <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>
                   {checkinResult.pointAwarded ? 'Point de fidélité crédité au titulaire.' : 'Pas de point de fidélité pour ce scan.'}
@@ -871,6 +878,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                           <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
                             {item.name} <span style={{ color: 'var(--text-faint)', fontWeight: 500 }}>×{item.quantity}</span>
+                            {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
                           </p>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
@@ -980,7 +988,8 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                 gap: 12,
                               }}
                             >
-                              <div style={{ minWidth: 0 }}>
+                              {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 42, height: 42, flexShrink: 0, borderRadius: 9, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 20 }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={42} height={42} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
+                              <div style={{ minWidth: 0, flex: 1 }}>
                                 <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
                                 {menuItem.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
                                 <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: '4px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>

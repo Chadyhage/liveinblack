@@ -7,6 +7,7 @@ import TicketWalletPanel, { type TicketWalletGroupView } from './TicketWallet'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
+import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -50,7 +51,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_email: 'Adresse e-mail invalide',
   same_email: "C'est déjà ton adresse e-mail actuelle",
   email_taken: 'Cette adresse e-mail est déjà utilisée',
-  password_too_short: 'Le nouveau mot de passe doit faire au moins 8 caractères',
+  password_too_short: 'Utilise au moins 8 caractères, une majuscule et un chiffre',
   user_not_found: 'Compte introuvable',
   invalid_data_uri: 'Image invalide',
   file_too_large: 'Image trop volumineuse',
@@ -994,7 +995,8 @@ function PasswordCard({ email }: { email: string }) {
   async function submit() {
     setMsg(null)
     if (!currentPassword) return setMsg({ text: 'Saisis ton mot de passe actuel', kind: 'err' })
-    if (newPassword.length < 8) return setMsg({ text: 'Le nouveau mot de passe doit faire au moins 8 caractères', kind: 'err' })
+    const policyErrors = getPasswordPolicyErrors(newPassword)
+    if (policyErrors.length > 0) return setMsg({ text: policyErrors[0], kind: 'err' })
     if (newPassword !== confirmPassword) return setMsg({ text: 'Les mots de passe ne correspondent pas', kind: 'err' })
     if (newPassword === currentPassword) return setMsg({ text: "Le nouveau mot de passe doit être différent de l'actuel", kind: 'err' })
 
@@ -1035,7 +1037,7 @@ function PasswordCard({ email }: { email: string }) {
     <div style={cardStyle}>
       <EyebrowLabel>Sécurité — Mot de passe</EyebrowLabel>
       <PasswordField value={currentPassword} onChange={setCurrentPassword} placeholder="Mot de passe actuel" style={{ marginBottom: 10 }} />
-      <PasswordField value={newPassword} onChange={setNewPassword} placeholder="Minimum 8 caractères" style={{ marginBottom: strength ? 6 : 10 }} />
+      <PasswordField value={newPassword} onChange={setNewPassword} placeholder="8 caractères, 1 majuscule, 1 chiffre" style={{ marginBottom: strength ? 6 : 10 }} />
       {strength && (
         <div style={{ marginBottom: 10 }}>
           <div style={{ height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: 4 }}>

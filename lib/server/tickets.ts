@@ -16,7 +16,7 @@ export interface TicketDisplay {
   placePrice: number
   totalPrice: number
   currency: string
-  preorders: { name: string; price: number; qty: number }[]
+  preorders: { name: string; price: number; qty: number; showOptionId: string | null; showLabel: string | null; showInfo: string | null }[]
   guestName: string | null
   bookedAt: string | null
 }
@@ -49,7 +49,7 @@ export async function getTicketDisplay(token: string): Promise<TicketDisplay | n
     placePrice: ticket.placePrice,
     totalPrice: ticket.totalPrice,
     currency: ticket.currency,
-    preorders: ticket.preorders.map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1 })),
+    preorders: ticket.preorders.map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1, showOptionId: p.showOptionId ?? null, showLabel: p.showLabel ?? null, showInfo: p.showInfo ?? null })),
     guestName: ticket.guestName ?? null,
     bookedAt: ticket.bookedAt ? new Date(ticket.bookedAt).toISOString() : null,
   }
@@ -73,7 +73,7 @@ export interface TicketWalletItemView {
   placePrice: number
   totalPrice: number
   currency: string
-  preorders: { name: string; price: number; qty: number }[]
+  preorders: { name: string; price: number; qty: number; showOptionId: string | null; showLabel: string | null; showInfo: string | null }[]
   guestName: string | null
   bookedAt: string | null
   checkedInAt: string | null
@@ -125,7 +125,7 @@ function toWalletItemView(
     placePrice?: number | null
     totalPrice?: number | null
     currency?: string | null
-    preorders?: { name: string; price?: number | null; qty?: number | null }[]
+    preorders?: { name: string; price?: number | null; qty?: number | null; showOptionId?: string | null; showLabel?: string | null; showInfo?: string | null }[]
     guestName?: string | null
     bookedAt?: Date | string | null
     checkedInAt?: Date | string | null
@@ -149,7 +149,7 @@ function toWalletItemView(
     placePrice: ticket.placePrice ?? 0,
     totalPrice: ticket.totalPrice ?? 0,
     currency: ticket.currency ?? 'EUR',
-    preorders: (ticket.preorders ?? []).map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1 })),
+    preorders: (ticket.preorders ?? []).map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1, showOptionId: p.showOptionId ?? null, showLabel: p.showLabel ?? null, showInfo: p.showInfo ?? null })),
     guestName: ticket.guestName ?? null,
     bookedAt: ticket.bookedAt ? new Date(ticket.bookedAt).toISOString() : null,
     checkedInAt: ticket.checkedInAt ? new Date(ticket.checkedInAt).toISOString() : null,

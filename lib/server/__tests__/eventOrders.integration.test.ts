@@ -150,6 +150,32 @@ describeIntegration('eventOrders (intégration, transaction réelle)', () => {
     expect(updated.item.quantity).toBe(5)
   })
 
+  it('fusionne les ajouts répétés du même article dans une seule ligne éditable', async () => {
+    const owner = await seedUser()
+    const event = await seedEvent(owner.id)
+    const holder = await seedUser()
+    const ticket = await seedTicket(event.id, holder.id)
+
+    const first = await addOrderItem(
+      { id: holder.id },
+      { eventId: event.id, ticketId: ticket.ticketCode, menuItemId: 'Coca', quantity: 1 }
+    )
+    const second = await addOrderItem(
+      { id: holder.id },
+      { eventId: event.id, ticketId: ticket.ticketCode, menuItemId: 'Coca', quantity: 2 }
+    )
+
+    expect(first.ok).toBe(true)
+    expect(second.ok).toBe(true)
+    if (!first.ok || !second.ok) return
+    expect(second.item.id).toBe(first.item.id)
+    expect(second.item.quantity).toBe(3)
+
+    const order = await EventOrder.findOne({ eventId: event.id }).lean()
+    expect(order?.items).toHaveLength(1)
+    expect(order?.items[0].quantity).toBe(3)
+  })
+
   it("ferme la lacune legacy : rang 0 refusé (403 not_your_ticket) pour créer une ligne sur le billet d'un tiers", async () => {
     const owner = await seedUser()
     const event = await seedEvent(owner.id)

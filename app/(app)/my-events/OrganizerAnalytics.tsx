@@ -3,14 +3,12 @@
 import { useMemo, useState } from 'react'
 import { formatMoney, type OrganizerEventView } from './types'
 
-// Port simplifié de OrganizerAnalytics (MesEvenementsPage.jsx lignes
+// Port de OrganizerAnalytics (MesEvenementsPage.jsx lignes
 // 3544-3725) — calculé ici depuis la liste d'événements déjà chargée par le
 // tableau de bord (ticketCount/revenue par événement, cf.
 // lib/server/organizerEvents.ts:listMyOrganizerEvents), sans appel réseau
-// supplémentaire. Le détail "par événement" du legacy incluait une barre de
-// taux de remplissage (nécessite la capacité totale des places, absente de
-// cette vue liste) — délibérément omis ici ; la page /statistiques (#80)
-// reste la source de vérité pour ce niveau de détail par événement.
+// supplémentaire. La capacité et le stock consommé sont inclus dans la vue
+// liste afin de restituer le taux de remplissage sans requête par événement.
 export default function OrganizerAnalytics({ events }: { events: OrganizerEventView[] }) {
   const [showFees, setShowFees] = useState(false)
 
@@ -26,7 +24,7 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
   }, [events])
 
   const totalTickets = events.reduce((sum, e) => sum + e.ticketCount, 0)
-  const topEvents = [...events].filter((e) => e.revenue > 0).sort((a, b) => b.revenue - a.revenue)
+  const topEvents = [...events].filter((e) => e.totalCapacity > 0).sort((a, b) => b.soldCount / b.totalCapacity - a.soldCount / a.totalCapacity)
 
   if (totalTickets === 0) {
     return (
@@ -93,16 +91,14 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
         <p style={{ font: '600 26px Inter, sans-serif', color: '#fff', margin: 0 }}>{totalTickets}</p>
       </div>
 
-      {topEvents.length > 1 && (
+      {topEvents.length > 0 && (
         <div style={{ gridColumn: '1 / -1', border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: '16px 18px' }}>
           <p style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Par événement</p>
           <div style={{ display: 'grid', gap: 8 }}>
-            {topEvents.map((e) => (
-              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12.5 }}>
-                <span style={{ color: '#fff' }}>{e.name}</span>
-                <span style={{ color: 'var(--gold)', fontWeight: 600 }}>{formatMoney(e.revenue, e.currency)}</span>
-              </div>
-            ))}
+            {topEvents.map((e) => {
+              const fill = Math.min(100, Math.round((e.soldCount / e.totalCapacity) * 100))
+              return <div key={e.id} style={{ display: 'grid', gap: 5 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12.5 }}><span style={{ color: '#fff' }}>{e.name}</span><span style={{ color: 'var(--gold)', fontWeight: 600 }}>{e.soldCount}/{e.totalCapacity} · {fill}% · {formatMoney(e.revenue, e.currency)}</span></div><div aria-label={`Remplissage ${fill} %`} style={{ height: 5, borderRadius: 999, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}><div style={{ width: `${fill}%`, height: '100%', borderRadius: 999, background: fill >= 90 ? 'var(--teal)' : 'var(--gold)' }} /></div></div>
+            })}
           </div>
         </div>
       )}

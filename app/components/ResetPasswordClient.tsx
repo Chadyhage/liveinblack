@@ -2,6 +2,7 @@
 
 import { forwardRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 
 // Cible du resetLink construit par app/api/auth/request-password-reset/route.ts
 // (?email=&token=), consommé par POST /api/auth/reset-password. Mise en page
@@ -33,18 +34,6 @@ const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
   padding: '14px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14.5, fontWeight: 700,
   border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
 })
-
-// Même règle que validatePassword() de AuthForm.tsx (app/(public)/login/AuthForm.tsx)
-// — dupliquée ici (fonction pure de 5 lignes, pas d'import cross-route-group)
-// pour que réinitialiser un mot de passe applique exactement la même politique
-// qu'à l'inscription (8 caractères + majuscule + chiffre).
-function validatePassword(pwd: string): string[] {
-  const errors: string[] = []
-  if (!pwd || pwd.length < 8) errors.push('Au moins 8 caractères')
-  if (!/[A-Z]/.test(pwd)) errors.push('Au moins une majuscule')
-  if (!/[0-9]/.test(pwd)) errors.push('Au moins un chiffre')
-  return errors
-}
 
 function checkPasswordStrength(pwd: string) {
   if (!pwd || pwd.length < 8) return { score: 0, label: 'Trop court', color: 'var(--pink)' }
@@ -100,7 +89,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    const pwdErrs = validatePassword(password)
+    const pwdErrs = getPasswordPolicyErrors(password)
     if (pwdErrs.length > 0) {
       setError(pwdErrs[0])
       return

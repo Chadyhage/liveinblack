@@ -7,14 +7,11 @@ import { regions } from '@/lib/shared/regions'
 import { normalizeRegionIds, getRegionName } from '@/lib/shared/locations'
 import { MOMO_REGIONS } from '@/lib/shared/payoutMomoValidation'
 import { fmtMoney } from '@/lib/shared/money'
+import ImageCropperModal from '@/app/components/ImageCropperModal'
 
 // Port de OrganizerPublicStudio.jsx + PayoutPanel.jsx + MomoPayoutManager.jsx
-// (#7 phase organisateur, tâche #81). Contrairement au legacy (cropper
-// react-easy-crop pour avatar/bannière), les images sont redimensionnées
-// côté client via canvas (cap 1280px, JPEG q=0.85) SANS interface de
-// recadrage interactif — simplification délibérée déjà appliquée ailleurs
-// dans ce port (studio organisateur, wizard événement), pas d'ajout de
-// dépendance pour ce seul écran.
+// (#7 phase organisateur, tâche #81). Avatar et bannière passent par le
+// recadrage partagé avant l'upload ; la galerie conserve son format libre.
 
 export interface OrganizerProfileView {
   publicName: string
@@ -102,6 +99,7 @@ export default function StudioClient({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [events, setEvents] = useState<{ id: string; name: string }[]>([])
   const [linkCopied, setLinkCopied] = useState(false)
+  const [crop, setCrop] = useState<{ kind: 'avatar' | 'banner'; src: string } | null>(null)
 
   useEffect(() => {
     fetch('/api/organizer-events')
@@ -170,11 +168,10 @@ export default function StudioClient({
     setSaving(false)
   }
 
-  async function upload(kind: 'avatar' | 'banner' | 'gallery', file: File) {
+  async function uploadData(kind: 'avatar' | 'banner' | 'gallery', dataUri: string) {
     setUploading(kind)
     setMessage(null)
     try {
-      const dataUri = kind === 'gallery' && file.type.startsWith('video') ? await readAsDataUri(file) : await resizeImageToDataUri(file)
       const res = await fetch('/api/organizers/me/media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -188,6 +185,17 @@ export default function StudioClient({
       setMessage({ type: 'error', text: 'Envoi impossible — réessaie.' })
     }
     setUploading('')
+  }
+
+  async function upload(kind: 'gallery', file: File) {
+    const dataUri = file.type.startsWith('video') ? await readAsDataUri(file) : await resizeImageToDataUri(file)
+    await uploadData(kind, dataUri)
+  }
+
+  async function prepareCrop(kind: 'avatar' | 'banner', file: File) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return setMessage({ type: 'error', text: 'Utilise une image JPG, PNG ou WEBP.' })
+    if (file.size > 5 * 1024 * 1024) return setMessage({ type: 'error', text: "L'image doit faire moins de 5 Mo." })
+    setCrop({ kind, src: await readAsDataUri(file) })
   }
 
   async function updateMedia(id: string, patch: { title?: string; eventId?: string | null; visibility?: 'public' | 'hidden' }) {
@@ -315,7 +323,7 @@ export default function StudioClient({
                   onChange={(e) => {
                     const file = e.target.files?.[0]
                     e.target.value = ''
-                    if (file) void upload('avatar', file)
+                    if (file) void prepareCrop('avatar', file)
                   }}
                   style={{ display: 'none' }}
                 />
@@ -338,7 +346,7 @@ export default function StudioClient({
                   onChange={(e) => {
                     const file = e.target.files?.[0]
                     e.target.value = ''
-                    if (file) void upload('banner', file)
+                    if (file) void prepareCrop('banner', file)
                   }}
                   style={{ display: 'none' }}
                 />
@@ -561,6 +569,18 @@ export default function StudioClient({
 
       <PayoutSection initialStatus={initialPayoutStatus} initialMomos={initialMomos} />
       </main>
+      {crop && (
+        <ImageCropperModal
+          key={`${crop.kind}-${crop.src.slice(-24)}`}
+          src={crop.src}
+          title={crop.kind === 'avatar' ? 'Recadrer le logo' : 'Recadrer la bannière'}
+          aspect={crop.kind === 'avatar' ? 1 : 16 / 7}
+          outputWidth={crop.kind === 'avatar' ? 640 : 1280}
+          circular={crop.kind === 'avatar'}
+          onCancel={() => setCrop(null)}
+          onConfirm={async (dataUri) => { await uploadData(crop.kind, dataUri); setCrop(null) }}
+        />
+      )}
     </>
   )
 }

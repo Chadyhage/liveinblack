@@ -165,7 +165,7 @@ describeIntegration('applications (intégration, vraie base + Cloudinary) — do
       if (!result.ok) return
       expect(result.application.status).toBe('submitted')
       expect(result.application.documents.identity).toHaveLength(1)
-      expect(result.application.documents.identity[0].url).toMatch(/^https?:\/\//)
+      expect(result.application.documents.identity[0].url).toMatch(/^\/api\/applications\//)
 
       const fresh = await User.findById(alice.id).lean()
       expect(fresh?.roles).toContain('organisateur')

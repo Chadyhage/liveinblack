@@ -207,7 +207,7 @@ describeIntegration('profile (intégration, vraie base) — paramètres du compt
       const alice = await seedUser()
       const newEmail = 'confirmee@test.com'
       await requestEmailChange({ id: alice.id }, { newEmail, currentPassword: 'correct-password' })
-      const token = await issueVerificationToken(newEmail)
+      const token = await issueVerificationToken(alice.id, newEmail, 'change-email')
 
       const result = await confirmEmailChange({ email: newEmail, token })
       expect(result.ok).toBe(true)

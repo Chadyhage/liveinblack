@@ -56,7 +56,7 @@ export default async function ScannerIndexPage() {
   }
 
   const ownEvents = await Event.find({ $or: [{ organizerId: callerId }, { createdBy: callerId }] })
-    .sort({ date: -1 })
+    .sort({ date: 1 })
     .limit(LIST_CAP)
     .select('name date dateDisplay')
     .lean()
@@ -78,8 +78,6 @@ export default async function ScannerIndexPage() {
     collect(extraEvents)
   }
 
-  // Outil utilisé le soir même pour trouver "l'événement de ce soir" : tri
-  // croissant (le plus proche en premier), pas décroissant.
   // Outil utilisé le soir même pour trouver "l'événement de ce soir" : tri
   // croissant (le plus proche en premier), pas décroissant.
   const events = Array.from(eventsById.values()).sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0))

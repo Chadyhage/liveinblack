@@ -12,7 +12,7 @@ interface BookingTicket {
   placePrice: number
   totalPrice: number
   buyerName: string | null
-  preorders: { name: string; price: number; qty: number }[]
+  preorders: { name: string; price: number; qty: number; showLabel: string | null; showInfo: string | null }[]
 }
 
 interface BookingsResponse {
@@ -136,6 +136,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
                         {t.preorders.map((p, i) => (
                           <li key={i}>
                             {p.qty}× {p.name} — {formatMoney(p.price * p.qty, event.currency)}
+                            {p.showLabel && <span style={{ display: 'block', color: 'var(--teal)' }}>Show : {p.showLabel}{p.showInfo ? ` · ${p.showInfo}` : ''}</span>}
                           </li>
                         ))}
                       </ul>

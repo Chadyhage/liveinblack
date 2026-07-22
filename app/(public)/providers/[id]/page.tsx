@@ -10,6 +10,7 @@ import { auth } from '@/auth'
 import ProviderReviewsClient from '@/app/components/ProviderReviewsClient'
 import ProviderCatalogInquiry from '@/app/components/ProviderCatalogInquiry'
 import { socialUrl } from '@/lib/shared/social'
+import PublicProfileActions from '@/app/components/PublicProfileActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,6 +77,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
         </div>
         <h1 style={{ fontSize: 24, fontWeight: 800, margin: '12px 0 0' }}>{provider.name}</h1>
         {provider.headline && <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 0' }}>{provider.headline}</p>}
+        <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
           {categories.map((c) => (
@@ -117,7 +119,11 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
               {provider.website}
             </a>
           )}
-          {provider.phone && <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>{provider.phone}</p>}
+          {provider.phone && (
+            <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ display: 'inline-block', fontSize: 13, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+              {provider.phone}
+            </a>
+          )}
         </Section>
 
         {visibleCatalog.length > 0 && (
@@ -132,8 +138,12 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
                   <div key={item.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
                     {item.media?.[0]?.url && (
                       <div style={{ aspectRatio: '4/3', position: 'relative' }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.media[0].url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {item.media[0].type === 'video' ? (
+                          <video src={item.media[0].url} controls preload="metadata" playsInline aria-label={`Vidéo de ${item.name}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.media[0].url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        )}
                       </div>
                     )}
                     <div style={{ padding: '12px 14px' }}>

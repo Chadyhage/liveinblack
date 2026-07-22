@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getDb } from '@/lib/db/mongoose'
 import User from '@/lib/models/User'
-import { issueVerificationToken } from '@/lib/auth/verification-tokens'
+import { issueVerificationToken, invalidateVerificationTokens } from '@/lib/auth/verification-tokens'
 import { passwordResetEmail } from '@/lib/server/email-templates'
 import { sendEmail } from '@/lib/server/email'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
@@ -37,7 +37,9 @@ export async function POST(req: Request) {
   await getDb()
   const user = await User.findOne({ email }).lean()
   if (user) {
-    const token = await issueVerificationToken(email, 60 * 60 * 1000) // 1h, plus court qu'une vérification email
+    const userId = String(user._id)
+    await invalidateVerificationTokens(userId, email, 'reset-password')
+    const token = await issueVerificationToken(userId, email, 'reset-password', 60 * 60 * 1000)
     const resetLink = `${SITE}/reset-password?email=${encodeURIComponent(email)}&token=${token}`
     const result = await sendEmail(email, passwordResetEmail(resetLink, SITE))
     if (!result.ok) console.error('[request-password-reset] email failed for', email, result.error)

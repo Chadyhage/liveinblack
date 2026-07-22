@@ -145,6 +145,28 @@ describeIntegration('createOrder (intégration, transaction réelle)', () => {
     expect(preorders).toEqual([{ name: 'Champagne', price: 5000, qty: 2 }]) // 50€ → 5000 centimes
   })
 
+  it('agrège les précommandes par billet tout en conservant leur répartition', async () => {
+    const event = await seedEvent()
+    const result = await createOrder({
+      userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 2, isTable: false, rail: 'stripe',
+      ticketPreorders: [
+        { ticketIndex: 0, items: [{ name: 'Champagne', qty: 1 }] },
+        { ticketIndex: 1, items: [{ name: 'Champagne', qty: 2 }] },
+      ],
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.order.preorders[0].qty).toBe(3)
+    expect(result.order.ticketPreorders).toHaveLength(2)
+  })
+
+  it('refuse une répartition visant un billet inexistant', async () => {
+    const event = await seedEvent()
+    const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 1, isTable: false, rail: 'stripe', ticketPreorders: [{ ticketIndex: 2, items: [{ name: 'Champagne', qty: 1 }] }] })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error).toBe('invalid_ticket_preorders')
+  })
+
   it('refuse un article de précommande inconnu du menu', async () => {
     const event = await seedEvent()
     const result = await createOrder({
@@ -157,6 +179,40 @@ describeIntegration('createOrder (intégration, transaction réelle)', () => {
       rail: 'stripe',
     })
     expect(result.ok).toBe(false)
+  })
+
+  it('résout et fige une option show par billet, sans faire confiance au libellé client', async () => {
+    const event = await seedEvent({ menu: [{ name: 'Champagne', price: 50, hasShow: true, showOptions: [{ id: 'birthday', label: 'Pancarte anniversaire', requiresInfo: true, infoPrompt: 'Quel prénom ?', excludedPlaces: [] }] }] })
+    const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 1, isTable: false, rail: 'stripe', ticketPreorders: [{ ticketIndex: 0, items: [{ name: 'Champagne', qty: 1, showOptionId: 'birthday', showInfo: 'Awa' }] }] })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.order.ticketPreorders[0].items[0]).toMatchObject({ showOptionId: 'birthday', showLabel: 'Pancarte anniversaire', showInfo: 'Awa' })
+
+    await fulfillOrder(result.order._id.toString(), { rail: 'stripe' })
+    const ticket = await Ticket.findOne({ orderId: result.order._id.toString() }).lean()
+    expect(ticket?.preorders[0]).toMatchObject({ showOptionId: 'birthday', showLabel: 'Pancarte anniversaire', showInfo: 'Awa' })
+  })
+
+  it('exige les informations du show et refuse les options exclues de la place', async () => {
+    const event = await seedEvent({ menu: [{ name: 'Champagne', price: 50, hasShow: true, showOptions: [{ id: 'private', label: 'Show privé', requiresInfo: true, excludedPlaces: ['Table VIP'] }] }] })
+    const missingInfo = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 1, isTable: false, rail: 'stripe', ticketPreorders: [{ ticketIndex: 0, items: [{ name: 'Champagne', qty: 1, showOptionId: 'private' }] }] })
+    expect(missingInfo.ok).toBe(false)
+    if (!missingInfo.ok) expect(missingInfo.error).toBe('show_info_required')
+
+    const excluded = await createOrder({ userId: 'host-1', eventId: event.id, placeId: 'p2', qty: 1, isTable: true, rail: 'stripe', ticketPreorders: [{ ticketIndex: 0, items: [{ name: 'Champagne', qty: 1, showOptionId: 'private', showInfo: 'Test' }] }] })
+    expect(excluded.ok).toBe(false)
+    if (!excluded.ok) expect(excluded.error).toBe('invalid_show_option')
+  })
+
+  it('refuse côté serveur un article masqué ou exclu de la place', async () => {
+    const hiddenEvent = await seedEvent({ menu: [{ name: 'Champagne', price: 50, available: false }] })
+    const hidden = await createOrder({ userId: 'user-1', eventId: hiddenEvent.id, placeId: 'p1', qty: 1, isTable: false, rail: 'stripe', preorders: [{ name: 'Champagne', qty: 1 }] })
+    expect(hidden.ok).toBe(false)
+
+    await Event.deleteMany({})
+    const excludedEvent = await seedEvent({ menu: [{ name: 'Champagne', price: 50, excludedPlaces: ['Standard'] }] })
+    const excluded = await createOrder({ userId: 'user-1', eventId: excludedEvent.id, placeId: 'p1', qty: 1, isTable: false, rail: 'stripe', preorders: [{ name: 'Champagne', qty: 1 }] })
+    expect(excluded.ok).toBe(false)
   })
 
   it('bloque un événement privé sans déverrouillage prouvé (ferme H07/C01)', async () => {
@@ -233,6 +289,17 @@ describeIntegration('fulfillOrder (intégration — chemin heureux sans appel r�
     expect(tickets[1].preorders).toHaveLength(0)
     expect(tickets.every((t) => t.hostUid === 'host-1')).toBe(true)
     expect(new Set(tickets.map((t) => t.tableId)).size).toBe(1) // même table pour tous les sièges
+  })
+
+  it('attribue les précommandes au bon billet', async () => {
+    const event = await seedEvent()
+    const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 2, isTable: false, rail: 'stripe', ticketPreorders: [{ ticketIndex: 1, items: [{ name: 'Champagne', qty: 2 }] }] })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    await fulfillOrder(result.order._id.toString(), { rail: 'stripe' })
+    const tickets = await Ticket.find({ orderId: result.order._id.toString() }).sort({ createdAt: 1 }).lean()
+    expect(tickets[0].preorders).toHaveLength(0)
+    expect(tickets[1].preorders[0].qty).toBe(2)
   })
 
   it('est idempotent : un deuxième appel ne remet pas de billets', async () => {

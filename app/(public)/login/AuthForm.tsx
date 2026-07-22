@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useRef, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
+import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 
 // Port de src/pages/LoginPage.jsx (#118). La distinction legacy
 // role==='user' vs role==='client' n'existe plus côté backend (un seul rôle
@@ -12,9 +13,8 @@ import { regions } from '@/lib/shared/regions'
 // JAMAIS de compte ici : ils sont redirigés vers leur propre wizard
 // d'inscription (/organizer-signup, /provider-signup), qui crée le compte +
 // la candidature à la soumission finale (lib/server/applications.ts) — donc
-// aucune étape 2 de ce formulaire ne les concerne. birthYear/gender du
-// formulaire legacy ne sont pas repris ici : POST /api/auth/register ne les
-// accepte pas (déclaratifs, renseignables ensuite depuis /profile).
+// aucune étape 2 de ce formulaire ne les concerne. Les données démographiques
+// facultatives restent déclaratives et modifiables ensuite depuis /profile.
 
 type Mode = 'login' | 'register'
 type RegRole = 'client' | 'organisateur' | 'prestataire'
@@ -34,14 +34,6 @@ function checkPasswordStrength(pwd: string) {
   if (score <= 1) return { score, label: 'Faible', color: 'var(--pink)' }
   if (score === 2) return { score, label: 'Moyen', color: 'var(--gold)' }
   return { score, label: 'Fort', color: 'var(--teal)' }
-}
-
-function validatePassword(pwd: string): string[] {
-  const errors: string[] = []
-  if (!pwd || pwd.length < 8) errors.push('Au moins 8 caractères')
-  if (!/[A-Z]/.test(pwd)) errors.push('Au moins une majuscule')
-  if (!/[0-9]/.test(pwd)) errors.push('Au moins un chiffre')
-  return errors
 }
 
 const cardStyle: React.CSSProperties = {
@@ -233,6 +225,8 @@ export default function AuthForm() {
   const [regEmail, setRegEmail] = useState('')
   const [dialCode, setDialCode] = useState('+228')
   const [phone, setPhone] = useState('')
+  const [birthYear, setBirthYear] = useState('')
+  const [gender, setGender] = useState('')
   const [regPwd, setRegPwd] = useState('')
   const [regPwdConfirm, setRegPwdConfirm] = useState('')
   const [showRegPwd, setShowRegPwd] = useState(false)
@@ -396,7 +390,7 @@ export default function AuthForm() {
     if (!lastName.trim()) { setRegError('Le nom est requis.'); return }
     if (!EMAIL_RE.test(regEmail)) { setRegError('Adresse email invalide.'); return }
     if (phone.trim() && !PHONE_RE.test(phone.trim())) { setRegError('Numéro de téléphone invalide.'); return }
-    const pwdErrs = validatePassword(regPwd)
+    const pwdErrs = getPasswordPolicyErrors(regPwd)
     if (pwdErrs.length > 0) { setRegError(pwdErrs[0]); return }
     if (regPwd !== regPwdConfirm) {
       // Si le message inline sous le champ de confirmation est déjà visible,
@@ -417,6 +411,8 @@ export default function AuthForm() {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           phone: phone.trim() ? (dialCode + phone.trim()).replace(/\s/g, '') : undefined,
+          birthYear: birthYear ? Number(birthYear) : null,
+          gender: gender || null,
         }),
       })
       if (res.status === 201) {
@@ -696,6 +692,23 @@ export default function AuthForm() {
                 <label style={labelStyle} htmlFor="reg-lastname">Nom</label>
                 <FocusInput id="reg-lastname" name="family-name" type="text" autoComplete="family-name" placeholder="Dupont" disabled={regLoading} value={lastName} onChange={(e) => setLastName(e.target.value)} style={regError === 'Le nom est requis.' ? { borderColor: 'var(--pink)' } : undefined} />
               </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <label style={labelStyle} htmlFor="reg-birth-year">Année de naissance</label>
+                <select id="reg-birth-year" value={birthYear} onChange={(event) => setBirthYear(event.target.value)} disabled={regLoading} style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <option value="">Non renseignée</option>
+                  {Array.from({ length: 68 }, (_, index) => new Date().getFullYear() - 13 - index).map((year) => <option key={year} value={year}>{year}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle} htmlFor="reg-gender">Genre</label>
+                <select id="reg-gender" value={gender} onChange={(event) => setGender(event.target.value)} disabled={regLoading} style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <option value="">Non renseigné</option><option value="femme">Femme</option><option value="homme">Homme</option><option value="autre">Autre</option>
+                </select>
+              </div>
+              <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 10.5, color: 'var(--text-faint)', lineHeight: 1.5 }}>Optionnel · utilisé uniquement dans des statistiques anonymes, jamais affiché sur ton profil.</p>
             </div>
 
             <div>

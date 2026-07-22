@@ -17,6 +17,7 @@ import User from '../models/User'
 import ProviderProfile from '../models/ProviderProfile'
 import CronLock from '../models/CronLock'
 import PaymentAlert from '../models/PaymentAlert'
+import SubscriptionPayment from '../models/SubscriptionPayment'
 import { SUBSCRIPTION } from '../shared/fees'
 import { PROVIDER_SUB, computeRenewal, deriveSubStatus, dueReminders, cycleKey, type SubWindow } from '../shared/providerSubscription'
 import { getProviderBillingContext } from './providerBilling'
@@ -96,6 +97,7 @@ export async function getMySubscriptionOverview(caller: { id: string }) {
   await getDb()
   const billing = await getProviderBillingContext(caller)
   const user = await User.findById(caller.id).lean()
+  const payments = await SubscriptionPayment.find({ userId: caller.id }).sort({ paidAt: -1 }).limit(36).lean()
   return {
     billingRegionId: billing.billingRegionId,
     currency: billing.currency,
@@ -104,7 +106,23 @@ export async function getMySubscriptionOverview(caller: { id: string }) {
     prestataireSubStatus: user?.prestataireSubStatus || null,
     prestataireSubEnd: user?.prestataireSubEnd ? new Date(user.prestataireSubEnd).toISOString() : null,
     prestataireSubRail: user?.prestataireSubRail || null,
+    payments: payments.map((payment) => ({
+      id: String(payment._id),
+      rail: payment.rail,
+      amountMinor: payment.amountMinor,
+      currency: payment.currency,
+      paidAt: new Date(payment.paidAt).toISOString(),
+      receiptUrl: payment.receiptUrl || null,
+    })),
   }
+}
+
+async function recordSubscriptionPayment(input: { userId: string; rail: 'stripe' | 'fedapay'; externalId: string; amountMinor: number; currency: 'EUR' | 'XOF'; paidAt: Date; receiptUrl?: string | null }) {
+  await SubscriptionPayment.updateOne(
+    { key: `${input.rail}:${input.externalId}` },
+    { $setOnInsert: { ...input, key: `${input.rail}:${input.externalId}` } },
+    { upsert: true }
+  )
 }
 
 // ── Rail EUR (Stripe Billing) ──
@@ -243,6 +261,32 @@ export async function handleStripeSubscriptionEvent(sub: Stripe.Subscription, de
   })
 }
 
+// `invoice.paid` est la source de vérité pour l'historique Stripe : il couvre
+// le premier paiement et chaque renouvellement sans dépendre du retour client.
+export async function handleStripeSubscriptionInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
+  const details = invoice.parent?.subscription_details
+  if (!details || invoice.amount_paid <= 0) return
+
+  const subscriptionId = typeof details.subscription === 'string' ? details.subscription : details.subscription.id
+  const metadata = details.metadata || (typeof details.subscription === 'string' ? null : details.subscription.metadata)
+  let uid = metadata?.uid || null
+  if (!uid) {
+    const user = await User.findOne({ stripeSubscriptionId: subscriptionId }).select('_id').lean()
+    uid = user?._id?.toString() || null
+  }
+  if (!uid) return
+
+  await recordSubscriptionPayment({
+    userId: uid,
+    rail: 'stripe',
+    externalId: invoice.id,
+    amountMinor: invoice.amount_paid,
+    currency: 'EUR',
+    paidAt: new Date(invoice.status_transitions.paid_at ? invoice.status_transitions.paid_at * 1000 : invoice.created * 1000),
+    receiptUrl: invoice.invoice_pdf || invoice.hosted_invoice_url || null,
+  })
+}
+
 // ── Rail XOF (FedaPay, renouvellement manuel) ──
 export type FedapayCheckoutResult = { ok: true; url: string; transactionId: string } | { ok: false; status: number; error: string }
 
@@ -298,6 +342,14 @@ export async function handleFedapaySubscriptionPayment(uid: string, entity: { id
 
   const renewal = computeRenewal(priorWindow, Date.now())
   await mirrorFedapayStatus(uid, renewal)
+  await recordSubscriptionPayment({
+    userId: uid,
+    rail: 'fedapay',
+    externalId: String(entity.id),
+    amountMinor: Math.round(Number(entity.amount) || PROVIDER_SUB.price),
+    currency: 'XOF',
+    paidAt: new Date(),
+  })
 }
 
 // ── Résiliation forcée (agent, avant purge de compte — #9 phase agent/admin) ──

@@ -43,8 +43,9 @@ export async function POST(req: Request) {
   if (user && !user.emailVerifiedAt) {
     // Un seul jeton actif à la fois : on invalide l'ancien avant d'en émettre
     // un nouveau (voir le commentaire de invalidateVerificationTokens).
-    await invalidateVerificationTokens(email)
-    const token = await issueVerificationToken(email)
+    const userId = String(user._id)
+    await invalidateVerificationTokens(userId, email, 'verify-email')
+    const token = await issueVerificationToken(userId, email, 'verify-email')
     const verifyLink = `${SITE}/verify-email?email=${encodeURIComponent(email)}&token=${token}`
     const result = await sendEmail(email, emailVerificationEmail(verifyLink, SITE))
     if (!result.ok) console.error('[resend-verification] email failed for', email, result.error)

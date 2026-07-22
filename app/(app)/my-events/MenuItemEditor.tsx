@@ -2,20 +2,10 @@
 
 import { useState } from 'react'
 import { currencySymbol } from '@/lib/shared/money'
+import type { ShowOption } from '@/lib/shared/showOptions'
 
 // Sous-composant du wizard événement (EventWizard.tsx) — port de
 // MenuItemEditor (MesEvenementsPage.jsx lignes ~3281-3542).
-//
-// Deux simplifications assumées pour cette passe (voir rapport de la
-// tâche #77) :
-// - Icône EMOJI uniquement : pas d'upload photo par article (le champ
-//   `imageUrl` existe toujours dans le type / la charge utile pour matcher
-//   le schéma serveur, mais reste toujours `null` ici — aucune UI d'upload).
-// - Une seule « option show » par article, stockée comme une chaîne unique
-//   dans `showOptions` (`[label]` si activée, `[]` sinon), au lieu de la
-//   sous-structure `showOptions[]` avec `requiresInfo`/`infoPrompt` et
-//   exclusions de places PAR show de la legacy. Couvre le concept central
-//   « cette conso a un show » sans le niveau de détail complet.
 //
 // NB style : les constantes S/Toggle/IconClose sont dupliquées ici plutôt
 // qu'importées depuis EventWizard.tsx pour éviter un import circulaire entre
@@ -29,8 +19,9 @@ export interface MenuItemRow {
   price: number
   category: string
   description: string
+  available: boolean
   hasShow: boolean
-  showOptions: string[]
+  showOptions: ShowOption[]
   excludedPlaces: string[]
 }
 
@@ -42,6 +33,7 @@ export function emptyMenuItem(): MenuItemRow {
     price: 0,
     category: 'Boissons',
     description: '',
+    available: true,
     hasShow: false,
     showOptions: [],
     excludedPlaces: [],
@@ -147,16 +139,32 @@ export interface MenuItemEditorProps {
   disabled?: boolean
   onChange: (item: MenuItemRow) => void
   onRemove?: () => void
+  onUploadImage?: (file: File) => Promise<string>
 }
 
-export default function MenuItemEditor({ item, index, currency, placeTypes, disabled = false, onChange, onRemove }: MenuItemEditorProps) {
+export default function MenuItemEditor({ item, index, currency, placeTypes, disabled = false, onChange, onRemove, onUploadImage }: MenuItemEditorProps) {
   const [showDesc, setShowDesc] = useState(!!item.description)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [imageError, setImageError] = useState('')
 
   function set<K extends keyof MenuItemRow>(field: K, value: MenuItemRow[K]) {
     onChange({ ...item, [field]: value })
   }
 
-  const showLabel = item.showOptions[0] || ''
+  function addShowOption() {
+    const option: ShowOption = {
+      id: `show-${globalThis.crypto.randomUUID()}`,
+      label: '',
+      requiresInfo: false,
+      infoPrompt: '',
+      excludedPlaces: [],
+    }
+    set('showOptions', [...item.showOptions, option])
+  }
+
+  function updateShowOption(id: string, patch: Partial<ShowOption>) {
+    set('showOptions', item.showOptions.map((option) => (option.id === id ? { ...option, ...patch } : option)))
+  }
 
   return (
     <div style={{ ...cardStyle, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10, opacity: disabled ? 0.55 : 1 }}>
@@ -176,18 +184,16 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
         )}
       </div>
 
-      {/* Icône (emoji uniquement — voir note de simplification en tête de fichier) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input
-          style={{ ...inputBase, width: 56, textAlign: 'center', flexShrink: 0, padding: '8px 6px' }}
-          placeholder="Icône"
-          value={item.emoji}
-          maxLength={4}
-          disabled={disabled}
-          onChange={(e) => set('emoji', e.target.value)}
-          onFocus={focusTeal}
-          onBlur={blurDefault}
-        />
+        {item.imageUrl ? (
+          <div style={{ position: 'relative', width: 56, height: 46, flexShrink: 0 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.imageUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: 9, objectFit: 'cover' }} />
+            <button type="button" onClick={() => set('imageUrl', null)} aria-label="Retirer la photo" style={{ position: 'absolute', top: -7, right: -7, width: 21, height: 21, borderRadius: '50%', border: 0, background: 'var(--pink)', color: '#fff', cursor: 'pointer' }}>×</button>
+          </div>
+        ) : (
+          <input style={{ ...inputBase, width: 56, textAlign: 'center', flexShrink: 0, padding: '8px 6px' }} placeholder="Icône" value={item.emoji} maxLength={4} disabled={disabled} onChange={(e) => set('emoji', e.target.value)} onFocus={focusTeal} onBlur={blurDefault} />
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <input
             style={{ ...inputBase }}
@@ -200,6 +206,20 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
           />
         </div>
       </div>
+      {onUploadImage && (
+        <label style={{ alignSelf: 'flex-start', padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.05)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, cursor: disabled || imageUploading ? 'not-allowed' : 'pointer' }}>
+          {imageUploading ? 'Envoi de la photo…' : item.imageUrl ? 'Changer la photo' : 'Ajouter une photo'}
+          <input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || imageUploading} style={{ display: 'none' }} onChange={async (event) => {
+            const file = event.target.files?.[0]
+            event.target.value = ''
+            if (!file) return
+            setImageError('')
+            setImageUploading(true)
+            try { set('imageUrl', await onUploadImage(file)) } catch { setImageError("L'envoi de la photo a échoué.") } finally { setImageUploading(false) }
+          }} />
+        </label>
+      )}
+      {imageError && <p role="alert" style={{ margin: '-4px 0 0', color: 'var(--pink)', fontSize: 11 }}>{imageError}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
@@ -228,6 +248,14 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
             onBlur={blurDefault}
           />
         </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
+        <div>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Disponible à la commande</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Masque temporairement cet article sans le supprimer.</p>
+        </div>
+        <Toggle value={item.available !== false} disabled={disabled} onChange={() => set('available', item.available === false)} />
       </div>
 
       {!showDesc ? (
@@ -265,23 +293,41 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
           disabled={disabled}
           onChange={() => {
             const next = !item.hasShow
-            onChange({ ...item, hasShow: next, showOptions: next ? item.showOptions : [] })
+            if (!next) onChange({ ...item, hasShow: false, showOptions: [] })
+            else if (item.showOptions.length) onChange({ ...item, hasShow: true })
+            else onChange({ ...item, hasShow: true, showOptions: [{ id: `show-${globalThis.crypto.randomUUID()}`, label: '', requiresInfo: false, infoPrompt: '', excludedPlaces: [] }] })
           }}
         />
       </div>
 
       {item.hasShow && (
-        <div style={{ paddingLeft: 8, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
-          <label style={labelStyle}>Intitulé du show</label>
-          <input
-            style={{ ...inputBase, fontSize: 12 }}
-            placeholder="Ex: Pancartes + feu d'artifices"
-            value={showLabel}
-            disabled={disabled}
-            onChange={(e) => set('showOptions', e.target.value ? [e.target.value] : [])}
-            onFocus={focusTeal}
-            onBlur={blurDefault}
-          />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
+          <p style={{ ...labelStyle, margin: 0 }}>Shows disponibles pour cet article</p>
+          {item.showOptions.map((option, optionIndex) => (
+            <div key={option.id} style={{ ...cardStyle, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input style={{ ...inputBase, flex: 1, fontSize: 12 }} placeholder={`Show ${optionIndex + 1} — ex: pancartes + étincelles`} value={option.label} disabled={disabled} onChange={(e) => updateShowOption(option.id, { label: e.target.value })} onFocus={focusTeal} onBlur={blurDefault} />
+                <button type="button" disabled={disabled} onClick={() => set('showOptions', item.showOptions.filter((entry) => entry.id !== option.id))} aria-label={`Supprimer le show ${optionIndex + 1}`} style={{ background: 'none', border: 0, padding: 5, cursor: disabled ? 'not-allowed' : 'pointer' }}><IconClose size={13} color="rgba(220,100,100,.9)" /></button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>Demander une information au client</span>
+                <Toggle value={option.requiresInfo} disabled={disabled} onChange={() => updateShowOption(option.id, { requiresInfo: !option.requiresInfo, ...(!option.requiresInfo ? {} : { infoPrompt: '' }) })} />
+              </div>
+              {option.requiresInfo && <input style={{ ...inputBase, fontSize: 12 }} placeholder="Ex: Prénom à écrire sur la pancarte ?" value={option.infoPrompt} disabled={disabled} onChange={(e) => updateShowOption(option.id, { infoPrompt: e.target.value })} onFocus={focusTeal} onBlur={blurDefault} />}
+              {placeTypes.length > 1 && (
+                <div style={{ paddingTop: 5, borderTop: '1px solid rgba(255,255,255,.05)' }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Masquer ce show pour :</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {placeTypes.map((placeType) => {
+                      const excluded = option.excludedPlaces.includes(placeType)
+                      return <button key={placeType} type="button" disabled={disabled} onClick={() => updateShowOption(option.id, { excludedPlaces: excluded ? option.excludedPlaces.filter((value) => value !== placeType) : [...option.excludedPlaces, placeType] })} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 8px', borderRadius: 8, border: excluded ? '1px solid rgba(224,90,170,.5)' : '1px solid rgba(255,255,255,.1)', background: excluded ? 'rgba(224,90,170,.14)' : '#0b0c12', color: excluded ? '#ff9ed2' : 'rgba(255,255,255,.55)', cursor: disabled ? 'not-allowed' : 'pointer' }}>{excluded ? '× ' : ''}{placeType}</button>
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          <button type="button" disabled={disabled || item.showOptions.length >= 20} onClick={addShowOption} style={{ padding: '8px 12px', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: 'var(--gold)', border: '1px solid rgba(200,169,110,.35)', borderRadius: 9, background: 'rgba(200,169,110,.08)', cursor: disabled ? 'not-allowed' : 'pointer' }}>+ Ajouter un show</button>
         </div>
       )}
 

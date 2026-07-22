@@ -22,13 +22,21 @@ import stripe from '@/lib/server/stripeClient'
 //  - H10 : email/nom pris de la session vérifiée, jamais du corps de requête.
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
+const preorderItemSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  qty: z.number().int().min(0).max(50),
+  showOptionId: z.string().trim().min(1).max(80).optional(),
+  showInfo: z.string().trim().max(240).optional(),
+})
+
 const bodySchema = z.object({
   eventId: z.string().min(1),
   placeId: z.string().min(1),
   qty: z.number().int().min(1).max(20).default(1),
   isTable: z.boolean().default(false),
   promoCode: z.string().trim().optional().nullable(),
-  preorders: z.array(z.object({ name: z.string().min(1), qty: z.number().int().min(0).max(50) })).default([]),
+  preorders: z.array(preorderItemSchema).max(50).default([]),
+  ticketPreorders: z.array(z.object({ ticketIndex: z.number().int().min(0).max(49), items: z.array(preorderItemSchema).max(50) })).max(50).default([]),
 })
 
 export async function POST(req: Request) {
@@ -37,7 +45,7 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
-  const { eventId, placeId, qty, isTable, promoCode, preorders } = parsed.data
+  const { eventId, placeId, qty, isTable, promoCode, preorders, ticketPreorders } = parsed.data
 
   await getDb()
   const event = await Event.findById(eventId).lean()
@@ -57,6 +65,7 @@ export async function POST(req: Request) {
     isTable,
     promoCode,
     preorders,
+    ticketPreorders,
     rail: 'stripe',
     privateAccessVerified,
   })
@@ -123,7 +132,7 @@ export async function POST(req: Request) {
         ...(paymentIntentData ? { payment_intent_data: paymentIntentData } : {}),
         customer_email: session.user.email || undefined,
         success_url: `${SITE}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-        cancel_url: `${SITE}/events/${eventId}?paiement=annule`,
+        cancel_url: `${SITE}/payment-cancelled?event_id=${encodeURIComponent(eventId)}`,
         metadata: { orderId },
         locale: 'fr',
       },

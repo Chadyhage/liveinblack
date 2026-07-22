@@ -20,7 +20,7 @@ export interface TicketWalletItemView {
   placePrice: number
   totalPrice: number
   currency: string
-  preorders: { name: string; price: number; qty: number }[]
+  preorders: { name: string; price: number; qty: number; showOptionId: string | null; showLabel: string | null; showInfo: string | null }[]
   guestName: string | null
   bookedAt: string | null
   checkedInAt: string | null
@@ -761,6 +761,7 @@ function PremiumTicketCard({
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 4 }}>
               <span>
                 {item.name} ×{item.qty}
+                {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
               </span>
               <span style={{ color: '#fff', fontWeight: 600 }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>
             </div>

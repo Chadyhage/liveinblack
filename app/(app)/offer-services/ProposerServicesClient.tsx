@@ -10,14 +10,13 @@ import { subPresentation, subPriceLabel, type SubWindow } from '@/lib/shared/pro
 import { fmtMoney } from '@/lib/shared/money'
 import { REVIEW_REPORT_REASONS, computeReviewStats } from '@/lib/shared/reviews'
 import { Stars } from '@/app/components/StarRating'
+import ImageCropperModal from '@/app/components/ImageCropperModal'
 
 // Port de ProposerServicesPage.jsx + MyProviderReviews.jsx (#8 phase
 // prestataire, tâche #91). Contrairement au legacy (facturation chargée
 // après montage via useEffect, écran "Chargement..."), tout est déjà résolu
 // côté serveur (voir page.tsx) — aucun état de chargement initial ici.
-// Avatar/couverture : redimensionnement client via canvas (même
-// simplification déjà appliquée dans StudioClient.tsx — pas de cropper
-// interactif react-easy-crop comme le legacy).
+// Avatar et couverture utilisent le recadrage partagé avant leur upload.
 
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
@@ -306,6 +305,7 @@ export default function ProposerServicesClient({
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<'avatar' | 'cover' | ''>('')
+  const [crop, setCrop] = useState<{ field: 'photoUrl' | 'coverUrl'; src: string } | null>(null)
   const [renewing, setRenewing] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
@@ -398,9 +398,12 @@ export default function ProposerServicesClient({
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return notify('Utilise une image JPG, PNG ou WEBP.')
     if (file.size > 5 * 1024 * 1024) return notify("L'image doit faire moins de 5 Mo.")
 
+    setCrop({ field, src: await readAsDataUri(file) })
+  }
+
+  async function uploadCroppedImage(field: 'photoUrl' | 'coverUrl', dataUri: string) {
     setUploading(field === 'photoUrl' ? 'avatar' : 'cover')
     try {
-      const dataUri = await resizeImageToDataUri(file, field === 'coverUrl' ? 1280 : 640)
       const res = await fetch('/api/providers/me/media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1363,6 +1366,19 @@ export default function ProposerServicesClient({
           </section>
         )}
       </main>
+
+      {crop && (
+        <ImageCropperModal
+          key={`${crop.field}-${crop.src.slice(-24)}`}
+          src={crop.src}
+          title={crop.field === 'photoUrl' ? 'Recadrer la photo' : 'Recadrer la couverture'}
+          aspect={crop.field === 'photoUrl' ? 1 : 16 / 7}
+          outputWidth={crop.field === 'photoUrl' ? 640 : 1280}
+          circular={crop.field === 'photoUrl'}
+          onCancel={() => setCrop(null)}
+          onConfirm={async (dataUri) => { await uploadCroppedImage(crop.field, dataUri); setCrop(null) }}
+        />
+      )}
 
       {confirmRemoveItem && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>

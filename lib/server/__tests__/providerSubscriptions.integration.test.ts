@@ -40,6 +40,7 @@ import {
   confirmStripeSubscriptionCheckout,
   handleStripeSubscriptionCheckoutCompleted,
   handleStripeSubscriptionEvent,
+  handleStripeSubscriptionInvoicePaid,
   createFedapaySubscriptionCheckout,
   handleFedapaySubscriptionPayment,
   runSubscriptionReminderCron,
@@ -49,6 +50,7 @@ import User from '../../models/User'
 import ProviderProfile from '../../models/ProviderProfile'
 import PaymentAlert from '../../models/PaymentAlert'
 import CronLock from '../../models/CronLock'
+import SubscriptionPayment from '../../models/SubscriptionPayment'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -73,6 +75,7 @@ beforeEach(async () => {
   await ProviderProfile.deleteMany({})
   await PaymentAlert.deleteMany({})
   await CronLock.deleteMany({})
+  await SubscriptionPayment.deleteMany({})
 })
 
 async function seedUser(overrides: Record<string, unknown> = {}) {
@@ -267,6 +270,9 @@ describeIntegration('handleFedapaySubscriptionPayment', () => {
     expect(fresh?.prestataireSubRail).toBe('fedapay')
     expect(fresh?.pendingFedapaySubTxnId).toBeNull()
     expect(new Date(fresh!.prestataireSubEnd!).getTime()).toBeGreaterThan(before + (PROVIDER_SUB.periodDays - 1) * DAY)
+    expect(await SubscriptionPayment.countDocuments({ userId: user.id, externalId: '112' })).toBe(1)
+    await handleFedapaySubscriptionPayment(user.id, { id: 112, amount: PROVIDER_SUB.price })
+    expect(await SubscriptionPayment.countDocuments({ userId: user.id, externalId: '112' })).toBe(1)
   })
 
   it('prolonge depuis l’expiration actuelle (pas depuis maintenant) pour un renouvellement anticipé', async () => {
@@ -285,6 +291,23 @@ describeIntegration('handleFedapaySubscriptionPayment', () => {
     const freshProfile = await ProviderProfile.findOne({ userId: user.id }).lean()
     const expectedExpiry = futureExpiry + PROVIDER_SUB.periodDays * DAY
     expect(freshProfile?.subscriptionExpiresAt?.getTime()).toBeCloseTo(expectedExpiry, -2)
+  })
+})
+
+describeIntegration('historique Stripe', () => {
+  it('enregistre invoice.paid une seule fois et l’expose au propriétaire', async () => {
+    const user = await seedUser({ stripeSubscriptionId: 'sub_history_1' })
+    const invoice = {
+      id: 'in_history_1', amount_paid: 999, created: Math.floor(Date.now() / 1000), currency: 'eur', invoice_pdf: 'https://stripe.test/receipt.pdf', hosted_invoice_url: null,
+      status_transitions: { paid_at: Math.floor(Date.now() / 1000) },
+      parent: { subscription_details: { subscription: 'sub_history_1', metadata: { uid: user.id } } },
+    }
+    await handleStripeSubscriptionInvoicePaid(invoice as never)
+    await handleStripeSubscriptionInvoicePaid(invoice as never)
+    const overview = await getMySubscriptionOverview({ id: user.id })
+    expect(overview.payments).toHaveLength(1)
+    expect(overview.payments[0].amountMinor).toBe(999)
+    expect(overview.payments[0].receiptUrl).toBe('https://stripe.test/receipt.pdf')
   })
 })
 

@@ -15,13 +15,10 @@ const ROLE_APPROVAL_STATUSES = ['none', 'pending', 'active', 'rejected'] as cons
 // statut d'un compte qui l'a désactivé) et `readReceipts` par
 // lib/server/messaging.ts (un accusé de lecture n'est exposé aux AUTRES que
 // si son auteur a cette préférence active). `showAvatar` et
-// `personalizedRecommendations` sont stockés mais PAS ENCORE appliqués
-// ailleurs dans ce port : la messagerie n'affiche aujourd'hui que des
-// initiales (jamais de vraie photo, cf. Avatar dans MessagesClient.tsx) et
-// aucun moteur de recommandation n'existe dans cette migration — un bascule
-// inerte est fidèle à "le réglage existe" mais ne doit jamais être présentée
-// comme un mensonge : documenté ici pour la prochaine phase qui touchera à
-// l'un des deux.
+// `personalizedRecommendations` pilote réellement le moteur de /events.
+// `showAvatar` reste la règle de visibilité à appliquer à toute future vue
+// sociale qui expose l'avatar personnel (les vues actuelles utilisent des
+// initiales ou les médias publics des profils professionnels).
 const privacySchema = new Schema(
   {
     showOnline: { type: Boolean, default: true },
@@ -58,10 +55,7 @@ const userSchema = new Schema(
     privacy: { type: privacySchema, default: () => ({}) },
     // Goûts déclarés (carte "Mes goûts", #6 phase profil) — forme libre
     // (musicStyles[]/artists[]/eventTypes[]/cities[]/budget/ambiances[]/...),
-    // jamais lue en dehors de ce port : le moteur de scoring/recommandation
-    // (src/utils/recommendations.js) et la section homepage qui le consomme
-    // restent HORS PÉRIMÈTRE de cette migration (phase ultérieure) — seule la
-    // DÉCLARATION est portée ici, fidèle au formulaire legacy.
+    // consommée par le moteur de recommandation de /events.
     preferences: { type: mongoose.Schema.Types.Mixed, default: null },
     roles: { type: [String], enum: ROLES, default: ['client'] },
     activeRole: { type: String, enum: ROLES, default: 'client' },

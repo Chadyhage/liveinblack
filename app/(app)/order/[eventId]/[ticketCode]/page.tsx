@@ -34,18 +34,10 @@ export async function generateMetadata({ params }: { params: Promise<{ eventId: 
 // Les commandes sur place n'ouvrent que 3h avant le début de l'événement.
 const ORDER_WINDOW_MS = 3 * 60 * 60 * 1000
 
-// `available` n'existe pas (encore) dans lib/models/Event.ts (menuItemSchema
-// ne le déclare pas) mais fait partie du contrat comportemental porté depuis
-// le legacy — un item peut porter ce champ en base (écrit hors du schéma
-// Mongoose actuel) sans que `.lean()` ne le filtre : Mongoose n'applique le
-// schéma qu'à l'écriture/hydratation, jamais à la lecture `.lean()` brute.
-// On le lit donc défensivement ici plutôt que de toucher au schéma partagé
-// (hors périmètre de cette tâche — voir lib/server/ et app/api/, seuls
-// fichiers dont la modification est explicitement interdite, mais modifier
-// un schéma partagé par tout le reste de l'app pour cette seule page serait
-// disproportionné).
 interface MenuItemDoc {
   name: string
+  emoji?: string
+  imageUrl?: string | null
   price?: number
   category?: string
   description?: string
@@ -211,6 +203,8 @@ export default async function CommanderPage({
     .filter((item) => item.available !== false)
     .map((item) => ({
       name: item.name,
+      emoji: item.emoji ?? '',
+      imageUrl: item.imageUrl ?? null,
       price: item.price ?? 0,
       category: item.category ?? '',
       description: item.description ?? '',

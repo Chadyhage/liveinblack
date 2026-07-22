@@ -1,19 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 // Port de src/components/PreferencesEditor.jsx ("Mes goûts", #6 phase
-// profil) — MÊMES 8 étapes, mêmes intitulés, mêmes options. Deux choses
-// restent volontairement HORS PÉRIMÈTRE de ce port (déclaration seule) :
-//   1. la recherche distante Deezer/Photon pour les étapes "artistes"/
-//      "villes" (proxy propre à recommendations, jamais construit dans cette
-//      migration) — remplacée par les suggestions LOCALES + ajout libre, un
-//      repli déjà prévu par le legacy lui-même en cas d'échec réseau ;
-//   2. le moteur de scoring (src/utils/recommendations.js) et la section
-//      homepage "Nos recommandations pour toi" qui le consomme — cette page
-//      ne fait qu'ENREGISTRER la déclaration (lib/server/profile.ts:
-//      updatePreferences), exactement comme le formulaire legacy le fait
-//      côté Firestore ; rien ne la lit encore ailleurs dans ce port.
+// profil) — mêmes 8 étapes, mêmes intitulés et mêmes options. Les artistes et
+// villes utilisent le proxy distant Deezer/Photon avec repli local et ajout
+// libre. Le moteur de scoring consomme ces préférences dans /events.
 const TEAL = '#4ee8c8'
 const VIOLET = '#8b5cf6'
 
@@ -98,6 +90,7 @@ const CITY_SUGGESTIONS = [
 export interface Preferences {
   musicStyles: string[]
   artists: string[]
+  artistPhotos: Record<string, string>
   eventTypes: string[]
   cities: string[]
   budget: string
@@ -106,7 +99,7 @@ export interface Preferences {
   groupPref: string
 }
 
-export const EMPTY_PREFERENCES: Preferences = { musicStyles: [], artists: [], eventTypes: [], cities: [], budget: '', ambiances: [], frequency: '', groupPref: '' }
+export const EMPTY_PREFERENCES: Preferences = { musicStyles: [], artists: [], artistPhotos: {}, eventTypes: [], cities: [], budget: '', ambiances: [], frequency: '', groupPref: '' }
 
 export function summarizePreferences(prefs: Partial<Preferences> | null | undefined): string[] {
   if (!prefs) return []
@@ -166,32 +159,74 @@ function Chip({ active, color, onClick, children }: { active: boolean; color: st
   )
 }
 
-function SearchMultiSelect({ value, onChange, suggestions, color, placeholder, max = 15 }: { value: string[]; onChange: (v: string[]) => void; suggestions: string[]; color: string; placeholder: string; max?: number }) {
+type RemoteSearchResult = { name: string; picture?: string | null; sublabel?: string }
+
+function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, placeholder, remoteType, max = 15 }: { value: string[]; photos?: Record<string, string>; onChange: (v: string[], photos?: Record<string, string>) => void; suggestions: string[]; color: string; placeholder: string; remoteType: 'artists' | 'cities'; max?: number }) {
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
+  const [remote, setRemote] = useState<RemoteSearchResult[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const matches = useMemo(() => {
+  const localMatches = useMemo(() => {
     const q = norm(query)
     if (!q) return []
     const selected = new Set(value.map(norm))
-    return suggestions.filter((s) => norm(s).includes(q) && !selected.has(norm(s))).slice(0, 8)
+    return suggestions.filter((s) => norm(s).includes(q) && !selected.has(norm(s))).slice(0, 6).map((name) => ({ name }))
   }, [query, suggestions, value])
 
-  const exact = query.trim() && [...suggestions, ...value].some((s) => norm(s) === norm(query))
+  useEffect(() => {
+    const q = query.trim()
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      if (q.length < 2) {
+        setRemote([])
+        setLoading(false)
+        return
+      }
+      setLoading(true)
+      try {
+        const response = await fetch(`/api/preferences/search?type=${remoteType}&q=${encodeURIComponent(q)}`, { signal: controller.signal })
+        const data = await response.json().catch(() => null) as { artists?: RemoteSearchResult[]; cities?: RemoteSearchResult[] } | null
+        setRemote(response.ok ? (remoteType === 'artists' ? data?.artists || [] : data?.cities || []) : [])
+      } catch {
+        if (!controller.signal.aborted) setRemote([])
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }, q.length < 2 ? 0 : 300)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [query, remoteType])
+
+  const matches = useMemo(() => {
+    const selected = new Set(value.map(norm))
+    const merged = new Map<string, RemoteSearchResult>()
+    for (const item of [...remote, ...localMatches]) {
+      const key = norm(item.name)
+      if (key && !selected.has(key) && !merged.has(key)) merged.set(key, item)
+    }
+    return [...merged.values()].slice(0, 8)
+  }, [localMatches, remote, value])
+
+  const exact = query.trim() && [...suggestions, ...remote.map((item) => item.name), ...value].some((s) => norm(s) === norm(query))
   const canAddCustom = query.trim().length >= 2 && !exact && value.length < max
 
-  function add(name: string) {
+  function add(item: string | RemoteSearchResult) {
+    const name = typeof item === 'string' ? item : item.name
     const trimmed = name.trim()
     if (!trimmed || value.length >= max) return
     if (value.some((v) => norm(v) === norm(trimmed))) {
       setQuery('')
       return
     }
-    onChange([...value, trimmed])
+    const picture = typeof item === 'string' ? null : item.picture
+    onChange([...value, trimmed], picture ? { ...photos, [trimmed]: picture } : photos)
     setQuery('')
+    setRemote([])
   }
   function remove(name: string) {
-    onChange(value.filter((v) => v !== name))
+    const nextPhotos = { ...photos }
+    delete nextPhotos[name]
+    onChange(value.filter((v) => v !== name), nextPhotos)
   }
 
   return (
@@ -214,6 +249,10 @@ function SearchMultiSelect({ value, onChange, suggestions, color, placeholder, m
                 fontWeight: 700,
               }}
             >
+              {remoteType === 'artists' && (photos[v] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photos[v]} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
+              ) : <span style={{ width: 24, height: 24, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,.28)', fontSize: 11 }}>{v.charAt(0).toUpperCase()}</span>)}
               {v}
               <button
                 type="button"
@@ -244,21 +283,26 @@ function SearchMultiSelect({ value, onChange, suggestions, color, placeholder, m
           disabled={value.length >= max}
           style={{ width: '100%', boxSizing: 'border-box', padding: '13px 14px', borderRadius: 12, border: `1px solid ${focused ? color : 'rgba(255,255,255,0.12)'}`, background: '#0b0c12', color: '#fff', outline: 'none', fontSize: 14 }}
         />
-        {focused && (matches.length > 0 || canAddCustom) && (
+        {focused && (matches.length > 0 || canAddCustom || loading) && (
           <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 5, maxHeight: 240, overflowY: 'auto', borderRadius: 12, padding: 6, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
             {matches.map((m) => (
               <button
-                key={m}
+                key={`${m.name}-${m.sublabel || ''}`}
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault()
                   add(m)
                 }}
-                style={{ width: '100%', textAlign: 'left', padding: '9px 10px', borderRadius: 8, border: 'none', background: 'none', color: '#fff', cursor: 'pointer', fontSize: 14 }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '9px 10px', borderRadius: 8, border: 'none', background: 'none', color: '#fff', cursor: 'pointer', fontSize: 14 }}
               >
-                {m}
+                {m.picture ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={m.picture} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} />
+                ) : <span style={{ width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,.07)', flexShrink: 0 }}>{m.name.charAt(0).toUpperCase()}</span>}
+                <span><span style={{ display: 'block' }}>{m.name}</span>{m.sublabel && <span style={{ display: 'block', color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{m.sublabel}</span>}</span>
               </button>
             ))}
+            {loading && matches.length === 0 && <p style={{ padding: '10px 12px', margin: 0, color: 'rgba(255,255,255,.4)', fontSize: 13 }}>Recherche…</p>}
             {canAddCustom && (
               <button
                 type="button"
@@ -324,8 +368,8 @@ export default function PreferencesModal({
       return { ...p, [current.key]: list.includes(id) ? list.filter((x) => x !== id) : [...list, id] }
     })
   }
-  function setSearchValue(names: string[]) {
-    setPrefs((p) => ({ ...p, [current.key]: names }))
+  function setSearchValue(names: string[], photos?: Record<string, string>) {
+    setPrefs((p) => ({ ...p, [current.key]: names, ...(current.key === 'artists' ? { artistPhotos: photos || {} } : {}) }))
   }
   function pickSingle(id: string) {
     const next = { ...prefs, [current.key]: prefs[current.key] === id ? '' : id }
@@ -405,7 +449,15 @@ export default function PreferencesModal({
                 </div>
               )}
               {current.type === 'search' && (
-                <SearchMultiSelect value={(val as string[]) || []} onChange={setSearchValue} suggestions={current.suggestions} color={current.color} placeholder={current.placeholder} />
+                <SearchMultiSelect
+                  value={(val as string[]) || []}
+                  photos={current.key === 'artists' ? prefs.artistPhotos : undefined}
+                  onChange={setSearchValue}
+                  suggestions={current.suggestions}
+                  color={current.color}
+                  placeholder={current.placeholder}
+                  remoteType={current.key === 'artists' ? 'artists' : 'cities'}
+                />
               )}
             </div>
 

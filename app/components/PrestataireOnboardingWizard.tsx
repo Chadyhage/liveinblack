@@ -8,6 +8,9 @@ import { regionToCurrency } from '@/lib/shared/money'
 import { fmtMoney } from '@/lib/shared/money'
 import { PROVIDER_SUB } from '@/lib/shared/providerSubscription'
 import { validatePrestataireStep0, validatePrestataireStep2, getRequiredDocs, type PrestataireFormData } from '@/lib/shared/applicationValidation'
+import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
+import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
+import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
 
 // Port de src/pages/OnboardingPrestataire.jsx (#8 phase prestataire) — 6
 // étapes (Compte/Activités/Détails/Fonctionnement/Documents/Finaliser),
@@ -99,19 +102,7 @@ const DOC_LABELS: Record<string, string> = {
   exploitation_proof: "Justificatif d'exploitation du lieu (bail, autorisation…)",
 }
 
-function fileToDataUri(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-interface DocState {
-  name: string
-  dataUri: string
-}
+type DocState = ApplicationDocumentUploadReference
 
 export default function PrestataireOnboardingWizard({
   mode,
@@ -133,7 +124,9 @@ export default function PrestataireOnboardingWizard({
   const [candidateNote, setCandidateNote] = useState(initialCandidateNote ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [uploadingDocs, setUploadingDocs] = useState(false)
   const [submitted, setSubmitted] = useState<{ email: string } | null>(null)
+  const [autosaveState, setAutosaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   function set<K extends keyof PrestataireFormData>(key: K, value: PrestataireFormData[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -167,11 +160,17 @@ export default function PrestataireOnboardingWizard({
 
   async function handleFileChange(key: string, fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return
-    const entries: DocState[] = []
-    for (const file of Array.from(fileList)) {
-      entries.push({ name: file.name, dataUri: await fileToDataUri(file) })
+    setError(null)
+    setUploadingDocs(true)
+    try {
+      const entries: DocState[] = []
+      for (const file of Array.from(fileList)) entries.push(await uploadApplicationDocument(file))
+      setDocuments((current) => ({ ...current, [key]: [...(current[key] || []), ...entries] }))
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Impossible d’envoyer le document.')
+    } finally {
+      setUploadingDocs(false)
     }
-    setDocuments((d) => ({ ...d, [key]: [...(d[key] || []), ...entries] }))
   }
   function removeDoc(key: string, index: number) {
     setDocuments((d) => ({ ...d, [key]: (d[key] || []).filter((_, i) => i !== index) }))
@@ -184,7 +183,8 @@ export default function PrestataireOnboardingWizard({
       if (!result.ok) return setError(result.error)
       if (mode === 'anonymous') {
         if (!regEmail.trim() || !regEmail.includes('@')) return setError('Adresse e-mail invalide.')
-        if (regPassword.length < 8) return setError('Le mot de passe doit faire au moins 8 caractères.')
+        const passwordErrors = getPasswordPolicyErrors(regPassword)
+        if (passwordErrors.length > 0) return setError(passwordErrors[0])
         if (regPassword !== regPasswordConfirm) return setError('Les mots de passe ne correspondent pas.')
       }
     }
@@ -193,9 +193,10 @@ export default function PrestataireOnboardingWizard({
       if (!result.ok) return setError(result.error)
     }
     if (mode === 'loggedIn') {
-      fetch('/api/applications/prestataire/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }).catch(() => {
-        // Autosave best-effort — voir OrganizerOnboardingWizard.tsx.
-      })
+      setAutosaveState('saving')
+      fetch('/api/applications/prestataire/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+        .then((res) => setAutosaveState(res.ok ? 'saved' : 'error'))
+        .catch(() => setAutosaveState('error'))
     }
     setStep((s) => Math.min(s + 1, STEPS.length - 1))
   }
@@ -629,15 +630,23 @@ export default function PrestataireOnboardingWizard({
                 Continuer
               </button>
             ) : (
-              <button onClick={handleSubmit} disabled={busy || missingDocs.length > 0} style={{ ...primaryBtn(busy || missingDocs.length > 0), flex: 1 }}>
-                {busy ? 'Envoi…' : mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
+              <button onClick={handleSubmit} disabled={busy || uploadingDocs || missingDocs.length > 0} style={{ ...primaryBtn(busy || uploadingDocs || missingDocs.length > 0), flex: 1 }}>
+                {uploadingDocs ? 'Envoi des documents…' : busy ? 'Envoi…' : mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
               </button>
             )}
           </div>
         </div>
 
         <p style={{ fontSize: 11, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
-          {mode === 'anonymous' ? 'Rien n’est encore enregistré : termine et envoie ta demande pour ne rien perdre.' : 'Sauvegarde automatique activée'}
+          {mode === 'anonymous'
+            ? 'Rien n’est encore enregistré : termine et envoie ta demande pour ne rien perdre.'
+            : autosaveState === 'error'
+              ? 'Échec de la dernière sauvegarde — vérifie ta connexion.'
+              : autosaveState === 'saving'
+                ? 'Sauvegarde du brouillon…'
+                : autosaveState === 'saved'
+                  ? 'Brouillon sauvegardé.'
+                  : 'Le brouillon sera sauvegardé quand tu cliqueras sur Continuer.'}
         </p>
       </div>
     </main>

@@ -22,7 +22,7 @@ export interface BookingTicketView {
   placePrice: number
   totalPrice: number
   buyerName: string | null
-  preorders: { name: string; price: number; qty: number }[]
+  preorders: { name: string; price: number; qty: number; showLabel: string | null; showInfo: string | null }[]
 }
 
 export interface EventBookingsView {
@@ -66,7 +66,7 @@ export async function getEventBookings(caller: BookingCaller, eventId: string): 
       placePrice: t.placePrice ?? 0,
       totalPrice: t.totalPrice ?? 0,
       buyerName: t.guestName || buyerNameById.get(t.userId) || null,
-      preorders: (t.preorders || []).map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1 })),
+      preorders: (t.preorders || []).map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1, showLabel: p.showLabel ?? null, showInfo: p.showInfo ?? null })),
     }
   })
 

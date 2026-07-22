@@ -48,7 +48,7 @@ export interface SeatTicketView {
   place: string
   totalPrice: number
   currency: string
-  preorders: { name: string; price: number; qty: number }[]
+  preorders: { name: string; price: number; qty: number; showLabel: string | null; showInfo: string | null }[]
   guestName: string | null
   assignedTo: string | null
   assignedName: string | null
@@ -102,7 +102,7 @@ function toSeatView(ticket: HydratedDocument<TicketDoc>): SeatTicketView {
     place: ticket.place,
     totalPrice: ticket.totalPrice,
     currency: ticket.currency,
-    preorders: ticket.preorders.map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1 })),
+    preorders: ticket.preorders.map((p) => ({ name: p.name, price: p.price ?? 0, qty: p.qty ?? 1, showLabel: p.showLabel ?? null, showInfo: p.showInfo ?? null })),
     guestName: ticket.guestName ?? null,
     assignedTo: ticket.assignedTo ?? null,
     assignedName: ticket.assignedName ?? null,

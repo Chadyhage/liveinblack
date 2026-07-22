@@ -15,7 +15,15 @@ const TYPES = ['organisateur', 'prestataire'] as const
 const documentEntrySchema = new Schema(
   {
     name: { type: String, required: true },
-    url: { type: String, required: true },
+    // `url` ne sert qu'aux anciens documents publics. Les nouveaux fichiers
+    // sont des assets Cloudinary `authenticated` décrits par les champs
+    // ci-dessous et servis via une route d'accès contrôlée.
+    url: { type: String, default: '' },
+    publicId: { type: String, default: null },
+    format: { type: String, default: null },
+    resourceType: { type: String, enum: ['image', 'raw'], default: null },
+    deliveryType: { type: String, enum: ['upload', 'authenticated'], default: null },
+    version: { type: Number, default: null },
     size: { type: Number, default: 0 },
     uploadedAt: { type: Date, default: null },
   },

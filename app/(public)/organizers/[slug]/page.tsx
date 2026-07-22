@@ -7,6 +7,7 @@ import { isFollowing } from '@/lib/server/organizerFollows'
 import { getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
+import PublicProfileActions from '@/app/components/PublicProfileActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,9 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: `${organizer.publicName} — LIVEINBLACK`, description: organizer.shortDescription?.slice(0, 160) }
 }
 
-// Port de src/pages/PublicOrganizerPage.jsx — lecture seule + abonnement
-// (#6 phase profil : follow/unfollow via OrganizerFollowButtonClient).
-// Contact/share/signalement restent hors périmètre (phases ultérieures).
+// Profil public complet : abonnement, contact, partage et signalement.
 export default async function PublicOrganizerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const organizer = await getOrganizerBySlug(slug)
@@ -63,6 +62,7 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
           {organizer.isVerified && <span style={{ marginLeft: 8, fontSize: 13, color: 'var(--teal)' }}>✓ vérifié</span>}
         </h1>
         {(organizer.city || zones.length > 0) && <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '4px 0 0' }}>{[organizer.city, ...zones].filter(Boolean).join(' · ')}</p>}
+        <PublicProfileActions targetUserId={organizer.userId} displayName={organizer.publicName} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
 
         {!isSelf && (
           <div style={{ marginTop: 14 }}>
@@ -134,8 +134,12 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
               {visibleMedia.map((m) => (
                 <div key={m.id} style={{ aspectRatio: '1', borderRadius: 10, overflow: 'hidden', background: 'var(--surface)' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={m.url} alt={m.title || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {m.type === 'video' ? (
+                    <video src={m.url} controls preload="metadata" playsInline aria-label={m.title || `Vidéo de ${organizer.publicName}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.url} alt={m.title || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
                 </div>
               ))}
             </div>
@@ -151,7 +155,11 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
         {(organizer.city || organizer.proPhone) && (
           <Section title="Contact">
             {organizer.city && <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>{[organizer.city, organizer.country].filter(Boolean).join(', ')}</p>}
-            {organizer.proPhone && <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 4 }}>{organizer.proPhone}</p>}
+            {organizer.proPhone && (
+              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ display: 'inline-block', fontSize: 13.5, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+                {organizer.proPhone}
+              </a>
+            )}
           </Section>
         )}
       </div>

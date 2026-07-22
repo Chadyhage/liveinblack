@@ -10,6 +10,7 @@ import { isEventTonight } from '@/lib/shared/eventUrgency'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
 import EventListCard from '../_components/EventListCard'
 import EventRow from '../_components/EventRow'
+import AccessCodeForm from './AccessCodeForm'
 
 export const metadata: Metadata = {
   title: 'Événements — LIVEINBLACK',
@@ -47,8 +48,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   const [events, boostedIds, session] = await Promise.all([listPublicEvents(), getBoostedEventIds(), auth()])
 
   // Recommandations personnalisées (port de src/utils/recommendations.js +
-  // la section "Nos recommandations pour toi" de HomePage.jsx — /home reste
-  // hors périmètre, seule /events consomme ce moteur ici). Anonyme ou compte
+  // la section "Nos recommandations pour toi" de HomePage.jsx. Anonyme ou compte
   // sans préférences/intérêts déclarés → `recommendations` reste vide,
   // aucune ligne de code ci-dessous ne change l'ordre/affichage existant.
   let recommendations: ReturnType<typeof getRecommendedEvents<PublicEvent>> = []
@@ -103,6 +103,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
             Chercher
           </button>
         </form>
+        <AccessCodeForm />
       </div>
 
       {search ? (

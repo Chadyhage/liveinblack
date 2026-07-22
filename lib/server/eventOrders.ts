@@ -46,6 +46,9 @@ export interface EventOrderItemView {
   name: string
   quantity: number
   unitPriceMinor: number
+  showOptionId: string | null
+  showLabel: string | null
+  showInfo: string | null
   ticketId: string
   addedBy: string
   addedByName: string | null
@@ -87,6 +90,9 @@ function toItemView(item: OrderItem): EventOrderItemView {
     name: item.name,
     quantity: item.quantity,
     unitPriceMinor: item.unitPriceMinor,
+    showOptionId: item.showOptionId ?? null,
+    showLabel: item.showLabel ?? null,
+    showInfo: item.showInfo ?? null,
     ticketId: item.ticketId,
     addedBy: item.addedBy,
     addedByName: item.addedByName ?? null,
@@ -273,7 +279,7 @@ export async function addOrderItem(caller: OrderCaller, input: AddOrderItemInput
   // strictement plus sûr : pas de carve-out "menu vide" ici, un menu vide ou
   // un item introuvable refusent tout simplement la ligne.
   const menuItem = event.menu?.find((m) => m.name === menuItemId)
-  if (!menuItem) return { ok: false, status: 400, error: 'unknown_menu_item' }
+  if (!menuItem || menuItem.available === false) return { ok: false, status: 400, error: 'unknown_menu_item' }
 
   const ticket = await Ticket.findOne({ ticketCode })
   if (!ticket || ticket.eventId !== eventId) return { ok: false, status: 404, error: 'ticket_not_found' }
@@ -291,18 +297,63 @@ export async function addOrderItem(caller: OrderCaller, input: AddOrderItemInput
 
   const addedByName = await resolveCallerName(caller.id)
   const itemId = crypto.randomBytes(12).toString('hex')
+  const unitPriceMinor = menuItem.price ?? 0
+
+  type Outcome = { kind: 'error'; status: number; error: string } | { kind: 'item'; item: OrderItem }
 
   const session = await mongoose.startSession()
-  let created: OrderItem
+  let outcome: Outcome
   try {
-    created = await session.withTransaction(async (): Promise<OrderItem> => {
+    outcome = await session.withTransaction(async (): Promise<Outcome> => {
       const order = await getOrCreateOrder(eventId, session)
+
+      // A repeated tap must increment the editable line instead of creating
+      // visually identical rows. Keeping this rule in the transaction also
+      // protects callers other than the scanner UI and fast double clicks.
+      const existing = order.items.find(
+        (item) =>
+          item.ticketId === ticketCode &&
+          item.menuItemId === menuItemId &&
+          item.kind === 'order' &&
+          item.unitPriceMinor === unitPriceMinor &&
+          !item.servedAt &&
+          !item.paidAt &&
+          item.status !== 'cancelled' &&
+          (rank > 0 || item.addedBy === caller.id)
+      )
+
+      if (existing) {
+        const oldQuantity = existing.quantity
+        const nextQuantity = oldQuantity + quantity
+        if (nextQuantity > 50) return { kind: 'error', status: 400, error: 'invalid_quantity' }
+
+        existing.quantity = nextQuantity
+        await order.save({ session })
+        await appendLog(
+          eventId,
+          {
+            actorId: caller.id,
+            actorName: addedByName,
+            actorRole: role,
+            itemId: existing.id,
+            ticketId: ticketCode,
+            itemName: existing.name,
+            action: 'edit',
+            oldValue: { quantity: oldQuantity },
+            newValue: { quantity: nextQuantity },
+            note: 'merged_repeated_add',
+          },
+          session
+        )
+        return { kind: 'item', item: existing }
+      }
+
       order.items.push({
         id: itemId,
         menuItemId,
         name: menuItem.name,
         quantity,
-        unitPriceMinor: menuItem.price ?? 0,
+        unitPriceMinor,
         ticketId: ticketCode,
         addedBy: caller.id,
         addedByName,
@@ -322,18 +373,19 @@ export async function addOrderItem(caller: OrderCaller, input: AddOrderItemInput
           ticketId: ticketCode,
           itemName: menuItem.name,
           action: 'add',
-          newValue: { quantity, unitPriceMinor: menuItem.price ?? 0 },
+          newValue: { quantity, unitPriceMinor },
         },
         session
       )
 
-      return newItem
+      return { kind: 'item', item: newItem }
     })
   } finally {
     await session.endSession()
   }
 
-  return { ok: true, item: toItemView(created) }
+  if (outcome.kind === 'error') return { ok: false, status: outcome.status, error: outcome.error }
+  return { ok: true, item: toItemView(outcome.item) }
 }
 
 // ────────────────────────── updateOrderItemQuantity ─────────────────────────
@@ -739,11 +791,11 @@ export async function materializeTicketOrders(caller: OrderCaller, input: Materi
   // moment du filtre. La seconde ligne deviendrait alors orpheline : tout
   // mutateur par id (serve/cancel/update/remove, qui font tous
   // `.find(i => i.id === itemId)`) ne peut jamais atteindre que la première.
-  const preordersByName = new Map<string, { name: string; price: number; qty: number }>()
+  const preordersByName = new Map<string, { name: string; price: number; qty: number; showOptionId: string | null; showLabel: string | null; showInfo: string | null }>()
   for (const p of ticket.preorders ?? []) {
     const existing = preordersByName.get(p.name)
     if (existing) existing.qty += p.qty ?? 1
-    else preordersByName.set(p.name, { name: p.name, price: p.price ?? 0, qty: p.qty ?? 1 })
+    else preordersByName.set(p.name, { name: p.name, price: p.price ?? 0, qty: p.qty ?? 1, showOptionId: p.showOptionId ?? null, showLabel: p.showLabel ?? null, showInfo: p.showInfo ?? null })
   }
   const preorderCandidates = Array.from(preordersByName.values()).map((p) => ({
     id: sanitizedItemId('pre', ticketCode, p.name),
@@ -751,6 +803,9 @@ export async function materializeTicketOrders(caller: OrderCaller, input: Materi
     name: p.name,
     quantity: p.qty,
     unitPriceMinor: p.price,
+    showOptionId: p.showOptionId,
+    showLabel: p.showLabel,
+    showInfo: p.showInfo,
     ticketId: ticketCode,
     addedBy: caller.id,
     addedByName: null as string | null,

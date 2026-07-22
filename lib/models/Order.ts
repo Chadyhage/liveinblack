@@ -13,6 +13,17 @@ const preorderRequestSchema = new Schema(
     name: { type: String, required: true },
     price: { type: Number, required: true }, // résolu depuis event.menu au moment de la commande
     qty: { type: Number, required: true },
+    showOptionId: { type: String, default: null },
+    showLabel: { type: String, default: null },
+    showInfo: { type: String, default: null },
+  },
+  { _id: false }
+)
+
+const ticketPreorderSchema = new Schema(
+  {
+    ticketIndex: { type: Number, required: true },
+    items: { type: [preorderRequestSchema], default: [] },
   },
   { _id: false }
 )
@@ -36,6 +47,7 @@ const orderSchema = new Schema(
     promoUnitDiscountMinor: { type: Number, default: 0 },
 
     preorders: { type: [preorderRequestSchema], default: [] },
+    ticketPreorders: { type: [ticketPreorderSchema], default: [] },
 
     sellerUid: { type: String, default: null },
     connectMode: { type: String, enum: ['auto', 'ledger', 'none'], default: 'none' },

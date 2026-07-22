@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { regions } from '@/lib/shared/regions'
 import { regionToCurrency, currencySymbol, payRailLabel } from '@/lib/shared/money'
+import ImageCropperModal from '@/app/components/ImageCropperModal'
 import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEditor'
 
 // Port du wizard de création/édition d'événement en 5 étapes
@@ -11,9 +12,8 @@ import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEdito
 //
 // Différences volontaires par rapport au legacy (documentées aussi dans le
 // rapport de tâche) :
-// - Pas de cropper interactif (react-easy-crop + canvas) : l'affiche et les
-//   photos de place sont juste redimensionnées côté client (canvas, 1280px
-//   max, JPEG q0.85) puis uploadées telles quelles.
+// - Les photos de place sont redimensionnées côté client (canvas, 1280px
+//   max, JPEG q0.85). L'affiche dispose du recadrage panoramique attendu.
 // - La vidéo d'aperçu est plafonnée à ~8 Mo (contrainte de
 //   `uploadDataUri` côté serveur, phase antérieure) au lieu de 30 Mo en
 //   legacy.
@@ -22,10 +22,6 @@ import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEdito
 // - Pas d'avertissement d'encaissement (Stripe/Momo) dans le wizard : déjà
 //   surfacé en agrégat sur le tableau de bord, éviter un aller-retour API
 //   redondant par événement.
-// - Pas de champ `subtitle` indépendant : ce wizard le régénère toujours à
-//   partir des 60 premiers caractères de `description` (voir buildPayload) et
-//   ne lit jamais `ev.subtitle` au chargement. Assumé — un `subtitle` défini
-//   par une autre voie sera écrasé à la prochaine sauvegarde depuis ce wizard.
 
 // ─────────────────────────────────────────────────────────────────────────
 // Types
@@ -318,6 +314,7 @@ function InputField({
   style,
   min,
   max,
+  maxLength,
   locked = false,
 }: {
   label?: string
@@ -329,6 +326,7 @@ function InputField({
   style?: React.CSSProperties
   min?: string | number
   max?: string | number
+  maxLength?: number
   locked?: boolean
 }) {
   const [focused, setFocused] = useState(false)
@@ -344,6 +342,7 @@ function InputField({
         type={type}
         min={min}
         max={max}
+        maxLength={maxLength}
         disabled={locked}
         title={locked ? 'Verrouillé — billets déjà vendus' : undefined}
         style={{
@@ -573,6 +572,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   // ── Step 0 : Bases ──
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [subtitle, setSubtitle] = useState('')
   const [dateStr, setDateStr] = useState('')
   const [timeStart, setTimeStart] = useState('')
   const [timeEnd, setTimeEnd] = useState('')
@@ -589,6 +589,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [posterCropSrc, setPosterCropSrc] = useState<string | null>(null)
   const [posterUploading, setPosterUploading] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
@@ -619,6 +620,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   function snapshotForm() {
     return JSON.stringify({
       name,
+      subtitle,
       description,
       dateStr,
       timeStart,
@@ -650,6 +652,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
   function hydrate(ev: ServerEventDetail) {
     setName(ev.name || '')
+    setSubtitle(ev.subtitle || '')
     setDescription(ev.description || '')
     setDateStr(ev.date || '')
     setTimeStart(ev.time || '')
@@ -708,7 +711,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     setRegion(ev.region || '')
     setPlaylist(!!ev.playlist)
     setPreorder(!!ev.preorder)
-    setMenuItems(ev.menu && ev.menu.length > 0 ? ev.menu : [emptyMenuItem()])
+    setMenuItems(ev.menu && ev.menu.length > 0 ? ev.menu.map((item) => ({ ...item, available: item.available !== false })) : [emptyMenuItem()])
     setPublishAt(toDatetimeLocalValue(ev.publishAt))
     setClosingDate(toDatetimeLocalValue(ev.closingDate))
     setCancelled(!!ev.cancelled)
@@ -776,18 +779,25 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       return
     }
     setErrors((err) => ({ ...err, image: '' }))
+    try {
+      setPosterCropSrc(await readFileAsDataUrl(file))
+    } catch {
+      setErrors((err) => ({ ...err, image: "Impossible de lire l'affiche sélectionnée." }))
+    }
+  }
+
+  async function uploadCroppedPoster(dataUrl: string) {
     setPosterUploading(true)
     try {
-      const dataUrl = await readFileAsDataUrl(file)
-      const resized = await resizeImageDataUrl(dataUrl, 1280, 0.85)
-      setImagePreview(resized)
-      const url = await uploadMedia(resized)
+      setImagePreview(dataUrl)
+      const url = await uploadMedia(dataUrl)
       setImageUrl(url)
       setImagePreview(url)
     } catch {
       setErrors((err) => ({ ...err, image: "L'envoi de l'affiche a échoué — réessaie." }))
     } finally {
       setPosterUploading(false)
+      setPosterCropSrc(null)
     }
   }
 
@@ -907,7 +917,17 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     const tags = [partyType, ...musicStyles, ...ambiances].filter(Boolean).slice(0, 6)
     const filteredArtists = artists.filter((a) => a.name.trim()).map((a) => ({ name: a.name.trim(), role: a.role }))
     const dj = filteredArtists.length > 0 ? filteredArtists.map((a) => a.name).join(', ') : ''
-    const validMenuItems = menuItems.filter((i) => i.name.trim() && i.price > 0)
+    const validMenuItems = menuItems
+      .filter((i) => i.name.trim() && i.price > 0)
+      .map((item) => ({
+        ...item,
+        name: item.name.trim(),
+        showOptions: item.hasShow
+          ? item.showOptions
+              .filter((option) => option.label.trim())
+              .map((option) => ({ ...option, label: option.label.trim(), infoPrompt: option.infoPrompt.trim() }))
+          : [],
+      }))
     const menuNameSet = new Set(validMenuItems.map((i) => i.name.trim()))
     const anyIncluded = places.some((p) => p.included.length > 0)
 
@@ -928,7 +948,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
     return {
       name: name.trim(),
-      subtitle: description.trim().slice(0, 60),
+      subtitle: subtitle.trim() || description.trim().slice(0, 60),
       description: description.trim(),
       category: finalCategory,
       tags,
@@ -1240,6 +1260,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
           {/* Champs de base */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <InputField label="Nom de l'événement *" placeholder="Ex: NEON NIGHT Vol.3" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} />
+            <InputField label="Sous-titre" placeholder="Ex: Une nuit afro-house hors du temps" value={subtitle} maxLength={120} onChange={(e) => setSubtitle(e.target.value)} />
             <InputField label="Date *" type="date" value={dateStr} min={locked ? undefined : new Date().toISOString().split('T')[0]} onChange={(e) => setDateStr(e.target.value)} error={errors.date} locked={locked} />
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -1894,6 +1915,12 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   placeTypes={places.map((p) => p.type).filter(Boolean)}
                   disabled={locked}
                   onChange={(updated) => setMenuItems((prev) => prev.map((m, j) => (j === i ? updated : m)))}
+                  onUploadImage={async (file) => {
+                    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('invalid_type')
+                    if (file.size > 5 * 1024 * 1024) throw new Error('too_large')
+                    const dataUrl = await readFileAsDataUrl(file)
+                    return uploadMedia(await resizeImageDataUrl(dataUrl, 800, 0.85))
+                  }}
                   onRemove={i > 0 ? () => setMenuItems((prev) => prev.filter((_, j) => j !== i)) : undefined}
                 />
               ))}
@@ -1999,6 +2026,16 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             )}
           </button>
         </div>
+      )}
+      {posterCropSrc && (
+        <ImageCropperModal
+          src={posterCropSrc}
+          title="Recadrer l'affiche"
+          aspect={16 / 9}
+          outputWidth={1280}
+          onCancel={() => setPosterCropSrc(null)}
+          onConfirm={uploadCroppedPoster}
+        />
       )}
     </main>
   )

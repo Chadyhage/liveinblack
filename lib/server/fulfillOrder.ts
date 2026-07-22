@@ -87,6 +87,7 @@ export async function fulfillOrder(
   // organisateur — `totalPrice` est la source canonique de cette somme, pas
   // seulement un doublon d'affichage de `placePrice`.
   const preorderTotalMajor = order.preorders.reduce((s, p) => s + (p.price / (isXof ? 1 : 100)) * p.qty, 0)
+  const hasTicketPreorders = (order.ticketPreorders?.length || 0) > 0
 
   const ticketCodes: string[] = []
   const ticketDocs = []
@@ -101,9 +102,13 @@ export async function fulfillOrder(
       eventDate: event.date,
       place: order.placeType,
       placePrice: unitMajor,
-      totalPrice: seatIndex === 0 ? unitMajor + preorderTotalMajor : unitMajor,
+      totalPrice: hasTicketPreorders
+        ? unitMajor + (order.ticketPreorders.find((group) => group.ticketIndex === seatIndex)?.items || []).reduce((sum, item) => sum + (item.price / (isXof ? 1 : 100)) * item.qty, 0)
+        : seatIndex === 0 ? unitMajor + preorderTotalMajor : unitMajor,
       currency: order.currency,
-      preorders: seatIndex === 0 ? order.preorders.map((p) => ({ name: p.name, price: p.price / (isXof ? 1 : 100), qty: p.qty })) : [],
+      preorders: hasTicketPreorders
+        ? (order.ticketPreorders.find((group) => group.ticketIndex === seatIndex)?.items || []).map((item) => ({ name: item.name, price: item.price / (isXof ? 1 : 100), qty: item.qty, showOptionId: item.showOptionId || null, showLabel: item.showLabel || null, showInfo: item.showInfo || null }))
+        : seatIndex === 0 ? order.preorders.map((p) => ({ name: p.name, price: p.price / (isXof ? 1 : 100), qty: p.qty, showOptionId: p.showOptionId || null, showLabel: p.showLabel || null, showInfo: p.showInfo || null })) : [],
       userId: order.isTable ? order.userId : order.userId,
       hostUid: order.isTable ? order.userId : null,
       tableId,

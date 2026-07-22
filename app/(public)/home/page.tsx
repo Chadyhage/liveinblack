@@ -1,11 +1,17 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { auth } from '@/auth'
 import { listPublicEvents, type PublicEvent } from '@/lib/server/events'
 import { listPublicProviders, type CatalogItem } from '@/lib/server/providers'
 import { getPublicHomepageConfig } from '@/lib/server/agentHomepageConfig'
+import { getBoostedEventIds } from '@/lib/server/boosts'
+import { getMyProfile } from '@/lib/server/profile'
+import { listActiveInterestSignals } from '@/lib/server/eventInterests'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
 import { eventStartMs } from '@/lib/shared/event-time'
+import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
+import HomeAmbienceButton from './HomeAmbienceButton'
 
 export const metadata: Metadata = {
   title: 'LIVEINBLACK — La marketplace de la nuit et de l’événementiel',
@@ -18,12 +24,8 @@ export const metadata: Metadata = {
 // sinon cette page une fois pour toutes au build.
 export const dynamic = 'force-dynamic'
 
-// Port de src/pages/PublicLanding.jsx (page réellement affichée aux visiteurs
-// anonymes — HomePage.jsx elle-même ne rend son contenu riche (Top 3, reco...)
-// qu'aux utilisateurs connectés, hors périmètre de la phase 2). Simplifications
-// assumées : pas d'animation de révélation au scroll (contenu affiché
-// directement), pas de bouton "ambiance sonore" (moteur audio global, à
-// porter avec le lecteur musical transverse dans une phase ultérieure).
+// Accueil unifié : vitrine de PublicLanding pour les visiteurs, enrichie du
+// Top 3 et des recommandations de HomePage pour les membres connectés.
 
 const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=80'
 
@@ -44,10 +46,31 @@ function firstOfferImage(catalog: CatalogItem[] = []): string | null {
 }
 
 export default async function AccueilPage() {
-  const [allEvents, providers, actualiteConfig] = await Promise.all([listPublicEvents(), listPublicProviders(), getPublicHomepageConfig()])
+  const [allEvents, providers, actualiteConfig, boostedIds, session] = await Promise.all([listPublicEvents(), listPublicProviders(), getPublicHomepageConfig(), getBoostedEventIds(), auth()])
 
   const events = [...allEvents].sort((a, b) => eventStartMs(a) - eventStartMs(b)).slice(0, 6)
   const featuredProviders = providers.slice(0, 4)
+  const topThree = [...allEvents]
+    .sort((a, b) => Number(boostedIds.has(b.id)) - Number(boostedIds.has(a.id)) || eventStartMs(a) - eventStartMs(b))
+    .slice(0, 3)
+
+  let recommendations: ReturnType<typeof getRecommendedEvents<PublicEvent>> = []
+  let needsPreferences = false
+  if (session?.user) {
+    const [profile, interestHistory] = await Promise.all([getMyProfile({ id: session.user.id }), listActiveInterestSignals({ id: session.user.id })])
+    if (profile && profile.privacy.personalizedRecommendations !== false) {
+      needsPreferences = !profile.preferences || Object.keys(profile.preferences).length === 0
+      const topIds = new Set(topThree.map((event) => event.id))
+      recommendations = getRecommendedEvents({
+        preferences: profile.preferences as RecommendationPreferences | null,
+        interestHistory,
+        events: allEvents.filter((event) => !topIds.has(event.id)),
+        boostedIds,
+        currentUserId: session.user.id,
+        max: 6,
+      })
+    }
+  }
 
   // Carrousel éditorial « Actualité » (#9 phase agent/admin) — additif : si la
   // config est inactive/vide ou qu'aucun événement curé n'est plus découvrable
@@ -84,14 +107,26 @@ export default async function AccueilPage() {
             Réserve, découvre, profite. Ta prochaine sortie commence ici. Billets, événements privés et prestataires réunis au même endroit.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 30 }}>
-            <Link href="/login?mode=register" style={btnPrimary}>Créer mon compte</Link>
+            <Link href={session?.user ? '/profile' : '/login?mode=register'} style={btnPrimary}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
             <Link href="/events" style={btnGhost}>Découvrir les événements</Link>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 18 }}>
+          {!session?.user && <p style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 18 }}>
             Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Se connecter</Link>
+          </p>}
+          <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '18px 0 0', letterSpacing: '.01em' }}>
+            Gratuit · Ton billet QR dans ta poche · Aucune app à installer
           </p>
+          <HomeAmbienceButton />
         </div>
       </section>
+
+      {session?.user && topThree.length > 0 && (
+        <Section eyebrow="Le classement" title="Top 3 du moment" sub="Les événements mis en avant et les prochaines dates à ne pas manquer.">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 16 }}>
+            {topThree.map((event, index) => <HomeEventCard key={event.id} event={event} badge={`0${index + 1}`} boosted={boostedIds.has(event.id)} />)}
+          </div>
+        </Section>
+      )}
 
       {/* ACTUALITÉ (carrousel éditorial curé par l'agent) */}
       {actualiteEvents.length > 0 && (
@@ -148,6 +183,28 @@ export default async function AccueilPage() {
                 </Link>
               )
             })}
+          </div>
+        </section>
+      )}
+
+      {session?.user && recommendations.length > 0 && (
+        <Section eyebrow="Rien que pour toi" title="Nos recommandations pour toi" sub="Selon tes goûts, tes favoris et tes réservations.">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '-18px 0 16px' }}>
+            <Link href="/profile" style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Régler mes goûts →</Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 16 }}>
+            {recommendations.map(({ event, reason }) => <HomeEventCard key={event.id} event={event} reason={reason} />)}
+          </div>
+        </Section>
+      )}
+
+      {session?.user && needsPreferences && (
+        <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
+          <div style={{ ...card, padding: '22px 24px', borderColor: 'rgba(132,68,255,.4)', background: 'linear-gradient(120deg,rgba(132,68,255,.13),rgba(78,232,200,.05)),var(--surface)' }}>
+            <p style={{ margin: 0, color: '#c9b0ff', fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
+            <h2 style={{ margin: '7px 0 5px', fontSize: 21 }}>Des soirées vraiment faites pour toi</h2>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12.5, lineHeight: 1.55 }}>Indique tes styles, tes villes et ton budget. Cela prend moins d&apos;une minute et reste modifiable.</p>
+            <Link href="/profile" style={{ ...btnPrimary, marginTop: 14, padding: '10px 17px', fontSize: 12.5 }}>Régler mes goûts</Link>
           </div>
         </section>
       )}
@@ -240,7 +297,7 @@ export default async function AccueilPage() {
       </Section>
 
       {/* POURQUOI CRÉER UN COMPTE */}
-      <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes.">
+      {!session?.user && <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes. Et tu débloques tout ça :">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 14 }}>
           {[
             ['Réserve tes billets', 'Paiement sécurisé, billet instantané.'],
@@ -261,7 +318,7 @@ export default async function AccueilPage() {
         <div style={{ textAlign: 'center', marginTop: 26 }}>
           <Link href="/login?mode=register" style={btnPrimary}>Créer mon compte gratuitement</Link>
         </div>
-      </Section>
+      </Section>}
 
       {/* COMMENT ÇA MARCHE */}
       <Section eyebrow="Simple" title="Comment ça marche">
@@ -287,7 +344,7 @@ export default async function AccueilPage() {
             <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--violet)', margin: 0 }}>Organisateur</p>
             <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
             <ul style={featList}>
-              {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Booste ta visibilité'].map((f) => (
+              {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
                 <li key={f} style={featItem}><span style={{ color: 'var(--violet)' }}>◆</span> {f}</li>
               ))}
             </ul>
@@ -297,7 +354,7 @@ export default async function AccueilPage() {
             <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
             <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
             <ul style={featList}>
-              {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs', 'Reçois des demandes et devis'].map((f) => (
+              {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
                 <li key={f} style={featItem}><span style={{ color: 'var(--gold)' }}>◆</span> {f}</li>
               ))}
             </ul>
@@ -330,20 +387,48 @@ export default async function AccueilPage() {
       {/* CTA FINAL */}
       <section style={{ padding: '10px 22px 70px' }}>
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.14), transparent 60%), var(--surface-2)' }}>
-          <h2 style={{ fontSize: 'clamp(26px,6vw,40px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>Rejoins Live in Black</h2>
+          <h2 style={{ fontSize: 'clamp(26px,6vw,40px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>
-            Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.
+            {session?.user ? 'Retrouve tes recommandations et tous tes billets au même endroit.' : 'Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.'}
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
-            <Link href="/login?mode=register" style={btnPrimary}>Créer mon compte</Link>
+            <Link href={session?.user ? '/profile' : '/login?mode=register'} style={btnPrimary}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
             <Link href="/events" style={btnGhost}>Découvrir les événements</Link>
           </div>
-          <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 24 }}>
-            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Se connecter</Link>
-          </p>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 18 }}>
+            <Link href="/organizer-signup" style={{ color: 'var(--teal)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
+            <Link href="/provider-signup" style={{ color: 'var(--gold)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir prestataire →</Link>
+          </div>
+          {!session?.user && <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 24 }}>
+            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
+          </p>}
         </div>
       </section>
     </>
+  )
+}
+
+function HomeEventCard({ event, badge, boosted = false, reason }: { event: PublicEvent; badge?: string; boosted?: boolean; reason?: string }) {
+  const prices = (event.places || []).map((place) => Number(place.price)).filter((price) => Number.isFinite(price) && price >= 0)
+  const minPrice = prices.length ? Math.min(...prices) : null
+  return (
+    <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
+      <div style={{ position: 'relative', aspectRatio: '4/3', background: `radial-gradient(circle at 25% 10%,${event.color || '#8444ff'}55,transparent 58%),var(--surface-2)` }}>
+        {event.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,4,11,.74),transparent 58%)' }} />
+        {badge && <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 26, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>}
+        {boosted && <span style={{ position: 'absolute', top: 10, right: 10, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '4px 8px', fontSize: 9.5, fontWeight: 900 }}>À LA UNE</span>}
+        {reason && <span style={{ position: 'absolute', left: 10, bottom: 10, maxWidth: 'calc(100% - 20px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(132,68,255,.48)', background: 'rgba(5,6,10,.86)', color: '#e5d8ff', padding: '5px 9px', fontSize: 10.5, fontWeight: 700 }}>{reason}</span>}
+      </div>
+      <div style={{ padding: '13px 15px 15px' }}>
+        <p style={{ margin: 0, color: '#fff', fontSize: 16, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>
+        <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 11.5 }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+        <p style={{ margin: '8px 0 0', color: 'var(--gold)', fontSize: 12.5, fontWeight: 800 }}>{minPrice == null || minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`}</p>
+      </div>
+    </Link>
   )
 }
 

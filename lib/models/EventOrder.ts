@@ -12,6 +12,9 @@ const orderItemSchema = new Schema(
     name: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1 },
     unitPriceMinor: { type: Number, required: true }, // résolu serveur depuis event.menu, jamais du client
+    showOptionId: { type: String, default: null },
+    showLabel: { type: String, default: null },
+    showInfo: { type: String, default: null },
     ticketId: { type: String, required: true }, // ticketCode propriétaire de la ligne
     addedBy: { type: String, required: true },
     addedByName: { type: String, default: null }, // symétrie affichage avec servedByName/paidByName

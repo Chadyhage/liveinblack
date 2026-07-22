@@ -5,7 +5,7 @@ import { fulfillOrder } from '@/lib/server/fulfillOrder'
 import { releaseOrder } from '@/lib/server/orders'
 import { finalizeBoost } from '@/lib/server/finalizeBoost'
 import { releaseBoostSlotIfPending } from '@/lib/server/boostSlots'
-import { handleStripeSubscriptionCheckoutCompleted, handleStripeSubscriptionEvent } from '@/lib/server/providerSubscriptions'
+import { handleStripeSubscriptionCheckoutCompleted, handleStripeSubscriptionEvent, handleStripeSubscriptionInvoicePaid } from '@/lib/server/providerSubscriptions'
 import User from '@/lib/models/User'
 import type Stripe from 'stripe'
 
@@ -58,6 +58,10 @@ export async function POST(req: Request) {
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription
         await handleStripeSubscriptionEvent(sub, event.type === 'customer.subscription.deleted')
+        break
+      }
+      case 'invoice.paid': {
+        await handleStripeSubscriptionInvoicePaid(event.data.object as Stripe.Invoice)
         break
       }
       case 'checkout.session.expired': {

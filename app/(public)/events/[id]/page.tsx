@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { auth } from '@/auth'
 import { getEventById } from '@/lib/server/events'
@@ -10,18 +11,17 @@ import { isEventInterested } from '@/lib/server/eventInterests'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
 import { isEventEnded } from '@/lib/shared/event-time'
+import { normalizeShowOptions } from '@/lib/shared/showOptions'
 import { canBook as canBookFn, getBookingBlockedReason } from '@/lib/server/permissions'
 import UnlockForm from './UnlockForm'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
 import AgeVerificationGate from '@/app/components/AgeVerificationGate'
 import EventCheckoutPanel from '@/app/components/EventCheckoutPanel'
+import EventShareButton from './EventShareButton'
 
-// Port de src/pages/EventDetailPage.jsx (2861 lignes côté legacy). Explicitement
-// HORS PÉRIMÈTRE ici (déférré) : playlist, partage (le bouton "Partager" du
-// hero legacy n'est pas encore porté — seul le bouton "Intéressé", #6 phase
-// profil, l'est ici). La sélection de place + paiement (#119) est portée par
-// EventCheckoutPanel — voir son en-tête pour le détail des simplifications
-// assumées par rapport au legacy. Ce que ce fichier ajoute par rapport au
+// Port de src/pages/EventDetailPage.jsx (2861 lignes côté legacy). La sélection
+// de place + paiement (#119) est portée par
+// EventCheckoutPanel. Ce que ce fichier ajoute par rapport au
 // legacy : méta SEO (aucune n'existait), et l'application RÉELLE (pas
 // seulement UI) du blocage des événements privés — voir lib/server/events.ts.
 
@@ -102,13 +102,17 @@ export default async function EventDetailPage({
     groupType: (p.groupType === 'group' ? 'group' : 'solo') as 'group' | 'solo',
     groupMin: p.groupMin ?? 0,
     groupMax: p.groupMax ?? 0,
+    photos: p.photos ?? [],
     included: p.included ?? [],
   }))
-  const checkoutMenu = (event.menu || []).map((m) => ({
+  const checkoutMenu = (event.menu || []).filter((m) => m.available !== false).map((m) => ({
     name: m.name,
     emoji: m.emoji || '',
+    imageUrl: m.imageUrl || null,
     price: m.price ?? 0,
     description: m.description || '',
+    hasShow: Boolean(m.hasShow),
+    showOptions: normalizeShowOptions(m.showOptions),
     excludedPlaces: m.excludedPlaces ?? [],
   }))
 
@@ -129,7 +133,8 @@ export default async function EventDetailPage({
           <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.92), transparent 55%)' }} />
-        <div style={{ position: 'absolute', top: 14, right: 14 }}>
+        <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <EventShareButton eventName={event.name} />
           <EventInterestButtonClient eventId={event.id} initialInterested={interestState.interested} isAuthenticated={Boolean(session?.user)} floating />
         </div>
         <div style={{ position: 'absolute', left: 20, right: 20, bottom: 16 }}>
@@ -158,6 +163,17 @@ export default async function EventDetailPage({
         {event.location && <Chip label={event.location} />}
         {event.minAge ? <Chip label={`${event.minAge}+`} /> : null}
       </div>
+
+      {event.playlist && (
+        <div style={{ padding: '14px 22px 0' }}>
+          <Link
+            href={session?.user ? `/playlist/${event.id}` : `/login?next=${encodeURIComponent(`/playlist/${event.id}`)}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 15px', borderRadius: 999, border: '1px solid rgba(224,90,170,.35)', background: 'rgba(224,90,170,.1)', color: 'var(--pink)', fontSize: 12.5, fontWeight: 800, textDecoration: 'none' }}
+          >
+            Playlist interactive · Proposer un son
+          </Link>
+        </div>
+      )}
 
       {/* DESCRIPTION */}
       {event.description && (
@@ -273,11 +289,11 @@ export default async function EventDetailPage({
       {!session?.user && event.menu?.length ? (
         <Section title="Carte / précommande">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
-            {event.menu.map((item) => (
+            {event.menu.filter((item) => item.available !== false).map((item) => (
               <div key={item.name} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700 }}>
-                    {item.emoji ? `${item.emoji} ` : ''}
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, fontSize: 13, fontWeight: 700 }}>
+                    {item.imageUrl ? <Image src={item.imageUrl} alt="" width={34} height={34} style={{ borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} /> : item.emoji ? <span aria-hidden="true">{item.emoji}</span> : null}
                     {item.name}
                   </span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.price, currency)}</span>

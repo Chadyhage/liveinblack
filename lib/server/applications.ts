@@ -7,6 +7,16 @@ import { applicationReceivedEmail } from './email-templates'
 import { sendEmail } from './email'
 import { validateOrganizerFormData, type OrganizerFormData, validatePrestataireFormData, type PrestataireFormData, getRequiredDocs } from '../shared/applicationValidation'
 import { applicationApprovedEmail, applicationRejectedEmail, applicationNeedsChangesEmail } from './email-templates'
+import { isPasswordPolicyCompliant } from '../shared/passwordPolicy'
+import {
+  APPLICATION_DOCUMENT_MAX_BYTES,
+  type ApplicationDocumentInput,
+  type ApplicationDocumentUploadReference,
+} from '../shared/applicationDocuments'
+import {
+  applicationUploadOwner,
+  verifyApplicationUploadReference,
+} from './applicationUpload'
 
 // Port de src/utils/applications.js (#7 phase organisateur) — dossier de
 // candidature organisateur/prestataire. Cette phase ne construit QUE le
@@ -30,16 +40,18 @@ export interface ApplicationCaller {
 
 type ErrResult = { ok: false; status: number; error: string }
 
-export interface DocumentEntryInput {
-  name: string
-  dataUri: string
-}
+export type DocumentEntryInput = ApplicationDocumentInput
 
 export interface ApplicationDocumentView {
   name: string
   url: string
   size: number
   uploadedAt: string | null
+  publicId?: string | null
+  format?: string | null
+  resourceType?: string | null
+  deliveryType?: string | null
+  version?: number | null
 }
 
 export interface ApplicationView {
@@ -71,7 +83,12 @@ function toApplicationView(app: ApplicationDoc & { _id: unknown }): ApplicationV
   if (docsMap) {
     const entries = docsMap instanceof Map ? docsMap.entries() : Object.entries(docsMap)
     for (const [key, list] of entries) {
-      documents[key] = (list || []).map((d) => ({ name: d.name, url: d.url, size: d.size ?? 0, uploadedAt: d.uploadedAt ? new Date(d.uploadedAt).toISOString() : null }))
+      documents[key] = (list || []).map((d, index) => ({
+        name: d.name,
+        url: `/api/applications/${String(app._id)}/documents/${encodeURIComponent(key)}/${index}`,
+        size: d.size ?? 0,
+        uploadedAt: d.uploadedAt ? new Date(d.uploadedAt).toISOString() : null,
+      }))
     }
   }
 
@@ -130,16 +147,52 @@ export type SubmitResult = ErrResult | { ok: true; application: ApplicationView 
 
 type UploadDocsResult = { ok: true; documents: Record<string, ApplicationDocumentView[]> } | ErrResult
 
-async function uploadApplicationDocuments(userId: string, appId: string, documents: Record<string, DocumentEntryInput[]>): Promise<UploadDocsResult> {
+async function uploadApplicationDocuments(
+  userId: string,
+  appId: string,
+  documents: Record<string, DocumentEntryInput[]>,
+  expectedUploadOwner: string
+): Promise<UploadDocsResult> {
   const uploaded: Record<string, ApplicationDocumentView[]> = {}
   for (const [key, files] of Object.entries(documents)) {
     const list: ApplicationDocumentView[] = []
     for (const file of files) {
-      const result = await uploadDataUri(file.dataUri, `applications/${userId}/${appId}/${key}`, {
-        allowedMimeTypes: DOCUMENT_MIME_TYPES,
+      if ('dataUri' in file) {
+        const result = await uploadDataUri(file.dataUri, `applications/${userId}/${appId}/${key}`, {
+          allowedMimeTypes: DOCUMENT_MIME_TYPES,
+          maxBytes: APPLICATION_DOCUMENT_MAX_BYTES,
+          deliveryType: 'authenticated',
+        })
+        if (!result.ok) return { ok: false, status: 400, error: result.error }
+        list.push({
+          name: file.name,
+          url: '',
+          size: result.bytes,
+          uploadedAt: new Date().toISOString(),
+          publicId: result.publicId,
+          format: result.format,
+          resourceType: result.resourceType,
+          deliveryType: result.deliveryType,
+          version: result.version,
+        })
+        continue
+      }
+
+      const reference = file as ApplicationDocumentUploadReference
+      if (!verifyApplicationUploadReference(reference, expectedUploadOwner)) {
+        return { ok: false, status: 400, error: 'invalid_document_upload' }
+      }
+      list.push({
+        name: reference.name,
+        url: '',
+        size: reference.bytes,
+        uploadedAt: new Date().toISOString(),
+        publicId: reference.publicId,
+        format: reference.format,
+        resourceType: reference.resourceType,
+        deliveryType: reference.deliveryType,
+        version: reference.version,
       })
-      if (!result.ok) return { ok: false, status: 400, error: result.error }
-      list.push({ name: file.name, url: result.url, size: file.dataUri.length, uploadedAt: new Date().toISOString() })
     }
     uploaded[key] = list
   }
@@ -167,7 +220,7 @@ export async function submitOrganizerApplication(caller: ApplicationCaller, inpu
   const wasCorrection = app?.status === 'needs_changes'
   if (!app) app = new Application({ userId: caller.id, type: 'organisateur', status: 'draft' })
 
-  const docsResult = await uploadApplicationDocuments(caller.id, String(app._id), input.documents)
+  const docsResult = await uploadApplicationDocuments(caller.id, String(app._id), input.documents, applicationUploadOwner(caller.id))
   if (!docsResult.ok) return docsResult
 
   app.formData = input.formData
@@ -215,7 +268,7 @@ export async function registerAndSubmitOrganizerApplication(input: RegisterAndSu
 
   const email = input.email.trim().toLowerCase()
   if (!email || !email.includes('@')) return { ok: false, status: 400, error: 'invalid_email' }
-  if (!input.password || input.password.length < 8) return { ok: false, status: 400, error: 'password_too_short' }
+  if (!isPasswordPolicyCompliant(input.password || '')) return { ok: false, status: 400, error: 'password_too_short' }
 
   const missing = missingRequiredDocs('organisateur', input.documents)
   if (missing.length > 0) return { ok: false, status: 400, error: 'missing_required_documents' }
@@ -240,7 +293,7 @@ export async function registerAndSubmitOrganizerApplication(input: RegisterAndSu
   })
 
   const app = new Application({ userId: String(user._id), type: 'organisateur', status: 'draft' })
-  const docsResult = await uploadApplicationDocuments(String(user._id), String(app._id), input.documents)
+  const docsResult = await uploadApplicationDocuments(String(user._id), String(app._id), input.documents, applicationUploadOwner())
   if (!docsResult.ok) {
     // Rollback : ne jamais laisser un compte orphelin sans candidature si
     // l'upload échoue en cours de route.
@@ -295,7 +348,7 @@ export async function submitPrestataireApplication(caller: ApplicationCaller, in
   const wasCorrection = app?.status === 'needs_changes'
   if (!app) app = new Application({ userId: caller.id, type: 'prestataire', status: 'draft' })
 
-  const docsResult = await uploadApplicationDocuments(caller.id, String(app._id), input.documents)
+  const docsResult = await uploadApplicationDocuments(caller.id, String(app._id), input.documents, applicationUploadOwner(caller.id))
   if (!docsResult.ok) return docsResult
 
   app.formData = input.formData
@@ -339,7 +392,7 @@ export async function registerAndSubmitPrestataireApplication(input: RegisterAnd
 
   const email = input.email.trim().toLowerCase()
   if (!email || !email.includes('@')) return { ok: false, status: 400, error: 'invalid_email' }
-  if (!input.password || input.password.length < 8) return { ok: false, status: 400, error: 'password_too_short' }
+  if (!isPasswordPolicyCompliant(input.password || '')) return { ok: false, status: 400, error: 'password_too_short' }
 
   const missing = missingRequiredDocs('prestataire', input.documents, input.formData.prestataireTypes)
   if (missing.length > 0) return { ok: false, status: 400, error: 'missing_required_documents' }
@@ -364,7 +417,7 @@ export async function registerAndSubmitPrestataireApplication(input: RegisterAnd
   })
 
   const app = new Application({ userId: String(user._id), type: 'prestataire', status: 'draft' })
-  const docsResult = await uploadApplicationDocuments(String(user._id), String(app._id), input.documents)
+  const docsResult = await uploadApplicationDocuments(String(user._id), String(app._id), input.documents, applicationUploadOwner())
   if (!docsResult.ok) {
     await User.deleteOne({ _id: user._id })
     return docsResult
@@ -508,6 +561,56 @@ export async function getApplicationForAgent(applicationId: string): Promise<Err
         at: new Date(entry.at as unknown as string).toISOString(),
         note: entry.note ?? '',
       })),
+    },
+  }
+}
+
+export interface ApplicationDocumentAccess {
+  userId: string
+  name: string
+  legacyUrl: string
+  publicId: string | null
+  format: string | null
+  resourceType: string | null
+  deliveryType: string | null
+}
+
+export async function getApplicationDocumentForAccess(
+  applicationId: string,
+  documentKey: string,
+  documentIndex: number
+): Promise<ErrResult | { ok: true; document: ApplicationDocumentAccess }> {
+  await getDb()
+  if (!applicationId || !documentKey || !Number.isInteger(documentIndex) || documentIndex < 0) {
+    return { ok: false, status: 400, error: 'invalid_document' }
+  }
+
+  const app = await Application.findById(applicationId).lean().catch(() => null)
+  if (!app) return { ok: false, status: 404, error: 'application_not_found' }
+
+  type StoredDocument = {
+    name?: string
+    url?: string
+    publicId?: string | null
+    format?: string | null
+    resourceType?: string | null
+    deliveryType?: string | null
+  }
+  const docs = app.documents as unknown as Map<string, StoredDocument[]> | Record<string, StoredDocument[]> | undefined
+  const list = docs instanceof Map ? docs.get(documentKey) : docs?.[documentKey]
+  const document = list?.[documentIndex]
+  if (!document) return { ok: false, status: 404, error: 'document_not_found' }
+
+  return {
+    ok: true,
+    document: {
+      userId: app.userId,
+      name: document.name || 'document',
+      legacyUrl: document.url || '',
+      publicId: document.publicId || null,
+      format: document.format || null,
+      resourceType: document.resourceType || null,
+      deliveryType: document.deliveryType || null,
     },
   }
 }

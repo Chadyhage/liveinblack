@@ -16,13 +16,18 @@ export async function POST(req: Request) {
   }
   const { email, token } = parsed.data
 
-  const valid = await consumeVerificationToken(email, token)
+  await getDb()
+  const user = await User.findOne({ email }).select('_id').lean()
+  if (!user) {
+    return NextResponse.json({ error: 'invalid_or_expired_token' }, { status: 400 })
+  }
+
+  const valid = await consumeVerificationToken(String(user._id), email, 'verify-email', token)
   if (!valid) {
     return NextResponse.json({ error: 'invalid_or_expired_token' }, { status: 400 })
   }
 
-  await getDb()
-  await User.updateOne({ email }, { $set: { emailVerifiedAt: new Date() } })
+  await User.updateOne({ _id: user._id, email }, { $set: { emailVerifiedAt: new Date() } })
 
   return NextResponse.json({ ok: true })
 }

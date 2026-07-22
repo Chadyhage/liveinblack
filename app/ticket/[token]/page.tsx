@@ -196,7 +196,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
                   borderBottom: i < ticket.preorders.length - 1 ? '1px solid var(--border)' : 'none',
                 }}
               >
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{item.name}</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{item.name}{item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 3 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>×{item.qty}</span>
                   <span style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>

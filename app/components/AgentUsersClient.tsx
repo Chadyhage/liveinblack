@@ -5,25 +5,20 @@ import { useEffect, useMemo, useState } from 'react'
 // Port de la section « Comptes » (tab === 'users') de src/pages/AgentPage.jsx
 // (#9 phase agent/admin) — recherche + filtres rôle/statut/en ligne, panneau
 // de détail slide-up, actions serveur (suspendre/réactiver, vérifier l'email,
-// éditer nom/prénom/téléphone). Voir lib/server/agentUsers.ts pour la logique
-// serveur et lib/server/agentGuard.ts pour la garde d'accès (déjà vérifiée
-// par la page serveur qui monte ce composant).
+// renvoyer les emails de sécurité, éditer les coordonnées). Voir
+// lib/server/agentUsers.ts pour la logique serveur et lib/server/agentGuard.ts
+// pour la garde d'accès (déjà vérifiée par la page serveur qui monte ce
+// composant).
 //
 // Différences volontaires avec le legacy :
-// - Pas de « Modifier l'email » ni de « Réinitialiser le mot de passe » — ce
-//   port n'a pas de couche Firebase Auth distincte à synchroniser (l'email
-//   EST l'identifiant de connexion Credentials, cf. auth.ts) ; changer
-//   l'email d'un compte reste hors périmètre de cette tâche.
 // - Pas de « Supprimer le compte » — la suppression complète est un panneau
 //   agent séparé (#104), avec sa propre revue des demandes RGPD.
-// - Pas de bouton « Renvoyer le lien de vérification » — ce port n'a pas
-//   (encore) de flux d'email de vérification candidat ; seul le forçage
-//   « Marquer l'email vérifié » (emailVerifiedAt) est porté ici.
 
 type Role = 'client' | 'organisateur' | 'prestataire' | 'agent'
 type AccountStatus = 'active' | 'pending' | 'rejected'
 type StatusFilter = AccountStatus | 'disabled' | 'all'
 type RoleFilter = Role | 'all'
+type EditableField = 'firstName' | 'lastName' | 'phone' | 'email'
 
 interface UserSummary {
   id: string
@@ -135,7 +130,7 @@ export default function AgentUsersClient() {
   const [detail, setDetail] = useState<UserDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
 
-  const [editField, setEditField] = useState<{ field: 'firstName' | 'lastName' | 'phone'; value: string } | null>(null)
+  const [editField, setEditField] = useState<{ field: EditableField; value: string } | null>(null)
   const [editBusy, setEditBusy] = useState(false)
   const [confirmDisable, setConfirmDisable] = useState(false)
   const [actionBusy, setActionBusy] = useState(false)
@@ -247,6 +242,36 @@ export default function AgentUsersClient() {
     }
   }
 
+  async function handleSendAccountEmail(kind: 'verification' | 'password-reset') {
+    if (!detail) return
+    setActionBusy(true)
+    try {
+      const endpoint = kind === 'verification' ? 'send-verification' : 'send-password-reset'
+      const res = await fetch(`/api/agent/users/${detail.id}/${endpoint}`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        const message =
+          data.error === 'rate_limited'
+            ? 'Trop d’envois rapprochés. Réessaie dans quelques minutes.'
+            : data.error === 'already_verified'
+              ? 'Cette adresse est déjà vérifiée.'
+              : 'L’email n’a pas pu être envoyé. Vérifie la configuration du service email.'
+        showToast(message, 'error')
+        return
+      }
+      showToast(
+        kind === 'verification'
+          ? `Lien de vérification envoyé à ${data.sentTo}`
+          : `Lien de réinitialisation envoyé à ${data.sentTo}`,
+        'success'
+      )
+    } catch {
+      showToast('L’email n’a pas pu être envoyé. Réessaie.', 'error')
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
   async function handleSetDisabled(disabled: boolean) {
     if (!detail) return
     setActionBusy(true)
@@ -287,12 +312,25 @@ export default function AgentUsersClient() {
       })
       const data = await res.json()
       if (!res.ok || !data.ok) {
-        showToast('Échec de l’enregistrement — réessaie.', 'error')
+        const message =
+          data.error === 'email_taken'
+            ? 'Cette adresse email est déjà utilisée.'
+            : data.error === 'same_email'
+              ? 'Cette adresse est déjà celle du compte.'
+              : data.error === 'protected_account'
+                ? 'Ce compte super-admin est protégé.'
+                : 'Échec de l’enregistrement — réessaie.'
+        showToast(message, 'error')
         return
       }
       setDetail(data.user)
       setEditField(null)
-      showToast('Modification enregistrée', 'success')
+      showToast(
+        editField.field === 'email'
+          ? 'Adresse modifiée. Le compte doit maintenant confirmer ce nouvel email.'
+          : 'Modification enregistrée',
+        'success'
+      )
       await loadList()
     } finally {
       setEditBusy(false)
@@ -474,6 +512,8 @@ export default function AgentUsersClient() {
                 confirmDisable={confirmDisable}
                 setConfirmDisable={setConfirmDisable}
                 onVerifyEmail={handleVerifyEmail}
+                onSendVerification={() => handleSendAccountEmail('verification')}
+                onSendPasswordReset={() => handleSendAccountEmail('password-reset')}
                 onSetDisabled={handleSetDisabled}
               />
             )}
@@ -514,24 +554,29 @@ function DetailPanel({
   confirmDisable,
   setConfirmDisable,
   onVerifyEmail,
+  onSendVerification,
+  onSendPasswordReset,
   onSetDisabled,
 }: {
   detail: UserDetail
-  editField: { field: 'firstName' | 'lastName' | 'phone'; value: string } | null
-  setEditField: (v: { field: 'firstName' | 'lastName' | 'phone'; value: string } | null) => void
+  editField: { field: EditableField; value: string } | null
+  setEditField: (v: { field: EditableField; value: string } | null) => void
   editBusy: boolean
   onSaveEdit: () => void
   actionBusy: boolean
   confirmDisable: boolean
   setConfirmDisable: (v: boolean) => void
   onVerifyEmail: () => void
+  onSendVerification: () => void
+  onSendPasswordReset: () => void
   onSetDisabled: (disabled: boolean) => void
 }) {
   const st = statusLabel(detail)
-  const editableFields: { field: 'firstName' | 'lastName' | 'phone'; label: string; current: string }[] = [
+  const editableFields: { field: EditableField; label: string; current: string }[] = [
     { field: 'firstName', label: 'Prénom', current: detail.firstName },
     { field: 'lastName', label: 'Nom', current: detail.lastName },
     { field: 'phone', label: 'Téléphone', current: detail.phone },
+    ...(!detail.superAdmin ? [{ field: 'email' as const, label: 'Email de connexion', current: detail.email }] : []),
   ]
 
   return (
@@ -579,30 +624,69 @@ function DetailPanel({
 
       <div>
         <p style={sectionTitleStyle}>Connexion</p>
-        <InfoRow label="Email vérifié" value={detail.emailVerified ? 'Oui' : 'NON — connexion possible mais compte non vérifié'} />
+        <InfoRow label="Email vérifié" value={detail.emailVerified ? 'Oui' : 'Non — confirmation requise pour un compte client'} />
         <InfoRow label="Connexion" value={detail.disabled ? 'DÉSACTIVÉE (suspendu)' : 'Autorisée'} />
         <InfoRow label="Dernière activité" value={detail.lastSeenAt ? fmtDate(detail.lastSeenAt) : 'Jamais'} />
-        {!detail.emailVerified && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+          {!detail.emailVerified && (
+            <button
+              disabled={actionBusy}
+              onClick={onSendVerification}
+              style={{
+                width: '100%',
+                padding: '10px 0',
+                borderRadius: 10,
+                cursor: actionBusy ? 'wait' : 'pointer',
+                background: 'rgba(78,232,200,0.12)',
+                border: '1px solid rgba(78,232,200,0.4)',
+                color: 'var(--teal)',
+                fontSize: 12,
+                fontWeight: 700,
+                opacity: actionBusy ? 0.6 : 1,
+              }}
+            >
+              Envoyer le lien de vérification
+            </button>
+          )}
+          {!detail.emailVerified && (
+            <button
+              disabled={actionBusy}
+              onClick={onVerifyEmail}
+              style={{
+                width: '100%',
+                padding: '10px 0',
+                borderRadius: 10,
+                cursor: actionBusy ? 'wait' : 'pointer',
+                background: 'var(--teal)',
+                border: '1px solid var(--border-strong)',
+                color: 'var(--obsidian)',
+                fontSize: 12,
+                fontWeight: 700,
+                opacity: actionBusy ? 0.6 : 1,
+              }}
+            >
+              Marquer l&apos;email vérifié
+            </button>
+          )}
           <button
             disabled={actionBusy}
-            onClick={onVerifyEmail}
+            onClick={onSendPasswordReset}
             style={{
-              marginTop: 10,
               width: '100%',
               padding: '10px 0',
               borderRadius: 10,
               cursor: actionBusy ? 'wait' : 'pointer',
-              background: 'var(--teal)',
+              background: 'transparent',
               border: '1px solid var(--border-strong)',
-              color: 'var(--obsidian)',
+              color: '#fff',
               fontSize: 12,
               fontWeight: 700,
               opacity: actionBusy ? 0.6 : 1,
             }}
           >
-            Marquer l&apos;email vérifié
+            Envoyer un lien de réinitialisation du mot de passe
           </button>
-        )}
+        </div>
       </div>
 
       <div>
@@ -612,7 +696,7 @@ function DetailPanel({
             <div key={f.field}>
               {editField?.field === f.field ? (
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <input style={{ ...inputStyle, flex: 1 }} value={editField.value} onChange={(e) => setEditField({ field: f.field, value: e.target.value })} />
+                  <input type={f.field === 'email' ? 'email' : 'text'} style={{ ...inputStyle, flex: 1 }} value={editField.value} onChange={(e) => setEditField({ field: f.field, value: e.target.value })} />
                   <button
                     onClick={onSaveEdit}
                     disabled={editBusy}

@@ -28,6 +28,17 @@ const placeSchema = z.object({
   included: z.array(z.object({ name: z.string(), qty: z.number().default(1) })).default([]),
 })
 
+const showOptionSchema = z.union([
+  z.string().trim().min(1).max(160),
+  z.object({
+    id: z.string().trim().min(1).max(80),
+    label: z.string().trim().min(1).max(160),
+    requiresInfo: z.boolean().default(false),
+    infoPrompt: z.string().max(240).default(''),
+    excludedPlaces: z.array(z.string().trim().min(1).max(120)).max(50).default([]),
+  }),
+])
+
 const menuItemSchema = z.object({
   name: z.string().trim().min(1),
   emoji: z.string().default(''),
@@ -35,8 +46,9 @@ const menuItemSchema = z.object({
   price: z.number().min(0).default(0),
   category: z.string().default('Boissons'),
   description: z.string().default(''),
+  available: z.boolean().default(true),
   hasShow: z.boolean().default(false),
-  showOptions: z.array(z.string()).default([]),
+  showOptions: z.array(showOptionSchema).max(20).default([]),
   excludedPlaces: z.array(z.string()).default([]),
 })
 

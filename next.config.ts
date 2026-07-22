@@ -9,9 +9,9 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://firebasestorage.googleapis.com https://images.unsplash.com",
-  "media-src 'self' blob: https://res.cloudinary.com",
-  "connect-src 'self' https://itunes.apple.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://firebasestorage.googleapis.com https://images.unsplash.com https://e-cdns-images.dzcdn.net https://*.mzstatic.com",
+  "media-src 'self' blob: https://res.cloudinary.com https://audio-ssl.itunes.apple.com",
+  "connect-src 'self' https://itunes.apple.com https://api.cloudinary.com",
   "font-src 'self' data:",
 ].join('; ');
 
@@ -64,8 +64,10 @@ const nextConfig: NextConfig = {
       { source: '/mentions-legales', destination: '/legal-notice', permanent: true },
       { source: '/confidentialite', destination: '/privacy', permanent: true },
       { source: '/paiement-reussi', destination: '/payment-success', permanent: true },
+      { source: '/paiement-annule', destination: '/payment-cancelled', permanent: true },
       // --- Authenticated ---
       { source: '/commander/:path*', destination: '/order/:path*', permanent: true },
+      { source: '/messagerie', destination: '/messages', permanent: true },
       { source: '/ma-page-organisateur', destination: '/organizer-studio', permanent: true },
       { source: '/mes-evenements/:path*', destination: '/my-events/:path*', permanent: true },
       { source: '/mon-dossier', destination: '/my-application', permanent: true },
@@ -75,8 +77,11 @@ const nextConfig: NextConfig = {
       { source: '/profil/evenements-interesses', destination: '/profile/interested-events', permanent: true },
       { source: '/profil/organisateurs-suivis', destination: '/profile/followed-organizers', permanent: true },
       { source: '/proposer-services', destination: '/offer-services', permanent: true },
+      { source: '/proposer', destination: '/offer-services', permanent: true },
+      { source: '/portefeuille', destination: '/profile', permanent: true },
       { source: '/mon-abonnement', destination: '/my-subscription', permanent: true },
       { source: '/mes-soirees', destination: '/my-shifts', permanent: true },
+      { source: '/agent/organisateurs', destination: '/agent', permanent: true },
     ]
   },
 };

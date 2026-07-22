@@ -9,6 +9,7 @@ import { resolvePromo, promoUnitDiscount } from './promos'
 import { findGroupTieForEvent, groupTieBuyMessage } from './groupTicketGuard'
 import { computeTicketFeeCents, computeTicketFeeXOF, isStripeConnectCountry } from '../shared/fees'
 import { isEventEnded } from '../shared/event-time'
+import { normalizeShowOptions } from '../shared/showOptions'
 
 // Réservation de stock SERVEUR-AUTORITAIRE (ferme l'audit C03). Contrairement
 // au legacy `api/event-stock.js` (mutation directe de `available`, sans lien
@@ -32,6 +33,7 @@ export type CreateOrderInput = {
   isTable: boolean
   promoCode?: string | null
   preorders?: Array<{ name: string; qty: number }>
+  ticketPreorders?: Array<{ ticketIndex: number; items: Array<{ name: string; qty: number; showOptionId?: string; showInfo?: string }> }>
   /** 'free' = lib/server/freeCheckout.ts — place gratuite, aucun rail de paiement à choisir (H07/H08 restent appliqués identiquement). */
   rail: 'stripe' | 'fedapay' | 'free'
   /** Le caller (route API) a déjà vérifié le cookie de déverrouillage si l'event est privé. */
@@ -106,13 +108,43 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   // Précommandes — UNIQUEMENT {name, qty} venant du client ; prix résolu ICI
   // depuis le menu serveur de l'événement (ferme C06/C07).
-  const preorders: Array<{ name: string; price: number; qty: number }> = []
-  for (const req of input.preorders || []) {
-    const menuItem = event.menu?.find((m) => m.name === req.name)
-    if (!menuItem) return { ok: false, status: 400, error: `unknown_menu_item:${req.name}` }
-    const reqQty = Math.max(0, Math.min(50, Math.floor(Number(req.qty) || 0)))
-    if (reqQty > 0) preorders.push({ name: menuItem.name, price: Math.round(Number(menuItem.price) * minorPerMajor), qty: reqQty })
+  const maxTicketIndex = isTable ? Math.max(0, Number(place.groupMax || 1) - 1) : qty - 1
+  const ticketPreorders: Array<{ ticketIndex: number; items: Array<{ name: string; price: number; qty: number; showOptionId?: string; showLabel?: string; showInfo?: string }> }> = []
+  const aggregate = new Map<string, { name: string; price: number; qty: number }>()
+  const sourceGroups: NonNullable<CreateOrderInput['ticketPreorders']> = input.ticketPreorders?.length ? input.ticketPreorders : [{ ticketIndex: 0, items: input.preorders || [] }]
+  const seenIndexes = new Set<number>()
+  for (const group of sourceGroups) {
+    const ticketIndex = Math.floor(Number(group.ticketIndex))
+    if (ticketIndex < 0 || ticketIndex > maxTicketIndex || seenIndexes.has(ticketIndex)) return { ok: false, status: 400, error: 'invalid_ticket_preorders' }
+    seenIndexes.add(ticketIndex)
+    const items: Array<{ name: string; price: number; qty: number; showOptionId?: string; showLabel?: string; showInfo?: string }> = []
+    const seenMenuItems = new Set<string>()
+    for (const req of group.items || []) {
+      const menuItem = event.menu?.find((item) => item.name === req.name)
+      if (!menuItem || menuItem.available === false || menuItem.excludedPlaces?.includes(place.type)) return { ok: false, status: 400, error: `unknown_menu_item:${req.name}` }
+      if (seenMenuItems.has(menuItem.name)) return { ok: false, status: 400, error: 'invalid_ticket_preorders' }
+      seenMenuItems.add(menuItem.name)
+      const reqQty = Math.max(0, Math.min(50, Math.floor(Number(req.qty) || 0)))
+      if (reqQty <= 0) continue
+      const showOptionId = req.showOptionId?.trim()
+      const showInfo = req.showInfo?.trim().slice(0, 240) || ''
+      let resolvedShow: { showOptionId: string; showLabel: string; showInfo: string } | undefined
+      if (showOptionId) {
+        const option = normalizeShowOptions(menuItem.showOptions).find((entry) => entry.id === showOptionId)
+        if (!menuItem.hasShow || !option || option.excludedPlaces.includes(place.type)) return { ok: false, status: 400, error: 'invalid_show_option' }
+        if (option.requiresInfo && !showInfo) return { ok: false, status: 400, error: 'show_info_required' }
+        resolvedShow = { showOptionId: option.id, showLabel: option.label, showInfo }
+      } else if (showInfo) {
+        return { ok: false, status: 400, error: 'invalid_show_option' }
+      }
+      const resolved = { name: menuItem.name, price: Math.round(Number(menuItem.price) * minorPerMajor), qty: reqQty, ...resolvedShow }
+      items.push(resolved)
+      const prior = aggregate.get(resolved.name)
+      aggregate.set(resolved.name, { name: resolved.name, price: resolved.price, qty: (prior?.qty || 0) + resolved.qty })
+    }
+    if (items.length) ticketPreorders.push({ ticketIndex, items })
   }
+  const preorders = [...aggregate.values()]
 
   const feeMinor =
     currency === 'XOF' ? computeTicketFeeXOF(unitPriceMinor, isTable ? 1 : qty) : computeTicketFeeCents(unitPriceMinor, isTable ? 1 : qty)
@@ -166,6 +198,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             promoUses,
             promoUnitDiscountMinor,
             preorders,
+            ticketPreorders,
             sellerUid,
             connectMode,
             rail: input.rail,

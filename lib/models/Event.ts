@@ -37,8 +37,12 @@ const menuItemSchema = new Schema(
     price: { type: Number, default: 0 },
     category: { type: String, default: 'Boissons' },
     description: { type: String, default: '' },
+    available: { type: Boolean, default: true },
     hasShow: { type: Boolean, default: false },
-    showOptions: { type: [String], default: [] },
+    // Mixed conserve la compatibilité avec les premiers événements migrés
+    // (`string[]`) et la forme riche actuelle ({id,label,requiresInfo,...}).
+    // Toute lecture métier passe par normalizeShowOptions().
+    showOptions: { type: [Schema.Types.Mixed], default: [] },
     excludedPlaces: { type: [String], default: [] },
   },
   { _id: false }

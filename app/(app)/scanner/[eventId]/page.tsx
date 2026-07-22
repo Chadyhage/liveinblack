@@ -26,12 +26,10 @@ export async function generateMetadata({ params }: { params: Promise<{ eventId: 
   }
 }
 
-// Voir le commentaire équivalent dans CommanderPage — `available` n'existe
-// pas (encore) dans lib/models/Event.ts mais fait partie du contrat
-// comportemental porté depuis le legacy ; lu défensivement ici plutôt que de
-// toucher au schéma partagé (hors périmètre de cette tâche).
 interface MenuItemDoc {
   name: string
+  emoji?: string
+  imageUrl?: string | null
   price?: number
   category?: string
   description?: string
@@ -105,6 +103,8 @@ export default async function ScannerEventPage({ params }: { params: Promise<{ e
     .filter((item) => item.available !== false)
     .map((item) => ({
       name: item.name,
+      emoji: item.emoji ?? '',
+      imageUrl: item.imageUrl ?? null,
       price: item.price ?? 0,
       category: item.category ?? '',
       description: item.description ?? '',

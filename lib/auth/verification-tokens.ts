@@ -1,6 +1,11 @@
 import { randomBytes } from 'node:crypto'
 import { MongoDBAdapter } from '@auth/mongodb-adapter'
 import clientPromise from '../db/mongodb-client'
+import {
+  VERIFICATION_TOKEN_PURPOSES,
+  verificationTokenIdentifier,
+  type VerificationTokenPurpose,
+} from './token-identifier'
 
 // Jetons de vérification email / reset mot de passe, stockés dans la
 // collection `verification_tokens` gérée par l'adaptateur MongoDB d'Auth.js
@@ -42,19 +47,32 @@ export function generateToken(): string {
   return randomBytes(32).toString('hex')
 }
 
-export async function issueVerificationToken(email: string, ttlMs = ONE_DAY_MS): Promise<string> {
+export async function issueVerificationToken(
+  subjectId: string,
+  email: string,
+  purpose: VerificationTokenPurpose,
+  ttlMs = ONE_DAY_MS
+): Promise<string> {
   const token = generateToken()
   await ensureVerificationTokenTTLIndex()
   await adapter.createVerificationToken?.({
-    identifier: email,
+    identifier: verificationTokenIdentifier(subjectId, email, purpose),
     token,
     expires: new Date(Date.now() + ttlMs),
   })
   return token
 }
 
-export async function consumeVerificationToken(email: string, token: string): Promise<boolean> {
-  const found = await adapter.useVerificationToken?.({ identifier: email, token })
+export async function consumeVerificationToken(
+  subjectId: string,
+  email: string,
+  purpose: VerificationTokenPurpose,
+  token: string
+): Promise<boolean> {
+  const found = await adapter.useVerificationToken?.({
+    identifier: verificationTokenIdentifier(subjectId, email, purpose),
+    token,
+  })
   if (!found) return false
   if (found.expires.getTime() < Date.now()) return false
   return true
@@ -66,7 +84,28 @@ export async function consumeVerificationToken(email: string, token: string): Pr
 // se contente d'un insertOne — sans ce nettoyage, redemander l'email plusieurs
 // fois empilerait des jetons dupliqués (tous valides jusqu'à expiration) dans
 // `verification_tokens` au lieu de n'en laisser qu'un seul actif.
-export async function invalidateVerificationTokens(email: string): Promise<void> {
+export async function invalidateVerificationTokens(
+  subjectId: string,
+  email: string,
+  purpose: VerificationTokenPurpose
+): Promise<void> {
   const client = await clientPromise
-  await client.db().collection('verification_tokens').deleteMany({ identifier: email })
+  await client
+    .db()
+    .collection('verification_tokens')
+    .deleteMany({ identifier: verificationTokenIdentifier(subjectId, email, purpose) })
+}
+
+export async function invalidateAllVerificationTokens(subjectId: string, email: string): Promise<void> {
+  const client = await clientPromise
+  await client
+    .db()
+    .collection('verification_tokens')
+    .deleteMany({
+      identifier: {
+        $in: VERIFICATION_TOKEN_PURPOSES.map((purpose) =>
+          verificationTokenIdentifier(subjectId, email, purpose)
+        ),
+      },
+    })
 }
