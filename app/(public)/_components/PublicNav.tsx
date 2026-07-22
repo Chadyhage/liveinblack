@@ -35,6 +35,20 @@ export default function PublicNav() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mobileOpen])
 
+  // Au-delà de 1100px le bouton hamburger disparaît (cf. règle CSS
+  // .lb-navlink-mobile plus bas) : sans ce listener, un tiroir resté ouvert
+  // avant un agrandissement de fenêtre (resize ou rotation d'écran) restait
+  // affiché sans aucun moyen de le fermer.
+  useEffect(() => {
+    if (!mobileOpen) return
+    const mq = window.matchMedia('(min-width: 1100px)')
+    function handleChange(event: MediaQueryListEvent) {
+      if (event.matches) setMobileOpen(false)
+    }
+    mq.addEventListener('change', handleChange)
+    return () => mq.removeEventListener('change', handleChange)
+  }, [mobileOpen])
+
   return (
     <header
       style={{
