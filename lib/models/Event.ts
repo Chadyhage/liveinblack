@@ -89,6 +89,12 @@ const eventSchema = new Schema(
       type: new Schema({ date: { type: String, required: true }, time: { type: String, default: '' } }, { _id: false }),
       default: null,
     },
+    // Fenêtre pendant laquelle un client peut demander le remboursement de son
+    // billet suite à un report (lib/server/clientRefunds.ts) — fixée au moment
+    // du report (postponeOrganizerEvent), jamais recalculée après coup. Passé
+    // ce délai, le billet reste valable pour la nouvelle date sans possibilité
+    // de remboursement (politique d'annulation/remboursement, §2).
+    refundWindowClosesAt: { type: Date, default: null },
 
     location: { type: String, default: '' },
     city: { type: String, default: '' },

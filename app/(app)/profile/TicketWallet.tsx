@@ -30,6 +30,10 @@ export interface TicketWalletItemView {
   seatIndex: number | null
   assignedTo: string | null
   assignedName: string | null
+  orderId: string | null
+  refundRequested: boolean
+  resellable: boolean
+  activeListing: { id: string; resalePriceMinor: number; feeMinor: number; sellerNetMinor: number; status: string } | null
 }
 
 export interface TicketWalletEventView {
@@ -44,6 +48,8 @@ export interface TicketWalletEventView {
   cancelled: boolean
   minAge: number
   hasPlaylist: boolean
+  postponed: boolean
+  refundWindowClosesAt: string | null
 }
 
 export interface TicketWalletGroupView {
@@ -56,6 +62,30 @@ export interface TicketWalletGroupView {
 const SITE = typeof window !== 'undefined' ? window.location.origin : ''
 const SUPPORT_EMAIL = 'hagechady@liveinblack.com'
 const DISMISSED_KEY = 'liveinblack:dismissedCancelBanners'
+
+const REFUND_ERROR_LABELS: Record<string, string> = {
+  refund_window_closed: 'La fenêtre pour demander un remboursement est passée — ton billet reste valable pour la nouvelle date.',
+  ticket_already_checked_in: 'Au moins une place de cette réservation a déjà été scannée à l’entrée, le remboursement n’est plus possible.',
+  already_requested: 'Une demande de remboursement a déjà été envoyée pour ce billet.',
+  not_eligible: 'Ce billet n’est pas éligible au remboursement.',
+}
+
+const RESELL_ERROR_LABELS: Record<string, string> = {
+  price_above_original: 'Le prix de revente ne peut pas dépasser le prix initial du billet.',
+  invalid_price: 'Indique un prix valide.',
+  resale_window_closed: 'La revente est fermée pour cet événement (moins de 2h avant les portes).',
+  resale_limit_reached: 'Ce billet a déjà changé de propriétaire le nombre maximum de fois autorisé.',
+  event_ended: 'Cet événement est déjà terminé.',
+  event_cancelled: 'Cet événement est annulé.',
+  ticket_already_checked_in: 'Ce billet a déjà été scanné à l’entrée.',
+  already_listed: 'Ce billet est déjà en vente.',
+  not_resellable_source: 'Ce billet n’est pas revendable.',
+  group_not_fully_held_by_host: 'Impossible de revendre : au moins une place de ce groupe a déjà été attribuée à quelqu’un d’autre.',
+}
+
+function toMajor(minor: number, currency: string): number {
+  return currency === 'XOF' ? minor : minor / 100
+}
 
 function readDismissed(): Set<string> {
   if (typeof window === 'undefined') return new Set()
@@ -603,6 +633,14 @@ function PremiumTicketCard({
   const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
   const [storyState, setStoryState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
   const [flashMsg, setFlashMsg] = useState<string | null>(null)
+  const [refundState, setRefundState] = useState<'idle' | 'busy' | 'done' | 'err'>(ticket.refundRequested ? 'done' : 'idle')
+  const [refundErr, setRefundErr] = useState<string | null>(null)
+  const [resellOpen, setResellOpen] = useState(false)
+  const [resellPrice, setResellPrice] = useState('')
+  const [resellState, setResellState] = useState<'idle' | 'busy' | 'err'>('idle')
+  const [resellErr, setResellErr] = useState<string | null>(null)
+  const [withdrawState, setWithdrawState] = useState<'idle' | 'busy' | 'err'>('idle')
+  const [activeListing, setActiveListing] = useState(ticket.activeListing)
   const qrExportRef = useRef<HTMLCanvasElement>(null)
 
   const ticketUrl = `${SITE}/ticket/${ticket.ticketToken}`
@@ -660,6 +698,74 @@ function PremiumTicketCard({
     const result = await shareOrCopy(`${SITE}/events/${event.id}`, `Rejoins-moi à ${event.name}`)
     if (result.method === 'copy') flash('Lien copié')
     else if (result.method === 'unsupported') flash('Partage indisponible sur ce navigateur')
+  }
+
+  async function handleResell() {
+    const majorAmount = Number(resellPrice.replace(',', '.'))
+    if (!majorAmount || majorAmount <= 0) {
+      setResellState('err')
+      setResellErr('Indique un prix valide.')
+      return
+    }
+    setResellState('busy')
+    setResellErr(null)
+    try {
+      const res = await fetch('/api/tickets/resell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketCode: ticket.ticketCode, resalePrice: majorAmount }),
+      })
+      const data = await res.json().catch(() => null)
+      if (res.ok && data?.ok) {
+        setActiveListing({ id: data.listingId, resalePriceMinor: Math.round(majorAmount * (ticket.currency === 'XOF' ? 1 : 100)), feeMinor: data.feeMinor, sellerNetMinor: data.sellerNetMinor, status: 'active' })
+        setResellOpen(false)
+        setResellState('idle')
+        flash('Billet mis en vente')
+      } else {
+        setResellState('err')
+        setResellErr(RESELL_ERROR_LABELS[data?.error as string] || 'Mise en vente impossible pour le moment.')
+      }
+    } catch {
+      setResellState('err')
+      setResellErr('Mise en vente impossible pour le moment.')
+    }
+  }
+
+  async function handleWithdrawResell() {
+    if (!activeListing || withdrawState === 'busy') return
+    setWithdrawState('busy')
+    try {
+      const res = await fetch(`/api/resale-listings/${activeListing.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setActiveListing(null)
+        setWithdrawState('idle')
+        flash('Mise en vente retirée — nouveau billet généré')
+      } else {
+        setWithdrawState('err')
+      }
+    } catch {
+      setWithdrawState('err')
+    }
+  }
+
+  async function handleRefundRequest() {
+    if (!ticket.orderId || refundState === 'busy') return
+    setRefundState('busy')
+    setRefundErr(null)
+    try {
+      const res = await fetch(`/api/orders/${ticket.orderId}/refund-request`, { method: 'POST' })
+      const data = await res.json().catch(() => null)
+      if (res.ok && data?.ok) {
+        setRefundState('done')
+        flash('Demande de remboursement envoyée')
+      } else {
+        setRefundState('err')
+        setRefundErr(REFUND_ERROR_LABELS[data?.error as string] || 'Impossible de traiter la demande pour le moment.')
+      }
+    } catch {
+      setRefundState('err')
+      setRefundErr('Impossible de traiter la demande pour le moment.')
+    }
   }
 
   async function handleShareStory() {
@@ -827,7 +933,49 @@ function PremiumTicketCard({
                 {storyState === 'busy' ? 'Création…' : 'Partager en story'}
               </button>
               <ActionBtn onClick={handleCalendar}>Calendrier</ActionBtn>
+              {event?.postponed && ticket.orderId && (
+                <button
+                  onClick={handleRefundRequest}
+                  disabled={refundState === 'busy' || refundState === 'done'}
+                  style={actionBtnStyle(refundState === 'busy' || refundState === 'done', 'rgba(224,90,170,0.14)', '#e05aaa')}
+                >
+                  {refundState === 'done' ? 'Remboursement demandé' : refundState === 'busy' ? 'Envoi…' : 'Demander un remboursement'}
+                </button>
+              )}
+              {ticket.resellable && !activeListing && (
+                <button onClick={() => setResellOpen((v) => !v)} style={actionBtnStyle(false, 'rgba(139,92,246,0.14)', 'var(--violet)')}>
+                  Revendre mon billet
+                </button>
+              )}
+              {activeListing && (
+                <button onClick={handleWithdrawResell} disabled={withdrawState === 'busy'} style={actionBtnStyle(withdrawState === 'busy', 'rgba(255,255,255,0.06)', 'var(--text-muted)')}>
+                  {withdrawState === 'busy' ? 'Retrait…' : `En vente — ${fmtMoney(toMajor(activeListing.resalePriceMinor, ticket.currency), ticket.currency)} · Retirer`}
+                </button>
+              )}
             </div>
+            {refundState === 'err' && refundErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{refundErr}</p>}
+
+            {resellOpen && !activeListing && (
+              <div style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0, lineHeight: 1.5 }}>
+                  Prix maximum : {fmtMoney(ticket.placePrice, ticket.currency)} (prix initial, majoration interdite). Le montant de revente n&apos;est jamais garanti tant que personne n&apos;a acheté ; les frais payés à l&apos;achat initial ne sont pas récupérés.
+                </p>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder={`Prix (max ${ticket.placePrice})`}
+                    value={resellPrice}
+                    onChange={(e) => setResellPrice(e.target.value)}
+                    style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--obsidian)', color: 'var(--text)', fontSize: 13 }}
+                  />
+                  <button onClick={handleResell} disabled={resellState === 'busy'} style={{ ...actionBtnStyle(resellState === 'busy'), background: 'var(--violet)', color: '#fff' }}>
+                    {resellState === 'busy' ? 'Publication…' : 'Confirmer'}
+                  </button>
+                </div>
+                {resellState === 'err' && resellErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{resellErr}</p>}
+              </div>
+            )}
           </>
         )}
       </div>

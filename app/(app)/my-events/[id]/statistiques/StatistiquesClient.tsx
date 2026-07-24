@@ -224,6 +224,29 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
               </div>
             </section>
 
+            {(view.resaleStats.active + view.resaleStats.sold + view.resaleStats.suspended) > 0 && (
+              <section style={{ marginBottom: 20 }}>
+                <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Revente officielle</h2>
+                <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '0 0 10px', lineHeight: 1.5 }}>
+                  Vue d&apos;ensemble uniquement — l&apos;identité des vendeurs/acheteurs n&apos;est jamais communiquée à l&apos;organisateur.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  <div style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', textAlign: 'center' }}>
+                    <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{view.resaleStats.active}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>En cours</p>
+                  </div>
+                  <div style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', textAlign: 'center' }}>
+                    <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{view.resaleStats.sold}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Terminées</p>
+                  </div>
+                  <div style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', textAlign: 'center' }}>
+                    <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{view.resaleStats.suspended}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Suspendues</p>
+                  </div>
+                </div>
+              </section>
+            )}
+
             {stats.preorderItems.length > 0 && (
               <section style={{ marginBottom: 20 }}>
                 <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Précommandes consommées</h2>

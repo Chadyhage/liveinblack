@@ -4,6 +4,7 @@ import Order from '../models/Order'
 import EventStaff from '../models/EventStaff'
 import PromoCode from '../models/PromoCode'
 import EventAccessCode from '../models/EventAccessCode'
+import ResaleListing from '../models/ResaleListing'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyScheduleChange } from './organizerFollowNotifications'
@@ -96,14 +97,22 @@ export async function cancelOrganizerEvent(
 export interface PostponeInput {
   date: string
   time?: string
+  // Nombre de jours pendant lesquels un client peut demander le remboursement
+  // de son billet plutôt que de garder sa place pour la nouvelle date (défaut
+  // 7 jours — cf. politique d'annulation/remboursement, "fenêtre communiquée").
+  refundWindowDays?: number
 }
 
 export type PostponeEventResult = ErrResult | { ok: true }
 
-// Les billets/QR déjà émis restent valables tels quels — aucun remboursement,
-// aucune modification de billet : le contrôle d'entrée (isEventEnded) relit
-// `Event.date`/`time` en direct, donc reporter prolonge naturellement la
-// fenêtre de check-in sans rien toucher côté Ticket.
+const DEFAULT_REFUND_WINDOW_DAYS = 7
+
+// Les billets/QR déjà émis restent valables tels quels — aucun remboursement
+// automatique, aucune modification de billet : le contrôle d'entrée
+// (isEventEnded) relit `Event.date`/`time` en direct, donc reporter prolonge
+// naturellement la fenêtre de check-in sans rien toucher côté Ticket. Un
+// client qui refuse la nouvelle date peut demander un remboursement dans la
+// fenêtre ci-dessous (lib/server/clientRefunds.ts).
 export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: string, input: PostponeInput): Promise<PostponeEventResult> {
   await getDb()
 
@@ -118,12 +127,21 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   if (!event.postponedFrom) {
     event.postponedFrom = { date: event.date, time: event.time }
   }
+  const windowDays = input.refundWindowDays && input.refundWindowDays > 0 ? input.refundWindowDays : DEFAULT_REFUND_WINDOW_DAYS
+  event.refundWindowClosesAt = new Date(Date.now() + windowDays * 24 * 60 * 60 * 1000)
   const previousWhen = [event.date, event.time].filter(Boolean).join(' · ')
   event.date = input.date
   if (input.time?.trim()) event.time = input.time
   const newWhen = [event.date, event.time].filter(Boolean).join(' · ')
 
   await event.save()
+
+  // Revente suspendue pendant un report (politique d'annulation/remboursement
+  // §2) — bloque toute nouvelle mise en vente/achat tant que le détenteur
+  // n'a pas décidé de garder son billet ou de demander un remboursement.
+  // Réactivation manuelle par le vendeur non gérée ici (limitation connue,
+  // v1) : il devra recréer un listing après résolution du report.
+  await ResaleListing.updateMany({ eventId: String(event._id), status: 'active' }, { $set: { status: 'suspended' } })
 
   // Alerte `scheduleChanges` aux abonnés — un report se renotifie à CHAQUE
   // appel (jamais idempotent comme l'annulation) : un 2e report vers une

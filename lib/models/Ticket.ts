@@ -49,6 +49,17 @@ const ticketSchema = new Schema(
     revoked: { type: Boolean, default: false },
     paid: { type: Boolean, default: false },
     source: { type: String, default: 'paid' }, // 'paid' | 'free' | 'guestlist'
+    // Revente officielle (lib/server/resale.ts) : non-null tant qu'une mise en
+    // vente est active pour ce billet — le QR du détenteur devient inutilisable
+    // dès la mise en vente (même mécanisme que seatVersion/entryNonce), donc ce
+    // champ sert surtout à bloquer une seconde mise en vente concurrente et à
+    // afficher l'état "en vente" côté portefeuille.
+    resaleListingId: { type: String, default: null },
+    // Nombre de fois où cette admission a déjà changé de main via la bourse
+    // de revente — plafonné (lib/server/resale.ts) pour limiter le risque de
+    // fraude/spéculation, conformément à la recommandation de lancement de la
+    // spec ("deux ou trois changements de propriétaire max").
+    resaleCount: { type: Number, default: 0 },
     stripeSessionId: { type: String, default: null, index: true },
     fedapayTransactionId: { type: String, default: null },
     promoCode: { type: String, default: null },

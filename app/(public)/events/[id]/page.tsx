@@ -17,6 +17,7 @@ import UnlockForm from './UnlockForm'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
 import AgeVerificationGate from '@/app/components/AgeVerificationGate'
 import EventCheckoutPanel from '@/app/components/EventCheckoutPanel'
+import ResaleListingsSection from '@/app/components/ResaleListingsSection'
 import EventShareButton from './EventShareButton'
 
 // Port de src/pages/EventDetailPage.jsx (2861 lignes côté legacy). La sélection
@@ -304,6 +305,8 @@ export default async function EventDetailPage({
           </div>
         </Section>
       ) : null}
+
+      <ResaleListingsSection eventId={event.id} isAuthenticated={Boolean(session?.user)} />
 
       {/* RÉSERVATION */}
       {session?.user ? (

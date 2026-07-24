@@ -2,6 +2,7 @@ import { getDb } from '../db/mongoose'
 import Event from '../models/Event'
 import Ticket from '../models/Ticket'
 import User from '../models/User'
+import ResaleListing from '../models/ResaleListing'
 import { computeEventStats, computeDemographics, buildEventInsights, type StatsFilters, type StatsTicket } from '../shared/eventStats'
 import { eventCurrency } from '../shared/money'
 
@@ -29,12 +30,22 @@ async function assertAccess(eventId: string, caller: StatsCaller) {
   return { ok: true as const, event }
 }
 
+export interface ResaleStatsView {
+  active: number
+  sold: number
+  suspended: number
+}
+
 export interface EventStatsView {
   event: { id: string; name: string; date: string; dateDisplay: string; city: string; cancelled: boolean; currency: 'EUR' | 'XOF' }
   stats: ReturnType<typeof computeEventStats>
   insights: ReturnType<typeof buildEventInsights>
   demographics: ReturnType<typeof computeDemographics>
   placeOptions: string[]
+  // Lecture seule, agrégats uniquement — jamais l'identité vendeur/acheteur,
+  // jamais un contrôle sur un listing précis (règle explicite de la spec de
+  // revente : l'organisateur ne doit ni connaître le vendeur ni intervenir).
+  resaleStats: ResaleStatsView
   updatedAt: string
 }
 
@@ -79,6 +90,12 @@ export async function getEventStats(caller: StatsCaller, eventId: string, filter
   // billets existent encore dessus) — fidèle au legacy.
   const placeOptions = [...new Set([...(event.places || []).map((p) => p.type), ...tickets.map((t) => t.place || 'Standard')])].filter(Boolean)
 
+  const [activeCount, soldCount, suspendedCount] = await Promise.all([
+    ResaleListing.countDocuments({ eventId, status: 'active' }),
+    ResaleListing.countDocuments({ eventId, status: 'sold' }),
+    ResaleListing.countDocuments({ eventId, status: 'suspended' }),
+  ])
+
   return {
     ok: true,
     view: {
@@ -87,6 +104,7 @@ export async function getEventStats(caller: StatsCaller, eventId: string, filter
       insights,
       demographics,
       placeOptions,
+      resaleStats: { active: activeCount, sold: soldCount, suspended: suspendedCount },
       updatedAt: new Date().toISOString(),
     },
   }

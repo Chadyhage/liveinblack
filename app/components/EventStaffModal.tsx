@@ -26,18 +26,20 @@ const FONT = 'Inter, sans-serif'
 // `var(--teal)` ne permet pas en concaténation de chaîne.
 const C = { teal: '#4ee8c8', gold: '#c8a96e', violet: '#8b5cf6', pink: '#e05aaa' }
 
-type InviteRole = 'serveur' | 'scan' | 'dj'
+type InviteRole = 'serveur' | 'scan' | 'dj' | 'vendeur'
 
 const INVITE_ROLES: { value: InviteRole; label: string; desc: string; color: string }[] = [
   { value: 'serveur', label: 'Serveur', desc: 'Prend et sert les commandes au bar', color: C.teal },
   { value: 'scan', label: 'Contrôle entrée', desc: "Scanne les billets à l'entrée", color: C.violet },
   { value: 'dj', label: 'DJ', desc: 'Gère la playlist interactive de la soirée', color: C.pink },
+  { value: 'vendeur', label: 'Vente sur place', desc: 'Vend des billets (espèces/Mobile Money) — hors application', color: C.gold },
 ]
 
 const ROLE_META: Record<string, { label: string; color: string }> = {
   serveur: { label: 'Serveur', color: C.teal },
   scan: { label: 'Contrôle entrée', color: C.violet },
   dj: { label: 'DJ', color: C.pink },
+  vendeur: { label: 'Vente sur place', color: C.gold },
 }
 
 interface StaffMember {

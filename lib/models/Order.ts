@@ -52,11 +52,34 @@ const orderSchema = new Schema(
     sellerUid: { type: String, default: null },
     connectMode: { type: String, enum: ['auto', 'ledger', 'none'], default: 'none' },
 
-    rail: { type: String, enum: ['stripe', 'fedapay', 'free'], required: true },
+    // 'cash' (#C) : vente espèces par un agent — jamais de session Stripe/
+    // FedaPay, statut posé directement à 'paid' de façon synchrone (voir
+    // lib/server/agentSales.ts), aucune attente de webhook.
+    rail: { type: String, enum: ['stripe', 'fedapay', 'free', 'cash'], required: true },
     stripeSessionId: { type: String, default: null, index: true },
     fedapayTxnId: { type: String, default: null, index: true },
 
-    status: { type: String, enum: ['pending', 'paid', 'expired', 'cancelled'], default: 'pending', index: true },
+    // 'superseded' : commande d'origine d'un billet depuis revendu — exclue
+    // volontairement de la boucle de remboursement d'annulation
+    // (organizerEventLifecycle.ts ne filtre que status:'paid') pour qu'une
+    // seule commande par admission soit jamais remboursée (celle du DERNIER
+    // payeur réel, cf. lib/server/resale.ts::fulfillResaleOrder).
+    status: { type: String, enum: ['pending', 'paid', 'expired', 'cancelled', 'superseded'], default: 'pending', index: true },
+    // 'ticket' = achat normal (stock décrémenté, billets mintés par
+    // fulfillOrder). 'resale' = achat d'un billet REVENDU (aucun stock
+    // touché, mute un Ticket existant — voir lib/server/resale.ts).
+    // 'agent_sale' = vente sur place par un agent désigné (#C,
+    // lib/server/agentSales.ts) — décrémente le stock comme un achat normal,
+    // mais le titulaire du billet n'est pas forcément le payeur (userId reste
+    // requis par le schéma Ticket mais ne représente qu'un rattachement
+    // technique ; le vrai destinataire est `guestName`/`contactEmail`/
+    // `contactPhone` ci-dessous, même convention que lib/server/guestlist.ts).
+    kind: { type: String, enum: ['ticket', 'resale', 'agent_sale'], default: 'ticket' },
+    resaleListingId: { type: String, default: null },
+    agentUid: { type: String, default: null },
+    guestName: { type: String, default: null },
+    contactEmail: { type: String, default: null },
+    contactPhone: { type: String, default: null },
     stockDecremented: { type: Boolean, default: false },
     expiresAt: { type: Date, required: true },
 
@@ -65,6 +88,14 @@ const orderSchema = new Schema(
     fulfillStartedAt: { type: Date, default: null },
     paid: { type: Boolean, default: false },
     settled: { type: Boolean, default: false },
+
+    // Traçabilité d'une demande de remboursement déclenchée par le CLIENT
+    // (lib/server/clientRefunds.ts) — distincte du remboursement de masse
+    // déclenché par l'organisateur via cancelOrganizerEvent (celui-ci ne
+    // renseigne jamais ces deux champs). 'postponed_declined' = le client a
+    // refusé la nouvelle date proposée après un report.
+    clientRefundRequestedAt: { type: Date, default: null },
+    clientRefundReason: { type: String, enum: ['postponed_declined', null], default: null },
   },
   { timestamps: true }
 )

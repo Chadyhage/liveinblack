@@ -3,6 +3,8 @@ import { getDb } from '@/lib/db/mongoose'
 import { verifyWebhookSignature, isApprovedTransactionEvent } from '@/lib/server/fedapayClient'
 import { fulfillOrder } from '@/lib/server/fulfillOrder'
 import { releaseOrder } from '@/lib/server/orders'
+import { fulfillResaleOrder, releaseResaleOrder } from '@/lib/server/resale'
+import { fulfillAgentSaleOrder, releaseAgentSaleOrder } from '@/lib/server/agentSales'
 import { handleFedapaySubscriptionPayment } from '@/lib/server/providerSubscriptions'
 import Order from '@/lib/models/Order'
 import User from '@/lib/models/User'
@@ -70,6 +72,14 @@ export async function POST(req: Request) {
 
       const order = await Order.findOne({ fedapayTxnId: String(entity.id) }).lean()
       if (!order) return NextResponse.json({ received: true, ignored: 'no_matching_order' })
+      if (order.kind === 'resale') {
+        await fulfillResaleOrder(order._id.toString(), { paidAmountMinor: entity.amount })
+        return NextResponse.json({ received: true })
+      }
+      if (order.kind === 'agent_sale') {
+        await fulfillAgentSaleOrder(order._id.toString(), { paidAmountMinor: entity.amount })
+        return NextResponse.json({ received: true })
+      }
       const result = await fulfillOrder(order._id.toString(), { rail: 'fedapay', paidAmountMinor: entity.amount })
       if (result.status === 'locked') {
         return NextResponse.json({ error: 'fulfillment_in_progress' }, { status: 500 })
@@ -80,7 +90,11 @@ export async function POST(req: Request) {
       (name === 'transaction.updated' && ['canceled', 'declined', 'expired'].includes(entity.status || ''))
     ) {
       const order = await Order.findOne({ fedapayTxnId: String(entity.id) }).lean()
-      if (order) await releaseOrder(order._id.toString(), null)
+      if (order) {
+        if (order.kind === 'resale') await releaseResaleOrder(order._id.toString())
+        else if (order.kind === 'agent_sale') await releaseAgentSaleOrder(order._id.toString())
+        else await releaseOrder(order._id.toString(), null)
+      }
     }
     return NextResponse.json({ received: true })
   } catch (err) {

@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { addEventStaff, listEventStaff, removeEventStaff } from '@/lib/server/eventStaff'
 
-const addSchema = z.object({ targetUserId: z.string().trim().min(1), role: z.enum(['scan', 'serveur', 'dj']) })
+const addSchema = z.object({ targetUserId: z.string().trim().min(1), role: z.enum(['scan', 'serveur', 'dj', 'vendeur']) })
 const removeSchema = z.object({ targetUserId: z.string().trim().min(1) })
 
 export async function GET(_req: Request, { params }: { params: Promise<{ eventId: string }> }) {

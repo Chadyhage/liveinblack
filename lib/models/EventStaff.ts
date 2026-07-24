@@ -6,7 +6,12 @@ import { Schema, model, models, type InferSchemaType, type Model } from 'mongoos
 // (MesEvenementsPage). Un roster vide dégrade proprement vers "propriétaire
 // ou agent uniquement" — aucune des deux autorisations ne dépend de ce
 // modèle étant peuplé.
-const ROLES = ['scan', 'serveur', 'manager', 'dj'] as const
+// 'vendeur' (#C, lib/server/agentSales.ts) : vend des billets sur place au
+// nom de l'organisateur (cash/Mobile Money) — un rôle PUREMENT commercial,
+// distinct de 'scan' (contrôle d'entrée) et sans rapport avec le rôle
+// plateforme User.roles:'agent' (staff LIVE IN BLACK, app/(app)/agent) —
+// deux concepts "agent" totalement différents, ne jamais les confondre.
+const ROLES = ['scan', 'serveur', 'manager', 'dj', 'vendeur'] as const
 
 const rosterEntrySchema = new Schema(
   {

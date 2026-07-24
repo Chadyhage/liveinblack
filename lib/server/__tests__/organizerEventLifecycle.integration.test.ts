@@ -14,8 +14,11 @@ vi.mock('../eventRefunds', () => ({
 
 import { cancelOrganizerEvent, postponeOrganizerEvent, deleteOrganizerEvent } from '../organizerEventLifecycle'
 import { createOrganizerEvent } from '../organizerEvents'
+import { listTicketForResale, initiateResaleOrder, fulfillResaleOrder } from '../resale'
 import Event from '../../models/Event'
 import Order from '../../models/Order'
+import Ticket from '../../models/Ticket'
+import ResaleListing from '../../models/ResaleListing'
 import EventStaff from '../../models/EventStaff'
 import PromoCode from '../../models/PromoCode'
 import EventAccessCode from '../../models/EventAccessCode'
@@ -40,6 +43,8 @@ beforeEach(async () => {
   if (!RUN_INTEGRATION) return
   await Event.deleteMany({})
   await Order.deleteMany({})
+  await Ticket.deleteMany({})
+  await ResaleListing.deleteMany({})
   await EventStaff.deleteMany({})
   await PromoCode.deleteMany({})
   await EventAccessCode.deleteMany({})
@@ -117,6 +122,43 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
       const fedapayRefund = await EventRefund.findOne({ eventId, paymentRef: 'txn-1' }).lean()
       expect(fedapayRefund?.status).toBe('pending_manual')
     })
+
+    it('un billet revendu : rembourse uniquement le dernier acheteur, jamais l\'acheteur d\'origine', async () => {
+      const eventId = await seedEvent()
+      const doc = await Event.findById(eventId).lean()
+      const placeId = doc!.places[0].id
+
+      const [originalOrder] = await Order.create([
+        {
+          userId: 'original-buyer', eventId, placeId, placeType: 'Standard', qty: 1, unitPriceMinor: 2000, currency: 'EUR',
+          feeMinor: 149, sellerUid: 'org-1', connectMode: 'ledger', rail: 'stripe', status: 'paid', paid: true, settled: true,
+          stripeSessionId: 'cs_original_2', expiresAt: new Date(Date.now() + 3600_000),
+        },
+      ])
+      await Ticket.create({
+        ticketCode: 'CANCELRESALE', orderId: String(originalOrder._id), eventId, place: 'Standard', placePrice: 20,
+        totalPrice: 20, currency: 'EUR', userId: 'original-buyer', paid: true, source: 'paid',
+      })
+
+      const listResult = await listTicketForResale({ id: 'original-buyer' }, 'CANCELRESALE', 15)
+      if (!listResult.ok) throw new Error('setup failed')
+      const initResult = await initiateResaleOrder({ id: 'resale-buyer' }, String(listResult.listing._id), 'stripe')
+      if (!initResult.ok) throw new Error('setup failed')
+      // Une commande Stripe a besoin d'un stripeSessionId pour être remboursable (refundStripeOrder mocké ici, mais le champ doit être présent).
+      await Order.updateOne({ _id: initResult.order._id }, { $set: { stripeSessionId: 'cs_resale_2' } })
+      const fulfillResult = await fulfillResaleOrder(String(initResult.order._id))
+      expect(fulfillResult.status).toBe('ok')
+
+      const result = await cancelOrganizerEvent({ id: 'org-1' }, eventId, 'Annulé après revente')
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      // Seule la commande de revente (le dernier payeur réel) est comptée —
+      // la commande d'origine est 'superseded', jamais reprise par la boucle.
+      expect(result.refundedCount).toBe(1)
+
+      const updatedOriginalOrder = await Order.findById(originalOrder._id).lean()
+      expect(updatedOriginalOrder?.status).toBe('superseded')
+    })
   })
 
   describe('postponeOrganizerEvent', () => {
@@ -144,6 +186,20 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
       expect(doc?.date).toBe('2027-03-15')
       expect(doc?.time).toBe('23:00')
       expect(doc?.postponedFrom?.date).toBe('2026-12-31')
+      expect(doc?.refundWindowClosesAt).toBeTruthy()
+    })
+
+    it('suspend les reventes actives en cours (politique §2)', async () => {
+      const eventId = await seedEvent()
+      await ResaleListing.create({
+        ticketCode: 'SUSPEND01', eventId, sellerUid: 'seller-1', resalePriceMinor: 1000, currency: 'EUR',
+        feeMinor: 100, sellerNetMinor: 900, closesAt: new Date(Date.now() + 3600_000),
+      })
+
+      await postponeOrganizerEvent({ id: 'org-1' }, eventId, { date: '2027-03-15' })
+
+      const listing = await ResaleListing.findOne({ ticketCode: 'SUSPEND01' }).lean()
+      expect(listing?.status).toBe('suspended')
     })
 
     it('ne réécrit jamais la date d’origine sur un second report', async () => {

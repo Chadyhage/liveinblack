@@ -11,6 +11,16 @@ export const FEES = {
   // Zone FCFA (FedaPay — UEMOA) : 5% + 300 FCFA, plafonné 1 500 FCFA/billet.
   // Montants en FCFA ENTIERS (le XOF n'a pas de centimes — zéro décimale).
   TICKET_XOF: { pct: 0.05, fixed: 300, cap: 1500, paidBy: 'buyer' as const },
+  // Revente officielle (LIVE_IN_BLACK_Systeme_de_revente.docx §1/§4) : mêmes
+  // 5% qu'un billet neuf, mais prélevés sur le prix de REVENTE (choisi par le
+  // vendeur, jamais > prix initial) et à la charge du VENDEUR (déduits du
+  // montant qui lui est reversé, jamais ajoutés au prix payé par l'acheteur).
+  // La spec ne donne le "min 200 FCFA" que pour la zone XOF (tout le document
+  // de revente raisonne en FCFA, marché Togo/Bénin) — pas d'équivalent EUR
+  // donné, donc RESALE (EUR) garde la même forme que TICKET (pct+cap, sans
+  // minimum inventé).
+  RESALE: { pct: 0.05, fixedCents: 0, capCents: 250, paidBy: 'seller' as const },
+  RESALE_XOF: { pct: 0.05, fixed: 0, cap: 1500, min: 200, paidBy: 'seller' as const },
 }
 
 export const SUBSCRIPTION = {
@@ -48,6 +58,22 @@ export function computeTicketFeeXOF(unitPrice: number, qty: number): number {
   if (u <= 0 || n <= 0) return 0
   const perTicket = Math.min(Math.round(u * FEES.TICKET_XOF.pct) + FEES.TICKET_XOF.fixed, FEES.TICKET_XOF.cap)
   return perTicket * n
+}
+
+// Commission LIVE IN BLACK sur une revente (par admission — une place de
+// groupe revendue compte pour UNE admission ici, le nombre de sièges réels se
+// gère au niveau de l'appelant qui multiplie si besoin).
+export function computeResaleFeeCents(resalePriceCents: number): number {
+  const p = Math.round(Number(resalePriceCents) || 0)
+  if (p <= 0) return 0
+  return Math.min(Math.round(p * FEES.RESALE.pct) + FEES.RESALE.fixedCents, FEES.RESALE.capCents)
+}
+
+export function computeResaleFeeXOF(resalePrice: number): number {
+  const p = Math.round(Number(resalePrice) || 0)
+  if (p <= 0) return 0
+  const fee = Math.round(p * FEES.RESALE_XOF.pct) + FEES.RESALE_XOF.fixed
+  return Math.min(Math.max(fee, FEES.RESALE_XOF.min), FEES.RESALE_XOF.cap)
 }
 
 // ── Pays supportés par Stripe (Connect / payouts) — liste blanche ISO-2 ──

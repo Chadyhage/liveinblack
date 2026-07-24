@@ -1,6 +1,8 @@
 import { getDb } from '../db/mongoose'
 import Ticket from '../models/Ticket'
 import Event from '../models/Event'
+import Order from '../models/Order'
+import ResaleListing from '../models/ResaleListing'
 import { verifyTicketToken, extractTicketCode, signTicketToken } from './ticketToken'
 
 // Contrairement au legacy (payload d'affichage embarqué dans le jeton, pensé
@@ -89,6 +91,17 @@ export interface TicketWalletItemView {
   seatIndex: number | null
   assignedTo: string | null
   assignedName: string | null
+  // Commande d'origine + si une demande de remboursement client a déjà été
+  // faite dessus (lib/server/clientRefunds.ts) — null pour un billet sans
+  // Order (guestlist, non remboursable de toute façon).
+  orderId: string | null
+  refundRequested: boolean
+  // Revente officielle (lib/server/resale.ts). `resellable` reflète les
+  // conditions vérifiables ici (source/scan/déjà en vente) — la fenêtre de
+  // clôture (2h avant les portes) et le statut de l'event sont revérifiés
+  // serveur au moment de la mise en vente, jamais fiés à cet indicateur seul.
+  resellable: boolean
+  activeListing: { id: string; resalePriceMinor: number; feeMinor: number; sellerNetMinor: number; status: string } | null
 }
 
 export interface TicketWalletEventView {
@@ -103,6 +116,11 @@ export interface TicketWalletEventView {
   cancelled: boolean
   minAge: number
   hasPlaylist: boolean
+  // Report en cours (postponedFrom non-null) + fenêtre encore ouverte pour
+  // demander un remboursement plutôt que de garder son billet pour la
+  // nouvelle date (lib/server/clientRefunds.ts).
+  postponed: boolean
+  refundWindowClosesAt: string | null
 }
 
 export interface TicketWalletGroupView {
@@ -135,9 +153,24 @@ function toWalletItemView(
     seatIndex?: number | null
     assignedTo?: string | null
     assignedName?: string | null
+    orderId?: string | null
+    revoked?: boolean | null
+    source?: string | null
+    resaleListingId?: string | null
+    resaleCount?: number | null
   },
-  callerId: string
+  callerId: string,
+  refundedOrderIds: Set<string>,
+  listingsById: Map<string, { resalePriceMinor: number; feeMinor: number; sellerNetMinor: number; status: string }>
 ): TicketWalletItemView {
+  const RESALE_LIMIT = 2
+  const listing = ticket.resaleListingId ? listingsById.get(ticket.resaleListingId) ?? null : null
+  const resellable =
+    !ticket.checkedInAt &&
+    !ticket.revoked &&
+    !ticket.resaleListingId &&
+    (ticket.source === 'paid' || ticket.source === 'stripe-webhook' || ticket.source === 'fedapay-webhook') &&
+    (ticket.resaleCount ?? 0) < RESALE_LIMIT
   return {
     ticketCode: ticket.ticketCode,
     ticketToken: signTicketToken({
@@ -159,6 +192,10 @@ function toWalletItemView(
     seatIndex: ticket.seatIndex ?? null,
     assignedTo: ticket.assignedTo ?? null,
     assignedName: ticket.assignedName ?? null,
+    orderId: ticket.orderId ?? null,
+    refundRequested: ticket.orderId ? refundedOrderIds.has(ticket.orderId) : false,
+    resellable,
+    activeListing: listing ? { id: ticket.resaleListingId as string, ...listing } : null,
   }
 }
 
@@ -179,6 +216,18 @@ export async function listMyTickets(callerId: string): Promise<ListMyTicketsResu
   const events = await Event.find({ _id: { $in: eventIds } }).lean()
   const eventById = new Map(events.map((e) => [String(e._id), e]))
 
+  const orderIds = [...new Set(tickets.map((t) => t.orderId).filter((id): id is string => Boolean(id)))]
+  const refundedOrders = orderIds.length
+    ? await Order.find({ _id: { $in: orderIds }, clientRefundRequestedAt: { $ne: null } }).select('_id').lean()
+    : []
+  const refundedOrderIds = new Set(refundedOrders.map((o) => String(o._id)))
+
+  const listingIds = [...new Set(tickets.map((t) => t.resaleListingId).filter((id): id is string => Boolean(id)))]
+  const listings = listingIds.length ? await ResaleListing.find({ _id: { $in: listingIds } }).lean() : []
+  const listingsById = new Map(
+    listings.map((l) => [String(l._id), { resalePriceMinor: l.resalePriceMinor, feeMinor: l.feeMinor, sellerNetMinor: l.sellerNetMinor, status: l.status }])
+  )
+
   const ticketsByEvent = new Map<string, typeof tickets>()
   for (const ticket of tickets) {
     const list = ticketsByEvent.get(ticket.eventId) ?? []
@@ -188,7 +237,7 @@ export async function listMyTickets(callerId: string): Promise<ListMyTicketsResu
 
   const groups: TicketWalletGroupView[] = [...ticketsByEvent.entries()].map(([eventId, eventTickets]) => {
     const ev = eventById.get(eventId)
-    const views = eventTickets.map((t) => toWalletItemView(t, callerId))
+    const views = eventTickets.map((t) => toWalletItemView(t, callerId, refundedOrderIds, listingsById))
     return {
       eventId,
       event: ev
@@ -204,6 +253,8 @@ export async function listMyTickets(callerId: string): Promise<ListMyTicketsResu
             cancelled: Boolean(ev.cancelled),
             minAge: ev.minAge ?? 18,
             hasPlaylist: Boolean(ev.playlist),
+            postponed: Boolean(ev.postponedFrom),
+            refundWindowClosesAt: ev.refundWindowClosesAt ? new Date(ev.refundWindowClosesAt).toISOString() : null,
           }
         : null,
       myTickets: views.filter((v) => v.isMine),

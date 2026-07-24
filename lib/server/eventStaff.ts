@@ -18,7 +18,7 @@ export interface StaffCaller {
 
 type ErrResult = { ok: false; status: number; error: string }
 
-const INVITABLE_ROLES = ['scan', 'serveur', 'dj'] as const
+const INVITABLE_ROLES = ['scan', 'serveur', 'dj', 'vendeur'] as const
 export type InvitableRole = (typeof INVITABLE_ROLES)[number]
 
 export interface StaffMemberView {
