@@ -177,6 +177,24 @@ describeIntegration('agentSales (intégration, vraie base) — vente sur place v
       const updated = await Event.findById(event._id).lean()
       expect(updated?.places.find((p) => p.id === 'p1')?.available).toBe(97)
     })
+
+    it('bloque un agent avec trop de ventes cash impayées et restitue le stock', async () => {
+      const event = await seedEvent()
+      for (let i = 0; i < 5; i++) {
+        const r = await sellTicketOnSite({ id: 'org-1' }, String(event._id), { placeId: 'p1', qty: 1, isTable: false, contactEmail: `pending-${i}@test.com`, method: 'cash', settlementMode: 'instant_debit' })
+        expect(r.ok).toBe(true)
+        if (r.ok) expect(r.status).toBe('pending_cash_settlement')
+      }
+      expect(await CashSaleSettlement.countDocuments({ agentUid: 'org-1', status: 'pending' })).toBe(5)
+
+      const beforeAvailable = (await Event.findById(event._id).lean())?.places.find((p) => p.id === 'p1')?.available
+      const blocked = await sellTicketOnSite({ id: 'org-1' }, String(event._id), { placeId: 'p1', qty: 1, isTable: false, contactEmail: 'blocked@test.com', method: 'cash', settlementMode: 'instant_debit' })
+      expect(blocked).toEqual({ ok: false, status: 409, error: 'too_many_unpaid_cash_sales' })
+
+      // Le stock de la tentative bloquée est restitué (pas de trou dans l'inventaire).
+      const afterAvailable = (await Event.findById(event._id).lean())?.places.find((p) => p.id === 'p1')?.available
+      expect(afterAvailable).toBe(beforeAvailable)
+    })
   })
 
   describe('vente de groupe (forfait à prix fixe)', () => {

@@ -249,4 +249,5 @@ const SALE_ERROR_LABELS: Record<string, string> = {
   event_cancelled: 'Cet événement est annulé.',
   event_ended: 'Cet événement est déjà terminé.',
   forbidden: 'Tu n’es pas autorisé à vendre des billets pour cet événement.',
+  too_many_unpaid_cash_sales: 'Trop de ventes espèces en attente de règlement — régule tes ventes en attente avant d’en vendre de nouvelles.',
 }

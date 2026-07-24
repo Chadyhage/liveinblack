@@ -9,7 +9,8 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
-vi.mock('../cloudinary', () => ({
+vi.mock('../cloudinary', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../cloudinary')>()),
   uploadDataUri: vi.fn(async (dataUri: string, folder: string) => ({ ok: true, url: `https://res.cloudinary.test/${folder}/mock.png` })),
 }))
 

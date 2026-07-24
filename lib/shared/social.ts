@@ -37,9 +37,12 @@ export function socialUrl(key: string, value: string | null | undefined): string
   }
 
   try {
+    // Valide via URL() (rejette les entrées malformées) mais renvoie `candidate`
+    // tel quel — jamais `url.toString()`, qui normalise (ex. ajoute un `/`
+    // final) et romprait la fidélité avec le comportement legacy (old/src/utils/social.js).
     const url = new URL(candidate)
     if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
-    return url.toString()
+    return candidate
   } catch {
     return null
   }

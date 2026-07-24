@@ -4,7 +4,7 @@ import { socialUrl } from '../social'
 describe('socialUrl', () => {
   it('normalise un pseudo et un domaine sans protocole', () => {
     expect(socialUrl('instagram', '@liveinblack')).toBe('https://instagram.com/liveinblack')
-    expect(socialUrl('website', 'liveinblack.com')).toBe('https://liveinblack.com/')
+    expect(socialUrl('website', 'liveinblack.com')).toBe('https://liveinblack.com')
   })
 
   it('conserve uniquement les URL HTTP(S) valides', () => {

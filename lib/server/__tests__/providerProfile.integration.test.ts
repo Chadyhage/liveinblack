@@ -5,7 +5,8 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
 
-vi.mock('../cloudinary', () => ({
+vi.mock('../cloudinary', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../cloudinary')>()),
   uploadDataUri: vi.fn(async (dataUri: string, folder: string) => ({ ok: true, url: `https://res.cloudinary.test/${folder}/mock.jpg` })),
 }))
 

@@ -250,17 +250,17 @@ describeIntegration('profile (intégration, vraie base) — paramètres du compt
   describe('changePassword', () => {
     it('change le mot de passe (le nouveau fonctionne, l’ancien non)', async () => {
       const alice = await seedUser()
-      const result = await changePassword({ id: alice.id }, { currentPassword: 'correct-password', newPassword: 'nouveau-mdp-12' })
+      const result = await changePassword({ id: alice.id }, { currentPassword: 'correct-password', newPassword: 'Nouveau-mdp-12' })
       expect(result.ok).toBe(true)
 
       const fresh = await User.findById(alice.id).lean()
-      expect(await bcrypt.compare('nouveau-mdp-12', fresh!.passwordHash)).toBe(true)
+      expect(await bcrypt.compare('Nouveau-mdp-12', fresh!.passwordHash)).toBe(true)
       expect(await bcrypt.compare('correct-password', fresh!.passwordHash)).toBe(false)
     })
 
     it('refuse un mauvais mot de passe actuel', async () => {
       const alice = await seedUser()
-      const result = await changePassword({ id: alice.id }, { currentPassword: 'mauvais-mdp', newPassword: 'nouveau-mdp-12' })
+      const result = await changePassword({ id: alice.id }, { currentPassword: 'mauvais-mdp', newPassword: 'Nouveau-mdp-12' })
       expect(result.ok).toBe(false)
       if (result.ok) return
       expect(result.error).toBe('invalid_password')

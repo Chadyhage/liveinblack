@@ -37,6 +37,14 @@ import { createTransaction, createToken, sendPaymentToUser, type MobileMoneyMode
 //    plutôt qu'un second flux de paiement carte dédié pour l'agent lui-même.
 const AGENT_SALE_ORDER_TTL_MS = 24 * 60 * 60 * 1000 // 24h — le temps de régler une vente cash, pas 30min comme un panier client
 
+// Seuil de blocage des ventes cash impayées (décision non tranchée par la
+// spec — valeur v1 assumée, à ajuster avec le client selon le volume moyen
+// d'un événement). Au-delà de ce nombre de CashSaleSettlement 'pending' pour
+// un même agent, tous events confondus, l'agent doit régler avant de vendre
+// à nouveau en espèces — le Mobile Money (réglé immédiatement via FedaPay)
+// n'est jamais concerné.
+const MAX_PENDING_CASH_SETTLEMENTS_PER_AGENT = 5
+
 export interface AgentSaleCaller {
   id: string
 }
@@ -264,6 +272,17 @@ async function processSale(agentCaller: AgentSaleCaller, eventId: string, input:
 
   // Espèces — la vente reste "en attente de règlement" tant que la part LIB
   // n'est pas sécurisée (règle finale non négociable de la spec §2).
+  const pendingCount = await CashSaleSettlement.countDocuments({ agentUid: agentCaller.id, status: 'pending' })
+  if (pendingCount >= MAX_PENDING_CASH_SETTLEMENTS_PER_AGENT) {
+    await releaseAgentSaleOrder(String(order._id))
+    await PaymentAlert.updateOne(
+      { key: `cash_sale_agent_blocked_${agentCaller.id}` },
+      { $set: { reason: 'cash_sale_too_many_unpaid', eventId, sellerUid: agentCaller.id, details: { pendingCount } } },
+      { upsert: true }
+    )
+    return { ok: false, status: 409, error: 'too_many_unpaid_cash_sales' }
+  }
+
   const seatCount = order.isTable ? 1 : order.qty
   const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
   const amountTotalMinor = order.unitPriceMinor * seatCount + preorderTotal + order.feeMinor

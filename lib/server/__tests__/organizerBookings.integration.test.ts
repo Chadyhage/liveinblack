@@ -109,7 +109,7 @@ describeIntegration('organizerBookings (intégration, vraie base) — détail de
 
     const paidTicket = result.view.tickets.find((t) => t.ticketCode === 'TCK001')
     expect(paidTicket?.buyerName).toBe('Ada Lovelace')
-    expect(paidTicket?.preorders).toEqual([{ name: 'Bière', price: 5, qty: 1 }])
+    expect(paidTicket?.preorders).toEqual([{ name: 'Bière', price: 5, qty: 1, showLabel: null, showInfo: null }])
 
     const guestTicket = result.view.tickets.find((t) => t.ticketCode === 'TCK002')
     expect(guestTicket?.buyerName).toBe('Ami Invité')
