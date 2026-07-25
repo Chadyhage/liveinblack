@@ -150,6 +150,34 @@ describeIntegration('clientRefunds (intégration, vraie base) — demande de rem
     expect(result).toEqual({ ok: false, status: 409, error: 'order_not_paid' })
   })
 
+  it("rembourse un order NON reporté si l'assurance-annulation a été achetée (bypasse not_eligible/fenêtre)", async () => {
+    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'EUR' })
+    const order = await seedPaidOrder(String(event._id), { cancellationProtectionPurchased: true, cancellationProtectionFeeMinor: 200 })
+
+    const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
+    expect(result).toEqual({ ok: true, refunded: true })
+
+    const updated = await Order.findById(order._id).lean()
+    expect(updated?.clientRefundReason).toBe('cancellation_protection')
+  })
+
+  it("l'assurance-annulation ne couvre PAS un billet déjà scanné", async () => {
+    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'EUR' })
+    const order = await seedPaidOrder(String(event._id), { cancellationProtectionPurchased: true, cancellationProtectionFeeMinor: 200 })
+    await Ticket.create({ ticketCode: 'T1', orderId: String(order._id), eventId: String(event._id), userId: 'buyer-1', paid: true, checkedInAt: new Date() })
+
+    const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
+    expect(result).toEqual({ ok: false, status: 409, error: 'ticket_already_checked_in' })
+  })
+
+  it("un order SANS assurance-annulation reste soumis aux conditions habituelles", async () => {
+    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'EUR' })
+    const order = await seedPaidOrder(String(event._id))
+
+    const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
+    expect(result).toEqual({ ok: false, status: 409, error: 'not_eligible' })
+  })
+
   it('traite réellement le rail FedaPay (recordFedapayRefund, sans mock réseau)', async () => {
     const event = await seedPostponedEvent()
     const order = await seedPaidOrder(String(event._id), { rail: 'fedapay', currency: 'XOF', stripeSessionId: null, fedapayTxnId: 'txn_test_1' })

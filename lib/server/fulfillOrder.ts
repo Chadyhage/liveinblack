@@ -174,7 +174,7 @@ export async function fulfillOrder(
 function expectedTotalMinor(order: OrderDoc): number {
   const seatCount = order.isTable ? 1 : order.qty
   const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
-  return order.unitPriceMinor * seatCount + preorderTotal + order.feeMinor
+  return order.unitPriceMinor * seatCount + preorderTotal + order.feeMinor + (order.cancellationProtectionFeeMinor || 0)
 }
 
 async function claimFulfillment(orderId: string): Promise<boolean> {

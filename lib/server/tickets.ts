@@ -96,6 +96,11 @@ export interface TicketWalletItemView {
   // Order (guestlist, non remboursable de toute façon).
   orderId: string | null
   refundRequested: boolean
+  // Assurance-annulation payée à l'achat (lib/shared/fees.ts::CANCELLATION_PROTECTION)
+  // — donne droit au bouton de remboursement même si l'event n'est pas
+  // reporté (voir requestClientRefund, qui bypasse la condition de report
+  // dans ce cas précis).
+  cancellationProtectionPurchased: boolean
   // Revente officielle (lib/server/resale.ts). `resellable` reflète les
   // conditions vérifiables ici (source/scan/déjà en vente) — la fenêtre de
   // clôture (2h avant les portes) et le statut de l'event sont revérifiés
@@ -161,6 +166,7 @@ function toWalletItemView(
   },
   callerId: string,
   refundedOrderIds: Set<string>,
+  protectedOrderIds: Set<string>,
   listingsById: Map<string, { resalePriceMinor: number; feeMinor: number; sellerNetMinor: number; status: string }>
 ): TicketWalletItemView {
   const RESALE_LIMIT = 2
@@ -194,6 +200,7 @@ function toWalletItemView(
     assignedName: ticket.assignedName ?? null,
     orderId: ticket.orderId ?? null,
     refundRequested: ticket.orderId ? refundedOrderIds.has(ticket.orderId) : false,
+    cancellationProtectionPurchased: ticket.orderId ? protectedOrderIds.has(ticket.orderId) : false,
     resellable,
     activeListing: listing ? { id: ticket.resaleListingId as string, ...listing } : null,
   }
@@ -222,6 +229,11 @@ export async function listMyTickets(callerId: string): Promise<ListMyTicketsResu
     : []
   const refundedOrderIds = new Set(refundedOrders.map((o) => String(o._id)))
 
+  const protectedOrders = orderIds.length
+    ? await Order.find({ _id: { $in: orderIds }, cancellationProtectionPurchased: true }).select('_id').lean()
+    : []
+  const protectedOrderIds = new Set(protectedOrders.map((o) => String(o._id)))
+
   const listingIds = [...new Set(tickets.map((t) => t.resaleListingId).filter((id): id is string => Boolean(id)))]
   const listings = listingIds.length ? await ResaleListing.find({ _id: { $in: listingIds } }).lean() : []
   const listingsById = new Map(
@@ -237,7 +249,7 @@ export async function listMyTickets(callerId: string): Promise<ListMyTicketsResu
 
   const groups: TicketWalletGroupView[] = [...ticketsByEvent.entries()].map(([eventId, eventTickets]) => {
     const ev = eventById.get(eventId)
-    const views = eventTickets.map((t) => toWalletItemView(t, callerId, refundedOrderIds, listingsById))
+    const views = eventTickets.map((t) => toWalletItemView(t, callerId, refundedOrderIds, protectedOrderIds, listingsById))
     return {
       eventId,
       event: ev

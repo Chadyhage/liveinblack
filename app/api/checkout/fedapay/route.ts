@@ -32,6 +32,7 @@ const bodySchema = z.object({
   promoCode: z.string().trim().optional().nullable(),
   preorders: z.array(preorderItemSchema).max(50).default([]),
   ticketPreorders: z.array(z.object({ ticketIndex: z.number().int().min(0).max(49), items: z.array(preorderItemSchema).max(50) })).max(50).default([]),
+  cancellationProtection: z.boolean().default(false),
 })
 
 export async function POST(req: Request) {
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
-  const { eventId, placeId, qty, isTable, promoCode, preorders, ticketPreorders } = parsed.data
+  const { eventId, placeId, qty, isTable, promoCode, preorders, ticketPreorders, cancellationProtection } = parsed.data
 
   await getDb()
   const event = await Event.findById(eventId).lean()
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
     ticketPreorders,
     rail: 'fedapay',
     privateAccessVerified,
+    cancellationProtection,
   })
   if (!orderResult.ok) return NextResponse.json({ error: orderResult.error }, { status: orderResult.status })
   const order = orderResult.order
@@ -71,7 +73,7 @@ export async function POST(req: Request) {
 
   const seatCount = isTable ? 1 : qty
   const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
-  const amountTotal = order.unitPriceMinor * seatCount + preorderTotal + order.feeMinor
+  const amountTotal = order.unitPriceMinor * seatCount + preorderTotal + order.feeMinor + order.cancellationProtectionFeeMinor
 
   if (amountTotal <= 0) {
     await releaseOrder(orderId, session.user.id)

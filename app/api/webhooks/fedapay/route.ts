@@ -5,6 +5,7 @@ import { fulfillOrder } from '@/lib/server/fulfillOrder'
 import { releaseOrder } from '@/lib/server/orders'
 import { fulfillResaleOrder, releaseResaleOrder } from '@/lib/server/resale'
 import { fulfillAgentSaleOrder, releaseAgentSaleOrder } from '@/lib/server/agentSales'
+import { activateSeatHold, completeSeatHold, releaseSeatHoldDepositOrder } from '@/lib/server/seatHolds'
 import { handleFedapaySubscriptionPayment } from '@/lib/server/providerSubscriptions'
 import Order from '@/lib/models/Order'
 import User from '@/lib/models/User'
@@ -80,9 +81,16 @@ export async function POST(req: Request) {
         await fulfillAgentSaleOrder(order._id.toString(), { paidAmountMinor: entity.amount })
         return NextResponse.json({ received: true })
       }
+      if (order.kind === 'seat_hold_deposit') {
+        await activateSeatHold(order._id.toString())
+        return NextResponse.json({ received: true })
+      }
       const result = await fulfillOrder(order._id.toString(), { rail: 'fedapay', paidAmountMinor: entity.amount })
       if (result.status === 'locked') {
         return NextResponse.json({ error: 'fulfillment_in_progress' }, { status: 500 })
+      }
+      if (result.status === 'ok' && order.completesSeatHoldId) {
+        await completeSeatHold(order.completesSeatHoldId, order._id.toString())
       }
     } else if (
       name === 'transaction.canceled' ||
@@ -93,6 +101,7 @@ export async function POST(req: Request) {
       if (order) {
         if (order.kind === 'resale') await releaseResaleOrder(order._id.toString())
         else if (order.kind === 'agent_sale') await releaseAgentSaleOrder(order._id.toString())
+        else if (order.kind === 'seat_hold_deposit') await releaseSeatHoldDepositOrder(order._id.toString(), releaseOrder)
         else await releaseOrder(order._id.toString(), null)
       }
     }

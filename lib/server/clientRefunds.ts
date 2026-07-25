@@ -39,9 +39,19 @@ export async function requestClientRefund(caller: RefundCaller, orderId: string)
   // L'annulation totale rembourse déjà tout automatiquement — rien à faire ici.
   if (event.cancelled) return { ok: false, status: 409, error: 'event_cancelled_auto_refunded' }
 
-  if (!event.postponedFrom) return { ok: false, status: 409, error: 'not_eligible' }
-  if (!event.refundWindowClosesAt || Date.now() > event.refundWindowClosesAt.getTime()) {
-    return { ok: false, status: 409, error: 'refund_window_closed' }
+  // Assurance-annulation (lib/shared/fees.ts::CANCELLATION_PROTECTION) : le
+  // client a payé un supplément à l'achat pour un droit de remboursement
+  // SANS condition de report/fenêtre — bypasse les deux vérifications
+  // suivantes, mais jamais le garde-fou "billet déjà scanné" ci-dessous (le
+  // service a déjà été rendu, l'assurance ne couvre pas un simple regret
+  // après coup une fois entré).
+  const coveredByProtection = order.cancellationProtectionPurchased
+
+  if (!coveredByProtection) {
+    if (!event.postponedFrom) return { ok: false, status: 409, error: 'not_eligible' }
+    if (!event.refundWindowClosesAt || Date.now() > event.refundWindowClosesAt.getTime()) {
+      return { ok: false, status: 409, error: 'refund_window_closed' }
+    }
   }
 
   // Un seul billet déjà scanné bloque le remboursement de tout le groupe —
@@ -56,7 +66,7 @@ export async function requestClientRefund(caller: RefundCaller, orderId: string)
   if (!result.ok) return { ok: false, status: 502, error: 'refund_failed' }
 
   order.clientRefundRequestedAt = new Date()
-  order.clientRefundReason = 'postponed_declined'
+  order.clientRefundReason = coveredByProtection ? 'cancellation_protection' : 'postponed_declined'
   await order.save()
 
   return { ok: true, refunded: true }

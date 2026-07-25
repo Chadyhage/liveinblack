@@ -37,6 +37,7 @@ const bodySchema = z.object({
   promoCode: z.string().trim().optional().nullable(),
   preorders: z.array(preorderItemSchema).max(50).default([]),
   ticketPreorders: z.array(z.object({ ticketIndex: z.number().int().min(0).max(49), items: z.array(preorderItemSchema).max(50) })).max(50).default([]),
+  cancellationProtection: z.boolean().default(false),
 })
 
 export async function POST(req: Request) {
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
-  const { eventId, placeId, qty, isTable, promoCode, preorders, ticketPreorders } = parsed.data
+  const { eventId, placeId, qty, isTable, promoCode, preorders, ticketPreorders, cancellationProtection } = parsed.data
 
   await getDb()
   const event = await Event.findById(eventId).lean()
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
     ticketPreorders,
     rail: 'stripe',
     privateAccessVerified,
+    cancellationProtection,
   })
   if (!orderResult.ok) return NextResponse.json({ error: orderResult.error }, { status: orderResult.status })
   const order = orderResult.order
@@ -102,6 +104,13 @@ export async function POST(req: Request) {
   if (order.feeMinor > 0) {
     lineItems.push({
       price_data: { currency: 'eur', product_data: { name: 'Frais de service LIVEINBLACK' }, unit_amount: order.feeMinor },
+      quantity: 1,
+    })
+  }
+
+  if (order.cancellationProtectionPurchased && order.cancellationProtectionFeeMinor > 0) {
+    lineItems.push({
+      price_data: { currency: 'eur', product_data: { name: 'Assurance annulation (remboursement libre)' }, unit_amount: order.cancellationProtectionFeeMinor },
       quantity: 1,
     })
   }

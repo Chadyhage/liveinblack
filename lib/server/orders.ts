@@ -7,7 +7,7 @@ import User from '../models/User'
 import PromoCode from '../models/PromoCode'
 import { resolvePromo, promoUnitDiscount } from './promos'
 import { findGroupTieForEvent, groupTieBuyMessage } from './groupTicketGuard'
-import { computeTicketFeeCents, computeTicketFeeXOF, isStripeConnectCountry } from '../shared/fees'
+import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF, isStripeConnectCountry } from '../shared/fees'
 import { isEventEnded } from '../shared/event-time'
 import { normalizeShowOptions } from '../shared/showOptions'
 
@@ -38,6 +38,8 @@ export type CreateOrderInput = {
   rail: 'stripe' | 'fedapay' | 'free'
   /** Le caller (route API) a déjà vérifié le cookie de déverrouillage si l'event est privé. */
   privateAccessVerified?: boolean
+  /** Assurance-annulation optionnelle (lib/shared/fees.ts::CANCELLATION_PROTECTION) — jamais sur une place gratuite. */
+  cancellationProtection?: boolean
 }
 
 export type CreateOrderResult =
@@ -149,6 +151,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   const feeMinor =
     currency === 'XOF' ? computeTicketFeeXOF(unitPriceMinor, isTable ? 1 : qty) : computeTicketFeeCents(unitPriceMinor, isTable ? 1 : qty)
 
+  // Gratuit exclu (rien à assurer) — même garde que pour les frais de service.
+  const cancellationProtectionPurchased = Boolean(input.cancellationProtection) && unitPriceMinor > 0
+  const cancellationProtectionFeeMinor = cancellationProtectionPurchased
+    ? currency === 'XOF'
+      ? computeCancellationProtectionFeeXOF(unitPriceMinor, isTable ? 1 : qty)
+      : computeCancellationProtectionFeeCents(unitPriceMinor, isTable ? 1 : qty)
+    : 0
+
   // Vendeur / mode de répartition (Stripe Connect vs ledger interne). Le
   // rail FedaPay est toujours 'ledger' (Connect ne couvre pas la zone XOF).
   const sellerUid = event.organizerId || event.createdBy || null
@@ -194,6 +204,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             unitPriceMinor,
             currency,
             feeMinor,
+            cancellationProtectionPurchased,
+            cancellationProtectionFeeMinor,
             promoCode,
             promoUses,
             promoUnitDiscountMinor,

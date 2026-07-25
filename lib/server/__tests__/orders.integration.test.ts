@@ -230,6 +230,34 @@ describeIntegration('createOrder (intégration, transaction réelle)', () => {
     if (result.ok) return
     expect(result.error).toBe('event_cancelled')
   })
+
+  it("calcule le supplément d'assurance-annulation à 10% quand demandé (EUR)", async () => {
+    const event = await seedEvent()
+    const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 2, isTable: false, rail: 'stripe', cancellationProtection: true })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    // 20€ × 2 billets = 4000 centimes, 10% = 400 centimes.
+    expect(result.order.cancellationProtectionPurchased).toBe(true)
+    expect(result.order.cancellationProtectionFeeMinor).toBe(400)
+  })
+
+  it("n'applique aucun supplément si l'option n'est pas demandée", async () => {
+    const event = await seedEvent()
+    const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 1, isTable: false, rail: 'stripe' })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.order.cancellationProtectionPurchased).toBe(false)
+    expect(result.order.cancellationProtectionFeeMinor).toBe(0)
+  })
+
+  it("n'applique jamais le supplément sur une place gratuite", async () => {
+    const event = await seedEvent({ places: [{ id: 'free', type: 'Gratuit', price: 0, available: 5, total: 5, maxPerAccount: 0 }] })
+    const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'free', qty: 1, isTable: false, rail: 'stripe', cancellationProtection: true })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.order.cancellationProtectionPurchased).toBe(false)
+    expect(result.order.cancellationProtectionFeeMinor).toBe(0)
+  })
 })
 
 describeIntegration('releaseOrder (intégration)', () => {
@@ -314,6 +342,18 @@ describeIntegration('fulfillOrder (intégration — chemin heureux sans appel r�
 
     const tickets = await Ticket.find({ orderId }).lean()
     expect(tickets).toHaveLength(1) // pas de doublon
+  })
+
+  it("inclut le supplément d'assurance-annulation dans le montant FedaPay attendu (régression : fulfillOrder rejetait ce montant en amount_mismatch)", async () => {
+    const event = await seedEvent({ currency: 'XOF', places: [{ id: 'pxof', type: 'Standard', price: 5000, available: 3, total: 3, maxPerAccount: 0 }] })
+    const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'pxof', qty: 1, isTable: false, rail: 'fedapay', cancellationProtection: true })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.order.cancellationProtectionFeeMinor).toBe(500) // 10% de 5000
+
+    const expectedPaid = result.order.unitPriceMinor + result.order.feeMinor + result.order.cancellationProtectionFeeMinor
+    const fulfillment = await fulfillOrder(result.order._id.toString(), { rail: 'fedapay', paidAmountMinor: expectedPaid })
+    expect(fulfillment.status).toBe('ok')
   })
 
   it("ne émet jamais de billet si l'événement a été annulé entre le paiement et le webhook", async () => {

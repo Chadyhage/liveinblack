@@ -21,6 +21,21 @@ export const FEES = {
   // minimum inventé).
   RESALE: { pct: 0.05, fixedCents: 0, capCents: 250, paidBy: 'seller' as const },
   RESALE_XOF: { pct: 0.05, fixed: 0, cap: 1500, min: 200, paidBy: 'seller' as const },
+  // Assurance-annulation optionnelle, choisie par l'ACHETEUR au checkout
+  // (jamais imposée) : +10% du prix du billet, payé EN PLUS au moment de
+  // l'achat, en échange d'un droit à remboursement à tout moment avant
+  // l'événement (hors billet déjà scanné) — voir lib/server/clientRefunds.ts.
+  // Décision client (transmise le 25/07/2026) : pas de min/plafond pour ce
+  // supplément, juste le pourcentage.
+  CANCELLATION_PROTECTION: { pct: 0.1 },
+  // Blocage temporaire de place ("hold") avec acompte — décision client :
+  // 5% (min/plafond EUR 2€/20€, XOF 200/2000) pendant 24h, ou 10%
+  // (min/plafond EUR 4€/40€, XOF 400/4000) pendant 72h. Prix figé à sa
+  // valeur au moment du hold ; solde à régler via un checkout normal avant
+  // expiration, sinon la place est automatiquement remise en vente (acompte
+  // non remboursé — voir lib/server/seatHolds.ts).
+  SEAT_HOLD_SHORT: { pct: 0.05, durationMs: 24 * 60 * 60 * 1000, minCents: 200, capCents: 2000, minXOF: 200, capXOF: 2000 },
+  SEAT_HOLD_LONG: { pct: 0.1, durationMs: 72 * 60 * 60 * 1000, minCents: 400, capCents: 4000, minXOF: 400, capXOF: 4000 },
 }
 
 export const SUBSCRIPTION = {
@@ -74,6 +89,37 @@ export function computeResaleFeeXOF(resalePrice: number): number {
   if (p <= 0) return 0
   const fee = Math.round(p * FEES.RESALE_XOF.pct) + FEES.RESALE_XOF.fixed
   return Math.min(Math.max(fee, FEES.RESALE_XOF.min), FEES.RESALE_XOF.cap)
+}
+
+// Supplément d'assurance-annulation — 10% du prix total du billet (unitaire
+// × quantité effective), aucun plafond/minimum (décision client).
+export function computeCancellationProtectionFeeCents(unitPriceCents: number, qty: number): number {
+  const u = Math.round(Number(unitPriceCents) || 0)
+  const n = Math.max(0, Math.floor(Number(qty) || 0))
+  if (u <= 0 || n <= 0) return 0
+  return Math.round(u * n * FEES.CANCELLATION_PROTECTION.pct)
+}
+
+export function computeCancellationProtectionFeeXOF(unitPrice: number, qty: number): number {
+  return computeCancellationProtectionFeeCents(unitPrice, qty)
+}
+
+export type SeatHoldTier = 'short' | 'long'
+
+// Acompte de blocage de place — pourcentage du prix UNITAIRE (une place à la
+// fois, jamais un lot), plafonné/minimum selon la devise. `unitPriceMinor`
+// est déjà en unité mineure (centimes EUR ou FCFA entiers).
+export function computeSeatHoldDepositMinor(unitPriceMinor: number, currency: 'EUR' | 'XOF', tier: SeatHoldTier): number {
+  const p = Math.max(0, Math.round(Number(unitPriceMinor) || 0))
+  const conf = tier === 'short' ? FEES.SEAT_HOLD_SHORT : FEES.SEAT_HOLD_LONG
+  const min = currency === 'XOF' ? conf.minXOF : conf.minCents
+  const cap = currency === 'XOF' ? conf.capXOF : conf.capCents
+  const raw = Math.round(p * conf.pct)
+  return Math.min(Math.max(raw, min), cap)
+}
+
+export function seatHoldDurationMs(tier: SeatHoldTier): number {
+  return tier === 'short' ? FEES.SEAT_HOLD_SHORT.durationMs : FEES.SEAT_HOLD_LONG.durationMs
 }
 
 // ── Pays supportés par Stripe (Connect / payouts) — liste blanche ISO-2 ──

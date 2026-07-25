@@ -42,6 +42,14 @@ const orderSchema = new Schema(
     currency: { type: String, enum: ['EUR', 'XOF'], required: true },
     feeMinor: { type: Number, default: 0 },
 
+    // Assurance-annulation optionnelle, choisie par l'ACHETEUR au checkout
+    // (lib/shared/fees.ts::CANCELLATION_PROTECTION, +10% du prix total) —
+    // donne droit à un remboursement à tout moment avant l'événement (hors
+    // billet déjà scanné), voir lib/server/clientRefunds.ts. Figée à l'achat,
+    // jamais modifiable après coup (pas de route pour l'ajouter a posteriori).
+    cancellationProtectionPurchased: { type: Boolean, default: false },
+    cancellationProtectionFeeMinor: { type: Number, default: 0 },
+
     promoCode: { type: String, default: null },
     promoUses: { type: Number, default: 0 },
     promoUnitDiscountMinor: { type: Number, default: 0 },
@@ -74,8 +82,18 @@ const orderSchema = new Schema(
     // requis par le schéma Ticket mais ne représente qu'un rattachement
     // technique ; le vrai destinataire est `guestName`/`contactEmail`/
     // `contactPhone` ci-dessous, même convention que lib/server/guestlist.ts).
-    kind: { type: String, enum: ['ticket', 'resale', 'agent_sale'], default: 'ticket' },
+    // 'seat_hold_deposit' : acompte de blocage de place (#B extension,
+    // lib/server/seatHolds.ts) — ne décrémente PAS le stock lui-même à la
+    // création (le hold l'a déjà fait) ; sa réussite ACTIVE le SeatHold
+    // référencé par `seatHoldId`, jamais de billet miné directement.
+    // 'seat_hold_completion' : paiement du SOLDE d'un hold actif, passe par
+    // le tunnel de checkout normal (createOrder) mais SANS redécrémenter le
+    // stock (déjà réservé par le hold) et à un prix = prix figé - acompte
+    // déjà payé — voir `completesSeatHoldId`.
+    kind: { type: String, enum: ['ticket', 'resale', 'agent_sale', 'seat_hold_deposit', 'seat_hold_completion'], default: 'ticket' },
     resaleListingId: { type: String, default: null },
+    seatHoldId: { type: String, default: null },
+    completesSeatHoldId: { type: String, default: null },
     agentUid: { type: String, default: null },
     guestName: { type: String, default: null },
     contactEmail: { type: String, default: null },
@@ -95,7 +113,10 @@ const orderSchema = new Schema(
     // renseigne jamais ces deux champs). 'postponed_declined' = le client a
     // refusé la nouvelle date proposée après un report.
     clientRefundRequestedAt: { type: Date, default: null },
-    clientRefundReason: { type: String, enum: ['postponed_declined', null], default: null },
+    // 'cancellation_protection' = remboursement libre couvert par le
+    // supplément payé à l'achat (cancellationProtectionPurchased), sans
+    // condition de report/annulation.
+    clientRefundReason: { type: String, enum: ['postponed_declined', 'cancellation_protection', null], default: null },
   },
   { timestamps: true }
 )

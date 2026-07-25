@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
@@ -32,6 +32,7 @@ export interface TicketWalletItemView {
   assignedName: string | null
   orderId: string | null
   refundRequested: boolean
+  cancellationProtectionPurchased: boolean
   resellable: boolean
   activeListing: { id: string; resalePriceMinor: number; feeMinor: number; sellerNetMinor: number; status: string } | null
 }
@@ -138,6 +139,8 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
       <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <BackHeader onBack={onBack} title="Mes billets" />
 
+        <SeatHoldsPanel />
+
         {groups.length === 0 ? (
           <EmptyWallet />
         ) : (
@@ -180,6 +183,99 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
         )}
       </div>
     </main>
+  )
+}
+
+// Compte à rebours en heures/minutes (pas en jours — les fenêtres de hold
+// sont de 24h/72h, `countdownLabel` ci-dessus est conçu pour un compte à
+// rebours en JOURS avant un événement, pas adapté ici).
+function hoursRemainingLabel(expiresAtISO: string): string {
+  const ms = new Date(expiresAtISO).getTime() - Date.now()
+  if (ms <= 0) return 'Expiré'
+  const totalMinutes = Math.floor(ms / 60000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (hours >= 1) return `${hours}h${minutes.toString().padStart(2, '0')} restantes`
+  return `${minutes} min restantes`
+}
+
+interface SeatHoldItem {
+  id: string
+  eventId: string
+  placeType: string
+  currency: string
+  depositMinor: number
+  balanceDueMinor: number
+  status: string
+  expiresAt: string | null
+}
+
+// Blocages de place actifs (acompte payé, solde en attente) — auto-fetch
+// (GET /api/seat-holds, indépendant des `groups` déjà chargés serveur pour
+// cette page) ; rien n'est affiché si l'appelant n'a aucun blocage en cours.
+// Voir lib/server/seatHolds.ts pour tout le cycle de vie.
+function SeatHoldsPanel() {
+  const [holds, setHolds] = useState<SeatHoldItem[] | null>(null)
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const [payErr, setPayErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      const res = await fetch('/api/seat-holds')
+      const data = await res.json().catch(() => null)
+      if (!cancelled && res.ok && data?.ok) setHolds(data.holds)
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function payBalance(hold: SeatHoldItem) {
+    setPayingId(hold.id)
+    setPayErr(null)
+    const endpoint = hold.currency === 'XOF' ? '/api/checkout/seat-hold/fedapay' : '/api/checkout/seat-hold'
+    try {
+      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seatHoldId: hold.id }) })
+      const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null
+      if (!res.ok || !data?.url) {
+        setPayErr(data?.error || 'Impossible de lancer le paiement.')
+        setPayingId(null)
+        return
+      }
+      window.location.assign(data.url)
+    } catch {
+      setPayErr('Impossible de lancer le paiement.')
+      setPayingId(null)
+    }
+  }
+
+  const active = (holds || []).filter((h) => h.status === 'active')
+  if (active.length === 0) return null
+
+  return (
+    <div style={{ ...cardStyle, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, border: '1px solid rgba(200,169,110,.35)' }}>
+      <p style={{ margin: 0, color: 'var(--gold)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em' }}>Places bloquées</p>
+      {active.map((hold) => (
+        <div key={hold.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+          <div>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 13.5, color: '#fff' }}>{hold.placeType}</p>
+            <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-faint)' }}>
+              Solde {fmtMoney(toMajor(hold.balanceDueMinor, hold.currency), hold.currency)} · {hold.expiresAt ? hoursRemainingLabel(hold.expiresAt) : ''}
+            </p>
+          </div>
+          <button
+            onClick={() => payBalance(hold)}
+            disabled={payingId === hold.id}
+            style={{ padding: '8px 14px', borderRadius: 999, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', opacity: payingId === hold.id ? 0.6 : 1 }}
+          >
+            {payingId === hold.id ? 'Redirection…' : 'Payer le solde'}
+          </button>
+        </div>
+      ))}
+      {payErr && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 11.5 }}>{payErr}</p>}
+    </div>
   )
 }
 
@@ -933,7 +1029,7 @@ function PremiumTicketCard({
                 {storyState === 'busy' ? 'Création…' : 'Partager en story'}
               </button>
               <ActionBtn onClick={handleCalendar}>Calendrier</ActionBtn>
-              {event?.postponed && ticket.orderId && (
+              {(event?.postponed || ticket.cancellationProtectionPurchased) && ticket.orderId && (
                 <button
                   onClick={handleRefundRequest}
                   disabled={refundState === 'busy' || refundState === 'done'}

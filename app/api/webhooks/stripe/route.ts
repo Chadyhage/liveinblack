@@ -4,6 +4,7 @@ import { getDb } from '@/lib/db/mongoose'
 import { fulfillOrder } from '@/lib/server/fulfillOrder'
 import { releaseOrder } from '@/lib/server/orders'
 import { fulfillResaleOrder, releaseResaleOrder } from '@/lib/server/resale'
+import { activateSeatHold, completeSeatHold, releaseSeatHoldDepositOrder } from '@/lib/server/seatHolds'
 import Order from '@/lib/models/Order'
 import { finalizeBoost } from '@/lib/server/finalizeBoost'
 import { releaseBoostSlotIfPending } from '@/lib/server/boostSlots'
@@ -48,11 +49,17 @@ export async function POST(req: Request) {
         const orderId = session.metadata?.orderId
         if (!orderId) break
         // Une revente ne mint jamais de nouveau billet depuis du stock (elle
-        // mute un Ticket existant) — fulfillOrder() suppose le contraire,
-        // donc on bifurque AVANT tout traitement selon order.kind.
-        const orderKind = await Order.findById(orderId).select('kind').lean()
-        if (orderKind?.kind === 'resale') {
+        // mute un Ticket existant), un acompte de blocage n'en mint aucun du
+        // tout (seule son ACTIVATION compte) — fulfillOrder() suppose le
+        // contraire dans les deux cas, donc on bifurque AVANT tout
+        // traitement selon order.kind.
+        const orderDoc = await Order.findById(orderId).select('kind completesSeatHoldId').lean()
+        if (orderDoc?.kind === 'resale') {
           await fulfillResaleOrder(orderId)
+          break
+        }
+        if (orderDoc?.kind === 'seat_hold_deposit') {
+          await activateSeatHold(orderId)
           break
         }
         const result = await fulfillOrder(orderId, { rail: 'stripe' })
@@ -60,6 +67,9 @@ export async function POST(req: Request) {
           // Stripe réessaiera cet événement plus tard — un autre traitement
           // (retry précédent) est en cours.
           return NextResponse.json({ error: 'fulfillment_in_progress' }, { status: 500 })
+        }
+        if (result.status === 'ok' && orderDoc?.completesSeatHoldId) {
+          await completeSeatHold(orderDoc.completesSeatHoldId, orderId)
         }
         break
       }
@@ -84,6 +94,7 @@ export async function POST(req: Request) {
         if (orderId) {
           const orderKind = await Order.findById(orderId).select('kind').lean()
           if (orderKind?.kind === 'resale') await releaseResaleOrder(orderId)
+          else if (orderKind?.kind === 'seat_hold_deposit') await releaseSeatHoldDepositOrder(orderId, releaseOrder)
           else await releaseOrder(orderId, null)
         }
         break

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
-import { computeTicketFeeCents, computeTicketFeeXOF } from '@/lib/shared/fees'
+import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF } from '@/lib/shared/fees'
 import type { ShowOption } from '@/lib/shared/showOptions'
 import AgeGateModal from './AgeGateModal'
 
@@ -170,6 +170,9 @@ export default function EventCheckoutPanel({
   const [promoLoading, setPromoLoading] = useState(false)
   const [promoUnitDiscount, setPromoUnitDiscount] = useState(0)
   const [promoLabel, setPromoLabel] = useState('')
+  const [cancellationProtection, setCancellationProtection] = useState(false)
+  const [seatHoldBusy, setSeatHoldBusy] = useState<'short' | 'long' | null>(null)
+  const [seatHoldError, setSeatHoldError] = useState('')
   const [showAgeModal, setShowAgeModal] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [ageVerified, setAgeVerified] = useState(false)
@@ -200,7 +203,16 @@ export default function EventCheckoutPanel({
   const preorderQty = preordersByTicket[preorderTicketIndex] || {}
   const preorderTotal = Object.values(preordersByTicket).reduce((total, ticketItems) => total + activeMenu.reduce((sum, item) => sum + (ticketItems[item.name] || 0) * item.price, 0), 0)
   const fee = currency === 'XOF' ? computeTicketFeeXOF(discountedPlacePrice, lineQty) : computeTicketFeeCents(Math.round(discountedPlacePrice * 100), lineQty) / 100
-  const grandTotal = discountedPlacePrice * lineQty + preorderTotal + fee
+  // Assurance-annulation — préviz uniquement, le serveur recalcule (jamais de
+  // confiance dans un montant venu du client, cf. createOrder). Non
+  // proposée sur une sélection gratuite (rien à assurer).
+  const cancellationProtectionFee =
+    discountedPlacePrice > 0 && cancellationProtection
+      ? currency === 'XOF'
+        ? computeCancellationProtectionFeeXOF(discountedPlacePrice, lineQty)
+        : computeCancellationProtectionFeeCents(Math.round(discountedPlacePrice * 100), lineQty) / 100
+      : 0
+  const grandTotal = discountedPlacePrice * lineQty + preorderTotal + fee + cancellationProtectionFee
   const disabled = Boolean(bookingDisabledReason)
 
   function selectPlace(id: string) {
@@ -335,6 +347,7 @@ export default function EventCheckoutPanel({
           promoCode: promoApplied || null,
           preorders: [],
           ticketPreorders,
+          cancellationProtection,
         }
     const endpoint = isFreeSelection ? '/api/checkout/free' : currency === 'XOF' ? '/api/checkout/fedapay' : '/api/checkout'
 
@@ -382,6 +395,26 @@ export default function EventCheckoutPanel({
     : `Vérifier ma commande · ${fmtMoney(grandTotal, currency)}`
 
   const buyDisabled = disabled || !canBook || submitting
+
+  async function handleSeatHold(tier: 'short' | 'long') {
+    if (!selectedPlace) return
+    setSeatHoldBusy(tier)
+    setSeatHoldError('')
+    const endpoint = currency === 'XOF' ? '/api/seat-holds/fedapay' : '/api/seat-holds'
+    try {
+      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId, placeId: selectedPlace.id, tier }) })
+      const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null
+      if (!res.ok || !data?.url) {
+        setSeatHoldError(data?.error === 'insufficient_stock' ? 'Plus de place disponible pour ce blocage.' : "Impossible de bloquer cette place pour l'instant.")
+        setSeatHoldBusy(null)
+        return
+      }
+      window.location.assign(data.url)
+    } catch {
+      setSeatHoldError('Connexion impossible — réessaye dans un instant.')
+      setSeatHoldBusy(null)
+    }
+  }
 
   return (
     <section style={{ padding: '22px 22px 0' }}>
@@ -649,6 +682,25 @@ export default function EventCheckoutPanel({
               </div>
             )}
 
+            {discountedPlacePrice > 0 && (
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', padding: '9px 10px', borderRadius: 9, background: cancellationProtection ? 'rgba(78,232,200,.08)' : 'rgba(255,255,255,.035)' }}>
+                <input type="checkbox" checked={cancellationProtection} onChange={(event) => setCancellationProtection(event.target.checked)} style={{ marginTop: 2 }} />
+                <span>
+                  <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>
+                    Assurance annulation · +{fmtMoney(
+                      currency === 'XOF'
+                        ? computeCancellationProtectionFeeXOF(discountedPlacePrice, lineQty)
+                        : computeCancellationProtectionFeeCents(Math.round(discountedPlacePrice * 100), lineQty) / 100,
+                      currency
+                    )}
+                  </span>
+                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>
+                    Remboursement possible à tout moment avant l&apos;événement, même sans annulation ni report (hors billet déjà scanné).
+                  </span>
+                </span>
+              </label>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Points fidélité</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)' }}>+1 par billet scanné à l&apos;entrée</span>
@@ -788,6 +840,33 @@ export default function EventCheckoutPanel({
             {submitting && <Spinner />}
             {disabled ? bookingDisabledReason : buyLabel}
           </button>
+
+          {!disabled && !isGroup && discountedPlacePrice > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+              <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text-faint)', textAlign: 'center' }}>
+                Pas prêt·e à payer maintenant ? Bloque la place à ce prix.
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => void handleSeatHold('short')}
+                  disabled={seatHoldBusy !== null}
+                  style={{ ...secondaryAction, flex: 1, opacity: seatHoldBusy !== null ? 0.6 : 1 }}
+                >
+                  {seatHoldBusy === 'short' ? '…' : `Bloquer 24h · +5%`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSeatHold('long')}
+                  disabled={seatHoldBusy !== null}
+                  style={{ ...secondaryAction, flex: 1, opacity: seatHoldBusy !== null ? 0.6 : 1 }}
+                >
+                  {seatHoldBusy === 'long' ? '…' : `Bloquer 72h · +10%`}
+                </button>
+              </div>
+              {seatHoldError && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 11.5, textAlign: 'center' }}>{seatHoldError}</p>}
+            </div>
+          )}
         </div>
       )}
 
@@ -855,6 +934,7 @@ export default function EventCheckoutPanel({
               })}
               {promoApplied && <SummaryRow label={`Code ${promoApplied}`} value={`− ${fmtMoney(promoUnitDiscount * lineQty, currency)}`} accent />}
               {fee > 0 && <SummaryRow label="Frais de service" value={fmtMoney(fee, currency)} />}
+              {cancellationProtectionFee > 0 && <SummaryRow label="Assurance annulation" value={fmtMoney(cancellationProtectionFee, currency)} />}
               <div style={{ borderTop: '1px solid var(--border)', marginTop: 3, paddingTop: 12 }}><SummaryRow label="Total à payer" value={fmtMoney(grandTotal, currency)} strong /></div>
             </div>
             <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 11.5, lineHeight: 1.5 }}>{grandTotal > 0 ? `Paiement sécurisé par ${currency === 'XOF' ? 'FedaPay' : 'Stripe'}.` : 'Aucun moyen de paiement ne sera demandé.'}</p>
