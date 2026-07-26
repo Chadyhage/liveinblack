@@ -64,41 +64,48 @@ Toute demande de remboursement, contestation ou litige relatif à un événement
     },
     {
       n: '09',
+      title: 'Billets de groupe achetés sans compte (vente sur place par un agent)',
+      body: `Lorsqu'un lot de billets de groupe est acheté sur place auprès d'un agent ${LEGAL.brand}, en espèces ou par mobile money, sans que chaque participant ne dispose d'un compte sur la plateforme, l'ensemble des billets du groupe est remis au premier participant nommé lors de la vente, qui a la qualité d'hôte du groupe. L'hôte est seul responsable de la transmission de ces billets aux autres participants.
+
+Faute de compte associé à chaque participant, ${LEGAL.brand} n'est techniquement pas en mesure d'invalider ou de faire réémettre un billet déjà transmis par l'hôte à un tiers, y compris en cas de perte, de vol, de transmission par erreur ou de litige entre l'hôte et les participants. L'hôte reconnaît et accepte ce risque au moment de l'achat sur place et demeure seul responsable de la diffusion de ces billets.`,
+    },
+    {
+      n: '10',
       title: 'Reversements aux vendeurs',
       body: `Les sommes dues aux vendeurs (prix de la prestation, après commission) leur sont reversées sur le compte bancaire qu'ils ont renseigné. Pour les vendeurs situés dans un pays pris en charge par Stripe, le reversement est automatisé via Stripe Connect. Pour les vendeurs situés dans un pays non pris en charge par Stripe, ${LEGAL.brand} procède au reversement par un autre moyen (virement, paiement mobile) après réception de la demande, dans un délai raisonnable. Le vendeur est responsable de l'exactitude de ses coordonnées de paiement et de ses obligations fiscales et déclaratives.`,
     },
     {
-      n: '10',
+      n: '11',
       title: 'Comportement et contenus',
       body: `L'utilisateur s'interdit de publier des contenus illicites, trompeurs, diffamatoires, haineux ou portant atteinte aux droits de tiers, ainsi que d'utiliser la plateforme à des fins frauduleuses ou de contourner les mécanismes de paiement et de commission. ${LEGAL.brand} peut retirer tout contenu et suspendre tout compte en cas de manquement.`,
     },
     {
-      n: '11',
+      n: '12',
       title: 'Propriété intellectuelle',
       body: `L'ensemble des éléments de la plateforme (marque ${LEGAL.brand}, logos, textes, visuels, code source) est protégé par le droit de la propriété intellectuelle. Toute reproduction ou utilisation sans autorisation écrite préalable est interdite. Les contenus publiés par les utilisateurs restent leur propriété, ${LEGAL.brand} bénéficiant d'une licence d'utilisation aux seules fins d'exploitation de la plateforme.`,
     },
     {
-      n: '12',
+      n: '13',
       title: 'Responsabilité',
       body: `${LEGAL.brand} fournit la plateforme « en l'état » et met en œuvre les moyens raisonnables pour en assurer la disponibilité et la sécurité, sans garantie d'absence totale d'interruption ou d'erreur. En sa qualité d'intermédiaire, ${LEGAL.brand} ne saurait être tenu responsable de l'inexécution ou de la mauvaise exécution des prestations vendues par les organisateurs et prestataires, ni des informations qu'ils publient.`,
     },
     {
-      n: '13',
+      n: '14',
       title: 'Données personnelles',
       body: `Le traitement des données personnelles est décrit dans la Politique de confidentialité accessible depuis le pied de page, conforme au RGPD. L'utilisateur y dispose notamment de droits d'accès, de rectification et de suppression.`,
     },
     {
-      n: '14',
+      n: '15',
       title: 'Modification des conditions',
       body: `${LEGAL.brand} peut modifier les présentes CGU/CGV à tout moment, notamment pour refléter une évolution légale ou de ses services (dont les taux de frais et commissions). Les utilisateurs sont informés des modifications par notification dans l'application. La poursuite de l'utilisation vaut acceptation des nouvelles conditions.`,
     },
     {
-      n: '15',
+      n: '16',
       title: 'Droit applicable, médiation et litiges',
       body: `Les présentes sont régies par le droit français. Conformément aux articles L.611-1 et suivants du Code de la consommation, le consommateur peut recourir gratuitement à un médiateur de la consommation. La plateforme européenne de règlement en ligne des litiges est accessible à : https://ec.europa.eu/consumers/odr. À défaut de résolution amiable, les tribunaux français sont compétents.`,
     },
     {
-      n: '16',
+      n: '17',
       title: 'Contact',
       body: 'Pour toute question relative aux présentes CGU/CGV :',
       contact: LEGAL.contactEmail,

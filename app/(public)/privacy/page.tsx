@@ -29,6 +29,11 @@ Pour toute question relative à vos données personnelles, vous pouvez nous cont
         { label: 'Données de candidature (organisateurs / prestataires)', value: "documents d'identité, justificatifs, informations professionnelles" },
         { label: 'Données de communication', value: 'messages échangés sur la plateforme, photos et fichiers partagés' },
         { label: 'Données de localisation', value: "région d'intervention déclarée par les prestataires (jamais de géolocalisation en temps réel)" },
+        {
+          label: "Données d'un participant sans compte",
+          value:
+            "lorsqu'un billet est émis sans création de compte (guestlist d'un organisateur, vente sur place par un agent) : prénom/nom déclaré et, le cas échéant, un email et/ou un numéro de téléphone de contact fournis par l'acheteur ou par l'agent au moment de la vente",
+        },
       ],
     },
     {
