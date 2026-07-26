@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BOOST_PLANS, getBoostPlan } from '@/lib/shared/boosts'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button } from '@/app/components/ui'
+import { Button, Modal } from '@/app/components/ui'
 
 interface BoostModalProps {
   event: { id: string; name: string; region: string }
@@ -158,31 +158,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 660,
-          maxHeight: '88vh',
-          overflowY: 'auto',
-          background: '#12131c',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 20,
-          padding: 22,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-        }}
-      >
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          aria-label="Fermer"
-          style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
-        >
-          ×
-        </Button>
-
+    <Modal onClose={onClose} maxWidth={660}>
         <div style={{ marginBottom: 20, paddingRight: 24 }}>
           <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Booster mon événement</h2>
           <p
@@ -437,7 +413,6 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
             </Button>
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }

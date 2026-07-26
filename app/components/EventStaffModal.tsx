@@ -19,7 +19,7 @@
 //      recherche affiche nom + email.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Input } from '@/app/components/ui'
+import { Button, Input, Modal } from '@/app/components/ui'
 
 const FONT = 'Inter, sans-serif'
 // Mirroir des tokens définis dans app/globals.css (:root) — repris en constantes
@@ -316,34 +316,12 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
   const msgText = message.slice(message.indexOf(':') + 1)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 480,
-          maxHeight: '88vh',
-          overflowY: 'auto',
-          background: 'var(--surface-2)',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 20,
-          padding: 22,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
-        <Button
-          onClick={onClose}
-          aria-label="Fermer"
-          variant="ghost"
-          style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
-        >
-          ×
-        </Button>
-
+    <>
+    <Modal
+      onClose={onClose}
+      maxWidth={480}
+      contentStyle={{ background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', gap: 16 }}
+    >
         {/* Header */}
         <div style={{ paddingRight: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
@@ -564,9 +542,8 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
             </p>
           </>
         )}
-      </div>
-
-      {/* Confirmation de retrait */}
+    </Modal>
+    {/* Confirmation de retrait */}
       {confirmRemove && (
         <div
           style={{ position: 'fixed', inset: 0, zIndex: 3010, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
@@ -652,6 +629,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

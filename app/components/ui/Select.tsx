@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 export interface SelectOption {
   value: string
@@ -18,6 +19,7 @@ export interface SelectProps {
   size?: 'sm' | 'md'
   name?: string
   id?: string
+  style?: CSSProperties
   'aria-label'?: string
 }
 
@@ -26,7 +28,7 @@ export interface SelectProps {
 // déclencheur + liste personnalisée, navigation clavier (flèches/Entrée/
 // Échap), fermeture au clic extérieur. `name` optionnel pose un <input
 // type="hidden"> pour rester compatible avec un <form> natif existant.
-export default function Select({ value, onChange, options, placeholder = 'Sélectionner…', disabled, invalid, size = 'md', name, id, ...aria }: SelectProps) {
+export default function Select({ value, onChange, options, placeholder = 'Sélectionner…', disabled, invalid, size = 'md', name, id, style, ...aria }: SelectProps) {
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -119,6 +121,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
           opacity: disabled ? 0.55 : 1,
           transition: 'border-color 0.15s ease',
           ...sizeStyle,
+          ...style,
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected ? selected.label : placeholder}</span>

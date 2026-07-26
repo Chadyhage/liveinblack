@@ -15,7 +15,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney, currencySymbol } from '@/lib/shared/money'
-import { Button, Input, Select, Label } from '@/app/components/ui'
+import { Button, Input, Select, Label, Modal } from '@/app/components/ui'
 
 const FONT = 'Inter, sans-serif'
 const inputStyle: React.CSSProperties = {
@@ -234,17 +234,12 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Codes promo"
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(3,4,8,.85)', backdropFilter: 'blur(8px)', display: 'grid', placeItems: 'center', padding: 18 }}
+    <>
+    <Modal
+      onClose={onClose}
+      maxWidth={560}
+      contentStyle={{ border: '1px solid rgba(255,255,255,.11)', boxShadow: '0 24px 64px rgba(0,0,0,.6)' }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(560px,100%)', maxHeight: '88vh', overflowY: 'auto', borderRadius: 18, background: '#12131c', border: '1px solid rgba(255,255,255,.11)', boxShadow: '0 24px 64px rgba(0,0,0,.6)', padding: 22 }}
-      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
             <h2 style={{ font: `700 28px ${FONT}`, letterSpacing: '.03em', margin: 0, color: '#fff' }}>Codes promo</h2>
@@ -252,14 +247,6 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
               {event.name} · réduction appliquée <strong style={{ color: 'rgba(255,255,255,.75)' }}>par billet</strong>
             </p>
           </div>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            aria-label="Fermer"
-            style={{ flexShrink: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1, padding: 0 }}
-          >
-            ×
-          </Button>
         </div>
 
         {loading ? (
@@ -422,9 +409,8 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
             </p>
           </>
         )}
-      </div>
-
-      {/* Confirmation de suppression */}
+    </Modal>
+    {/* Confirmation de suppression */}
       {confirmRemove && (
         <div
           role="dialog"
@@ -476,6 +462,6 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Input } from '@/app/components/ui'
+import { Button, Input, Modal } from '@/app/components/ui'
 
 // Port de src/components/PreferencesEditor.jsx ("Mes goûts", #6 phase
 // profil) — mêmes 8 étapes, mêmes intitulés et mêmes options. Les artistes et
@@ -389,12 +389,7 @@ export default function PreferencesModal({
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto', background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, padding: 22, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
-        <Button variant="ghost" onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}>
-          ×
-        </Button>
+    <Modal onClose={onClose} maxWidth={520}>
         {done ? (
           <div style={{ textAlign: 'center', padding: '30px 10px 20px' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)' }}>
@@ -485,7 +480,6 @@ export default function PreferencesModal({
             </div>
           </>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }

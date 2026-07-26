@@ -6,6 +6,7 @@ import { getCachedPublicProviders as listPublicProviders } from '@/lib/server/pu
 import { getProviderCategories, getProviderCategory, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
+import FilterSelect from '../_components/FilterSelect'
 import { Button, Input } from '@/app/components/ui'
 
 export const metadata: Metadata = {
@@ -72,10 +73,13 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
           placeholder="Rechercher un prestataire, une ville…"
           style={{ minWidth: 0, borderRadius: 'var(--radius-pill)', background: '#0b0c12', fontSize: 13.5 }}
         />
-        <select className="provider-directory__field" name="region" defaultValue={region} aria-label="Filtrer par région">
-          <option value="">Toutes les régions</option>
-          {regions.map((item) => <option key={item.id} value={item.id}>{item.flag} {item.name}</option>)}
-        </select>
+        <FilterSelect
+          name="region"
+          defaultValue={region}
+          ariaLabel="Filtrer par région"
+          options={[{ value: '', label: 'Toutes les régions' }, ...regions.map((item) => ({ value: item.id, label: `${item.flag} ${item.name}` }))]}
+          style={{ borderRadius: 'var(--radius-pill)', background: '#0b0c12', fontSize: 13.5 }}
+        />
         <Button
           type="submit"
           variant="primary"

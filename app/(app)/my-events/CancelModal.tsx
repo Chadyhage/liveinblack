@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Textarea } from '@/app/components/ui'
+import { Button, Modal, Textarea } from '@/app/components/ui'
 
 // Port du modal de suppression/annulation (MesEvenementsPage.jsx lignes
 // ~1826-1896). Contrairement au legacy (qui connaissait le nombre de
@@ -63,25 +63,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 520,
-          maxHeight: '88vh',
-          overflowY: 'auto',
-          background: '#12131c',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 20,
-          padding: 22,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-        }}
-      >
-        <Button variant="ghost" onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}>
-          ×
-        </Button>
+    <Modal onClose={onClose} maxWidth={520}>
         <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 14px' }}>
           {phase === 'confirm' ? "Supprimer l’événement ?" : "Annuler l’événement ?"}
         </h2>
@@ -159,7 +141,6 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
             </div>
           </>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }

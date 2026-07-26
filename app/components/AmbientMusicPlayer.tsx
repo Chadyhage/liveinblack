@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { DISCS, subscribe, getState, getServerSnapshot, play, toggle, playRandom, setVolume, playTrack } from '@/lib/client/musicEngine'
-import { Button, Input } from '@/app/components/ui'
+import { Button, Input, Slider } from '@/app/components/ui'
 
 // useSyncExternalStore (pas useState+useEffect) : lit le moteur audio, un
 // store externe au sens React, sans jamais déclencher de setState synchrone
@@ -585,14 +585,13 @@ export default function AmbientMusicPlayer() {
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
               <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
             </svg>
-            <input
-              type="range"
+            <Slider
               min="0"
               max="1"
               step="0.01"
               value={st.volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
-              style={{ flex: 1, accentColor: accent, cursor: 'pointer' }}
+              style={{ flex: 1, accentColor: accent }}
             />
           </div>
         </div>

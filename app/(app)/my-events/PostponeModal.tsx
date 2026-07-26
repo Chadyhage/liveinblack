@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Input, Label } from '@/app/components/ui'
+import { Button, Input, Label, Modal } from '@/app/components/ui'
 
 // Port du modal de report (MesEvenementsPage.jsx lignes ~1797-1825).
 export interface PostponeModalEvent {
@@ -54,30 +54,7 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 480,
-          maxHeight: '88vh',
-          overflowY: 'auto',
-          background: '#12131c',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 20,
-          padding: 22,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-        }}
-      >
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          aria-label="Fermer"
-          style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
-        >
-          ×
-        </Button>
+    <Modal onClose={onClose} maxWidth={480}>
         <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>Reporter l&rsquo;événement ?</h2>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 14px' }}>
           Les billets déjà vendus restent valables pour la nouvelle date — personne n&rsquo;est remboursé. Chaque acheteur est prévenu par e-mail (ancienne et nouvelle date).
@@ -127,7 +104,6 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
             Confirmer le report
           </Button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

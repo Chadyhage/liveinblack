@@ -8,7 +8,7 @@ import PreferencesModal, { summarizePreferences, type Preferences } from './Pref
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
-import { Button, Input, Select, Switch, Badge, Label } from '@/app/components/ui'
+import { Button, Input, Select, Switch, Badge, Label, Slider, Modal } from '@/app/components/ui'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -221,9 +221,12 @@ function ConfirmModal({
   children?: React.ReactNode
 }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onCancel} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 24 }}>
+    <Modal
+      onClose={onCancel}
+      maxWidth={380}
+      hideClose
+      contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 24, maxHeight: 'none', overflowY: 'visible' }}
+    >
         <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>{title}</h3>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 16px' }}>{body}</p>
         {children}
@@ -240,8 +243,7 @@ function ConfirmModal({
             {confirmLabel}
           </Button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -348,9 +350,12 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       </Button>
 
       {cropSrc && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.85)' }} />
-          <div style={{ position: 'relative', width: '100%', maxWidth: 340, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 20, textAlign: 'center' }}>
+        <Modal
+          onClose={() => setCropSrc(null)}
+          maxWidth={340}
+          hideClose
+          contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 20, textAlign: 'center', maxHeight: 'none', overflowY: 'visible' }}
+        >
             <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>Recadrer la photo</h3>
             <p style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', margin: '0 0 16px' }}>Glisse pour repositionner</p>
             <div
@@ -403,7 +408,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
             {/* Curseur de zoom natif conservé : Input/Select ne couvrent pas
                 type="range" (rendu/accentColor spécifique), donc laissé natif
                 comme indiqué dans la consigne de swap. */}
-            <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--gold)', marginBottom: 18 }} />
+            <Slider accent="gold" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ marginBottom: 18 }} />
             <div style={{ display: 'flex', gap: 10 }}>
               <Button onClick={() => setCropSrc(null)} variant="secondary" style={{ flex: 1, padding: '11px 0', borderRadius: 10 }}>
                 Annuler
@@ -412,8 +417,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                 Valider
               </Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   )

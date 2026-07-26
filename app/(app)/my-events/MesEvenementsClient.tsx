@@ -16,7 +16,7 @@ import AccessCodesModal from './AccessCodesModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
-import { Button } from '@/app/components/ui'
+import { Button, Modal } from '@/app/components/ui'
 
 // Port du tableau de bord organisateur (MesEvenementsPage.jsx, #7 phase
 // organisateur) — vue 'dashboard' (cette page) vs. 'create' (EventWizard,
@@ -412,8 +412,7 @@ function GuestlistModalWithPlaces({ event, onClose }: { event: OrganizerEventVie
 
   if (!places) {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
+      <Modal onClose={onClose} hideClose contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
         <div style={{ position: 'relative', width: 40, height: 40 }} aria-label="Chargement de la guestlist">
           <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
             <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
@@ -422,7 +421,7 @@ function GuestlistModalWithPlaces({ event, onClose }: { event: OrganizerEventVie
             </path>
           </svg>
         </div>
-      </div>
+      </Modal>
     )
   }
   return <GuestlistModal event={{ id: event.id, name: event.name, places, currency: event.currency }} onClose={onClose} />

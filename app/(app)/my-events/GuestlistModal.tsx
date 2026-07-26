@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Input, Label, Select, Spinner } from '@/app/components/ui'
+import { Button, Input, Label, Modal, Select, Spinner } from '@/app/components/ui'
 
 interface EventPlace {
   id: string
@@ -151,31 +151,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
   const arrivedCount = entries.filter((entry) => entry.checkedInAt).length
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 560,
-          maxHeight: '88vh',
-          overflowY: 'auto',
-          background: '#12131c',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 20,
-          padding: 22,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-        }}
-      >
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          aria-label="Fermer"
-          style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1, padding: 0 }}
-        >
-          ×
-        </Button>
-
+    <Modal onClose={onClose} maxWidth={560}>
         <div style={{ marginBottom: 16, paddingRight: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.5}>
@@ -388,31 +364,10 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: 0 }}>
           Chaque invité reçoit un billet réel (gratuit) à ce lien — il le présente à l&apos;entrée, le videur le scanne comme n&apos;importe quel billet.
         </p>
-      </div>
 
       {/* Confirmation de retrait */}
       {confirmRemove && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 3010, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setConfirmRemove(null)}
-        >
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: 360,
-              background: '#12131c',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 16,
-              padding: 22,
-              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-            }}
-          >
+        <Modal onClose={() => setConfirmRemove(null)} maxWidth={360} hideClose contentStyle={{ padding: 22, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>Retirer cet invité ?</p>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
               <strong style={{ color: '#fff' }}>{confirmRemove.guestName}</strong> n&apos;aura plus accès à ce billet. Tu pourras le réinviter à tout moment.
@@ -433,9 +388,8 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                 Retirer
               </Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
-    </div>
+    </Modal>
   )
 }

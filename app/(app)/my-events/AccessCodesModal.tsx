@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Button, Input, Label, Spinner } from '@/app/components/ui'
+import { Button, Input, Label, Modal, Spinner } from '@/app/components/ui'
 
 interface AccessCodesModalProps {
   event: { id: string; name: string }
@@ -129,31 +129,7 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 420,
-          maxHeight: '88vh',
-          overflowY: 'auto',
-          background: '#12131c',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 20,
-          padding: 22,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-        }}
-      >
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          aria-label="Fermer"
-          style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
-        >
-          ×
-        </Button>
-
+    <Modal onClose={onClose} maxWidth={420}>
         <div style={{ marginBottom: 16, paddingRight: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth={1.5}>
@@ -309,7 +285,6 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }

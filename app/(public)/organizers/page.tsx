@@ -12,6 +12,7 @@ import {
 } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
+import FilterSelect from '../_components/FilterSelect'
 import { Button, Checkbox, Input } from '@/app/components/ui'
 
 export const metadata: Metadata = {
@@ -103,14 +104,23 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             placeholder="Nom, ville, événement…"
             style={{ minWidth: 0, borderRadius: 999, background: '#0b0c12', fontSize: 13 }}
           />
-          <select className="organizer-directory__field" name="region" defaultValue={region} aria-label="Filtrer par région">
-            <option value="">Toutes les régions</option>
-            {regions.map((item) => <option key={item.id} value={item.id}>{item.flag} {item.name}</option>)}
-          </select>
-          <select className="organizer-directory__field" name="sort" defaultValue={sort} aria-label="Trier les organisateurs">
-            <option value="popular">Plus populaires</option>
-            <option value="recent">Plus récents</option>
-          </select>
+          <FilterSelect
+            name="region"
+            defaultValue={region}
+            ariaLabel="Filtrer par région"
+            options={[{ value: '', label: 'Toutes les régions' }, ...regions.map((item) => ({ value: item.id, label: `${item.flag} ${item.name}` }))]}
+            style={{ borderRadius: 999, background: '#0b0c12', fontSize: 13 }}
+          />
+          <FilterSelect
+            name="sort"
+            defaultValue={sort}
+            ariaLabel="Trier les organisateurs"
+            options={[
+              { value: 'popular', label: 'Plus populaires' },
+              { value: 'recent', label: 'Plus récents' },
+            ]}
+            style={{ borderRadius: 999, background: '#0b0c12', fontSize: 13 }}
+          />
           <Checkbox
             name="upcoming"
             value="1"
