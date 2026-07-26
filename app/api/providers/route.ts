@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { listPublicProviders } from '@/lib/server/providers'
+import { getCachedPublicProviders as listPublicProviders } from '@/lib/server/publicCache'
 import { getProviderCategories, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
 

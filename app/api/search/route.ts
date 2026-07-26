@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
-import { searchPublicEvents } from '@/lib/server/events'
-import { listPublicProviders } from '@/lib/server/providers'
-import { listPublicOrganizers } from '@/lib/server/organizers'
+import {
+  getCachedSearchPublicEvents as searchPublicEvents,
+  getCachedPublicProviders as listPublicProviders,
+  getCachedPublicOrganizers as listPublicOrganizers,
+} from '@/lib/server/publicCache'
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 

@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { auth } from '@/auth'
-import { listPublicEvents, type PublicEvent } from '@/lib/server/events'
-import { getBoostedEventIds } from '@/lib/server/boosts'
+import { type PublicEvent } from '@/lib/server/events'
+import { getCachedPublicEvents as listPublicEvents, getCachedBoostedEventIds as getBoostedEventIds } from '@/lib/server/publicCache'
 import { getMyProfile } from '@/lib/server/profile'
 import { listActiveInterestSignals } from '@/lib/server/eventInterests'
 import { normalizeGeoText } from '@/lib/shared/locations'
@@ -78,7 +78,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   return (
     <div style={{ padding: '28px 0 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
       <div style={{ padding: '0 22px', marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 16px' }}>Événements</h1>
+        <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.01em', margin: '0 0 16px' }}>Événements</h1>
         <form action="/events" method="get" style={{ display: 'flex', gap: 8, maxWidth: 420 }}>
           <input
             type="text"
@@ -98,7 +98,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
           />
           <button
             type="submit"
-            style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}
+            style={{ padding: '11px 18px', borderRadius: 8, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13, cursor: 'pointer' }}
           >
             Chercher
           </button>

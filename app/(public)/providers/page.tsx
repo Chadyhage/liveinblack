@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
-import { listPublicProviders } from '@/lib/server/providers'
+import { Star } from 'lucide-react'
+import { getCachedPublicProviders as listPublicProviders } from '@/lib/server/publicCache'
 import { getProviderCategories, getProviderCategory, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
@@ -56,7 +58,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
       <div style={{ maxWidth: 1120, margin: '0 auto' }}>
       <header style={{ textAlign: 'center', marginBottom: 26 }}>
         <p style={{ margin: 0, color: 'var(--gold)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>L&apos;annuaire</p>
-        <h1 style={{ fontSize: 'clamp(32px, 7vw, 54px)', lineHeight: 1.02, letterSpacing: '-.04em', margin: '10px 0 0' }}>Les prestataires qui font<br /><span style={{ color: 'var(--gold)' }}>vivre la nuit.</span></h1>
+        <h1 className="font-display" style={{ fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em', margin: '10px 0 0' }}>Les prestataires qui font<br /><span style={{ color: 'var(--gold)' }}>vivre la nuit.</span></h1>
         <p style={{ maxWidth: 560, margin: '16px auto 0', color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>DJ, salles, sono, photo, boissons : trouve le bon partenaire et découvre directement ses offres.</p>
       </header>
 
@@ -73,7 +75,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
           <option value="">Toutes les régions</option>
           {regions.map((item) => <option key={item.id} value={item.id}>{item.flag} {item.name}</option>)}
         </select>
-        <button type="submit" style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 999, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>
+        <button type="submit" style={{ flexShrink: 0, padding: '12px 18px', borderRadius: 8, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13, cursor: 'pointer' }}>
           Filtrer
         </button>
       </form>
@@ -108,8 +110,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
               >
                 <div style={{ position: 'relative', height: 120, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))` }}>
                   {coverImage && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={coverImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <Image src={coverImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 230px" />
                   )}
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.88), transparent 64%)' }} />
                   <span
@@ -134,8 +135,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
                   </span>
                   <div style={{ position: 'absolute', left: 14, bottom: -22, width: 52, height: 52, borderRadius: '50%', border: '2px solid var(--surface)', overflow: 'hidden', background: pc.color, display: 'grid', placeItems: 'center', color: '#04120e', fontSize: 20, fontWeight: 800 }}>
                     {p.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <Image src={p.photoUrl} alt={p.name} width={52} height={52} style={{ objectFit: 'cover' }} />
                     ) : p.name?.[0]?.toUpperCase()}
                   </div>
                 </div>
@@ -145,7 +145,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
                   {(p.city || p.location || p.country) && <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>}
                   {p.description && <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.description}</p>}
                   {visibleCatalog.length > 0 && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', fontWeight: 700, margin: '12px 0 0' }}>{visibleCatalog.length} offre{visibleCatalog.length !== 1 ? 's' : ''} au catalogue</p>}
-                  {(p.ratingCount || 0) > 0 && <p style={{ fontSize: 11.5, color: 'var(--gold)', fontWeight: 800, margin: '6px 0 0' }}>★ {(p.ratingAvg || 0).toFixed(1)} · {p.ratingCount} avis</p>}
+                  {(p.ratingCount || 0) > 0 && <p style={{ fontSize: 11.5, color: 'var(--gold)', fontWeight: 800, margin: '6px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}><Star size={12} fill="currentColor" /> {(p.ratingAvg || 0).toFixed(1)} · {p.ratingCount} avis</p>}
                 </div>
               </Link>
             )
@@ -153,9 +153,9 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
         </div>
       )}
       <section style={{ maxWidth: 820, margin: '54px auto 0', padding: '36px 24px', textAlign: 'center', borderRadius: 20, border: '1px solid rgba(200,169,110,.3)', background: 'var(--surface)' }}>
-        <h2 style={{ margin: 0, fontSize: 28 }}>Tu es prestataire ?</h2>
+        <h2 className="font-display" style={{ margin: 0, fontSize: 32, letterSpacing: '.01em' }}>Tu es prestataire ?</h2>
         <p style={{ maxWidth: 500, margin: '10px auto 20px', color: 'var(--text-muted)', lineHeight: 1.6 }}>Crée ta vitrine, présente ton catalogue et échange directement avec les organisateurs.</p>
-        <Link href="/provider-signup" style={{ display: 'inline-block', padding: '12px 19px', borderRadius: 11, background: 'var(--gold)', color: '#090a0f', textDecoration: 'none', fontWeight: 800 }}>Devenir prestataire</Link>
+        <Link href="/provider-signup" style={{ display: 'inline-block', padding: '13px 22px', borderRadius: 8, background: 'var(--gold)', color: '#090a0f', textDecoration: 'none', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13.5 }}>Devenir prestataire</Link>
       </section>
       </div>
     </main>

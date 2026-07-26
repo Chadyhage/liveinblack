@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listPublicOrganizersWithNextEvent } from '@/lib/server/organizers'
+import { getCachedPublicOrganizersWithNextEvent as listPublicOrganizersWithNextEvent } from '@/lib/server/publicCache'
 import { listMyFollowedOrganizers } from '@/lib/server/organizerFollows'
 import { normalizeGeoText, getEntityRegionIds, getRegionName, matchesEntityRegion } from '@/lib/shared/locations'
 

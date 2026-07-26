@@ -1,10 +1,15 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { auth } from '@/auth'
-import { listPublicEvents, type PublicEvent } from '@/lib/server/events'
-import { listPublicProviders, type CatalogItem } from '@/lib/server/providers'
-import { getPublicHomepageConfig } from '@/lib/server/agentHomepageConfig'
-import { getBoostedEventIds } from '@/lib/server/boosts'
+import { type PublicEvent } from '@/lib/server/events'
+import { type CatalogItem } from '@/lib/server/providers'
+import {
+  getCachedPublicEvents as listPublicEvents,
+  getCachedPublicProviders as listPublicProviders,
+  getCachedPublicHomepageConfig as getPublicHomepageConfig,
+  getCachedBoostedEventIds as getBoostedEventIds,
+} from '@/lib/server/publicCache'
 import { getMyProfile } from '@/lib/server/profile'
 import { listActiveInterestSignals } from '@/lib/server/eventInterests'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
@@ -43,6 +48,23 @@ function firstOfferImage(catalog: CatalogItem[] = []): string | null {
     if (image) return image.url
   }
   return null
+}
+
+const MONTHS_FR = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEP', 'OCT', 'NOV', 'DÉC']
+
+// Badge date façon "billet" (mois/jour empilés) — même langage visuel que
+// les cartes de pass du site de référence (chillandgroovefestival.com,
+// migration design demandée par le client) et déjà porté côté mobile
+// (components/EventCard.tsx), pour rester cohérent entre les deux plateformes.
+function DateBadge({ dateISO }: { dateISO: string }) {
+  const d = new Date(dateISO)
+  if (Number.isNaN(d.getTime())) return null
+  return (
+    <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(4,4,11,.78)', borderRadius: 8, padding: '5px 9px', textAlign: 'center', lineHeight: 1.1 }}>
+      <p style={{ margin: 0, fontSize: 9.5, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '.04em' }}>{MONTHS_FR[d.getMonth()]}</p>
+      <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fff' }}>{d.getDate()}</p>
+    </div>
+  )
 }
 
 export default async function AccueilPage() {
@@ -98,7 +120,7 @@ export default async function AccueilPage() {
           <p style={{ fontSize: 34, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
             L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
           </p>
-          <h1 style={{ fontSize: 'clamp(34px, 8vw, 62px)', fontWeight: 800, lineHeight: 1.03, letterSpacing: '-1.5px', margin: '22px 0 0' }}>
+          <h1 className="font-display" style={{ fontSize: 'clamp(38px, 9vw, 78px)', lineHeight: 0.98, letterSpacing: '0.01em', margin: '22px 0 0' }}>
             Les meilleures soirées,
             <br />
             <span style={{ color: 'var(--teal)' }}>au bout des doigts.</span>
@@ -151,14 +173,13 @@ export default async function AccueilPage() {
                 >
                   <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
                     {e.imageUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={e.imageUrl} alt={e.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <Image src={e.imageUrl} alt={e.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
                     )}
                     <span
                       style={{
                         position: 'absolute',
                         top: 8,
-                        left: 8,
+                        left: 62,
                         fontSize: 11,
                         fontWeight: 700,
                         color: '#0b0d14',
@@ -170,6 +191,7 @@ export default async function AccueilPage() {
                     >
                       À la une
                     </span>
+                    <DateBadge dateISO={e.date} />
                     {min != null && (
                       <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 11, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>
                         dès {fmtMoney(min, eventCurrency(e))}
@@ -223,9 +245,9 @@ export default async function AccueilPage() {
                   <Link key={e.id} href={`/events/${e.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
                       {e.imageUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={e.imageUrl} alt={e.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <Image src={e.imageUrl} alt={e.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
                       )}
+                      <DateBadge dateISO={e.date} />
                       {min != null && (
                         <span style={{ position: 'absolute', top: 10, right: 10, fontSize: 11, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>
                           dès {fmtMoney(min, eventCurrency(e))}
@@ -262,8 +284,7 @@ export default async function AccueilPage() {
                   <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ position: 'relative', height: 110, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
                       {coverImage && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={coverImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <Image src={coverImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
                       )}
                       <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
                         {pc.label}
@@ -271,8 +292,7 @@ export default async function AccueilPage() {
                       </span>
                       <div style={{ position: 'absolute', left: 12, bottom: -20, width: 46, height: 46, borderRadius: '50%', border: '2px solid var(--obsidian)', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, color: 'var(--obsidian)' }}>
                         {p.photoUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <Image src={p.photoUrl} alt={p.name} width={46} height={46} style={{ objectFit: 'cover' }} />
                         ) : (
                           p.name?.[0]?.toUpperCase() || '?'
                         )}
@@ -387,7 +407,7 @@ export default async function AccueilPage() {
       {/* CTA FINAL */}
       <section style={{ padding: '10px 22px 70px' }}>
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.14), transparent 60%), var(--surface-2)' }}>
-          <h2 style={{ fontSize: 'clamp(26px,6vw,40px)', fontWeight: 800, letterSpacing: '-1px', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
+          <h2 className="font-display" style={{ fontSize: 'clamp(28px,7vw,46px)', letterSpacing: '.01em', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>
             {session?.user ? 'Retrouve tes recommandations et tous tes billets au même endroit.' : 'Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.'}
           </p>
@@ -415,11 +435,14 @@ function HomeEventCard({ event, badge, boosted = false, reason }: { event: Publi
     <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
       <div style={{ position: 'relative', aspectRatio: '4/3', background: `radial-gradient(circle at 25% 10%,${event.color || '#8444ff'}55,transparent 58%),var(--surface-2)` }}>
         {event.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 230px" />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,4,11,.74),transparent 58%)' }} />
-        {badge && <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 26, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>}
+        {badge ? (
+          <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 26, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
+        ) : (
+          <DateBadge dateISO={event.date} />
+        )}
         {boosted && <span style={{ position: 'absolute', top: 10, right: 10, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '4px 8px', fontSize: 9.5, fontWeight: 900 }}>À LA UNE</span>}
         {reason && <span style={{ position: 'absolute', left: 10, bottom: 10, maxWidth: 'calc(100% - 20px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(132,68,255,.48)', background: 'rgba(5,6,10,.86)', color: '#e5d8ff', padding: '5px 9px', fontSize: 10.5, fontWeight: 700 }}>{reason}</span>}
       </div>
@@ -437,7 +460,7 @@ function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: s
     <section style={{ padding: '54px 22px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
       <div style={{ textAlign: 'center', marginBottom: 30 }}>
         {eyebrow && <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: 0 }}>{eyebrow}</p>}
-        <h2 style={{ fontSize: 'clamp(24px,5.5vw,36px)', fontWeight: 800, letterSpacing: '-.8px', margin: '8px 0 0' }}>{title}</h2>
+        <h2 className="font-display" style={{ fontSize: 'clamp(26px,6vw,42px)', letterSpacing: '.01em', margin: '10px 0 0' }}>{title}</h2>
         {sub && <p style={{ fontSize: 14.5, color: 'var(--text-muted)', margin: '10px auto 0', maxWidth: 520, lineHeight: 1.5 }}>{sub}</p>}
       </div>
       {children}
@@ -454,9 +477,13 @@ function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string;
   )
 }
 
+// Boutons rectangulaires, texte MAJUSCULES + tracking — langage visuel du
+// site de référence (chillandgroovefestival.com : "PRENDRE MON PASS",
+// "Acheter"), couleurs LIVEINBLACK inchangées (décision client : polices/
+// mise en page oui, palette non).
 const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
-const btnPrimary: React.CSSProperties = { padding: '14px 26px', borderRadius: 999, fontSize: 15, fontWeight: 700, color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none', display: 'inline-block' }
-const btnGhost: React.CSSProperties = { padding: '13px 24px', borderRadius: 999, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none', display: 'inline-block' }
-const btnSolid: React.CSSProperties = { padding: '13px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', display: 'inline-block', textAlign: 'center' }
+const btnPrimary: React.CSSProperties = { padding: '15px 28px', borderRadius: 8, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none', display: 'inline-block' }
+const btnGhost: React.CSSProperties = { padding: '14px 26px', borderRadius: 8, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none', display: 'inline-block' }
+const btnSolid: React.CSSProperties = { padding: '14px 22px', borderRadius: 8, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', textDecoration: 'none', display: 'inline-block', textAlign: 'center' }
 const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }
 const featItem: React.CSSProperties = { fontSize: 13.5, color: 'var(--text-muted)', display: 'flex', gap: 9, alignItems: 'baseline' }

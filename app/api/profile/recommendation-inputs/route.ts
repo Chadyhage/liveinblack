@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getMyProfile } from '@/lib/server/profile'
 import { listActiveInterestSignals } from '@/lib/server/eventInterests'
-import { getBoostedEventIds } from '@/lib/server/boosts'
+import { getCachedBoostedEventIds as getBoostedEventIds } from '@/lib/server/publicCache'
 
 // Route JSON dédiée à LIB_Mobile — les 3 signaux nécessaires à
 // lib/shared/recommendations.ts::getRecommendedEvents (préférences, historique

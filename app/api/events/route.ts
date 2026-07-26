@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { listPublicEvents, searchPublicEvents } from '@/lib/server/events'
+import { getCachedPublicEvents as listPublicEvents, getCachedSearchPublicEvents as searchPublicEvents } from '@/lib/server/publicCache'
 
 // Route JSON publique de listing d'événements — n'existait pas jusqu'ici car
 // app/(public)/events/page.tsx appelle lib/server/events.ts directement

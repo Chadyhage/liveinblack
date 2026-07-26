@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { listPublicEvents } from '@/lib/server/events'
-import { listPublicProviders } from '@/lib/server/providers'
-import { listPublicOrganizers } from '@/lib/server/organizers'
+import {
+  getCachedPublicEvents as listPublicEvents,
+  getCachedPublicProviders as listPublicProviders,
+  getCachedPublicOrganizers as listPublicOrganizers,
+} from '@/lib/server/publicCache'
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import EventListCard from '../_components/EventListCard'
@@ -57,7 +59,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
 
   return (
     <div style={{ padding: '28px 22px 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 16px' }}>Recherche</h1>
+      <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.01em', margin: '0 0 16px' }}>Recherche</h1>
       <form action="/search" method="get" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxWidth: 480, marginBottom: 28 }}>
         <input
           type="text"
@@ -67,7 +69,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
           style={{ flex: '1 1 220px', minWidth: 0, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5 }}
           autoFocus
         />
-        <button type="submit" style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>
+        <button type="submit" style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 8, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13, cursor: 'pointer' }}>
           Chercher
         </button>
       </form>
@@ -79,7 +81,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
           <p style={{ color: 'var(--text-muted)', margin: '0 0 14px' }}>Aucun résultat pour « {query} ».</p>
           <Link
             href="/events"
-            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 10, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13.5, textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 8, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13, textDecoration: 'none' }}
           >
             Parcourir les événements
           </Link>
@@ -138,7 +140,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
 function ResultSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 30 }}>
-      <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 12px' }}>{title}</h2>
+      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>{title}</h2>
       {children}
     </section>
   )

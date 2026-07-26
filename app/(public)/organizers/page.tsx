@@ -1,7 +1,8 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { auth } from '@/auth'
-import { listPublicOrganizersWithNextEvent } from '@/lib/server/organizers'
+import { getCachedPublicOrganizersWithNextEvent as listPublicOrganizersWithNextEvent } from '@/lib/server/publicCache'
 import { listMyFollowedOrganizers } from '@/lib/server/organizerFollows'
 import {
   normalizeGeoText,
@@ -85,7 +86,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
       <div className="organizer-directory__wrap">
         <header style={{ textAlign: 'center' }}>
           <p style={{ margin: 0, color: 'var(--gold)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>L&apos;annuaire</p>
-          <h1 style={{ margin: '10px 0 0', fontSize: 'clamp(32px, 7vw, 54px)', lineHeight: 1.02, letterSpacing: '-.04em' }}>
+          <h1 className="font-display" style={{ margin: '10px 0 0', fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em' }}>
             Les organisateurs qui font<br /><span style={{ color: 'var(--gold)' }}>vibrer la nuit.</span>
           </h1>
           <p style={{ maxWidth: 570, margin: '16px auto 0', color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>
@@ -107,7 +108,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             <input type="checkbox" name="upcoming" value="1" defaultChecked={upcomingOnly} />
             Événement à venir
           </label>
-          <button type="submit" style={{ minHeight: 42, padding: '0 19px', borderRadius: 999, border: 0, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, cursor: 'pointer' }}>Filtrer</button>
+          <button type="submit" style={{ minHeight: 42, padding: '0 19px', borderRadius: 8, border: 0, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13, cursor: 'pointer' }}>Filtrer</button>
         </form>
 
         <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>
@@ -128,13 +129,11 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                 <article key={organizer.userId} className="organizer-directory__card">
                   <Link href={`/organizers/${organizer.slug}`} className="organizer-directory__cover" aria-label={`Découvrir ${organizer.publicName}`}>
                     {organizer.bannerUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={organizer.bannerUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <Image src={organizer.bannerUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 820px) 100vw, 240px" />
                     )}
                     <div style={{ position: 'absolute', zIndex: 2, left: 18, bottom: 18, width: 58, height: 58, borderRadius: '50%', overflow: 'hidden', border: '3px solid rgba(4,4,11,.9)', background: 'var(--surface-2)', display: 'grid', placeItems: 'center', color: 'var(--teal)', fontSize: 23, fontWeight: 800 }}>
                       {organizer.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={organizer.avatarUrl} alt={organizer.publicName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <Image src={organizer.avatarUrl} alt={organizer.publicName} width={58} height={58} style={{ objectFit: 'cover' }} />
                       ) : organizer.publicName?.[0]?.toUpperCase()}
                     </div>
                   </Link>
@@ -149,7 +148,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                     )}
                   </Link>
                   <div className="organizer-directory__actions">
-                    <Link href={`/organizers/${organizer.slug}`} style={{ display: 'block', padding: '11px 14px', borderRadius: 11, textAlign: 'center', textDecoration: 'none', color: '#0a0a0e', background: 'var(--gold)', fontWeight: 800, fontSize: 13 }}>Découvrir la page</Link>
+                    <Link href={`/organizers/${organizer.slug}`} style={{ display: 'block', padding: '12px 14px', borderRadius: 8, textAlign: 'center', textDecoration: 'none', color: '#0a0a0e', background: 'var(--gold)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 12.5 }}>Découvrir la page</Link>
                     {!isSelf && (
                       <OrganizerFollowButtonClient
                         organizerId={organizer.userId}

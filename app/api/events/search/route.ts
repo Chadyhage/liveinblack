@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { searchPublicEvents } from '@/lib/server/events'
+import { getCachedSearchPublicEvents as searchPublicEvents } from '@/lib/server/publicCache'
 
 // Recherche d'événements PUBLICS pour l'EventPickerModal de MessagesClient.tsx
 // ('Partager un événement' → sondage 'On y va ?', voir POST
