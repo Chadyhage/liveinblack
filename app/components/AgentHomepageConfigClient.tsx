@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { ChevronUp, ChevronDown, X } from 'lucide-react'
+import { Button, Input, Switch } from '@/app/components/ui'
 
 // Port de src/components/ActualiteAdminPanel.jsx (#9 phase agent/admin, tab
 // 'actualite') — édition du carrousel « Actualité » de l'accueil : actif
@@ -63,8 +65,7 @@ function normalizeForPreview(d: Draft): Draft {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 18px' }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 13.5, outline: 'none' }
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', marginBottom: 8 }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', marginBottom: 8 }
 
 export default function AgentHomepageConfigClient() {
   const [draft, setDraft] = useState<Draft>(defaultDraft())
@@ -206,7 +207,7 @@ export default function AgentHomepageConfigClient() {
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Actualité</h1>
+        <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Actualité</h1>
 
         {loadError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)' }}>
@@ -223,7 +224,7 @@ export default function AgentHomepageConfigClient() {
         )}
 
       <div style={cardStyle}>
-        <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: '#fff' }}>Carrousel « Actualité »</h3>
+        <h3 style={{ margin: '0 0 6px', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Carrousel « Actualité »</h3>
         <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.6 }}>
           Un bandeau éditorial en haut de l&apos;accueil pour mettre en avant une sélection d&apos;événements (le gros
           événement du week-end, les nouveautés, une saison…). Il n&apos;apparaît que s&apos;il est activé et qu&apos;au
@@ -232,61 +233,38 @@ export default function AgentHomepageConfigClient() {
       </div>
 
       <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <span>
             <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#fff' }}>Afficher sur l&apos;accueil</span>
             <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-faint)', marginTop: 2 }}>
               {draft.active ? 'Le carrousel est visible par les visiteurs.' : 'Masqué — personne ne le voit.'}
             </span>
           </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={draft.active}
-            onClick={() => patch({ active: !draft.active })}
-            style={{
-              flexShrink: 0,
-              width: 48,
-              height: 28,
-              borderRadius: 999,
-              border: 'none',
-              cursor: 'pointer',
-              background: draft.active ? '#3ed6b5' : 'rgba(255,255,255,0.14)',
-              position: 'relative',
-              transition: 'background 0.2s',
-            }}
-          >
-            <span style={{ position: 'absolute', top: 3, left: draft.active ? 23 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
-          </button>
-        </label>
+          <Switch checked={draft.active} onChange={() => patch({ active: !draft.active })} style={{ flexShrink: 0 }} />
+        </div>
 
         <div>
           <span style={labelStyle}>Accent</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {ACCENTS.map((a) => (
-              <button
+              <Button
                 key={a.key}
-                type="button"
+                variant="ghost"
                 onClick={() => patch({ accent: a.key })}
                 style={{
                   flex: 1,
                   padding: '8px 10px',
                   borderRadius: 10,
-                  cursor: 'pointer',
                   background: draft.accent === a.key ? a.soft : 'rgba(255,255,255,0.04)',
                   border: `1px solid ${draft.accent === a.key ? a.border : 'rgba(255,255,255,0.08)'}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   gap: 7,
                   fontSize: 12,
-                  fontWeight: 700,
                   color: draft.accent === a.key ? a.dot : 'var(--text-muted)',
                 }}
               >
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: a.dot }} />
                 {a.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -295,12 +273,12 @@ export default function AgentHomepageConfigClient() {
       <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <span style={labelStyle}>Titre</span>
-          <input style={inputStyle} value={draft.title} maxLength={80} onChange={(e) => patch({ title: e.target.value })} placeholder="L'actu du moment" />
+          <Input value={draft.title} maxLength={80} onChange={(e) => patch({ title: e.target.value })} placeholder="L'actu du moment" />
           <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)', marginTop: 4, textAlign: 'right' }}>{draft.title.length}/80</span>
         </div>
         <div>
           <span style={labelStyle}>Sous-titre</span>
-          <input style={inputStyle} value={draft.subtitle} maxLength={140} onChange={(e) => patch({ subtitle: e.target.value })} placeholder="Les temps forts à ne pas manquer" />
+          <Input value={draft.subtitle} maxLength={140} onChange={(e) => patch({ subtitle: e.target.value })} placeholder="Les temps forts à ne pas manquer" />
           <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)', marginTop: 4, textAlign: 'right' }}>{draft.subtitle.length}/140</span>
         </div>
       </div>
@@ -340,13 +318,13 @@ export default function AgentHomepageConfigClient() {
                   </span>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                     <IconBtn label="Monter" disabled={i === 0} onClick={() => move(id, -1)}>
-                      ↑
+                      <ChevronUp size={14} />
                     </IconBtn>
                     <IconBtn label="Descendre" disabled={i === eventIds.length - 1} onClick={() => move(id, 1)}>
-                      ↓
+                      <ChevronDown size={14} />
                     </IconBtn>
                     <IconBtn label="Retirer" danger onClick={() => removeEvent(id)}>
-                      ✕
+                      <X size={14} />
                     </IconBtn>
                   </div>
                 </div>
@@ -361,15 +339,15 @@ export default function AgentHomepageConfigClient() {
         {atMax && (
           <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, color: '#c8a96e' }}>Maximum atteint ({MAX_EVENTS} événements). Retire-en un pour en ajouter un autre.</p>
         )}
-        <input style={{ ...inputStyle, marginBottom: 10 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, ville…" />
+        <Input style={{ marginBottom: 10 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, ville…" />
         {candidates.length === 0 ? (
           <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-faint)' }}>{q ? 'Aucun événement à venir ne correspond.' : 'Aucun autre événement à venir.'}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
             {candidates.map((ev) => (
-              <button
+              <Button
                 key={ev.id}
-                type="button"
+                variant="ghost"
                 onClick={() => addEvent(ev.id)}
                 disabled={atMax}
                 style={{
@@ -377,7 +355,6 @@ export default function AgentHomepageConfigClient() {
                   alignItems: 'center',
                   gap: 10,
                   textAlign: 'left',
-                  cursor: atMax ? 'not-allowed' : 'pointer',
                   opacity: atMax ? 0.5 : 1,
                   padding: '8px 10px',
                   borderRadius: 10,
@@ -390,7 +367,7 @@ export default function AgentHomepageConfigClient() {
                   <span style={{ display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--text-faint)' }}>{[ev.dateDisplay || ev.date, ev.city].filter(Boolean).join(' · ')}</span>
                 </span>
                 <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#4ee8c8' }}>+ Ajouter</span>
-              </button>
+              </Button>
             ))}
           </div>
         )}
@@ -415,14 +392,16 @@ export default function AgentHomepageConfigClient() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={onSave}
           disabled={saving}
-          style={{ padding: '12px 22px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', background: 'var(--teal)', color: 'var(--obsidian)', opacity: saving ? 0.6 : 1 }}
+          loading={saving}
+          loadingText="Enregistrement…"
+          style={{ padding: '12px 22px', borderRadius: 8, fontSize: 14, textTransform: 'uppercase', letterSpacing: '.03em' }}
         >
-          {saving ? 'Enregistrement…' : 'Enregistrer'}
-        </button>
+          Enregistrer
+        </Button>
         {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.ok ? '#4ee8c8' : '#ff9ed2' }}>{msg.text}</span>}
       </div>
       </div>
@@ -432,8 +411,8 @@ export default function AgentHomepageConfigClient() {
 
 function IconBtn({ children, label, onClick, disabled, danger }: { children: React.ReactNode; label: string; onClick: () => void; disabled?: boolean; danger?: boolean }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
@@ -441,18 +420,14 @@ function IconBtn({ children, label, onClick, disabled, danger }: { children: Rea
         width: 30,
         height: 30,
         borderRadius: 8,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        padding: 0,
         background: danger ? 'rgba(224,90,170,0.14)' : 'rgba(255,255,255,0.06)',
         border: `1px solid ${danger ? 'rgba(224,90,170,0.4)' : 'rgba(255,255,255,0.1)'}`,
         color: disabled ? 'rgba(255,255,255,0.25)' : danger ? '#ff9ed2' : 'rgba(255,255,255,0.8)',
         fontSize: 13,
-        fontWeight: 700,
       }}
     >
       {children}
-    </button>
+    </Button>
   )
 }

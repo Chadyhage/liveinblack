@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Button } from '@/app/components/ui'
 import AgentDossiersClient from '@/app/components/AgentDossiersClient'
 import AgentDashboardClient from '@/app/components/AgentDashboardClient'
 import AgentUsersClient from '@/app/components/AgentUsersClient'
@@ -135,7 +136,7 @@ export default function AgentShell() {
         }}
       >
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
-          <h1 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 9 }}>
+          <h1 className="font-display" style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 9 }}>
             Administration
             <span
               style={{
@@ -174,20 +175,18 @@ export default function AgentShell() {
             const active = t.key === tab
             const count = badges[t.key] ?? 0
             return (
-              <button
+              <Button
                 key={t.key}
+                variant="ghost"
                 onClick={() => setTab(t.key)}
                 aria-label={count > 0 ? `${t.label}, ${count} en attente` : undefined}
                 style={{
                   flexShrink: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
                   gap: 6,
                   padding: '8px 14px',
                   fontSize: 12.5,
                   fontWeight: 700,
                   letterSpacing: '0.01em',
-                  cursor: 'pointer',
                   background: active ? 'rgba(200,169,110,0.16)' : 'transparent',
                   border: active ? '1px solid rgba(200,169,110,0.45)' : '1px solid transparent',
                   borderRadius: 9,
@@ -210,7 +209,7 @@ export default function AgentShell() {
                     {count}
                   </span>
                 )}
-              </button>
+              </Button>
             )
           })}
         </div>

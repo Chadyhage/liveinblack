@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button, Input, Label, Select, Spinner } from '@/app/components/ui'
 
 interface EventPlace {
   id: string
@@ -51,17 +52,6 @@ const REMOVE_ERROR_MESSAGES: Record<string, string> = {
   already_checked_in: 'Cet invité est déjà arrivé, impossible de le retirer.',
   forbidden: "Tu n'as pas accès à cette guestlist.",
   event_not_found: 'Événement introuvable.',
-}
-
-function Spinner({ size = 14, color = '#fff' }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={3} />
-      <path d="M21 12a9 9 0 00-9-9" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round">
-        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-      </path>
-    </svg>
-  )
 }
 
 export default function GuestlistModal({ event, onClose }: GuestlistModalProps) {
@@ -177,13 +167,14 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
           boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
         }}
       >
-        <button
+        <Button
+          variant="ghost"
           onClick={onClose}
           aria-label="Fermer"
-          style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}
+          style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1, padding: 0 }}
         >
           ×
-        </button>
+        </Button>
 
         <div style={{ marginBottom: 16, paddingRight: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -193,7 +184,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
               <line x1="19" y1="8" x2="19" y2="14" />
               <line x1="16" y1="11" x2="22" y2="11" />
             </svg>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Guestlist</p>
+            <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Guestlist</p>
           </div>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
             Invitations pour <span style={{ color: 'var(--teal)' }}>{event.name}</span>
@@ -209,17 +200,15 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
         {/* Add guest form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 14, marginBottom: 16 }}>
           <div>
-            <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
+            <Label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
               Nom de l&apos;invité
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex : Aminata Koné"
               style={{
-                width: '100%',
-                boxSizing: 'border-box',
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.12)',
                 borderRadius: 10,
@@ -232,58 +221,42 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
           </div>
           {event.places.length > 0 && (
             <div>
-              <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
+              <Label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
                 Type de place
-              </label>
-              <select
+              </Label>
+              <Select
                 value={placeId}
-                onChange={(e) => setPlaceId(e.target.value)}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: 10,
-                  padding: '10px 12px',
-                  color: '#fff',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: 14,
-                  cursor: 'pointer',
-                }}
-              >
-                {event.places.map((place) => (
-                  <option key={place.id} value={place.id}>
-                    {place.type} — normalement {fmtMoney(place.price, event.currency)}, offert à l&apos;invité
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setPlaceId(value)}
+                options={event.places.map((place) => ({
+                  value: place.id,
+                  label: `${place.type} — normalement ${fmtMoney(place.price, event.currency)}, offert à l'invité`,
+                }))}
+              />
             </div>
           )}
           {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{error}</p>}
-          <button
+          <Button
+            variant="primary"
             onClick={handleAddGuest}
             disabled={adding || !name.trim()}
+            loading={adding}
+            loadingText="Ajout…"
+            fullWidth
             style={{
               padding: 12,
-              borderRadius: 10,
+              borderRadius: 8,
               border: 'none',
-              cursor: adding || !name.trim() ? 'not-allowed' : 'pointer',
               background: adding || !name.trim() ? 'rgba(255,255,255,0.07)' : '#3ed6b5',
               color: adding || !name.trim() ? 'rgba(255,255,255,0.35)' : '#04120e',
               fontFamily: 'Inter, sans-serif',
               fontSize: 14,
-              fontWeight: 700,
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '.03em',
             }}
           >
-            {adding ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                <Spinner size={14} />
-                Ajout…
-              </span>
-            ) : (
-              'Ajouter à la guestlist'
-            )}
-          </button>
+            Ajouter à la guestlist
+          </Button>
         </div>
 
         {/* Guest list */}
@@ -335,13 +308,13 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                    <button
+                    <Button
+                      variant="secondary"
                       onClick={() => copyGuestLink(entry)}
                       style={{
                         flex: 1,
                         padding: 9,
                         borderRadius: 10,
-                        cursor: 'pointer',
                         background: copiedCode === entry.ticketCode ? '#3ed6b5' : 'rgba(255,255,255,0.08)',
                         border: copiedCode === entry.ticketCode ? 'none' : '1px solid rgba(255,255,255,0.14)',
                         color: copiedCode === entry.ticketCode ? '#04120e' : 'rgba(255,255,255,0.9)',
@@ -351,7 +324,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                       }}
                     >
                       {copiedCode === entry.ticketCode ? 'Copié' : 'Copier le lien'}
-                    </button>
+                    </Button>
                     <a
                       href={waLink}
                       target="_blank"
@@ -386,26 +359,24 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                       {waSentCode === entry.ticketCode ? 'Ouvert' : 'WhatsApp'}
                     </a>
                     {!entry.checkedInAt && (
-                      <button
+                      <Button
+                        variant="danger"
                         onClick={() => askRemoveGuest(entry.ticketCode, guestName)}
                         title="Retirer"
                         aria-label="Retirer"
                         style={{
                           padding: '9px 12px',
                           borderRadius: 10,
-                          cursor: 'pointer',
                           background: 'rgba(224,90,170,0.14)',
                           border: '1px solid rgba(224,90,170,0.55)',
                           color: '#ff9ed2',
                           fontFamily: 'Inter, sans-serif',
                           fontSize: 12,
                           fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
                         }}
                       >
                         ×
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -447,18 +418,20 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
               <strong style={{ color: '#fff' }}>{confirmRemove.guestName}</strong> n&apos;aura plus accès à ce billet. Tu pourras le réinviter à tout moment.
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setConfirmRemove(null)}
-                style={{ flex: 1, padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600 }}
+                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 600 }}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={doConfirmRemoveGuest}
-                style={{ flex: 1.4, padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'var(--pink)', border: '1px solid transparent', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 700 }}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 8, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em' }}
               >
                 Retirer
-              </button>
+              </Button>
             </div>
           </div>
         </div>

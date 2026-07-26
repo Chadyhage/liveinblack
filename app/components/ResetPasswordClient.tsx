@@ -1,8 +1,9 @@
 'use client'
 
-import { forwardRef, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
+import { Button, Input, Label } from '@/app/components/ui'
 
 // Cible du resetLink construit par app/api/auth/request-password-reset/route.ts
 // (?email=&token=), consommé par POST /api/auth/reset-password. Mise en page
@@ -16,22 +17,10 @@ const CARD: React.CSSProperties = {
   borderRadius: 20,
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
-const inputStyle: React.CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--border-strong)',
-  borderRadius: 10,
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text)',
-  padding: '12px 14px',
-  width: '100%',
-  outline: 'none',
-  transition: 'border-color 0.2s, box-shadow 0.2s',
-  boxSizing: 'border-box',
-}
 const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 8 }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14.5, fontWeight: 700,
+  padding: '14px 20px', borderRadius: 8, cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
+  textTransform: 'uppercase', letterSpacing: '.03em',
   border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
 })
 
@@ -45,33 +34,6 @@ function checkPasswordStrength(pwd: string) {
   if (score === 2) return { score, label: 'Moyen', color: 'var(--gold)' }
   return { score, label: 'Fort', color: 'var(--teal)' }
 }
-
-const FocusInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function FocusInput(
-  { style, ...props },
-  ref
-) {
-  const [focused, setFocused] = useState(false)
-  return (
-    <input
-      ref={ref}
-      {...props}
-      onFocus={(e) => {
-        setFocused(true)
-        props.onFocus?.(e)
-      }}
-      onBlur={(e) => {
-        setFocused(false)
-        props.onBlur?.(e)
-      }}
-      style={{
-        ...inputStyle,
-        borderColor: focused ? 'var(--violet)' : 'var(--border-strong)',
-        boxShadow: focused ? '0 0 0 3px rgba(139,92,246,0.16)' : 'none',
-        ...style,
-      }}
-    />
-  )
-})
 
 type State = 'form' | 'success' | 'invalid' | 'missing'
 
@@ -125,13 +87,13 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
       <div style={{ ...CARD, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: state === 'form' ? 'left' : 'center' }}>
         {state === 'form' && (
           <>
-            <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 8px' }}>Nouveau mot de passe</h1>
+            <h1 className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 8px' }}>Nouveau mot de passe</h1>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.62)', lineHeight: 1.6, margin: '0 0 24px', overflowWrap: 'break-word' }}>Choisis un nouveau mot de passe pour {email}.</p>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={labelStyle} htmlFor="reset-password">Nouveau mot de passe</label>
+                <Label style={labelStyle} htmlFor="reset-password">Nouveau mot de passe</Label>
                 <div style={{ position: 'relative' }}>
-                  <FocusInput
+                  <Input
                     id="reset-password"
                     name="new-password"
                     type={showPwd ? 'text' : 'password'}
@@ -141,13 +103,14 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
                     onChange={(e) => setPassword(e.target.value)}
                     style={{ paddingRight: 56 }}
                   />
-                  <button
+                  <Button
+                    variant="link"
                     type="button"
                     onClick={() => setShowPwd((v) => !v)}
-                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
                   >
                     {showPwd ? 'Cacher' : 'Voir'}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -163,13 +126,13 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
               )}
 
               <div>
-                <label style={labelStyle} htmlFor="reset-password-confirm">Confirmer le mot de passe</label>
-                <FocusInput id="reset-password-confirm" name="new-password" type="password" autoComplete="new-password" placeholder="Mot de passe" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+                <Label style={labelStyle} htmlFor="reset-password-confirm">Confirmer le mot de passe</Label>
+                <Input id="reset-password-confirm" name="new-password" type="password" autoComplete="new-password" placeholder="Mot de passe" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
               </div>
               {error && <p style={{ fontSize: 12, color: COLORS.pink, margin: 0 }}>{error}</p>}
-              <button type="submit" disabled={loading} style={{ ...btnSolid('var(--teal-solid)', '#04120e'), opacity: loading ? 0.75 : 1, cursor: loading ? 'wait' : 'pointer', marginTop: 4 }}>
-                {loading ? 'Enregistrement…' : 'Changer mon mot de passe'}
-              </button>
+              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--teal-solid)', '#04120e'), marginTop: 4 }}>
+                Changer mon mot de passe
+              </Button>
             </form>
           </>
         )}
@@ -179,12 +142,12 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
             <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(78,232,200,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>Mot de passe changé</h1>
+            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>Mot de passe changé</h1>
             <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55, overflowWrap: 'break-word' }}>
               Le mot de passe de {email} a été changé. Tu peux maintenant te connecter avec ton nouveau mot de passe.
             </p>
             <div style={{ marginTop: 28 }}>
-              <button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#04120e')}>Se connecter</button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#04120e')}>Se connecter</Button>
             </div>
           </>
         )}
@@ -194,12 +157,12 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
             <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
             </div>
-            <h1 style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien invalide ou expiré</h1>
+            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien invalide ou expiré</h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
               Ce lien de réinitialisation n&apos;est plus valable. Redemande-en un nouveau depuis la page de connexion.
             </p>
             <div style={{ marginTop: 28 }}>
-              <button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</Button>
             </div>
           </>
         )}
@@ -209,12 +172,12 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
             <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
             </div>
-            <h1 style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien de réinitialisation introuvable</h1>
+            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien de réinitialisation introuvable</h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
               Cette page s&apos;utilise uniquement depuis le lien reçu par email. Demande un nouveau lien depuis la page de connexion.
             </p>
             <div style={{ marginTop: 28 }}>
-              <button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</Button>
             </div>
           </>
         )}

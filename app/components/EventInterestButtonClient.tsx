@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { Button } from '@/app/components/ui'
 
 // Port de src/components/EventInterestButton.jsx — bouton coeur utilisé sur
 // la fiche événement et sur la page "Événements intéressés" (#6 phase
@@ -72,15 +73,16 @@ export default function EventInterestButtonClient({
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
-      <button
+      <Button
         onClick={toggle}
         disabled={busy}
+        variant="ghost"
         style={style}
         aria-label={interested ? 'Retirer de mes événements intéressés' : 'Ajouter à mes événements intéressés'}
       >
         <HeartIcon filled={interested} />
         {!compact && <span style={{ fontSize: 12.5, fontWeight: 700 }}>Intéressé</span>}
-      </button>
+      </Button>
       {error && (
         <div
           style={{

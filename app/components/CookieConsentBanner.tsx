@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { getCookieConsent, saveCookieConsent, type CookieConsentValue } from '@/lib/shared/cookieConsent'
+import { Button } from '@/app/components/ui'
 
 type Phase = 'entering' | 'visible' | 'leaving'
 
@@ -136,11 +137,13 @@ export default function CookieConsentBanner() {
         .cc-btn {
           min-height: 40px;
           padding: 10px 18px;
-          border-radius: 10px;
+          border-radius: 8px;
           cursor: pointer;
           font-family: Inter, system-ui, sans-serif;
-          font-size: 13px;
-          font-weight: 600;
+          font-size: 12.5px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
           white-space: nowrap;
           transition: all 0.2s ease;
           outline: none;
@@ -199,12 +202,44 @@ export default function CookieConsentBanner() {
               </p>
             </div>
             <div className="cc-actions">
-              <button className="cc-btn cc-btn-refuse" onClick={() => dismiss('refused')}>
+              <Button
+                variant="secondary"
+                onClick={() => dismiss('refused')}
+                style={{
+                  minHeight: 40,
+                  padding: '10px 18px',
+                  borderRadius: 8,
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontSize: 12.5,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.03em',
+                  whiteSpace: 'nowrap',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  color: 'rgba(255,255,255,0.88)',
+                }}
+              >
                 Tout refuser
-              </button>
-              <button className="cc-btn cc-btn-accept" onClick={() => dismiss('accepted')}>
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => dismiss('accepted')}
+                style={{
+                  minHeight: 40,
+                  padding: '10px 18px',
+                  borderRadius: 8,
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontSize: 12.5,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.03em',
+                  whiteSpace: 'nowrap',
+                  background: 'rgba(78,232,200,0.08)',
+                  border: '1px solid rgba(78,232,200,0.42)',
+                  color: 'rgba(255,255,255,0.88)',
+                }}
+              >
                 Tout accepter
-              </button>
+              </Button>
             </div>
           </div>
         </div>

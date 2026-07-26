@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Button } from '@/app/components/ui'
 
 // Seule partie interactive de la page (bascule entre les 3 profils) — le
 // reste de /c-est-quoi est statique. Port de la logique JourneyVisual/tabs de
@@ -65,13 +66,13 @@ export default function TabsSection() {
     <div>
       <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 28, flexWrap: 'wrap' }}>
         {TABS.map((t) => (
-          <button
+          <Button
             key={t.id}
+            variant="ghost"
             onClick={() => setActiveTab(t.id)}
             style={{
               fontSize: 14,
               fontWeight: 700,
-              cursor: 'pointer',
               padding: '10px 20px',
               borderRadius: 999,
               color: activeTab === t.id ? '#fff' : 'var(--text-muted)',
@@ -80,7 +81,7 @@ export default function TabsSection() {
             }}
           >
             {t.label}
-          </button>
+          </Button>
         ))}
       </div>
 

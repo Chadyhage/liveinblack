@@ -7,6 +7,8 @@ import { fmtMoney } from '@/lib/shared/money'
 import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF } from '@/lib/shared/fees'
 import type { ShowOption } from '@/lib/shared/showOptions'
 import AgeGateModal from './AgeGateModal'
+import { Check, X } from 'lucide-react'
+import { Button, Input, Textarea, Checkbox } from '@/app/components/ui'
 
 // Port INTERACTIF de la section « Réservation » de src/pages/EventDetailPage.jsx
 // (sélecteur de place + table/groupe, stepper de quantité, précommande, code
@@ -130,17 +132,6 @@ function isPromoRelatedError(code: string | null | undefined): boolean {
 }
 
 const MAX_PREORDER_ITEM_QTY = 20
-
-function Spinner({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(4,18,14,0.25)" strokeWidth={3} />
-      <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="#04120e" strokeWidth={3} strokeLinecap="round">
-        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-      </path>
-    </svg>
-  )
-}
 
 export default function EventCheckoutPanel({
   eventId,
@@ -390,9 +381,7 @@ export default function EventCheckoutPanel({
     }
   }
 
-  const buyLabel = submitting
-    ? 'Redirection vers le paiement…'
-    : `Vérifier ma commande · ${fmtMoney(grandTotal, currency)}`
+  const buyLabel = `Vérifier ma commande · ${fmtMoney(grandTotal, currency)}`
 
   const buyDisabled = disabled || !canBook || submitting
 
@@ -418,7 +407,7 @@ export default function EventCheckoutPanel({
 
   return (
     <section style={{ padding: '22px 22px 0' }}>
-      <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 10px' }}>Réservation</h2>
+      <h2 style={{ fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--teal)', margin: '0 0 12px' }}>Réservation</h2>
 
       {cancelNoticeVisible && (
         <div
@@ -438,13 +427,14 @@ export default function EventCheckoutPanel({
           <p style={{ fontSize: 13, color: 'var(--text)', margin: 0, lineHeight: 1.5 }}>
             Paiement annulé — aucun montant n&apos;a été débité. Tu peux réessayer quand tu veux.
           </p>
-          <button
+          <Button
             onClick={() => setCancelNoticeVisible(false)}
             aria-label="Fermer"
-            style={{ flexShrink: 0, background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: 0 }}
+            variant="ghost"
+            style={{ flexShrink: 0, background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 18, lineHeight: 1, padding: 0, display: 'flex', alignItems: 'center' }}
           >
-            ×
-          </button>
+            <X size={18} />
+          </Button>
         </div>
       )}
 
@@ -534,8 +524,9 @@ export default function EventCheckoutPanel({
               {(place.photos.length > 0 || place.included.length > 0) && (
                 <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
                   {place.photos.length > 0 && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={(event) => {
                         event.stopPropagation()
                         setPhotoGallery({ type: place.type, photos: place.photos, index: 0 })
@@ -543,11 +534,12 @@ export default function EventCheckoutPanel({
                       style={detailButton}
                     >
                       Voir la place · {place.photos.length} photo{place.photos.length > 1 ? 's' : ''}
-                    </button>
+                    </Button>
                   )}
                   {place.included.length > 0 && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={(event) => {
                         event.stopPropagation()
                         setIncludedModal(place)
@@ -555,12 +547,12 @@ export default function EventCheckoutPanel({
                       style={detailButton}
                     >
                       Ce qui est inclus · {place.included.length}
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}
               <span style={{ display: 'inline-block', marginTop: 10, fontSize: 10.5, fontWeight: 700, color: isSelected ? 'var(--gold)' : 'var(--text-faint)' }}>
-                {isSelected ? '✓ Choisi' : soldOut ? 'Complet' : 'Choisir'}
+                {isSelected ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={12} /> Choisi</span> : soldOut ? 'Complet' : 'Choisir'}
               </span>
             </div>
           )
@@ -603,18 +595,19 @@ export default function EventCheckoutPanel({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                     Code {promoApplied} {promoLabel && `· ${promoLabel}`}
-                    <button
+                    <Button
                       onClick={removePromo}
-                      style={{ background: 'none', border: 'none', color: 'var(--pink)', cursor: 'pointer', fontSize: 11, fontWeight: 700, padding: 0 }}
+                      variant="ghost"
+                      style={{ background: 'none', border: 'none', color: 'var(--pink)', fontSize: 11, fontWeight: 700, padding: 0 }}
                     >
                       Retirer
-                    </button>
+                    </Button>
                   </span>
                 </div>
               ) : promoOpen ? (
                 <div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input
+                    <Input
                       value={promoInput}
                       onChange={(e) => {
                         setPromoInput(e.target.value.toUpperCase())
@@ -626,23 +619,24 @@ export default function EventCheckoutPanel({
                       placeholder="TON CODE"
                       aria-label="Code promo"
                       autoFocus
+                      invalid={Boolean(promoFieldError)}
                       style={{
                         flex: 1,
                         minWidth: 0,
                         padding: '10px 12px',
                         borderRadius: 9,
-                        border: `1px solid ${promoFieldError ? 'var(--pink)' : 'var(--border-strong)'}`,
                         background: 'var(--obsidian)',
                         color: 'var(--text)',
                         fontSize: 13,
                         letterSpacing: '0.06em',
-                        outline: 'none',
                         textTransform: 'uppercase',
                       }}
                     />
-                    <button
+                    <Button
                       onClick={() => void applyPromo()}
                       disabled={!promoInput.trim() || promoLoading}
+                      loading={promoLoading}
+                      loadingText="Vérification…"
                       style={{
                         padding: '10px 16px',
                         borderRadius: 9,
@@ -651,21 +645,21 @@ export default function EventCheckoutPanel({
                         color: !promoInput.trim() ? 'var(--text-faint)' : '#04120e',
                         fontSize: 12.5,
                         fontWeight: 700,
-                        cursor: !promoInput.trim() ? 'not-allowed' : 'pointer',
                       }}
                     >
-                      {promoLoading ? 'Vérification…' : 'Appliquer'}
-                    </button>
+                      Appliquer
+                    </Button>
                   </div>
                   {promoFieldError && <p style={{ margin: '7px 0 0', color: 'var(--pink)', fontSize: 12 }}>{promoFieldError}</p>}
                 </div>
               ) : (
-                <button
+                <Button
                   onClick={() => setPromoOpen(true)}
-                  style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                  variant="ghost"
+                  style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', justifyContent: 'flex-start', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}
                 >
                   Ajouter un code promo
-                </button>
+                </Button>
               ))}
 
             {promoApplied && promoUnitDiscount > 0 && (
@@ -683,22 +677,27 @@ export default function EventCheckoutPanel({
             )}
 
             {discountedPlacePrice > 0 && (
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', padding: '9px 10px', borderRadius: 9, background: cancellationProtection ? 'rgba(78,232,200,.08)' : 'rgba(255,255,255,.035)' }}>
-                <input type="checkbox" checked={cancellationProtection} onChange={(event) => setCancellationProtection(event.target.checked)} style={{ marginTop: 2 }} />
-                <span>
-                  <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>
-                    Assurance annulation · +{fmtMoney(
-                      currency === 'XOF'
-                        ? computeCancellationProtectionFeeXOF(discountedPlacePrice, lineQty)
-                        : computeCancellationProtectionFeeCents(Math.round(discountedPlacePrice * 100), lineQty) / 100,
-                      currency
-                    )}
-                  </span>
-                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>
-                    Remboursement possible à tout moment avant l&apos;événement, même sans annulation ni report (hors billet déjà scanné).
-                  </span>
-                </span>
-              </label>
+              <div style={{ padding: '9px 10px', borderRadius: 9, background: cancellationProtection ? 'rgba(78,232,200,.08)' : 'rgba(255,255,255,.035)' }}>
+                <Checkbox
+                  checked={cancellationProtection}
+                  onChange={(event) => setCancellationProtection(event.target.checked)}
+                  label={
+                    <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>
+                      Assurance annulation · +{fmtMoney(
+                        currency === 'XOF'
+                          ? computeCancellationProtectionFeeXOF(discountedPlacePrice, lineQty)
+                          : computeCancellationProtectionFeeCents(Math.round(discountedPlacePrice * 100), lineQty) / 100,
+                        currency
+                      )}
+                    </span>
+                  }
+                  description={
+                    <span style={{ display: 'block', fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>
+                      Remboursement possible à tout moment avant l&apos;événement, même sans annulation ni report (hors billet déjà scanné).
+                    </span>
+                  }
+                />
+              </div>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -725,7 +724,7 @@ export default function EventCheckoutPanel({
                   {Array.from({ length: ticketCount }, (_, index) => {
                     const count = Object.values(preordersByTicket[index] || {}).reduce((sum, value) => sum + value, 0)
                     const active = preorderTicketIndex === index
-                    return <button key={index} type="button" role="tab" aria-selected={active} onClick={() => setPreorderTicketIndex(index)} style={{ flexShrink: 0, padding: '8px 11px', borderRadius: 9, border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`, background: active ? 'rgba(200,169,110,.12)' : 'var(--surface-2)', color: active ? 'var(--gold)' : 'var(--text-muted)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}>Billet {index + 1}{count > 0 ? ` · ${count}` : ''}</button>
+                    return <Button key={index} type="button" role="tab" aria-selected={active} variant="ghost" onClick={() => setPreorderTicketIndex(index)} style={{ flexShrink: 0, padding: '8px 11px', borderRadius: 9, border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`, background: active ? 'rgba(200,169,110,.12)' : 'var(--surface-2)', color: active ? 'var(--gold)' : 'var(--text-muted)', fontSize: 11.5, fontWeight: 800 }}>Billet {index + 1}{count > 0 ? ` · ${count}` : ''}</Button>
                   })}
                 </div>
               )}
@@ -763,7 +762,7 @@ export default function EventCheckoutPanel({
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {availableShows.map((option) => {
                             const active = selectedShow?.showOptionId === option.id
-                            return <button key={option.id} type="button" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 8, border: `1px solid ${active ? 'var(--teal)' : 'var(--border-strong)'}`, background: active ? 'rgba(78,232,200,.1)' : 'var(--surface-2)', color: active ? 'var(--teal)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700, cursor: 'pointer' }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</button>
+                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 8, border: `1px solid ${active ? 'var(--teal)' : 'var(--border-strong)'}`, background: active ? 'rgba(78,232,200,.1)' : 'var(--surface-2)', color: active ? 'var(--teal)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
                           })}
                         </div>
                         {selectedShow && <p style={{ margin: '7px 0 0', color: 'var(--teal)', fontSize: 10.5 }}>Show choisi : {selectedShow.showLabel}{selectedShow.showInfo ? ` · ${selectedShow.showInfo}` : ''}</p>}
@@ -817,29 +816,28 @@ export default function EventCheckoutPanel({
             </div>
           )}
 
-          <button
+          <Button
             onClick={handleBuyClick}
             disabled={buyDisabled}
+            loading={submitting}
+            loadingText="Redirection vers le paiement…"
+            fullWidth
             style={{
               padding: '16px',
-              borderRadius: 14,
+              borderRadius: 8,
               border: 'none',
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               gap: 9,
-              fontSize: 15.5,
-              fontWeight: 700,
+              fontSize: 15,
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '.04em',
               color: buyDisabled ? 'var(--text-faint)' : '#04120e',
               background: buyDisabled ? 'var(--surface-2)' : 'linear-gradient(135deg,#c8a96e,#e0c48a)',
               boxShadow: buyDisabled ? 'none' : '0 8px 26px rgba(200,169,110,0.32)',
-              cursor: buyDisabled ? 'not-allowed' : 'pointer',
             }}
           >
-            {submitting && <Spinner />}
             {disabled ? bookingDisabledReason : buyLabel}
-          </button>
+          </Button>
 
           {!disabled && !isGroup && discountedPlacePrice > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
@@ -847,22 +845,28 @@ export default function EventCheckoutPanel({
                 Pas prêt·e à payer maintenant ? Bloque la place à ce prix.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => void handleSeatHold('short')}
                   disabled={seatHoldBusy !== null}
+                  loading={seatHoldBusy === 'short'}
+                  loadingText="…"
                   style={{ ...secondaryAction, flex: 1, opacity: seatHoldBusy !== null ? 0.6 : 1 }}
                 >
-                  {seatHoldBusy === 'short' ? '…' : `Bloquer 24h · +5%`}
-                </button>
-                <button
+                  Bloquer 24h · +5%
+                </Button>
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => void handleSeatHold('long')}
                   disabled={seatHoldBusy !== null}
+                  loading={seatHoldBusy === 'long'}
+                  loadingText="…"
                   style={{ ...secondaryAction, flex: 1, opacity: seatHoldBusy !== null ? 0.6 : 1 }}
                 >
-                  {seatHoldBusy === 'long' ? '…' : `Bloquer 72h · +10%`}
-                </button>
+                  Bloquer 72h · +10%
+                </Button>
               </div>
               {seatHoldError && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 11.5, textAlign: 'center' }}>{seatHoldError}</p>}
             </div>
@@ -873,15 +877,14 @@ export default function EventCheckoutPanel({
       {photoGallery && (
         <div role="dialog" aria-modal="true" aria-label={`Photos de la place ${photoGallery.type}`} onClick={() => setPhotoGallery(null)} style={modalBackdrop}>
           <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 760, position: 'relative' }}>
-            <button type="button" onClick={() => setPhotoGallery(null)} aria-label="Fermer la galerie" style={modalClose}>×</button>
-            <div style={{ aspectRatio: '4/3', borderRadius: 18, overflow: 'hidden', background: '#090a10', border: '1px solid var(--border-strong)' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photoGallery.photos[photoGallery.index]} alt={`${photoGallery.type}, photo ${photoGallery.index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <Button type="button" variant="ghost" onClick={() => setPhotoGallery(null)} aria-label="Fermer la galerie" style={{ ...modalClose, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button>
+            <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 18, overflow: 'hidden', background: '#090a10', border: '1px solid var(--border-strong)' }}>
+              <Image src={photoGallery.photos[photoGallery.index]} alt={`${photoGallery.type}, photo ${photoGallery.index + 1}`} fill style={{ objectFit: 'contain' }} sizes="(max-width: 768px) 100vw, 760px" />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12 }}>
-              <button type="button" onClick={() => setPhotoGallery((current) => current && ({ ...current, index: (current.index - 1 + current.photos.length) % current.photos.length }))} disabled={photoGallery.photos.length < 2} style={galleryButton}>Précédente</button>
+              <Button type="button" variant="secondary" onClick={() => setPhotoGallery((current) => current && ({ ...current, index: (current.index - 1 + current.photos.length) % current.photos.length }))} disabled={photoGallery.photos.length < 2} style={galleryButton}>Précédente</Button>
               <p style={{ margin: 0, color: '#fff', fontSize: 13, fontWeight: 700 }}>{photoGallery.type} · {photoGallery.index + 1}/{photoGallery.photos.length}</p>
-              <button type="button" onClick={() => setPhotoGallery((current) => current && ({ ...current, index: (current.index + 1) % current.photos.length }))} disabled={photoGallery.photos.length < 2} style={galleryButton}>Suivante</button>
+              <Button type="button" variant="secondary" onClick={() => setPhotoGallery((current) => current && ({ ...current, index: (current.index + 1) % current.photos.length }))} disabled={photoGallery.photos.length < 2} style={galleryButton}>Suivante</Button>
             </div>
           </div>
         </div>
@@ -892,7 +895,7 @@ export default function EventCheckoutPanel({
           <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 430, padding: 22, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
               <div><p style={{ margin: 0, color: 'var(--gold)', fontSize: 11, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase' }}>Inclus dans ce billet</p><h3 id="included-modal-title" style={{ margin: '3px 0 0', fontSize: 20 }}>{includedModal.type}</h3></div>
-              <button type="button" onClick={() => setIncludedModal(null)} aria-label="Fermer" style={{ ...modalClose, position: 'static' }}>×</button>
+              <Button type="button" variant="ghost" onClick={() => setIncludedModal(null)} aria-label="Fermer" style={{ ...modalClose, position: 'static', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button>
             </div>
             <div style={{ display: 'grid', gap: 8, marginTop: 18 }}>
               <IncludedRow label="1 entrée à la soirée" />
@@ -913,9 +916,9 @@ export default function EventCheckoutPanel({
             <h3 id="show-info-title" style={{ margin: '5px 0 4px', fontSize: 20 }}>{showInfoModal.option.label}</h3>
             <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 12 }}>Pour {showInfoModal.itemName} · billet {showInfoModal.ticketIndex + 1}</p>
             <label htmlFor="show-info-input" style={{ display: 'block', marginBottom: 6, color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>{showInfoModal.option.infoPrompt || 'Information à transmettre au staff'}</label>
-            <textarea id="show-info-input" autoFocus rows={3} maxLength={240} value={showInfoInput} onChange={(event) => setShowInfoInput(event.target.value)} style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', borderRadius: 11, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', padding: '11px 12px', font: 'inherit' }} />
+            <Textarea id="show-info-input" autoFocus rows={3} maxLength={240} value={showInfoInput} onChange={(event) => setShowInfoInput(event.target.value)} style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', borderRadius: 11, background: 'var(--surface)', color: 'var(--text)', padding: '11px 12px', font: 'inherit' }} />
             <p style={{ margin: '5px 0 0', color: 'var(--text-faint)', textAlign: 'right', fontSize: 10 }}>{showInfoInput.length}/240</p>
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}><button type="button" onClick={() => setShowInfoModal(null)} style={{ ...secondaryAction, flex: 1 }}>Annuler</button><button type="button" onClick={confirmShowInfo} disabled={!showInfoInput.trim()} style={{ ...primaryAction, flex: 1, opacity: showInfoInput.trim() ? 1 : .45 }}>Valider</button></div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}><Button type="button" variant="secondary" onClick={() => setShowInfoModal(null)} style={{ ...secondaryAction, flex: 1 }}>Annuler</Button><Button type="button" onClick={confirmShowInfo} disabled={!showInfoInput.trim()} style={{ ...primaryAction, flex: 1, opacity: showInfoInput.trim() ? 1 : .45 }}>Valider</Button></div>
           </div>
         </div>
       )}
@@ -923,7 +926,7 @@ export default function EventCheckoutPanel({
       {showConfirmation && selectedPlace && (
         <div role="dialog" aria-modal="true" aria-labelledby="checkout-confirm-title" onClick={() => !submitting && setShowConfirmation(false)} style={modalBackdrop}>
           <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 470, padding: 24, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.07em' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 22 }}>Récapitulatif</h3></div><button type="button" onClick={() => setShowConfirmation(false)} aria-label="Fermer" style={{ ...modalClose, position: 'static' }}>×</button></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.07em' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 22 }}>Récapitulatif</h3></div><Button type="button" variant="ghost" onClick={() => setShowConfirmation(false)} aria-label="Fermer" style={{ ...modalClose, position: 'static', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button></div>
             <div style={{ display: 'grid', gap: 9, marginTop: 20 }}>
               <SummaryRow label="Place" value={selectedPlace.type} />
               <SummaryRow label="Quantité" value={String(lineQty)} />
@@ -938,7 +941,7 @@ export default function EventCheckoutPanel({
               <div style={{ borderTop: '1px solid var(--border)', marginTop: 3, paddingTop: 12 }}><SummaryRow label="Total à payer" value={fmtMoney(grandTotal, currency)} strong /></div>
             </div>
             <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 11.5, lineHeight: 1.5 }}>{grandTotal > 0 ? `Paiement sécurisé par ${currency === 'XOF' ? 'FedaPay' : 'Stripe'}.` : 'Aucun moyen de paiement ne sera demandé.'}</p>
-            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}><button type="button" onClick={() => setShowConfirmation(false)} disabled={submitting} style={{ ...secondaryAction, flex: 1 }}>Modifier</button><button type="button" onClick={() => void doCheckout()} disabled={submitting} style={{ ...primaryAction, flex: 1 }}>{submitting ? 'Redirection…' : grandTotal > 0 ? `Payer ${fmtMoney(grandTotal, currency)}` : 'Confirmer'}</button></div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}><Button type="button" variant="secondary" onClick={() => setShowConfirmation(false)} disabled={submitting} style={{ ...secondaryAction, flex: 1 }}>Modifier</Button><Button type="button" onClick={() => void doCheckout()} loading={submitting} loadingText="Redirection…" style={{ ...primaryAction, flex: 1 }}>{grandTotal > 0 ? `Payer ${fmtMoney(grandTotal, currency)}` : 'Confirmer'}</Button></div>
           </div>
         </div>
       )}
@@ -949,7 +952,7 @@ export default function EventCheckoutPanel({
 }
 
 function IncludedRow({ label, emoji }: { label: string; emoji?: string }) {
-  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: '1px solid rgba(78,232,200,.22)', background: 'rgba(78,232,200,.05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center' }}>{emoji || '✓'}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--teal)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
+  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: '1px solid rgba(78,232,200,.22)', background: 'rgba(78,232,200,.05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--teal)" />}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--teal)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
 }
 
 function SummaryRow({ label, value, accent, strong }: { label: string; value: string; accent?: boolean; strong?: boolean }) {
@@ -960,13 +963,14 @@ const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8
 const modalBackdrop: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(8px)' }
 const modalClose: React.CSSProperties = { position: 'absolute', zIndex: 2, top: 12, right: 12, width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,.2)', background: 'rgba(4,4,11,.78)', color: '#fff', fontSize: 21, cursor: 'pointer' }
 const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }
-const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 11, background: 'var(--gold)', color: '#181104', fontWeight: 800, cursor: 'pointer' }
-const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 11, background: 'transparent', color: 'var(--text)', fontWeight: 700, cursor: 'pointer' }
+const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 8, background: 'var(--gold)', color: '#181104', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13.5, cursor: 'pointer' }
+const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 8, background: 'transparent', color: 'var(--text)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13, cursor: 'pointer' }
 
 function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onClick: () => void; disabled?: boolean; label: string; ariaLabel: string; variant: 'ghost' | 'solid' }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       aria-label={ariaLabel}
       onClick={onClick}
       disabled={disabled}
@@ -974,12 +978,8 @@ function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onCli
         width: 28,
         height: 28,
         borderRadius: 8,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         fontSize: 15,
         fontWeight: 700,
-        cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.4 : 1,
         border: variant === 'ghost' ? '1px solid var(--border-strong)' : 'none',
         background: variant === 'ghost' ? 'var(--surface-2)' : 'var(--gold)',
@@ -987,6 +987,6 @@ function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onCli
       }}
     >
       {label}
-    </button>
+    </Button>
   )
 }

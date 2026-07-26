@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
+import { Button, Checkbox } from '@/app/components/ui'
 
 // Port de src/pages/FollowedOrganizersPage.jsx (#6 phase profil).
 
@@ -219,60 +220,32 @@ function FollowCard({
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#fff', cursor: savingMaster ? 'default' : 'pointer' }}>
-          <AlertCheckbox checked={follow.notificationsEnabled} onChange={toggleMaster} disabled={savingMaster} />
-          Notifications de cet organisateur
-        </label>
-        <button onClick={() => setExpanded((v) => !v)} style={{ background: 'transparent', border: 'none', color: 'var(--teal)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+        <Checkbox
+          label="Notifications de cet organisateur"
+          checked={follow.notificationsEnabled}
+          onChange={toggleMaster}
+          disabled={savingMaster}
+          style={{ fontSize: 13, color: '#fff' }}
+        />
+        <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 12.5 }}>
           {expanded ? 'Masquer les réglages' : 'Personnaliser les alertes'}
-        </button>
+        </Button>
       </div>
 
       {expanded && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 8, marginTop: 12 }}>
           {ALERT_LABELS.map(({ key, label }) => (
-            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: '#fff', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '9px 12px', cursor: 'pointer' }}>
-              <AlertCheckbox checked={follow.alerts[key]} onChange={() => toggleAlert(key)} />
-              {label}
-            </label>
+            <Checkbox
+              key={key}
+              label={label}
+              checked={follow.alerts[key]}
+              onChange={() => toggleAlert(key)}
+              style={{ fontSize: 12.5, color: '#fff', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '9px 12px' }}
+            />
           ))}
         </div>
       )}
     </section>
-  )
-}
-
-// Remplace les <input type="checkbox"> natifs (accent bleu par défaut du
-// navigateur) par une case cochable stylée sur le design system teal/gold —
-// cohérent avec PrivacyToggle (ProfilClient.tsx) utilisé dans le même
-// parcours "Paramètres du compte".
-function AlertCheckbox({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onChange}
-      disabled={disabled}
-      aria-pressed={checked}
-      style={{
-        width: 18,
-        height: 18,
-        borderRadius: 5,
-        border: checked ? 'none' : '1px solid var(--border-strong)',
-        background: checked ? 'var(--teal-solid)' : 'transparent',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: disabled ? 'default' : 'pointer',
-        flexShrink: 0,
-        padding: 0,
-      }}
-    >
-      {checked && (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#04120e" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-        </svg>
-      )}
-    </button>
   )
 }
 

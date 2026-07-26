@@ -12,6 +12,7 @@ import {
 } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
+import { Button, Checkbox, Input } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: 'Organisateurs — LIVEINBLACK',
@@ -95,7 +96,13 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
         </header>
 
         <form action="/organizers" method="get" className="organizer-directory__filters">
-          <input className="organizer-directory__field" type="search" name="q" defaultValue={search} placeholder="Nom, ville, événement…" />
+          <Input
+            type="search"
+            name="q"
+            defaultValue={search}
+            placeholder="Nom, ville, événement…"
+            style={{ minWidth: 0, borderRadius: 999, background: '#0b0c12', fontSize: 13 }}
+          />
           <select className="organizer-directory__field" name="region" defaultValue={region} aria-label="Filtrer par région">
             <option value="">Toutes les régions</option>
             {regions.map((item) => <option key={item.id} value={item.id}>{item.flag} {item.name}</option>)}
@@ -104,11 +111,20 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             <option value="popular">Plus populaires</option>
             <option value="recent">Plus récents</option>
           </select>
-          <label className="organizer-directory__check">
-            <input type="checkbox" name="upcoming" value="1" defaultChecked={upcomingOnly} />
-            Événement à venir
-          </label>
-          <button type="submit" style={{ minHeight: 42, padding: '0 19px', borderRadius: 8, border: 0, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13, cursor: 'pointer' }}>Filtrer</button>
+          <Checkbox
+            name="upcoming"
+            value="1"
+            defaultChecked={upcomingOnly}
+            label="Événement à venir"
+            style={{ minHeight: 42, padding: '0 13px', borderRadius: 999, border: '1px solid var(--border-strong)', background: 'rgba(255,255,255,.04)', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
+          />
+          <Button
+            type="submit"
+            variant="primary"
+            style={{ minHeight: 42, padding: '0 19px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13 }}
+          >
+            Filtrer
+          </Button>
         </form>
 
         <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>

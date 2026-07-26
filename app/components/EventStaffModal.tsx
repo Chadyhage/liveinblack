@@ -19,6 +19,7 @@
 //      recherche affiche nom + email.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Button, Input } from '@/app/components/ui'
 
 const FONT = 'Inter, sans-serif'
 // Mirroir des tokens définis dans app/globals.css (:root) — repris en constantes
@@ -334,13 +335,14 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
           gap: 16,
         }}
       >
-        <button
+        <Button
           onClick={onClose}
           aria-label="Fermer"
-          style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}
+          variant="ghost"
+          style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
         >
           ×
-        </button>
+        </Button>
 
         {/* Header */}
         <div style={{ paddingRight: 28 }}>
@@ -382,28 +384,31 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                 {INVITE_ROLES.map((r) => {
                   const active = role === r.value
                   return (
-                    <button
+                    <Button
                       key={r.value}
                       onClick={() => setRole(r.value)}
+                      variant="ghost"
                       style={{
                         flex: 1,
                         padding: '10px 8px',
                         borderRadius: 11,
-                        cursor: 'pointer',
                         textAlign: 'left',
+                        justifyContent: 'flex-start',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
                         border: active ? `1px solid ${r.color}88` : '1px solid rgba(255,255,255,0.10)',
                         background: active ? `${r.color}22` : 'rgba(255,255,255,0.05)',
                       }}
                     >
                       <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: active ? r.color : 'rgba(255,255,255,0.75)' }}>{r.label}</span>
                       <span style={{ display: 'block', fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,0.4)', marginTop: 2, lineHeight: 1.4 }}>{r.desc}</span>
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
 
               {/* Recherche */}
-              <input
+              <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Nom ou email…"
@@ -419,8 +424,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   color: 'rgba(255,255,255,0.92)',
                   outline: 'none',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = C.teal)}
-                onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
               />
 
               {/* Résultats */}
@@ -453,24 +456,24 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                             {u.email}
                           </p>
                         </div>
-                        <button
+                        <Button
                           onClick={() => invite(u)}
-                          disabled={busy}
+                          loading={busy}
+                          loadingText="Ajout…"
                           style={{
                             flexShrink: 0,
                             padding: '8px 14px',
                             borderRadius: 10,
-                            cursor: busy ? 'not-allowed' : 'pointer',
-                            border: busy ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
-                            color: busy ? 'rgba(255,255,255,0.35)' : '#04120e',
+                            border: '1px solid transparent',
+                            color: '#04120e',
                             fontFamily: FONT,
                             fontSize: 12.5,
                             fontWeight: 700,
-                            background: busy ? 'rgba(255,255,255,0.07)' : '#3ed6b5',
+                            background: '#3ed6b5',
                           }}
                         >
-                          {busy ? 'Ajout…' : 'Ajouter'}
-                        </button>
+                          Ajouter
+                        </Button>
                       </div>
                     ))
                   )}
@@ -530,18 +533,16 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                       <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '1px 0 0' }}>Ajouté à l&apos;équipe</p>
                     </div>
                     <RoleBadge role={m.role} />
-                    <button
+                    <Button
                       onClick={() => askRemove(m.userId, m.name)}
                       title="Retirer"
+                      variant="danger"
                       style={{
                         flexShrink: 0,
                         width: 30,
                         height: 30,
+                        padding: 0,
                         borderRadius: 9,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         background: 'rgba(224,90,170,0.14)',
                         border: '1px solid rgba(224,90,170,0.45)',
                         color: '#ff9ed2',
@@ -550,7 +551,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
-                    </button>
+                    </Button>
                   </div>
                 ))
               )}
@@ -610,14 +611,14 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               <strong style={{ color: '#fff' }}>{confirmRemove.name}</strong> n&apos;aura plus accès au scanner de cette soirée. Tu pourras le réinviter à tout moment.
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-              <button
+              <Button
                 onClick={() => setConfirmRemove(null)}
                 disabled={busy}
+                variant="secondary"
                 style={{
                   flex: 1,
                   padding: '11px',
                   borderRadius: 12,
-                  cursor: busy ? 'not-allowed' : 'pointer',
                   background: 'rgba(255,255,255,0.08)',
                   border: '1px solid rgba(255,255,255,0.14)',
                   color: 'rgba(255,255,255,0.9)',
@@ -627,25 +628,26 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                 }}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={doConfirmRemove}
-                disabled={busy}
+                loading={busy}
+                loadingText="Retrait…"
+                variant="danger"
                 style={{
                   flex: 1.4,
                   padding: '11px',
                   borderRadius: 12,
-                  cursor: busy ? 'not-allowed' : 'pointer',
-                  background: busy ? 'rgba(255,255,255,0.07)' : 'var(--pink)',
-                  border: busy ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
-                  color: busy ? 'rgba(255,255,255,0.35)' : '#fff',
+                  background: 'var(--pink)',
+                  border: '1px solid transparent',
+                  color: '#fff',
                   fontFamily: FONT,
                   fontSize: 13.5,
                   fontWeight: 700,
                 }}
               >
-                {busy ? 'Retrait…' : 'Retirer'}
-              </button>
+                Retirer
+              </Button>
             </div>
           </div>
         </div>

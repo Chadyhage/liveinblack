@@ -6,6 +6,7 @@ import { getCachedPublicProviders as listPublicProviders } from '@/lib/server/pu
 import { getProviderCategories, getProviderCategory, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
+import { Button, Input } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: 'Prestataires — LIVEINBLACK',
@@ -64,20 +65,24 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
 
       <form action="/providers" method="get" className="provider-directory__filters">
         {category && <input type="hidden" name="categorie" value={category} />}
-        <input
-          className="provider-directory__field"
+        <Input
           type="text"
           name="q"
           defaultValue={search}
           placeholder="Rechercher un prestataire, une ville…"
+          style={{ minWidth: 0, borderRadius: 'var(--radius-pill)', background: '#0b0c12', fontSize: 13.5 }}
         />
         <select className="provider-directory__field" name="region" defaultValue={region} aria-label="Filtrer par région">
           <option value="">Toutes les régions</option>
           {regions.map((item) => <option key={item.id} value={item.id}>{item.flag} {item.name}</option>)}
         </select>
-        <button type="submit" style={{ flexShrink: 0, padding: '12px 18px', borderRadius: 8, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13, cursor: 'pointer' }}>
+        <Button
+          type="submit"
+          variant="primary"
+          style={{ flexShrink: 0, padding: '12px 18px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13 }}
+        >
           Filtrer
-        </button>
+        </Button>
       </form>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>

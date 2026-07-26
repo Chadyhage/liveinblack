@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
+import { X } from 'lucide-react'
+import { Button, Input, Textarea, Label } from '@/app/components/ui'
 
 // Port de la section « Dossiers » de src/pages/AgentPage.jsx (#9 phase
 // agent/admin) — file/queue de candidatures organisateur/prestataire, panneau
@@ -182,8 +184,7 @@ const TARIF_TYPE_LABEL: Record<string, string> = {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 13.5, outline: 'none' }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
 
 function str(v: unknown): string {
   return v == null ? '' : String(v)
@@ -194,7 +195,7 @@ function zonesLabel(ids: unknown): string {
   if (list.length === 0) return '—'
   return list
     .map((id) => {
-      if (id === 'international') return '🌍 International'
+      if (id === 'international') return 'International'
       const r = regions.find((r) => r.id === id)
       return r ? `${r.flag} ${r.name}` : id
     })
@@ -506,7 +507,7 @@ export default function AgentDossiersClient() {
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Dossiers</h1>
+          <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Dossiers</h1>
           {totalAllPending > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {totalAllPending} en attente
@@ -517,9 +518,9 @@ export default function AgentDossiersClient() {
         {listError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <button onClick={loadList} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}>
+            <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 
@@ -528,8 +529,9 @@ export default function AgentDossiersClient() {
             const count = applications.filter((a) => s.statuses.includes(a.status)).length
             const active = s.key === section
             return (
-              <button
+              <Button
                 key={s.key}
+                variant="ghost"
                 onClick={() => {
                   setSection(s.key)
                   setSearch('')
@@ -539,20 +541,19 @@ export default function AgentDossiersClient() {
                   borderRadius: 12,
                   border: `1px solid ${active ? s.color : 'var(--border)'}`,
                   background: active ? `${s.color}22` : 'var(--surface)',
-                  cursor: 'pointer',
                   textAlign: 'left',
+                  display: 'block',
                 }}
               >
                 <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{count}</div>
                 <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? s.color : 'var(--text-faint)' }}>{s.label}</div>
-              </button>
+              </Button>
             )
           })}
         </div>
 
         {filteredBySection.length > 0 && (
-          <input
-            style={inputStyle}
+          <Input
             placeholder={`Rechercher dans « ${activeSection.label} »…`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -568,9 +569,9 @@ export default function AgentDossiersClient() {
               {search ? `Aucun dossier ne correspond à « ${search} » dans « ${activeSection.label} ».` : `Aucun dossier dans la section « ${activeSection.label} ».`}
             </p>
             {search && (
-              <button onClick={() => setSearch('')} style={{ marginTop: 12, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}>
+              <Button variant="secondary" onClick={() => setSearch('')} style={{ marginTop: 12, fontSize: 12.5 }}>
                 Effacer la recherche
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -599,14 +600,14 @@ export default function AgentDossiersClient() {
           <div onClick={closeDetail} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
           <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto', background: 'var(--surface-2)', borderRadius: '16px 16px 0 0', padding: '18px 20px 32px' }}>
             <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               onClick={closeDetail}
               aria-label="Fermer le dossier"
-              style={{ position: 'absolute', top: 12, right: 14, width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}
+              style={{ position: 'absolute', top: 12, right: 14, width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', padding: 0 }}
             >
-              ×
-            </button>
+              <X size={18} />
+            </Button>
             {detailLoading || !detail ? (
               <p style={{ fontSize: 13, color: 'var(--text-faint)', textAlign: 'center', padding: '40px 0' }}>Chargement…</p>
             ) : (
@@ -658,7 +659,8 @@ function AppCard({ app, compact, onClick }: { app: ApplicationSummary; compact?:
   const dateLabel = app.submittedAt ? `Soumis le ${fmtDate(app.submittedAt)}` : `Mis à jour le ${fmtDate(app.updatedAt)}`
 
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       style={{
         ...cardStyle,
@@ -666,7 +668,6 @@ function AppCard({ app, compact, onClick }: { app: ApplicationSummary; compact?:
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        cursor: 'pointer',
         textAlign: 'left',
         width: '100%',
         border: compact ? '1px solid var(--border)' : cardStyle.border,
@@ -701,7 +702,7 @@ function AppCard({ app, compact, onClick }: { app: ApplicationSummary; compact?:
           <p style={{ fontSize: 11.5, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', borderRadius: 6, padding: '4px 8px', margin: '6px 0 0' }}>{app.requestedChanges}</p>
         )}
       </div>
-    </button>
+    </Button>
   )
 }
 
@@ -831,14 +832,15 @@ function DetailPanel({
       <div>
         <p style={sectionTitleStyle}>Notes internes</p>
         <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '0 0 8px' }}>Privé — jamais visible par le candidat.</p>
-        <textarea style={{ ...inputStyle, minHeight: 70 }} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="Ajouter une note…" />
-        <button
+        <Textarea style={{ minHeight: 70 }} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="Ajouter une note…" />
+        <Button
+          variant="secondary"
           onClick={onSaveNote}
           disabled={noteBusy || noteDraft === detail.adminNote}
-          style={{ marginTop: 8, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: noteBusy ? 'default' : 'pointer', fontSize: 12.5, opacity: noteDraft === detail.adminNote ? 0.5 : 1 }}
+          style={{ marginTop: 8, fontSize: 12.5, opacity: noteDraft === detail.adminNote ? 0.5 : 1 }}
         >
           Enregistrer la note
-        </button>
+        </Button>
       </div>
 
       <div>
@@ -905,7 +907,7 @@ function DossierActions({
   displayName: string
   onAction: (action: ModerateAction, note?: string) => void
 }) {
-  const btnBase: React.CSSProperties = { padding: '11px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', width: '100%' }
+  const btnBase: React.CSSProperties = { borderRadius: 8, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.03em', width: '100%' }
   const teal: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
   const amber: React.CSSProperties = { ...btnBase, background: '#f59e0b', color: '#1a1508' }
   const pink: React.CSSProperties = { ...btnBase, background: '#c2347f', color: '#fff' }
@@ -923,9 +925,9 @@ function DossierActions({
   if (status === 'approved') {
     return (
       <>
-        <button style={pink} onClick={() => setConfirmSuspend(true)} disabled={actionBusy}>
+        <Button variant="danger" style={pink} onClick={() => setConfirmSuspend(true)} disabled={actionBusy}>
           Suspendre le compte
-        </button>
+        </Button>
         {confirmSuspend && (
           <ConfirmModal
             title={`Suspendre le dossier de ${displayName} ?`}
@@ -941,9 +943,9 @@ function DossierActions({
 
   if (status === 'suspended') {
     return (
-      <button style={teal} onClick={() => onAction('reactivate')} disabled={actionBusy}>
+      <Button variant="primary" style={teal} onClick={() => onAction('reactivate')} disabled={actionBusy}>
         Réactiver le dossier
-      </button>
+      </Button>
     )
   }
 
@@ -968,9 +970,9 @@ function DossierActions({
             onConfirm={() => onAction('reject', actionNote)}
           />
         ) : (
-          <button style={pink} onClick={() => setActiveAction('reject')} disabled={actionBusy}>
+          <Button variant="danger" style={pink} onClick={() => setActiveAction('reject')} disabled={actionBusy}>
             Refuser définitivement
-          </button>
+          </Button>
         )}
       </div>
     )
@@ -993,9 +995,9 @@ function DossierActions({
           onConfirm={() => onAction('approve', actionNote)}
         />
       ) : (
-        <button style={teal} onClick={() => setActiveAction('approve')} disabled={actionBusy}>
+        <Button variant="primary" style={teal} onClick={() => setActiveAction('approve')} disabled={actionBusy}>
           Approuver le dossier
-        </button>
+        </Button>
       )}
 
       {activeAction === 'changes' ? (
@@ -1013,15 +1015,15 @@ function DossierActions({
           onConfirm={() => onAction('request_changes', actionNote)}
         />
       ) : (
-        <button style={amber} onClick={() => setActiveAction('changes')} disabled={actionBusy}>
+        <Button variant="secondary" style={amber} onClick={() => setActiveAction('changes')} disabled={actionBusy}>
           Demander des corrections
-        </button>
+        </Button>
       )}
 
       {(status === 'submitted' || status === 'resubmitted') && (
-        <button style={blue} onClick={() => onAction('under_review')} disabled={actionBusy}>
+        <Button variant="secondary" style={blue} onClick={() => onAction('under_review')} disabled={actionBusy}>
           Passer en révision
-        </button>
+        </Button>
       )}
 
       {activeAction === 'reject' ? (
@@ -1039,9 +1041,9 @@ function DossierActions({
           onConfirm={() => onAction('reject', actionNote)}
         />
       ) : (
-        <button style={pink} onClick={() => setActiveAction('reject')} disabled={actionBusy}>
+        <Button variant="danger" style={pink} onClick={() => setActiveAction('reject')} disabled={actionBusy}>
           Refuser le dossier
-        </button>
+        </Button>
       )}
     </div>
   )
@@ -1075,16 +1077,16 @@ function ActionForm({
   const disabled = busy || (required && !note.trim())
   return (
     <div style={{ ...cardStyle, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</label>
-      <textarea style={{ ...inputStyle, minHeight: 70 }} value={note} onChange={(e) => setNote(e.target.value)} placeholder={placeholder} />
+      <Label style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</Label>
+      <Textarea style={{ minHeight: 70 }} value={note} onChange={(e) => setNote(e.target.value)} placeholder={placeholder} />
       {helper && <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>{helper}</p>}
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={onCancel} disabled={busy} style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}>
+        <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, padding: '9px 12px', fontSize: 12.5 }}>
           Annuler
-        </button>
-        <button onClick={onConfirm} disabled={disabled} style={{ ...confirmStyle, flex: 1, opacity: disabled ? 0.5 : 1, padding: '9px 12px', fontSize: 12.5 }}>
+        </Button>
+        <Button variant="primary" onClick={onConfirm} disabled={disabled} style={{ ...confirmStyle, flex: 1, opacity: disabled ? 0.5 : 1, padding: '9px 12px', fontSize: 12.5 }}>
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -1097,12 +1099,12 @@ function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: stri
       <div style={{ position: 'relative', ...cardStyle, maxWidth: 360, width: '90%', textAlign: 'center' }}>
         <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onCancel} disabled={busy} style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+          <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
             Annuler
-          </button>
-          <button onClick={onConfirm} disabled={busy} style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: 'none', background: color, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+          </Button>
+          <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.03em' }}>
             Confirmer
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -16,6 +16,7 @@ import AccessCodesModal from './AccessCodesModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
+import { Button } from '@/app/components/ui'
 
 // Port du tableau de bord organisateur (MesEvenementsPage.jsx, #7 phase
 // organisateur) — vue 'dashboard' (cette page) vs. 'create' (EventWizard,
@@ -200,8 +201,8 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
     <main style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 20px 100px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 18, marginBottom: 24, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ font: '300 42px Inter, sans-serif', color: '#fff', margin: 0 }}>
-            Mes <span style={{ color: 'var(--teal)', fontWeight: 600 }}>Événements</span>
+          <h1 className="font-display" style={{ fontSize: 42, letterSpacing: '.02em', color: '#fff', margin: 0 }}>
+            Mes <span style={{ color: 'var(--teal)' }}>Événements</span>
           </h1>
           <p style={{ color: 'var(--text-muted)', margin: '8px 0 0', fontSize: 14 }}>Crée et gère tes soirées</p>
         </div>
@@ -231,7 +232,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           </p>
           <Link
             href="/organizer-studio?section=encaissement"
-            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 10, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 700, fontSize: 12.5, textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 12.5, textDecoration: 'none' }}
           >
             Configurer mon encaissement
           </Link>
@@ -239,14 +240,15 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
-        <button
+        <Button
+          variant="ghost"
           onClick={startCreate}
-          style={{ textAlign: 'left', padding: 16, borderRadius: 14, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.08)', cursor: 'pointer' }}
+          style={{ textAlign: 'left', padding: 16, borderRadius: 14, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.08)', cursor: 'pointer', display: 'block', fontWeight: 400 }}
         >
           <p style={{ font: '700 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 6px' }}>Nouveau</p>
           <p style={{ font: '600 15px Inter, sans-serif', color: '#fff', margin: '0 0 4px' }}>Créer un événement</p>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>De A à Z — lieux, places, options</p>
-        </button>
+        </Button>
         <Link
           href="/organizer-studio"
           style={{ textAlign: 'left', padding: 16, borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface)', textDecoration: 'none', display: 'block' }}
@@ -268,7 +270,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
       <OrganizerAnalytics events={events} />
 
       <section style={{ marginBottom: 28 }}>
-        <p style={{ font: '700 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 12px' }}>
+        <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 12px' }}>
           Mes soirées en cours
         </p>
         {upcomingEvents.length === 0 ? (
@@ -287,7 +289,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {cancelledEvents.length > 0 && (
         <section style={{ marginBottom: 28 }}>
-          <p style={{ font: '700 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 12px' }}>Annulés</p>
+          <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 12px' }}>Annulés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {cancelledEvents.map((event) => (
               <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
@@ -299,12 +301,14 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
                   </p>
                 </div>
                 <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.15)', color: 'var(--pink)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>Annulé</span>
-                <button
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => hideCancelledEvent(event.id)}
-                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 11.5, cursor: 'pointer' }}
+                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 11.5 }}
                 >
                   Retirer de ma liste
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -316,7 +320,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {pastEvents.length > 0 && (
         <section>
-          <p style={{ font: '700 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 12px' }}>Événements passés</p>
+          <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 12px' }}>Événements passés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {pastEvents.map((event) => (
               <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>

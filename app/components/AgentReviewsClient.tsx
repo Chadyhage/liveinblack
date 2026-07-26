@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Stars } from '@/app/components/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
+import { Button, Input } from '@/app/components/ui'
 
 // Port de src/components/AdminReviewsPanel.jsx (#9 phase agent/admin) —
 // modération des avis prestataires. Voir lib/server/providerReviews.ts
@@ -64,8 +65,7 @@ const TOAST_LABEL: Record<ModerationOp, string> = {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }
-const inputStyle: React.CSSProperties = { boxSizing: 'border-box', width: '100%', minHeight: 40, padding: '9px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', outline: 'none', fontSize: 13 }
-const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 10, cursor: 'pointer', border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', fontSize: 12, fontWeight: 700 }
+const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 8, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.03em' }
 
 function fmtDate(iso: string): string {
   try {
@@ -200,7 +200,7 @@ export default function AgentReviewsClient() {
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Modération des avis prestataires</h1>
+          <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Modération des avis prestataires</h1>
           {reportedCount > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {reportedCount} signalé{reportedCount > 1 ? 's' : ''}
@@ -211,14 +211,13 @@ export default function AgentReviewsClient() {
         {listError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <button onClick={loadList} style={btnBase}>
+            <Button variant="secondary" onClick={loadList} style={btnBase}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 
-        <input
-          style={inputStyle}
+        <Input
           placeholder="Rechercher (prestataire, auteur, texte...)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -234,14 +233,13 @@ export default function AgentReviewsClient() {
               { key: 'deleted' as const, label: 'Supprimés' },
             ]
           ).map((f) => (
-            <button
+            <Button
               key={f.key}
-              type="button"
+              variant="ghost"
               onClick={() => setStatusFilter(f.key)}
               style={{
                 padding: '7px 12px',
                 borderRadius: 999,
-                cursor: 'pointer',
                 fontSize: 10,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
@@ -251,20 +249,19 @@ export default function AgentReviewsClient() {
               }}
             >
               {f.label}
-            </button>
+            </Button>
           ))}
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {(['all', '5', '4', '3', '2', '1'] as const).map((n) => (
-            <button
+            <Button
               key={n}
-              type="button"
+              variant="ghost"
               onClick={() => setRatingFilter(n)}
               style={{
                 padding: '7px 12px',
                 borderRadius: 999,
-                cursor: 'pointer',
                 fontSize: 10,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
@@ -274,7 +271,7 @@ export default function AgentReviewsClient() {
               }}
             >
               {n === 'all' ? 'Toutes notes' : `${n} étoile${n !== '1' ? 's' : ''}`}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -411,7 +408,7 @@ function ReviewCard({
 
       {review.reports.length > 0 && (
         <div style={{ marginTop: 10, padding: '9px 12px', borderRadius: 10, background: 'rgba(224,90,170,.06)', border: '1px solid rgba(224,90,170,.22)' }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: '#e05aaa', margin: '0 0 6px' }}>Signalements</p>
+          <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#e05aaa', margin: '0 0 6px' }}>Signalements</p>
           {review.reports.map((rep) => (
             <p key={rep.id} style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.5 }}>
               <strong>{REASON_LABEL[rep.reason] || rep.reason}</strong> — {rep.reporterName || 'Membre'} · {fmtDate(rep.createdAt)}
@@ -431,52 +428,53 @@ function ReviewCard({
 
       {noteOpen ? (
         <div style={{ marginTop: 10 }}>
-          <input value={noteText} onChange={(e) => onChangeNote(e.target.value.slice(0, 500))} placeholder="Note interne (visible des agents uniquement)" style={inputStyle} />
+          <Input value={noteText} onChange={(e) => onChangeNote(e.target.value.slice(0, 500))} placeholder="Note interne (visible des agents uniquement)" />
           <div style={{ display: 'flex', gap: 7, marginTop: 8 }}>
-            <button onClick={onCancelNote} disabled={busy} style={btnBase}>
+            <Button variant="secondary" onClick={onCancelNote} disabled={busy} style={btnBase}>
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               onClick={() => onAction(review, 'note', noteText.trim())}
               disabled={busy || !noteText.trim()}
-              style={{ ...btnBase, background: '#3ed6b5', color: '#04120e', opacity: busy || !noteText.trim() ? 0.5 : 1, cursor: busy || !noteText.trim() ? 'not-allowed' : 'pointer' }}
+              style={{ ...btnBase, background: '#3ed6b5', color: '#04120e', opacity: busy || !noteText.trim() ? 0.5 : 1 }}
             >
               Enregistrer
-            </button>
+            </Button>
           </div>
         </div>
       ) : confirmDelete ? (
         <div style={{ marginTop: 10, padding: 12, borderRadius: 10, background: 'rgba(194,52,127,.08)', border: '1px solid rgba(194,52,127,.35)' }}>
           <p style={{ fontSize: 12.5, color: '#fff', margin: '0 0 10px' }}>Supprimer définitivement cet avis ? Il ne comptera plus dans la note du prestataire.</p>
           <div style={{ display: 'flex', gap: 7 }}>
-            <button onClick={onCancelConfirmDelete} disabled={busy} style={btnBase}>
+            <Button variant="secondary" onClick={onCancelConfirmDelete} disabled={busy} style={btnBase}>
               Annuler
-            </button>
-            <button onClick={() => onAction(review, 'delete')} disabled={busy} style={{ ...btnBase, background: '#c2347f', color: '#fff', border: 'none', opacity: busy ? 0.5 : 1 }}>
-              {busy ? '…' : 'Confirmer la suppression'}
-            </button>
+            </Button>
+            <Button variant="danger" onClick={() => onAction(review, 'delete')} disabled={busy} loading={busy} loadingText="…" style={{ ...btnBase, background: '#c2347f' }}>
+              Confirmer la suppression
+            </Button>
           </div>
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
           {review.status === 'published' && (
-            <button onClick={() => onAction(review, 'hide')} disabled={busy} style={{ ...btnBase, color: '#ff9ed2', border: '1px solid rgba(224,90,170,.5)', background: 'rgba(224,90,170,.12)' }}>
-              {busy ? '…' : 'Masquer'}
-            </button>
+            <Button variant="danger" onClick={() => onAction(review, 'hide')} disabled={busy} loading={busy} loadingText="…" style={{ ...btnBase, color: '#ff9ed2', border: '1px solid rgba(224,90,170,.5)', background: 'rgba(224,90,170,.12)' }}>
+              Masquer
+            </Button>
           )}
           {review.status === 'hidden' && (
-            <button onClick={() => onAction(review, 'publish')} disabled={busy} style={{ ...btnBase, background: '#3ed6b5', color: '#04120e', border: 'none' }}>
-              {busy ? '…' : 'Republier'}
-            </button>
+            <Button variant="primary" onClick={() => onAction(review, 'publish')} disabled={busy} loading={busy} loadingText="…" style={{ ...btnBase, background: '#3ed6b5', color: '#04120e' }}>
+              Republier
+            </Button>
           )}
           {review.status !== 'deleted' && (
-            <button onClick={onOpenConfirmDelete} disabled={busy} style={{ ...btnBase, color: '#ff8fb2', border: '1px solid rgba(194,52,127,.5)', background: 'rgba(194,52,127,.12)' }}>
+            <Button variant="danger" onClick={onOpenConfirmDelete} disabled={busy} style={{ ...btnBase, color: '#ff8fb2', border: '1px solid rgba(194,52,127,.5)', background: 'rgba(194,52,127,.12)' }}>
               Supprimer
-            </button>
+            </Button>
           )}
-          <button onClick={onOpenNote} disabled={busy} style={btnBase}>
+          <Button variant="secondary" onClick={onOpenNote} disabled={busy} style={btnBase}>
             Note admin
-          </button>
+          </Button>
         </div>
       )}
     </article>

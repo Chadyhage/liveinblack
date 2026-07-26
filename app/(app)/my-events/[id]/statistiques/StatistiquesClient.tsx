@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { Star, Check, AlertTriangle, ArrowLeft } from 'lucide-react'
 import type { EventStatsView } from '@/lib/server/eventStats'
 import { eventStatsCsvRows } from '@/lib/shared/eventStats'
 import { formatMoney } from '../../types'
+import { Button, Select } from '@/app/components/ui'
 
 const TONE_COLOR: Record<string, string> = {
   gold: 'var(--gold)',
@@ -13,10 +16,10 @@ const TONE_COLOR: Record<string, string> = {
   muted: 'var(--text-muted)',
 }
 
-const TONE_PREFIX: Record<string, string> = {
-  gold: '★',
-  teal: '✓',
-  pink: '⚠',
+const TONE_PREFIX: Record<string, ReactNode> = {
+  gold: <Star size={12} />,
+  teal: <Check size={12} />,
+  pink: <AlertTriangle size={12} />,
   muted: '·',
 }
 
@@ -86,8 +89,8 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
   return (
     <main style={{ maxWidth: 900, margin: '0 auto', padding: '28px 20px 80px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <Link href="/my-events" aria-label="Retour" style={{ color: '#fff', fontSize: 20, textDecoration: 'none', padding: 10, margin: -10, lineHeight: 1 }}>
-          ←
+        <Link href="/my-events" aria-label="Retour" style={{ color: '#fff', fontSize: 20, textDecoration: 'none', padding: 10, margin: -10, lineHeight: 1, display: 'inline-flex', alignItems: 'center' }}>
+          <ArrowLeft size={20} />
         </Link>
         <div>
           <h1 style={{ font: '600 22px Inter, sans-serif', color: '#fff', margin: 0 }}>{view.event.name}</h1>
@@ -98,33 +101,36 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-        <select
-          value={range}
-          onChange={(e) => applyFilters(e.target.value as typeof range, place)}
-          style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', color: '#fff' }}
-        >
-          <option value="all">Toute la période</option>
-          <option value="7d">7 derniers jours</option>
-          <option value="30d">30 derniers jours</option>
-        </select>
-        <select
-          value={place}
-          onChange={(e) => applyFilters(range, e.target.value)}
-          style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', color: '#fff' }}
-        >
-          <option value="all">Toutes les places</option>
-          {placeOptions.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
+        <div style={{ width: 180 }}>
+          <Select
+            value={range}
+            onChange={(value) => applyFilters(value as typeof range, place)}
+            options={[
+              { value: 'all', label: 'Toute la période' },
+              { value: '7d', label: '7 derniers jours' },
+              { value: '30d', label: '30 derniers jours' },
+            ]}
+            size="sm"
+          />
+        </div>
+        <div style={{ width: 180 }}>
+          <Select
+            value={place}
+            onChange={(value) => applyFilters(range, value)}
+            options={[
+              { value: 'all', label: 'Toutes les places' },
+              ...placeOptions.map((p) => ({ value: p, label: p })),
+            ]}
+            size="sm"
+          />
+        </div>
         {hasActiveFilter && (
-          <button onClick={resetFilters} style={{ padding: '9px 12px', borderRadius: 10, border: 'none', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, textDecoration: 'underline' }}>
+          <Button variant="link" onClick={resetFilters} style={{ padding: '9px 12px', borderRadius: 10, color: 'var(--text-muted)', fontSize: 12 }}>
             Réinitialiser
-          </button>
+          </Button>
         )}
-        <button
+        <Button
+          variant="secondary"
           onClick={() => downloadCsv(view)}
           disabled={stats.assignedTickets === 0}
           style={{
@@ -134,12 +140,12 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
             border: '1px solid var(--border)',
             background: 'rgba(255,255,255,0.05)',
             color: stats.assignedTickets === 0 ? 'var(--text-faint)' : '#fff',
-            cursor: stats.assignedTickets === 0 ? 'default' : 'pointer',
             fontSize: 12.5,
+            fontWeight: 400,
           }}
         >
           Exporter en CSV
-        </button>
+        </Button>
       </div>
 
       {isPending && <p style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 10 }}>Actualisation…</p>}
@@ -197,8 +203,8 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
 
             <div style={{ display: 'grid', gap: 8, marginBottom: 20 }}>
               {insights.map((insight, i) => (
-                <p key={i} style={{ fontSize: 12.5, color: TONE_COLOR[insight.tone] ?? 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
-                  <span aria-hidden="true">{TONE_PREFIX[insight.tone] ?? TONE_PREFIX.muted}</span> {insight.text}
+                <p key={i} style={{ fontSize: 12.5, color: TONE_COLOR[insight.tone] ?? 'var(--text-muted)', margin: 0, lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center' }}>{TONE_PREFIX[insight.tone] ?? TONE_PREFIX.muted}</span> {insight.text}
                 </p>
               ))}
             </div>

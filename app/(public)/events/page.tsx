@@ -11,6 +11,7 @@ import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shar
 import EventListCard from '../_components/EventListCard'
 import EventRow from '../_components/EventRow'
 import AccessCodeForm from './AccessCodeForm'
+import { Button, Input } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: 'Événements — LIVEINBLACK',
@@ -80,28 +81,20 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       <div style={{ padding: '0 22px', marginBottom: 24 }}>
         <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.01em', margin: '0 0 16px' }}>Événements</h1>
         <form action="/events" method="get" style={{ display: 'flex', gap: 8, maxWidth: 420 }}>
-          <input
+          <Input
             type="text"
             name="q"
             defaultValue={search}
             placeholder="Événement, ville, style…"
-            style={{
-              flex: 1,
-              minWidth: 0,
-              padding: '11px 14px',
-              borderRadius: 10,
-              border: '1px solid var(--border-strong)',
-              background: 'var(--surface)',
-              color: 'var(--text)',
-              fontSize: 13.5,
-            }}
+            style={{ flex: 1, minWidth: 0, borderRadius: 10, fontSize: 13.5 }}
           />
-          <button
+          <Button
             type="submit"
-            style={{ padding: '11px 18px', borderRadius: 8, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13, cursor: 'pointer' }}
+            variant="primary"
+            style={{ padding: '11px 18px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13 }}
           >
             Chercher
-          </button>
+          </Button>
         </form>
         <AccessCodeForm />
       </div>

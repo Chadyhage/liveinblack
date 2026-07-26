@@ -2,13 +2,14 @@
 
 import { useSyncExternalStore } from 'react'
 import { getServerSnapshot, getState, playRandom, subscribe } from '@/lib/client/musicEngine'
+import { Button } from '@/app/components/ui'
 
 export default function HomeAmbienceButton() {
   const state = useSyncExternalStore(subscribe, getState, getServerSnapshot)
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={() => playRandom()}
       aria-pressed={state.playing}
       style={{
@@ -19,12 +20,10 @@ export default function HomeAmbienceButton() {
         background: state.playing ? 'rgba(78,232,200,.12)' : 'rgba(8,9,15,.56)',
         color: state.playing ? 'var(--teal)' : 'var(--text)',
         fontSize: 12.5,
-        fontWeight: 800,
-        cursor: 'pointer',
         backdropFilter: 'blur(12px)',
       }}
     >
       {state.playing ? 'Ambiance en cours' : "Mettre l'ambiance"}
-    </button>
+    </Button>
   )
 }

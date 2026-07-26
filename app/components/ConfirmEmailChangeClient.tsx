@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/app/components/ui'
 
 // Cible du verifyLink construit par lib/server/profile.ts:requestEmailChange
 // (?email=&token=), consommé par POST /api/profil/confirmer-email. Régression
@@ -21,7 +22,8 @@ const CARD: React.CSSProperties = {
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14.5, fontWeight: 700,
+  padding: '14px 20px', borderRadius: 8, cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
+  textTransform: 'uppercase', letterSpacing: '.03em',
   border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
 })
 
@@ -61,7 +63,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-confirm-email-spin 0.9s linear infinite' }} />
-            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
+            <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
               Confirmation de ta nouvelle adresse…
             </h1>
           </>
@@ -72,14 +74,14 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
             <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(78,232,200,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>
               Adresse e-mail mise à jour
             </h1>
             <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>
               {email ? `${email} est désormais ton adresse de connexion.` : 'Ta nouvelle adresse est confirmée.'}
             </p>
             <div style={{ marginTop: 28 }}>
-              <button onClick={() => router.push('/profile')} style={btnSolid('#3ed6b5', '#04120e')}>Retour au profil</button>
+              <Button onClick={() => router.push('/profile')} fullWidth style={btnSolid('#3ed6b5', '#04120e')}>Retour au profil</Button>
             </div>
           </>
         )}
@@ -89,14 +91,14 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
             <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
             </div>
-            <h1 style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
               Lien invalide ou expiré
             </h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
               Ce lien de confirmation n&apos;est plus valable. Relance la demande de changement d&apos;e-mail depuis ton profil.
             </p>
             <div style={{ marginTop: 28 }}>
-              <button onClick={() => router.push('/profile')} style={btnSolid('#c8a96e', '#141007')}>Retour au profil</button>
+              <Button onClick={() => router.push('/profile')} fullWidth style={btnSolid('#c8a96e', '#141007')}>Retour au profil</Button>
             </div>
           </>
         )}

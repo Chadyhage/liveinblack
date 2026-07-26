@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Button, Input, Textarea, Label } from '@/app/components/ui'
 
 // Port de la section « Suppressions » de src/pages/AgentPage.jsx (tab ===
 // 'suppressions', #9 phase agent/admin, tâche #104) — file des demandes de
@@ -43,8 +44,7 @@ interface ToastState {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 13.5, outline: 'none' }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
 
 const ROLE_LABEL: Record<string, string> = { organisateur: 'Organisateur', prestataire: 'Prestataire', client: 'Client', agent: 'Agent' }
 
@@ -202,7 +202,7 @@ export default function AgentDeletionClient() {
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Suppressions</h1>
+          <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Suppressions</h1>
           {requests.length > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>{requests.length} en attente</span>
           )}
@@ -211,13 +211,13 @@ export default function AgentDeletionClient() {
         {listError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <button onClick={loadList} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}>
+            <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 
-        {requests.length > 0 && <input style={inputStyle} placeholder="Rechercher par nom, email, raison…" value={search} onChange={(e) => setSearch(e.target.value)} />}
+        {requests.length > 0 && <Input placeholder="Rechercher par nom, email, raison…" value={search} onChange={(e) => setSearch(e.target.value)} />}
 
         {listLoading ? (
           <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
@@ -284,9 +284,10 @@ export default function AgentDeletionClient() {
 
 function RequestCard({ request, onClick }: { request: DeletionRequestSummary; onClick: () => void }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
-      style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left', width: '100%', borderLeft: '3px solid var(--pink)' }}
+      style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%', borderLeft: '3px solid var(--pink)' }}
     >
       <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--pink)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
         {(request.userName || request.userEmail || '?').charAt(0).toUpperCase()}
@@ -303,7 +304,7 @@ function RequestCard({ request, onClick }: { request: DeletionRequestSummary; on
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '6px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>« {request.reason} »</p>
         )}
       </div>
-    </button>
+    </Button>
   )
 }
 
@@ -349,7 +350,7 @@ function DetailPanel({
 
       {hasBlockers && (
         <div style={{ padding: '12px 14px', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.28)', borderRadius: 10 }}>
-          <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Bloque l’approbation</p>
+          <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>Bloque l’approbation</p>
           {detail.audit.blockers.map((b, i) => (
             <p key={i} style={{ fontSize: 12.5, color: 'rgba(224,90,170,0.9)', margin: '0 0 5px', lineHeight: 1.5 }}>
               • {b.label}
@@ -360,7 +361,7 @@ function DetailPanel({
 
       {detail.audit.warnings.length > 0 && (
         <div style={{ padding: '12px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.22)', borderRadius: 10 }}>
-          <p style={{ fontSize: 11, fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Ce qui se passera à l’approbation</p>
+          <p style={{ fontSize: 11.5, fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>Ce qui se passera à l’approbation</p>
           {detail.audit.warnings.map((w, i) => (
             <p key={i} style={{ fontSize: 12.5, color: 'rgba(245,158,11,0.85)', margin: '0 0 5px', lineHeight: 1.5 }}>
               • {w.label}
@@ -372,41 +373,43 @@ function DetailPanel({
       <div>
         <p style={sectionTitleStyle}>Actions</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button
+          <Button
+            variant="danger"
+            fullWidth
             onClick={() => setConfirmApprove(true)}
             disabled={actionBusy || rejecting || hasBlockers}
             title={hasBlockers ? 'Résous les blocages ci-dessus avant d’approuver.' : undefined}
             style={{
-              padding: '11px 16px',
-              borderRadius: 10,
-              border: 'none',
+              borderRadius: 8,
               fontSize: 13,
-              fontWeight: 700,
-              cursor: hasBlockers ? 'not-allowed' : 'pointer',
-              width: '100%',
+              textTransform: 'uppercase',
+              letterSpacing: '.03em',
               background: '#c2347f',
-              color: '#fff',
               opacity: hasBlockers ? 0.45 : 1,
             }}
           >
             Approuver la suppression (irréversible)
-          </button>
+          </Button>
 
-          <label style={{ fontSize: 11, color: 'var(--text-faint)', display: 'block', marginBottom: -2 }}>Note pour l&apos;utilisateur (optionnel, visible si refusé)</label>
-          <textarea
-            style={{ ...inputStyle, minHeight: 60 }}
+          <Label style={{ fontSize: 11, color: 'var(--text-faint)', display: 'block', marginBottom: -2 }}>Note pour l&apos;utilisateur (optionnel, visible si refusé)</Label>
+          <Textarea
+            style={{ minHeight: 60 }}
             placeholder="Ex : merci de préciser la raison de ta demande…"
             value={rejectNote}
             onChange={(e) => setRejectNote(e.target.value)}
             disabled={actionBusy || rejecting}
           />
-          <button
+          <Button
+            variant="secondary"
+            fullWidth
             onClick={onReject}
             disabled={actionBusy || rejecting}
-            style={{ padding: '11px 16px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, width: '100%' }}
+            loading={rejecting}
+            loadingText="…"
+            style={{ borderRadius: 10, fontSize: 13, fontWeight: 600 }}
           >
-            {rejecting ? '…' : 'Refuser la demande'}
-          </button>
+            Refuser la demande
+          </Button>
         </div>
       </div>
 
@@ -419,20 +422,24 @@ function DetailPanel({
               Ses données personnelles seront anonymisées, sa vitrine publique retirée, et son compte définitivement inaccessible. Les billets, commandes et avis restent archivés (obligation légale). Action irréversible.
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setConfirmApprove(false)}
                 disabled={actionBusy}
-                style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 13 }}
+                style={{ flex: 1, borderRadius: 8, fontSize: 13 }}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={onApprove}
                 disabled={actionBusy}
-                style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#c2347f', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}
+                loading={actionBusy}
+                loadingText="…"
+                style={{ flex: 1, borderRadius: 8, background: '#c2347f', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.03em' }}
               >
-                {actionBusy ? '…' : 'Confirmer la suppression'}
-              </button>
+                Confirmer la suppression
+              </Button>
             </div>
           </div>
         </div>

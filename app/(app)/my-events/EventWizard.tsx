@@ -1,11 +1,13 @@
 'use client'
 
+import NextImage from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { regions } from '@/lib/shared/regions'
 import { regionToCurrency, currencySymbol, payRailLabel } from '@/lib/shared/money'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEditor'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
+import { Button, Input, Textarea, Select, Switch, Spinner } from '@/app/components/ui'
 
 // Port du wizard de création/édition d'événement en 5 étapes
 // (src/pages/MesEvenementsPage.jsx, vue 'create' — lignes ~2140-3274 pour le
@@ -206,10 +208,12 @@ const S = {
     padding: '13px 20px',
     background: 'var(--violet-cta)',
     border: '1px solid rgba(255,255,255,0.14)',
-    borderRadius: 12,
+    borderRadius: 8,
     fontFamily: 'Inter, sans-serif',
     fontSize: 14,
-    fontWeight: 700,
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    letterSpacing: '.03em',
     color: '#fff',
     cursor: 'pointer',
     boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
@@ -251,58 +255,12 @@ function IconClose({ size = 12, color = 'rgba(255,255,255,0.5)' }: { size?: numb
   )
 }
 
-function Spinner({ size = 14, color = '#fff' }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={3} />
-      <path d="M21 12a9 9 0 00-9-9" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round">
-        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-      </path>
-    </svg>
-  )
-}
-
+// Toggle : fine wrapper autour du Switch custom partagé, qui remplace
+// l'ancien interrupteur bricolé (div role="switch" + couleur de fond animée)
+// — conserve la signature `onChange: () => void` (sans event) utilisée par
+// tous les appelants de ce fichier.
 function Toggle({ value, onChange, disabled = false }: { value: boolean; onChange: () => void; disabled?: boolean }) {
-  return (
-    <div
-      onClick={disabled ? undefined : onChange}
-      onKeyDown={(e) => {
-        if (disabled) return
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onChange()
-        }
-      }}
-      role="switch"
-      aria-checked={value}
-      tabIndex={disabled ? -1 : 0}
-      style={{
-        width: 44,
-        height: 24,
-        borderRadius: 12,
-        background: value ? 'var(--teal)' : 'rgba(255,255,255,0.08)',
-        position: 'relative',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'background 0.2s',
-        flexShrink: 0,
-        opacity: disabled ? 0.45 : 1,
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          top: 4,
-          width: 16,
-          height: 16,
-          background: 'white',
-          borderRadius: '50%',
-          transition: 'left 0.2s',
-          left: value ? 24 : 4,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-        }}
-      />
-    </div>
-  )
+  return <Switch checked={value} onChange={() => onChange()} disabled={disabled} />
 }
 
 function InputField({
@@ -330,7 +288,6 @@ function InputField({
   maxLength?: number
   locked?: boolean
 }) {
-  const [focused, setFocused] = useState(false)
   return (
     <div>
       {label && (
@@ -339,27 +296,23 @@ function InputField({
           {locked && <LockIcon />}
         </label>
       )}
-      <input
+      <Input
         type={type}
         min={min}
         max={max}
         maxLength={maxLength}
         disabled={locked}
+        invalid={!!error}
         title={locked ? 'Verrouillé — billets déjà vendus' : undefined}
         style={{
           ...S.inputBase,
-          borderColor: error ? 'rgba(220,50,50,0.6)' : focused ? 'var(--teal)' : locked ? 'rgba(200,169,110,0.18)' : 'rgba(255,255,255,0.10)',
-          boxShadow: focused && !locked ? '0 0 0 3px rgba(78,232,200,0.06)' : 'none',
           opacity: locked ? 0.55 : 1,
-          cursor: locked ? 'not-allowed' : 'text',
           background: locked ? 'rgba(200,169,110,0.04)' : S.inputBase.background,
           ...style,
         }}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        onFocus={() => !locked && setFocused(true)}
-        onBlur={() => setFocused(false)}
       />
       {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{error}</p>}
     </div>
@@ -380,15 +333,14 @@ function Pill({
   accent?: string
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={onClick}
       disabled={disabled}
       title={disabled ? 'Verrouillé — billets déjà vendus' : undefined}
       style={{
         padding: '8px 12px',
         borderRadius: 999,
-        cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.35 : 1,
         border: active ? `1px solid ${accent}` : '1px solid rgba(255,255,255,0.10)',
         background: active ? `${accent}22` : 'transparent',
@@ -399,7 +351,7 @@ function Pill({
       }}
     >
       {label}
-    </button>
+    </Button>
   )
 }
 
@@ -1047,7 +999,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   if (loading) {
     return (
       <main style={{ maxWidth: 1180, margin: '0 auto', padding: '60px 20px', display: 'flex', justifyContent: 'center' }}>
-        <Spinner size={22} color="var(--gold)" />
+        <Spinner size={22} />
       </main>
     )
   }
@@ -1056,12 +1008,13 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     return (
       <main style={{ maxWidth: 640, margin: '80px auto', padding: '0 20px', textAlign: 'center' }}>
         <p style={{ color: 'var(--pink)', fontSize: 14, marginBottom: 18 }}>{loadError}</p>
-        <button
+        <Button
+          variant="secondary"
           onClick={onClose}
-          style={{ padding: '12px 22px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+          style={{ padding: '12px 22px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', textTransform: 'uppercase', letterSpacing: '.03em' }}
         >
           Retour au tableau de bord
-        </button>
+        </Button>
       </main>
     )
   }
@@ -1096,9 +1049,9 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </p>
           </div>
         </div>
-        <button onClick={onClose} style={S.btnPrimary}>
+        <Button variant="primary" onClick={onClose} style={S.btnPrimary}>
           Retour au tableau de bord
-        </button>
+        </Button>
       </main>
     )
   }
@@ -1109,18 +1062,18 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     <main style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px 100px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           aria-label={step === 0 ? 'Fermer la création d’événement' : 'Revenir à l’étape précédente'}
           onClick={() => (step === 0 ? requestClose() : setStep((s) => s - 1))}
-          style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+          style={{ width: 36, height: 36, padding: 0, borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-        </button>
+        </Button>
         <div>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.93)', margin: 0 }}>
+          <p className="font-display" style={{ fontSize: 22, color: 'rgba(255,255,255,0.93)', margin: 0 }}>
             {eventId ? "Modifier l'événement" : 'Créer un événement'}
           </p>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, letterSpacing: '0.02em', color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
@@ -1176,17 +1129,16 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
           {/* Affiche */}
           <div>
             <label style={S.label}>Affiche / Photo de l&apos;événement</label>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              fullWidth
               onClick={() => imageInputRef.current?.click()}
               style={{
                 position: 'relative',
                 display: 'block',
-                width: '100%',
                 padding: 0,
                 borderRadius: 12,
                 overflow: 'hidden',
-                cursor: 'pointer',
                 aspectRatio: '16/9',
                 border: imagePreview ? '1px solid rgba(200,169,110,0.35)' : '2px dashed rgba(255,255,255,0.14)',
                 background: '#0b0c12',
@@ -1212,7 +1164,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   <Spinner size={20} />
                 </div>
               )}
-            </button>
+            </Button>
             <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handlePoster} />
             {errors.image && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
           </div>
@@ -1240,15 +1192,21 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'var(--teal)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
                     </div>
-                    <button onClick={clearVideo} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.55)', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    <Button
+                      variant="danger"
+                      onClick={clearVideo}
+                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.55)', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 12 }}
+                    >
                       Retirer
-                    </button>
+                    </Button>
                   </div>
                 </>
               ) : (
-                <button
+                <Button
+                  variant="ghost"
+                  fullWidth
                   onClick={() => videoInputRef.current?.click()}
-                  style={{ width: '100%', minHeight: 118, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 13, padding: 16, border: 0, background: 'transparent', cursor: 'pointer', textAlign: 'left' }}
+                  style={{ minHeight: 118, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 13, padding: 16, border: 0, background: 'transparent', textAlign: 'left' }}
                 >
                   <span style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.28)', color: 'var(--teal)', flexShrink: 0 }}>
                     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1259,7 +1217,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Ajouter une courte vidéo</span>
                     <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · 8 Mo maximum. Idéal : 6 à 12 secondes en 720p.</span>
                   </span>
-                </button>
+                </Button>
               )}
               {videoUploading && (
                 <div style={{ position: 'absolute', inset: 0, background: 'rgba(4,4,11,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1286,7 +1244,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
             <div>
               <label style={S.label}>Description courte</label>
-              <textarea
+              <Textarea
                 style={{ ...S.inputBase, resize: 'none', height: 80 }}
                 placeholder="Décris ta soirée en deux ou trois phrases…"
                 value={description}
@@ -1307,34 +1265,35 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {artists.map((a, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <select
-                        value={a.role}
-                        onChange={(e) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, role: e.target.value } : x)))}
-                        style={{ ...S.inputBase, width: 'auto', flexShrink: 0 }}
-                      >
-                        {ARTIST_ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
-                      <input
+                      <div style={{ width: 130, flexShrink: 0 }}>
+                        <Select
+                          value={a.role}
+                          onChange={(value) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, role: value } : x)))}
+                          options={ARTIST_ROLES.map((r) => ({ value: r, label: r }))}
+                        />
+                      </div>
+                      <Input
                         style={{ ...S.inputBase, flex: 1 }}
                         placeholder="Nom de l'artiste"
                         value={a.name}
                         onChange={(e) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: e.target.value } : x)))}
                       />
-                      <button onClick={() => setArtists((prev) => prev.filter((_, xi) => xi !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setArtists((prev) => prev.filter((_, xi) => xi !== i))}
+                        style={{ background: 'none', border: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}
+                      >
                         <IconClose size={13} color="rgba(220,100,100,0.9)" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={() => setArtists((prev) => [...prev, { name: '', role: 'DJ' }])}
-                    style={{ padding: '10px', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(255,255,255,0.08)', cursor: 'pointer' }}
+                    style={{ padding: '10px', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(255,255,255,0.08)' }}
                   >
                     + Ajouter un DJ / artiste
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -1347,8 +1306,10 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {(['public', 'private'] as const).map((t) => (
-                <button
+                <Button
                   key={t}
+                  variant="ghost"
+                  disabled={locked}
                   onClick={() => {
                     if (locked) return
                     setVisibility(t)
@@ -1358,8 +1319,8 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   style={{
                     ...S.card,
                     padding: 12,
+                    display: 'block',
                     textAlign: 'center',
-                    cursor: locked ? 'not-allowed' : 'pointer',
                     opacity: locked && visibility !== t ? 0.4 : 1,
                     borderColor: visibility === t ? 'rgba(200,169,110,0.55)' : 'rgba(255,255,255,0.08)',
                     background: visibility === t ? 'rgba(200,169,110,0.08)' : 'var(--surface)',
@@ -1381,7 +1342,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   </div>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: visibility === t ? 'var(--gold)' : 'rgba(255,255,255,0.93)' }}>{t === 'public' ? 'Public' : 'Privé'}</p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>{t === 'public' ? 'Visible par tous' : 'Accès par code'}</p>
-                </button>
+                </Button>
               ))}
             </div>
             {errors.visibility && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.visibility}</p>}
@@ -1409,8 +1370,9 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             <label style={{ ...S.label, marginBottom: 8 }}>Genre musical</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {GENRES.map((g) => (
-                <button
+                <Button
                   key={g}
+                  variant="ghost"
                   onClick={() => {
                     setCategory(g)
                     if (g !== 'Autre') setCustomGenre('')
@@ -1418,23 +1380,23 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   style={{
                     padding: '10px',
                     borderRadius: 10,
+                    display: 'block',
                     border: category === g ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.10)',
                     background: category === g ? 'rgba(200,169,110,0.10)' : 'var(--surface)',
                     fontFamily: 'Inter, sans-serif',
                     fontSize: 12,
                     fontWeight: 600,
                     color: category === g ? 'var(--gold)' : 'rgba(255,255,255,0.6)',
-                    cursor: 'pointer',
                     textAlign: 'center',
                   }}
                 >
                   {g}
-                </button>
+                </Button>
               ))}
             </div>
             {category === 'Autre' && (
               <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input
+                <Input
                   autoFocus
                   type="text"
                   maxLength={40}
@@ -1500,9 +1462,9 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </label>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
               {AGE_PRESETS.map(({ label: presetLabel, value }) => (
-                <button
+                <Button
                   key={value}
-                  type="button"
+                  variant="ghost"
                   disabled={locked}
                   title={locked ? 'Verrouillé — billets déjà vendus' : undefined}
                   onClick={() => setMinAge(value)}
@@ -1516,16 +1478,15 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     fontSize: 12,
                     fontWeight: 600,
                     letterSpacing: '0.04em',
-                    cursor: locked ? 'not-allowed' : 'pointer',
                     opacity: locked && minAge !== value ? 0.4 : 1,
                   }}
                 >
                   {presetLabel}
-                </button>
+                </Button>
               ))}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input
+              <Input
                 type="number"
                 min={0}
                 max={99}
@@ -1546,9 +1507,9 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </div>
           </div>
 
-          <button onClick={() => goNext(0)} style={S.btnPrimary}>
+          <Button variant="primary" onClick={() => goNext(0)} style={S.btnPrimary}>
             Suivant
-          </button>
+          </Button>
         </div>
       )}
 
@@ -1556,7 +1517,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       {step === 1 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: '0 0 4px' }}>Places &amp; Prix</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Places &amp; Prix</p>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Configure chaque type de place que tu veux proposer.</p>
           </div>
 
@@ -1597,17 +1558,18 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     )}
                   </div>
                   {places.length > 1 && (
-                    <button
+                    <Button
+                      variant="danger"
                       onClick={() => {
                         if (placeHasSales) return
                         setPlaces((prev) => prev.filter((p) => p.key !== place.key))
                       }}
                       disabled={placeHasSales}
                       title={placeHasSales ? 'Impossible — cette place a déjà été vendue' : undefined}
-                      style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', cursor: placeHasSales ? 'not-allowed' : 'pointer', opacity: placeHasSales ? 0.4 : 1, fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#ff9ed2' }}
+                      style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', opacity: placeHasSales ? 0.4 : 1, fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#ff9ed2' }}
                     >
                       Supprimer
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -1717,15 +1679,15 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                     {place.photos.map((ph, k) => (
                       <div key={k} style={{ position: 'relative', width: 66, height: 66, borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={ph} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <button
+                        <NextImage src={ph} alt="" fill style={{ objectFit: 'cover' }} sizes="66px" />
+                        <Button
+                          variant="ghost"
                           onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, photos: p.photos.filter((_, m) => m !== k) } : p)))}
                           title="Retirer"
-                          style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 12, lineHeight: '15px', cursor: 'pointer', padding: 0 }}
+                          style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 12, lineHeight: '15px', padding: 0 }}
                         >
                           ×
-                        </button>
+                        </Button>
                       </div>
                     ))}
                     {place.photos.length < MAX_PLACE_PHOTOS && (
@@ -1741,7 +1703,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                           }}
                         />
                         {placePhotoUploadingKeys.has(place.key) ? (
-                          <Spinner size={16} color="var(--gold)" />
+                          <Spinner size={16} />
                         ) : (
                           <>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1775,24 +1737,25 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                         const stillInMenu = menuChoices.some((m) => m.name.trim() === inc.name)
                         return (
                           <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(78,232,200,0.22)' : 'rgba(220,100,100,0.35)'}`, background: 'rgba(255,255,255,0.04)' }}>
-                            <select
-                              value={inc.name}
-                              onChange={(e) =>
-                                setPlaces((prev) =>
-                                  prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, name: e.target.value } : x)) } : p))
-                                )
-                              }
-                              style={{ flex: 1, minWidth: 0, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 8px', outline: 'none' }}
-                            >
-                              {!stillInMenu && <option value={inc.name}>{inc.name} (retiré du menu)</option>}
-                              {menuChoices.map((m) => (
-                                <option key={m.name} value={m.name.trim()}>
-                                  {m.emoji ? `${m.emoji} ` : ''}
-                                  {m.name.trim()} · {m.price} {currencySymbol(currency)}
-                                </option>
-                              ))}
-                            </select>
-                            <input
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <Select
+                                value={inc.name}
+                                onChange={(value) =>
+                                  setPlaces((prev) =>
+                                    prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, name: value } : x)) } : p))
+                                  )
+                                }
+                                size="sm"
+                                options={[
+                                  ...(!stillInMenu ? [{ value: inc.name, label: `${inc.name} (retiré du menu)` }] : []),
+                                  ...menuChoices.map((m) => ({
+                                    value: m.name.trim(),
+                                    label: `${m.emoji ? `${m.emoji} ` : ''}${m.name.trim()} · ${m.price} ${currencySymbol(currency)}`,
+                                  })),
+                                ]}
+                              />
+                            </div>
+                            <Input
                               type="number"
                               min={1}
                               value={inc.qty || 1}
@@ -1802,7 +1765,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                                 )
                               }
                               title="Quantité incluse"
-                              style={{ width: 52, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 6px', textAlign: 'center', outline: 'none' }}
+                              style={{ width: 52, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 6px', textAlign: 'center' }}
                             />
                             <span
                               title="Inclus gratuitement dans le billet"
@@ -1810,25 +1773,27 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                             >
                               Offert
                             </span>
-                            <button
+                            <Button
+                              variant="ghost"
                               onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
                               title="Retirer cette option"
-                              style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', cursor: 'pointer', padding: 0 }}
+                              style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', padding: 0 }}
                             >
                               ×
-                            </button>
+                            </Button>
                           </div>
                         )
                       })}
                       {menuChoices.length > 0 && (
-                        <button
+                        <Button
+                          variant="secondary"
                           onClick={() =>
                             setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: menuChoices[0].name.trim(), qty: 1 }] } : p)))
                           }
-                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', color: 'var(--teal)', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', color: 'var(--teal)', fontFamily: 'Inter, sans-serif', fontSize: 12 }}
                         >
                           + Inclure un article du menu
-                        </button>
+                        </Button>
                       )}
                     </div>
                   )}
@@ -1837,12 +1802,12 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             )
           })}
 
-          <button onClick={() => setPlaces((prev) => [...prev, newPlaceRow()])} style={S.btnGhost}>
+          <Button variant="secondary" onClick={() => setPlaces((prev) => [...prev, newPlaceRow()])} style={S.btnGhost}>
             + Ajouter un type de place
-          </button>
-          <button onClick={() => goNext(1)} style={S.btnPrimary}>
+          </Button>
+          <Button variant="primary" onClick={() => goNext(1)} style={S.btnPrimary}>
             Suivant
-          </button>
+          </Button>
         </div>
       )}
 
@@ -1850,7 +1815,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       {step === 2 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Indique où se déroulera ton événement.</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1870,16 +1835,16 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </div>
           </div>
 
-          <button onClick={() => goNext(2)} style={S.btnPrimary}>
+          <Button variant="primary" onClick={() => goNext(2)} style={S.btnPrimary}>
             Suivant
-          </button>
+          </Button>
         </div>
       )}
 
       {/* ── Step 3 : Options avancées ── */}
       {step === 3 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Options avancées</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Options avancées</p>
 
           <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(78,232,200,0.15)' }}>
             <div style={{ flex: 1 }}>
@@ -1938,9 +1903,9 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   onRemove={i > 0 ? () => setMenuItems((prev) => prev.filter((_, j) => j !== i)) : undefined}
                 />
               ))}
-              <button onClick={() => setMenuItems((prev) => [...prev, emptyMenuItem()])} style={S.btnGhost} disabled={locked}>
+              <Button variant="secondary" onClick={() => setMenuItems((prev) => [...prev, emptyMenuItem()])} style={S.btnGhost} disabled={locked}>
                 + Ajouter un article
-              </button>
+              </Button>
             </div>
           )}
 
@@ -1956,7 +1921,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               <label style={S.label}>
                 Date de publication <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel — vide = maintenant)</span>
               </label>
-              <input
+              <Input
                 type="datetime-local"
                 value={publishAt}
                 onChange={(e) => setPublishAt(e.target.value)}
@@ -1971,25 +1936,26 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               <label style={S.label}>
                 Date de clôture des réservations <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel)</span>
               </label>
-              <input type="datetime-local" value={closingDate} onChange={(e) => setClosingDate(e.target.value)} min={dateStr || undefined} style={{ ...S.inputBase, colorScheme: 'dark' }} />
+              <Input type="datetime-local" value={closingDate} onChange={(e) => setClosingDate(e.target.value)} min={dateStr || undefined} style={{ ...S.inputBase, colorScheme: 'dark' }} />
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>Laisse vide pour fermer automatiquement à la date de l&apos;événement.</p>
             </div>
           </div>
 
-          <button
+          <Button
+            variant="primary"
             onClick={() => goNext(3)}
             disabled={!canProceedStep3}
-            style={{ ...S.btnPrimary, ...(!canProceedStep3 ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'none', cursor: 'not-allowed' } : {}) }}
+            style={{ ...S.btnPrimary, ...(!canProceedStep3 ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'none' } : {}) }}
           >
             Suivant
-          </button>
+          </Button>
         </div>
       )}
 
       {/* ── Step 4 : Récapitulatif & publication ── */}
       {step === 4 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Récapitulatif &amp; publication</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Récapitulatif &amp; publication</p>
 
           {imagePreview && (
             <div style={{ borderRadius: 8, overflow: 'hidden', aspectRatio: '16/9' }}>
@@ -2027,18 +1993,16 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             ))}
           </div>
 
-          <button style={{ ...S.btnPrimary, cursor: saving ? 'wait' : 'pointer' }} onClick={handleSubmit} disabled={saving}>
-            {saving ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                <Spinner size={14} />
-                {eventId ? 'Enregistrement…' : 'Publication…'}
-              </span>
-            ) : eventId ? (
-              'Enregistrer les modifications'
-            ) : (
-              'Publier mon événement'
-            )}
-          </button>
+          <Button
+            variant="primary"
+            style={S.btnPrimary}
+            onClick={handleSubmit}
+            disabled={saving}
+            loading={saving}
+            loadingText={eventId ? 'Enregistrement…' : 'Publication…'}
+          >
+            {eventId ? 'Enregistrer les modifications' : 'Publier mon événement'}
+          </Button>
         </div>
       )}
       {posterCropSrc && (

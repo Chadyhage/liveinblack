@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Button, Input } from '@/app/components/ui'
 
 export default function AccessCodeForm() {
   const [code, setCode] = useState('')
@@ -36,19 +37,27 @@ export default function AccessCodeForm() {
       <p style={{ margin: 0, fontSize: 14, fontWeight: 800 }}>Tu as un code d&apos;accès ?</p>
       <p style={{ margin: '5px 0 12px', color: 'var(--text-muted)', fontSize: 12.5 }}>Saisis le code reçu pour ouvrir ton événement privé.</p>
       <form onSubmit={submit} style={{ display: 'flex', gap: 8 }}>
-        <input
+        <Input
           value={code}
           onChange={(event) => setCode(event.target.value.toUpperCase())}
           placeholder="CODE D'ACCÈS"
           aria-label="Code d'accès à un événement privé"
           aria-invalid={Boolean(error)}
+          invalid={Boolean(error)}
           disabled={loading}
           maxLength={64}
-          style={{ flex: 1, minWidth: 0, padding: '11px 13px', borderRadius: 10, border: `1px solid ${error ? 'var(--pink)' : 'var(--border-strong)'}`, background: 'var(--obsidian)', color: 'var(--text)', fontSize: 13.5, textTransform: 'uppercase' }}
+          style={{ flex: 1, minWidth: 0, borderRadius: 10, background: 'var(--obsidian)', fontSize: 13.5, textTransform: 'uppercase' }}
         />
-        <button type="submit" disabled={loading || !code.trim()} style={{ padding: '11px 16px', borderRadius: 10, border: 0, background: 'var(--gold)', color: '#181104', fontWeight: 800, cursor: loading ? 'wait' : 'pointer', opacity: loading || !code.trim() ? .55 : 1 }}>
-          {loading ? 'Vérification…' : 'Ouvrir'}
-        </button>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={loading || !code.trim()}
+          loading={loading}
+          loadingText="Vérification…"
+          style={{ padding: '11px 16px', borderRadius: 8, background: 'var(--gold)', color: '#181104', textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13 }}
+        >
+          Ouvrir
+        </Button>
       </form>
       {error && <p role="alert" style={{ margin: '9px 0 0', color: 'var(--pink)', fontSize: 12 }}>{error}</p>}
     </section>

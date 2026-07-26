@@ -1,8 +1,10 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { currencySymbol } from '@/lib/shared/money'
 import type { ShowOption } from '@/lib/shared/showOptions'
+import { Button, Input, Textarea, Label } from '@/app/components/ui'
 
 // Sous-composant du wizard événement (EventWizard.tsx) — port de
 // MenuItemEditor (MesEvenementsPage.jsx lignes ~3281-3542).
@@ -38,29 +40,6 @@ export function emptyMenuItem(): MenuItemRow {
     showOptions: [],
     excludedPlaces: [],
   }
-}
-
-const inputBase: React.CSSProperties = {
-  background: '#0b0c12',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 10,
-  fontFamily: 'Inter, sans-serif',
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'rgba(255,255,255,0.92)',
-  padding: '12px 14px',
-  width: '100%',
-  outline: 'none',
-  boxSizing: 'border-box',
-}
-
-const labelStyle: React.CSSProperties = {
-  fontFamily: 'Inter, sans-serif',
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'rgba(255,255,255,0.6)',
-  display: 'block',
-  marginBottom: 6,
 }
 
 const cardStyle: React.CSSProperties = {
@@ -122,15 +101,6 @@ function Toggle({ value, onChange, disabled = false }: { value: boolean; onChang
   )
 }
 
-function focusTeal(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
-  e.target.style.borderColor = 'var(--teal)'
-  e.target.style.boxShadow = '0 0 0 3px rgba(78,232,200,0.06)'
-}
-function blurDefault(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
-  e.target.style.borderColor = 'rgba(255,255,255,0.10)'
-  e.target.style.boxShadow = 'none'
-}
-
 export interface MenuItemEditorProps {
   item: MenuItemRow
   index: number
@@ -169,40 +139,43 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
   return (
     <div style={{ ...cardStyle, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10, opacity: disabled ? 0.55 : 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)' }}>
           Article {index + 1}
         </p>
         {onRemove && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={onRemove}
             disabled={disabled}
-            style={{ background: 'none', border: 'none', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', padding: 2 }}
+            style={{ display: 'flex', alignItems: 'center', padding: 2 }}
           >
             <IconClose size={12} color="rgba(220,100,100,0.9)" />
-          </button>
+          </Button>
         )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {item.imageUrl ? (
           <div style={{ position: 'relative', width: 56, height: 46, flexShrink: 0 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={item.imageUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: 9, objectFit: 'cover' }} />
-            <button type="button" onClick={() => set('imageUrl', null)} aria-label="Retirer la photo" style={{ position: 'absolute', top: -7, right: -7, width: 21, height: 21, borderRadius: '50%', border: 0, background: 'var(--pink)', color: '#fff', cursor: 'pointer' }}>×</button>
+            <Image src={item.imageUrl} alt="" fill style={{ borderRadius: 9, objectFit: 'cover' }} sizes="56px" />
+            <Button
+              variant="ghost"
+              onClick={() => set('imageUrl', null)}
+              aria-label="Retirer la photo"
+              style={{ position: 'absolute', top: -7, right: -7, width: 21, height: 21, borderRadius: '50%', border: 0, background: 'var(--pink)', color: '#fff', padding: 0 }}
+            >
+              ×
+            </Button>
           </div>
         ) : (
-          <input style={{ ...inputBase, width: 56, textAlign: 'center', flexShrink: 0, padding: '8px 6px' }} placeholder="Icône" value={item.emoji} maxLength={4} disabled={disabled} onChange={(e) => set('emoji', e.target.value)} onFocus={focusTeal} onBlur={blurDefault} />
+          <Input style={{ width: 56, textAlign: 'center', flexShrink: 0, padding: '8px 6px' }} placeholder="Icône" value={item.emoji} maxLength={4} disabled={disabled} onChange={(e) => set('emoji', e.target.value)} />
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <input
-            style={{ ...inputBase }}
+          <Input
             placeholder="Nom de l'article"
             value={item.name}
             disabled={disabled}
             onChange={(e) => set('name', e.target.value)}
-            onFocus={focusTeal}
-            onBlur={blurDefault}
           />
         </div>
       </div>
@@ -223,29 +196,23 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
-          <label style={labelStyle}>Prix ({currencySymbol(currency)})</label>
-          <input
-            style={{ ...inputBase }}
+          <Label>Prix ({currencySymbol(currency)})</Label>
+          <Input
             type="number"
             placeholder="0"
             min={0}
             value={item.price}
             disabled={disabled}
             onChange={(e) => set('price', Math.max(0, parseFloat(e.target.value) || 0))}
-            onFocus={focusTeal}
-            onBlur={blurDefault}
           />
         </div>
         <div>
-          <label style={labelStyle}>Catégorie</label>
-          <input
-            style={{ ...inputBase }}
+          <Label>Catégorie</Label>
+          <Input
             placeholder="Ex: Boissons, VIP, Snacks…"
             value={item.category}
             disabled={disabled}
             onChange={(e) => set('category', e.target.value)}
-            onFocus={focusTeal}
-            onBlur={blurDefault}
           />
         </div>
       </div>
@@ -259,26 +226,24 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
       </div>
 
       {!showDesc ? (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={() => setShowDesc(true)}
           disabled={disabled}
-          style={{ background: 'none', border: 'none', cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.65)', textAlign: 'left', padding: 0 }}
+          style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', textAlign: 'left', padding: 0, justifyContent: 'flex-start' }}
         >
           + Ajouter une description
-        </button>
+        </Button>
       ) : (
         <div>
-          <label style={labelStyle}>Description (optionnelle)</label>
-          <textarea
-            style={{ ...inputBase, resize: 'none' }}
+          <Label>Description (optionnelle)</Label>
+          <Textarea
+            style={{ resize: 'none' }}
             rows={2}
             placeholder="Ex: Bouteille 75cl servie avec glaçons et pailles dorées..."
             value={item.description}
             disabled={disabled}
             onChange={(e) => set('description', e.target.value)}
-            onFocus={focusTeal}
-            onBlur={blurDefault}
           />
         </div>
       )}
@@ -302,32 +267,42 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
 
       {item.hasShow && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
-          <p style={{ ...labelStyle, margin: 0 }}>Shows disponibles pour cet article</p>
+          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>Shows disponibles pour cet article</p>
           {item.showOptions.map((option, optionIndex) => (
             <div key={option.id} style={{ ...cardStyle, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input style={{ ...inputBase, flex: 1, fontSize: 12 }} placeholder={`Show ${optionIndex + 1} — ex: pancartes + étincelles`} value={option.label} disabled={disabled} onChange={(e) => updateShowOption(option.id, { label: e.target.value })} onFocus={focusTeal} onBlur={blurDefault} />
-                <button type="button" disabled={disabled} onClick={() => set('showOptions', item.showOptions.filter((entry) => entry.id !== option.id))} aria-label={`Supprimer le show ${optionIndex + 1}`} style={{ background: 'none', border: 0, padding: 5, cursor: disabled ? 'not-allowed' : 'pointer' }}><IconClose size={13} color="rgba(220,100,100,.9)" /></button>
+                <Input style={{ flex: 1, fontSize: 12 }} placeholder={`Show ${optionIndex + 1} — ex: pancartes + étincelles`} value={option.label} disabled={disabled} onChange={(e) => updateShowOption(option.id, { label: e.target.value })} />
+                <Button variant="ghost" disabled={disabled} onClick={() => set('showOptions', item.showOptions.filter((entry) => entry.id !== option.id))} aria-label={`Supprimer le show ${optionIndex + 1}`} style={{ padding: 5 }}><IconClose size={13} color="rgba(220,100,100,.9)" /></Button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>Demander une information au client</span>
                 <Toggle value={option.requiresInfo} disabled={disabled} onChange={() => updateShowOption(option.id, { requiresInfo: !option.requiresInfo, ...(!option.requiresInfo ? {} : { infoPrompt: '' }) })} />
               </div>
-              {option.requiresInfo && <input style={{ ...inputBase, fontSize: 12 }} placeholder="Ex: Prénom à écrire sur la pancarte ?" value={option.infoPrompt} disabled={disabled} onChange={(e) => updateShowOption(option.id, { infoPrompt: e.target.value })} onFocus={focusTeal} onBlur={blurDefault} />}
+              {option.requiresInfo && <Input style={{ fontSize: 12 }} placeholder="Ex: Prénom à écrire sur la pancarte ?" value={option.infoPrompt} disabled={disabled} onChange={(e) => updateShowOption(option.id, { infoPrompt: e.target.value })} />}
               {placeTypes.length > 1 && (
                 <div style={{ paddingTop: 5, borderTop: '1px solid rgba(255,255,255,.05)' }}>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Masquer ce show pour :</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {placeTypes.map((placeType) => {
                       const excluded = option.excludedPlaces.includes(placeType)
-                      return <button key={placeType} type="button" disabled={disabled} onClick={() => updateShowOption(option.id, { excludedPlaces: excluded ? option.excludedPlaces.filter((value) => value !== placeType) : [...option.excludedPlaces, placeType] })} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 8px', borderRadius: 8, border: excluded ? '1px solid rgba(224,90,170,.5)' : '1px solid rgba(255,255,255,.1)', background: excluded ? 'rgba(224,90,170,.14)' : '#0b0c12', color: excluded ? '#ff9ed2' : 'rgba(255,255,255,.55)', cursor: disabled ? 'not-allowed' : 'pointer' }}>{excluded ? '× ' : ''}{placeType}</button>
+                      return (
+                        <Button
+                          key={placeType}
+                          variant="ghost"
+                          disabled={disabled}
+                          onClick={() => updateShowOption(option.id, { excludedPlaces: excluded ? option.excludedPlaces.filter((value) => value !== placeType) : [...option.excludedPlaces, placeType] })}
+                          style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 8px', borderRadius: 8, border: excluded ? '1px solid rgba(224,90,170,.5)' : '1px solid rgba(255,255,255,.1)', background: excluded ? 'rgba(224,90,170,.14)' : '#0b0c12', color: excluded ? '#ff9ed2' : 'rgba(255,255,255,.55)' }}
+                        >
+                          {excluded ? '× ' : ''}{placeType}
+                        </Button>
+                      )
                     })}
                   </div>
                 </div>
               )}
             </div>
           ))}
-          <button type="button" disabled={disabled || item.showOptions.length >= 20} onClick={addShowOption} style={{ padding: '8px 12px', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: 'var(--gold)', border: '1px solid rgba(200,169,110,.35)', borderRadius: 9, background: 'rgba(200,169,110,.08)', cursor: disabled ? 'not-allowed' : 'pointer' }}>+ Ajouter un show</button>
+          <Button variant="secondary" disabled={disabled || item.showOptions.length >= 20} onClick={addShowOption} style={{ fontSize: 12, color: 'var(--gold)', border: '1px solid rgba(200,169,110,.35)', borderRadius: 9, background: 'rgba(200,169,110,.08)' }}>+ Ajouter un show</Button>
         </div>
       )}
 
@@ -338,13 +313,12 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
             {placeTypes.map((pt) => {
               const isExcluded = item.excludedPlaces.includes(pt)
               return (
-                <button
+                <Button
                   key={pt}
-                  type="button"
+                  variant="ghost"
                   disabled={disabled}
                   onClick={() => set('excludedPlaces', isExcluded ? item.excludedPlaces.filter((x) => x !== pt) : [...item.excludedPlaces, pt])}
                   style={{
-                    fontFamily: 'Inter, sans-serif',
                     fontSize: 11,
                     fontWeight: 600,
                     padding: '5px 10px',
@@ -352,7 +326,6 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
                     border: isExcluded ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(255,255,255,0.10)',
                     background: isExcluded ? 'rgba(224,90,170,0.14)' : '#0b0c12',
                     color: isExcluded ? '#ff9ed2' : 'rgba(255,255,255,0.55)',
-                    cursor: disabled ? 'not-allowed' : 'pointer',
                   }}
                 >
                   {isExcluded ? (
@@ -366,7 +339,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
                   ) : (
                     pt
                   )}
-                </button>
+                </Button>
               )
             })}
           </div>

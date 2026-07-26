@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatMoney } from './types'
+import { Button, Spinner } from '@/app/components/ui'
 
 // Port de BookingsPanel (MesEvenementsPage.jsx lignes 3727-3884) — panneau
 // plein écran (pas une petite modale) de détail des réservations d'un
@@ -50,15 +51,16 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'var(--obsidian)', overflowY: 'auto' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '20px 22px', borderBottom: '1px solid var(--border)' }}>
-        <button
+        <Button
+          variant="ghost"
           onClick={onClose}
           aria-label="Retour"
-          style={{ background: 'none', border: 0, color: '#fff', fontSize: 20, cursor: 'pointer' }}
+          style={{ padding: 0, color: '#fff', fontSize: 20 }}
         >
           ←
-        </button>
+        </Button>
         <div>
-          <h1 style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: 0 }}>{event.name}</h1>
+          <h1 className="font-display" style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: 0 }}>{event.name}</h1>
           <p style={{ font: '500 12px Inter, sans-serif', color: 'var(--text-muted)', margin: '2px 0 0' }}>
             Réservations · {data?.ticketCount ?? 0} billet(s)
           </p>
@@ -68,14 +70,8 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 22px 60px' }}>
         {error && <p style={{ color: 'var(--pink)', fontSize: 13 }}>{error}</p>}
         {!data && !error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '20px 0' }}>
-            <svg width={16} height={16} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-              <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
-              <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="var(--text-muted)" strokeWidth={3} strokeLinecap="round">
-                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-              </path>
-            </svg>
-            <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0 }}>Chargement…</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '20px 0', color: 'var(--text-muted)', fontSize: 13 }}>
+            <Spinner size={16} text="Chargement…" />
           </div>
         )}
 
@@ -88,7 +84,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
         {data && data.ticketCount > 0 && (
           <>
             <section style={{ marginBottom: 20 }}>
-              <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>
+              <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
                 Résumé par type de place
               </h2>
               <div style={{ display: 'grid', gap: 8 }}>
@@ -103,7 +99,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
 
             {data.preorderSummary.length > 0 && (
               <section style={{ marginBottom: 20 }}>
-                <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>
+                <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
                   Précommandes (stock à prévoir)
                 </h2>
                 <div style={{ display: 'grid', gap: 8 }}>
@@ -118,7 +114,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
             )}
 
             <section>
-              <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>
+              <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
                 Détail par billet
               </h2>
               <div style={{ display: 'grid', gap: 8 }}>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button, Input } from '@/app/components/ui'
 
 // Seule partie interactive de la page détail (phase 2 est en lecture seule) —
 // nécessaire pour vérifier le code d'un événement privé sans jamais l'exposer
@@ -32,7 +33,7 @@ export default function UnlockForm({ eventId }: { eventId: string }) {
   return (
     <div style={{ maxWidth: 340, margin: '18px auto 0' }}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8 }}>
-        <input
+        <Input
           type="text"
           value={code}
           onChange={(e) => {
@@ -40,12 +41,13 @@ export default function UnlockForm({ eventId }: { eventId: string }) {
             setError(null)
           }}
           placeholder="Code d'accès"
-          style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: `1px solid ${error ? 'var(--pink)' : 'var(--border-strong)'}`, background: 'var(--surface)', color: 'var(--text)', textTransform: 'uppercase' }}
+          invalid={Boolean(error)}
+          style={{ flex: 1, borderRadius: 10, background: 'var(--surface)', textTransform: 'uppercase' }}
           required
         />
-        <button type="submit" disabled={loading} style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, cursor: 'pointer' }}>
-          {loading ? '…' : 'Valider'}
-        </button>
+        <Button type="submit" variant="primary" disabled={loading} loading={loading} style={{ padding: '11px 18px', borderRadius: 10 }}>
+          Valider
+        </Button>
       </form>
       {error && (
         <p role="alert" aria-live="assertive" style={{ marginTop: 10, fontSize: 13, color: 'var(--pink)' }}>

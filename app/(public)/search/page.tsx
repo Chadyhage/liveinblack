@@ -8,6 +8,7 @@ import {
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import EventListCard from '../_components/EventListCard'
+import { Button, Input } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: 'Recherche — LIVEINBLACK',
@@ -61,17 +62,21 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
     <div style={{ padding: '28px 22px 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
       <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.01em', margin: '0 0 16px' }}>Recherche</h1>
       <form action="/search" method="get" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxWidth: 480, marginBottom: 28 }}>
-        <input
+        <Input
           type="text"
           name="q"
           defaultValue={query}
           placeholder="Événements, organisateurs, prestataires…"
-          style={{ flex: '1 1 220px', minWidth: 0, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5 }}
+          style={{ flex: '1 1 220px', minWidth: 0, borderRadius: 10, fontSize: 13.5 }}
           autoFocus
         />
-        <button type="submit" style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 8, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13, cursor: 'pointer' }}>
+        <Button
+          type="submit"
+          variant="primary"
+          style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13 }}
+        >
           Chercher
-        </button>
+        </Button>
       </form>
 
       {!query ? (

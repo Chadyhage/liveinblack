@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import AccountMenu from './AccountMenu'
+import { Button } from '@/app/components/ui'
 
 const NAV_LINKS = [
   { href: '/home', label: 'Accueil' },
@@ -25,6 +28,7 @@ export default function PublicNav() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
   const onLoginPage = pathname === '/login'
+  const { data: session, status } = useSession()
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -88,7 +92,8 @@ export default function PublicNav() {
             {link.label}
           </Link>
         ))}
-        {!onLoginPage && (
+        {status === 'authenticated' && session?.user && <AccountMenu user={session.user} />}
+        {status === 'unauthenticated' && !onLoginPage && (
           <>
             <Link
               href="/login"
@@ -137,41 +142,39 @@ export default function PublicNav() {
             </Link>
           </>
         )}
-        <button
-          type="button"
-          className="lb-navlink-mobile lb-burger"
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-expanded={mobileOpen}
-          aria-controls="lb-mobile-menu"
-          aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 10,
-            border: '1px solid var(--border-strong)',
-            background: 'var(--surface)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            color: 'var(--text)',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            {mobileOpen ? (
-              <>
-                <line x1="5" y1="5" x2="19" y2="19" />
-                <line x1="19" y1="5" x2="5" y2="19" />
-              </>
-            ) : (
-              <>
-                <line x1="4" y1="7" x2="20" y2="7" />
-                <line x1="4" y1="12" x2="20" y2="12" />
-                <line x1="4" y1="17" x2="20" y2="17" />
-              </>
-            )}
-          </svg>
-        </button>
+        <span className="lb-navlink-mobile lb-burger">
+          <Button
+            variant="ghost"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-expanded={mobileOpen}
+            aria-controls="lb-mobile-menu"
+            aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            style={{
+              width: 38,
+              height: 38,
+              padding: 0,
+              borderRadius: 10,
+              border: '1px solid var(--border-strong)',
+              background: 'var(--surface)',
+              color: 'var(--text)',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              {mobileOpen ? (
+                <>
+                  <line x1="5" y1="5" x2="19" y2="19" />
+                  <line x1="19" y1="5" x2="5" y2="19" />
+                </>
+              ) : (
+                <>
+                  <line x1="4" y1="7" x2="20" y2="7" />
+                  <line x1="4" y1="12" x2="20" y2="12" />
+                  <line x1="4" y1="17" x2="20" y2="17" />
+                </>
+              )}
+            </svg>
+          </Button>
+        </span>
       </nav>
 
       {mobileOpen && (

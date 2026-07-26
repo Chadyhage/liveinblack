@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Button } from '@/app/components/ui'
 import type { EventActionKey, OrganizerEventView } from './types'
 
 // Port de EventDashboardCard (MesEvenementsPage.jsx lignes 208-236) — carte
@@ -77,9 +78,9 @@ export default function EventDashboardCard({ event, onAction }: { event: Organiz
         </Link>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
           {actions.map((action) => (
-            <button
+            <Button
               key={action.key}
-              type="button"
+              variant="secondary"
               onClick={() => onAction(action.key, event)}
               style={{
                 padding: '9px 8px',
@@ -89,12 +90,12 @@ export default function EventDashboardCard({ event, onAction }: { event: Organiz
                 color: action.color,
                 font: '600 11.5px Inter, sans-serif',
                 letterSpacing: '.02em',
-                cursor: 'pointer',
                 textAlign: 'left',
+                justifyContent: 'flex-start',
               }}
             >
               {action.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

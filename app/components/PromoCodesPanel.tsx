@@ -15,6 +15,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney, currencySymbol } from '@/lib/shared/money'
+import { Button, Input, Select, Label } from '@/app/components/ui'
 
 const FONT = 'Inter, sans-serif'
 const inputStyle: React.CSSProperties = {
@@ -251,13 +252,14 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
               {event.name} · réduction appliquée <strong style={{ color: 'rgba(255,255,255,.75)' }}>par billet</strong>
             </p>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             aria-label="Fermer"
-            style={{ flexShrink: 0, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}
+            style={{ flexShrink: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1, padding: 0 }}
           >
             ×
-          </button>
+          </Button>
         </div>
 
         {loading ? (
@@ -278,8 +280,8 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
             <div style={{ marginTop: 18, padding: 15, borderRadius: 12, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
                 <div>
-                  <span style={labelStyle}>Code</span>
-                  <input
+                  <Label style={labelStyle}>Code</Label>
+                  <Input
                     style={{ ...inputStyle, textTransform: 'uppercase', letterSpacing: '.06em' }}
                     placeholder="Ex. SOIREE20"
                     value={form.code}
@@ -287,15 +289,19 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                   />
                 </div>
                 <div>
-                  <span style={labelStyle}>Type</span>
-                  <select style={inputStyle} value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as PromoType }))}>
-                    <option value="percent">Pourcentage (%)</option>
-                    <option value="fixed">Montant fixe ({curLabel})</option>
-                  </select>
+                  <Label style={labelStyle}>Type</Label>
+                  <Select
+                    value={form.type}
+                    onChange={(value) => setForm((f) => ({ ...f, type: value as PromoType }))}
+                    options={[
+                      { value: 'percent', label: 'Pourcentage (%)' },
+                      { value: 'fixed', label: `Montant fixe (${curLabel})` },
+                    ]}
+                  />
                 </div>
                 <div>
-                  <span style={labelStyle}>{form.type === 'percent' ? 'Réduction (%)' : `Réduction (${curLabel})`}</span>
-                  <input
+                  <Label style={labelStyle}>{form.type === 'percent' ? 'Réduction (%)' : `Réduction (${curLabel})`}</Label>
+                  <Input
                     style={inputStyle}
                     type="number"
                     min="1"
@@ -306,33 +312,32 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                   />
                 </div>
                 <div>
-                  <span style={labelStyle}>Utilisations max (vide = illimité)</span>
-                  <input style={inputStyle} type="number" min="0" placeholder="Ex. 50" value={form.maxUses} onChange={(e) => setForm((f) => ({ ...f, maxUses: e.target.value }))} />
+                  <Label style={labelStyle}>Utilisations max (vide = illimité)</Label>
+                  <Input style={inputStyle} type="number" min="0" placeholder="Ex. 50" value={form.maxUses} onChange={(e) => setForm((f) => ({ ...f, maxUses: e.target.value }))} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <span style={labelStyle}>Expire le (optionnel)</span>
-                  <input style={inputStyle} type="date" value={form.expiresAt} onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))} />
+                  <Label style={labelStyle}>Expire le (optionnel)</Label>
+                  <Input style={inputStyle} type="date" value={form.expiresAt} onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))} />
                 </div>
               </div>
               {error && <p style={{ margin: '10px 0 0', color: '#ff9ed2', font: `500 12.5px ${FONT}` }}>{error}</p>}
-              <button
+              <Button
                 onClick={addCode}
-                disabled={saving}
+                loading={saving}
+                loadingText="Enregistrement…"
                 style={{
                   marginTop: 12,
                   width: '100%',
                   minHeight: 44,
                   borderRadius: 10,
-                  border: 'none',
                   background: saving ? 'rgba(255,255,255,.08)' : '#c8a96e',
                   color: saving ? 'rgba(255,255,255,.4)' : '#04040b',
                   font: `700 13px ${FONT}`,
                   letterSpacing: '.03em',
-                  cursor: saving ? 'wait' : 'pointer',
                 }}
               >
-                {saving ? 'Enregistrement…' : 'Créer le code'}
-              </button>
+                Créer le code
+              </Button>
             </div>
 
             {/* Liste */}
@@ -374,7 +379,8 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                           {expired ? ' · EXPIRÉ' : exhausted ? ' · ÉPUISÉ' : p.active === false ? ' · DÉSACTIVÉ' : ''}
                         </p>
                       </div>
-                      <button
+                      <Button
+                        variant="secondary"
                         onClick={() => toggleActive(p)}
                         disabled={rowBusy || saving}
                         style={{
@@ -384,13 +390,13 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                           background: 'rgba(255,255,255,.06)',
                           color: 'rgba(255,255,255,.8)',
                           font: `600 11.5px ${FONT}`,
-                          cursor: rowBusy || saving ? 'not-allowed' : 'pointer',
                           flexShrink: 0,
                         }}
                       >
                         {p.active === false ? 'Réactiver' : 'Désactiver'}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="danger"
                         onClick={() => askRemove(p)}
                         disabled={rowBusy || saving}
                         style={{
@@ -400,12 +406,11 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                           background: 'rgba(224,90,170,.10)',
                           color: '#ff9ed2',
                           font: `600 11.5px ${FONT}`,
-                          cursor: rowBusy || saving ? 'not-allowed' : 'pointer',
                           flexShrink: 0,
                         }}
                       >
                         Supprimer
-                      </button>
+                      </Button>
                     </div>
                   )
                 })
@@ -453,18 +458,20 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
               utilisation{(Number(confirmRemove.usedCount) || 0) > 1 ? 's' : ''}). Pour le retirer sans perdre l&apos;historique, utilise plutôt « Désactiver ».
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setConfirmRemove(null)}
-                style={{ flex: 1, padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', font: `600 13.5px ${FONT}` }}
+                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', font: `600 13.5px ${FONT}` }}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={doConfirmRemove}
-                style={{ flex: 1.4, padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px ${FONT}` }}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px ${FONT}` }}
               >
                 Supprimer
-              </button>
+              </Button>
             </div>
           </div>
         </div>

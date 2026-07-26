@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { Button } from '@/app/components/ui'
 
 export default function ImageCropperModal({ src, title, aspect, outputWidth, circular = false, onCancel, onConfirm }: { src: string; title: string; aspect: number; outputWidth: number; circular?: boolean; onCancel: () => void; onConfirm: (dataUri: string) => Promise<void> | void }) {
   const previewWidth = 280
@@ -59,13 +60,13 @@ export default function ImageCropperModal({ src, title, aspect, outputWidth, cir
           <img ref={imageRef} src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, userSelect: 'none', transformOrigin: 'center' }} />
         </div>
         <div role="group" aria-label="Repositionner l'image" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
-          {[['←', -6, 0], ['↑', 0, -6], ['↓', 0, 6], ['→', 6, 0]].map(([glyph, dx, dy]) => <button key={String(glyph)} type="button" onClick={() => move(Number(dx), Number(dy))} style={controlButton}>{glyph}</button>)}
+          {[['←', -6, 0], ['↑', 0, -6], ['↓', 0, 6], ['→', 6, 0]].map(([glyph, dx, dy]) => <Button key={String(glyph)} type="button" variant="secondary" onClick={() => move(Number(dx), Number(dy))} style={controlButton}>{glyph}</Button>)}
         </div>
         <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: 11, textAlign: 'left' }}>Zoom</label>
         <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(event) => setZoom(Number(event.target.value))} style={{ width: '100%', accentColor: 'var(--gold)', margin: '5px 0 18px' }} />
         <div style={{ display: 'flex', gap: 10 }}>
-          <button type="button" onClick={onCancel} disabled={saving} style={{ ...actionButton, background: 'transparent', color: '#fff', border: '1px solid var(--border-strong)' }}>Annuler</button>
-          <button type="button" onClick={() => void confirm()} disabled={saving} style={{ ...actionButton, background: 'var(--gold)', color: '#181104', border: 0 }}>{saving ? 'Envoi…' : 'Valider'}</button>
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={saving} style={{ ...actionButton, background: 'transparent', color: '#fff', border: '1px solid var(--border-strong)' }}>Annuler</Button>
+          <Button type="button" onClick={() => void confirm()} loading={saving} loadingText="Envoi…" style={{ ...actionButton, background: 'var(--gold)', color: '#181104', border: 0 }}>Valider</Button>
         </div>
       </div>
     </div>

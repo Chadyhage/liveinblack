@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button, Input, Select, Checkbox, Label } from '@/app/components/ui'
 
 export interface PlaceView {
   id: string
@@ -20,8 +21,6 @@ export interface AgentSalesDashboardView {
   momoSales: number
 }
 
-const inputStyle: React.CSSProperties = { padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, width: '100%' }
-const labelStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', margin: '0 0 4px' }
 const cardStyle: React.CSSProperties = { padding: '16px 18px', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--border)' }
 
 export default function AgentSalesClient({
@@ -134,106 +133,139 @@ export default function AgentSalesClient({
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <button onClick={() => setMode('onsite')} style={{ ...inputStyle, width: 'auto', flex: 1, cursor: 'pointer', background: mode === 'onsite' ? 'var(--teal-solid)' : 'var(--surface)', color: mode === 'onsite' ? '#04120e' : 'var(--text)', fontWeight: 700 }}>
+        <Button
+          variant={mode === 'onsite' ? 'primary' : 'secondary'}
+          onClick={() => setMode('onsite')}
+          fullWidth
+          style={{ flex: 1, borderRadius: 8 }}
+        >
           Vente (avant soirée)
-        </button>
-        <button onClick={() => setMode('door')} style={{ ...inputStyle, width: 'auto', flex: 1, cursor: 'pointer', background: mode === 'door' ? 'var(--teal-solid)' : 'var(--surface)', color: mode === 'door' ? '#04120e' : 'var(--text)', fontWeight: 700 }}>
+        </Button>
+        <Button
+          variant={mode === 'door' ? 'primary' : 'secondary'}
+          onClick={() => setMode('door')}
+          fullWidth
+          style={{ flex: 1, borderRadius: 8 }}
+        >
           Vente à l&apos;entrée (rapide)
-        </button>
+        </Button>
       </div>
 
       <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
-          <label style={labelStyle}>Type de place</label>
-          <select value={placeId} onChange={(e) => setPlaceId(e.target.value)} style={inputStyle}>
-            {places.map((p) => (
-              <option key={p.id} value={p.id} disabled={p.available <= 0}>
-                {p.type} — {fmtMoney(p.price, currency)} ({p.available} restantes)
-              </option>
-            ))}
-          </select>
+          <Label>Type de place</Label>
+          <Select
+            value={placeId}
+            onChange={(v) => setPlaceId(v)}
+            options={places.map((p) => ({
+              value: p.id,
+              label: `${p.type} — ${fmtMoney(p.price, currency)} (${p.available} restantes)`,
+              disabled: p.available <= 0,
+            }))}
+          />
         </div>
 
         {mode === 'onsite' && selectedPlace?.groupType === 'group' && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-            <input type="checkbox" checked={isTable} onChange={(e) => setIsTable(e.target.checked)} />
-            Vente de la place de groupe entière (forfait à prix fixe, {selectedPlace.groupMin}-{selectedPlace.groupMax} pers.)
-          </label>
+          <Checkbox
+            checked={isTable}
+            onChange={(e) => setIsTable(e.target.checked)}
+            label={`Vente de la place de groupe entière (forfait à prix fixe, ${selectedPlace.groupMin}-${selectedPlace.groupMax} pers.)`}
+          />
         )}
 
         {mode === 'onsite' && !isTable && (
           <div>
-            <label style={labelStyle}>Nombre de billets</label>
-            <input type="number" min={1} max={20} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))} style={inputStyle} />
+            <Label>Nombre de billets</Label>
+            <Input type="number" min={1} max={20} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))} />
           </div>
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
-            <label style={labelStyle}>Nom (optionnel)</label>
-            <input value={guestName} onChange={(e) => setGuestName(e.target.value)} style={inputStyle} placeholder="Nom du client" />
+            <Label>Nom (optionnel)</Label>
+            <Input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nom du client" />
           </div>
           <div>
-            <label style={labelStyle}>Email</label>
-            <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} style={inputStyle} placeholder="ton@email.com" />
+            <Label>Email</Label>
+            <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="ton@email.com" />
           </div>
         </div>
         <div>
-          <label style={labelStyle}>Téléphone {!contactEmail.trim() ? '(email ou téléphone requis)' : '(optionnel)'}</label>
-          <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} style={inputStyle} placeholder="+228 90 00 00 00" />
+          <Label>Téléphone {!contactEmail.trim() ? '(email ou téléphone requis)' : '(optionnel)'}</Label>
+          <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+228 90 00 00 00" />
         </div>
 
         <div>
-          <label style={labelStyle}>Moyen de paiement</label>
+          <Label>Moyen de paiement</Label>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setMethod('cash')} style={{ ...inputStyle, width: 'auto', flex: 1, cursor: 'pointer', background: method === 'cash' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'cash' ? '#1a1508' : 'var(--text)', fontWeight: 700 }}>
+            <Button
+              variant="secondary"
+              onClick={() => setMethod('cash')}
+              fullWidth
+              style={{ flex: 1, borderRadius: 8, background: method === 'cash' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'cash' ? '#1a1508' : 'var(--text)' }}
+            >
               Espèces
-            </button>
-            <button onClick={() => setMethod('momo')} style={{ ...inputStyle, width: 'auto', flex: 1, cursor: 'pointer', background: method === 'momo' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'momo' ? '#1a1508' : 'var(--text)', fontWeight: 700 }}>
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setMethod('momo')}
+              fullWidth
+              style={{ flex: 1, borderRadius: 8, background: method === 'momo' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'momo' ? '#1a1508' : 'var(--text)' }}
+            >
               Mobile Money
-            </button>
+            </Button>
           </div>
         </div>
 
         {method === 'cash' && (
           <div>
-            <label style={labelStyle}>Règlement de la part LIVE IN BLACK</label>
-            <select value={settlementMode} onChange={(e) => setSettlementMode(e.target.value as typeof settlementMode)} style={inputStyle}>
-              <option value="agent_settles">Je règle moi-même numériquement</option>
-              <option value="instant_debit">Prélèvement immédiat sur le solde organisateur</option>
-            </select>
+            <Label>Règlement de la part LIVE IN BLACK</Label>
+            <Select
+              value={settlementMode}
+              onChange={(v) => setSettlementMode(v as typeof settlementMode)}
+              options={[
+                { value: 'agent_settles', label: 'Je règle moi-même numériquement' },
+                { value: 'instant_debit', label: 'Prélèvement immédiat sur le solde organisateur' },
+              ]}
+            />
           </div>
         )}
 
         {method === 'momo' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <div>
-              <label style={labelStyle}>Opérateur</label>
-              <select value={momoMode} onChange={(e) => setMomoMode(e.target.value as typeof momoMode)} style={inputStyle}>
-                <option value="moov_tg">Moov Togo</option>
-                <option value="mtn_ci">MTN Côte d&apos;Ivoire</option>
-                <option value="mtn">MTN Bénin</option>
-                <option value="moov">Moov Bénin</option>
-              </select>
+              <Label>Opérateur</Label>
+              <Select
+                value={momoMode}
+                onChange={(v) => setMomoMode(v as typeof momoMode)}
+                options={[
+                  { value: 'moov_tg', label: 'Moov Togo' },
+                  { value: 'mtn_ci', label: 'MTN Côte d’Ivoire' },
+                  { value: 'mtn', label: 'MTN Bénin' },
+                  { value: 'moov', label: 'Moov Bénin' },
+                ]}
+              />
             </div>
             <div>
-              <label style={labelStyle}>Pays</label>
-              <input value={momoCountry} onChange={(e) => setMomoCountry(e.target.value.toUpperCase())} style={inputStyle} placeholder="TG" maxLength={2} />
+              <Label>Pays</Label>
+              <Input value={momoCountry} onChange={(e) => setMomoCountry(e.target.value.toUpperCase())} placeholder="TG" maxLength={2} />
             </div>
             <div>
-              <label style={labelStyle}>Numéro Momo</label>
-              <input value={momoNumber} onChange={(e) => setMomoNumber(e.target.value)} style={inputStyle} placeholder="90000000" />
+              <Label>Numéro Momo</Label>
+              <Input value={momoNumber} onChange={(e) => setMomoNumber(e.target.value)} placeholder="90000000" />
             </div>
           </div>
         )}
 
-        <button
+        <Button
           onClick={handleSubmit}
-          disabled={busy || !placeId}
-          style={{ padding: '13px 20px', borderRadius: 10, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
+          disabled={!placeId}
+          loading={busy}
+          loadingText="Traitement…"
+          size="lg"
         >
-          {busy ? 'Traitement…' : 'Encaisser la vente'}
-        </button>
+          Encaisser la vente
+        </Button>
 
         {result && <p style={{ fontSize: 12.5, color: result.kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
       </div>

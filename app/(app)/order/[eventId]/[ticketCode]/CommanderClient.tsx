@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button } from '@/app/components/ui'
 
 // Port de src/pages/OnSiteOrderPage.jsx (partie interactive uniquement — les
 // gates de chargement/accès vivent dans page.tsx, un Server Component). Ce
@@ -400,9 +401,12 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                             ) : lockedLine ? (
                               <span style={{ fontSize: 11.5, color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{lockedLineLabel(lockedLine)}</span>
                             ) : (
-                              <button
+                              <Button
                                 type="button"
+                                variant="primary"
                                 disabled={busy}
+                                loading={busy}
+                                loadingText="…"
                                 onClick={() => handleStep(menuItem, undefined, 1)}
                                 style={{
                                   padding: '8px 16px',
@@ -412,12 +416,10 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                                   fontWeight: 700,
                                   color: '#fff',
                                   background: 'var(--violet)',
-                                  opacity: busy ? 0.5 : 1,
-                                  cursor: busy ? 'default' : 'pointer',
                                 }}
                               >
-                                {busy ? '…' : 'Ajouter'}
-                              </button>
+                                Ajouter
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -493,26 +495,27 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
 
 function StepButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="secondary"
       disabled={disabled}
       onClick={onClick}
       style={{
         width: 30,
         height: 30,
+        padding: 0,
         borderRadius: '50%',
         border: '1px solid var(--border-strong)',
         background: disabled ? 'rgba(255,255,255,0.03)' : 'var(--surface-2)',
         color: 'var(--text)',
         fontSize: 16,
         fontWeight: 700,
-        cursor: disabled ? 'default' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
       {label}
-    </button>
+    </Button>
   )
 }

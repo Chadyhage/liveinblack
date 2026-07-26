@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import NextImage from 'next/image'
 import Link from 'next/link'
+import { Check, Smartphone, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react'
 import { SOCIAL_NETWORKS, type SocialNetworkKey } from '@/lib/shared/social'
 import { regions } from '@/lib/shared/regions'
 import { normalizeRegionIds, getRegionName } from '@/lib/shared/locations'
@@ -10,6 +12,7 @@ import { fmtMoney } from '@/lib/shared/money'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import type { PublicMediaUploadReference } from '@/lib/shared/publicMediaUploads'
+import { Button, Input, Textarea, Checkbox, Radio, Select, Label } from '@/app/components/ui'
 
 // Port de OrganizerPublicStudio.jsx + PayoutPanel.jsx + MomoPayoutManager.jsx
 // (#7 phase organisateur, tâche #81). Avatar et bannière passent par le
@@ -250,7 +253,7 @@ export default function StudioClient({
       <main style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 20px 100px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 18, marginBottom: 20, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ font: '300 40px Inter, sans-serif', color: '#fff', margin: 0 }}>Ma page publique</h1>
+          <h1 className="font-display" style={{ fontSize: 40, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Ma page publique</h1>
           <p style={{ color: 'var(--text-muted)', margin: '8px 0 0', fontSize: 14 }}>Présente ton univers, tes événements et construis ton audience.</p>
         </div>
         <span
@@ -299,16 +302,18 @@ export default function StudioClient({
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)', marginBottom: 16, flexWrap: 'wrap' }}>
         <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{publicUrl}</span>
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => {
             navigator.clipboard?.writeText(publicUrl)
             setLinkCopied(true)
             setTimeout(() => setLinkCopied(false), 2000)
           }}
-          style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 11.5, cursor: 'pointer' }}
+          style={{ fontSize: 11.5 }}
         >
-          {linkCopied ? 'Copié ✓' : 'Copier le lien'}
-        </button>
+          {linkCopied ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Copié <Check size={13} /></span> : 'Copier le lien'}
+        </Button>
         {profile.status === 'public' && (
           <Link href={`/organizers/${slug}`} style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 700, textDecoration: 'none' }}>
             Voir ma page
@@ -319,14 +324,13 @@ export default function StudioClient({
       <div className="studio-profile-grid">
         {/* Informations publiques */}
         <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
-          <h2 style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: '0 0 16px' }}>Informations publiques</h2>
+          <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px' }}>Informations publiques</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: 14, marginBottom: 18 }}>
             <div>
               <div style={{ width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', background: '#12151d', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <NextImage src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} width={100} height={100} style={{ objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 32, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
@@ -348,10 +352,9 @@ export default function StudioClient({
               <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '4px 0 0' }}>Image 10 Mo max.</p>
             </div>
             <div>
-              <div style={{ height: 100, borderRadius: 8, overflow: 'hidden', background: '#10131d' }}>
+              <div style={{ height: 100, borderRadius: 8, overflow: 'hidden', background: '#10131d', position: 'relative' }}>
                 {profile.bannerUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.bannerUrl} alt={`Bannière de ${profile.publicName}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <NextImage src={profile.bannerUrl} alt={`Bannière de ${profile.publicName}`} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
                 )}
               </div>
               <label style={{ display: 'inline-block', marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 11, cursor: 'pointer' }}>
@@ -373,28 +376,28 @@ export default function StudioClient({
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <label style={{ display: 'grid', gap: 6 }}>
-              <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nom public</span>
-              <input value={profile.publicName} onChange={(e) => update({ publicName: e.target.value })} style={inputStyle} />
-            </label>
-            <label style={{ display: 'grid', gap: 6 }}>
-              <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Slug public</span>
-              <input value={profile.slug} onChange={(e) => update({ slug: e.target.value })} style={inputStyle} />
-            </label>
-            <label style={{ display: 'grid', gap: 6 }}>
-              <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ville d&rsquo;intervention</span>
-              <input value={profile.city} onChange={(e) => update({ city: e.target.value })} placeholder="Ta ville de base" style={inputStyle} />
-            </label>
+            <div>
+              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 6 }}>Nom public</Label>
+              <Input value={profile.publicName} onChange={(e) => update({ publicName: e.target.value })} />
+            </div>
+            <div>
+              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 6 }}>Slug public</Label>
+              <Input value={profile.slug} onChange={(e) => update({ slug: e.target.value })} />
+            </div>
+            <div>
+              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 6 }}>Ville d&rsquo;intervention</Label>
+              <Input value={profile.city} onChange={(e) => update({ city: e.target.value })} placeholder="Ta ville de base" />
+            </div>
             <div />
             <div style={{ gridColumn: '1 / -1' }}>
-              <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Pays / régions d&rsquo;intervention</span>
+              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>Pays / régions d&rsquo;intervention</Label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                 {ZONE_OPTIONS.map((r) => {
                   const sel = zones.includes(r.id)
                   return (
-                    <button
+                    <Button
                       key={r.id}
-                      type="button"
+                      variant="ghost"
                       onClick={() => toggleZone(r.id)}
                       style={{
                         padding: '8px 14px',
@@ -404,11 +407,10 @@ export default function StudioClient({
                         color: sel ? 'var(--teal)' : 'var(--text-muted)',
                         fontSize: 12.5,
                         fontWeight: 600,
-                        cursor: 'pointer',
                       }}
                     >
                       {r.flag} {r.name}
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -418,7 +420,7 @@ export default function StudioClient({
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(200,169,110,0.28)', background: 'rgba(200,169,110,0.06)' }}>
-                <span aria-hidden="true" style={{ fontSize: 18 }}>{regionCurrency === 'XOF' ? '📱' : '💳'}</span>
+                <span aria-hidden="true" style={{ fontSize: 18, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={18} /> : <CreditCard size={18} />}</span>
                 <div>
                   <p style={{ font: '700 12.5px Inter, sans-serif', color: 'var(--gold)', margin: 0 }}>
                     {getRegionName(profile.regionId) || profile.country || '—'} · {regionCurrency === 'XOF' ? 'FCFA (XOF)' : 'Euro (€)'}
@@ -429,51 +431,48 @@ export default function StudioClient({
                 </div>
               </div>
             </div>
-            <label style={{ display: 'grid', gap: 6, gridColumn: '1 / -1' }}>
-              <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Description</span>
-              <textarea
+            <div style={{ display: 'grid', gap: 6, gridColumn: '1 / -1' }}>
+              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>Description</Label>
+              <Textarea
                 rows={4}
                 maxLength={500}
                 value={profile.shortDescription}
                 onChange={(e) => update({ shortDescription: e.target.value })}
                 placeholder="Présente ton univers en quelques phrases."
-                style={inputStyle}
               />
               <span style={{ fontSize: 10.5, color: 'var(--text-faint)', justifySelf: 'end' }}>{profile.shortDescription.length}/500</span>
-            </label>
+            </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Réseaux sociaux</span>
+              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>Réseaux sociaux</Label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
                 {SOCIAL_NETWORKS.map((net) => (
-                  <label key={net.key} style={{ display: 'grid', gap: 5 }}>
-                    <span style={{ font: '600 10.5px Inter, sans-serif', color: 'var(--text-faint)', textTransform: 'uppercase' }}>{net.label}</span>
-                    <input
+                  <div key={net.key} style={{ display: 'grid', gap: 5 }}>
+                    <Label style={{ font: '600 10.5px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>{net.label}</Label>
+                    <Input
                       value={profile.socialLinks[net.key] || ''}
                       onChange={(e) => update({ socialLinks: { ...profile.socialLinks, [net.key]: e.target.value } })}
                       placeholder={net.placeholder}
-                      style={inputStyle}
                     />
-                  </label>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <button onClick={save} disabled={saving} style={saveButtonStyle(saving)}>
-            {saving ? 'Enregistrement…' : 'Enregistrer'}
-          </button>
+          <Button onClick={save} loading={saving} loadingText="Enregistrement…" fullWidth style={{ ...saveButtonStyle(saving), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)' }}>
+            Enregistrer
+          </Button>
         </section>
 
         {/* Aperçu + statut */}
         <aside style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
-          <h2 style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: '0 0 16px' }}>Aperçu de ma page</h2>
+          <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
             <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(78,232,200,0.12), rgba(200,169,110,0.12))' }} />
             <div style={{ padding: 16 }}>
               <div style={{ width: 64, height: 64, marginTop: -32, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <NextImage src={profile.avatarUrl} alt="" width={64} height={64} style={{ objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 26, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
@@ -486,15 +485,18 @@ export default function StudioClient({
           <div style={{ marginTop: 16 }}>
             <p style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase', margin: '0 0 8px' }}>Statut de la page</p>
             {(['draft', 'public'] as const).map((status) => (
-              <label key={status} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 0', fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
-                <input type="radio" checked={profile.status === status} onChange={() => update({ status })} />
-                {status === 'public' ? 'Publique — visible par tout le monde' : 'Privée — visible par toi seulement'}
-              </label>
+              <Radio
+                key={status}
+                checked={profile.status === status}
+                onChange={() => update({ status })}
+                label={status === 'public' ? 'Publique — visible par tout le monde' : 'Privée — visible par toi seulement'}
+                style={{ padding: '9px 0', fontSize: 13, color: 'rgba(255,255,255,0.85)' }}
+              />
             ))}
           </div>
-          <button onClick={save} disabled={saving} style={saveButtonStyle(saving)}>
-            {saving ? 'Enregistrement…' : 'Enregistrer'}
-          </button>
+          <Button onClick={save} loading={saving} loadingText="Enregistrement…" fullWidth style={{ ...saveButtonStyle(saving), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)' }}>
+            Enregistrer
+          </Button>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textAlign: 'center', margin: '6px 0 0' }}>Enregistre l&rsquo;ensemble de ton profil, y compris les informations publiques.</p>
         </aside>
       </div>
@@ -503,10 +505,10 @@ export default function StudioClient({
       <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
           <div>
-            <h2 style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
+            <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
             <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Images 10 Mo max. Vidéos 8 Mo max. 12 médias au maximum recommandé pour une page lisible (non bloquant).</p>
           </div>
-          <label style={{ padding: '10px 16px', borderRadius: 10, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+          <label style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', cursor: 'pointer' }}>
             {uploading === 'gallery' ? 'Envoi…' : '+ Ajouter un média'}
             <input
               type="file"
@@ -527,56 +529,49 @@ export default function StudioClient({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12 }}>
             {profile.media.map((item, index) => (
               <article key={item.id} style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 9, background: 'rgba(255,255,255,0.04)' }}>
-                <div style={{ height: 125, background: '#111', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ height: 125, background: '#111', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
                   {item.type === 'video' ? (
                     <video src={item.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <NextImage src={item.url} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 210px" />
                   )}
                 </div>
-                <input
+                <Input
                   value={item.title}
                   onChange={(e) => setProfile((p) => ({ ...p, media: p.media.map((m) => (m.id === item.id ? { ...m, title: e.target.value } : m)) }))}
                   onBlur={(e) => void updateMedia(item.id, { title: e.target.value })}
                   placeholder="Titre facultatif"
-                  style={{ ...inputStyle, marginTop: 8 }}
+                  style={{ marginTop: 8 }}
                 />
-                <select
+                <Select
                   value={item.eventId || ''}
-                  onChange={(e) => void updateMedia(item.id, { eventId: e.target.value || null })}
-                  style={{ ...inputStyle, marginTop: 7 }}
-                >
-                  <option value="">Aucun événement lié</option>
-                  {events.map((ev) => (
-                    <option key={ev.id} value={ev.id}>
-                      {ev.name}
-                    </option>
-                  ))}
-                </select>
-                <label style={{ display: 'flex', gap: 7, alignItems: 'center', fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={item.visibility !== 'hidden'}
-                    onChange={(e) => void updateMedia(item.id, { visibility: e.target.checked ? 'public' : 'hidden' })}
-                  />
-                  Visible publiquement
-                </label>
+                  onChange={(value) => void updateMedia(item.id, { eventId: value || null })}
+                  placeholder="Aucun événement lié"
+                  options={events.map((ev) => ({ value: ev.id, label: ev.name }))}
+                  size="sm"
+                />
+                <Checkbox
+                  checked={item.visibility !== 'hidden'}
+                  onChange={(e) => void updateMedia(item.id, { visibility: e.target.checked ? 'public' : 'hidden' })}
+                  label="Visible publiquement"
+                  style={{ gap: 7, fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}
+                />
                 <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
-                  <button onClick={() => void moveMedia(index, -1)} disabled={index === 0} aria-label="Déplacer vers la gauche" style={mediaActionStyle}>
-                    ←
-                  </button>
-                  <button onClick={() => void moveMedia(index, 1)} disabled={index === profile.media.length - 1} aria-label="Déplacer vers la droite" style={mediaActionStyle}>
-                    →
-                  </button>
-                  <button
+                  <Button variant="ghost" onClick={() => void moveMedia(index, -1)} disabled={index === 0} aria-label="Déplacer vers la gauche" style={mediaActionStyle}>
+                    <ChevronLeft size={14} />
+                  </Button>
+                  <Button variant="ghost" onClick={() => void moveMedia(index, 1)} disabled={index === profile.media.length - 1} aria-label="Déplacer vers la droite" style={mediaActionStyle}>
+                    <ChevronRight size={14} />
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => {
                       if (window.confirm('Supprimer définitivement ce média de ta page ?')) void removeMedia(item.id)
                     }}
                     style={{ ...mediaActionStyle, color: 'var(--pink)' }}
                   >
                     Supprimer
-                  </button>
+                  </Button>
                 </div>
               </article>
             ))}
@@ -602,18 +597,6 @@ export default function StudioClient({
   )
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box',
-  padding: '11px 13px',
-  borderRadius: 10,
-  border: '1px solid rgba(255,255,255,0.12)',
-  background: '#0b0c12',
-  color: 'rgba(255,255,255,0.92)',
-  outline: 'none',
-  fontSize: 13,
-}
-
 function saveButtonStyle(saving: boolean): React.CSSProperties {
   return {
     width: '100%',
@@ -621,10 +604,12 @@ function saveButtonStyle(saving: boolean): React.CSSProperties {
     padding: 13,
     background: 'var(--gold)',
     border: '1px solid var(--gold)',
-    borderRadius: 12,
+    borderRadius: 8,
     color: 'var(--obsidian)',
     fontSize: 13,
-    fontWeight: 700,
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    letterSpacing: '.04em',
     cursor: saving ? 'wait' : 'pointer',
     marginTop: 16,
   }
@@ -753,7 +738,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
 
   return (
     <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, display: 'grid', gap: 16 }} id="encaissement">
-      <h2 style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: 0 }}>Encaissement</h2>
+      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Encaissement</h2>
 
       <div style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}>
         {status.mode === 'manual' ? (
@@ -765,9 +750,14 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                   {status.amountDueCents > 0 && <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{fmtMoney(status.amountDueCents / 100, 'EUR')}</p>}
                   {status.amountDueXOF > 0 && <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{fmtMoney(status.amountDueXOF, 'XOF')}</p>}
                 </div>
-                <button onClick={requestPayout} disabled={requesting} style={{ ...saveButtonStyle(requesting), width: 'auto', padding: '10px 18px', marginTop: 0 }}>
-                  {requesting ? 'Envoi…' : 'Demander un reversement'}
-                </button>
+                <Button
+                  onClick={requestPayout}
+                  loading={requesting}
+                  loadingText="Envoi…"
+                  style={{ ...saveButtonStyle(requesting), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)', width: 'auto', padding: '10px 18px', marginTop: 0 }}
+                >
+                  Demander un reversement
+                </Button>
               </div>
             ) : (
               <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Aucun solde à reverser pour l&rsquo;instant.</p>
@@ -783,9 +773,14 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
             <p style={{ fontSize: 13, color: '#fff', margin: '0 0 10px' }}>
               {status.connected ? 'Ton compte Stripe est en cours de vérification.' : 'Connecte ton compte bancaire via Stripe pour être payé automatiquement.'}
             </p>
-            <button onClick={connect} disabled={connecting} style={{ ...saveButtonStyle(connecting), width: 'auto', padding: '10px 18px', marginTop: 0 }}>
-              {connecting ? 'Redirection…' : 'Connecter mon compte bancaire'}
-            </button>
+            <Button
+              onClick={connect}
+              loading={connecting}
+              loadingText="Redirection…"
+              style={{ ...saveButtonStyle(connecting), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)', width: 'auto', padding: '10px 18px', marginTop: 0 }}
+            >
+              Connecter mon compte bancaire
+            </Button>
           </>
         )}
         {payoutMessage && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10 }}>{payoutMessage}</p>}
@@ -808,22 +803,23 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
                     {region.flag} {region.name}
                   </span>
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => {
                       if (!momos[code]?.trim() || window.confirm(`Retirer ${region.name} ? Le numéro saisi pour ce pays sera perdu.`)) removeCountry(code)
                     }}
                     aria-label="Retirer"
-                    style={{ background: 'none', border: 0, color: 'var(--text-faint)', fontSize: 18, cursor: 'pointer' }}
+                    style={{ color: 'var(--text-faint)', fontSize: 18, padding: 0 }}
                   >
                     ×
-                  </button>
+                  </Button>
                 </div>
-                <input
+                <Input
                   type="tel"
                   placeholder={`${region.dial} 90 00 00 00`}
                   value={momos[code] || ''}
                   onChange={(e) => setMomos((m) => ({ ...m, [code]: e.target.value }))}
-                  style={{ ...inputStyle, ...(hasError ? { borderColor: 'var(--pink)' } : {}) }}
+                  invalid={hasError}
                 />
               </div>
             )
@@ -831,23 +827,29 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
         </div>
         {remaining.length > 0 && (
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <select value={addSel} onChange={(e) => setAddSel(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
-              <option value="">Ajouter un pays…</option>
-              {remaining.map((r) => (
-                <option key={r.momoCountry} value={r.momoCountry ?? ''}>
-                  {r.flag} {r.name}
-                </option>
-              ))}
-            </select>
-            <button onClick={() => addCountry(addSel)} disabled={!addSel} style={{ padding: '0 16px', borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: addSel ? 'pointer' : 'not-allowed' }}>
+            <div style={{ flex: 1 }}>
+              <Select
+                value={addSel}
+                onChange={(value) => setAddSel(value)}
+                placeholder="Ajouter un pays…"
+                options={remaining.map((r) => ({ value: r.momoCountry ?? '', label: `${r.flag} ${r.name}` }))}
+              />
+            </div>
+            <Button variant="secondary" onClick={() => addCountry(addSel)} disabled={!addSel} style={{ padding: '0 16px', borderRadius: 10, fontSize: 13 }}>
               Ajouter
-            </button>
+            </Button>
           </div>
         )}
         {momoMessage && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12 }}>{momoMessage}</p>}
-        <button onClick={saveMomos} disabled={savingMomos} style={{ ...saveButtonStyle(savingMomos), width: '100%' }}>
-          {savingMomos ? 'Enregistrement…' : 'Enregistrer mes numéros'}
-        </button>
+        <Button
+          onClick={saveMomos}
+          loading={savingMomos}
+          loadingText="Enregistrement…"
+          fullWidth
+          style={{ ...saveButtonStyle(savingMomos), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)' }}
+        >
+          Enregistrer mes numéros
+        </Button>
       </div>
     </section>
   )

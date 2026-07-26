@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button } from '@/app/components/ui'
 
 // Port de la fusion des 3 onglets legacy 'reversements' / 'remboursements' /
 // 'paiements' (src/pages/AgentPage.jsx) en un seul panneau (#9 phase
@@ -130,10 +131,10 @@ const SECTIONS = [
 type SectionKey = (typeof SECTIONS)[number]['key']
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 10px' }
-const btnBase: React.CSSProperties = { padding: '11px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', width: '100%' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
+const btnBase: React.CSSProperties = { borderRadius: 8, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em', width: '100%' }
 const tealBtn: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
-const ghostBtn: React.CSSProperties = { ...btnBase, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600 }
+const ghostBtn: React.CSSProperties = { ...btnBase, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'none', letterSpacing: 'normal' }
 
 export default function AgentPaymentsClient() {
   const [section, setSection] = useState<SectionKey>('payouts')
@@ -286,16 +287,16 @@ export default function AgentPaymentsClient() {
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Paiements</h1>
+        <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Paiements</h1>
 
         {loadError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
               Lecture impossible d&apos;une obligation financière. Aucune action de règlement n&apos;est proposée tant que les montants réels ne sont pas connus — recharge la page.
             </p>
-            <button onClick={loadAll} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5, flexShrink: 0 }}>
+            <Button variant="secondary" onClick={loadAll} style={{ fontSize: 12.5, flexShrink: 0 }}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 
@@ -304,21 +305,22 @@ export default function AgentPaymentsClient() {
             const active = s.key === section
             const count = counts[s.key]
             return (
-              <button
+              <Button
                 key={s.key}
+                variant="ghost"
                 onClick={() => setSection(s.key)}
                 style={{
                   padding: '12px 10px',
                   borderRadius: 12,
                   border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`,
                   background: active ? 'rgba(200,169,110,0.14)' : 'var(--surface)',
-                  cursor: 'pointer',
                   textAlign: 'left',
+                  display: 'block',
                 }}
               >
                 <div style={{ fontSize: 20, fontWeight: 800, color: count > 0 ? '#e05aaa' : 'var(--text-faint)' }}>{count}</div>
                 <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? 'var(--gold)' : 'var(--text-faint)' }}>{s.label}</div>
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -428,9 +430,9 @@ function PayoutsSection({
                     Événement ANNULÉ (ou supprimé) — cette recette rembourse les acheteurs (section Remboursements). Ne rien verser à l&apos;organisateur.
                   </p>
                 ) : (
-                  <button style={{ ...tealBtn, marginTop: 12, background: 'rgba(78,232,200,0.16)', border: '1px solid rgba(78,232,200,0.5)', color: 'var(--teal)' }} onClick={() => setConfirm({ type: 'markPayoutPaid', eventId: p.eventId, label: fmtXOF(p.amountDueXOF), who: p.sellerName })}>
+                  <Button variant="primary" style={{ ...tealBtn, marginTop: 12, background: 'rgba(78,232,200,0.16)', border: '1px solid rgba(78,232,200,0.5)', color: 'var(--teal)' }} onClick={() => setConfirm({ type: 'markPayoutPaid', eventId: p.eventId, label: fmtXOF(p.amountDueXOF), who: p.sellerName })}>
                     Marquer payé ({fmtXOF(p.amountDueXOF)})
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -506,9 +508,9 @@ function PayoutCard({
       {mismatch && <p style={{ fontSize: 11, color: '#f59e0b', margin: '8px 0 0', lineHeight: 1.5 }}>Le montant demandé dépasse le solde réel du ledger — seul le solde réel sera réglé.</p>}
 
       {payCents > 0 && (
-        <button style={{ ...tealBtn, marginTop: 12 }} onClick={() => setConfirm({ type: 'settle', sellerUid, requestId, amount: payCents, currency: 'EUR', label: fmtEUR(payCents), who: sellerName })}>
+        <Button variant="primary" style={{ ...tealBtn, marginTop: 12 }} onClick={() => setConfirm({ type: 'settle', sellerUid, requestId, amount: payCents, currency: 'EUR', label: fmtEUR(payCents), who: sellerName })}>
           Marquer payé ({fmtEUR(payCents)})
-        </button>
+        </Button>
       )}
 
       {amountDueXOF > 0 && (
@@ -529,9 +531,9 @@ function PayoutCard({
       )}
 
       {requestId && payCents <= 0 && amountDueXOF <= 0 && (
-        <button style={{ ...ghostBtn, marginTop: 12 }} onClick={() => setConfirm({ type: 'closeRequest', requestId, who: sellerName })}>
+        <Button variant="secondary" style={{ ...ghostBtn, marginTop: 12 }} onClick={() => setConfirm({ type: 'closeRequest', requestId, who: sellerName })}>
           Solde à zéro — clore la demande
-        </button>
+        </Button>
       )}
     </div>
   )
@@ -562,9 +564,9 @@ function RefundsSection({ refunds, setConfirm }: { refunds: RefundAlert[]; setCo
                 <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Événement : {r.eventName}</p>
                 <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{fmtDate(r.createdAt)}</p>
               </div>
-              <button style={{ flexShrink: 0, width: 'auto', background: 'var(--teal)', color: 'var(--obsidian)', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} onClick={() => setConfirm({ type: 'completeRefund', refundId: r.id, label: fmtXOF(r.amountXOF), who: r.buyerEmail || 'cet acheteur' })}>
+              <Button variant="primary" style={{ flexShrink: 0, width: 'auto', borderRadius: 8, padding: '10px 14px', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }} onClick={() => setConfirm({ type: 'completeRefund', refundId: r.id, label: fmtXOF(r.amountXOF), who: r.buyerEmail || 'cet acheteur' })}>
                 Marquer remboursé
-              </button>
+              </Button>
             </div>
           </div>
         ))
@@ -611,9 +613,9 @@ function AlertsSection({ alerts, setConfirm }: { alerts: PaymentAlertView[]; set
                 </div>
               )}
             </div>
-            <button style={{ marginTop: 13, width: 'auto', padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: 'var(--teal)', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--obsidian)', fontWeight: 700, fontSize: 12 }} onClick={() => setConfirm({ type: 'resolveAlert', alertId: a.id, label: ALERT_REASON_LABEL[a.reason] || a.reason })}>
+            <Button variant="primary" style={{ marginTop: 13, width: 'auto', padding: '10px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 12 }} onClick={() => setConfirm({ type: 'resolveAlert', alertId: a.id, label: ALERT_REASON_LABEL[a.reason] || a.reason })}>
               Marquer comme examiné
-            </button>
+            </Button>
           </div>
         ))
       )}
@@ -650,12 +652,12 @@ function ConfirmModal({ action, busy, onCancel, onConfirm }: { action: ConfirmAc
         <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>{title}</p>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.5 }}>{helper}</p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onCancel} disabled={busy} style={{ ...ghostBtn, cursor: busy ? 'default' : 'pointer' }}>
+          <Button variant="secondary" onClick={onCancel} disabled={busy} style={ghostBtn}>
             Annuler
-          </button>
-          <button onClick={onConfirm} disabled={busy} style={{ ...tealBtn, opacity: busy ? 0.6 : 1, cursor: busy ? 'wait' : 'pointer' }}>
-            {busy ? '…' : 'Confirmer'}
-          </button>
+          </Button>
+          <Button variant="primary" onClick={onConfirm} disabled={busy} loading={busy} loadingText="…" style={tealBtn}>
+            Confirmer
+          </Button>
         </div>
       </div>
     </div>

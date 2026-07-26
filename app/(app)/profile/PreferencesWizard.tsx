@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { Button, Input } from '@/app/components/ui'
 
 // Port de src/components/PreferencesEditor.jsx ("Mes goûts", #6 phase
 // profil) — mêmes 8 étapes, mêmes intitulés et mêmes options. Les artistes et
@@ -140,13 +141,12 @@ function norm(s: string): string {
 
 function Chip({ active, color, onClick, children }: { active: boolean; color: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant={active ? 'primary' : 'secondary'}
       onClick={onClick}
       style={{
         padding: '11px 16px',
         borderRadius: 999,
-        cursor: 'pointer',
         border: `1px solid ${active ? color : 'rgba(255,255,255,0.14)'}`,
         background: active ? `${color}1f` : 'rgba(255,255,255,0.04)',
         color: active ? color : 'rgba(255,255,255,0.7)',
@@ -155,7 +155,7 @@ function Chip({ active, color, onClick, children }: { active: boolean; color: st
       }}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -254,20 +254,20 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                 <img src={photos[v]} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
               ) : <span style={{ width: 24, height: 24, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,.28)', fontSize: 11 }}>{v.charAt(0).toUpperCase()}</span>)}
               {v}
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => remove(v)}
                 aria-label={`Retirer ${v}`}
-                style={{ width: 18, height: 18, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(0,0,0,0.25)', color, fontSize: 12, lineHeight: 1 }}
+                style={{ width: 18, height: 18, padding: 0, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.25)', color, fontSize: 12, lineHeight: 1 }}
               >
                 ×
-              </button>
+              </Button>
             </span>
           ))}
         </div>
       )}
       <div style={{ position: 'relative' }}>
-        <input
+        <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -281,39 +281,41 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
           }}
           placeholder={placeholder}
           disabled={value.length >= max}
-          style={{ width: '100%', boxSizing: 'border-box', padding: '13px 14px', borderRadius: 12, border: `1px solid ${focused ? color : 'rgba(255,255,255,0.12)'}`, background: '#0b0c12', color: '#fff', outline: 'none', fontSize: 14 }}
+          style={{ boxSizing: 'border-box', padding: '13px 14px', borderRadius: 12, border: `1px solid ${focused ? color : 'rgba(255,255,255,0.12)'}`, background: '#0b0c12', color: '#fff', fontSize: 14 }}
         />
         {focused && (matches.length > 0 || canAddCustom || loading) && (
           <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 5, maxHeight: 240, overflowY: 'auto', borderRadius: 12, padding: 6, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
             {matches.map((m) => (
-              <button
+              <Button
                 key={`${m.name}-${m.sublabel || ''}`}
-                type="button"
+                variant="ghost"
+                fullWidth
                 onMouseDown={(e) => {
                   e.preventDefault()
                   add(m)
                 }}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '9px 10px', borderRadius: 8, border: 'none', background: 'none', color: '#fff', cursor: 'pointer', fontSize: 14 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-start', textAlign: 'left', padding: '9px 10px', borderRadius: 8, border: 'none', background: 'none', color: '#fff', fontSize: 14, fontWeight: 400 }}
               >
                 {m.picture ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.picture} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} />
                 ) : <span style={{ width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,.07)', flexShrink: 0 }}>{m.name.charAt(0).toUpperCase()}</span>}
                 <span><span style={{ display: 'block' }}>{m.name}</span>{m.sublabel && <span style={{ display: 'block', color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{m.sublabel}</span>}</span>
-              </button>
+              </Button>
             ))}
             {loading && matches.length === 0 && <p style={{ padding: '10px 12px', margin: 0, color: 'rgba(255,255,255,.4)', fontSize: 13 }}>Recherche…</p>}
             {canAddCustom && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                fullWidth
                 onMouseDown={(e) => {
                   e.preventDefault()
                   add(query)
                 }}
-                style={{ width: '100%', textAlign: 'left', padding: '11px 12px', borderRadius: 8, border: 'none', background: 'none', color, cursor: 'pointer', fontSize: 14, fontWeight: 700 }}
+                style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '11px 12px', borderRadius: 8, border: 'none', background: 'none', color, fontSize: 14, fontWeight: 700 }}
               >
                 + Ajouter « {query.trim()} »
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -390,9 +392,9 @@ export default function PreferencesModal({
     <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
       <div style={{ position: 'relative', width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto', background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, padding: 22, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
-        <button onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}>
+        <Button variant="ghost" onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}>
           ×
-        </button>
+        </Button>
         {done ? (
           <div style={{ textAlign: 'center', padding: '30px 10px 20px' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)' }}>
@@ -402,17 +404,17 @@ export default function PreferencesModal({
             </div>
             <h2 style={{ fontSize: 23, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>C&apos;est noté !</h2>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>Tes préférences sont enregistrées.</p>
-            <button
+            <Button
               onClick={onClose}
-              style={{ padding: '13px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 700 }}
+              style={{ padding: '13px 28px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em' }}
             >
               Fermer
-            </button>
+            </Button>
           </div>
         ) : (
           <>
             <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: VIOLET, margin: '0 0 6px' }}>Personnalisation</p>
-            <h2 style={{ fontSize: 23, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 18px' }}>Dis-nous ce que tu aimes</h2>
+            <h2 className="font-display" style={{ fontSize: 23, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 18px' }}>Dis-nous ce que tu aimes</h2>
 
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -463,23 +465,23 @@ export default function PreferencesModal({
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 26 }}>
               {step > 0 && (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={goBack}
                   aria-label="Précédent"
-                  style={{ width: 46, height: 46, borderRadius: 12, flexShrink: 0, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}
+                  style={{ width: 46, height: 46, padding: 0, borderRadius: 12, flexShrink: 0, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}
                 >
                   ‹
-                </button>
+                </Button>
               )}
-              <button
-                type="button"
+              <Button
                 onClick={goNext}
                 disabled={saving}
-                style={{ flex: 1, padding: '15px 24px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 700 }}
+                fullWidth
+                style={{ flex: 1, padding: '15px 24px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em' }}
               >
                 {isLast ? 'Terminer' : hasValue ? 'Continuer' : 'Passer cette étape'}
-              </button>
+              </Button>
             </div>
           </>
         )}

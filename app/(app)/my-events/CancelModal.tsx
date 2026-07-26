@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Button, Textarea } from '@/app/components/ui'
 
 // Port du modal de suppression/annulation (MesEvenementsPage.jsx lignes
 // ~1826-1896). Contrairement au legacy (qui connaissait le nombre de
@@ -78,10 +79,10 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
           boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
         }}
       >
-        <button onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}>
+        <Button variant="ghost" onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}>
           ×
-        </button>
-        <h2 style={{ font: '700 22px Inter, sans-serif', color: '#fff', margin: '0 0 14px' }}>
+        </Button>
+        <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 14px' }}>
           {phase === 'confirm' ? "Supprimer l’événement ?" : "Annuler l’événement ?"}
         </h2>
 
@@ -92,20 +93,24 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
             </p>
             {error && <p style={{ color: 'var(--pink)', fontSize: 12.5, marginBottom: 12 }}>{error}</p>}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={onClose}
                 disabled={busy}
-                style={{ padding: '12px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '12px 0', borderRadius: 12 }}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={attemptDelete}
                 disabled={busy}
-                style={{ padding: '12px 0', borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}
+                loading={busy}
+                loadingText="Suppression…"
+                style={{ padding: '12px 0', borderRadius: 8, background: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '.03em' }}
               >
-                {busy ? 'Suppression…' : 'Supprimer'}
-              </button>
+                Supprimer
+              </Button>
             </div>
           </>
         ) : (
@@ -117,12 +122,12 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
             </div>
             <label style={{ display: 'grid', gap: 6, marginBottom: 6 }}>
               <span style={{ font: '600 11px Inter, sans-serif', color: 'rgba(255,255,255,0.55)' }}>Message aux acheteurs (optionnel)</span>
-              <textarea
+              <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 500))}
                 rows={4}
                 placeholder="Ex : Nous sommes au regret de vous annoncer l'annulation de cet événement pour cause de force majeure. Le remboursement du prix de votre billet vous sera versé automatiquement (hors frais de service, non remboursables)."
-                style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#0b0c12', color: '#fff', resize: 'vertical' }}
+                style={{ background: '#0b0c12' }}
               />
             </label>
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '0 0 14px' }}>
@@ -133,20 +138,24 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
             </p>
             {error && <p style={{ color: 'var(--pink)', fontSize: 12.5, marginBottom: 12 }}>{error}</p>}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 10 }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setPhase('confirm')}
                 disabled={busy}
-                style={{ padding: '12px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '12px 0', borderRadius: 12 }}
               >
                 Retour
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={confirmCancel}
                 disabled={busy}
-                style={{ padding: '12px 0', borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}
+                loading={busy}
+                loadingText="Annulation en cours…"
+                style={{ padding: '12px 0', borderRadius: 8, background: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '.03em' }}
               >
-                {busy ? 'Annulation en cours…' : "Confirmer l'annulation"}
-              </button>
+                Confirmer l&apos;annulation
+              </Button>
             </div>
           </>
         )}

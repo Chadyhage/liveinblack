@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button, Textarea, Label } from '@/app/components/ui'
 
 // Port de src/pages/PublicPrestatairePage.jsx (openServiceInquiry /
 // sendServiceInquiry) — "Demander ce service" par item de catalogue, sur la
@@ -31,13 +33,15 @@ const inquiryBtn: React.CSSProperties = {
   justifyContent: 'center',
   gap: 7,
   padding: '9px 12px',
-  borderRadius: 10,
+  borderRadius: 8,
   border: '1px solid var(--border-strong)',
   background: 'var(--violet-cta)',
   color: '#fff',
   fontFamily: FONT,
-  fontSize: 12.5,
-  fontWeight: 700,
+  fontSize: 12,
+  fontWeight: 800,
+  textTransform: 'uppercase',
+  letterSpacing: '.03em',
   cursor: 'pointer',
 }
 const primaryBtn: React.CSSProperties = {
@@ -47,14 +51,16 @@ const primaryBtn: React.CSSProperties = {
   gap: 8,
   minHeight: 46,
   padding: '12px 18px',
-  borderRadius: 12,
+  borderRadius: 8,
   border: '1px solid var(--border-strong)',
   cursor: 'pointer',
   background: 'var(--violet-cta)',
   color: '#fff',
   fontFamily: FONT,
-  fontSize: 13.5,
-  fontWeight: 700,
+  fontSize: 13,
+  fontWeight: 800,
+  textTransform: 'uppercase',
+  letterSpacing: '.03em',
 }
 const ghostBtn: React.CSSProperties = {
   flex: 1,
@@ -69,16 +75,6 @@ const ghostBtn: React.CSSProperties = {
   cursor: 'pointer',
 }
 const disabledBtn: React.CSSProperties = { opacity: 0.5, cursor: 'not-allowed' }
-const spinnerStyle: React.CSSProperties = {
-  width: 14,
-  height: 14,
-  display: 'inline-block',
-  borderRadius: '50%',
-  border: '2px solid rgba(255,255,255,.3)',
-  borderTopColor: '#fff',
-  flexShrink: 0,
-  animation: 'lib-spin 0.7s linear infinite',
-}
 
 async function apiFetch<T>(url: string, init?: RequestInit): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   try {
@@ -189,16 +185,15 @@ export default function ProviderCatalogInquiry({
 
   return (
     <>
-      <button type="button" onClick={openSheet} style={inquiryBtn}>
+      <Button type="button" onClick={openSheet} style={inquiryBtn}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
         </svg>
         Demander ce service
-      </button>
+      </Button>
 
       {open && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <style>{`@keyframes lib-spin { to { transform: rotate(360deg) } }`}</style>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,.72)', backdropFilter: 'blur(8px)' }} onClick={closeSheet} />
           <div
             style={{
@@ -235,8 +230,7 @@ export default function ProviderCatalogInquiry({
             >
               {item.image && (
                 <div style={{ width: 70, height: 70, borderRadius: 12, overflow: 'hidden', background: 'var(--surface-2)' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <Image src={item.image} alt="" width={70} height={70} style={{ objectFit: 'cover' }} />
                 </div>
               )}
               <div style={{ minWidth: 0 }}>
@@ -252,24 +246,20 @@ export default function ProviderCatalogInquiry({
               </div>
             </div>
 
-            <label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
+            <Label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
               Message
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={4}
               placeholder="Ajoute ta date, ton lieu, ton budget ou ta question…"
               style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                resize: 'vertical',
                 minHeight: 100,
                 borderRadius: 12,
                 border: '1px solid var(--border)',
                 background: 'var(--obsidian)',
                 color: 'var(--text)',
-                outline: 'none',
                 padding: 14,
                 fontFamily: FONT,
                 fontSize: 14,
@@ -287,18 +277,18 @@ export default function ProviderCatalogInquiry({
             )}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button type="button" onClick={closeSheet} disabled={sending} style={{ ...ghostBtn, ...(sending ? disabledBtn : null) }}>
+              <Button type="button" variant="secondary" onClick={closeSheet} disabled={sending} style={{ ...ghostBtn, ...(sending ? disabledBtn : null) }}>
                 Annuler
-              </button>
-              <button type="button" onClick={handleSend} disabled={sending} style={{ ...primaryBtn, flex: 1.6, ...(sending ? disabledBtn : null) }}>
-                {sending ? (
-                  <>
-                    <span style={spinnerStyle} /> Envoi…
-                  </>
-                ) : (
-                  'Envoyer la demande'
-                )}
-              </button>
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSend}
+                loading={sending}
+                loadingText="Envoi…"
+                style={{ ...primaryBtn, flex: 1.6, ...(sending ? disabledBtn : null) }}
+              >
+                Envoyer la demande
+              </Button>
             </div>
           </div>
         </div>

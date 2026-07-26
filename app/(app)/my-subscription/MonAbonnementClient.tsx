@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/app/components/ui'
 import { regions } from '@/lib/shared/regions'
 import { subPresentation, subPriceLabel, type SubWindow } from '@/lib/shared/providerSubscription'
 import type { ProviderProfileView } from '@/lib/server/providerProfile'
@@ -18,9 +19,7 @@ type SubscriptionOverview = Awaited<ReturnType<typeof getMySubscriptionOverview>
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
 const card: React.CSSProperties = { background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }
-const primaryButton: React.CSSProperties = { minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 20px', border: 'none', borderRadius: 12, cursor: 'pointer', background: C.gold, color: C.obsidian, fontFamily: FONT, fontSize: 14, fontWeight: 700 }
-const disabledButton: React.CSSProperties = { opacity: 0.6, cursor: 'wait' }
-const spinnerStyle: React.CSSProperties = { width: 14, height: 14, border: '2px solid rgba(4,4,11,0.3)', borderTopColor: '#04040b', borderRadius: '50%', display: 'inline-block', animation: 'lib-spin 0.7s linear infinite' }
+const primaryButton: React.CSSProperties = { background: C.gold, color: C.obsidian, fontFamily: FONT, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em' }
 
 function fmtDate(value: string | null | undefined): string {
   if (!value) return '—'
@@ -136,15 +135,15 @@ export default function MonAbonnementClient({ profile, subscription }: { profile
 
   return (
     <>
-      <style>{`@keyframes lib-spin { to { transform: rotate(360deg) } }`}</style>
       <main style={{ maxWidth: 760, margin: '0 auto', padding: '22px 16px 110px' }}>
-        <button
+        <Button
+          variant="ghost"
           onClick={() => router.push('/offer-services')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'rgba(255,255,255,.5)', fontFamily: FONT, fontSize: 12.5, cursor: 'pointer', padding: 0, marginBottom: 14 }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,.5)', fontFamily: FONT, fontSize: 12.5, padding: 0, marginBottom: 14 }}
         >
           ← Mon espace
-        </button>
-        <h1 style={{ fontFamily: FONT, fontSize: 26, fontWeight: 800, letterSpacing: '-.5px', margin: '0 0 4px' }}>Mon abonnement</h1>
+        </Button>
+        <h1 className="font-display" style={{ fontSize: 26, letterSpacing: '.02em', margin: '0 0 4px' }}>Mon abonnement</h1>
         <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: 0 }}>Ce qui rend ton profil visible sur LIVEINBLACK.</p>
 
         <section style={{ ...card, padding: 18, marginTop: 20, borderLeft: `3px solid ${color}` }}>
@@ -169,21 +168,20 @@ export default function MonAbonnementClient({ profile, subscription }: { profile
           {msg && <p style={{ fontFamily: FONT, fontSize: 12, color: C.pink, margin: '12px 0 0' }}>{msg}</p>}
 
           {showCta && (
-            <button onClick={() => void (currency === 'XOF' ? handleFedapaySubscribe() : handleStripeSubscribe())} disabled={renewing} style={{ ...primaryButton, marginTop: 16, ...(renewing ? disabledButton : null) }}>
-              {renewing ? (
-                <>
-                  <span style={spinnerStyle} />
-                  Redirection…
-                </>
-              ) : (
-                cta
-              )}
-            </button>
+            <Button
+              onClick={() => void (currency === 'XOF' ? handleFedapaySubscribe() : handleStripeSubscribe())}
+              disabled={renewing}
+              loading={renewing}
+              loadingText="Redirection…"
+              style={{ ...primaryButton, marginTop: 16 }}
+            >
+              {cta}
+            </Button>
           )}
         </section>
 
         <section style={{ ...card, padding: 18, marginTop: 16 }}>
-          <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, margin: '0 0 4px' }}>Historique des paiements</h2>
+          <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Historique des paiements</h2>
           <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '0 0 4px' }}>Tes reçus d&rsquo;abonnement.</p>
           {subscription.payments.length === 0 ? (
             <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', margin: '16px 0 0' }}>Aucun paiement confirmé dans cet historique.</p>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Button, Input, Label } from '@/app/components/ui'
 
 // Port du modal de report (MesEvenementsPage.jsx lignes ~1797-1825).
 export interface PostponeModalEvent {
@@ -69,10 +70,15 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
           boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
         }}
       >
-        <button onClick={onClose} aria-label="Fermer" style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}>
+        <Button
+          variant="ghost"
+          onClick={onClose}
+          aria-label="Fermer"
+          style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
+        >
           ×
-        </button>
-        <h2 style={{ font: '700 22px Inter, sans-serif', color: '#fff', margin: '0 0 10px' }}>Reporter l&rsquo;événement ?</h2>
+        </Button>
+        <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>Reporter l&rsquo;événement ?</h2>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 14px' }}>
           Les billets déjà vendus restent valables pour la nouvelle date — personne n&rsquo;est remboursé. Chaque acheteur est prévenu par e-mail (ancienne et nouvelle date).
         </p>
@@ -80,42 +86,46 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
           Date actuelle : <span style={{ textDecoration: 'line-through' }}>{event.dateDisplay || event.date}</span> · {event.time}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-          <label style={{ display: 'grid', gap: 6 }}>
-            <span style={{ font: '600 11px Inter, sans-serif', color: 'rgba(255,255,255,0.55)' }}>Nouvelle date</span>
-            <input
+          <div style={{ display: 'grid', gap: 6 }}>
+            <Label style={{ font: '600 11px Inter, sans-serif', color: 'rgba(255,255,255,0.55)', margin: 0 }}>Nouvelle date</Label>
+            <Input
               type="date"
               value={date}
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setDate(e.target.value)}
-              style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#0b0c12', color: '#fff' }}
+              style={{ padding: '11px 12px', borderRadius: 10, background: '#0b0c12', color: '#fff' }}
             />
-          </label>
-          <label style={{ display: 'grid', gap: 6 }}>
-            <span style={{ font: '600 11px Inter, sans-serif', color: 'rgba(255,255,255,0.55)' }}>Heure</span>
-            <input
+          </div>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <Label style={{ font: '600 11px Inter, sans-serif', color: 'rgba(255,255,255,0.55)', margin: 0 }}>Heure</Label>
+            <Input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#0b0c12', color: '#fff' }}
+              style={{ padding: '11px 12px', borderRadius: 10, background: '#0b0c12', color: '#fff' }}
             />
-          </label>
+          </div>
         </div>
         {error && <p style={{ color: 'var(--pink)', fontSize: 12.5, marginBottom: 12 }}>{error}</p>}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 10 }}>
-          <button
+          <Button
+            variant="secondary"
             onClick={onClose}
             disabled={busy}
-            style={{ padding: '12px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+            style={{ padding: '12px 0', borderRadius: 12 }}
           >
             Retour
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={confirm}
             disabled={busy}
-            style={{ padding: '12px 0', borderRadius: 12, border: 'none', background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 700, cursor: busy ? 'wait' : 'pointer' }}
+            loading={busy}
+            loadingText="Report en cours…"
+            style={{ padding: '12px 0', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', textTransform: 'uppercase', letterSpacing: '.03em' }}
           >
-            {busy ? 'Report en cours…' : 'Confirmer le report'}
-          </button>
+            Confirmer le report
+          </Button>
         </div>
       </div>
     </div>

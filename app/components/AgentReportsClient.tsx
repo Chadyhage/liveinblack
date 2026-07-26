@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { Button, Input, Textarea } from '@/app/components/ui'
 
 // Port de la section « Signalements » de src/pages/AgentPage.jsx (#9 phase
 // agent/admin, tâche #103) — file de signalements d'utilisateurs. Voir
@@ -26,7 +27,6 @@ interface ReportItem {
 type FilterKey = 'open' | 'handled'
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 13.5, outline: 'none' }
 
 function fmtDateTime(iso: string): string {
   const d = new Date(iso)
@@ -165,7 +165,7 @@ export default function AgentReportsClient() {
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Signalements d&apos;utilisateurs</h1>
+          <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Signalements d&apos;utilisateurs</h1>
           {openCount ? (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {openCount} à traiter
@@ -176,9 +176,9 @@ export default function AgentReportsClient() {
         {listError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <button onClick={() => loadList(filter)} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}>
+            <Button variant="secondary" onClick={() => loadList(filter)} style={{ fontSize: 12.5 }}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 
@@ -191,41 +191,42 @@ export default function AgentReportsClient() {
           ).map((f) => {
             const active = f.key === filter
             return (
-              <button
+              <Button
                 key={f.key}
+                variant="ghost"
                 onClick={() => setFilter(f.key)}
                 style={{
                   padding: '12px 10px',
                   borderRadius: 12,
                   border: `1px solid ${active ? f.color : 'var(--border)'}`,
                   background: active ? `${f.color}22` : 'var(--surface)',
-                  cursor: 'pointer',
                   textAlign: 'left',
+                  display: 'block',
                 }}
               >
                 <div style={{ fontSize: 20, fontWeight: 800, color: active ? f.color : 'var(--text-faint)' }}>{counts ? counts[f.key] : '—'}</div>
                 <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? f.color : 'var(--text-faint)' }}>{f.label}</div>
-              </button>
+              </Button>
             )
           })}
         </div>
 
         <div style={{ position: 'relative' }}>
-          <input
-            style={{ ...inputStyle, ...(search ? { paddingRight: 34 } : null) }}
+          <Input
+            style={search ? { paddingRight: 34 } : undefined}
             placeholder="Rechercher (signalé, signalant, motif…)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           {search && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               aria-label="Effacer la recherche"
               onClick={() => setSearch('')}
-              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
             >
               ×
-            </button>
+            </Button>
           )}
         </div>
 
@@ -287,39 +288,44 @@ export default function AgentReportsClient() {
                   </p>
                 ) : activeId === r.id ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <textarea
-                      style={{ ...inputStyle, minHeight: 60 }}
+                    <Textarea
+                      style={{ minHeight: 60 }}
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
                       placeholder="Note interne (optionnelle)…"
                     />
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button
+                      <Button
+                        variant="secondary"
                         onClick={() => {
                           setActiveId(null)
                           setNote('')
                         }}
                         disabled={busyId === r.id}
-                        style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}
+                        style={{ flex: 1, padding: '9px 12px', fontSize: 12.5 }}
                       >
                         Annuler
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="primary"
                         onClick={() => handleMark(r.id)}
                         disabled={busyId === r.id}
-                        style={{ flex: 1, padding: '9px 12px', borderRadius: 10, cursor: busyId === r.id ? 'wait' : 'pointer', background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12.5, fontWeight: 700, opacity: busyId === r.id ? 0.6 : 1 }}
+                        loading={busyId === r.id}
+                        loadingText="…"
+                        style={{ flex: 1, padding: '9px 12px', borderRadius: 8, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12.5, textTransform: 'uppercase', letterSpacing: '.03em' }}
                       >
-                        {busyId === r.id ? '…' : 'Confirmer'}
-                      </button>
+                        Confirmer
+                      </Button>
                     </div>
                   </div>
                 ) : (
-                  <button
+                  <Button
+                    variant="primary"
                     onClick={() => setActiveId(r.id)}
-                    style={{ padding: '10px 16px', borderRadius: 10, cursor: 'pointer', background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12, fontWeight: 700 }}
+                    style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12, textTransform: 'uppercase', letterSpacing: '.03em' }}
                   >
                     Marquer comme traité
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}

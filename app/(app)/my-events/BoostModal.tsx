@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BOOST_PLANS, getBoostPlan } from '@/lib/shared/boosts'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button } from '@/app/components/ui'
 
 interface BoostModalProps {
   event: { id: string; name: string; region: string }
@@ -60,17 +61,6 @@ function RankIcon({ position, size = 20 }: { position: number; size?: number }) 
       <text x="12" y="15" textAnchor="middle" fontSize={8} fill="#090a10" fontFamily="Inter, sans-serif" fontWeight="bold">
         {position}
       </text>
-    </svg>
-  )
-}
-
-function Spinner({ size = 14, color = '#fff' }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth={3} />
-      <path d="M21 12a9 9 0 00-9-9" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round">
-        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-      </path>
     </svg>
   )
 }
@@ -184,16 +174,17 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
           boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
         }}
       >
-        <button
+        <Button
+          variant="ghost"
           onClick={onClose}
           aria-label="Fermer"
-          style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}
+          style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
         >
           ×
-        </button>
+        </Button>
 
         <div style={{ marginBottom: 20, paddingRight: 24 }}>
-          <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 25, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>Booster mon événement</h2>
+          <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Booster mon événement</h2>
           <p
             style={{
               fontFamily: 'Inter, sans-serif',
@@ -215,27 +206,24 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
         {step === 'error' ? (
           <div style={{ textAlign: 'center', padding: '28px 0' }}>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#ee9bb7', lineHeight: 1.7, marginBottom: 20 }}>{errorMsg}</p>
-            <button
+            <Button
+              variant="secondary"
               onClick={() => setStep('pick')}
               style={{
                 padding: '14px 22px',
                 borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.14)',
-                background: 'rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.9)',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: 13,
                 fontWeight: 600,
-                cursor: 'pointer',
               }}
             >
               Retour aux options
-            </button>
+            </Button>
           </div>
         ) : step === 'pay' && chosen && chosenTier ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div style={{ padding: 18, border: '1px solid rgba(200,169,110,0.3)', borderRadius: 14, background: 'rgba(255,255,255,0.04)' }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
                 Récapitulatif avant paiement
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
@@ -271,54 +259,47 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
               Paiement sécurisé via Stripe. Le créneau est confirmé uniquement après validation du paiement.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 9 }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setStep('pick')}
                 style={{
                   minHeight: 50,
                   borderRadius: 12,
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  background: 'rgba(255,255,255,0.08)',
-                  color: 'rgba(255,255,255,0.9)',
                   fontFamily: 'Inter, sans-serif',
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
                 }}
               >
                 Retour
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 onClick={confirmBoost}
                 disabled={paying}
+                loading={paying}
+                loadingText="Redirection vers Stripe…"
+                fullWidth
                 style={{
                   minHeight: 52,
-                  width: '100%',
-                  borderRadius: 12,
-                  border: 'none',
+                  borderRadius: 8,
                   background: paying ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                   color: paying ? 'rgba(255,255,255,0.35)' : '#181206',
                   fontFamily: 'Inter, sans-serif',
                   fontSize: 14,
-                  fontWeight: 700,
-                  cursor: paying ? 'not-allowed' : 'pointer',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '.03em',
                   boxShadow: paying ? 'none' : '0 6px 20px rgba(200,169,110,0.25)',
                 }}
               >
-                {paying ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    <Spinner size={14} />
-                    Redirection vers Stripe…
-                  </span>
-                ) : (
-                  `Payer ${formatPrice(chosenTier.price)}`
-                )}
-              </button>
+                {`Payer ${formatPrice(chosenTier.price)}`}
+              </Button>
             </div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
                 1. Choisis ta position
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
@@ -326,8 +307,9 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   const blocked = positionBlocked(plan.position)
                   const active = activePosition === plan.position
                   return (
-                    <button
+                    <Button
                       key={plan.position}
+                      variant="secondary"
                       onClick={() => {
                         setActivePosition(plan.position)
                         setSelectedPlan(null)
@@ -336,9 +318,10 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         minHeight: 76,
                         padding: '12px 11px',
                         borderRadius: 12,
+                        justifyContent: 'flex-start',
                         textAlign: 'left',
+                        display: 'block',
                         color: '#fff',
-                        cursor: 'pointer',
                         border: active ? '1px solid rgba(200,169,110,0.65)' : '1px solid rgba(255,255,255,0.08)',
                         background: active ? 'rgba(200,169,110,0.14)' : 'rgba(255,255,255,0.04)',
                         opacity: blocked ? 0.78 : 1,
@@ -362,7 +345,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                       >
                         {positionLabel(plan.position)}
                       </span>
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -371,7 +354,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, marginBottom: 10 }}>
                 <div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 5px' }}>
+                  <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 5px' }}>
                     2. Choisis la durée
                   </p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{activePlan.description}</p>
@@ -397,8 +380,9 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   const selected = selectedPlan?.position === activePosition && selectedPlan?.tierIdx === index
                   const disabled = positionBlocked(activePosition)
                   return (
-                    <button
+                    <Button
                       key={tier.days}
+                      variant="secondary"
                       disabled={disabled}
                       title={disabled ? 'Emplacement indisponible pour le moment' : ''}
                       onClick={() => setSelectedPlan({ position: activePosition, tierIdx: index })}
@@ -406,10 +390,11 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         minHeight: 96,
                         padding: '14px 12px',
                         borderRadius: 12,
+                        justifyContent: 'flex-start',
                         textAlign: 'left',
+                        display: 'block',
                         border: selected ? '1px solid rgba(78,232,200,0.7)' : '1px solid rgba(255,255,255,0.08)',
                         background: selected ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
-                        cursor: disabled ? 'not-allowed' : 'pointer',
                         opacity: disabled ? 0.38 : 1,
                       }}
                     >
@@ -419,7 +404,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                       <strong style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 22, marginTop: 10, whiteSpace: 'nowrap', color: selected ? '#fff' : activePlan.color }}>
                         {formatPrice(tier.price)}
                       </strong>
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -430,25 +415,26 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
               )}
             </div>
 
-            <button
+            <Button
+              variant="primary"
               disabled={!selectedPlan || positionBlocked(selectedPlan.position)}
               onClick={() => selectedPlan && setStep('pay')}
+              fullWidth
               style={{
                 minHeight: 52,
-                width: '100%',
-                borderRadius: 12,
-                border: 'none',
+                borderRadius: 8,
                 fontFamily: 'Inter, sans-serif',
-                fontWeight: 700,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '.03em',
                 fontSize: 14,
                 background: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                 color: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.35)' : '#181206',
-                cursor: !selectedPlan || positionBlocked(selectedPlan.position) ? 'not-allowed' : 'pointer',
                 boxShadow: !selectedPlan || positionBlocked(selectedPlan.position) ? 'none' : '0 6px 20px rgba(200,169,110,0.25)',
               }}
             >
               {selectedPlan && chosenTier ? `Continuer · ${formatPrice(chosenTier.price)}` : 'Sélectionne une durée'}
-            </button>
+            </Button>
           </div>
         )}
       </div>

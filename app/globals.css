@@ -42,13 +42,32 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-open-sans);
 }
 
+/* Migration typographique (design de référence
+   chillandgroovefestival.com, décision client 2026-07-26) : Montserrat pour
+   TOUS les titres (h1-h6, classes .heading), Open Sans pour le texte
+   courant, Anton pour l'affichage impact (hero/compteurs — substitut libre
+   à "Gagalin", police payante non redistribuable). Ne jamais utiliser ces
+   variables directement sans passer par ces règles/classes : la source
+   unique de la police reste ici. */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), Inter, sans-serif;
+  font-family: var(--font-open-sans), "Open Sans", Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .heading {
+  font-family: var(--font-montserrat), Montserrat, Arial, sans-serif;
+  font-weight: 700;
+}
+
+.font-display {
+  font-family: var(--font-display), Anton, Arial, sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
 }
 
 *,
@@ -81,6 +100,22 @@ body.lb-cookie-consent-visible {
 input[type='checkbox'],
 input[type='radio'] {
   accent-color: var(--teal);
+}
+
+/* Spinner du design system (app/components/ui/Spinner.tsx) — keyframes
+   globales pour ne pas la redéfinir dans chaque fichier consommateur. */
+@keyframes lb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Contrôles custom du design system (Checkbox/Radio/Switch, app/components/
+   ui/) — le visuel coché/décoché est piloté en React (voir ces fichiers),
+   seul le focus clavier reste géré ici en CSS. */
+:where(input[type='checkbox'], input[type='radio']):focus-visible ~ * {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
 }
 
 /* Grain texture discret (cf. CLAUDE.md — opacity 0.035) */

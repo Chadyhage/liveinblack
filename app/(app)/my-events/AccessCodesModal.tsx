@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Button, Input, Label, Spinner } from '@/app/components/ui'
 
 interface AccessCodesModalProps {
   event: { id: string; name: string }
@@ -32,17 +33,6 @@ const GENERATE_ERROR_MESSAGES: Record<string, string> = {
   forbidden: "Tu n'as pas accès à cet événement.",
   event_not_found: 'Événement introuvable.',
   event_not_private: "Cet événement n'est pas en accès privé.",
-}
-
-function Spinner({ size = 14, color = '#181206' }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth={3} />
-      <path d="M21 12a9 9 0 00-9-9" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round">
-        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-      </path>
-    </svg>
-  )
 }
 
 export default function AccessCodesModal({ event, onClose }: AccessCodesModalProps) {
@@ -155,13 +145,14 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
           boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
         }}
       >
-        <button
+        <Button
+          variant="ghost"
           onClick={onClose}
           aria-label="Fermer"
-          style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, cursor: 'pointer', lineHeight: 1 }}
+          style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
         >
           ×
-        </button>
+        </Button>
 
         <div style={{ marginBottom: 16, paddingRight: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -169,7 +160,7 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
               <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.93)', margin: 0 }}>Codes d&apos;accès</p>
+            <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Codes d&apos;accès</p>
           </div>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
             Génère des codes uniques pour <span style={{ color: 'var(--gold)' }}>{event.name}</span>
@@ -178,15 +169,15 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
 
         {loadingExisting ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-            <Spinner size={20} color="rgba(255,255,255,0.6)" />
+            <Spinner size={20} />
           </div>
         ) : !codes ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
+              <Label style={{ display: 'block', marginBottom: 6 }}>
                 Nombre de codes à générer
-              </label>
-              <input
+              </Label>
+              <Input
                 type="number"
                 value={qty}
                 onChange={(e) => {
@@ -197,14 +188,7 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
                 min={1}
                 max={100}
                 style={{
-                  width: '100%',
                   boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: 10,
-                  padding: '10px 12px',
-                  color: '#fff',
-                  fontFamily: 'Inter, sans-serif',
                   fontSize: 14,
                 }}
               />
@@ -213,48 +197,35 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
             </div>
             {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{error}</p>}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={onClose}
-                style={{
-                  flex: 1,
-                  padding: 12,
-                  borderRadius: 10,
-                  cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.9)',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
+                fullWidth
+                style={{ flex: 1, padding: 12, borderRadius: 10, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={generateCodes}
                 disabled={generating}
+                loading={generating}
+                loadingText="Génération…"
+                fullWidth
                 style={{
                   flex: 1,
                   padding: 12,
                   borderRadius: 10,
-                  border: 'none',
-                  cursor: generating ? 'not-allowed' : 'pointer',
                   background: generating ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                   color: generating ? 'rgba(255,255,255,0.35)' : '#181206',
                   fontFamily: 'Inter, sans-serif',
                   fontSize: 13,
-                  fontWeight: 700,
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '.03em',
                 }}
               >
-                {generating ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                    <Spinner size={14} />
-                    Génération…
-                  </span>
-                ) : (
-                  'Générer'
-                )}
-              </button>
+                Générer
+              </Button>
             </div>
           </div>
         ) : (
@@ -278,12 +249,12 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
                   }}
                 >
                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'var(--gold)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{code}</span>
-                  <button
+                  <Button
+                    size="sm"
                     onClick={() => copyOneCode(code, idx)}
                     style={{
                       padding: '8px 14px',
                       borderRadius: 10,
-                      cursor: 'pointer',
                       background: copiedIdx === idx ? '#3ed6b5' : 'rgba(255,255,255,0.08)',
                       border: copiedIdx === idx ? 'none' : '1px solid rgba(255,255,255,0.14)',
                       color: copiedIdx === idx ? '#04120e' : 'rgba(255,255,255,0.9)',
@@ -294,65 +265,47 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
                     }}
                   >
                     {copiedIdx === idx ? 'Copié' : 'Copier'}
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
               Copie et envoie ces codes à tes invités. Chaque code ne peut être utilisé qu&apos;une seule fois.
             </p>
-            <button
+            <Button
               onClick={copyAllCodes}
+              fullWidth
               style={{
-                width: '100%',
                 padding: 12,
                 borderRadius: 10,
-                border: 'none',
-                cursor: 'pointer',
                 background: 'var(--gold)',
                 color: '#181206',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: 13,
-                fontWeight: 700,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '.03em',
               }}
             >
               {allCopied ? 'Tous les codes copiés' : 'Copier tous les codes'}
-            </button>
+            </Button>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={backToGeneration}
-                style={{
-                  flex: 1,
-                  padding: 12,
-                  borderRadius: 10,
-                  cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.9)',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
+                fullWidth
+                style={{ flex: 1, padding: 12, borderRadius: 10, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}
               >
                 Générer d&apos;autres codes
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={onClose}
-                style={{
-                  flex: 1,
-                  padding: 12,
-                  borderRadius: 10,
-                  cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.9)',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
+                fullWidth
+                style={{ flex: 1, padding: 12, borderRadius: 10, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600 }}
               >
                 Fermer
-              </button>
+              </Button>
             </div>
           </div>
         )}

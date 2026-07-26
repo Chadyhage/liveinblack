@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Stars, StarInput } from './StarRating'
 import { computeReviewStats, REVIEW_COMMENT_MIN, REVIEW_COMMENT_MAX, REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
+import { Button, Textarea, Label } from '@/app/components/ui'
 
 // Port de src/components/ProviderReviews.jsx — section "Avis clients" d'une
 // page publique prestataire. Contrairement au legacy (modale d'auth inline
@@ -19,14 +20,9 @@ const GOLD = '#c8a96e'
 const TEAL = '#4ee8c8'
 
 const card: React.CSSProperties = { padding: 20, borderRadius: 16, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
-const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'var(--violet-cta)', color: '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 700, boxShadow: '0 6px 20px rgba(122,59,242,.35)' }
+const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'var(--violet-cta)', color: '#fff', fontFamily: FONT, fontSize: 12.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', boxShadow: '0 6px 20px rgba(122,59,242,.35)' }
 const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600 }
 const disabledBtn: React.CSSProperties = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
-const spinnerStyle: React.CSSProperties = { width: 14, height: 14, display: 'inline-block', borderRadius: '50%', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', flexShrink: 0, animation: 'lib-spin 0.7s linear infinite' }
-
-function Spinner() {
-  return <span style={spinnerStyle} />
-}
 
 function fmtDate(iso: string): string {
   try {
@@ -180,7 +176,6 @@ export default function ProviderReviewsClient({
 
   return (
     <section style={{ marginTop: 28 }}>
-      <style>{`@keyframes lib-spin { to { transform: rotate(360deg) } }`}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
         <h2 style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', margin: 0 }}>Avis clients</h2>
         {count > 0 && <span style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.4)' }}>{count} avis</span>}
@@ -193,9 +188,9 @@ export default function ProviderReviewsClient({
               {`${providerName || 'Ce prestataire'} n’a pas encore reçu d’avis.${!isSelf ? ' Tu as travaillé avec ce prestataire ? Ton retour aidera les prochains clients.' : ''}`}
             </p>
             {!isSelf && (
-              <button onClick={openForm} style={{ ...primaryBtn, marginTop: 14 }}>
+              <Button onClick={openForm} style={{ ...primaryBtn, marginTop: 14 }}>
                 Laisser un avis
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -228,9 +223,9 @@ export default function ProviderReviewsClient({
             </div>
 
             {!isSelf && (
-              <button onClick={openForm} style={{ ...ghostBtn, marginTop: 18 }}>
+              <Button variant="secondary" onClick={openForm} style={{ ...ghostBtn, marginTop: 18 }}>
                 {myReview && !hiddenMine ? 'Modifier mon avis' : 'Laisser un avis'}
-              </button>
+              </Button>
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 8 }}>
@@ -263,17 +258,17 @@ export default function ProviderReviewsClient({
                     <div style={{ display: 'flex', gap: 14, marginTop: 9 }}>
                       {isMine ? (
                         <>
-                          <button onClick={openForm} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: TEAL }}>
+                          <Button variant="link" onClick={openForm} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: TEAL, textDecoration: 'none' }}>
                             Modifier
-                          </button>
-                          <button onClick={() => setConfirmRemove(true)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: FONT, fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)' }}>
+                          </Button>
+                          <Button variant="link" onClick={() => setConfirmRemove(true)} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)', textDecoration: 'none' }}>
                             Retirer
-                          </button>
+                          </Button>
                         </>
                       ) : (
-                        <button onClick={() => openReport(review)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: FONT, fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)' }}>
+                        <Button variant="link" onClick={() => openReport(review)} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)', textDecoration: 'none' }}>
                           Signaler
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </article>
@@ -295,13 +290,13 @@ export default function ProviderReviewsClient({
             <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.45)', margin: '6px 0 0', minHeight: 16 }}>{['', 'Décevant', 'Moyen', 'Bien', 'Très bien', 'Excellent'][formRating] || 'Touche les étoiles pour noter'}</p>
           </div>
 
-          <label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', margin: '14px 0 8px' }}>Ton avis</label>
-          <textarea
+          <Label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', margin: '14px 0 8px' }}>Ton avis</Label>
+          <Textarea
             value={formComment}
             onChange={(e) => setFormComment(e.target.value.slice(0, REVIEW_COMMENT_MAX))}
             rows={5}
             placeholder="Raconte ton expérience : qualité de la prestation, ponctualité, communication…"
-            style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 120, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', outline: 'none', padding: 14, fontFamily: FONT, fontSize: 14, lineHeight: 1.55 }}
+            style={{ minHeight: 120, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', padding: 14, fontFamily: FONT, fontSize: 14, lineHeight: 1.55 }}
           />
           <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.38)', margin: '7px 0 0', textAlign: 'right' }}>
             {formComment.trim().length} / {REVIEW_COMMENT_MAX}
@@ -315,18 +310,17 @@ export default function ProviderReviewsClient({
           )}
 
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => setShowForm(false)} disabled={formBusy} style={{ ...ghostBtn, flex: 1 }}>
+            <Button variant="secondary" onClick={() => setShowForm(false)} disabled={formBusy} style={{ ...ghostBtn, flex: 1 }}>
               Annuler
-            </button>
-            <button onClick={handleSubmit} disabled={formBusy} style={{ ...primaryBtn, flex: 1.6, ...(formBusy ? disabledBtn : null) }}>
-              {formBusy ? (
-                <>
-                  <Spinner /> Publication…
-                </>
-              ) : (
-                'Publier mon avis'
-              )}
-            </button>
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              loading={formBusy}
+              loadingText="Publication…"
+              style={{ ...primaryBtn, flex: 1.6, ...(formBusy ? disabledBtn : null) }}
+            >
+              Publier mon avis
+            </Button>
           </div>
         </Sheet>
       )}
@@ -337,9 +331,9 @@ export default function ProviderReviewsClient({
             <div style={{ textAlign: 'center', padding: '14px 0 6px' }}>
               <h3 style={{ fontFamily: FONT, fontSize: 22, letterSpacing: '-.5px', margin: '0 0 8px', color: '#fff' }}>Merci</h3>
               <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>{typeof reportDone === 'string' ? reportDone : 'Ton signalement a été transmis. Notre équipe va examiner cet avis.'}</p>
-              <button onClick={() => setReportTarget(null)} style={{ ...primaryBtn, minWidth: 160 }}>
+              <Button onClick={() => setReportTarget(null)} style={{ ...primaryBtn, minWidth: 160 }}>
                 Fermer
-              </button>
+              </Button>
             </div>
           ) : (
             <>
@@ -347,16 +341,17 @@ export default function ProviderReviewsClient({
               <h3 style={{ fontFamily: FONT, fontSize: 24, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: '#fff' }}>Signaler cet avis</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
                 {REVIEW_REPORT_REASONS.map((reason) => (
-                  <button
+                  <Button
                     key={reason.id}
+                    variant="secondary"
                     type="button"
                     onClick={() => setReportReason(reason.id)}
                     style={{
                       textAlign: 'left',
+                      justifyContent: 'flex-start',
                       minHeight: 44,
                       padding: '11px 14px',
                       borderRadius: 12,
-                      cursor: 'pointer',
                       fontFamily: FONT,
                       fontSize: 13.5,
                       fontWeight: 600,
@@ -366,33 +361,33 @@ export default function ProviderReviewsClient({
                     }}
                   >
                     {reason.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
-              <label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 8 }}>Ajouter une précision (facultatif)</label>
-              <textarea
+              <Label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 8 }}>Ajouter une précision (facultatif)</Label>
+              <Textarea
                 value={reportDetails}
                 onChange={(e) => setReportDetails(e.target.value.slice(0, 500))}
                 rows={3}
                 placeholder="Explique en quelques mots ce qui pose problème…"
-                style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 76, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', outline: 'none', padding: 12, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5 }}
+                style={{ minHeight: 76, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', padding: 12, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5 }}
               />
               <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.38)', margin: '7px 0 16px', textAlign: 'right' }}>
                 {reportDetails.length} / 500
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setReportTarget(null)} disabled={reportBusy} style={{ ...ghostBtn, flex: 1 }}>
+                <Button variant="secondary" onClick={() => setReportTarget(null)} disabled={reportBusy} style={{ ...ghostBtn, flex: 1 }}>
                   Annuler
-                </button>
-                <button onClick={handleReport} disabled={reportBusy || !reportReason} style={{ ...primaryBtn, flex: 1.4, ...(reportBusy || !reportReason ? disabledBtn : null) }}>
-                  {reportBusy ? (
-                    <>
-                      <Spinner /> Envoi…
-                    </>
-                  ) : (
-                    'Envoyer le signalement'
-                  )}
-                </button>
+                </Button>
+                <Button
+                  onClick={handleReport}
+                  disabled={!reportReason}
+                  loading={reportBusy}
+                  loadingText="Envoi…"
+                  style={{ ...primaryBtn, flex: 1.4, ...(!reportReason ? disabledBtn : null) }}
+                >
+                  Envoyer le signalement
+                </Button>
               </div>
             </>
           )}
@@ -404,18 +399,18 @@ export default function ProviderReviewsClient({
           <h3 style={{ fontFamily: FONT, fontSize: 22, letterSpacing: '-.5px', margin: '0 0 8px', color: '#fff' }}>Retirer ton avis ?</h3>
           <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>Ton avis et ta note ne seront plus visibles sur la page de {providerName || 'ce prestataire'}.</p>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => setConfirmRemove(false)} disabled={removeBusy} style={{ ...ghostBtn, flex: 1 }}>
+            <Button variant="secondary" onClick={() => setConfirmRemove(false)} disabled={removeBusy} style={{ ...ghostBtn, flex: 1 }}>
               Annuler
-            </button>
-            <button onClick={handleRemoveOwn} disabled={removeBusy} style={{ ...primaryBtn, flex: 1.2, background: '#c2347f', boxShadow: 'none', ...(removeBusy ? disabledBtn : null) }}>
-              {removeBusy ? (
-                <>
-                  <Spinner /> Retrait…
-                </>
-              ) : (
-                'Retirer mon avis'
-              )}
-            </button>
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleRemoveOwn}
+              loading={removeBusy}
+              loadingText="Retrait…"
+              style={{ ...primaryBtn, flex: 1.2, background: '#c2347f', boxShadow: 'none' }}
+            >
+              Retirer mon avis
+            </Button>
           </div>
         </Sheet>
       )}

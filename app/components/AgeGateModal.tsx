@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { Button } from '@/app/components/ui'
 
 // Modale de vérification d'âge partagée — utilisée à la fois par
 // AgeVerificationGate (visiteur anonyme, CTA "Se connecter pour réserver")
@@ -120,9 +121,10 @@ export default function AgeGateModal({
           En continuant, tu confirmes avoir {minAge} ans ou plus.
         </p>
 
-        <button
+        <Button
           ref={confirmButtonRef}
           onClick={onConfirm}
+          fullWidth
           style={{
             padding: '13px 20px',
             background: 'var(--violet-cta)',
@@ -131,15 +133,15 @@ export default function AgeGateModal({
             fontSize: 14,
             fontWeight: 700,
             color: '#fff',
-            cursor: 'pointer',
-            width: '100%',
             boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
           }}
         >
           J&apos;ai compris
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={onCancel}
+          variant="secondary"
+          fullWidth
           style={{
             marginTop: 8,
             padding: '12px 20px',
@@ -149,12 +151,10 @@ export default function AgeGateModal({
             fontSize: 13,
             fontWeight: 600,
             color: 'rgba(255,255,255,0.85)',
-            cursor: 'pointer',
-            width: '100%',
           }}
         >
           Annuler
-        </button>
+        </Button>
       </div>
     </div>
   )

@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { X } from 'lucide-react'
+import { Button, Input } from '@/app/components/ui'
 
 // Port de la section « Comptes » (tab === 'users') de src/pages/AgentPage.jsx
 // (#9 phase agent/admin) — recherche + filtres rôle/statut/en ligne, panneau
@@ -91,8 +93,7 @@ function fmtDate(iso: string | null): string {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 13.5, outline: 'none' }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
 
 function Badge({ label, color, border, bg }: { label: string } & BadgeColors) {
   return (
@@ -341,36 +342,37 @@ export default function AgentUsersClient() {
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Comptes</h1>
+          <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Comptes</h1>
         </div>
 
         {listError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <button onClick={loadList} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}>
+            <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 
         <div style={{ position: 'relative' }}>
-          <input style={{ ...inputStyle, ...(search ? { paddingRight: 34 } : null) }} placeholder="Nom, email, téléphone…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input style={search ? { paddingRight: 34 } : undefined} placeholder="Nom, email, téléphone…" value={search} onChange={(e) => setSearch(e.target.value)} />
           {search && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               aria-label="Effacer la recherche"
               onClick={() => setSearch('')}
-              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
             >
-              ×
-            </button>
+              <X size={12} />
+            </Button>
           )}
         </div>
 
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
           {ROLE_FILTERS.map((f) => (
-            <button
+            <Button
               key={f.key}
+              variant="ghost"
               onClick={() => setRoleFilter(f.key)}
               style={{
                 flexShrink: 0,
@@ -379,21 +381,21 @@ export default function AgentUsersClient() {
                 fontSize: 10.5,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                cursor: 'pointer',
                 background: roleFilter === f.key ? 'rgba(200,169,110,0.18)' : 'transparent',
                 border: roleFilter === f.key ? '1px solid rgba(200,169,110,0.45)' : '1px solid var(--border)',
                 color: roleFilter === f.key ? 'var(--gold)' : 'var(--text-faint)',
               }}
             >
               {f.label}
-            </button>
+            </Button>
           ))}
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {STATUS_FILTERS.map((s) => (
-            <button
+            <Button
               key={s.key}
+              variant="ghost"
               onClick={() => setStatusFilter(s.key)}
               style={{
                 flexShrink: 0,
@@ -402,16 +404,16 @@ export default function AgentUsersClient() {
                 fontSize: 10.5,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                cursor: 'pointer',
                 background: statusFilter === s.key ? 'rgba(255,255,255,0.08)' : 'transparent',
                 border: statusFilter === s.key ? '1px solid var(--border-strong)' : '1px solid var(--border)',
                 color: statusFilter === s.key ? '#fff' : 'var(--text-faint)',
               }}
             >
               {s.label}
-            </button>
+            </Button>
           ))}
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setOnlineOnly((v) => !v)}
             style={{
               flexShrink: 0,
@@ -420,9 +422,6 @@ export default function AgentUsersClient() {
               fontSize: 10.5,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
               gap: 5,
               background: onlineOnly ? 'rgba(78,232,200,0.14)' : 'transparent',
               border: onlineOnly ? '1px solid rgba(78,232,200,0.5)' : '1px solid var(--border)',
@@ -431,8 +430,8 @@ export default function AgentUsersClient() {
           >
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: onlineOnly ? 'var(--teal)' : 'rgba(255,255,255,0.25)' }} />
             En ligne
-            {onlineOnly && <span style={{ marginLeft: 2, opacity: 0.75 }}>✕</span>}
-          </button>
+            {onlineOnly && <span style={{ marginLeft: 2, opacity: 0.75, display: 'inline-flex', alignItems: 'center' }}><X size={11} /></span>}
+          </Button>
         </div>
 
         <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>
@@ -450,10 +449,11 @@ export default function AgentUsersClient() {
             {users.map((u) => {
               const st = statusLabel(u)
               return (
-                <button
+                <Button
                   key={u.id}
+                  variant="ghost"
                   onClick={() => setSelectedId(u.id)}
-                  style={{ ...cardStyle, padding: 12, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                  style={{ ...cardStyle, padding: 12, display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left' }}
                 >
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div
@@ -487,7 +487,7 @@ export default function AgentUsersClient() {
                     <Badge label={ROLE_LABEL[u.role]} {...ROLE_BADGE[u.role]} />
                     <Badge label={st.label} color={st.color} border={st.border} bg={st.bg} />
                   </div>
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -629,63 +629,59 @@ function DetailPanel({
         <InfoRow label="Dernière activité" value={detail.lastSeenAt ? fmtDate(detail.lastSeenAt) : 'Jamais'} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
           {!detail.emailVerified && (
-            <button
+            <Button
+              variant="secondary"
               disabled={actionBusy}
               onClick={onSendVerification}
               style={{
                 width: '100%',
                 padding: '10px 0',
-                borderRadius: 10,
-                cursor: actionBusy ? 'wait' : 'pointer',
+                borderRadius: 8,
                 background: 'rgba(78,232,200,0.12)',
                 border: '1px solid rgba(78,232,200,0.4)',
                 color: 'var(--teal)',
                 fontSize: 12,
-                fontWeight: 700,
-                opacity: actionBusy ? 0.6 : 1,
+                textTransform: 'uppercase',
+                letterSpacing: '.04em',
               }}
             >
               Envoyer le lien de vérification
-            </button>
+            </Button>
           )}
           {!detail.emailVerified && (
-            <button
+            <Button
+              variant="primary"
               disabled={actionBusy}
               onClick={onVerifyEmail}
               style={{
                 width: '100%',
                 padding: '10px 0',
-                borderRadius: 10,
-                cursor: actionBusy ? 'wait' : 'pointer',
-                background: 'var(--teal)',
+                borderRadius: 8,
                 border: '1px solid var(--border-strong)',
-                color: 'var(--obsidian)',
                 fontSize: 12,
-                fontWeight: 700,
-                opacity: actionBusy ? 0.6 : 1,
+                textTransform: 'uppercase',
+                letterSpacing: '.04em',
               }}
             >
               Marquer l&apos;email vérifié
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="secondary"
             disabled={actionBusy}
             onClick={onSendPasswordReset}
             style={{
               width: '100%',
               padding: '10px 0',
-              borderRadius: 10,
-              cursor: actionBusy ? 'wait' : 'pointer',
+              borderRadius: 8,
               background: 'transparent',
-              border: '1px solid var(--border-strong)',
-              color: '#fff',
               fontSize: 12,
-              fontWeight: 700,
-              opacity: actionBusy ? 0.6 : 1,
+              textTransform: 'uppercase',
+              letterSpacing: '.04em',
             }}
           >
             Envoyer un lien de réinitialisation du mot de passe
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -696,34 +692,35 @@ function DetailPanel({
             <div key={f.field}>
               {editField?.field === f.field ? (
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <input type={f.field === 'email' ? 'email' : 'text'} style={{ ...inputStyle, flex: 1 }} value={editField.value} onChange={(e) => setEditField({ field: f.field, value: e.target.value })} />
-                  <button
+                  <Input type={f.field === 'email' ? 'email' : 'text'} style={{ flex: 1 }} value={editField.value} onChange={(e) => setEditField({ field: f.field, value: e.target.value })} />
+                  <Button
+                    variant="primary"
                     onClick={onSaveEdit}
                     disabled={editBusy}
-                    style={{ padding: '0 14px', borderRadius: 10, cursor: editBusy ? 'wait' : 'pointer', background: 'var(--teal)', border: '1px solid var(--border-strong)', color: 'var(--obsidian)', fontWeight: 700, fontSize: 12.5 }}
+                    style={{ padding: '0 14px', borderRadius: 8, border: '1px solid var(--border-strong)', fontSize: 12.5 }}
                   >
                     OK
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => setEditField(null)}
                     disabled={editBusy}
                     aria-label="Annuler"
-                    style={{ padding: '0 14px', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: '1px solid var(--border-strong)', color: 'rgba(255,255,255,0.7)', fontSize: 15 }}
+                    style={{ padding: '0 14px', borderRadius: 10, background: 'transparent', border: '1px solid var(--border-strong)', color: 'rgba(255,255,255,0.7)', fontSize: 15 }}
                   >
-                    ×
-                  </button>
+                    <X size={14} />
+                  </Button>
                 </div>
               ) : (
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => setEditField({ field: f.field, value: f.current })}
                   style={{
                     width: '100%',
                     display: 'flex',
-                    alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '9px 12px',
                     borderRadius: 6,
-                    cursor: 'pointer',
                     background: 'transparent',
                     border: '1px solid var(--border)',
                     textAlign: 'left',
@@ -731,7 +728,7 @@ function DetailPanel({
                 >
                   <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{f.label}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{f.current || '—'}</span>
-                </button>
+                </Button>
               )}
             </div>
           ))}
@@ -743,22 +740,24 @@ function DetailPanel({
         {detail.superAdmin ? (
           <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Ce compte super-admin est protégé — aucune action de suspension possible.</p>
         ) : detail.disabled ? (
-          <button
+          <Button
+            variant="primary"
             onClick={() => onSetDisabled(false)}
             disabled={actionBusy}
-            style={{ width: '100%', padding: '12px 0', borderRadius: 10, cursor: actionBusy ? 'wait' : 'pointer', background: 'var(--teal)', border: '1px solid var(--border-strong)', color: 'var(--obsidian)', fontSize: 13, fontWeight: 700 }}
+            style={{ width: '100%', padding: '12px 0', borderRadius: 8, border: '1px solid var(--border-strong)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}
           >
             Réactiver le compte
-          </button>
+          </Button>
         ) : (
           <>
-            <button
+            <Button
+              variant="secondary"
               onClick={() => setConfirmDisable(true)}
               disabled={actionBusy}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer', background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.55)', color: 'var(--gold)', fontSize: 13, fontWeight: 700 }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 8, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.55)', color: 'var(--gold)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}
             >
               Suspendre le compte
-            </button>
+            </Button>
             {confirmDisable && (
               <ConfirmModal
                 title={`Suspendre le compte de ${detail.displayName} ?`}
@@ -782,12 +781,12 @@ function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: stri
       <div style={{ position: 'relative', ...cardStyle, maxWidth: 360, width: '90%', textAlign: 'center' }}>
         <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onCancel} disabled={busy} style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+          <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
             Annuler
-          </button>
-          <button onClick={onConfirm} disabled={busy} style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: 'none', background: color, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+          </Button>
+          <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}>
             Confirmer
-          </button>
+          </Button>
         </div>
       </div>
     </div>

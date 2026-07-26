@@ -11,6 +11,8 @@ import { validatePrestataireStep0, validatePrestataireStep2, getRequiredDocs, ty
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
 import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
+import { Globe } from 'lucide-react'
+import { Button, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
 
 // Port de src/pages/OnboardingPrestataire.jsx (#8 phase prestataire) — 6
 // étapes (Compte/Activités/Détails/Fonctionnement/Documents/Finaliser),
@@ -76,12 +78,14 @@ const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box'
 const labelStyle: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
 const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   padding: '13px 26px',
-  borderRadius: 10,
+  borderRadius: 8,
   border: 'none',
   background: disabled ? 'rgba(200,169,110,0.3)' : 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
   color: '#1a1508',
-  fontWeight: 700,
+  fontWeight: 800,
   fontSize: 14,
+  textTransform: 'uppercase',
+  letterSpacing: '.03em',
   cursor: disabled ? 'default' : 'pointer',
 })
 const chip = (active: boolean): React.CSSProperties => ({
@@ -259,7 +263,7 @@ export default function PrestataireOnboardingWizard({
     return (
       <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ ...cardStyle, maxWidth: 420, textAlign: 'center' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
+          <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
             Tu seras contacté à <strong style={{ color: '#fff' }}>{submitted.email}</strong> une fois ton compte validé.
@@ -281,7 +285,7 @@ export default function PrestataireOnboardingWizard({
       <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>Demande d&apos;espace</p>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Compte Prestataire</h1>
+          <h1 className="font-display" style={{ fontSize: 28, color: '#fff', margin: '0 0 6px' }}>Compte Prestataire</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
@@ -299,71 +303,68 @@ export default function PrestataireOnboardingWizard({
         <div style={cardStyle}>
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Tes informations</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Tes informations</h2>
               <div style={{ display: 'flex', gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>Prénom</label>
-                  <input style={inputStyle} value={form.prenom} onChange={(e) => set('prenom', e.target.value)} />
+                  <Label style={labelStyle}>Prénom</Label>
+                  <Input style={inputStyle} value={form.prenom} onChange={(e) => set('prenom', e.target.value)} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>Nom</label>
-                  <input style={inputStyle} value={form.nom} onChange={(e) => set('nom', e.target.value)} />
+                  <Label style={labelStyle}>Nom</Label>
+                  <Input style={inputStyle} value={form.nom} onChange={(e) => set('nom', e.target.value)} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <select style={{ ...inputStyle, maxWidth: 110 }} value={form.telephoneCode} onChange={(e) => set('telephoneCode', e.target.value)}>
-                  {regions.map((r) => (
-                    <option key={r.id} value={r.dial}>
-                      {r.flag} {r.dial}
-                    </option>
-                  ))}
-                </select>
-                <input style={inputStyle} value={form.telephone} onChange={(e) => set('telephone', e.target.value)} placeholder="Téléphone" />
+                <Select
+                  value={form.telephoneCode}
+                  onChange={(value) => set('telephoneCode', value)}
+                  options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))}
+                />
+                <Input style={inputStyle} value={form.telephone} onChange={(e) => set('telephone', e.target.value)} placeholder="Téléphone" />
               </div>
               <div>
-                <label style={labelStyle}>Ville</label>
-                <input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
+                <Label style={labelStyle}>Ville</Label>
+                <Input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
               </div>
               <div>
-                <label style={labelStyle}>Pays</label>
-                <select style={inputStyle} value={form.pays} onChange={(e) => set('pays', e.target.value)}>
-                  {regions.map((r) => (
-                    <option key={r.id} value={r.country}>
-                      {r.flag} {r.country}
-                    </option>
-                  ))}
-                </select>
+                <Label style={labelStyle}>Pays</Label>
+                <Select
+                  value={form.pays}
+                  onChange={(value) => set('pays', value)}
+                  options={regions.map((r) => ({ value: r.country, label: `${r.flag} ${r.country}` }))}
+                />
               </div>
 
               {mode === 'anonymous' && (
                 <>
                   <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
                   <div>
-                    <label style={labelStyle}>Adresse e-mail (identifiant de connexion)</label>
-                    <input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                    <Label style={labelStyle}>Adresse e-mail (identifiant de connexion)</Label>
+                    <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Mot de passe</label>
+                    <Label style={labelStyle}>Mot de passe</Label>
                     <div style={{ position: 'relative' }}>
-                      <input
+                      <Input
                         style={{ ...inputStyle, paddingRight: 56 }}
                         type={showRegPwd ? 'text' : 'password'}
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
                         placeholder="Minimum 8 caractères"
                       />
-                      <button
+                      <Button
+                        variant="link"
                         type="button"
                         onClick={() => setShowRegPwd((v) => !v)}
-                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
                       >
                         {showRegPwd ? 'Cacher' : 'Voir'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <div>
-                    <label style={labelStyle}>Confirmer le mot de passe</label>
-                    <input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                    <Label style={labelStyle}>Confirmer le mot de passe</Label>
+                    <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
                   </div>
                 </>
               )}
@@ -372,151 +373,178 @@ export default function PrestataireOnboardingWizard({
 
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Ton activité</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Ton activité</h2>
               <div>
-                <label style={labelStyle}>Que proposes-tu ? (plusieurs choix possibles)</label>
+                <Label style={labelStyle}>Que proposes-tu ? (plusieurs choix possibles)</Label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {PROVIDER_CATEGORIES.map((cat) => (
-                    <button key={cat.id} type="button" onClick={() => toggleProviderType(cat.id)} style={chip(types.includes(cat.id))}>
+                    <Button key={cat.id} variant="secondary" type="button" onClick={() => toggleProviderType(cat.id)} style={chip(types.includes(cat.id))}>
                       {cat.label}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Nom de ta page / nom commercial</label>
-                <input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} />
+                <Label style={labelStyle}>Nom de ta page / nom commercial</Label>
+                <Input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} />
               </div>
               {types.includes('artiste') && (
                 <div style={{ padding: 10, borderRadius: 10, background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.2)' }}>
-                  <label style={labelStyle}>Nom de scène (visible car « Artiste » est sélectionné)</label>
-                  <input style={inputStyle} value={form.nomScene} onChange={(e) => set('nomScene', e.target.value)} />
+                  <Label style={labelStyle}>Nom de scène (visible car « Artiste » est sélectionné)</Label>
+                  <Input style={inputStyle} value={form.nomScene} onChange={(e) => set('nomScene', e.target.value)} />
                 </div>
               )}
               <div>
-                <label style={labelStyle}>Précise librement tes spécialités</label>
-                <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.specialitesLibre} onChange={(e) => set('specialitesLibre', e.target.value)} />
+                <Label style={labelStyle}>Précise librement tes spécialités</Label>
+                <Textarea style={{ ...inputStyle, minHeight: 60 }} value={form.specialitesLibre} onChange={(e) => set('specialitesLibre', e.target.value)} />
               </div>
               <div>
-                <label style={labelStyle}>Description courte</label>
-                <textarea style={{ ...inputStyle, minHeight: 80 }} value={form.description} onChange={(e) => set('description', e.target.value)} />
+                <Label style={labelStyle}>Description courte</Label>
+                <Textarea style={{ ...inputStyle, minHeight: 80 }} value={form.description} onChange={(e) => set('description', e.target.value)} />
               </div>
               <div>
-                <label style={labelStyle}>Zones d&apos;intervention</label>
+                <Label style={labelStyle}>Zones d&apos;intervention</Label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  <button type="button" onClick={() => toggleZone('international')} style={chip(form.zonesIntervention.includes('international'))}>
-                    🌍 International
-                  </button>
+                  <Button variant="secondary" type="button" onClick={() => toggleZone('international')} style={{ ...chip(form.zonesIntervention.includes('international')), display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Globe size={14} /> International
+                  </Button>
                   {regions.map((r) => (
-                    <button key={r.id} type="button" onClick={() => toggleZone(r.id)} style={chip(form.zonesIntervention.includes(r.id))}>
+                    <Button key={r.id} variant="secondary" type="button" onClick={() => toggleZone(r.id)} style={chip(form.zonesIntervention.includes(r.id))}>
                       {r.flag} {r.name}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Numéro SIRET / SIREN (optionnel)</label>
-                <input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou 9 pour un SIREN" />
+                <Label style={labelStyle}>Numéro SIRET / SIREN (optionnel)</Label>
+                <Input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou 9 pour un SIREN" />
               </div>
             </div>
           )}
 
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Détails de ton activité</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Détails de ton activité</h2>
 
               {types.includes('artiste') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: 0 }}>Artiste / DJ / animation</p>
-                  <select style={inputStyle} value={form.typeArtiste} onChange={(e) => set('typeArtiste', e.target.value)}>
-                    <option value="">Type d&apos;artiste —</option>
-                    <option value="dj">DJ</option>
-                    <option value="musicien_live">Musicien live</option>
-                    <option value="danseur">Danseur</option>
-                    <option value="performeur">Performeur</option>
-                    <option value="dj_sax">DJ + Saxophoniste</option>
-                    <option value="orchestre">Orchestre</option>
-                    <option value="animateur">Animateur</option>
-                    <option value="humoriste">Humoriste</option>
-                    <option value="autre">Autre</option>
-                  </select>
-                  <input style={inputStyle} value={form.styles} onChange={(e) => set('styles', e.target.value)} placeholder="Styles / genres" />
-                  <select style={inputStyle} value={form.anneesExperience} onChange={(e) => set('anneesExperience', e.target.value)}>
-                    <option value="">Années d&apos;expérience —</option>
-                    <option value="moins_1">Moins d&apos;1 an</option>
-                    <option value="1_3">1 à 3 ans</option>
-                    <option value="3_5">3 à 5 ans</option>
-                    <option value="5_10">5 à 10 ans</option>
-                    <option value="plus_10">Plus de 10 ans</option>
-                  </select>
-                  <input style={inputStyle} value={form.portfolio} onChange={(e) => set('portfolio', e.target.value)} placeholder="Lien portfolio / mix" />
-                  <input style={inputStyle} value={form.instagram} onChange={(e) => set('instagram', e.target.value)} placeholder="Instagram" />
-                  <select style={inputStyle} value={form.statutFacturation} onChange={(e) => set('statutFacturation', e.target.value)}>
-                    <option value="">Statut de facturation —</option>
-                    <option value="auto_entrepreneur">Auto-entrepreneur</option>
-                    <option value="artiste_auteur">Artiste-auteur</option>
-                    <option value="salarie_intermittent">Salarié intermittent</option>
-                    <option value="structure">Structure / société</option>
-                    <option value="autre">Autre</option>
-                  </select>
-                  <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.besoinstechniques} onChange={(e) => set('besoinstechniques', e.target.value)} placeholder="Besoins techniques (optionnel)" />
+                  <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Artiste / DJ / animation</p>
+                  <Select
+                    value={form.typeArtiste}
+                    onChange={(value) => set('typeArtiste', value)}
+                    options={[
+                      { value: '', label: "Type d'artiste —" },
+                      { value: 'dj', label: 'DJ' },
+                      { value: 'musicien_live', label: 'Musicien live' },
+                      { value: 'danseur', label: 'Danseur' },
+                      { value: 'performeur', label: 'Performeur' },
+                      { value: 'dj_sax', label: 'DJ + Saxophoniste' },
+                      { value: 'orchestre', label: 'Orchestre' },
+                      { value: 'animateur', label: 'Animateur' },
+                      { value: 'humoriste', label: 'Humoriste' },
+                      { value: 'autre', label: 'Autre' },
+                    ]}
+                  />
+                  <Input style={inputStyle} value={form.styles} onChange={(e) => set('styles', e.target.value)} placeholder="Styles / genres" />
+                  <Select
+                    value={form.anneesExperience}
+                    onChange={(value) => set('anneesExperience', value)}
+                    options={[
+                      { value: '', label: "Années d'expérience —" },
+                      { value: 'moins_1', label: "Moins d'1 an" },
+                      { value: '1_3', label: '1 à 3 ans' },
+                      { value: '3_5', label: '3 à 5 ans' },
+                      { value: '5_10', label: '5 à 10 ans' },
+                      { value: 'plus_10', label: 'Plus de 10 ans' },
+                    ]}
+                  />
+                  <Input style={inputStyle} value={form.portfolio} onChange={(e) => set('portfolio', e.target.value)} placeholder="Lien portfolio / mix" />
+                  <Input style={inputStyle} value={form.instagram} onChange={(e) => set('instagram', e.target.value)} placeholder="Instagram" />
+                  <Select
+                    value={form.statutFacturation}
+                    onChange={(value) => set('statutFacturation', value)}
+                    options={[
+                      { value: '', label: 'Statut de facturation —' },
+                      { value: 'auto_entrepreneur', label: 'Auto-entrepreneur' },
+                      { value: 'artiste_auteur', label: 'Artiste-auteur' },
+                      { value: 'salarie_intermittent', label: 'Salarié intermittent' },
+                      { value: 'structure', label: 'Structure / société' },
+                      { value: 'autre', label: 'Autre' },
+                    ]}
+                  />
+                  <Textarea style={{ ...inputStyle, minHeight: 60 }} value={form.besoinstechniques} onChange={(e) => set('besoinstechniques', e.target.value)} placeholder="Besoins techniques (optionnel)" />
                 </div>
               )}
 
               {types.includes('salle') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: 0 }}>Salle / lieu</p>
-                  <input style={inputStyle} value={form.adresseLieu} onChange={(e) => set('adresseLieu', e.target.value)} placeholder="Adresse du lieu" />
-                  <input style={inputStyle} type="number" min={0} value={form.capaciteLieu ?? ''} onChange={(e) => set('capaciteLieu', e.target.value ? Number(e.target.value) : null)} placeholder="Capacité d'accueil" />
-                  <select style={inputStyle} value={form.typeLieu} onChange={(e) => set('typeLieu', e.target.value)}>
-                    <option value="">Type de lieu —</option>
-                    <option value="salle_reception">Salle de réception</option>
-                    <option value="loft">Loft</option>
-                    <option value="rooftop">Rooftop</option>
-                    <option value="club">Club</option>
-                    <option value="chateau">Château</option>
-                    <option value="warehouse">Warehouse</option>
-                    <option value="plein_air">Plein air</option>
-                    <option value="autre">Autre</option>
-                  </select>
-                  <input style={inputStyle} value={form.equipements} onChange={(e) => set('equipements', e.target.value)} placeholder="Équipements inclus" />
-                  <input style={inputStyle} value={form.horairesAutorises} onChange={(e) => set('horairesAutorises', e.target.value)} placeholder="Horaires autorisés" />
-                  <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.reglesDuLieu} onChange={(e) => set('reglesDuLieu', e.target.value)} placeholder="Règles du lieu" />
+                  <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Salle / lieu</p>
+                  <Input style={inputStyle} value={form.adresseLieu} onChange={(e) => set('adresseLieu', e.target.value)} placeholder="Adresse du lieu" />
+                  <Input style={inputStyle} type="number" min={0} value={form.capaciteLieu ?? ''} onChange={(e) => set('capaciteLieu', e.target.value ? Number(e.target.value) : null)} placeholder="Capacité d'accueil" />
+                  <Select
+                    value={form.typeLieu}
+                    onChange={(value) => set('typeLieu', value)}
+                    options={[
+                      { value: '', label: 'Type de lieu —' },
+                      { value: 'salle_reception', label: 'Salle de réception' },
+                      { value: 'loft', label: 'Loft' },
+                      { value: 'rooftop', label: 'Rooftop' },
+                      { value: 'club', label: 'Club' },
+                      { value: 'chateau', label: 'Château' },
+                      { value: 'warehouse', label: 'Warehouse' },
+                      { value: 'plein_air', label: 'Plein air' },
+                      { value: 'autre', label: 'Autre' },
+                    ]}
+                  />
+                  <Input style={inputStyle} value={form.equipements} onChange={(e) => set('equipements', e.target.value)} placeholder="Équipements inclus" />
+                  <Input style={inputStyle} value={form.horairesAutorises} onChange={(e) => set('horairesAutorises', e.target.value)} placeholder="Horaires autorisés" />
+                  <Textarea style={{ ...inputStyle, minHeight: 60 }} value={form.reglesDuLieu} onChange={(e) => set('reglesDuLieu', e.target.value)} placeholder="Règles du lieu" />
                 </div>
               )}
 
               {types.includes('materiel') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: 0 }}>Technique / matériel</p>
-                  <input style={inputStyle} value={form.categoriesMateriel} onChange={(e) => set('categoriesMateriel', e.target.value)} placeholder="Catégories de matériel" />
-                  <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.inventaire} onChange={(e) => set('inventaire', e.target.value)} placeholder="Inventaire" />
-                  <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.conditionsLocation} onChange={(e) => set('conditionsLocation', e.target.value)} placeholder="Conditions de location" />
-                  <input style={inputStyle} value={form.politiqueCaution} onChange={(e) => set('politiqueCaution', e.target.value)} placeholder="Politique de caution" />
+                  <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Technique / matériel</p>
+                  <Input style={inputStyle} value={form.categoriesMateriel} onChange={(e) => set('categoriesMateriel', e.target.value)} placeholder="Catégories de matériel" />
+                  <Textarea style={{ ...inputStyle, minHeight: 60 }} value={form.inventaire} onChange={(e) => set('inventaire', e.target.value)} placeholder="Inventaire" />
+                  <Textarea style={{ ...inputStyle, minHeight: 60 }} value={form.conditionsLocation} onChange={(e) => set('conditionsLocation', e.target.value)} placeholder="Conditions de location" />
+                  <Input style={inputStyle} value={form.politiqueCaution} onChange={(e) => set('politiqueCaution', e.target.value)} placeholder="Politique de caution" />
                 </div>
               )}
 
               {types.includes('food') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: 0 }}>Food / boissons</p>
-                  <select style={inputStyle} value={form.typeActiviteFood} onChange={(e) => set('typeActiviteFood', e.target.value)}>
-                    <option value="">Type d&apos;activité —</option>
-                    <option value="traiteur">Traiteur</option>
-                    <option value="boissons">Boissons</option>
-                    <option value="cocktail">Bar / cocktails</option>
-                    <option value="food_truck">Food truck</option>
-                    <option value="desserts">Pâtisserie / desserts</option>
-                    <option value="autre">Autre</option>
-                  </select>
-                  <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.menuBase} onChange={(e) => set('menuBase', e.target.value)} placeholder="Menu de base" />
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#fff' }}>
-                    <input type="checkbox" checked={form.alcoolFood} onChange={(e) => set('alcoolFood', e.target.checked)} />
-                    Alcool proposé
-                  </label>
+                  <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Food / boissons</p>
+                  <Select
+                    value={form.typeActiviteFood}
+                    onChange={(value) => set('typeActiviteFood', value)}
+                    options={[
+                      { value: '', label: "Type d'activité —" },
+                      { value: 'traiteur', label: 'Traiteur' },
+                      { value: 'boissons', label: 'Boissons' },
+                      { value: 'cocktail', label: 'Bar / cocktails' },
+                      { value: 'food_truck', label: 'Food truck' },
+                      { value: 'desserts', label: 'Pâtisserie / desserts' },
+                      { value: 'autre', label: 'Autre' },
+                    ]}
+                  />
+                  <Textarea style={{ ...inputStyle, minHeight: 60 }} value={form.menuBase} onChange={(e) => set('menuBase', e.target.value)} placeholder="Menu de base" />
+                  <Checkbox
+                    label="Alcool proposé"
+                    checked={form.alcoolFood}
+                    onChange={(e) => set('alcoolFood', e.target.checked)}
+                  />
                   {form.alcoolFood && (
-                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      <input type="checkbox" checked={form.alcoolFoodAtteste} onChange={(e) => set('alcoolFoodAtteste', e.target.checked)} style={{ marginTop: 2 }} />
-                      J&apos;atteste respecter la réglementation locale sur la vente d&apos;alcool et en assumer l&apos;entière responsabilité.
-                    </label>
+                    <Checkbox
+                      checked={form.alcoolFoodAtteste}
+                      onChange={(e) => set('alcoolFoodAtteste', e.target.checked)}
+                      style={{ alignItems: 'flex-start' }}
+                      label={
+                        <span style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, fontWeight: 400 }}>
+                          J&apos;atteste respecter la réglementation locale sur la vente d&apos;alcool et en assumer l&apos;entière responsabilité.
+                        </span>
+                      }
+                    />
                   )}
                 </div>
               )}
@@ -533,25 +561,30 @@ export default function PrestataireOnboardingWizard({
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: 0 }}>Tarifs</p>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#fff' }}>
-                  <input type="checkbox" checked={form.tarifDevis} onChange={(e) => set('tarifDevis', e.target.checked)} />
-                  Sur devis uniquement
-                </label>
+                <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Tarifs</p>
+                <Checkbox
+                  label="Sur devis uniquement"
+                  checked={form.tarifDevis}
+                  onChange={(e) => set('tarifDevis', e.target.checked)}
+                />
                 {!form.tarifDevis && (
                   <>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <input style={inputStyle} type="number" min={0} value={form.tarifMin ?? ''} onChange={(e) => set('tarifMin', e.target.value ? Number(e.target.value) : null)} placeholder="Tarif min" />
-                      <input style={inputStyle} type="number" min={0} value={form.tarifMax ?? ''} onChange={(e) => set('tarifMax', e.target.value ? Number(e.target.value) : null)} placeholder="Tarif max" />
+                      <Input style={inputStyle} type="number" min={0} value={form.tarifMin ?? ''} onChange={(e) => set('tarifMin', e.target.value ? Number(e.target.value) : null)} placeholder="Tarif min" />
+                      <Input style={inputStyle} type="number" min={0} value={form.tarifMax ?? ''} onChange={(e) => set('tarifMax', e.target.value ? Number(e.target.value) : null)} placeholder="Tarif max" />
                     </div>
-                    <select style={inputStyle} value={form.tarifType} onChange={(e) => set('tarifType', e.target.value)}>
-                      <option value="">Type de tarif —</option>
-                      <option value="soiree">Par soirée</option>
-                      <option value="heure">Par heure</option>
-                      <option value="journee">Par journée</option>
-                      <option value="forfait">Forfait</option>
-                      <option value="personne">Par personne</option>
-                    </select>
+                    <Select
+                      value={form.tarifType}
+                      onChange={(value) => set('tarifType', value)}
+                      options={[
+                        { value: '', label: 'Type de tarif —' },
+                        { value: 'soiree', label: 'Par soirée' },
+                        { value: 'heure', label: 'Par heure' },
+                        { value: 'journee', label: 'Par journée' },
+                        { value: 'forfait', label: 'Forfait' },
+                        { value: 'personne', label: 'Par personne' },
+                      ]}
+                    />
                   </>
                 )}
               </div>
@@ -560,7 +593,7 @@ export default function PrestataireOnboardingWizard({
 
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Comment ça marche</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Comment ça marche</h2>
               {[
                 ['01', 'Page publiée', 'Ta page prestataire est visible dans l’annuaire LIVEINBLACK.'],
                 ['02', 'Catalogue consulté', 'Les organisateurs et clients consultent ton catalogue de services.'],
@@ -582,7 +615,7 @@ export default function PrestataireOnboardingWizard({
 
           {step === 4 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Documents justificatifs</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Documents justificatifs</h2>
               <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
                 Ces documents nous permettent de vérifier ton identité et la légitimité de ton activité. Ils sont stockés de façon privée et accessibles uniquement à
                 l&apos;équipe LIVEINBLACK.
@@ -601,7 +634,7 @@ export default function PrestataireOnboardingWizard({
 
           {step === 5 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Finaliser</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Finaliser</h2>
               {missingDocs.length > 0 ? (
                 <p style={{ fontSize: 12.5, color: '#e05aaa', margin: 0 }}>
                   Documents manquants : {missingDocs.map((k) => DOC_LABELS[k] || k).join(', ')}
@@ -617,8 +650,8 @@ export default function PrestataireOnboardingWizard({
                 .
               </p>
               <div>
-                <label style={labelStyle}>Message pour l&apos;équipe (optionnel)</label>
-                <textarea style={{ ...inputStyle, minHeight: 70 }} value={candidateNote} onChange={(e) => setCandidateNote(e.target.value)} />
+                <Label style={labelStyle}>Message pour l&apos;équipe (optionnel)</Label>
+                <Textarea style={{ ...inputStyle, minHeight: 70 }} value={candidateNote} onChange={(e) => setCandidateNote(e.target.value)} />
               </div>
             </div>
           )}
@@ -627,18 +660,24 @@ export default function PrestataireOnboardingWizard({
 
           <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
             {step > 0 && (
-              <button onClick={back} style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer' }}>
+              <Button variant="secondary" onClick={back} style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff' }}>
                 Retour
-              </button>
+              </Button>
             )}
             {step < STEPS.length - 1 ? (
-              <button onClick={next} style={{ ...primaryBtn(false), flex: 1 }}>
+              <Button onClick={next} style={{ ...primaryBtn(false), flex: 1 }}>
                 Continuer
-              </button>
+              </Button>
             ) : (
-              <button onClick={handleSubmit} disabled={busy || uploadingDocs || missingDocs.length > 0} style={{ ...primaryBtn(busy || uploadingDocs || missingDocs.length > 0), flex: 1 }}>
-                {uploadingDocs ? 'Envoi des documents…' : busy ? 'Envoi…' : mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
-              </button>
+              <Button
+                onClick={handleSubmit}
+                disabled={missingDocs.length > 0}
+                loading={busy || uploadingDocs}
+                loadingText={uploadingDocs ? 'Envoi des documents…' : 'Envoi…'}
+                style={{ ...primaryBtn(busy || uploadingDocs || missingDocs.length > 0), flex: 1 }}
+              >
+                {mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
+              </Button>
             )}
           </div>
         </div>
@@ -678,9 +717,9 @@ function DocUpload({
   const inputId = `doc-upload-${docKey}`
   return (
     <div>
-      <label style={labelStyle}>
+      <Label style={labelStyle}>
         {label} {required && <span style={{ color: 'var(--gold)' }}>*</span>}
-      </label>
+      </Label>
       <label
         htmlFor={inputId}
         style={{
@@ -715,9 +754,9 @@ function DocUpload({
           {files.map((f, i) => (
             <div key={f.publicId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
               <span>{f.name}</span>
-              <button onClick={() => onRemove(docKey, i)} style={{ background: 'transparent', border: 'none', color: '#e05aaa', cursor: 'pointer', fontSize: 12 }}>
+              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: '#e05aaa', fontSize: 12, textDecoration: 'none' }}>
                 Retirer
-              </button>
+              </Button>
             </div>
           ))}
         </div>

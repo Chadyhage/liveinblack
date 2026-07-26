@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button } from '@/app/components/ui'
 
 // Port de la section « Métriques business » + « Communauté » de l'onglet
 // Tableau de bord de src/pages/AgentPage.jsx (tab === 'dashboard', #101 phase
@@ -42,7 +43,7 @@ interface DashboardStats {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
 
 const ROLE_LABEL: Record<DashboardStats['roleBreakdown'][number]['role'], string> = {
   client: 'Client',
@@ -105,14 +106,14 @@ export default function AgentDashboardClient() {
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Tableau de bord</h1>
+        <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Tableau de bord</h1>
 
         {error && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <button onClick={load} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}>
+            <Button variant="secondary" onClick={load} style={{ fontSize: 12.5 }}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 
@@ -240,13 +241,13 @@ function SignupBars({ days }: { days: { date: string; count: number }[] }) {
         {days.map((d, i) => {
           const h = (d.count / max) * 100
           return (
-            <button
+            <Button
               key={d.date}
-              type="button"
+              variant="ghost"
               onClick={() => setActiveIndex((cur) => (cur === i ? null : i))}
               title={`${d.count} compte${d.count > 1 ? 's' : ''} le ${fmtDay(d.date)}`}
               aria-label={`${fmtDay(d.date)} : ${d.count} compte${d.count > 1 ? 's' : ''}`}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 0, border: 'none' }}
             >
               <div
                 style={{
@@ -263,7 +264,7 @@ function SignupBars({ days }: { days: { date: string; count: number }[] }) {
                   transition: 'height 0.4s',
                 }}
               />
-            </button>
+            </Button>
           )
         })}
       </div>

@@ -1,7 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { Button, Input } from '@/app/components/ui'
 
 interface PlaylistSong {
   id: string
@@ -543,8 +545,7 @@ export default function PlaylistClient({
 
       {eventImage && (
         <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border-strong)', height: 120, marginBottom: 18 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={eventImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={eventImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 640px" />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,0.95), rgba(6,8,14,0.35))' }} />
           <div style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
             <p
@@ -577,12 +578,12 @@ export default function PlaylistClient({
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={() => setPreviewMode(true)} style={ghostButtonStyle}>
+            <Button variant="ghost" onClick={() => setPreviewMode(true)} style={ghostButtonStyle}>
               Aperçu participant
-            </button>
-            <button type="button" onClick={handleExport} style={{ ...smallButtonStyle, background: 'var(--gold)', color: '#181203', border: 'none', fontWeight: 700 }}>
+            </Button>
+            <Button variant="primary" onClick={handleExport} style={{ ...smallButtonStyle, background: 'var(--gold)', color: '#181203', border: 'none', fontWeight: 700 }}>
               {copied ? 'Copié' : 'Exporter'}
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
@@ -626,9 +627,9 @@ export default function PlaylistClient({
           }}
         >
           <span>Aperçu équipe — un vrai participant doit avoir son billet scanné à l&apos;entrée pour proposer un son.</span>
-          <button type="button" onClick={() => setPreviewMode(false)} style={{ ...ghostButtonStyle, flexShrink: 0 }}>
+          <Button variant="ghost" onClick={() => setPreviewMode(false)} style={{ ...ghostButtonStyle, flexShrink: 0 }}>
             Retour modération
-          </button>
+          </Button>
         </div>
       )}
 
@@ -663,9 +664,9 @@ export default function PlaylistClient({
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nowPlaying.artist}</p>
           </div>
           {effectiveCanModerate && (
-            <button type="button" onClick={handleStopNow} style={ghostButtonStyle}>
+            <Button variant="ghost" onClick={handleStopNow} style={ghostButtonStyle}>
               Terminer
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -688,10 +689,13 @@ export default function PlaylistClient({
 
           <section style={{ ...cardStyle, marginBottom: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>Ajouter un son (auto-validé)</p>
-            <div style={{ position: 'relative' }}>
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un titre, un artiste…" style={inputStyle} />
-              <SearchStatusGlyph searching={searching} />
-            </div>
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Rechercher un titre, un artiste…"
+              style={inputStyle}
+              rightIcon={<SearchStatusGlyph searching={searching} />}
+            />
             {visibleResults.length > 0 && (
               <SearchResultsList
                 results={visibleResults}
@@ -707,9 +711,9 @@ export default function PlaylistClient({
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
             {DJ_FILTERS.map((f) => (
-              <button
+              <Button
                 key={f.key}
-                type="button"
+                variant="ghost"
                 onClick={() => setModerationTab(f.key)}
                 style={{
                   ...pillButtonStyle,
@@ -719,13 +723,13 @@ export default function PlaylistClient({
                 }}
               >
                 {f.label} · {f.key === 'all' ? djStats.total : djStats[f.key]}
-              </button>
+              </Button>
             ))}
             <span style={{ width: 1, height: 18, background: 'var(--border-strong)', margin: '0 2px' }} />
             {(['likes', 'recent'] as const).map((id) => (
-              <button
+              <Button
                 key={id}
-                type="button"
+                variant="ghost"
                 onClick={() => setDjSort(id)}
                 style={{
                   ...pillButtonStyle,
@@ -735,7 +739,7 @@ export default function PlaylistClient({
                 }}
               >
                 {id === 'likes' ? 'Par likes' : 'Plus récents'}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -768,8 +772,8 @@ export default function PlaylistClient({
                 <div key={song.id} style={cardStyle}>
                   <DjSongRow song={song} currentUserId={currentUserId} playingKey={playingKey} onTogglePreview={togglePreviewAudio} />
                   <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
                       disabled={busyId === song.id}
                       onClick={() => handlePlayNow(song)}
                       style={{
@@ -780,34 +784,34 @@ export default function PlaylistClient({
                       }}
                     >
                       Jouer maintenant
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="secondary"
                       disabled={busyId === song.id}
                       onClick={() => handleSetStatus(song, 'validated')}
                       style={{ ...smallButtonStyle, borderColor: song.status === 'validated' ? 'var(--teal)' : 'var(--border)' }}
                     >
                       Valider
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="danger"
                       disabled={busyId === song.id}
                       onClick={() => handleSetStatus(song, 'refused')}
                       style={{ ...smallButtonStyle, borderColor: song.status === 'refused' ? 'var(--pink)' : 'var(--border)' }}
                     >
                       Refuser
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="secondary"
                       disabled={busyId === song.id}
                       onClick={() => handleSetStatus(song, 'played')}
                       style={{ ...smallButtonStyle, borderColor: song.status === 'played' ? 'var(--violet)' : 'var(--border)' }}
                     >
                       Marquer joué
-                    </button>
-                    <button type="button" disabled={busyId === song.id} onClick={() => handleModeratorRemove(song)} style={{ ...smallButtonStyle, color: 'var(--pink)' }}>
+                    </Button>
+                    <Button variant="danger" disabled={busyId === song.id} onClick={() => handleModeratorRemove(song)} style={{ ...smallButtonStyle, color: 'var(--pink)' }}>
                       Supprimer
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -826,9 +830,9 @@ export default function PlaylistClient({
             {PARTICIPANT_TABS.map((t) => {
               const active = participantTab === t.key
               return (
-                <button
+                <Button
                   key={t.key}
-                  type="button"
+                  variant="ghost"
                   onClick={() => setParticipantTab(t.key)}
                   style={{
                     flex: 1,
@@ -845,7 +849,7 @@ export default function PlaylistClient({
                 >
                   {t.label}
                   {t.key === 'mine' && mySongs.length ? ` · ${mySongs.length}` : ''}
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -881,8 +885,8 @@ export default function PlaylistClient({
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <SongRow song={song} isMine={isMine} playingKey={playingKey} onTogglePreview={togglePreviewAudio} />
                         </div>
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
                           disabled={isMine || busyId === song.id || (!liked && likesRemaining <= 0)}
                           onClick={() => handleToggleLike(song.id)}
                           title={isMine ? 'Tu ne peux pas liker ton propre son' : liked ? 'Retirer le like' : 'Liker'}
@@ -902,7 +906,7 @@ export default function PlaylistClient({
                           <span style={{ fontSize: 13.5, fontWeight: 700, color: isMine ? 'rgba(255,255,255,0.35)' : liked ? 'var(--teal)' : 'rgba(255,255,255,0.75)' }}>
                             {song.likedBy.length}
                           </span>
-                        </button>
+                        </Button>
                       </div>
                     )
                   })}
@@ -976,10 +980,13 @@ export default function PlaylistClient({
                     <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px' }}>
                       Propose un son au DJ — <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{effectiveSongsRemaining} proposition{effectiveSongsRemaining > 1 ? 's' : ''} restante{effectiveSongsRemaining > 1 ? 's' : ''}</span>
                     </p>
-                    <div style={{ position: 'relative' }}>
-                      <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un titre, un artiste…" style={inputStyle} />
-                      <SearchStatusGlyph searching={searching} />
-                    </div>
+                    <Input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Rechercher un titre, un artiste…"
+                      style={inputStyle}
+                      rightIcon={<SearchStatusGlyph searching={searching} />}
+                    />
                     {visibleResults.length > 0 && (
                       <SearchResultsList
                         results={visibleResults}
@@ -1040,8 +1047,8 @@ export default function PlaylistClient({
                             <HeartIcon filled={false} color="rgba(255,255,255,0.25)" />
                             <span style={{ fontSize: 13.5, fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>{song.likedBy.length}</span>
                           </div>
-                          <button
-                            type="button"
+                          <Button
+                            variant="danger"
                             disabled={busyId === song.id}
                             onClick={() => handleRemoveOwnSong(song)}
                             title="Supprimer mon son"
@@ -1060,7 +1067,7 @@ export default function PlaylistClient({
                             }}
                           >
                             <TrashIcon />
-                          </button>
+                          </Button>
                         </div>
                         )
                       })}
@@ -1140,24 +1147,20 @@ export default function PlaylistClient({
 // slot droit (40px de padding réservé) du champ de recherche — jamais un
 // vide, contrairement à un spinner affiché seul.
 function SearchStatusGlyph({ searching }: { searching: boolean }) {
-  return (
-    <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
-      {searching ? (
-        <span
-          style={{
-            width: 13,
-            height: 13,
-            border: '2px solid rgba(255,255,255,0.25)',
-            borderTopColor: 'rgba(255,255,255,0.8)',
-            borderRadius: '50%',
-            display: 'inline-block',
-            animation: 'lbSpin 0.7s linear infinite',
-          }}
-        />
-      ) : (
-        <SearchIcon />
-      )}
-    </span>
+  return searching ? (
+    <span
+      style={{
+        width: 13,
+        height: 13,
+        border: '2px solid rgba(255,255,255,0.25)',
+        borderTopColor: 'rgba(255,255,255,0.8)',
+        borderRadius: '50%',
+        display: 'inline-block',
+        animation: 'lbSpin 0.7s linear infinite',
+      }}
+    />
+  ) : (
+    <SearchIcon />
   )
 }
 
@@ -1188,8 +1191,8 @@ function SearchResultsList({
         return (
           <div key={busyKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, gap: 10, borderBottom: i < results.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11, flex: 1, minWidth: 0 }}>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => onTogglePreview(previewKey, r.previewUrl)}
                 disabled={!r.previewUrl}
                 aria-label={playing ? `Mettre en pause l'extrait de ${r.title}` : `Écouter un extrait de ${r.title}`}
@@ -1211,7 +1214,7 @@ function SearchResultsList({
                     <PlayPauseGlyph playing={playing} />
                   </span>
                 )}
-              </button>
+              </Button>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <p style={{ fontSize: 13, fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</p>
                 <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1221,9 +1224,9 @@ function SearchResultsList({
                 </p>
               </div>
             </div>
-            <button type="button" disabled={disableAdd || busyId === busyKey} onClick={() => onAdd(r, busyKey)} style={{ ...smallButtonStyle, opacity: busyId === busyKey ? 0.6 : 1 }}>
+            <Button variant="secondary" disabled={disableAdd || busyId === busyKey} onClick={() => onAdd(r, busyKey)} style={{ ...smallButtonStyle, opacity: busyId === busyKey ? 0.6 : 1 }}>
               Ajouter
-            </button>
+            </Button>
           </div>
         )
       })}
@@ -1251,8 +1254,8 @@ function SongRow({
   const playing = playingKey === previewKey
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={() => song.previewUrl && onTogglePreview(previewKey, song.previewUrl)}
         disabled={!song.previewUrl}
         aria-label={playing ? `Mettre en pause l'extrait de ${song.title}` : `Écouter un extrait de ${song.title}`}
@@ -1279,7 +1282,7 @@ function SongRow({
             <PlayPauseGlyph playing={playing} />
           </span>
         )}
-      </button>
+      </Button>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <p style={{ fontWeight: 700, fontSize: 15.5, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
@@ -1332,8 +1335,8 @@ function DjSongRow({
   const playing = playingKey === previewKey
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={() => song.previewUrl && onTogglePreview(previewKey, song.previewUrl)}
         disabled={!song.previewUrl}
         aria-label={playing ? `Mettre en pause l'extrait de ${song.title}` : `Écouter un extrait de ${song.title}`}
@@ -1355,7 +1358,7 @@ function DjSongRow({
             <PlayPauseGlyph playing={playing} />
           </span>
         )}
-      </button>
+      </Button>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <p style={{ fontWeight: 700, fontSize: 15, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>

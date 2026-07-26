@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import { Button, Input, Textarea, Label } from '@/app/components/ui'
 
 // Port de la section « Événements » (tab === 'events') de
 // src/pages/AgentPage.jsx (#9 phase agent/admin) — vue admin de TOUS les
@@ -51,7 +53,6 @@ const STATUS_STYLE: Record<EventStatus, React.CSSProperties> = {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 13.5, outline: 'none' }
 
 interface ToastState {
   message: string
@@ -170,15 +171,15 @@ export default function AgentEventsClient() {
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Événements</h1>
+          <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Événements</h1>
         </div>
 
         {listError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <button onClick={loadList} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5 }}>
+            <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 
@@ -196,20 +197,20 @@ export default function AgentEventsClient() {
           ))}
         </div>
 
-        <input type="text" placeholder="Rechercher par nom, organisateur, ville…" value={search} onChange={(e) => setSearch(e.target.value)} style={inputStyle} />
+        <Input type="text" placeholder="Rechercher par nom, organisateur, ville…" value={search} onChange={(e) => setSearch(e.target.value)} />
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {FILTERS.map((f) => {
             const count = f.key === 'all' ? events.length : f.key === 'upcoming' ? totalUpcoming : f.key === 'past' ? totalPast : totalCancelled
             const active = filter === f.key
             return (
-              <button
+              <Button
                 key={f.key}
+                variant="ghost"
                 onClick={() => setFilter(f.key)}
                 style={{
                   padding: '7px 12px',
                   borderRadius: 999,
-                  cursor: 'pointer',
                   fontSize: 10,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
@@ -219,7 +220,7 @@ export default function AgentEventsClient() {
                 }}
               >
                 {f.label} <span style={{ marginLeft: 4, opacity: 0.7 }}>{count}</span>
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -293,8 +294,7 @@ function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void
         }}
       >
         {event.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={event.imageUrl} alt="" width={56} height={56} style={{ objectFit: 'cover' }} />
         ) : (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="1.5">
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -330,13 +330,13 @@ function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void
               {event.cancellationMessage ? ` — « ${event.cancellationMessage} »` : ' — aucun message aux participants'}
             </p>
             {event.cancellationMessage && (
-              <button
-                type="button"
+              <Button
+                variant="link"
                 onClick={() => setExpanded((v) => !v)}
-                style={{ marginTop: 2, padding: 0, border: 'none', background: 'transparent', color: 'var(--text-faint)', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                style={{ marginTop: 2, color: 'var(--text-faint)', fontSize: 10.5, fontWeight: 700 }}
               >
                 {expanded ? 'Voir moins' : 'Voir plus'}
-              </button>
+              </Button>
             )}
           </>
         )}
@@ -344,12 +344,13 @@ function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void
 
       <div style={{ display: 'flex', gap: 14, flexShrink: 0 }}>
         {event.status === 'upcoming' && (
-          <button
+          <Button
+            variant="danger"
             onClick={onCancel}
-            style={{ padding: '8px 12px', borderRadius: 10, cursor: 'pointer', background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.5)', fontSize: 12, fontWeight: 700, color: '#e05aaa' }}
+            style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.5)', fontSize: 12, color: '#e05aaa' }}
           >
             Annuler
-          </button>
+          </Button>
         )}
         <Link
           href={`/events/${event.id}`}
@@ -386,29 +387,33 @@ function AdminCancelModal({
           Action irréversible : rembourse automatiquement les acheteurs (carte via Stripe, mobile money mis en liste de remboursement), annule les billets, libère le stock et bloque tout versement
           à l&apos;organisateur. Les acheteurs sont prévenus par e-mail.
         </p>
-        <label style={{ fontSize: 10, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 }}>Message aux acheteurs (optionnel)</label>
-        <textarea
+        <Label style={{ fontSize: 10, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 }}>Message aux acheteurs (optionnel)</Label>
+        <Textarea
           rows={3}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Ex : soirée annulée pour raisons de sécurité…"
-          style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6, marginBottom: 14 }}
+          style={{ resize: 'vertical', lineHeight: 1.6, marginBottom: 14 }}
         />
         <div style={{ display: 'flex', gap: 8 }}>
-          <button
+          <Button
+            variant="secondary"
             onClick={onCancel}
             disabled={busy}
-            style={{ flex: 1, padding: '11px 0', borderRadius: 10, cursor: busy ? 'default' : 'pointer', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 600 }}
+            style={{ flex: 1, padding: '11px 0', borderRadius: 10, fontSize: 13 }}
           >
             Retour
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="danger"
             onClick={onConfirm}
             disabled={busy}
-            style={{ flex: 1, padding: '11px 0', borderRadius: 10, cursor: busy ? 'default' : 'pointer', background: '#c2347f', border: '1px solid var(--border-strong)', color: '#fff', fontSize: 13, fontWeight: 700 }}
+            loading={busy}
+            loadingText="Annulation…"
+            style={{ flex: 1, padding: '11px 0', borderRadius: 8, background: '#c2347f', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}
           >
-            {busy ? 'Annulation…' : "Annuler l'événement"}
-          </button>
+            Annuler l&apos;événement
+          </Button>
         </div>
       </div>
     </div>

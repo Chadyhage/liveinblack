@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { Button, Select, Textarea, Label } from '@/app/components/ui'
 
 export default function PublicProfileActions({ targetUserId, displayName, isAuthenticated, isSelf }: { targetUserId: string; displayName: string; isAuthenticated: boolean; isSelf: boolean }) {
   const router = useRouter()
@@ -68,9 +69,9 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
   return (
     <>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
-        {!isSelf && <button type="button" onClick={contact} disabled={busy} style={primary}>{busy ? 'Ouverture…' : 'Envoyer un message'}</button>}
-        <button type="button" onClick={share} style={secondary}>{copied ? 'Lien copié' : 'Partager'}</button>
-        {!isSelf && <button type="button" onClick={() => requireAuth() && setReportOpen(true)} style={secondary}>Signaler</button>}
+        {!isSelf && <Button type="button" onClick={contact} disabled={busy} style={primary}>{busy ? 'Ouverture…' : 'Envoyer un message'}</Button>}
+        <Button type="button" variant="secondary" onClick={share} style={secondary}>{copied ? 'Lien copié' : 'Partager'}</Button>
+        {!isSelf && <Button type="button" variant="secondary" onClick={() => requireAuth() && setReportOpen(true)} style={secondary}>Signaler</Button>}
       </div>
       {status && !reportOpen && <p role="status" style={{ color: 'var(--text-muted)', fontSize: 12, margin: '8px 0 0' }}>{status}</p>}
 
@@ -78,14 +79,24 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
         <div role="dialog" aria-modal="true" aria-labelledby="profile-report-title" style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(3,4,8,.78)', display: 'grid', placeItems: 'center', padding: 20 }} onClick={() => setReportOpen(false)}>
           <form onSubmit={submitReport} onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 430, padding: 24, borderRadius: 18, background: 'var(--surface-2)', border: '1px solid var(--border-strong)' }}>
             <h2 id="profile-report-title" style={{ margin: '0 0 16px', fontSize: 21 }}>Signaler {displayName}</h2>
-            <label htmlFor="profile-report-reason" style={label}>Motif</label>
-            <select id="profile-report-reason" value={reason} onChange={(event) => setReason(event.target.value)} style={input}>
-              <option value="faux profil">Faux profil</option><option value="contenu trompeur">Contenu trompeur</option><option value="contenu inapproprié">Contenu inapproprié</option><option value="suspicion d’arnaque">Suspicion d’arnaque</option><option value="usurpation d’identité">Usurpation d’identité</option><option value="autre">Autre</option>
-            </select>
-            <label htmlFor="profile-report-details" style={{ ...label, marginTop: 12 }}>Précisions facultatives</label>
-            <textarea id="profile-report-details" value={details} onChange={(event) => setDetails(event.target.value)} maxLength={850} rows={4} style={{ ...input, resize: 'vertical' }} />
+            <Label htmlFor="profile-report-reason" style={label}>Motif</Label>
+            <Select
+              id="profile-report-reason"
+              value={reason}
+              onChange={(value) => setReason(value)}
+              options={[
+                { value: 'faux profil', label: 'Faux profil' },
+                { value: 'contenu trompeur', label: 'Contenu trompeur' },
+                { value: 'contenu inapproprié', label: 'Contenu inapproprié' },
+                { value: 'suspicion d’arnaque', label: 'Suspicion d’arnaque' },
+                { value: 'usurpation d’identité', label: 'Usurpation d’identité' },
+                { value: 'autre', label: 'Autre' },
+              ]}
+            />
+            <Label htmlFor="profile-report-details" style={{ ...label, marginTop: 12 }}>Précisions facultatives</Label>
+            <Textarea id="profile-report-details" value={details} onChange={(event) => setDetails(event.target.value)} maxLength={850} rows={4} style={input} />
             {status && <p role="status" style={{ color: status.startsWith('Merci') ? 'var(--teal)' : 'var(--pink)', fontSize: 12 }}>{status}</p>}
-            <div style={{ display: 'flex', gap: 9, marginTop: 16 }}><button type="button" onClick={() => setReportOpen(false)} style={{ ...secondary, flex: 1 }}>Fermer</button><button type="submit" disabled={busy} style={{ ...primary, flex: 1 }}>{busy ? 'Envoi…' : 'Envoyer'}</button></div>
+            <div style={{ display: 'flex', gap: 9, marginTop: 16 }}><Button type="button" variant="secondary" onClick={() => setReportOpen(false)} style={{ ...secondary, flex: 1 }}>Fermer</Button><Button type="submit" disabled={busy} style={{ ...primary, flex: 1 }}>{busy ? 'Envoi…' : 'Envoyer'}</Button></div>
           </form>
         </div>
       )}

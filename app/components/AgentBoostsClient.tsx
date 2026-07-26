@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button } from '@/app/components/ui'
 
 // Port en LECTURE SEULE de la section « Boosts » de src/pages/AgentPage.jsx
 // (tab === 'boosts', #106 phase agent/admin) — voir lib/server/agentBoosts.ts
@@ -88,14 +89,14 @@ export default function AgentBoostsClient() {
   return (
     <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Boosts</h1>
+        <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Boosts</h1>
 
         {error && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page.</p>
-            <button onClick={load} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5, flexShrink: 0 }}>
+            <Button variant="secondary" onClick={load} style={{ fontSize: 12.5, flexShrink: 0 }}>
               Recharger
-            </button>
+            </Button>
           </div>
         )}
 

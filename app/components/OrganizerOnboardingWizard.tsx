@@ -8,6 +8,7 @@ import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { validateOrganizerStep0, validateOrganizerStep1, type OrganizerFormData } from '@/lib/shared/applicationValidation'
 import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
 import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
+import { Button, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
 
 // Port de src/pages/OnboardingOrganisateur.jsx (#7 phase organisateur) — 4
 // étapes (Établissement/Activité/Revenus/Documents), utilisé À LA FOIS par
@@ -48,13 +49,15 @@ const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box'
 const labelStyle: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
 const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   padding: '13px 26px',
-  borderRadius: 10,
+  borderRadius: 8,
   border: 'none',
   background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
   opacity: disabled ? 0.4 : 1,
   color: '#1a1508',
-  fontWeight: 700,
+  fontWeight: 800,
   fontSize: 14,
+  textTransform: 'uppercase',
+  letterSpacing: '.03em',
   cursor: disabled ? 'default' : 'pointer',
 })
 
@@ -210,7 +213,7 @@ export default function OrganizerOnboardingWizard({
     return (
       <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ ...cardStyle, maxWidth: 420, textAlign: 'center' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
+          <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
             Tu seras contacté à <strong style={{ color: '#fff' }}>{submitted.emailPro}</strong> une fois ton compte validé.
@@ -231,7 +234,7 @@ export default function OrganizerOnboardingWizard({
       <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>Demande d&apos;espace</p>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Compte Organisateur</h1>
+          <h1 className="font-display" style={{ fontSize: 28, color: '#fff', margin: '0 0 6px' }}>Compte Organisateur</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
@@ -250,18 +253,18 @@ export default function OrganizerOnboardingWizard({
         <div style={cardStyle}>
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Informations de l&apos;établissement</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Informations de l&apos;établissement</h2>
               <div>
-                <label style={labelStyle}>Nom de l&apos;établissement / commercial {requiredMark}</label>
-                <input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
+                <Label style={labelStyle}>Nom de l&apos;établissement / commercial {requiredMark}</Label>
+                <Input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
               </div>
               <div>
-                <label style={labelStyle}>Numéro SIRET / SIREN {requiredMark}</label>
-                <input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
+                <Label style={labelStyle}>Numéro SIRET / SIREN {requiredMark}</Label>
+                <Input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
               </div>
               <div>
-                <label style={labelStyle}>Email professionnel {requiredMark}</label>
-                <input
+                <Label style={labelStyle}>Email professionnel {requiredMark}</Label>
+                <Input
                   style={inputStyle}
                   type="email"
                   value={form.emailPro}
@@ -270,66 +273,66 @@ export default function OrganizerOnboardingWizard({
                 />
               </div>
               <div>
-                <label style={labelStyle}>Téléphone professionnel {requiredMark}</label>
+                <Label style={labelStyle}>Téléphone professionnel {requiredMark}</Label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <select style={{ ...inputStyle, maxWidth: 150 }} value={form.telephoneProCode} onChange={(e) => set('telephoneProCode', e.target.value)}>
-                    {regions.map((r) => (
-                      <option key={r.id} value={r.dial}>
-                        {r.flag} {r.country} {r.dial}
-                      </option>
-                    ))}
-                  </select>
-                  <input style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
+                  <Select
+                    value={form.telephoneProCode}
+                    onChange={(value) => set('telephoneProCode', value)}
+                    options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.country} ${r.dial}` }))}
+                  />
+                  <Input style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
                 </div>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#fff' }}>
-                <input type="checkbox" checked={form.noFixedAddress} onChange={(e) => set('noFixedAddress', e.target.checked)} />
-                Pas de lieu fixe (établissement en ligne / itinérant)
-              </label>
+              <Checkbox
+                label="Pas de lieu fixe (établissement en ligne / itinérant)"
+                checked={form.noFixedAddress}
+                onChange={(e) => set('noFixedAddress', e.target.checked)}
+              />
               {!form.noFixedAddress && (
                 <div>
-                  <label style={labelStyle}>Adresse de l&apos;établissement {requiredMark}</label>
-                  <input style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
+                  <Label style={labelStyle}>Adresse de l&apos;établissement {requiredMark}</Label>
+                  <Input style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
                 </div>
               )}
               <div>
-                <label style={labelStyle}>Site web / Instagram</label>
-                <input style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
+                <Label style={labelStyle}>Site web / Instagram</Label>
+                <Input style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
               </div>
 
               {mode === 'anonymous' && (
                 <>
                   <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                  <h3 style={{ fontSize: 13, fontWeight: 800, color: '#fff', margin: 0 }}>Ton compte de connexion</h3>
+                  <h3 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Ton compte de connexion</h3>
                   <div>
-                    <label style={labelStyle}>Adresse e-mail (identifiant de connexion) {requiredMark}</label>
-                    <input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                    <Label style={labelStyle}>Adresse e-mail (identifiant de connexion) {requiredMark}</Label>
+                    <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Mot de passe {requiredMark}</label>
+                    <Label style={labelStyle}>Mot de passe {requiredMark}</Label>
                     <div style={{ position: 'relative' }}>
-                      <input
+                      <Input
                         style={{ ...inputStyle, paddingRight: 56 }}
                         type={showRegPassword ? 'text' : 'password'}
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
                         placeholder="Minimum 8 caractères"
                       />
-                      <button
+                      <Button
+                        variant="link"
                         type="button"
                         aria-pressed={showRegPassword}
                         aria-label={showRegPassword ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
                         onClick={() => setShowRegPassword((v) => !v)}
-                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
                       >
                         <IconEye open={showRegPassword} />
                         {showRegPassword ? 'Cacher' : 'Voir'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <div>
-                    <label style={labelStyle}>Confirmer le mot de passe {requiredMark}</label>
-                    <input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                    <Label style={labelStyle}>Confirmer le mot de passe {requiredMark}</Label>
+                    <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
                   </div>
                   <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;email professionnel ci-dessus.</p>
                 </>
@@ -339,57 +342,61 @@ export default function OrganizerOnboardingWizard({
 
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Description de l&apos;activité</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Description de l&apos;activité</h2>
               <div>
-                <label style={labelStyle}>Type d&apos;établissement {requiredMark}</label>
-                <select style={inputStyle} value={form.typeEtablissement} onChange={(e) => set('typeEtablissement', e.target.value)}>
-                  <option value="">—</option>
-                  <option value="Boîte / Club">Boîte / Club</option>
-                  <option value="Bar">Bar</option>
-                  <option value="Autre">Autre</option>
-                </select>
+                <Label style={labelStyle}>Type d&apos;établissement {requiredMark}</Label>
+                <Select
+                  value={form.typeEtablissement}
+                  onChange={(value) => set('typeEtablissement', value)}
+                  options={[
+                    { value: '', label: '—' },
+                    { value: 'Boîte / Club', label: 'Boîte / Club' },
+                    { value: 'Bar', label: 'Bar' },
+                    { value: 'Autre', label: 'Autre' },
+                  ]}
+                />
               </div>
               {form.typeEtablissement === 'Autre' && (
-                <input style={inputStyle} value={form.typeEtablissementCustom} onChange={(e) => set('typeEtablissementCustom', e.target.value)} placeholder="Précise le type" />
+                <Input style={inputStyle} value={form.typeEtablissementCustom} onChange={(e) => set('typeEtablissementCustom', e.target.value)} placeholder="Précise le type" />
               )}
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#fff' }}>
-                <input type="checkbox" checked={form.itinerant} onChange={(e) => set('itinerant', e.target.checked)} />
-                Itinérant — j&apos;organise dans plusieurs villes / pays
-              </label>
+              <Checkbox
+                label="Itinérant — j'organise dans plusieurs villes / pays"
+                checked={form.itinerant}
+                onChange={(e) => set('itinerant', e.target.checked)}
+              />
               {!form.itinerant ? (
                 <>
                   <div>
-                    <label style={labelStyle}>Ville {requiredMark}</label>
-                    <input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris" />
+                    <Label style={labelStyle}>Ville {requiredMark}</Label>
+                    <Input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris" />
                   </div>
                   <div>
-                    <label style={labelStyle}>Pays</label>
-                    <select style={inputStyle} value={form.pays} onChange={(e) => set('pays', e.target.value)}>
-                      {regions.map((r) => (
-                        <option key={r.id} value={r.country}>
-                          {r.flag} {r.country}
-                        </option>
-                      ))}
-                    </select>
+                    <Label style={labelStyle}>Pays</Label>
+                    <Select
+                      value={form.pays}
+                      onChange={(value) => set('pays', value)}
+                      options={regions.map((r) => ({ value: r.country, label: `${r.flag} ${r.country}` }))}
+                    />
                   </div>
                   <div>
-                    <label style={labelStyle}>Capacité d&apos;accueil</label>
-                    <input style={inputStyle} type="number" min={0} value={form.capacite ?? ''} onChange={(e) => set('capacite', e.target.value ? Number(e.target.value) : null)} />
+                    <Label style={labelStyle}>Capacité d&apos;accueil</Label>
+                    <Input style={inputStyle} type="number" min={0} value={form.capacite ?? ''} onChange={(e) => set('capacite', e.target.value ? Number(e.target.value) : null)} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Horaires habituels</label>
-                    <input style={inputStyle} value={form.horaires} onChange={(e) => set('horaires', e.target.value)} placeholder="Ven-Sam 23h-07h" />
+                    <Label style={labelStyle}>Horaires habituels</Label>
+                    <Input style={inputStyle} value={form.horaires} onChange={(e) => set('horaires', e.target.value)} placeholder="Ven-Sam 23h-07h" />
                   </div>
                 </>
               ) : (
                 <div>
-                  <label style={labelStyle}>Zones d&apos;activité</label>
+                  <Label style={labelStyle}>Zones d&apos;activité</Label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {regions.map((r) => {
                       const active = form.zonesActivite.includes(r.id)
                       return (
-                        <button
+                        <Button
                           key={r.id}
+                          variant="secondary"
                           type="button"
                           onClick={() => set('zonesActivite', active ? form.zonesActivite.filter((z) => z !== r.id) : [...form.zonesActivite, r.id])}
                           style={{
@@ -399,37 +406,43 @@ export default function OrganizerOnboardingWizard({
                             background: active ? 'rgba(200,169,110,0.14)' : 'transparent',
                             color: active ? 'var(--gold)' : '#fff',
                             fontSize: 12.5,
-                            cursor: 'pointer',
                           }}
                         >
                           {r.flag} {r.name}
-                        </button>
+                        </Button>
                       )
                     })}
                   </div>
                 </div>
               )}
               <div>
-                <label style={labelStyle}>Description courte</label>
-                <textarea style={{ ...inputStyle, minHeight: 80 }} maxLength={500} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="Décris en quelques lignes ton activité, ton public, l'ambiance…" />
+                <Label style={labelStyle}>Description courte</Label>
+                <Textarea style={{ ...inputStyle, minHeight: 80 }} maxLength={500} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="Décris en quelques lignes ton activité, ton public, l'ambiance…" />
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#fff' }}>
-                <input type="checkbox" checked={form.alcool} onChange={(e) => set('alcool', e.target.checked)} />
-                Alcool vendu sur place
-              </label>
+              <Checkbox
+                label="Alcool vendu sur place"
+                checked={form.alcool}
+                onChange={(e) => set('alcool', e.target.checked)}
+              />
               {form.alcool && (
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  <input type="checkbox" checked={form.alcoolAtteste} onChange={(e) => set('alcoolAtteste', e.target.checked)} style={{ marginTop: 2 }} />
-                  J&apos;atteste respecter la réglementation locale sur la vente d&apos;alcool et en assumer l&apos;entière responsabilité. Cette responsabilité t&apos;incombe entièrement —
-                  LIVEINBLACK n&apos;est pas responsable de la conformité de ton activité.
-                </label>
+                <Checkbox
+                  checked={form.alcoolAtteste}
+                  onChange={(e) => set('alcoolAtteste', e.target.checked)}
+                  style={{ alignItems: 'flex-start' }}
+                  label={
+                    <span style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, fontWeight: 400 }}>
+                      J&apos;atteste respecter la réglementation locale sur la vente d&apos;alcool et en assumer l&apos;entière responsabilité. Cette responsabilité t&apos;incombe entièrement —
+                      LIVEINBLACK n&apos;est pas responsable de la conformité de ton activité.
+                    </span>
+                  }
+                />
               )}
             </div>
           )}
 
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Tes revenus</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Tes revenus</h2>
               <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Comment tu seras payé</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                 LIVEINBLACK collecte les paiements de tes billets et te reverse ta part directement sur ton compte bancaire. Les reversements sont gérés de façon
@@ -457,7 +470,7 @@ export default function OrganizerOnboardingWizard({
 
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Documents justificatifs</h2>
+              <h2 style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Documents justificatifs</h2>
               <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
                 Ces documents nous permettent de vérifier ton identité et la légitimité de ton activité. Ils sont stockés de façon privée et accessibles uniquement à
                 l&apos;équipe LIVEINBLACK. Formats acceptés : PDF, JPG, PNG — 10 Mo max par fichier.
@@ -468,8 +481,8 @@ export default function OrganizerOnboardingWizard({
                 <DocUpload label="Licence / justificatif de débit de boissons" docKey="alcohol_license" documents={documents} onChange={handleFileChange} onRemove={removeDoc} />
               )}
               <div>
-                <label style={labelStyle}>Message pour l&apos;équipe (optionnel)</label>
-                <textarea style={{ ...inputStyle, minHeight: 70 }} value={candidateNote} onChange={(e) => setCandidateNote(e.target.value)} />
+                <Label style={labelStyle}>Message pour l&apos;équipe (optionnel)</Label>
+                <Textarea style={{ ...inputStyle, minHeight: 70 }} value={candidateNote} onChange={(e) => setCandidateNote(e.target.value)} />
               </div>
             </div>
           )}
@@ -491,18 +504,23 @@ export default function OrganizerOnboardingWizard({
 
           <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
             {step > 0 && (
-              <button onClick={back} style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer' }}>
+              <Button variant="secondary" onClick={back} style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff' }}>
                 Retour
-              </button>
+              </Button>
             )}
             {step < STEPS.length - 1 ? (
-              <button onClick={next} style={{ ...primaryBtn(false), flex: 1 }}>
+              <Button onClick={next} style={{ ...primaryBtn(false), flex: 1 }}>
                 Continuer
-              </button>
+              </Button>
             ) : (
-              <button onClick={handleSubmit} disabled={busy || uploadingDocs} style={{ ...primaryBtn(busy || uploadingDocs), flex: 1 }}>
-                {uploadingDocs ? 'Envoi des documents…' : busy ? 'Envoi…' : mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
-              </button>
+              <Button
+                onClick={handleSubmit}
+                loading={busy || uploadingDocs}
+                loadingText={uploadingDocs ? 'Envoi des documents…' : 'Envoi…'}
+                style={{ ...primaryBtn(busy || uploadingDocs), flex: 1 }}
+              >
+                {mode === 'anonymous' ? 'Envoyer ma demande' : 'Soumettre mon dossier'}
+              </Button>
             )}
           </div>
         </div>
@@ -539,9 +557,9 @@ function DocUpload({
   const files = documents[docKey] || []
   return (
     <div>
-      <label style={labelStyle}>
+      <Label style={labelStyle}>
         {label} {required && <span style={{ color: 'var(--gold)' }}>*</span>}
-      </label>
+      </Label>
       <label style={{ display: 'inline-block', padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}>
         + Ajouter un fichier
         <input
@@ -566,9 +584,9 @@ function DocUpload({
                 </span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
               </span>
-              <button onClick={() => onRemove(docKey, i)} style={{ background: 'transparent', border: 'none', color: '#e05aaa', cursor: 'pointer', fontSize: 12, flexShrink: 0 }}>
+              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: '#e05aaa', fontSize: 12, flexShrink: 0, textDecoration: 'none' }}>
                 Retirer
-              </button>
+              </Button>
             </div>
           ))}
         </div>

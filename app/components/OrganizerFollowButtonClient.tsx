@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { Button } from '@/app/components/ui'
 
 // Port de src/components/OrganizerFollowButton.jsx — utilisé sur la page
 // publique organisateur, la page "Organisateurs suivis" (#6 phase profil) et
@@ -107,9 +108,11 @@ export default function OrganizerFollowButtonClient({
 
   const base: React.CSSProperties = {
     padding: compact ? '7px 14px' : '12px 22px',
-    borderRadius: 999,
-    fontSize: compact ? 12.5 : 13.5,
-    fontWeight: 700,
+    borderRadius: 8,
+    fontSize: compact ? 12 : 13,
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    letterSpacing: '.03em',
     border: 'none',
     cursor: busy ? 'default' : 'pointer',
     width: appearance === 'premium' && !compact ? '100%' : undefined,
@@ -124,7 +127,7 @@ export default function OrganizerFollowButtonClient({
 
   return (
     <div ref={rootRef} style={{ position: 'relative', display: 'inline-block' }}>
-      <button
+      <Button
         type="button"
         onClick={handleClick}
         disabled={busy}
@@ -135,7 +138,7 @@ export default function OrganizerFollowButtonClient({
       >
         {following && <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#6feedd', marginRight: 7 }} />}
         {following ? 'Abonné(e)' : "S'abonner"}
-      </button>
+      </Button>
 
       {menuOpen && following && (
         <div
@@ -153,14 +156,15 @@ export default function OrganizerFollowButtonClient({
             boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
           }}
         >
-          <button
+          <Button
             type="button"
+            variant="danger"
             role="menuitem"
             onClick={unfollow}
-            style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', border: 'none', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            style={{ display: 'block', width: '100%', borderRadius: 0, padding: '10px 16px', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', border: 'none', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap' }}
           >
             Se désabonner
-          </button>
+          </Button>
         </div>
       )}
 

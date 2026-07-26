@@ -1,6 +1,30 @@
 'use client'
 
+import NextImage from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import {
+  Camera,
+  Pencil,
+  MessageCircle,
+  Search,
+  Pin,
+  BellOff,
+  X,
+  ArrowDown,
+  Trash2,
+  Check,
+  CheckCheck,
+  Mic,
+  ArrowLeft,
+  BarChart2,
+  CornerUpRight,
+  Star,
+  Hourglass,
+  Play,
+  Pause,
+  Handshake,
+} from 'lucide-react'
+import { Button, Input, Textarea, Checkbox, Radio } from '@/app/components/ui'
 
 // ─────────────────────────── types (miroir des DTO JSON) ────────────────────
 // Copies volontaires des formes renvoyées par les routes HTTP (pas des
@@ -334,6 +358,11 @@ export default function MessagesClient({
   const [forwardTarget, setForwardTarget] = useState<MessageView | null>(null)
   const [reportTarget, setReportTarget] = useState<{ userId: string; userName: string } | null>(null)
   const [blockAfterReport, setBlockAfterReport] = useState<{ userId: string; userName: string } | null>(null)
+  // Suppression de groupe = perte définitive de la conversation ET de tous
+  // ses messages pour tous les membres (transactionnel côté serveur) — trop
+  // destructeur pour partir directement du clic, contrairement à "Quitter le
+  // groupe" qui ne retire que l'appelant.
+  const [deleteGroupConfirm, setDeleteGroupConfirm] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ message: MessageView; x: number; y: number } | null>(null)
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null)
   // conversationId: null quand la photo vient du bouton caméra de l'EN-TÊTE
@@ -1313,7 +1342,7 @@ export default function MessagesClient({
         >
           <div style={{ padding: '18px 16px 12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--text)' }}>Messages</h1>
+              <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--text)' }}>Messages</h1>
               <div style={{ display: 'flex', gap: 6, position: 'relative' }}>
                 <input
                   ref={cameraFileInputRef}
@@ -1324,10 +1353,10 @@ export default function MessagesClient({
                   onChange={(e) => handlePhotoFileChange(e, activeId)}
                 />
                 <IconButton title="Envoyer une photo" onClick={() => cameraFileInputRef.current?.click()}>
-                  📷
+                  <Camera size={16} />
                 </IconButton>
                 <IconButton title="Nouvelle discussion" onClick={() => setPanel('newDirect')}>
-                  {received.length > 0 && <Badge count={received.length} />}✎
+                  {received.length > 0 && <Badge count={received.length} />}<Pencil size={16} />
                 </IconButton>
                 <IconButton title="Menu" onClick={() => setShowListMenu((v) => !v)}>
                   ⋮
@@ -1347,7 +1376,7 @@ export default function MessagesClient({
                 )}
               </div>
             </div>
-            <input
+            <Input
               value={convSearch}
               onChange={(e) => setConvSearch(e.target.value)}
               placeholder="Rechercher une conversation…"
@@ -1355,16 +1384,17 @@ export default function MessagesClient({
             />
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '4px 8px 16px' }}>
-            {conversations.length === 0 && <EmptyState icon="💬" title="Aucune conversation" subtitle="Ajoute un contact et commence à discuter" />}
+            {conversations.length === 0 && <EmptyState icon={<MessageCircle size={32} />} title="Aucune conversation" subtitle="Ajoute un contact et commence à discuter" />}
             {conversations.length > 0 && filteredConversations.length === 0 && (
-              <EmptyState icon="🔎" title="Aucun résultat" subtitle="Essaie un autre terme de recherche" />
+              <EmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Essaie un autre terme de recherche" />
             )}
             {filteredConversations.map((conv) => {
               const label = conversationLabel(conv, currentUserId)
               const other = conv.type === 'direct' ? conv.members.find((m) => m.userId !== currentUserId) : null
               return (
-                <button
+                <Button
                   key={conv.id}
+                  variant="ghost"
                   onClick={() => openConversation(conv.id)}
                   onContextMenu={(e) => {
                     e.preventDefault()
@@ -1383,6 +1413,7 @@ export default function MessagesClient({
                     background: conv.id === activeId ? 'var(--surface-2)' : 'transparent',
                     cursor: 'pointer',
                     marginBottom: 2,
+                    fontWeight: 400,
                   }}
                 >
                   {conv.type === 'group' ? (
@@ -1405,7 +1436,7 @@ export default function MessagesClient({
                           gap: 4,
                         }}
                       >
-                        {conv.pinned && <span title="Épinglée">📌</span>}
+                        {conv.pinned && <span title="Épinglée"><Pin size={12} /></span>}
                         {label}
                       </span>
                       <span style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }}>{conv.lastMessageAt ? formatTime(conv.lastMessageAt) : ''}</span>
@@ -1415,7 +1446,7 @@ export default function MessagesClient({
                         {conv.lastMessage || 'Aucun message'}
                       </p>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                        {conv.mutedForMe && <span style={{ fontSize: 11, opacity: 0.6 }}>🔕</span>}
+                        {conv.mutedForMe && <span style={{ fontSize: 11, opacity: 0.6, display: 'inline-flex', alignItems: 'center' }}><BellOff size={12} /></span>}
                         {conv.unreadCount > 0 &&
                           (conv.mutedForMe ? (
                             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--teal-solid)', display: 'inline-block' }} />
@@ -1436,7 +1467,7 @@ export default function MessagesClient({
                       </span>
                     </div>
                   </div>
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -1447,7 +1478,7 @@ export default function MessagesClient({
         <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: '100vh' }}>
           {!activeConversation ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <EmptyState icon="💬" title="Choisis une conversation" subtitle="Sélectionne un contact ou un groupe pour commencer à discuter" />
+              <EmptyState icon={<MessageCircle size={32} />} title="Choisis une conversation" subtitle="Sélectionne un contact ou un groupe pour commencer à discuter" />
             </div>
           ) : (
             <>
@@ -1468,7 +1499,7 @@ export default function MessagesClient({
 
               {inThreadSearchOpen && (
                 <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)' }}>
-                  <input
+                  <Input
                     autoFocus
                     value={inThreadSearchQuery}
                     onChange={(e) => setInThreadSearchQuery(e.target.value)}
@@ -1496,29 +1527,29 @@ export default function MessagesClient({
                   onClick={() => scrollToMessage(pinnedMessage.id)}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    <span>📌</span>
+                    <span><Pin size={14} /></span>
                     <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {pinnedMessage.deletedForAll ? 'Message supprimé' : pinnedMessage.content || messageTypeLabel(pinnedMessage.type)}
                     </p>
                   </div>
                   {amAdmin && (
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleTogglePin(pinnedMessage)
                       }}
-                      style={{ border: 'none', background: 'none', color: 'var(--text-faint)', cursor: 'pointer', fontSize: 13 }}
+                      style={{ color: 'var(--text-faint)', fontSize: 13, padding: 0 }}
                     >
-                      ✕
-                    </button>
+                      <X size={14} />
+                    </Button>
                   )}
                 </div>
               )}
 
               <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', position: 'relative' }}>
                 {visibleMessages.length === 0 && inThreadSearchOpen && inThreadSearchQuery.trim() && (
-                  <EmptyState icon="🔎" title="Aucun résultat" subtitle="Aucun message ne correspond à ta recherche" />
+                  <EmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Aucun message ne correspond à ta recherche" />
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {visibleMessages.map((msg, idx) => {
@@ -1575,8 +1606,8 @@ export default function MessagesClient({
               </div>
 
               {showScrollButton && (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={scrollToBottom}
                   style={{
                     position: 'absolute',
@@ -1584,16 +1615,13 @@ export default function MessagesClient({
                     bottom: 96,
                     width: 38,
                     height: 38,
+                    padding: 0,
                     borderRadius: '50%',
-                    border: '1px solid var(--border-strong)',
-                    background: 'var(--surface-2)',
-                    color: 'var(--text)',
-                    cursor: 'pointer',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
                   }}
                 >
-                  ↓
-                </button>
+                  <ArrowDown size={16} />
+                </Button>
               )}
 
               {myGroupMute ? (
@@ -1606,13 +1634,13 @@ export default function MessagesClient({
                 <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
                   <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>
                     Tu as bloqué ce contact —{' '}
-                    <button
-                      type="button"
+                    <Button
+                      variant="link"
                       onClick={() => otherDirectMember && handleUnblock(otherDirectMember.userId)}
-                      style={{ background: 'none', border: 'none', color: 'var(--teal)', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: 13 }}
+                      style={{ fontSize: 13 }}
                     >
                       débloquer
-                    </button>
+                    </Button>
                   </p>
                 </div>
               ) : (
@@ -1620,24 +1648,22 @@ export default function MessagesClient({
                   {mentionMatches.length > 0 && (
                     <div style={{ marginBottom: 8, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: 10, overflow: 'hidden' }}>
                       {mentionMatches.map((m) => (
-                        <button
+                        <Button
                           key={m.userId}
-                          type="button"
+                          variant="ghost"
                           onClick={() => applyMention(m)}
                           style={{
                             display: 'block',
                             width: '100%',
                             textAlign: 'left',
                             padding: '8px 12px',
-                            border: 'none',
-                            background: 'transparent',
                             color: 'var(--text)',
-                            cursor: 'pointer',
                             fontSize: 13,
+                            fontWeight: 400,
                           }}
                         >
                           @{m.name}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -1656,9 +1682,9 @@ export default function MessagesClient({
                       }}
                     >
                       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)', margin: 0 }}>Modifier le message</p>
-                      <button type="button" onClick={handleEditCancel} style={{ border: 'none', background: 'none', color: 'var(--text-faint)', cursor: 'pointer' }}>
-                        ✕
-                      </button>
+                      <Button variant="ghost" onClick={handleEditCancel} style={{ padding: 0 }}>
+                        <X size={14} />
+                      </Button>
                     </div>
                   )}
 
@@ -1681,9 +1707,9 @@ export default function MessagesClient({
                           {replyTo.preview}
                         </p>
                       </div>
-                      <button type="button" onClick={() => setReplyTo(null)} style={{ border: 'none', background: 'none', color: 'var(--text-faint)', cursor: 'pointer' }}>
-                        ✕
-                      </button>
+                      <Button variant="ghost" onClick={() => setReplyTo(null)} style={{ padding: 0 }}>
+                        <X size={14} />
+                      </Button>
                     </div>
                   )}
 
@@ -1699,26 +1725,26 @@ export default function MessagesClient({
                         border: '1px solid var(--border-strong)',
                       }}
                     >
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
                         onClick={() => stopRecording(false)}
-                        style={{ border: 'none', background: 'none', color: 'var(--pink)', cursor: 'pointer', fontSize: 18 }}
+                        style={{ color: 'var(--pink)', fontSize: 18, padding: 0 }}
                         aria-label="Annuler"
                       >
-                        🗑
-                      </button>
+                        <Trash2 size={18} />
+                      </Button>
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--pink)', animation: 'lib-pulse 1.2s infinite' }} />
                       <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>
                         {Math.floor(recordDuration / 60)}:{String(recordDuration % 60).padStart(2, '0')}
                       </span>
-                      <button
-                        type="button"
+                      <Button
+                        variant="primary"
                         onClick={() => stopRecording(true)}
-                        style={{ border: 'none', background: 'var(--teal-solid)', color: '#04120e', borderRadius: '50%', width: 34, height: 34, cursor: 'pointer' }}
+                        style={{ borderRadius: '50%', width: 34, height: 34, padding: 0 }}
                         aria-label="Envoyer"
                       >
-                        ✓
-                      </button>
+                        <Check size={18} />
+                      </Button>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', position: 'relative' }}>
@@ -1741,7 +1767,7 @@ export default function MessagesClient({
                         )}
                         <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handlePhotoFileChange(e, activeId)} />
                       </div>
-                      <textarea
+                      <Textarea
                         value={composerText}
                         onChange={(e) => handleInputChange(e.target.value)}
                         onKeyDown={(e) => {
@@ -1755,42 +1781,42 @@ export default function MessagesClient({
                         style={{ ...inputStyle, marginBottom: 0, flex: 1, resize: 'none', maxHeight: 120 }}
                       />
                       {composerText.trim() ? (
-                        <button
-                          type="button"
+                        <Button
+                          variant="primary"
                           onClick={handleSend}
                           disabled={busy}
                           style={{
                             padding: '10px 20px',
-                            borderRadius: 999,
-                            border: 'none',
-                            fontWeight: 700,
+                            borderRadius: 8,
+                            fontWeight: 800,
                             fontSize: 13,
+                            textTransform: 'uppercase',
+                            letterSpacing: '.03em',
                             color: '#fff',
                             background: busy ? 'rgba(143,86,255,0.5)' : 'var(--violet-cta)',
                             cursor: busy ? 'default' : 'pointer',
                           }}
                         >
                           {editingMessageId ? 'Modifier' : 'Envoyer'}
-                        </button>
+                        </Button>
                       ) : (
-                        <button
-                          type="button"
+                        <Button
+                          variant="primary"
                           onPointerDown={handleMicPointerDown}
                           onPointerUp={handleMicPointerUp}
                           style={{
                             width: 42,
                             height: 42,
+                            padding: 0,
                             borderRadius: '50%',
-                            border: 'none',
                             background: 'var(--violet-cta)',
                             color: '#fff',
-                            cursor: 'pointer',
                             flexShrink: 0,
                           }}
                           aria-label="Message vocal"
                         >
-                          🎙
-                        </button>
+                          <Mic size={18} />
+                        </Button>
                       )}
                     </div>
                   )}
@@ -1884,8 +1910,20 @@ export default function MessagesClient({
           onUploadAvatar={handleUploadGroupAvatar}
           groupAvatarInputRef={groupAvatarInputRef}
           onLeave={handleLeaveGroup}
-          onDelete={handleDeleteGroup}
+          onDelete={() => setDeleteGroupConfirm(true)}
           onClose={() => setPanel('none')}
+        />
+      )}
+      {deleteGroupConfirm && (
+        <ConfirmModal
+          title="Supprimer le groupe"
+          message="Le groupe et tous ses messages seront supprimés définitivement pour tous les membres. Cette action est irréversible."
+          confirmLabel="Supprimer"
+          onConfirm={() => {
+            setDeleteGroupConfirm(false)
+            handleDeleteGroup()
+          }}
+          onCancel={() => setDeleteGroupConfirm(false)}
         />
       )}
       {panel === 'contactPanel' && activeConversation?.type === 'direct' && otherDirectMember && (
@@ -1976,17 +2014,19 @@ export default function MessagesClient({
                 {conversations.map((conv) => {
                   const label = conversationLabel(conv, currentUserId)
                   return (
-                    <label key={conv.id} style={{ ...rowButtonStyle, cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        name="photo-target-conversation"
-                        checked={photoPreviewPickedConv === conv.id}
-                        onChange={() => setPhotoPreviewPickedConv(conv.id)}
-                        style={{ marginRight: 4 }}
-                      />
-                      {conv.type === 'group' ? <GroupAvatar conv={conv} size={28} /> : <Avatar userId={conv.id} name={label} size={28} />}
-                      <span style={{ fontSize: 13, color: 'var(--text)' }}>{label}</span>
-                    </label>
+                    <Radio
+                      key={conv.id}
+                      name="photo-target-conversation"
+                      checked={photoPreviewPickedConv === conv.id}
+                      onChange={() => setPhotoPreviewPickedConv(conv.id)}
+                      style={{ ...rowButtonStyle, cursor: 'pointer' }}
+                      label={
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {conv.type === 'group' ? <GroupAvatar conv={conv} size={28} /> : <Avatar userId={conv.id} name={label} size={28} />}
+                          <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{label}</span>
+                        </span>
+                      }
+                    />
                   )
                 })}
               </div>
@@ -2005,12 +2045,12 @@ export default function MessagesClient({
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
           <video ref={videoRef} autoPlay playsInline style={{ maxWidth: '92%', maxHeight: '70vh', borderRadius: 12 }} />
           <div style={{ display: 'flex', gap: 12 }}>
-            <button type="button" onClick={closeCamera} style={smallButtonStyle}>
+            <Button variant="secondary" onClick={closeCamera} size="sm" style={{ borderRadius: 999 }}>
               Annuler
-            </button>
-            <button type="button" onClick={capturePhoto} style={{ ...smallButtonStyle, background: 'var(--teal-solid)', color: '#04120e', border: 'none', fontWeight: 700 }}>
+            </Button>
+            <Button variant="primary" onClick={capturePhoto} size="sm" style={{ borderRadius: 8 }}>
               Capturer
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -2056,8 +2096,8 @@ function messageTypeLabel(type: MessageType): string {
 
 function IconButton({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
       title={title}
       aria-label={title}
       onClick={onClick}
@@ -2065,19 +2105,13 @@ function IconButton({ title, onClick, children }: { title: string; onClick: () =
         position: 'relative',
         width: 32,
         height: 32,
+        padding: 0,
         borderRadius: '50%',
-        border: '1px solid var(--border-strong)',
-        background: 'var(--surface-2)',
-        color: 'var(--text)',
-        cursor: 'pointer',
         fontSize: 14,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -2103,7 +2137,7 @@ function Badge({ count }: { count: number }) {
   )
 }
 
-function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
+function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '48px 24px', textAlign: 'center' }}>
       <span style={{ fontSize: 32, opacity: 0.5 }}>{icon}</span>
@@ -2164,8 +2198,15 @@ function Avatar({
 
 function GroupAvatar({ conv, size = 38 }: { conv: { avatar: string | null; name: string | null }; size?: number }) {
   if (conv.avatar) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={conv.avatar} alt={conv.name ?? 'Groupe'} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+    return (
+      <NextImage
+        src={conv.avatar}
+        alt={conv.name ?? 'Groupe'}
+        width={size}
+        height={size}
+        style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+      />
+    )
   }
   return (
     <div
@@ -2227,10 +2268,10 @@ function ThreadHeader({
   const otherOnline = other ? presence[other.userId]?.online : false
   return (
     <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={conversation.type === 'group' ? onOpenGroupSettings : onOpenContactPanel}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', minWidth: 0 }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', minWidth: 0, fontWeight: 400, padding: 0 }}
       >
         {!isDesktop && (
           <span
@@ -2238,9 +2279,9 @@ function ThreadHeader({
               e.stopPropagation()
               onBack()
             }}
-            style={{ color: 'var(--text-faint)', fontSize: 18, marginRight: 4 }}
+            style={{ color: 'var(--text-faint)', fontSize: 18, marginRight: 4, display: 'inline-flex', alignItems: 'center' }}
           >
-            ←
+            <ArrowLeft size={18} />
           </span>
         )}
         {conversation.type === 'group' ? <GroupAvatar conv={conversation} size={36} /> : <Avatar userId={other?.userId ?? ''} name={label} size={36} />}
@@ -2250,13 +2291,13 @@ function ThreadHeader({
             {conversation.type === 'group' ? `${conversation.members.length} membres` : otherOnline ? 'En ligne' : 'Hors ligne'}
           </p>
         </div>
-      </button>
+      </Button>
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
         <IconButton title="Rechercher" onClick={onOpenSearch}>
-          🔎
+          <Search size={16} />
         </IconButton>
         <IconButton title="Sondage" onClick={onOpenPoll}>
-          📊
+          <BarChart2 size={16} />
         </IconButton>
       </div>
     </div>
@@ -2332,7 +2373,7 @@ function MessageRow({
       <div style={{ maxWidth: '74%', display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', gap: 2, transform: `translateX(${swipeX}px)` }}>
         {showSenderName && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', paddingLeft: 4 }}>{message.senderName}</span>}
         {message.forwardedFrom && (
-          <span style={{ fontSize: 10.5, color: 'var(--text-faint)', paddingLeft: isMine ? 0 : 4 }}>↗ Transféré de {message.forwardedFrom.senderName}</span>
+          <span style={{ fontSize: 10.5, color: 'var(--text-faint)', paddingLeft: isMine ? 0 : 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}><CornerUpRight size={11} /> Transféré de {message.forwardedFrom.senderName}</span>
         )}
         {replyPreview && (
           <div
@@ -2376,44 +2417,44 @@ function MessageRow({
             {reactionEntries.map(([emoji, users]) => {
               const reactedByMe = users.includes(currentUserId)
               return (
-                <button
+                <Button
                   key={emoji}
-                  type="button"
+                  variant="secondary"
                   onClick={() => onReact(message.id, emoji)}
                   style={{
                     background: reactedByMe ? 'rgba(78,232,200,0.14)' : 'var(--surface-2)',
                     border: `1px solid ${reactedByMe ? 'rgba(78,232,200,0.3)' : 'var(--border)'}`,
                     borderRadius: 10,
                     padding: '2px 6px',
-                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 3,
                     fontSize: 11,
+                    fontWeight: 400,
                     color: reactedByMe ? 'var(--teal)' : 'var(--text)',
                   }}
                 >
                   <span>{emoji}</span>
                   <span style={{ fontSize: 9, color: reactedByMe ? 'var(--teal)' : 'var(--text-faint)' }}>{users.length}</span>
-                </button>
+                </Button>
               )
             })}
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               onClick={onOpenFullPicker}
-              style={{ border: '1px solid var(--border)', background: 'transparent', borderRadius: 10, padding: '2px 6px', cursor: 'pointer', color: 'var(--text-faint)', fontSize: 11 }}
+              style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '2px 6px', color: 'var(--text-faint)', fontSize: 11 }}
             >
               +
-            </button>
+            </Button>
           </div>
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {message.starredByMe && <span style={{ fontSize: 10, color: 'var(--gold)' }}>★</span>}
+          {message.starredByMe && <span style={{ fontSize: 10, color: 'var(--gold)', display: 'inline-flex', alignItems: 'center' }}><Star size={10} /></span>}
           <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{formatTime(message.createdAt)}</span>
           {isMine && message.readStatus && (
-            <span style={{ fontSize: 9, color: message.readStatus === 'read' ? 'var(--teal)' : 'var(--text-faint)' }}>
-              {message.readStatus === 'read' ? '✓✓' : '✓'}
+            <span style={{ fontSize: 9, color: message.readStatus === 'read' ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center' }}>
+              {message.readStatus === 'read' ? <CheckCheck size={12} /> : <Check size={12} />}
             </span>
           )}
         </div>
@@ -2500,7 +2541,7 @@ function ImageBubble({ content, createdAt }: { content: string | null; createdAt
   if (isExpired) {
     return (
       <div style={{ width: 180, height: 90, borderRadius: 10, background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-        <span style={{ fontSize: 18 }}>⏳</span>
+        <span style={{ fontSize: 18, display: 'inline-flex', alignItems: 'center' }}><Hourglass size={18} /></span>
         <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Photo expirée</span>
       </div>
     )
@@ -2527,7 +2568,7 @@ function ImageBubble({ content, createdAt }: { content: string | null; createdAt
           onClick={(e) => e.stopPropagation()}
           style={{ position: 'absolute', bottom: 5, right: 5, background: 'rgba(0,0,0,0.55)', borderRadius: 6, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', textDecoration: 'none' }}
         >
-          ↓
+          <ArrowDown size={14} />
         </a>
       </div>
       {zoomed && (
@@ -2609,13 +2650,13 @@ function VoiceBubble({ content }: { content: string | null }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 190, maxWidth: 240 }}>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={handlePlay}
-        style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff' }}
+        style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}
       >
-        {playing ? '❚❚' : '▶'}
-      </button>
+        {playing ? <Pause size={14} /> : <Play size={14} />}
+      </Button>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, height: 24 }}>
         {activeBars.map((h, i) => (
           <div
@@ -2647,9 +2688,9 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
           const pct = totalVotes ? Math.round((opt.voterIds.length / totalVotes) * 100) : 0
           const votedByMe = opt.voterIds.includes(currentUserId)
           return (
-            <button
+            <Button
               key={opt.id}
-              type="button"
+              variant="secondary"
               onClick={() => onVote(message.id, opt.id)}
               aria-label={`Voter pour ${opt.text}`}
               aria-pressed={votedByMe}
@@ -2665,18 +2706,18 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
                 background: 'rgba(255,255,255,0.05)',
                 color: 'var(--text)',
                 fontSize: 12.5,
-                cursor: 'pointer',
+                fontWeight: 400,
                 textAlign: 'left',
                 overflow: 'hidden',
               }}
             >
               <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(78,232,200,0.22)' }} />
               <span style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {votedByMe && <span style={{ color: 'var(--teal)' }}>✓</span>}
+                {votedByMe && <span style={{ color: 'var(--teal)', display: 'inline-flex', alignItems: 'center' }}><Check size={12} /></span>}
                 {opt.text}
               </span>
               <span style={{ position: 'relative', color: 'var(--teal)', fontWeight: 700 }}>{opt.voterIds.length}</span>
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -2720,12 +2761,11 @@ function EventCard({ content }: { content: string | null }) {
       href={clickable ? `/events/${ev.id}` : undefined}
       style={{ display: 'block', width: 240, borderRadius: 10, overflow: 'hidden', background: 'var(--surface-2)', textDecoration: 'none', cursor: clickable ? 'pointer' : 'default' }}
     >
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
         {ev.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={ev.image} alt={ev.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
+          <NextImage src={ev.image} alt={ev.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
         ) : (
-          <div style={{ width: '100%', aspectRatio: '16/9', background: 'rgba(255,255,255,0.06)' }} />
+          <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.06)' }} />
         )}
         {priceLabel && (
           <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10, fontWeight: 700, color: 'var(--gold)', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: 6 }}>
@@ -2754,12 +2794,11 @@ function CatalogItemCard({ content }: { content: string | null }) {
       href={clickable ? `/providers/${encodeURIComponent(it.providerId!)}` : undefined}
       style={{ display: 'block', width: 240, borderRadius: 10, overflow: 'hidden', background: 'var(--surface-2)', textDecoration: 'none', cursor: clickable ? 'pointer' : 'default' }}
     >
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
         {it.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={it.image} alt={it.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
+          <NextImage src={it.image} alt={it.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
         ) : (
-          <div style={{ width: '100%', aspectRatio: '16/9', background: 'rgba(255,255,255,0.06)' }} />
+          <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.06)' }} />
         )}
       </div>
       <div style={{ padding: '10px 12px' }}>
@@ -2838,16 +2877,16 @@ function MessageContextMenu({
         {!message.deletedForAll && (
           <div style={{ display: 'flex', gap: 4, padding: 8, borderBottom: '1px solid var(--border)' }}>
             {QUICK_REACT.map((emoji) => (
-              <button key={emoji} type="button" onClick={() => onReact(emoji)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}>
+              <Button key={emoji} variant="ghost" onClick={() => onReact(emoji)} style={{ padding: 0, fontSize: 16 }}>
                 {emoji}
-              </button>
+              </Button>
             ))}
           </div>
         )}
         {items.map((item) => (
-          <button
+          <Button
             key={item.label}
-            type="button"
+            variant="ghost"
             onClick={() => {
               item.onClick()
               onClose()
@@ -2857,15 +2896,16 @@ function MessageContextMenu({
               width: '100%',
               textAlign: 'left',
               padding: '9px 14px',
-              border: 'none',
               background: 'transparent',
+              border: 'none',
               color: item.danger ? '#c2347f' : 'var(--text)',
-              cursor: 'pointer',
               fontSize: 13,
+              fontWeight: 400,
+              borderRadius: 0,
             }}
           >
             {item.label}
-          </button>
+          </Button>
         ))}
       </div>
     </>
@@ -2877,17 +2917,17 @@ function FullReactionPicker({ onPick, onClose }: { onPick: (emoji: string) => vo
     <ModalShell title="Réagir" onClose={onClose}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
         {EMOJIS.map((emoji) => (
-          <button
+          <Button
             key={emoji}
-            type="button"
+            variant="secondary"
             onClick={() => {
               onPick(emoji)
               onClose()
             }}
-            style={{ border: 'none', background: 'var(--surface)', borderRadius: 8, padding: 8, fontSize: 20, cursor: 'pointer' }}
+            style={{ background: 'var(--surface)', border: 'none', borderRadius: 8, padding: 8, fontSize: 20 }}
           >
             {emoji}
-          </button>
+          </Button>
         ))}
       </div>
     </ModalShell>
@@ -2911,17 +2951,17 @@ function DropdownMenu({ items, onClose }: { items: { label: string; onClick: () 
         }}
       >
         {items.map((item) => (
-          <button
+          <Button
             key={item.label}
-            type="button"
+            variant="ghost"
             onClick={() => {
               item.onClick()
               onClose()
             }}
-            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 13 }}
+            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', color: 'var(--text)', fontSize: 13, fontWeight: 400, borderRadius: 0 }}
           >
             {item.label}
-          </button>
+          </Button>
         ))}
       </div>
     </>
@@ -2957,23 +2997,21 @@ function ModalShell({ title, onClose, wide, children }: { title: string; onClose
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: 'var(--text)' }}>{title}</h3>
-          <button
-            type="button"
+          <h3 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{title}</h3>
+          <Button
+            variant="ghost"
             onClick={onClose}
             aria-label="Fermer"
             style={{
               background: 'transparent',
-              border: 'none',
               color: 'var(--text-muted)',
               fontSize: 20,
               lineHeight: 1,
-              cursor: 'pointer',
               padding: 4,
             }}
           >
             ×
-          </button>
+          </Button>
         </div>
         {children}
       </div>
@@ -2984,24 +3022,22 @@ function ModalShell({ title, onClose, wide, children }: { title: string; onClose
 function ModalActions({ onCancel, onConfirm, confirmLabel, disabled }: { onCancel: () => void; onConfirm: () => void; confirmLabel: string; disabled?: boolean }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-      <button type="button" onClick={onCancel} style={smallButtonStyle}>
+      <Button variant="secondary" onClick={onCancel} size="sm" style={{ borderRadius: 999 }}>
         Annuler
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="primary"
         onClick={onConfirm}
         disabled={disabled}
+        size="sm"
         style={{
-          ...smallButtonStyle,
-          background: disabled ? 'var(--border-strong)' : 'var(--teal-solid)',
-          color: disabled ? 'var(--text-faint)' : '#04120e',
-          border: 'none',
-          fontWeight: 700,
-          cursor: disabled ? 'default' : 'pointer',
+          borderRadius: 8,
+          textTransform: 'uppercase',
+          letterSpacing: '.03em',
         }}
       >
         {confirmLabel}
-      </button>
+      </Button>
     </div>
   )
 }
@@ -3043,26 +3079,27 @@ function NewDirectModal({
   const filtered = friends.filter((f) => f.name.toLowerCase().includes(query.trim().toLowerCase()))
   return (
     <ModalShell title="Nouvelle discussion" onClose={onClose} wide>
-      <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un ami…" style={inputStyle} autoFocus />
+      <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un ami…" style={inputStyle} autoFocus />
       <div style={{ maxHeight: 220, overflowY: 'auto', marginBottom: 14 }}>
         {filtered.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami trouvé.</p>}
         {filtered.map((f) => (
-          <button key={f.userId} type="button" onClick={() => onPick(f.userId)} style={{ ...rowButtonStyle }}>
+          <Button key={f.userId} variant="ghost" onClick={() => onPick(f.userId)} style={{ ...rowButtonStyle, fontWeight: 400 }}>
             <Avatar userId={f.userId} name={f.name} size={32} />
             <span style={{ fontSize: 13, color: 'var(--text)' }}>{f.name}</span>
-          </button>
+          </Button>
         ))}
       </div>
       <p style={sectionLabelStyle}>Ou par email</p>
       <div style={{ display: 'flex', gap: 8 }}>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email du contact" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
-        <button
-          type="button"
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email du contact" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+        <Button
+          variant="primary"
           onClick={() => email.trim() && onEmail(email.trim())}
-          style={{ ...smallButtonStyle, background: 'var(--teal-solid)', color: '#04120e', border: 'none', fontWeight: 700 }}
+          size="sm"
+          style={{ borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.03em' }}
         >
           Valider
-        </button>
+        </Button>
       </div>
     </ModalShell>
   )
@@ -3128,16 +3165,17 @@ function NewGroupModal({
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-          <button type="button" onClick={() => setStep(1)} style={smallButtonStyle}>
+          <Button variant="secondary" onClick={() => setStep(1)} size="sm" style={{ borderRadius: 999 }}>
             Retour
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
             onClick={() => onCreate(name, [...memberIds], avatarDataUrl)}
-            style={{ ...smallButtonStyle, background: 'var(--teal-solid)', color: '#04120e', border: 'none', fontWeight: 700 }}
+            size="sm"
+            style={{ borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.03em' }}
           >
             Créer le groupe
-          </button>
+          </Button>
         </div>
       </ModalShell>
     )
@@ -3145,22 +3183,29 @@ function NewGroupModal({
 
   return (
     <ModalShell title="Nouveau groupe" onClose={onClose} wide>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du groupe" style={inputStyle} autoFocus />
-      <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un ami…" style={inputStyle} />
+      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du groupe" style={inputStyle} autoFocus />
+      <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un ami…" style={inputStyle} />
       <div style={{ maxHeight: 220, overflowY: 'auto', marginBottom: 14 }}>
         {filtered.map((f) => (
-          <label key={f.userId} style={{ ...rowButtonStyle, cursor: 'pointer' }}>
-            <input type="checkbox" checked={memberIds.has(f.userId)} onChange={() => toggleMember(f.userId)} style={{ marginRight: 4 }} />
-            <Avatar userId={f.userId} name={f.name} size={32} />
-            <span style={{ fontSize: 13, color: 'var(--text)' }}>{f.name}</span>
-          </label>
+          <Checkbox
+            key={f.userId}
+            checked={memberIds.has(f.userId)}
+            onChange={() => toggleMember(f.userId)}
+            style={{ ...rowButtonStyle, cursor: 'pointer' }}
+            label={
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Avatar userId={f.userId} name={f.name} size={32} />
+                <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{f.name}</span>
+              </span>
+            }
+          />
         ))}
         {filtered.length === 0 && friends.length === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
             <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Tu n&apos;as pas encore d&apos;amis. Ajoute-en pour pouvoir créer un groupe.</p>
-            <button type="button" onClick={onGoToFriends} style={smallButtonStyle}>
+            <Button variant="secondary" onClick={onGoToFriends} size="sm" style={{ borderRadius: 999 }}>
               Ajouter un ami
-            </button>
+            </Button>
           </div>
         )}
         {filtered.length === 0 && friends.length > 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami trouvé.</p>}
@@ -3195,9 +3240,9 @@ function FriendsPanel({
   return (
     <ModalShell title="Amis" onClose={onClose} wide>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email d'un ami" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
-        <button
-          type="button"
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email d'un ami" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+        <Button
+          variant="secondary"
           onClick={() => {
             const trimmed = email.trim()
             if (trimmed) {
@@ -3206,10 +3251,11 @@ function FriendsPanel({
               })
             }
           }}
-          style={smallButtonStyle}
+          size="sm"
+          style={{ borderRadius: 999 }}
         >
           Envoyer
-        </button>
+        </Button>
       </div>
 
       {received.length > 0 && (
@@ -3219,12 +3265,12 @@ function FriendsPanel({
             <div key={r.id} style={rowStyle}>
               <span style={{ fontSize: 13, color: 'var(--text)' }}>{r.fromName}</span>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button type="button" onClick={() => onAction(r.id, 'accept')} style={smallButtonStyle}>
+                <Button variant="secondary" onClick={() => onAction(r.id, 'accept')} size="sm" style={{ borderRadius: 999 }}>
                   Accepter
-                </button>
-                <button type="button" onClick={() => onAction(r.id, 'decline')} style={smallButtonStyle}>
+                </Button>
+                <Button variant="danger" onClick={() => onAction(r.id, 'decline')} size="sm" style={{ borderRadius: 999 }}>
                   Refuser
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -3237,9 +3283,9 @@ function FriendsPanel({
           {sent.map((r) => (
             <div key={r.id} style={rowStyle}>
               <span style={{ fontSize: 13, color: 'var(--text)' }}>{r.toName}</span>
-              <button type="button" onClick={() => onAction(r.id, 'cancel')} style={smallButtonStyle}>
+              <Button variant="secondary" onClick={() => onAction(r.id, 'cancel')} size="sm" style={{ borderRadius: 999 }}>
                 Annuler
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -3247,19 +3293,18 @@ function FriendsPanel({
 
       <div>
         <p style={sectionLabelStyle}>Mes amis ({friends.length})</p>
-        {friends.length === 0 && <EmptyState icon="🤝" title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
+        {friends.length === 0 && <EmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
         {friends.map((f) => (
           <div key={f.userId} style={rowStyle}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>
               {f.name}
               {newFriendIds.has(f.userId) && (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={() => onDismissNew(f.userId)}
                   title="Marquer comme vu"
                   style={{
                     fontSize: 10,
-                    fontWeight: 700,
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                     color: 'var(--teal)',
@@ -3267,16 +3312,15 @@ function FriendsPanel({
                     border: '1px solid rgba(78,232,200,0.35)',
                     borderRadius: 999,
                     padding: '2px 8px',
-                    cursor: 'pointer',
                   }}
                 >
                   Nouveau
-                </button>
+                </Button>
               )}
             </span>
-            <button type="button" onClick={() => onRemove(f.userId)} style={smallButtonStyle}>
+            <Button variant="secondary" onClick={() => onRemove(f.userId)} size="sm" style={{ borderRadius: 999 }}>
               Retirer
-            </button>
+            </Button>
           </div>
         ))}
       </div>
@@ -3347,14 +3391,15 @@ function GroupSettingsModal({
         </label>
         {isAdmin ? (
           <div style={{ flex: 1, display: 'flex', gap: 8 }}>
-            <input value={name} onChange={(e) => setName(e.target.value)} style={{ ...inputStyle, marginBottom: 0, flex: 1 }} />
-            <button
-              type="button"
+            <Input value={name} onChange={(e) => setName(e.target.value)} style={{ ...inputStyle, marginBottom: 0, flex: 1 }} />
+            <Button
+              variant="secondary"
               onClick={() => name.trim() && name.trim() !== conversation.name && onRename(name.trim())}
-              style={smallButtonStyle}
+              size="sm"
+              style={{ borderRadius: 999 }}
             >
               Renommer
-            </button>
+            </Button>
           </div>
         ) : (
           <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{conversation.name}</p>
@@ -3364,22 +3409,22 @@ function GroupSettingsModal({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <p style={{ ...sectionLabelStyle, margin: 0 }}>Membres ({conversation.members.length})</p>
         {isAdmin && (
-          <button type="button" onClick={() => setShowAddMember((v) => !v)} style={smallButtonStyle}>
+          <Button variant="secondary" onClick={() => setShowAddMember((v) => !v)} size="sm" style={{ borderRadius: 999 }}>
             + Ajouter
-          </button>
+          </Button>
         )}
       </div>
 
       {showAddMember && (
         <div style={{ marginBottom: 12, background: 'var(--surface)', borderRadius: 10, padding: 10 }}>
-          <input value={addMemberSearch} onChange={(e) => onAddMemberSearchChange(e.target.value)} placeholder="Rechercher un ami…" style={{ ...inputStyle, marginBottom: 8 }} />
+          <Input value={addMemberSearch} onChange={(e) => onAddMemberSearchChange(e.target.value)} placeholder="Rechercher un ami…" style={{ ...inputStyle, marginBottom: 8 }} />
           <div style={{ maxHeight: 140, overflowY: 'auto' }}>
             {addableFriends.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami à ajouter.</p>}
             {addableFriends.map((f) => (
-              <button key={f.userId} type="button" onClick={() => onAddMember(f.userId)} style={rowButtonStyle}>
+              <Button key={f.userId} variant="ghost" onClick={() => onAddMember(f.userId)} style={{ ...rowButtonStyle, fontWeight: 400 }}>
                 <Avatar userId={f.userId} name={f.name} size={28} />
                 <span style={{ fontSize: 13, color: 'var(--text)' }}>{f.name}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -3401,22 +3446,22 @@ function GroupSettingsModal({
                 {m.role !== 'admin' && (
                   <>
                     {m.muteUntilAt !== undefined ? (
-                      <button type="button" onClick={() => onClearMute(m.userId)} style={smallButtonStyle}>
+                      <Button variant="secondary" onClick={() => onClearMute(m.userId)} size="sm" style={{ borderRadius: 999 }}>
                         Réactiver
-                      </button>
+                      </Button>
                     ) : (
-                      <button type="button" onClick={() => onOpenMuteDialog(m.userId, m.name)} style={smallButtonStyle}>
+                      <Button variant="secondary" onClick={() => onOpenMuteDialog(m.userId, m.name)} size="sm" style={{ borderRadius: 999 }}>
                         Sourdine
-                      </button>
+                      </Button>
                     )}
                   </>
                 )}
-                <button type="button" onClick={() => onSetRole(m.userId, m.role === 'admin' ? 'member' : 'admin')} style={smallButtonStyle}>
+                <Button variant="secondary" onClick={() => onSetRole(m.userId, m.role === 'admin' ? 'member' : 'admin')} size="sm" style={{ borderRadius: 999 }}>
                   {m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}
-                </button>
-                <button type="button" onClick={() => onRemoveMember(m.userId)} style={{ ...smallButtonStyle, color: '#c2347f' }}>
+                </Button>
+                <Button variant="danger" onClick={() => onRemoveMember(m.userId)} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
                   Retirer
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -3424,13 +3469,13 @@ function GroupSettingsModal({
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" onClick={onLeave} style={smallButtonStyle}>
+        <Button variant="secondary" onClick={onLeave} size="sm" style={{ borderRadius: 999 }}>
           Quitter le groupe
-        </button>
+        </Button>
         {isAdmin && (
-          <button type="button" onClick={onDelete} style={{ ...smallButtonStyle, color: '#c2347f' }}>
+          <Button variant="danger" onClick={onDelete} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
             Supprimer le groupe
-          </button>
+          </Button>
         )}
       </div>
     </ModalShell>
@@ -3443,10 +3488,13 @@ function MuteMemberModal({ name, onApply, onClose }: { name: string; onApply: (d
     <ModalShell title={`Mettre ${name} en sourdine`} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
         {GROUP_MUTE_DURATIONS.map((d) => (
-          <label key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <input type="radio" name="mute-duration" checked={durationMs === d.ms} onChange={() => setDurationMs(d.ms)} />
-            <span style={{ fontSize: 13, color: 'var(--text)' }}>{d.label}</span>
-          </label>
+          <Radio
+            key={d.id}
+            name="mute-duration"
+            checked={durationMs === d.ms}
+            onChange={() => setDurationMs(d.ms)}
+            label={<span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{d.label}</span>}
+          />
         ))}
       </div>
       <ModalActions onCancel={onClose} onConfirm={() => onApply(durationMs)} confirmLabel="Mettre en sourdine" />
@@ -3508,26 +3556,26 @@ function ContactPanelModal({
         )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <button type="button" onClick={onClearHistory} style={fullRowButtonStyle}>
+        <Button variant="secondary" onClick={onClearHistory} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>
           Vider l&apos;historique
-        </button>
+        </Button>
         {isFriend && (
-          <button type="button" onClick={onRemoveFriend} style={fullRowButtonStyle}>
+          <Button variant="secondary" onClick={onRemoveFriend} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>
             Retirer des amis
-          </button>
+          </Button>
         )}
         {isBlocked ? (
-          <button type="button" onClick={onUnblock} style={fullRowButtonStyle}>
+          <Button variant="secondary" onClick={onUnblock} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>
             Débloquer
-          </button>
+          </Button>
         ) : (
-          <button type="button" onClick={onBlock} style={{ ...fullRowButtonStyle, color: '#c2347f' }}>
+          <Button variant="danger" onClick={onBlock} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
             Bloquer
-          </button>
+          </Button>
         )}
-        <button type="button" onClick={onReport} style={{ ...fullRowButtonStyle, color: '#c2347f' }}>
+        <Button variant="danger" onClick={onReport} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
           Signaler
-        </button>
+        </Button>
       </div>
     </ModalShell>
   )
@@ -3537,7 +3585,7 @@ function ReportModal({ target, onSubmit, onClose }: { target: { userId: string; 
   const [reason, setReason] = useState('')
   return (
     <ModalShell title={`Signaler ${target.userName}`} onClose={onClose}>
-      <textarea
+      <Textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         placeholder="Décris le problème…"
@@ -3565,19 +3613,19 @@ function StarredModal({
   return (
     <ModalShell title="Messages importants" onClose={onClose} wide>
       {messages.length === 0 && (
-        <EmptyState icon="★" title="Aucun message important" subtitle="Appui long (ou clic droit) sur un message → « Marquer important »" />
+        <EmptyState icon={<Star size={32} />} title="Aucun message important" subtitle="Appui long (ou clic droit) sur un message → « Marquer important »" />
       )}
       {messages.map((m) => (
         <div key={m.id} style={rowStyle}>
-          <button type="button" onClick={() => onJumpTo(m.conversationId)} style={{ background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', flex: 1, minWidth: 0 }}>
+          <Button variant="ghost" onClick={() => onJumpTo(m.conversationId)} style={{ textAlign: 'left', flex: 1, minWidth: 0, fontWeight: 400, display: 'block', padding: 0 }}>
             <p style={{ fontSize: 12, fontWeight: 600, color: m.senderId === currentUserId ? 'var(--teal)' : 'var(--text-muted)', margin: 0 }}>{m.senderName}</p>
             <p style={{ fontSize: 13, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {m.content || messageTypeLabel(m.type)}
             </p>
-          </button>
-          <button type="button" onClick={() => onUnstar(m.id)} style={smallButtonStyle}>
+          </Button>
+          <Button variant="secondary" onClick={() => onUnstar(m.id)} size="sm" style={{ borderRadius: 999 }}>
             Retirer
-          </button>
+          </Button>
         </div>
       ))}
     </ModalShell>
@@ -3602,9 +3650,9 @@ function BlockedReportedModal({
       {blocked.map((b) => (
         <div key={b.userId} style={rowStyle}>
           <span style={{ fontSize: 13, color: 'var(--text)' }}>{b.name}</span>
-          <button type="button" onClick={() => onUnblock(b.userId)} style={smallButtonStyle}>
+          <Button variant="secondary" onClick={() => onUnblock(b.userId)} size="sm" style={{ borderRadius: 999 }}>
             Débloquer
-          </button>
+          </Button>
         </div>
       ))}
       <p style={{ ...sectionLabelStyle, marginTop: 18 }}>Signalements envoyés ({reports.length})</p>
@@ -3643,11 +3691,18 @@ function ForwardModal({
         {conversations.map((conv) => {
           const label = conversationLabel(conv, currentUserId)
           return (
-            <label key={conv.id} style={{ ...rowButtonStyle, cursor: 'pointer' }}>
-              <input type="checkbox" checked={picked.has(conv.id)} onChange={() => onToggle(conv.id)} style={{ marginRight: 4 }} />
-              {conv.type === 'group' ? <GroupAvatar conv={conv} size={30} /> : <Avatar userId={conv.id} name={label} size={30} />}
-              <span style={{ fontSize: 13, color: 'var(--text)' }}>{label}</span>
-            </label>
+            <Checkbox
+              key={conv.id}
+              checked={picked.has(conv.id)}
+              onChange={() => onToggle(conv.id)}
+              style={{ ...rowButtonStyle, cursor: 'pointer' }}
+              label={
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {conv.type === 'group' ? <GroupAvatar conv={conv} size={30} /> : <Avatar userId={conv.id} name={label} size={30} />}
+                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{label}</span>
+                </span>
+              }
+            />
           )
         })}
       </div>
@@ -3680,9 +3735,9 @@ function PollDraftModal({
   const hasDuplicate = duplicateIndexes.size > 0
   return (
     <ModalShell title="Nouveau sondage" onClose={onClose}>
-      <input value={draft.question} onChange={(e) => onChange({ ...draft, question: e.target.value })} placeholder="Question" style={inputStyle} autoFocus />
+      <Input value={draft.question} onChange={(e) => onChange({ ...draft, question: e.target.value })} placeholder="Question" style={inputStyle} autoFocus />
       {draft.options.map((opt, i) => (
-        <input
+        <Input
           key={i}
           value={opt}
           onChange={(e) => {
@@ -3691,20 +3746,21 @@ function PollDraftModal({
             onChange({ ...draft, options: next })
           }}
           placeholder={`Option ${i + 1}`}
+          invalid={duplicateIndexes.has(i)}
           style={{ ...inputStyle, border: duplicateIndexes.has(i) ? '1px solid var(--pink)' : inputStyle.border }}
         />
       ))}
       {hasDuplicate && <p style={{ fontSize: 11.5, color: 'var(--pink)', margin: '-6px 0 10px' }}>Deux options ne peuvent pas être identiques.</p>}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         {draft.options.length < 6 && (
-          <button type="button" onClick={() => onChange({ ...draft, options: [...draft.options, ''] })} style={smallButtonStyle}>
+          <Button variant="secondary" onClick={() => onChange({ ...draft, options: [...draft.options, ''] })} size="sm" style={{ borderRadius: 999 }}>
             + Option
-          </button>
+          </Button>
         )}
         {draft.options.length > 2 && (
-          <button type="button" onClick={() => onChange({ ...draft, options: draft.options.slice(0, -1) })} style={smallButtonStyle}>
+          <Button variant="secondary" onClick={() => onChange({ ...draft, options: draft.options.slice(0, -1) })} size="sm" style={{ borderRadius: 999 }}>
             − Option
-          </button>
+          </Button>
         )}
       </div>
       <ModalActions onCancel={onClose} onConfirm={onSubmit} confirmLabel="Envoyer" disabled={!draft.question.trim() || hasBlankOption || hasDuplicate} />
@@ -3748,18 +3804,17 @@ function EventPickerModal({ onPick, onClose }: { onPick: (eventId: string) => vo
 
   return (
     <ModalShell title="Partager un événement" onClose={onClose} wide>
-      <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un événement…" style={inputStyle} autoFocus />
+      <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un événement…" style={inputStyle} autoFocus />
       {searching && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 8px' }}>Recherche…</p>}
       <div style={{ maxHeight: 320, overflowY: 'auto' }}>
         {!searching && trimmedQuery && visibleResults.length === 0 && (
           <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun événement trouvé.</p>
         )}
         {visibleResults.map((ev) => (
-          <button key={ev.id} type="button" onClick={() => onPick(ev.id)} style={{ ...rowButtonStyle, alignItems: 'center' }}>
+          <Button key={ev.id} variant="ghost" onClick={() => onPick(ev.id)} style={{ ...rowButtonStyle, alignItems: 'center', fontWeight: 400 }}>
             <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)' }}>
               {ev.image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={ev.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <NextImage src={ev.image} alt="" width={44} height={44} style={{ objectFit: 'cover' }} />
               )}
             </div>
             <div style={{ minWidth: 0 }}>
@@ -3768,7 +3823,7 @@ function EventPickerModal({ onPick, onClose }: { onPick: (eventId: string) => vo
               </p>
               <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>{[ev.date, ev.city].filter(Boolean).join(' · ')}</p>
             </div>
-          </button>
+          </Button>
         ))}
       </div>
     </ModalShell>
@@ -3834,10 +3889,10 @@ const rowButtonStyle: React.CSSProperties = {
 }
 
 const sectionLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
-  color: 'var(--text-faint)',
+  fontSize: 11.5,
+  fontWeight: 800,
+  color: 'var(--teal)',
   textTransform: 'uppercase',
-  letterSpacing: '0.06em',
+  letterSpacing: '0.08em',
   margin: '0 0 8px',
 }

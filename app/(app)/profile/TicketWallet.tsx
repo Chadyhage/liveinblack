@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
+import { Button, Input } from '@/app/components/ui'
 
 // Port du panneau "Mes billets" de ProfilePage.jsx (#6 phase profil) — copies
 // mirroir des DTO JSON de lib/server/tickets.ts (même convention que
@@ -69,6 +71,7 @@ const REFUND_ERROR_LABELS: Record<string, string> = {
   ticket_already_checked_in: 'Au moins une place de cette réservation a déjà été scannée à l’entrée, le remboursement n’est plus possible.',
   already_requested: 'Une demande de remboursement a déjà été envoyée pour ce billet.',
   not_eligible: 'Ce billet n’est pas éligible au remboursement.',
+  free_ticket_not_refundable: 'Ce billet est gratuit, il n’y a rien à rembourser.',
 }
 
 const RESELL_ERROR_LABELS: Record<string, string> = {
@@ -265,13 +268,17 @@ function SeatHoldsPanel() {
               Solde {fmtMoney(toMajor(hold.balanceDueMinor, hold.currency), hold.currency)} · {hold.expiresAt ? hoursRemainingLabel(hold.expiresAt) : ''}
             </p>
           </div>
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => payBalance(hold)}
             disabled={payingId === hold.id}
-            style={{ padding: '8px 14px', borderRadius: 999, border: 'none', background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', opacity: payingId === hold.id ? 0.6 : 1 }}
+            loading={payingId === hold.id}
+            loadingText="Redirection…"
+            style={{ borderRadius: 999 }}
           >
-            {payingId === hold.id ? 'Redirection…' : 'Payer le solde'}
-          </button>
+            Payer le solde
+          </Button>
         </div>
       ))}
       {payErr && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 11.5 }}>{payErr}</p>}
@@ -282,7 +289,7 @@ function SeatHoldsPanel() {
 function Section({ label, groups, currentUserId }: { label: string; groups: TicketWalletGroupView[]; currentUserId: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0' }}>{label}</p>
+      <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '4px 0 0' }}>{label}</p>
       {groups.map((g) => (
         <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classify(g)} />
       ))}
@@ -293,14 +300,15 @@ function Section({ label, groups, currentUserId }: { label: string; groups: Tick
 function BackHeader({ onBack, title }: { onBack: () => void; title: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-      <button
+      <Button
+        variant="ghost"
         onClick={onBack}
-        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 22, cursor: 'pointer', padding: '4px 8px 4px 0' }}
+        style={{ fontSize: 22, padding: '4px 8px 4px 0', color: 'var(--text-muted)' }}
         aria-label="Retour"
       >
         ‹
-      </button>
-      <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>{title}</h1>
+      </Button>
+      <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>{title}</h1>
     </div>
   )
 }
@@ -437,12 +445,14 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
             >
               Contacter le support
             </a>
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={dismissBanner}
-              style={{ padding: '8px 12px', borderRadius: 8, background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: 12.5, cursor: 'pointer' }}
+              style={{ borderRadius: 8 }}
             >
-              ✕
-            </button>
+              <X size={14} />
+            </Button>
           </div>
         </div>
       )}
@@ -459,12 +469,9 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
       {group.myTickets.length > 0 && (
         <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--teal)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}
-            >
+            <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 12.5 }}>
               {expanded ? 'Masquer mes places' : 'Voir mes places'}
-            </button>
+            </Button>
             {event?.hasPlaylist && !cancelled && !past && (
               <Link
                 href={`/playlist/${event.id}`}
@@ -617,7 +624,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <p style={{ fontWeight: 700, fontSize: 13.5, color: '#fff', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
+        <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
         <span style={{ fontSize: 12, color: 'var(--violet)', fontWeight: 700 }}>
           {assignedCount}/{hostedSeats.length} attribuées
         </span>
@@ -644,15 +651,17 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                   </p>
                 </div>
                 {seat.assignedTo ? (
-                  <button onClick={() => revoke(seat.ticketCode)} disabled={busyCode === seat.ticketCode} style={smallBtnStyle('rgba(224,90,170,0.14)', '#e05aaa')}>
+                  <Button variant="danger" size="sm" onClick={() => revoke(seat.ticketCode)} disabled={busyCode === seat.ticketCode} style={smallBtnStyle('rgba(224,90,170,0.14)', '#e05aaa')}>
                     Reprendre
-                  </button>
+                  </Button>
                 ) : pendingEmail ? (
-                  <button onClick={() => cancelInvite(seat.ticketCode)} disabled={busyCode === seat.ticketCode} style={smallBtnStyle('rgba(255,255,255,0.06)', 'var(--text-muted)')}>
+                  <Button variant="secondary" size="sm" onClick={() => cancelInvite(seat.ticketCode)} disabled={busyCode === seat.ticketCode} style={smallBtnStyle('rgba(255,255,255,0.06)', 'var(--text-muted)')}>
                     Annuler
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                       setOpenInviteFor(openInviteFor === seat.ticketCode ? null : seat.ticketCode)
                       setEmailDraft('')
@@ -660,25 +669,28 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                     style={smallBtnStyle('rgba(139,92,246,0.16)', 'var(--violet)')}
                   >
                     Inviter
-                  </button>
+                  </Button>
                 )}
               </div>
               {openInviteFor === seat.ticketCode && (
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <input
+                  <Input
                     type="email"
                     value={emailDraft}
                     onChange={(e) => setEmailDraft(e.target.value)}
                     placeholder="Adresse e-mail de ton invité·e"
-                    style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 12.5 }}
+                    size="sm"
+                    style={{ flex: 1, borderRadius: 8, fontSize: 12.5 }}
                   />
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => sendInvite(seat.ticketCode)}
                     disabled={busyCode === seat.ticketCode || !emailDraft.trim()}
                     style={smallBtnStyle('var(--teal-solid)', '#04120e')}
                   >
                     Donner
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -1007,9 +1019,17 @@ function PremiumTicketCard({
         ) : (
           <>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <ActionBtn onClick={handleDownload} disabled={downloadState === 'busy'}>
-                {downloadState === 'busy' ? 'Préparation…' : downloadState === 'ok' ? 'Billet téléchargé' : 'Télécharger le billet'}
-              </ActionBtn>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleDownload}
+                disabled={downloadState === 'busy'}
+                loading={downloadState === 'busy'}
+                loadingText="Préparation…"
+                style={actionBtnStyle(false)}
+              >
+                {downloadState === 'ok' ? 'Billet téléchargé' : 'Télécharger le billet'}
+              </Button>
               <ActionBtn onClick={toggleIncluded}>{showIncluded ? 'Masquer les options' : 'Voir les options incluses'}</ActionBtn>
             </div>
             {downloadState === 'err' && (
@@ -1025,28 +1045,49 @@ function PremiumTicketCard({
                 </Link>
               )}
               <ActionBtn onClick={handleShare}>Partager</ActionBtn>
-              <button onClick={handleShareStory} disabled={storyState === 'busy'} title="Une belle image 9:16 pour Instagram — sans le QR code" style={actionBtnStyle(false, 'rgba(224,90,170,0.14)', '#e05aaa')}>
-                {storyState === 'busy' ? 'Création…' : 'Partager en story'}
-              </button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleShareStory}
+                disabled={storyState === 'busy'}
+                loading={storyState === 'busy'}
+                loadingText="Création…"
+                title="Une belle image 9:16 pour Instagram — sans le QR code"
+                style={actionBtnStyle(false, 'rgba(224,90,170,0.14)', '#e05aaa')}
+              >
+                Partager en story
+              </Button>
               <ActionBtn onClick={handleCalendar}>Calendrier</ActionBtn>
               {(event?.postponed || ticket.cancellationProtectionPurchased) && ticket.orderId && (
-                <button
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={handleRefundRequest}
                   disabled={refundState === 'busy' || refundState === 'done'}
+                  loading={refundState === 'busy'}
+                  loadingText="Envoi…"
                   style={actionBtnStyle(refundState === 'busy' || refundState === 'done', 'rgba(224,90,170,0.14)', '#e05aaa')}
                 >
-                  {refundState === 'done' ? 'Remboursement demandé' : refundState === 'busy' ? 'Envoi…' : 'Demander un remboursement'}
-                </button>
+                  {refundState === 'done' ? 'Remboursement demandé' : 'Demander un remboursement'}
+                </Button>
               )}
               {ticket.resellable && !activeListing && (
-                <button onClick={() => setResellOpen((v) => !v)} style={actionBtnStyle(false, 'rgba(139,92,246,0.14)', 'var(--violet)')}>
+                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} style={actionBtnStyle(false, 'rgba(139,92,246,0.14)', 'var(--violet)')}>
                   Revendre mon billet
-                </button>
+                </Button>
               )}
               {activeListing && (
-                <button onClick={handleWithdrawResell} disabled={withdrawState === 'busy'} style={actionBtnStyle(withdrawState === 'busy', 'rgba(255,255,255,0.06)', 'var(--text-muted)')}>
-                  {withdrawState === 'busy' ? 'Retrait…' : `En vente — ${fmtMoney(toMajor(activeListing.resalePriceMinor, ticket.currency), ticket.currency)} · Retirer`}
-                </button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleWithdrawResell}
+                  disabled={withdrawState === 'busy'}
+                  loading={withdrawState === 'busy'}
+                  loadingText="Retrait…"
+                  style={actionBtnStyle(withdrawState === 'busy', 'rgba(255,255,255,0.06)', 'var(--text-muted)')}
+                >
+                  {`En vente — ${fmtMoney(toMajor(activeListing.resalePriceMinor, ticket.currency), ticket.currency)} · Retirer`}
+                </Button>
               )}
             </div>
             {refundState === 'err' && refundErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{refundErr}</p>}
@@ -1057,17 +1098,24 @@ function PremiumTicketCard({
                   Prix maximum : {fmtMoney(ticket.placePrice, ticket.currency)} (prix initial, majoration interdite). Le montant de revente n&apos;est jamais garanti tant que personne n&apos;a acheté ; les frais payés à l&apos;achat initial ne sont pas récupérés.
                 </p>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input
+                  <Input
                     type="number"
                     inputMode="decimal"
                     placeholder={`Prix (max ${ticket.placePrice})`}
                     value={resellPrice}
                     onChange={(e) => setResellPrice(e.target.value)}
-                    style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--obsidian)', color: 'var(--text)', fontSize: 13 }}
+                    style={{ flex: 1, borderRadius: 8, background: 'var(--obsidian)', fontSize: 13 }}
                   />
-                  <button onClick={handleResell} disabled={resellState === 'busy'} style={{ ...actionBtnStyle(resellState === 'busy'), background: 'var(--violet)', color: '#fff' }}>
-                    {resellState === 'busy' ? 'Publication…' : 'Confirmer'}
-                  </button>
+                  <Button
+                    variant="primary"
+                    onClick={handleResell}
+                    disabled={resellState === 'busy'}
+                    loading={resellState === 'busy'}
+                    loadingText="Publication…"
+                    style={{ ...actionBtnStyle(resellState === 'busy'), background: 'var(--violet)', color: '#fff' }}
+                  >
+                    Confirmer
+                  </Button>
                 </div>
                 {resellState === 'err' && resellErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{resellErr}</p>}
               </div>
@@ -1104,8 +1152,8 @@ function actionBtnStyle(disabled: boolean, bg = 'rgba(255,255,255,0.06)', color 
 
 function ActionBtn({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
-    <button onClick={onClick} disabled={disabled} style={actionBtnStyle(Boolean(disabled))}>
+    <Button variant="secondary" size="sm" onClick={onClick} disabled={disabled} style={actionBtnStyle(Boolean(disabled))}>
       {children}
-    </button>
+    </Button>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/app/components/ui'
 
 // Port de src/pages/BoostActivePage.jsx. Différence d'architecture vs
 // legacy : l'activation (création du doc Boost) est intégralement côté
@@ -95,7 +96,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 24px', border: `2px solid ${COLORS.dim}`, borderTopColor: COLORS.pink, animation: 'lib-boost-spin 0.9s linear infinite' }} />
-            <p style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
+            <p className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
               Activation du boost…
             </p>
           </>
@@ -108,7 +109,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
             </div>
-            <p style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 8px' }}>
+            <p className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 8px' }}>
               Boost activé
             </p>
             {boostInfo && (
@@ -119,16 +120,17 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
-              <button
+              <Button
                 onClick={() => router.push('/my-events')}
-                style={{ padding: '14px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14.5, fontWeight: 700, background: 'var(--violet-cta)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
+                style={{ padding: '14px 20px', borderRadius: 8, fontSize: 14.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', background: 'var(--violet-cta)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
                 Voir mes événements
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => router.push('/home')}
-                style={{ padding: '13px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>
+                variant="secondary"
+                style={{ padding: '13px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>
                 Voir le Top 3
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -142,7 +144,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
                 <circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} />
               </svg>
             </div>
-            <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <p className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
               Erreur d&apos;activation
             </p>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
@@ -155,11 +157,12 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
                 <IconMail size={15} color="#141007" />
                 Contacter le support
               </a>
-              <button
+              <Button
                 onClick={() => router.push('/my-events')}
-                style={{ padding: '13px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>
+                variant="secondary"
+                style={{ padding: '13px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>
                 Retour à mes événements
-              </button>
+              </Button>
             </div>
           </>
         )}

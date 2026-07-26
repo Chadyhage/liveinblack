@@ -1,6 +1,7 @@
 // Port de src/components/StarRating.jsx — étoiles de notation (affichage
 // lecture seule + saisie 1-5). Couleur champagne var(--gold)/#c8a96e.
 import { useId, useRef } from 'react'
+import { Button } from '@/app/components/ui'
 
 const GOLD = '#c8a96e'
 
@@ -70,9 +71,10 @@ export function StarInput({ value = 0, onChange, size = 30 }: { value?: number; 
   return (
     <div role="radiogroup" aria-label="Note sur 5" style={{ display: 'inline-flex', gap: 6 }}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <button
+        <Button
           key={i}
           ref={(el) => { btnRefs.current[i - 1] = el }}
+          variant="ghost"
           type="button"
           role="radio"
           aria-checked={value === i}
@@ -80,10 +82,10 @@ export function StarInput({ value = 0, onChange, size = 30 }: { value?: number; 
           tabIndex={i - 1 === activeIndex ? 0 : -1}
           onClick={() => onChange?.(i)}
           onKeyDown={(e) => handleKeyDown(e, i)}
-          style={{ background: 'none', border: 'none', padding: 7, cursor: 'pointer', lineHeight: 0 }}
+          style={{ padding: 7, lineHeight: 0 }}
         >
           <StarIcon size={size} gradientId={`star-input-${uid}-${i}`} fill={value >= i ? 'full' : 'empty'} />
-        </button>
+        </Button>
       ))}
     </div>
   )

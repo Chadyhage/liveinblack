@@ -1,13 +1,14 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import TicketWalletPanel, { type TicketWalletGroupView } from './TicketWallet'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
+import { Button, Input, Select, Switch, Badge, Label } from '@/app/components/ui'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -67,29 +68,31 @@ function errorMessage(code: string, data?: { nextChangeAllowedAt?: string }): st
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 14, outline: 'none' }
-const primaryBtn = (disabled: boolean): React.CSSProperties => ({
-  padding: '11px 20px',
-  borderRadius: 10,
-  border: 'none',
-  background: disabled ? 'rgba(200,169,110,0.3)' : 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
+// Style visuel "CTA or" partagé par tous les boutons primaires de ce panneau
+// (auparavant généré par l'helper `primaryBtn`) — passé via la prop `style`
+// de <Button variant="primary">, qui gère déjà elle-même l'opacité/curseur
+// disabled et le spinner de chargement.
+const goldButtonStyle: React.CSSProperties = {
+  borderRadius: 8,
+  background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
   color: '#1a1508',
-  fontWeight: 700,
-  fontSize: 13.5,
-  cursor: disabled ? 'default' : 'pointer',
-})
+  textTransform: 'uppercase',
+  letterSpacing: '.04em',
+}
 
 type Panel = null | 'settings' | 'billets' | 'support'
 
-const ROLE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  client: { label: 'Client', color: '#4ee8c8', bg: 'rgba(78,232,200,0.10)' },
-  prestataire: { label: 'Prestataire', color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)' },
-  organisateur: { label: 'Organisateur', color: '#4ee8c8', bg: 'rgba(78,232,200,0.10)' },
-  agent: { label: 'Agent', color: '#c8a96e', bg: 'rgba(200,169,110,0.10)' },
+const ROLE_LABELS: Record<string, { label: string; badgeTone: 'teal' | 'violet' | 'gold' }> = {
+  client: { label: 'Client', badgeTone: 'teal' },
+  prestataire: { label: 'Prestataire', badgeTone: 'violet' },
+  organisateur: { label: 'Organisateur', badgeTone: 'teal' },
+  agent: { label: 'Agent', badgeTone: 'gold' },
 }
 
 export default function ProfilClient({ initialUser, initialTicketGroups }: { initialUser: ProfilUser; initialTicketGroups: TicketWalletGroupView[] }) {
-  const [panel, setPanel] = useState<Panel>(null)
+  const searchParams = useSearchParams()
+  const initialPanel = searchParams.get('panel')
+  const [panel, setPanel] = useState<Panel>(initialPanel === 'billets' || initialPanel === 'settings' || initialPanel === 'support' ? initialPanel : null)
   const [user, setUser] = useState<ProfilUser>(initialUser)
 
   if (panel === 'billets') return <TicketWalletPanel groups={initialTicketGroups} currentUserId={user.id} onBack={() => setPanel(null)} />
@@ -123,21 +126,17 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
       <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <AvatarUpload user={user} setUser={setUser} />
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0, textAlign: 'center' }}>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0, textAlign: 'center' }}>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
           <p style={{ fontSize: 12, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{user.email}</p>
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-            {roleInfo && (
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 11px', borderRadius: 999, color: roleInfo.color, background: roleInfo.bg }}>{roleInfo.label}</span>
-            )}
-            {!isOrganizer && (
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 11px', borderRadius: 999, color: 'var(--gold)', background: 'rgba(200,169,110,0.12)' }}>{user.points || 0} pts</span>
-            )}
+            {roleInfo && <Badge tone={roleInfo.badgeTone}>{roleInfo.label}</Badge>}
+            {!isOrganizer && <Badge tone="gold">{user.points || 0} pts</Badge>}
           </div>
         </div>
 
         {!isOrganizer && (
           <div style={cardStyle}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Système de points</p>
+            <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>Système de points</p>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
               Tu gagnes <strong style={{ color: '#fff' }}>1 point</strong> pour chaque ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs.
             </p>
@@ -152,12 +151,14 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
           <MenuRow label="Support / Aide" onClick={() => onOpenPanel('support')} />
         </div>
 
-        <button
+        <Button
           onClick={() => setShowLogoutConfirm(true)}
-          style={{ padding: '13px 0', borderRadius: 12, border: '1px solid rgba(224,90,170,0.4)', background: 'transparent', color: '#e05aaa', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+          variant="secondary"
+          fullWidth
+          style={{ padding: '13px 0', borderRadius: 12, border: '1px solid rgba(224,90,170,0.4)', background: 'transparent', color: '#e05aaa', fontSize: 14 }}
         >
           Se déconnecter
-        </button>
+        </Button>
       </div>
 
       {showLogoutConfirm && (
@@ -176,8 +177,10 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
 
 function MenuRow({ label, onClick, gold }: { label: string; onClick: () => void; gold?: boolean }) {
   return (
-    <button
+    <Button
       onClick={onClick}
+      variant="secondary"
+      fullWidth
       style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -188,16 +191,13 @@ function MenuRow({ label, onClick, gold }: { label: string; onClick: () => void;
         background: gold ? 'rgba(200,169,110,0.06)' : 'var(--surface)',
         color: '#fff',
         fontSize: 13.5,
-        fontWeight: 600,
         textTransform: 'uppercase',
         letterSpacing: '0.02em',
-        cursor: 'pointer',
-        width: '100%',
       }}
     >
       {label}
       <span style={{ color: 'var(--text-faint)', fontSize: 16 }}>›</span>
-    </button>
+    </Button>
   )
 }
 
@@ -228,16 +228,17 @@ function ConfirmModal({
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 16px' }}>{body}</p>
         {children}
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-          <button onClick={onCancel} style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', fontSize: 13.5, cursor: 'pointer' }}>
+          <Button onClick={onCancel} variant="secondary" style={{ flex: 1, padding: '11px 0', borderRadius: 10 }}>
             Annuler
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onConfirm}
             disabled={confirmDisabled}
-            style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: danger ? '#c2347f' : 'var(--teal-solid)', color: danger ? '#fff' : '#04120e', fontSize: 13.5, fontWeight: 700, cursor: confirmDisabled ? 'default' : 'pointer', opacity: confirmDisabled ? 0.6 : 1 }}
+            variant={danger ? 'danger' : 'primary'}
+            style={{ flex: 1, padding: '11px 0', borderRadius: 8, background: danger ? '#c2347f' : 'var(--teal-solid)', color: danger ? '#fff' : '#04120e', textTransform: 'uppercase', letterSpacing: '.04em' }}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -326,8 +327,9 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
   return (
     <>
       <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFileChange} />
-      <button
+      <Button
         type="button"
+        variant="ghost"
         aria-label="Changer la photo de profil"
         onClick={() => fileInputRef.current?.click()}
         style={{
@@ -335,20 +337,15 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           height: 80,
           borderRadius: '50%',
           background: user.avatarUrl ? `url(${user.avatarUrl}) center/cover` : 'rgba(200,169,110,0.18)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
           fontSize: 28,
           fontWeight: 800,
           color: 'var(--gold)',
           position: 'relative',
-          border: 'none',
           padding: 0,
         }}
       >
         {!user.avatarUrl && initial}
-      </button>
+      </Button>
 
       {cropSrc && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
@@ -391,25 +388,29 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                 { label: 'Déplacer la photo vers le bas', glyph: '↓', dx: 0, dy: 6 },
                 { label: 'Déplacer la photo vers la droite', glyph: '→', dx: 6, dy: 0 },
               ].map((control) => (
-                <button
+                <Button
                   key={control.label}
                   type="button"
+                  variant="secondary"
                   aria-label={control.label}
                   onClick={() => setOffset((current) => ({ x: current.x + control.dx, y: current.y + control.dy }))}
-                  style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: '#fff', cursor: 'pointer', fontSize: 17 }}
+                  style={{ width: 36, height: 36, padding: 0, borderRadius: 10, fontSize: 17 }}
                 >
                   {control.glyph}
-                </button>
+                </Button>
               ))}
             </div>
+            {/* Curseur de zoom natif conservé : Input/Select ne couvrent pas
+                type="range" (rendu/accentColor spécifique), donc laissé natif
+                comme indiqué dans la consigne de swap. */}
             <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--gold)', marginBottom: 18 }} />
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setCropSrc(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff', cursor: 'pointer' }}>
+              <Button onClick={() => setCropSrc(null)} variant="secondary" style={{ flex: 1, padding: '11px 0', borderRadius: 10 }}>
                 Annuler
-              </button>
-              <button onClick={saveAvatar} disabled={saving} style={primaryBtn(saving)}>
-                {saving ? 'Enregistrement…' : 'Valider'}
-              </button>
+              </Button>
+              <Button onClick={saveAvatar} disabled={saving} loading={saving} loadingText="Enregistrement…" variant="primary" style={{ flex: 1, padding: '11px 0', ...goldButtonStyle }}>
+                Valider
+              </Button>
             </div>
           </div>
         </div>
@@ -465,26 +466,26 @@ function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (
       `}</style>
       <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={onBack} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 22, cursor: 'pointer', padding: '4px 8px 4px 0' }} aria-label="Retour">
+          <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
             ‹
-          </button>
-          <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>Paramètres du compte</h1>
+          </Button>
+          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>Paramètres du compte</h1>
         </div>
 
-        <input
+        <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher un réglage — nom, e-mail, mot de passe…"
-          style={{ ...inputStyle, textOverflow: 'ellipsis' }}
+          style={{ textOverflow: 'ellipsis' }}
         />
 
         {filtered.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center' }}>
             <p style={{ fontSize: 14, color: '#fff', margin: '0 0 6px' }}>Aucun réglage ne correspond à « {query} »</p>
             <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 12px' }}>Essaie « nom », « e-mail », « mot de passe », « confidentialité »…</p>
-            <button onClick={() => setQuery('')} style={{ background: 'transparent', border: 'none', color: 'var(--teal)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+            <Button onClick={() => setQuery('')} variant="link" style={{ fontSize: 12.5, textDecoration: 'none' }}>
               Effacer la recherche
-            </button>
+            </Button>
           </div>
         ) : (
           filtered.map((entry) => <div key={entry.id}>{entry.render({ user, setUser })}</div>)
@@ -495,7 +496,7 @@ function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (
 }
 
 function EyebrowLabel({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>{children}</p>
+  return <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>{children}</p>
 }
 
 function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {
@@ -521,21 +522,22 @@ function PasswordField({
   const [show, setShow] = useState(false)
   return (
     <div style={{ position: 'relative' }}>
-      <input
+      <Input
         autoFocus={autoFocus}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         type={show ? 'text' : 'password'}
         placeholder={placeholder}
-        style={{ ...inputStyle, ...style, paddingRight: 56 }}
+        style={{ ...style, paddingRight: 56 }}
       />
-      <button
+      <Button
         type="button"
+        variant="link"
         onClick={() => setShow((v) => !v)}
-        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
       >
         {show ? 'Cacher' : 'Voir'}
-      </button>
+      </Button>
     </div>
   )
 }
@@ -668,66 +670,67 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
   return (
     <div style={cardStyle}>
       <EyebrowLabel>Informations personnelles</EyebrowLabel>
-      <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Prénom / Nom</label>
+      <Label>Prénom / Nom</Label>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8, opacity: onCooldown ? 0.5 : 1 }}>
-        <input value={firstName} onChange={(e) => !onCooldown && setFirstName(e.target.value)} placeholder="Ton prénom" style={inputStyle} disabled={onCooldown} />
-        <input value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" style={inputStyle} disabled={onCooldown} />
+        <Input value={firstName} onChange={(e) => !onCooldown && setFirstName(e.target.value)} placeholder="Ton prénom" disabled={onCooldown} />
+        <Input value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" disabled={onCooldown} />
       </div>
       {onCooldown && nextChangeDate && (
         <p style={{ fontSize: 12, color: 'var(--gold)', margin: '0 0 10px' }}>
           Prochain changement possible le {nextChangeDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       )}
-      <button onClick={saveName} disabled={saving || !nameChanged || onCooldown} style={primaryBtn(saving || !nameChanged || onCooldown)}>
-        {saving ? 'Enregistrement…' : 'Enregistrer le nom'}
-      </button>
+      <Button onClick={saveName} disabled={saving || !nameChanged || onCooldown} loading={saving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
+        Enregistrer le nom
+      </Button>
       {msg && <Toast text={msg.text} kind={msg.kind} />}
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
-      <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Téléphone</label>
+      <Label>Téléphone</Label>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <select value={dialCode} onChange={(e) => setDialCode(e.target.value)} style={{ ...inputStyle, maxWidth: 110, cursor: 'pointer' }}>
-          {regions.map((r) => (
-            <option key={r.id} value={r.dial}>
-              {r.flag} {r.dial}
-            </option>
-          ))}
-        </select>
-        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro sans l'indicatif" style={{ ...inputStyle, flex: 1 }} />
+        <Select
+          value={dialCode}
+          onChange={setDialCode}
+          options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))}
+          size="sm"
+        />
+        <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro sans l'indicatif" style={{ flex: 1 }} />
       </div>
       <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
         Utilisé pour te contacter et partagé avec les organisateurs/prestataires avec qui tu échanges en messagerie.
       </p>
-      <button onClick={savePhone} disabled={phoneSaving || !phoneChanged} style={primaryBtn(phoneSaving || !phoneChanged)}>
-        {phoneSaving ? 'Enregistrement…' : 'Enregistrer le téléphone'}
-      </button>
+      <Button onClick={savePhone} disabled={phoneSaving || !phoneChanged} loading={phoneSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
+        Enregistrer le téléphone
+      </Button>
       {phoneMsg && <Toast text={phoneMsg.text} kind={phoneMsg.kind} />}
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
       <div className="profile-demo-row" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <select value={birthYear} onChange={(e) => setBirthYear(e.target.value)} style={inputStyle}>
-          <option value="">Année de naissance —</option>
-          {yearOptions.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
-        <select value={gender} onChange={(e) => setGender(e.target.value)} style={inputStyle}>
-          <option value="">Genre —</option>
-          <option value="femme">Femme</option>
-          <option value="homme">Homme</option>
-          <option value="autre">Autre</option>
-        </select>
+        <Select
+          value={birthYear}
+          onChange={setBirthYear}
+          placeholder="Année de naissance —"
+          options={yearOptions.map((y) => ({ value: String(y), label: String(y) }))}
+        />
+        <Select
+          value={gender}
+          onChange={setGender}
+          placeholder="Genre —"
+          options={[
+            { value: 'femme', label: 'Femme' },
+            { value: 'homme', label: 'Homme' },
+            { value: 'autre', label: 'Autre' },
+          ]}
+        />
       </div>
       <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
         Optionnel — sert uniquement aux statistiques anonymes des organisateurs. Jamais affiché sur ton profil, jamais utilisé comme contrôle d&apos;âge.
       </p>
-      <button onClick={saveDemographics} disabled={demoSaving || demoUnchanged} style={primaryBtn(demoSaving || demoUnchanged)}>
-        {demoSaving ? 'Enregistrement…' : 'Enregistrer ces infos'}
-      </button>
+      <Button onClick={saveDemographics} disabled={demoSaving || demoUnchanged} loading={demoSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
+        Enregistrer ces infos
+      </Button>
       {demoMsg && <Toast text={demoMsg.text} kind={demoMsg.kind} />}
     </div>
   )
@@ -766,20 +769,18 @@ function PreferencesCard({ user, setUser }: { user: ProfilUser; setUser: (u: Pro
       {tags.length > 0 ? (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
           {shown.map((t, i) => (
-            <span key={i} style={{ fontSize: 11.5, fontWeight: 700, padding: '5px 11px', borderRadius: 999, background: 'rgba(139,92,246,0.14)', color: 'var(--violet)' }}>
+            <Badge key={i} tone="violet">
               {t}
-            </span>
+            </Badge>
           ))}
-          {overflow > 0 && (
-            <span style={{ fontSize: 11.5, fontWeight: 700, padding: '5px 11px', borderRadius: 999, background: 'rgba(255,255,255,0.06)', color: 'var(--text-faint)' }}>+{overflow}</span>
-          )}
+          {overflow > 0 && <Badge tone="neutral">+{overflow}</Badge>}
         </div>
       ) : (
         <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '0 0 14px' }}>Tu n&apos;as pas encore renseigné tes goûts.</p>
       )}
-      <button onClick={() => setOpen(true)} style={primaryBtn(false)}>
+      <Button onClick={() => setOpen(true)} variant="primary" style={goldButtonStyle}>
         {tags.length > 0 ? 'Modifier mes goûts' : 'Renseigner mes goûts'}
-      </button>
+      </Button>
       <PreferencesModal
         open={open}
         onClose={() => setOpen(false)}
@@ -797,13 +798,7 @@ function PrivacyToggle({ label, hint, value, onChange }: { label: string; hint: 
         <p style={{ fontSize: 13, color: '#fff', margin: '0 0 2px', fontWeight: 600 }}>{label}</p>
         <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0, lineHeight: 1.4 }}>{hint}</p>
       </div>
-      <button
-        onClick={() => onChange(!value)}
-        style={{ width: 42, height: 24, borderRadius: 999, border: 'none', background: value ? 'var(--teal-solid)' : 'rgba(255,255,255,0.14)', position: 'relative', cursor: 'pointer', flexShrink: 0 }}
-        aria-pressed={value}
-      >
-        <span style={{ position: 'absolute', top: 3, left: value ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
-      </button>
+      <Switch checked={value} onChange={(e) => onChange(e.target.checked)} />
     </div>
   )
 }
@@ -896,9 +891,9 @@ function DataExportCard() {
         messages que tu as envoyés, amis, avis, événements suivis…) au format JSON — droit d&apos;accès et droit à la
         portabilité (articles 15 et 20 du RGPD).
       </p>
-      <button onClick={download} disabled={downloading} style={primaryBtn(downloading)}>
-        {downloading ? 'Préparation…' : 'Télécharger mes données'}
-      </button>
+      <Button onClick={download} disabled={downloading} loading={downloading} loadingText="Préparation…" variant="primary" style={goldButtonStyle}>
+        Télécharger mes données
+      </Button>
       {msg && <Toast text={msg.text} kind={msg.kind} />}
     </div>
   )
@@ -952,7 +947,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
       <EyebrowLabel>Adresse e-mail</EyebrowLabel>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'var(--surface-2)', marginBottom: 14 }}>
         <span style={{ fontSize: 13, color: '#fff', flex: 1 }}>{user.email}</span>
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--teal)', background: 'rgba(78,232,200,0.10)', padding: '3px 8px', borderRadius: 999 }}>Actuel</span>
+        <Badge tone="teal">Actuel</Badge>
       </div>
 
       {user.pendingEmail ? (
@@ -961,19 +956,19 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.5 }}>
             Un lien a été envoyé à {user.pendingEmail}. Ouvre-le pour confirmer le changement.
           </p>
-          <button onClick={cancelRequest} disabled={cancelling} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+          <Button onClick={cancelRequest} disabled={cancelling} variant="link" style={{ color: 'var(--text-muted)', fontSize: 12 }}>
             Annuler la demande
-          </button>
+          </Button>
         </div>
       ) : (
         <>
-          <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Nouvelle adresse e-mail</label>
-          <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} type="email" style={{ ...inputStyle, marginBottom: 10 }} />
-          <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Mot de passe actuel (requis)</label>
+          <Label>Nouvelle adresse e-mail</Label>
+          <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} type="email" style={{ marginBottom: 10 }} />
+          <Label>Mot de passe actuel (requis)</Label>
           <PasswordField value={currentPassword} onChange={setCurrentPassword} placeholder="Mot de passe actuel" style={{ marginBottom: 12 }} />
-          <button onClick={submit} disabled={saving || !newEmail || !currentPassword} style={primaryBtn(saving || !newEmail || !currentPassword)}>
-            {saving ? 'Envoi…' : 'Envoyer le lien de vérification'}
-          </button>
+          <Button onClick={submit} disabled={saving || !newEmail || !currentPassword} loading={saving} loadingText="Envoi…" variant="primary" style={goldButtonStyle}>
+            Envoyer le lien de vérification
+          </Button>
         </>
       )}
       {msg && <Toast text={msg.text} kind={msg.kind} />}
@@ -1050,16 +1045,16 @@ function PasswordCard({ email }: { email: string }) {
         value={confirmPassword}
         onChange={setConfirmPassword}
         placeholder="Confirmer le nouveau mot de passe"
-        style={{ marginBottom: 12, border: mismatch ? '1px solid #e05aaa' : inputStyle.border }}
+        style={{ marginBottom: 12, border: mismatch ? '1px solid #e05aaa' : undefined }}
       />
-      <button onClick={submit} disabled={saving || !currentPassword || !newPassword || !confirmPassword} style={primaryBtn(saving || !currentPassword || !newPassword || !confirmPassword)}>
-        {saving ? 'Mise à jour…' : 'Mettre à jour le mot de passe'}
-      </button>
+      <Button onClick={submit} disabled={saving || !currentPassword || !newPassword || !confirmPassword} loading={saving} loadingText="Mise à jour…" variant="primary" style={goldButtonStyle}>
+        Mettre à jour le mot de passe
+      </Button>
       {msg && <Toast text={msg.text} kind={msg.kind} />}
       <div style={{ marginTop: 14 }}>
-        <button onClick={sendReset} disabled={resetSending} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
+        <Button onClick={sendReset} disabled={resetSending} variant="link" style={{ color: 'var(--text-muted)', fontSize: 12 }}>
           Mot de passe oublié ? Recevoir un lien de réinitialisation
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -1115,12 +1110,13 @@ function DangerZoneCard() {
           </p>
         </div>
       ) : (
-        <button
+        <Button
           onClick={() => setShowConfirm(true)}
-          style={{ padding: '11px 18px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.4)', background: 'transparent', color: '#e05aaa', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          variant="secondary"
+          style={{ padding: '11px 18px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.4)', background: 'transparent', color: '#e05aaa', fontSize: 13 }}
         >
           Supprimer mon compte
-        </button>
+        </Button>
       )}
 
       {showConfirm && (
@@ -1136,7 +1132,7 @@ function DangerZoneCard() {
           onCancel={() => setShowConfirm(false)}
           onConfirm={handleDelete}
         >
-          <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', margin: '0 0 6px' }}>Confirme avec ton mot de passe</label>
+          <Label>Confirme avec ton mot de passe</Label>
           <PasswordField value={password} onChange={setPassword} placeholder="Mot de passe" autoFocus />
           {error && <p style={{ fontSize: 12, color: '#e05aaa', margin: '8px 0 0' }}>{error}</p>}
         </ConfirmModal>
@@ -1182,23 +1178,25 @@ function SupportPanel({ onBack }: { onBack: () => void }) {
     <main style={{ minHeight: '100vh', padding: '20px 16px 48px' }}>
       <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={onBack} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 22, cursor: 'pointer', padding: '4px 8px 4px 0' }} aria-label="Retour">
+          <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
             ‹
-          </button>
-          <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>Support / Aide</h1>
+          </Button>
+          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>Support / Aide</h1>
         </div>
 
         <div style={cardStyle}>
           <EyebrowLabel>Questions fréquentes</EyebrowLabel>
           {FAQ.map((f, i) => (
             <div key={i} style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
-              <button
+              <Button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', background: 'none', border: 'none', color: '#fff', fontSize: 13.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer' }}
+                variant="ghost"
+                fullWidth
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', color: '#fff', fontSize: 13.5, textAlign: 'left' }}
               >
                 {f.q}
                 <span style={{ transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s', color: 'var(--text-faint)' }}>⌄</span>
-              </button>
+              </Button>
               {openFaq === i && <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 14px' }}>{f.a}</p>}
             </div>
           ))}
@@ -1206,9 +1204,9 @@ function SupportPanel({ onBack }: { onBack: () => void }) {
 
         <div style={{ ...cardStyle, border: '1px solid rgba(200,169,110,0.25)' }}>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>Tu n&apos;as pas trouvé de réponse ? Écris-nous, on répond sous 24h.</p>
-          <button onClick={copyEmail} style={{ ...primaryBtn(false), marginBottom: 10 }}>
+          <Button onClick={copyEmail} variant="primary" style={{ ...goldButtonStyle, marginBottom: 10 }}>
             {copied ? 'Adresse copiée' : "Copier l'adresse e-mail"}
-          </button>
+          </Button>
           <p style={{ fontSize: 12.5, color: '#fff', margin: '0 0 10px' }}>{SUPPORT_EMAIL}</p>
           <a href={`mailto:${SUPPORT_EMAIL}?subject=Support%20LIVEINBLACK`} style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
             ou ouvrir mon application mail →

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
+import { Button } from '@/app/components/ui'
 
 // Bourse de revente officielle — affichée sur la page événement, séparément
 // du panneau de réservation classique (EventCheckoutPanel) : une revente n'a
@@ -89,13 +90,13 @@ export default function ResaleListingsSection({ eventId, isAuthenticated }: { ev
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
               <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(toMajor(listing.resalePriceMinor, listing.currency), listing.currency)}</span>
               {isAuthenticated ? (
-                <button
+                <Button
                   onClick={() => handleBuy(listing)}
                   disabled={buyingId === listing.id}
-                  style={{ padding: '9px 16px', borderRadius: 999, border: 'none', background: 'var(--violet)', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}
+                  style={{ padding: '9px 16px', borderRadius: 999, border: 'none', background: 'var(--violet)', color: '#fff', fontSize: 12.5 }}
                 >
                   {buyingId === listing.id ? 'Redirection…' : 'Acheter'}
-                </button>
+                </Button>
               ) : (
                 <a href="/login" style={{ padding: '9px 16px', borderRadius: 999, background: 'var(--violet)', color: '#fff', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>
                   Se connecter

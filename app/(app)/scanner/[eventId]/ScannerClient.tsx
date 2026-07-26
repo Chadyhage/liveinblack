@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import CameraScanner from './CameraScanner'
+import { Button, Input, Label } from '@/app/components/ui'
 
 // Port de src/pages/ScannerPage.jsx (outil staff : porte + bar). Ce composant
 // ne parle QU'aux routes HTTP déjà construites (/api/tickets/checkin et les
@@ -224,66 +225,6 @@ const sectionTitleStyle: React.CSSProperties = {
   letterSpacing: '0.06em',
   color: 'var(--text-muted)',
   margin: '0 0 12px',
-}
-
-const primaryButtonStyle = (disabled: boolean): React.CSSProperties => ({
-  padding: '8px 16px',
-  borderRadius: 999,
-  border: 'none',
-  fontSize: 13,
-  fontWeight: 700,
-  color: '#fff',
-  background: 'var(--violet)',
-  opacity: disabled ? 0.5 : 1,
-  cursor: disabled ? 'default' : 'pointer',
-})
-
-const secondaryButtonStyle = (disabled: boolean): React.CSSProperties => ({
-  padding: '8px 16px',
-  borderRadius: 999,
-  border: '1px solid var(--border-strong)',
-  fontSize: 12.5,
-  fontWeight: 700,
-  color: 'var(--text)',
-  background: disabled ? 'rgba(255,255,255,0.03)' : 'var(--surface-2)',
-  cursor: disabled ? 'default' : 'pointer',
-})
-
-// Variante teal du bouton secondaire pour les actions "métier" (Servir) —
-// visuellement distinctes des actions de navigation légère (Scanner un autre
-// billet, Activer/Désactiver la caméra) qui gardent secondaryButtonStyle.
-const serveButtonStyle = (disabled: boolean): React.CSSProperties => ({
-  padding: '8px 16px',
-  borderRadius: 999,
-  border: '1px solid rgba(78,232,200,0.4)',
-  fontSize: 12.5,
-  fontWeight: 700,
-  color: 'var(--teal)',
-  background: disabled ? 'rgba(255,255,255,0.03)' : 'rgba(78,232,200,0.1)',
-  cursor: disabled ? 'default' : 'pointer',
-  minWidth: 64,
-})
-
-const dangerButtonStyle = (disabled: boolean): React.CSSProperties => ({
-  padding: '8px 16px',
-  borderRadius: 999,
-  border: 'none',
-  fontSize: 12.5,
-  fontWeight: 700,
-  color: '#fff',
-  background: disabled ? 'rgba(224,90,170,0.5)' : 'var(--pink)',
-  cursor: disabled ? 'default' : 'pointer',
-})
-
-const inputStyle: React.CSSProperties = {
-  flex: 1,
-  minWidth: 0,
-  background: 'var(--surface-2)',
-  border: '1px solid var(--border-strong)',
-  borderRadius: 10,
-  padding: '10px 12px',
-  color: 'var(--text)',
-  fontSize: 14,
 }
 
 // <label> visuellement masqué mais lu par les lecteurs d'écran — le
@@ -711,9 +652,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{eventName}</p>
           </div>
           {mode === 'service' && (
-            <button type="button" onClick={resetToScan} style={secondaryButtonStyle(false)}>
+            <Button type="button" variant="secondary" size="sm" onClick={resetToScan}>
               Scanner un autre billet
-            </button>
+            </Button>
           )}
         </div>
 
@@ -739,9 +680,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             <section style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <h2 style={{ ...sectionTitleStyle, margin: 0 }}>Caméra</h2>
-                <button type="button" onClick={() => setScanning((s) => !s)} style={secondaryButtonStyle(false)}>
+                <Button type="button" variant="secondary" size="sm" onClick={() => setScanning((s) => !s)}>
                   {scanning ? 'Désactiver' : 'Activer'} la caméra
-                </button>
+                </Button>
               </div>
               <CameraScanner active={scanning} onScan={handleScanValue} />
             </section>
@@ -755,24 +696,21 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 }}
                 style={{ display: 'flex', gap: 8 }}
               >
-                <label htmlFor="scanner-manual-code" style={SR_ONLY_STYLE}>
+                <Label htmlFor="scanner-manual-code" style={SR_ONLY_STYLE}>
                   Code du billet
-                </label>
-                <input
+                </Label>
+                <Input
                   id="scanner-manual-code"
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value)}
                   placeholder="Code du billet"
-                  style={{
-                    ...inputStyle,
-                    textTransform: 'uppercase',
-                    ...(checkinError ? { border: '1px solid var(--pink)' } : {}),
-                  }}
+                  invalid={Boolean(checkinError)}
+                  style={{ flex: 1, minWidth: 0, textTransform: 'uppercase' }}
                   autoCapitalize="characters"
                 />
-                <button type="submit" disabled={checkinBusy || !manualCode.trim()} style={primaryButtonStyle(checkinBusy || !manualCode.trim())}>
-                  {checkinBusy ? '…' : 'Valider'}
-                </button>
+                <Button type="submit" variant="primary" size="sm" disabled={checkinBusy || !manualCode.trim()} loading={checkinBusy} loadingText="…">
+                  Valider
+                </Button>
               </form>
             </section>
           </>
@@ -904,47 +842,60 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           {canServe && (
-                            <button
+                            <Button
                               type="button"
+                              variant="secondary"
+                              size="sm"
                               disabled={busyKey === serveKey}
+                              loading={busyKey === serveKey}
+                              loadingText="…"
                               onClick={() => void handleServe(item)}
-                              style={serveButtonStyle(busyKey === serveKey)}
+                              style={{
+                                border: '1px solid rgba(78,232,200,0.4)',
+                                color: 'var(--teal)',
+                                background: busyKey === serveKey ? 'rgba(255,255,255,0.03)' : 'rgba(78,232,200,0.1)',
+                                minWidth: 64,
+                              }}
                             >
-                              {busyKey === serveKey ? '…' : 'Servir'}
-                            </button>
+                              Servir
+                            </Button>
                           )}
                           {canCancel && (
-                            <button
+                            <Button
                               type="button"
+                              variant="secondary"
+                              size="sm"
                               disabled={rowBusy}
                               onClick={() => setCancellingItemId(isCancelling ? null : item.id)}
-                              style={secondaryButtonStyle(rowBusy)}
                             >
                               Annuler
-                            </button>
+                            </Button>
                           )}
                         </div>
                         {isCancelling && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                             <div style={{ display: 'flex', gap: 8 }}>
-                              <label htmlFor={`cancel-reason-${item.id}`} style={SR_ONLY_STYLE}>
+                              <Label htmlFor={`cancel-reason-${item.id}`} style={SR_ONLY_STYLE}>
                                 Motif de l&apos;annulation
-                              </label>
-                              <input
+                              </Label>
+                              <Input
                                 id={`cancel-reason-${item.id}`}
                                 value={cancelDrafts[item.id] ?? ''}
                                 onChange={(e) => setCancelDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
                                 placeholder="Motif de l'annulation"
-                                style={inputStyle}
+                                style={{ flex: 1, minWidth: 0 }}
                               />
-                              <button
+                              <Button
                                 type="button"
+                                variant="danger"
+                                size="sm"
                                 disabled={!(cancelDrafts[item.id] ?? '').trim() || busyKey === cancelKey}
+                                loading={busyKey === cancelKey}
+                                loadingText="…"
                                 onClick={() => void handleCancel(item)}
-                                style={dangerButtonStyle(!(cancelDrafts[item.id] ?? '').trim() || busyKey === cancelKey)}
                               >
-                                {busyKey === cancelKey ? '…' : 'Confirmer'}
-                              </button>
+                                Confirmer
+                              </Button>
                             </div>
                             <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Motif obligatoire.</p>
                           </div>
@@ -1001,9 +952,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                   <StepButton label="+" disabled={busy} onClick={() => handleStep(menuItem, editable, 1)} />
                                 </div>
                               ) : (
-                                <button type="button" disabled={busy} onClick={() => void handleAddItem(menuItem)} style={primaryButtonStyle(busy)}>
-                                  {busy ? '…' : 'Ajouter'}
-                                </button>
+                                <Button type="button" variant="primary" size="sm" disabled={busy} loading={busy} loadingText="…" onClick={() => void handleAddItem(menuItem)}>
+                                  Ajouter
+                                </Button>
                               )}
                             </div>
                           )
@@ -1037,14 +988,17 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(unpaidTotal, currency)}</span>
             </div>
             {rank >= 2 && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
+                size="sm"
                 disabled={busyKey === 'pay' || unpaidTotal <= 0}
+                loading={busyKey === 'pay'}
+                loadingText="…"
                 onClick={() => void handlePay()}
-                style={primaryButtonStyle(busyKey === 'pay' || unpaidTotal <= 0)}
               >
-                {busyKey === 'pay' ? '…' : 'Marquer payé'}
-              </button>
+                Marquer payé
+              </Button>
             )}
           </div>
         </div>
@@ -1092,26 +1046,20 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
 function StepButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="secondary"
       disabled={disabled}
       onClick={onClick}
       style={{
         width: 30,
         height: 30,
+        padding: 0,
         borderRadius: '50%',
-        border: '1px solid var(--border-strong)',
-        background: disabled ? 'rgba(255,255,255,0.03)' : 'var(--surface-2)',
-        color: 'var(--text)',
         fontSize: 16,
-        fontWeight: 700,
-        cursor: disabled ? 'default' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
     >
       {label}
-    </button>
+    </Button>
   )
 }

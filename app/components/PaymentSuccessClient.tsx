@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/app/components/ui'
 
 // Port de src/pages/PaiementReussiPage.jsx + src/pages/PaiementAnnulePage.jsx.
 // Architecture différente du legacy : ici l'émission des billets est
@@ -34,7 +35,8 @@ const CARD: React.CSSProperties = {
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14.5, fontWeight: 700,
+  padding: '14px 20px', borderRadius: 8, cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
+  textTransform: 'uppercase', letterSpacing: '.03em',
   border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
 })
 const btnGhostS: React.CSSProperties = {
@@ -180,7 +182,7 @@ export default function PaymentSuccessClient({
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-pay-spin 0.9s linear infinite' }} />
-            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
+            <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
               Confirmation du paiement…
             </h1>
             <p style={{ fontSize: 14, color: COLORS.muted, marginTop: 12, lineHeight: 1.6 }}>
@@ -194,13 +196,13 @@ export default function PaymentSuccessClient({
             <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(78,232,200,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.8px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.8px', color: '#fff', margin: '0 0 10px' }}>
               Paiement confirmé
             </h1>
             <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>{successMsg}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <button onClick={() => router.push('/profile')} style={btnSolid('var(--teal-solid)', '#04120e')}>Voir mes billets</button>
-              <button onClick={() => router.push('/events')} style={btnGhostS}>Découvrir d&apos;autres événements</button>
+              <Button onClick={() => router.push('/profile')} style={btnSolid('var(--teal-solid)', '#04120e')}>Voir mes billets</Button>
+              <Button variant="secondary" onClick={() => router.push('/events')} style={btnGhostS}>Découvrir d&apos;autres événements</Button>
             </div>
           </>
         )}
@@ -210,15 +212,15 @@ export default function PaymentSuccessClient({
             <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(139,92,246,0.12)', border: `2px solid ${COLORS.violet}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.violet} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
             </div>
-            <h1 style={{ fontSize: 27, fontWeight: 800, letterSpacing: '-0.7px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 27, fontWeight: 800, letterSpacing: '-0.7px', color: '#fff', margin: '0 0 10px' }}>
               Paiement bien reçu
             </h1>
             <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
               On finalise {eventName ? '« ' + eventName + ' »' : 'ta réservation'}. Tes billets arrivent dans <strong style={{ color: '#fff' }}>Mes billets</strong> d&apos;ici quelques instants — inutile de repayer.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <button onClick={() => router.push('/profile')} style={{ ...btnSolid('var(--violet-cta)', '#fff'), border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Voir mes billets</button>
-              <button onClick={() => setAttempt((a) => a + 1)} style={btnGhostS}>Vérifier maintenant</button>
+              <Button onClick={() => router.push('/profile')} style={{ ...btnSolid('var(--violet-cta)', '#fff'), border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Voir mes billets</Button>
+              <Button variant="secondary" onClick={() => setAttempt((a) => a + 1)} style={btnGhostS}>Vérifier maintenant</Button>
             </div>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 14 }}>
               {attempt < MAX_AUTO_ATTEMPTS ? 'Vérification automatique en cours…' : 'Tes billets apparaîtront dans « Mes billets » dès confirmation.'}
@@ -235,7 +237,7 @@ export default function PaymentSuccessClient({
                 <line x1="9" y1="9" x2="15" y2="15" />
               </svg>
             </div>
-            <p style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 10px' }}>
+            <p className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 10px' }}>
               Paiement annulé
             </p>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
@@ -243,11 +245,11 @@ export default function PaymentSuccessClient({
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
               {eventId && (
-                <button onClick={() => router.push(`/events/${eventId}`)} style={btnSolid(COLORS.gold, '#141007')}>
+                <Button onClick={() => router.push(`/events/${eventId}`)} style={btnSolid(COLORS.gold, '#141007')}>
                   Retourner à l&apos;événement
-                </button>
+                </Button>
               )}
-              <button onClick={() => router.push('/events')} style={btnGhostS}>Voir tous les événements</button>
+              <Button variant="secondary" onClick={() => router.push('/events')} style={btnGhostS}>Voir tous les événements</Button>
             </div>
           </>
         )}
@@ -257,17 +259,17 @@ export default function PaymentSuccessClient({
             <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
             </div>
-            <h1 style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
               Une erreur est survenue
             </h1>
             <p style={{ fontSize: 14, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>{errorMsg}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <button onClick={copySupport} style={{ ...btnSolid(COLORS.gold, '#141007'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+              <Button onClick={copySupport} style={{ ...btnSolid(COLORS.gold, '#141007'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
                 <IconMail size={16} color="#141007" />
                 {copied ? 'Adresse copiée' : "Copier l'email du support"}
-              </button>
-              <button onClick={() => router.push('/profile')} style={btnGhostS}>Voir mes billets</button>
-              <button onClick={() => router.push('/')} style={{ ...btnGhostS, border: 'none', background: 'none', color: 'rgba(255,255,255,0.55)' }}>Retour à l&apos;accueil</button>
+              </Button>
+              <Button variant="secondary" onClick={() => router.push('/profile')} style={btnGhostS}>Voir mes billets</Button>
+              <Button variant="ghost" onClick={() => router.push('/')} style={{ ...btnGhostS, border: 'none', background: 'none', color: 'rgba(255,255,255,0.55)' }}>Retour à l&apos;accueil</Button>
             </div>
             <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', marginTop: 16 }}>{SUPPORT_EMAIL}</p>
           </>

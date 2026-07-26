@@ -1,11 +1,12 @@
 'use client'
 
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { safeInternalPath } from '@/lib/shared/safeNavigation'
+import { Button, Input, Label, Select } from '@/app/components/ui'
 
 // Port de src/pages/LoginPage.jsx (#118). La distinction legacy
 // role==='user' vs role==='client' n'existe plus côté backend (un seul rôle
@@ -43,96 +44,30 @@ const cardStyle: React.CSSProperties = {
   borderRadius: 20,
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
-const inputStyle: React.CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--border-strong)',
-  borderRadius: 10,
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text)',
-  padding: '12px 14px',
-  width: '100%',
-  outline: 'none',
-  transition: 'border-color 0.2s, box-shadow 0.2s',
-  boxSizing: 'border-box',
-}
-const labelStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'var(--text-muted)',
-  display: 'block',
-  marginBottom: 8,
-}
 const btnPrimary: React.CSSProperties = {
-  padding: '14px 24px',
+  padding: '15px 24px',
   background: 'var(--teal-solid)',
   border: '1px solid var(--border-strong)',
-  borderRadius: 12,
-  fontSize: 15,
-  fontWeight: 700,
+  borderRadius: 8,
+  fontSize: 14,
+  textTransform: 'uppercase',
+  letterSpacing: '.04em',
   color: '#04120e',
-  cursor: 'pointer',
   width: '100%',
   boxShadow: '0 6px 20px rgba(78,232,200,0.22)',
 }
 const btnGold: React.CSSProperties = {
-  padding: '14px 24px',
+  padding: '15px 24px',
   background: 'var(--gold)',
   border: '1px solid var(--border-strong)',
-  borderRadius: 12,
-  fontSize: 15,
-  fontWeight: 700,
+  borderRadius: 8,
+  fontSize: 14,
+  textTransform: 'uppercase',
+  letterSpacing: '.04em',
   color: '#181104',
-  cursor: 'pointer',
   width: '100%',
 }
 const errorText: React.CSSProperties = { fontSize: 12, color: 'var(--pink)' }
-
-const FocusInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function FocusInput(
-  { style, ...props },
-  ref
-) {
-  const [focused, setFocused] = useState(false)
-  return (
-    <input
-      ref={ref}
-      {...props}
-      onFocus={(e) => {
-        setFocused(true)
-        props.onFocus?.(e)
-      }}
-      onBlur={(e) => {
-        setFocused(false)
-        props.onBlur?.(e)
-      }}
-      style={{
-        ...inputStyle,
-        borderColor: focused ? 'var(--teal)' : 'var(--border-strong)',
-        boxShadow: focused ? '0 0 0 3px var(--focus-ring)' : 'none',
-        ...style,
-      }}
-    />
-  )
-})
-
-function Spinner({ text }: { text: string }) {
-  return (
-    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-      <span
-        style={{
-          width: 14,
-          height: 14,
-          border: '2px solid rgba(255,255,255,0.15)',
-          borderTopColor: 'rgba(255,255,255,0.7)',
-          borderRadius: '50%',
-          animation: 'lb-spin 0.7s linear infinite',
-          display: 'inline-block',
-        }}
-      />
-      {text}
-    </span>
-  )
-}
 
 function IconCheck({ size = 11 }: { size?: number }) {
   return (
@@ -469,17 +404,17 @@ export default function AuthForm() {
               Si un compte existe avec cette adresse et n&apos;est pas encore vérifié, un nouvel email vient de partir.
             </p>
           )}
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={handleResendVerification}
             disabled={resendLoading || resendCooldown > 0}
-            style={{ fontSize: 12.5, fontWeight: 600, color: resendCooldown > 0 ? 'var(--text-faint)' : 'var(--text-muted)', background: 'none', border: 'none', cursor: resendLoading || resendCooldown > 0 ? 'default' : 'pointer', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
+            style={{ fontSize: 12.5, color: resendCooldown > 0 ? 'var(--text-faint)' : 'var(--text-muted)', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
           >
             {resendLoading ? 'Envoi…' : resendCooldown > 0 ? `Renvoyer dans ${resendCooldown}s` : "Renvoyer l'email de vérification"}
-          </button>
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            variant="primary"
             onClick={() => {
               const savedEmail = registeredEmail
               setRegisteredEmail('')
@@ -490,7 +425,7 @@ export default function AuthForm() {
             style={{ ...btnGold, marginTop: 8 }}
           >
             Aller à la connexion
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -511,30 +446,36 @@ export default function AuthForm() {
         .lb-banner-fade { animation: lb-fade-in 0.22s ease }
       `}</style>
 
+      <div style={{ textAlign: 'center', marginBottom: 26 }}>
+        <p className="font-display" style={{ fontSize: 28, letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
+          {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0' }}>
+          {mode === 'login' ? 'Connecte-toi pour retrouver tes billets et tes soirées.' : "Crée ton compte pour découvrir ce qui se passe près de toi."}
+        </p>
+      </div>
+
       <div style={{ ...cardStyle, padding: '38px 32px' }}>
         {/* Mode tabs */}
         <div style={{ display: 'flex', gap: 6, padding: 5, background: 'var(--surface)', borderRadius: 14, marginBottom: 28, border: '1px solid var(--border)' }}>
           {(['login', 'register'] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={`lb-tab${mode === m ? ' lb-tab-active' : ''}`}
-              onClick={() => switchMode(m)}
-              style={{
-                flex: 1,
-                padding: 12,
-                fontSize: 14.5,
-                fontWeight: 700,
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                background: mode === m ? 'rgba(255,255,255,0.10)' : 'transparent',
-                color: mode === m ? 'var(--text)' : 'var(--text-muted)',
-              }}
-            >
-              {m === 'login' ? 'Connexion' : 'Inscription'}
-            </button>
+            <div key={m} className={`lb-tab${mode === m ? ' lb-tab-active' : ''}`} style={{ flex: 1, borderRadius: 10 }}>
+              <Button
+                variant="ghost"
+                fullWidth
+                onClick={() => switchMode(m)}
+                style={{
+                  padding: 12,
+                  fontSize: 14.5,
+                  borderRadius: 10,
+                  transition: 'all 0.2s',
+                  background: mode === m ? 'rgba(255,255,255,0.10)' : 'transparent',
+                  color: mode === m ? 'var(--text)' : 'var(--text-muted)',
+                }}
+              >
+                {m === 'login' ? 'Connexion' : 'Inscription'}
+              </Button>
+            </div>
           ))}
         </div>
 
@@ -558,8 +499,8 @@ export default function AuthForm() {
         {mode === 'login' && (
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <label style={labelStyle} htmlFor="login-email">Email</label>
-              <FocusInput
+              <Label htmlFor="login-email">Email</Label>
+              <Input
                 id="login-email"
                 name="email"
                 type="text"
@@ -569,13 +510,13 @@ export default function AuthForm() {
                 disabled={loginLoading}
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                style={loginError === 'Email ou mot de passe incorrect.' ? { borderColor: 'var(--pink)' } : undefined}
+                invalid={loginError === 'Email ou mot de passe incorrect.'}
               />
             </div>
             <div>
-              <label style={labelStyle} htmlFor="login-password">Mot de passe</label>
+              <Label htmlFor="login-password">Mot de passe</Label>
               <div style={{ position: 'relative' }}>
-                <FocusInput
+                <Input
                   id="login-password"
                   name="password"
                   type={showLoginPwd ? 'text' : 'password'}
@@ -584,32 +525,31 @@ export default function AuthForm() {
                   disabled={loginLoading}
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  style={{
-                    paddingRight: 56,
-                    ...(loginError === 'Email ou mot de passe incorrect.' ? { borderColor: 'var(--pink)' } : {}),
-                  }}
+                  invalid={loginError === 'Email ou mot de passe incorrect.'}
+                  style={{ paddingRight: 56 }}
                 />
-                <button
-                  type="button"
-                  className="lb-toggle-btn"
-                  onClick={() => setShowLoginPwd((v) => !v)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                  <IconEye open={showLoginPwd} />
-                  {showLoginPwd ? 'Cacher' : 'Voir'}
-                </button>
+                <span className="lb-toggle-btn" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowLoginPwd((v) => !v)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'inherit' }}
+                  >
+                    <IconEye open={showLoginPwd} />
+                    {showLoginPwd ? 'Cacher' : 'Voir'}
+                  </Button>
+                </span>
               </div>
             </div>
-            <button type="submit" disabled={loginLoading} style={{ ...btnPrimary, marginTop: 4, opacity: loginLoading ? 0.75 : 1, cursor: loginLoading ? 'wait' : 'pointer' }}>
-              {loginLoading ? <Spinner text="Connexion…" /> : 'Se connecter'}
-            </button>
-            <button
-              type="button"
+            <Button type="submit" variant="primary" disabled={loginLoading} loading={loginLoading} loadingText="Connexion…" style={{ ...btnPrimary, marginTop: 4 }}>
+              Se connecter
+            </Button>
+            <Button
+              variant="ghost"
               onClick={openForgotModal}
-              style={{ alignSelf: 'center', marginTop: 2, fontSize: 12.5, fontWeight: 600, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+              style={{ alignSelf: 'center', marginTop: 2, fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'underline' }}
             >
               Mot de passe oublié&nbsp;?
-            </button>
+            </Button>
           </form>
         )}
 
@@ -620,42 +560,41 @@ export default function AuthForm() {
               Quel type de compte veux-tu créer&nbsp;?
             </p>
             {ROLE_CARDS.map(({ role, title, desc, badge, accent }) => (
-              <button
-                key={role}
-                type="button"
-                className="lb-role-card"
-                onClick={() => chooseRole(role)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 15,
-                  padding: '17px 18px',
-                  minHeight: 92,
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 16,
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{ width: 46, height: 46, borderRadius: 13, background: `${accent}1a`, border: `1px solid ${accent}3a`, color: accent, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <RoleIcon role={role} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                    <p style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.2px', color: 'var(--text)', margin: 0 }}>{title}</p>
-                    {badge && (
-                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.12)' }}>
-                        {badge}
-                      </span>
-                    )}
+              <div key={role} className="lb-role-card" style={{ borderRadius: 16, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)' }}>
+                <Button
+                  variant="ghost"
+                  fullWidth
+                  onClick={() => chooseRole(role)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 15,
+                    padding: '17px 18px',
+                    minHeight: 92,
+                    borderRadius: 16,
+                    textAlign: 'left',
+                    justifyContent: 'flex-start',
+                  }}
+                >
+                  <div style={{ width: 46, height: 46, borderRadius: 13, background: `${accent}1a`, border: `1px solid ${accent}3a`, color: accent, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <RoleIcon role={role} />
                   </div>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{desc}</p>
-                </div>
-                <svg className="lb-role-chevron" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={2} strokeLinecap="round" style={{ flexShrink: 0 }}>
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
-              </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                      <p style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.2px', color: 'var(--text)', margin: 0 }}>{title}</p>
+                      {badge && (
+                        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.12)' }}>
+                          {badge}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{desc}</p>
+                  </div>
+                  <svg className="lb-role-chevron" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={2} strokeLinecap="round" style={{ flexShrink: 0 }}>
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </Button>
+              </div>
             ))}
             <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-faint)', marginTop: 8, lineHeight: 1.6 }}>
               En t&apos;inscrivant, tu acceptes nos{' '}
@@ -669,16 +608,16 @@ export default function AuthForm() {
         {mode === 'register' && regStep === 2 && (
           <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => { setRegStep(1); setRegError('') }}
-                style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+                style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}
               >
                 <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
                 Retour
-              </button>
+              </Button>
               <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '4px 10px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'rgba(255,255,255,0.06)' }}>
                 Client
               </span>
@@ -686,54 +625,63 @@ export default function AuthForm() {
 
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle} htmlFor="reg-firstname">Prénom</label>
-                <FocusInput id="reg-firstname" name="given-name" type="text" autoComplete="given-name" placeholder="Jean" disabled={regLoading} value={firstName} onChange={(e) => setFirstName(e.target.value)} style={regError === 'Le prénom est requis.' ? { borderColor: 'var(--pink)' } : undefined} />
+                <Label htmlFor="reg-firstname">Prénom</Label>
+                <Input id="reg-firstname" name="given-name" type="text" autoComplete="given-name" placeholder="Jean" disabled={regLoading} value={firstName} onChange={(e) => setFirstName(e.target.value)} invalid={regError === 'Le prénom est requis.'} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle} htmlFor="reg-lastname">Nom</label>
-                <FocusInput id="reg-lastname" name="family-name" type="text" autoComplete="family-name" placeholder="Dupont" disabled={regLoading} value={lastName} onChange={(e) => setLastName(e.target.value)} style={regError === 'Le nom est requis.' ? { borderColor: 'var(--pink)' } : undefined} />
+                <Label htmlFor="reg-lastname">Nom</Label>
+                <Input id="reg-lastname" name="family-name" type="text" autoComplete="family-name" placeholder="Dupont" disabled={regLoading} value={lastName} onChange={(e) => setLastName(e.target.value)} invalid={regError === 'Le nom est requis.'} />
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
-                <label style={labelStyle} htmlFor="reg-birth-year">Année de naissance</label>
-                <select id="reg-birth-year" value={birthYear} onChange={(event) => setBirthYear(event.target.value)} disabled={regLoading} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  <option value="">Non renseignée</option>
-                  {Array.from({ length: 68 }, (_, index) => new Date().getFullYear() - 13 - index).map((year) => <option key={year} value={year}>{year}</option>)}
-                </select>
+                <Label htmlFor="reg-birth-year">Année de naissance</Label>
+                <Select
+                  id="reg-birth-year"
+                  value={birthYear}
+                  onChange={(value) => setBirthYear(value)}
+                  disabled={regLoading}
+                  placeholder="Non renseignée"
+                  options={Array.from({ length: 68 }, (_, index) => new Date().getFullYear() - 13 - index).map((year) => ({ value: String(year), label: String(year) }))}
+                />
               </div>
               <div>
-                <label style={labelStyle} htmlFor="reg-gender">Genre</label>
-                <select id="reg-gender" value={gender} onChange={(event) => setGender(event.target.value)} disabled={regLoading} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  <option value="">Non renseigné</option><option value="femme">Femme</option><option value="homme">Homme</option><option value="autre">Autre</option>
-                </select>
+                <Label htmlFor="reg-gender">Genre</Label>
+                <Select
+                  id="reg-gender"
+                  value={gender}
+                  onChange={(value) => setGender(value)}
+                  disabled={regLoading}
+                  placeholder="Non renseigné"
+                  options={[
+                    { value: 'femme', label: 'Femme' },
+                    { value: 'homme', label: 'Homme' },
+                    { value: 'autre', label: 'Autre' },
+                  ]}
+                />
               </div>
               <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 10.5, color: 'var(--text-faint)', lineHeight: 1.5 }}>Optionnel · utilisé uniquement dans des statistiques anonymes, jamais affiché sur ton profil.</p>
             </div>
 
             <div>
-              <label style={labelStyle} htmlFor="reg-email">Email</label>
-              <FocusInput id="reg-email" name="email" type="text" inputMode="email" autoComplete="email" placeholder="ton@email.com" disabled={regLoading} value={regEmail} onChange={(e) => setRegEmail(e.target.value)} style={regError === 'Adresse email invalide.' ? { borderColor: 'var(--pink)' } : undefined} />
+              <Label htmlFor="reg-email">Email</Label>
+              <Input id="reg-email" name="email" type="text" inputMode="email" autoComplete="email" placeholder="ton@email.com" disabled={regLoading} value={regEmail} onChange={(e) => setRegEmail(e.target.value)} invalid={regError === 'Adresse email invalide.'} />
             </div>
 
             <div>
-              <label style={labelStyle} htmlFor="reg-phone">Téléphone (optionnel)</label>
+              <Label htmlFor="reg-phone">Téléphone (optionnel)</Label>
               <div style={{ display: 'flex', gap: 8 }}>
-                <select
-                  aria-label="Indicatif pays"
-                  value={dialCode}
-                  onChange={(e) => setDialCode(e.target.value)}
-                  disabled={regLoading}
-                  style={{ ...inputStyle, maxWidth: 110, cursor: 'pointer' }}
-                >
-                  {regions.map((r) => (
-                    <option key={r.id} value={r.dial}>
-                      {r.flag} {r.name} {r.dial}
-                    </option>
-                  ))}
-                </select>
-                <FocusInput
+                <div style={{ maxWidth: 110, flexShrink: 0 }}>
+                  <Select
+                    aria-label="Indicatif pays"
+                    value={dialCode}
+                    onChange={(value) => setDialCode(value)}
+                    disabled={regLoading}
+                    options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.name} ${r.dial}` }))}
+                  />
+                </div>
+                <Input
                   id="reg-phone"
                   name="tel-national"
                   type="tel"
@@ -742,16 +690,17 @@ export default function AuthForm() {
                   disabled={regLoading}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  style={{ flex: 1, ...(regError === 'Numéro de téléphone invalide.' ? { borderColor: 'var(--pink)' } : {}) }}
+                  invalid={regError === 'Numéro de téléphone invalide.'}
+                  style={{ flex: 1 }}
                 />
               </div>
               <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '6px 0 0' }}>Sans l&apos;indicatif pays, déjà sélectionné à gauche.</p>
             </div>
 
             <div>
-              <label style={labelStyle} htmlFor="reg-password">Mot de passe</label>
+              <Label htmlFor="reg-password">Mot de passe</Label>
               <div style={{ position: 'relative' }}>
-                <FocusInput
+                <Input
                   id="reg-password"
                   name="new-password"
                   type={showRegPwd ? 'text' : 'password'}
@@ -762,15 +711,16 @@ export default function AuthForm() {
                   onChange={(e) => setRegPwd(e.target.value)}
                   style={{ paddingRight: 56 }}
                 />
-                <button
-                  type="button"
-                  className="lb-toggle-btn"
-                  onClick={() => setShowRegPwd((v) => !v)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                  <IconEye open={showRegPwd} />
-                  {showRegPwd ? 'Cacher' : 'Voir'}
-                </button>
+                <span className="lb-toggle-btn" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowRegPwd((v) => !v)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'inherit' }}
+                  >
+                    <IconEye open={showRegPwd} />
+                    {showRegPwd ? 'Cacher' : 'Voir'}
+                  </Button>
+                </span>
               </div>
             </div>
 
@@ -797,8 +747,8 @@ export default function AuthForm() {
             )}
 
             <div>
-              <label style={labelStyle} htmlFor="reg-password-confirm">Confirmer le mot de passe</label>
-              <FocusInput
+              <Label htmlFor="reg-password-confirm">Confirmer le mot de passe</Label>
+              <Input
                 id="reg-password-confirm"
                 name="new-password"
                 type="password"
@@ -807,14 +757,14 @@ export default function AuthForm() {
                 disabled={regLoading}
                 value={regPwdConfirm}
                 onChange={(e) => setRegPwdConfirm(e.target.value)}
-                style={regPwdConfirm.length >= regPwd.length && regPwd !== regPwdConfirm ? { borderColor: 'var(--pink)' } : undefined}
+                invalid={regPwdConfirm.length >= regPwd.length && regPwd !== regPwdConfirm}
               />
             </div>
             {regPwdConfirm.length >= regPwd.length && regPwd !== regPwdConfirm && <p style={{ ...errorText, marginTop: -6 }}>Les mots de passe ne correspondent pas</p>}
 
-            <button type="submit" disabled={regLoading} style={{ ...btnPrimary, marginTop: 4, opacity: regLoading ? 0.75 : 1, cursor: regLoading ? 'wait' : 'pointer' }}>
-              {regLoading ? <Spinner text="Création…" /> : 'Créer mon compte'}
-            </button>
+            <Button type="submit" variant="primary" disabled={regLoading} loading={regLoading} loadingText="Création…" style={{ ...btnPrimary, marginTop: 4 }}>
+              Créer mon compte
+            </Button>
             <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0', lineHeight: 1.6 }}>
               En créant ton compte, tu acceptes nos{' '}
               <a href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>CGU</a> et notre{' '}
@@ -841,8 +791,8 @@ export default function AuthForm() {
                 </p>
                 <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div>
-                    <label style={labelStyle} htmlFor="forgot-email">Email</label>
-                    <FocusInput
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <Input
                       ref={forgotEmailRef}
                       id="forgot-email"
                       name="email"
@@ -855,17 +805,17 @@ export default function AuthForm() {
                       onChange={(e) => setForgotEmail(e.target.value)}
                       aria-invalid={Boolean(forgotError)}
                       aria-describedby={forgotError ? 'forgot-email-error' : undefined}
-                      style={forgotError ? { borderColor: 'var(--pink)' } : undefined}
+                      invalid={Boolean(forgotError)}
                     />
                   </div>
                   {forgotError && <p id="forgot-email-error" role="alert" style={errorText}>{forgotError}</p>}
                   <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                    <button type="button" onClick={closeForgotModal} style={{ flex: 1, padding: '13px 16px', borderRadius: 12, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text)', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
+                    <Button variant="secondary" onClick={closeForgotModal} style={{ flex: 1, padding: '13px 16px', borderRadius: 12, fontSize: 13.5 }}>
                       Annuler
-                    </button>
-                    <button type="submit" disabled={forgotLoading} style={{ ...btnPrimary, flex: 1, fontSize: 13.5, opacity: forgotLoading ? 0.75 : 1, cursor: forgotLoading ? 'wait' : 'pointer' }}>
-                      {forgotLoading ? <Spinner text="Envoi…" /> : 'Envoyer le lien'}
-                    </button>
+                    </Button>
+                    <Button type="submit" variant="primary" disabled={forgotLoading} loading={forgotLoading} loadingText="Envoi…" style={{ ...btnPrimary, flex: 1, fontSize: 13.5 }}>
+                      Envoyer le lien
+                    </Button>
                   </div>
                 </form>
               </>
@@ -881,9 +831,9 @@ export default function AuthForm() {
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                   Si un compte existe avec cette adresse, tu vas recevoir un email avec un lien pour réinitialiser ton mot de passe.
                 </p>
-                <button type="button" onClick={closeForgotModal} style={{ ...btnGold, marginTop: 4 }}>
+                <Button variant="primary" onClick={closeForgotModal} style={{ ...btnGold, marginTop: 4 }}>
                   Fermer
-                </button>
+                </Button>
               </div>
             )}
           </div>
