@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Input, Modal } from '@/app/components/ui'
+import { Button, Input, Modal, Avatar } from '@/app/components/ui'
 
 // Port de src/components/PreferencesEditor.jsx ("Mes goûts", #6 phase
 // profil) — mêmes 8 étapes, mêmes intitulés et mêmes options. Les artistes et
@@ -249,10 +249,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                 fontWeight: 700,
               }}
             >
-              {remoteType === 'artists' && (photos[v] ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={photos[v]} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
-              ) : <span style={{ width: 24, height: 24, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,.28)', fontSize: 11 }}>{v.charAt(0).toUpperCase()}</span>)}
+              {remoteType === 'artists' && <Avatar src={photos[v] || null} name={v} size="sm" style={{ width: 24, height: 24 }} />}
               {v}
               <Button
                 variant="ghost"
@@ -296,10 +293,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                 }}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-start', textAlign: 'left', padding: '9px 10px', borderRadius: 8, border: 'none', background: 'none', color: '#fff', fontSize: 14, fontWeight: 400 }}
               >
-                {m.picture ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={m.picture} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} />
-                ) : <span style={{ width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,.07)', flexShrink: 0 }}>{m.name.charAt(0).toUpperCase()}</span>}
+                <Avatar src={m.picture || null} name={m.name} size="md" style={{ width: 34, height: 34, flexShrink: 0 }} />
                 <span><span style={{ display: 'block' }}>{m.name}</span>{m.sublabel && <span style={{ display: 'block', color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{m.sublabel}</span>}</span>
               </Button>
             ))}

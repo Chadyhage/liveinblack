@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Button, Input, Textarea, Label } from '@/app/components/ui'
+import { Avatar, Button, Card, Input, Textarea, Label } from '@/app/components/ui'
 
 // Port de la section « Suppressions » de src/pages/AgentPage.jsx (tab ===
 // 'suppressions', #9 phase agent/admin, tâche #104) — file des demandes de
@@ -209,12 +209,12 @@ export default function AgentDeletionClient() {
         </div>
 
         {listError && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         {requests.length > 0 && <Input placeholder="Rechercher par nom, email, raison…" value={search} onChange={(e) => setSearch(e.target.value)} />}
@@ -222,10 +222,10 @@ export default function AgentDeletionClient() {
         {listLoading ? (
           <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
         ) : filtered.length === 0 ? (
-          <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <Card style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>{search ? 'Aucun résultat' : 'Aucune demande en attente'}</p>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{search ? `Aucune demande ne correspond à « ${search} ».` : 'Aucun compte n’a demandé sa suppression pour le moment.'}</p>
-          </div>
+          </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {filtered.map((r) => (
@@ -289,9 +289,7 @@ function RequestCard({ request, onClick }: { request: DeletionRequestSummary; on
       onClick={onClick}
       style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%', borderLeft: '3px solid var(--pink)' }}
     >
-      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--pink)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
-        {(request.userName || request.userEmail || '?').charAt(0).toUpperCase()}
-      </div>
+      <Avatar src={null} name={request.userName || request.userEmail || '?'} size="md" />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{request.userName || request.userEmail}</span>
@@ -416,7 +414,7 @@ function DetailPanel({
       {confirmApprove && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={() => !actionBusy && setConfirmApprove(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.8)', backdropFilter: 'blur(8px)' }} />
-          <div style={{ position: 'relative', ...cardStyle, maxWidth: 380, width: '90%', textAlign: 'center' }}>
+          <Card style={{ position: 'relative', maxWidth: 380, width: '90%', textAlign: 'center' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Supprimer définitivement le compte de {detail.userName || detail.userEmail} ?</p>
             <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.6 }}>
               Ses données personnelles seront anonymisées, sa vitrine publique retirée, et son compte définitivement inaccessible. Les billets, commandes et avis restent archivés (obligation légale). Action irréversible.
@@ -441,7 +439,7 @@ function DetailPanel({
                 Confirmer la suppression
               </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/app/components/ui'
+import { Button, Card } from '@/app/components/ui'
 
 // Port de src/pages/PaiementReussiPage.jsx + src/pages/PaiementAnnulePage.jsx.
 // Architecture différente du legacy : ici l'émission des billets est
@@ -177,7 +177,7 @@ export default function PaymentSuccessClient({
   return (
     <main style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
       <style>{`@keyframes lib-pay-spin { to { transform: rotate(360deg) } }`}</style>
-      <div style={{ ...CARD, padding: '40px 32px', maxWidth: 460, width: '100%', textAlign: 'center' }}>
+      <Card style={{ ...CARD, padding: '40px 32px', maxWidth: 460, width: '100%', textAlign: 'center' }}>
 
         {state === 'loading' && (
           <>
@@ -274,7 +274,7 @@ export default function PaymentSuccessClient({
             <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', marginTop: 16 }}>{SUPPORT_EMAIL}</p>
           </>
         )}
-      </div>
+      </Card>
     </main>
   )
 }

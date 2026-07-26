@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Button } from '@/app/components/ui'
+import { Button, Card } from '@/app/components/ui'
 
 // Seule partie interactive de la page (bascule entre les 3 profils) — le
 // reste de /c-est-quoi est statique. Port de la logique JourneyVisual/tabs de
@@ -85,11 +85,8 @@ export default function TabsSection() {
         ))}
       </div>
 
-      <div
+      <Card
         style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 16,
           padding: '36px 30px',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
@@ -146,7 +143,7 @@ export default function TabsSection() {
             ))}
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

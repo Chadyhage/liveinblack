@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import CameraScanner from './CameraScanner'
-import { Button, Input, Label } from '@/app/components/ui'
+import { Button, Card, Input, Label } from '@/app/components/ui'
 
 // Port de src/pages/ScannerPage.jsx (outil staff : porte + bar). Ce composant
 // ne parle QU'aux routes HTTP déjà construites (/api/tickets/checkin et les
@@ -209,14 +209,6 @@ function groupByCategory(menu: MenuItemView[]): Array<[string, MenuItemView[]]> 
 }
 
 let toastSeq = 0
-
-const cardStyle: React.CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--border)',
-  borderRadius: 16,
-  padding: 18,
-  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-}
 
 const sectionTitleStyle: React.CSSProperties = {
   fontSize: 13,
@@ -677,7 +669,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               </div>
             )}
 
-            <section style={cardStyle}>
+            <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <h2 style={{ ...sectionTitleStyle, margin: 0 }}>Caméra</h2>
                 <Button type="button" variant="secondary" size="sm" onClick={() => setScanning((s) => !s)}>
@@ -685,9 +677,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 </Button>
               </div>
               <CameraScanner active={scanning} onScan={handleScanValue} />
-            </section>
+            </Card>
 
-            <section style={cardStyle}>
+            <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
               <h2 style={sectionTitleStyle}>Saisie manuelle</h2>
               <form
                 onSubmit={(e) => {
@@ -712,15 +704,15 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   Valider
                 </Button>
               </form>
-            </section>
+            </Card>
           </>
         ) : (
           <>
             {checkinResult && (
-              <section
+              <Card
                 style={{
-                  ...cardStyle,
                   border: checkinResult.alreadyCheckedIn ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(78,232,200,0.35)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                 }}
               >
                 {/* Même langage visuel icône-cercle + gros titre que
@@ -787,10 +779,10 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>
                   {checkinResult.pointAwarded ? 'Point de fidélité crédité au titulaire.' : 'Pas de point de fidélité pour ce scan.'}
                 </p>
-              </section>
+              </Card>
             )}
 
-            <section style={cardStyle}>
+            <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
               <h2 style={sectionTitleStyle}>Commande de ce billet</h2>
               {items.length === 0 ? (
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Aucun article pour l&apos;instant.</p>
@@ -905,15 +897,15 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   })}
                 </div>
               )}
-            </section>
+            </Card>
 
             <section>
               <h2 style={{ ...sectionTitleStyle, marginBottom: 18 }}>Ajouter au menu</h2>
               {menu.length === 0 ? (
-                <div style={{ ...cardStyle, padding: '40px 20px', textAlign: 'center' }}>
+                <Card style={{ padding: '40px 20px', textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
                   <p style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px' }}>Aucune carte disponible</p>
                   <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>L&apos;organisateur n&apos;a pas publié de menu pour cet événement.</p>
-                </div>
+                </Card>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
                   {groups.map(([category, catItems]) => (
@@ -927,11 +919,11 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                           const busy = busyKey === key
                           const editable = findEditableLine(items, menuItem.name)
                           return (
-                            <div
+                            <Card
                               key={menuItem.name}
                               style={{
-                                ...cardStyle,
                                 borderRadius: 12,
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                                 padding: '12px 14px',
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -956,7 +948,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                   Ajouter
                                 </Button>
                               )}
-                            </div>
+                            </Card>
                           )
                         })}
                       </div>

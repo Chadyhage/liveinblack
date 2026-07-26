@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/app/components/ui'
+import { Button, Card } from '@/app/components/ui'
 
 // Port de src/pages/BoostActivePage.jsx. Différence d'architecture vs
 // legacy : l'activation (création du doc Boost) est intégralement côté
@@ -92,7 +92,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
   return (
     <main style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
       <style>{`@keyframes lib-boost-spin { to { transform: rotate(360deg) } }`}</style>
-      <div style={{ ...CARD, padding: 32, maxWidth: 460, width: '100%', textAlign: 'center' }}>
+      <Card style={{ ...CARD, padding: 32, maxWidth: 460, width: '100%', textAlign: 'center' }}>
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 24px', border: `2px solid ${COLORS.dim}`, borderTopColor: COLORS.pink, animation: 'lib-boost-spin 0.9s linear infinite' }} />
@@ -166,7 +166,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
             </div>
           </>
         )}
-      </div>
+      </Card>
     </main>
   )
 }

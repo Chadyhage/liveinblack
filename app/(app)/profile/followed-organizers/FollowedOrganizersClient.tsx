@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
-import { Button, Checkbox } from '@/app/components/ui'
+import { Avatar, Button, Card, Checkbox } from '@/app/components/ui'
 
 // Port de src/pages/FollowedOrganizersPage.jsx (#6 phase profil).
 
@@ -43,8 +43,6 @@ const ALERT_LABELS: { key: keyof AlertSettings; label: string }[] = [
   { key: 'newMedia', label: 'Nouveaux médias publiés' },
   { key: 'importantAnnouncements', label: 'Annonces importantes' },
 ]
-
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18 }
 
 const DEFAULT_ALERTS: AlertSettings = {
   newEvent: true,
@@ -101,7 +99,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
         </div>
 
         {follows.length === 0 ? (
-          <div style={{ ...cardStyle, textAlign: 'center', padding: '48px 24px' }}>
+          <Card style={{ textAlign: 'center', padding: '48px 24px' }}>
             <div style={{ width: 56, height: 56, borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)' }}>
               <IconUsers />
             </div>
@@ -113,7 +111,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
             >
               Découvrir les organisateurs
             </Link>
-          </div>
+          </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {follows.map((f) => (
@@ -129,7 +127,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
               {suggestions
                 .filter((s) => !follows.some((f) => f.organizerId === s.organizerId))
                 .map((s) => (
-                  <div key={s.organizerId} style={{ ...cardStyle, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <Card key={s.organizerId} style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div>
                       <Link href={`/organizers/${s.slug}`} style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
                         {s.name}
@@ -137,7 +135,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
                       {(s.city || s.country) && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
                     </div>
                     <OrganizerFollowButtonClient organizerId={s.organizerId} organizerName={s.name} initialFollowing={false} isAuthenticated compact onFollow={() => addFollow(s)} />
-                  </div>
+                  </Card>
                 ))}
             </div>
           </div>
@@ -185,25 +183,9 @@ function FollowCard({
   }
 
   return (
-    <section style={cardStyle}>
+    <Card>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <div
-          style={{
-            width: 54,
-            height: 54,
-            borderRadius: '50%',
-            background: follow.organizerAvatarUrl ? `url(${follow.organizerAvatarUrl}) center/cover` : '#111',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 20,
-            fontWeight: 800,
-            color: 'var(--teal)',
-            flexShrink: 0,
-          }}
-        >
-          {!follow.organizerAvatarUrl && follow.organizerName[0]?.toUpperCase()}
-        </div>
+        <Avatar src={follow.organizerAvatarUrl} name={follow.organizerName} size="lg" style={{ width: 54, height: 54 }} />
         <div style={{ flex: 1, minWidth: 160 }}>
           <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{follow.organizerName}</h2>
           {(follow.organizerCity || follow.organizerCountry) && (
@@ -245,7 +227,7 @@ function FollowCard({
           ))}
         </div>
       )}
-    </section>
+    </Card>
   )
 }
 

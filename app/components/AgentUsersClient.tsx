@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
-import { Button, Input } from '@/app/components/ui'
+import { Button, Card, Input } from '@/app/components/ui'
 
 // Port de la section « Comptes » (tab === 'users') de src/pages/AgentPage.jsx
 // (#9 phase agent/admin) — recherche + filtres rôle/statut/en ligne, panneau
@@ -346,12 +346,12 @@ export default function AgentUsersClient() {
         </div>
 
         {listError && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         <div style={{ position: 'relative' }}>
@@ -441,9 +441,9 @@ export default function AgentUsersClient() {
         {listLoading ? (
           <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
         ) : users.length === 0 ? (
-          <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <Card style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Aucun compte trouvé</p>
-          </div>
+          </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {users.map((u) => {
@@ -778,7 +778,7 @@ function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: stri
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
-      <div style={{ position: 'relative', ...cardStyle, maxWidth: 360, width: '90%', textAlign: 'center' }}>
+      <Card style={{ position: 'relative', maxWidth: 360, width: '90%', textAlign: 'center' }}>
         <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
@@ -788,7 +788,7 @@ function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: stri
             Confirmer
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

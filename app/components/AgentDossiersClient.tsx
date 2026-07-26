@@ -5,7 +5,7 @@ import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { X } from 'lucide-react'
-import { Button, Input, Textarea, Label } from '@/app/components/ui'
+import { Avatar, Button, Card, Input, Textarea, Label } from '@/app/components/ui'
 
 // Port de la section « Dossiers » de src/pages/AgentPage.jsx (#9 phase
 // agent/admin) — file/queue de candidatures organisateur/prestataire, panneau
@@ -516,12 +516,12 @@ export default function AgentDossiersClient() {
         </div>
 
         {listError && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -563,7 +563,7 @@ export default function AgentDossiersClient() {
         {listLoading ? (
           <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
         ) : grouped.length === 0 ? (
-          <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <Card style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>{search ? 'Aucun résultat' : 'Aucun dossier'}</p>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
               {search ? `Aucun dossier ne correspond à « ${search} » dans « ${activeSection.label} ».` : `Aucun dossier dans la section « ${activeSection.label} ».`}
@@ -573,14 +573,14 @@ export default function AgentDossiersClient() {
                 Effacer la recherche
               </Button>
             )}
-          </div>
+          </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {grouped.map((group) =>
               group.length === 1 ? (
                 <AppCard key={group[0].id} app={group[0]} onClick={() => setSelectedId(group[0].id)} />
               ) : (
-                <div key={group[0].userEmail || group[0].userId} style={{ ...cardStyle, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Card key={group[0].userEmail || group[0].userId} style={{ background: 'var(--surface-2)', border: '1px solid var(--border-strong)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Même compte · plusieurs activités</span>
                     <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{group.length} dossiers</span>
@@ -588,7 +588,7 @@ export default function AgentDossiersClient() {
                   {group.map((app) => (
                     <AppCard key={app.id} app={app} compact onClick={() => setSelectedId(app.id)} />
                   ))}
-                </div>
+                </Card>
               )
             )}
           </div>
@@ -673,23 +673,7 @@ function AppCard({ app, compact, onClick }: { app: ApplicationSummary; compact?:
         border: compact ? '1px solid var(--border)' : cardStyle.border,
       }}
     >
-      <div
-        style={{
-          width: compact ? 28 : 36,
-          height: compact ? 28 : 36,
-          borderRadius: '50%',
-          background: 'var(--gold)',
-          color: 'var(--obsidian)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 800,
-          fontSize: compact ? 12 : 14,
-          flexShrink: 0,
-        }}
-      >
-        {(app.displayName || '?').charAt(0).toUpperCase()}
-      </div>
+      <Avatar src={null} name={app.displayName || '?'} size={compact ? 'sm' : 'md'} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ flex: 1, minWidth: 0, fontSize: compact ? 13 : 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.displayName}</span>
@@ -1076,7 +1060,7 @@ function ActionForm({
 }) {
   const disabled = busy || (required && !note.trim())
   return (
-    <div style={{ ...cardStyle, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <Card style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <Label style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</Label>
       <Textarea style={{ minHeight: 70 }} value={note} onChange={(e) => setNote(e.target.value)} placeholder={placeholder} />
       {helper && <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>{helper}</p>}
@@ -1088,7 +1072,7 @@ function ActionForm({
           {confirmLabel}
         </Button>
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -1096,7 +1080,7 @@ function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: stri
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
-      <div style={{ position: 'relative', ...cardStyle, maxWidth: 360, width: '90%', textAlign: 'center' }}>
+      <Card style={{ position: 'relative', maxWidth: 360, width: '90%', textAlign: 'center' }}>
         <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
@@ -1106,7 +1090,7 @@ function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: stri
             Confirmer
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

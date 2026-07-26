@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { safeInternalPath } from '@/lib/shared/safeNavigation'
-import { Button, Input, Label, Select } from '@/app/components/ui'
+import { Button, Card, Input, Label, Select, Tabs } from '@/app/components/ui'
 
 // Port de src/pages/LoginPage.jsx (#118). La distinction legacy
 // role==='user' vs role==='client' n'existe plus côté backend (un seul rôle
@@ -376,7 +376,7 @@ export default function AuthForm() {
   if (registeredEmail) {
     return (
       <div style={{ width: '100%', maxWidth: 448, margin: '0 auto', padding: '48px 20px' }}>
-        <div style={{ ...cardStyle, padding: '38px 32px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <Card style={{ background: 'var(--surface-2)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: '38px 32px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -426,7 +426,7 @@ export default function AuthForm() {
           >
             Aller à la connexion
           </Button>
-        </div>
+        </Card>
       </div>
     )
   }
@@ -455,29 +455,17 @@ export default function AuthForm() {
         </p>
       </div>
 
-      <div style={{ ...cardStyle, padding: '38px 32px' }}>
+      <Card style={{ background: 'var(--surface-2)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: '38px 32px' }}>
         {/* Mode tabs */}
-        <div style={{ display: 'flex', gap: 6, padding: 5, background: 'var(--surface)', borderRadius: 14, marginBottom: 28, border: '1px solid var(--border)' }}>
-          {(['login', 'register'] as const).map((m) => (
-            <div key={m} className={`lb-tab${mode === m ? ' lb-tab-active' : ''}`} style={{ flex: 1, borderRadius: 10 }}>
-              <Button
-                variant="ghost"
-                fullWidth
-                onClick={() => switchMode(m)}
-                style={{
-                  padding: 12,
-                  fontSize: 14.5,
-                  borderRadius: 10,
-                  transition: 'all 0.2s',
-                  background: mode === m ? 'rgba(255,255,255,0.10)' : 'transparent',
-                  color: mode === m ? 'var(--text)' : 'var(--text-muted)',
-                }}
-              >
-                {m === 'login' ? 'Connexion' : 'Inscription'}
-              </Button>
-            </div>
-          ))}
-        </div>
+        <Tabs
+          value={mode}
+          onChange={(v) => switchMode(v as Mode)}
+          options={[
+            { value: 'login', label: 'Connexion' },
+            { value: 'register', label: 'Inscription' },
+          ]}
+          style={{ marginBottom: 28 }}
+        />
 
         {mode === 'login' && loginError && (
           <div className="lb-banner-fade" style={{ marginBottom: 16, padding: '11px 14px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 13, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.5 }}>
@@ -772,7 +760,7 @@ export default function AuthForm() {
             </p>
           </form>
         )}
-      </div>
+      </Card>
 
       {showForgotModal && (
         <div

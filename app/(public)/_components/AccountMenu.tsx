@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { MessageCircle, Ticket, User, LayoutDashboard, LogOut } from 'lucide-react'
-import { Button } from '@/app/components/ui'
+import { Avatar, Button } from '@/app/components/ui'
 
 // Remplace les boutons Connexion/Créer un compte de PublicNav dès qu'une
 // session existe — avant ce composant, un utilisateur connecté voyait
@@ -182,13 +182,7 @@ export default function AccountMenu({
                     onClick={() => setMessagesOpen(false)}
                     style={{ display: 'flex', gap: 10, padding: '10px 14px', textDecoration: 'none', color: 'inherit', alignItems: 'center' }}
                   >
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--surface)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>
-                      {avatar ? (
-                        <Image src={avatar} alt="" width={36} height={36} style={{ objectFit: 'cover' }} />
-                      ) : (
-                        name[0]?.toUpperCase()
-                      )}
-                    </div>
+                    <Avatar src={avatar} name={name} size="md" />
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: c.unreadCount > 0 ? 800 : 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</p>
                       <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.lastMessage || '—'}</p>

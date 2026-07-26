@@ -8,7 +8,7 @@ import PreferencesModal, { summarizePreferences, type Preferences } from './Pref
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
-import { Button, Input, Select, Switch, Badge, Label, Slider, Modal } from '@/app/components/ui'
+import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion } from '@/app/components/ui'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -67,7 +67,6 @@ function errorMessage(code: string, data?: { nextChangeAllowedAt?: string }): st
   return ERROR_MESSAGES[code] || 'Une erreur est survenue, réessaie'
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 // Style visuel "CTA or" partagé par tous les boutons primaires de ce panneau
 // (auparavant généré par l'helper `primaryBtn`) — passé via la prop `style`
 // de <Button variant="primary">, qui gère déjà elle-même l'opacité/curseur
@@ -135,12 +134,12 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
         </div>
 
         {!isOrganizer && (
-          <div style={cardStyle}>
+          <Card>
             <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>Système de points</p>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
               Tu gagnes <strong style={{ color: '#fff' }}>1 point</strong> pour chaque ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs.
             </p>
-          </div>
+          </Card>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -484,13 +483,13 @@ function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (
         />
 
         {filtered.length === 0 ? (
-          <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <Card style={{textAlign: 'center'}}>
             <p style={{ fontSize: 14, color: '#fff', margin: '0 0 6px' }}>Aucun réglage ne correspond à « {query} »</p>
             <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 12px' }}>Essaie « nom », « e-mail », « mot de passe », « confidentialité »…</p>
             <Button onClick={() => setQuery('')} variant="link" style={{ fontSize: 12.5, textDecoration: 'none' }}>
               Effacer la recherche
             </Button>
-          </div>
+          </Card>
         ) : (
           filtered.map((entry) => <div key={entry.id}>{entry.render({ user, setUser })}</div>)
         )}
@@ -672,7 +671,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
   }
 
   return (
-    <div style={cardStyle}>
+    <Card>
       <EyebrowLabel>Informations personnelles</EyebrowLabel>
       <Label>Prénom / Nom</Label>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8, opacity: onCooldown ? 0.5 : 1 }}>
@@ -736,14 +735,14 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
         Enregistrer ces infos
       </Button>
       {demoMsg && <Toast text={demoMsg.text} kind={demoMsg.kind} />}
-    </div>
+    </Card>
   )
 }
 
 function VisibilityCard({ user }: { user: ProfilUser }) {
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'
   return (
-    <div style={cardStyle}>
+    <Card>
       <EyebrowLabel>Qui voit quoi ?</EyebrowLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
@@ -754,7 +753,7 @@ function VisibilityCard({ user }: { user: ProfilUser }) {
           <p style={{ fontSize: 11.5, color: 'var(--text-muted)', textAlign: 'right', maxWidth: 190, margin: 0 }}>Conversations, demandes d&apos;amis, guestlists, équipes de soirée, billets.</p>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -765,7 +764,7 @@ function PreferencesCard({ user, setUser }: { user: ProfilUser; setUser: (u: Pro
   const overflow = tags.length - shown.length
 
   return (
-    <div style={cardStyle}>
+    <Card>
       <EyebrowLabel>Mes goûts — recommandations</EyebrowLabel>
       <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
         Optionnel. Sert uniquement à te proposer les bonnes soirées sur l&apos;accueil (« Nos recommandations pour toi »). Jamais partagé avec les organisateurs.
@@ -791,7 +790,7 @@ function PreferencesCard({ user, setUser }: { user: ProfilUser; setUser: (u: Pro
         initialPreferences={user.preferences}
         onSaved={(next) => setUser({ ...user, preferences: next })}
       />
-    </div>
+    </Card>
   )
 }
 
@@ -827,7 +826,7 @@ function PrivacyCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilU
   }
 
   return (
-    <div style={cardStyle}>
+    <Card>
       <EyebrowLabel>Confidentialité</EyebrowLabel>
       <PrivacyToggle label="Statut en ligne" hint="Les autres voient quand tu es connecté·e." value={user.privacy.showOnline} onChange={(v) => toggle('showOnline', v)} />
       <PrivacyToggle label="Photo de profil" hint="Les autres voient ta photo (sinon : initiales)." value={user.privacy.showAvatar} onChange={(v) => toggle('showAvatar', v)} />
@@ -843,7 +842,7 @@ function PrivacyCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilU
         value={user.privacy.personalizedRecommendations}
         onChange={(v) => toggle('personalizedRecommendations', v)}
       />
-    </div>
+    </Card>
   )
 }
 
@@ -888,7 +887,7 @@ function DataExportCard() {
   }
 
   return (
-    <div style={cardStyle}>
+    <Card>
       <EyebrowLabel>Mes données</EyebrowLabel>
       <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
         Télécharge une copie de toutes les données personnelles associées à ton compte (profil, billets, commandes,
@@ -899,7 +898,7 @@ function DataExportCard() {
         Télécharger mes données
       </Button>
       {msg && <Toast text={msg.text} kind={msg.kind} />}
-    </div>
+    </Card>
   )
 }
 
@@ -947,7 +946,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
   }
 
   return (
-    <div style={cardStyle}>
+    <Card>
       <EyebrowLabel>Adresse e-mail</EyebrowLabel>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'var(--surface-2)', marginBottom: 14 }}>
         <span style={{ fontSize: 13, color: '#fff', flex: 1 }}>{user.email}</span>
@@ -976,7 +975,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
         </>
       )}
       {msg && <Toast text={msg.text} kind={msg.kind} />}
-    </div>
+    </Card>
   )
 }
 
@@ -1033,7 +1032,7 @@ function PasswordCard({ email }: { email: string }) {
   }
 
   return (
-    <div style={cardStyle}>
+    <Card>
       <EyebrowLabel>Sécurité — Mot de passe</EyebrowLabel>
       <PasswordField value={currentPassword} onChange={setCurrentPassword} placeholder="Mot de passe actuel" style={{ marginBottom: 10 }} />
       <PasswordField value={newPassword} onChange={setNewPassword} placeholder="8 caractères, 1 majuscule, 1 chiffre" style={{ marginBottom: strength ? 6 : 10 }} />
@@ -1060,7 +1059,7 @@ function PasswordCard({ email }: { email: string }) {
           Mot de passe oublié ? Recevoir un lien de réinitialisation
         </Button>
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -1102,7 +1101,7 @@ function DangerZoneCard() {
   }
 
   return (
-    <div style={cardStyle}>
+    <Card>
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 16px' }} />
       <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Zone de danger</p>
 
@@ -1141,7 +1140,7 @@ function DangerZoneCard() {
           {error && <p style={{ fontSize: 12, color: '#e05aaa', margin: '8px 0 0' }}>{error}</p>}
         </ConfirmModal>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -1155,7 +1154,6 @@ const FAQ = [
 ]
 
 function SupportPanel({ onBack }: { onBack: () => void }) {
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
 
   async function copyEmail() {
@@ -1188,25 +1186,12 @@ function SupportPanel({ onBack }: { onBack: () => void }) {
           <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>Support / Aide</h1>
         </div>
 
-        <div style={cardStyle}>
+        <Card>
           <EyebrowLabel>Questions fréquentes</EyebrowLabel>
-          {FAQ.map((f, i) => (
-            <div key={i} style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
-              <Button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                variant="ghost"
-                fullWidth
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', color: '#fff', fontSize: 13.5, textAlign: 'left' }}
-              >
-                {f.q}
-                <span style={{ transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s', color: 'var(--text-faint)' }}>⌄</span>
-              </Button>
-              {openFaq === i && <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 14px' }}>{f.a}</p>}
-            </div>
-          ))}
-        </div>
+          <Accordion items={FAQ.map((f) => ({ question: f.q, answer: f.a }))} />
+        </Card>
 
-        <div style={{ ...cardStyle, border: '1px solid rgba(200,169,110,0.25)' }}>
+        <Card style={{border: '1px solid rgba(200,169,110,0.25)'}}>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>Tu n&apos;as pas trouvé de réponse ? Écris-nous, on répond sous 24h.</p>
           <Button onClick={copyEmail} variant="primary" style={{ ...goldButtonStyle, marginBottom: 10 }}>
             {copied ? 'Adresse copiée' : "Copier l'adresse e-mail"}
@@ -1215,7 +1200,7 @@ function SupportPanel({ onBack }: { onBack: () => void }) {
           <a href={`mailto:${SUPPORT_EMAIL}?subject=Support%20LIVEINBLACK`} style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
             ou ouvrir mon application mail →
           </a>
-        </div>
+        </Card>
       </div>
     </main>
   )

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronUp, ChevronDown, X } from 'lucide-react'
-import { Button, Input, Switch } from '@/app/components/ui'
+import { Button, Card, Input, Switch } from '@/app/components/ui'
 
 // Port de src/components/ActualiteAdminPanel.jsx (#9 phase agent/admin, tab
 // 'actualite') — édition du carrousel « Actualité » de l'accueil : actif
@@ -64,7 +64,6 @@ function normalizeForPreview(d: Draft): Draft {
   }
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 18px' }
 const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', marginBottom: 8 }
 
 export default function AgentHomepageConfigClient() {
@@ -196,9 +195,9 @@ export default function AgentHomepageConfigClient() {
     return (
       <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
-          <div style={{ ...cardStyle, padding: '28px 18px', textAlign: 'center' }}>
+          <Card style={{ padding: '28px 18px', textAlign: 'center' }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Chargement de la configuration…</span>
-          </div>
+          </Card>
         </div>
       </main>
     )
@@ -210,29 +209,29 @@ export default function AgentHomepageConfigClient() {
         <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Actualité</h1>
 
         {loadError && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)' }}>
+          <Card style={{ border: '1px solid rgba(224,90,170,0.35)' }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
               Lecture impossible — la configuration ci-dessous peut être incomplète. Recharge la page pour réessayer.
             </p>
-          </div>
+          </Card>
         )}
 
         {dirty && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.06)', padding: '10px 14px' }}>
+          <Card style={{ border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.06)', padding: '10px 14px' }}>
             <p style={{ fontSize: 12.5, color: 'var(--gold)', margin: 0, fontWeight: 700 }}>Modifications non enregistrées — pense à cliquer sur « Enregistrer ».</p>
-          </div>
+          </Card>
         )}
 
-      <div style={cardStyle}>
+      <Card style={{ padding: '16px 18px' }}>
         <h3 style={{ margin: '0 0 6px', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Carrousel « Actualité »</h3>
         <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.6 }}>
           Un bandeau éditorial en haut de l&apos;accueil pour mettre en avant une sélection d&apos;événements (le gros
           événement du week-end, les nouveautés, une saison…). Il n&apos;apparaît que s&apos;il est activé et qu&apos;au
           moins un événement choisi est encore à venir.
         </p>
-      </div>
+      </Card>
 
-      <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Card style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <span>
             <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#fff' }}>Afficher sur l&apos;accueil</span>
@@ -268,9 +267,9 @@ export default function AgentHomepageConfigClient() {
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <Card style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <span style={labelStyle}>Titre</span>
           <Input value={draft.title} maxLength={80} onChange={(e) => patch({ title: e.target.value })} placeholder="L'actu du moment" />
@@ -281,9 +280,9 @@ export default function AgentHomepageConfigClient() {
           <Input value={draft.subtitle} maxLength={140} onChange={(e) => patch({ subtitle: e.target.value })} placeholder="Les temps forts à ne pas manquer" />
           <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)', marginTop: 4, textAlign: 'right' }}>{draft.subtitle.length}/140</span>
         </div>
-      </div>
+      </Card>
 
-      <div style={cardStyle}>
+      <Card style={{ padding: '16px 18px' }}>
         <span style={{ ...labelStyle, marginBottom: 10 }}>
           À la une ({eventIds.length}/{MAX_EVENTS})
         </span>
@@ -332,9 +331,9 @@ export default function AgentHomepageConfigClient() {
             })}
           </div>
         )}
-      </div>
+      </Card>
 
-      <div style={cardStyle}>
+      <Card style={{ padding: '16px 18px' }}>
         <span style={{ ...labelStyle, marginBottom: 10 }}>Ajouter un événement</span>
         {atMax && (
           <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, color: '#c8a96e' }}>Maximum atteint ({MAX_EVENTS} événements). Retire-en un pour en ajouter un autre.</p>
@@ -371,9 +370,9 @@ export default function AgentHomepageConfigClient() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
-      <div style={cardStyle}>
+      <Card style={{ padding: '16px 18px' }}>
         <span style={{ ...labelStyle, marginBottom: 10 }}>Aperçu</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: previewAccent.soft, border: `1px solid ${previewAccent.border}` }}>
@@ -389,7 +388,7 @@ export default function AgentHomepageConfigClient() {
               : "Activé, mais aucun événement à venir → rien ne s'affichera."
             : "Désactivé → masqué sur l'accueil."}
         </p>
-      </div>
+      </Card>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <Button

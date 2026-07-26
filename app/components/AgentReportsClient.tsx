@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Input, Textarea } from '@/app/components/ui'
+import { Button, Card, Input, Textarea } from '@/app/components/ui'
 
 // Port de la section « Signalements » de src/pages/AgentPage.jsx (#9 phase
 // agent/admin, tâche #103) — file de signalements d'utilisateurs. Voir
@@ -25,8 +25,6 @@ interface ReportItem {
 }
 
 type FilterKey = 'open' | 'handled'
-
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 
 function fmtDateTime(iso: string): string {
   const d = new Date(iso)
@@ -174,12 +172,12 @@ export default function AgentReportsClient() {
         </div>
 
         {listError && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={() => loadList(filter)} style={{ fontSize: 12.5 }}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
@@ -233,21 +231,20 @@ export default function AgentReportsClient() {
         {listLoading ? (
           <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
         ) : sorted.length === 0 ? (
-          <div style={{ ...cardStyle, padding: 32, textAlign: 'center' }}>
+          <Card style={{ padding: 32, textAlign: 'center' }}>
             <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>
               {filter === 'open' ? 'Aucun signalement' : 'Aucun signalement traité'}
             </p>
-          </div>
+          </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {sorted.map((r) => (
-              <div
+              <Card
                 key={r.id}
                 style={{
-                  ...cardStyle,
                   padding: 18,
                   borderColor: r.handled ? 'var(--border)' : 'rgba(224,90,170,0.28)',
-                  borderLeft: r.handled ? cardStyle.border as string : '3px solid rgba(224,90,170,0.55)',
+                  borderLeft: r.handled ? '1px solid var(--border)' : '3px solid rgba(224,90,170,0.55)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
@@ -327,7 +324,7 @@ export default function AgentReportsClient() {
                     Marquer comme traité
                   </Button>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
         )}

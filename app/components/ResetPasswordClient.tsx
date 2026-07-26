@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
-import { Button, Input, Label } from '@/app/components/ui'
+import { Button, Card, Input, Label } from '@/app/components/ui'
 
 // Cible du resetLink construit par app/api/auth/request-password-reset/route.ts
 // (?email=&token=), consommé par POST /api/auth/reset-password. Mise en page
@@ -84,7 +84,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
 
   return (
     <main style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
-      <div style={{ ...CARD, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: state === 'form' ? 'left' : 'center' }}>
+      <Card style={{ ...CARD, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: state === 'form' ? 'left' : 'center' }}>
         {state === 'form' && (
           <>
             <h1 className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 8px' }}>Nouveau mot de passe</h1>
@@ -181,7 +181,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
             </div>
           </>
         )}
-      </div>
+      </Card>
     </main>
   )
 }
