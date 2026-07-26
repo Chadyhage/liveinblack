@@ -3,9 +3,10 @@
 // par le BoostModal côté tableau de bord organisateur).
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { getEventBoostAvailability, reserveBoostSlot } from '../boostSlots'
+import { getEventBoostAvailability, reserveBoostSlot, releaseBoostSlotIfPending } from '../boostSlots'
 import Event from '../../models/Event'
 import BoostSlot from '../../models/BoostSlot'
+import { boostSlotId, normalizeBoostRegion } from '../../shared/boosts'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -58,5 +59,51 @@ describeIntegration('getEventBoostAvailability (intégration, vraie base) — oc
     if (!result.ok) return
     expect(result.slots.find((s) => s.position === 2)?.status).toBe('held')
     expect(result.slots.find((s) => s.position === 1)?.status).toBe('available')
+  })
+})
+
+describeIntegration('releaseBoostSlotIfPending (intégration, vraie base) — libération après échec de paiement', () => {
+  it("supprime un créneau 'pending' correspondant exactement au boostId fourni", async () => {
+    const event = await Event.create({ name: 'Soirée', date: '2030-01-01', city: 'Lomé', region: 'Togo', organizerId: 'org-1', createdBy: 'org-1', places: [] })
+    await reserveBoostSlot({ eventId: String(event._id), userId: 'org-1', position: 1, region: 'Togo', boostId: 'BOOST-A' })
+    const slotId = boostSlotId(normalizeBoostRegion('Togo'), 1)
+    expect(await BoostSlot.findOne({ slotId }).lean()).toBeTruthy()
+
+    await releaseBoostSlotIfPending(slotId, 'BOOST-A')
+
+    expect(await BoostSlot.findOne({ slotId }).lean()).toBeNull()
+  })
+
+  it("ne touche PAS un créneau déjà passé 'active' entre-temps, même avec le bon boostId", async () => {
+    const event = await Event.create({ name: 'Soirée', date: '2030-01-01', city: 'Lomé', region: 'Togo', organizerId: 'org-1', createdBy: 'org-1', places: [] })
+    await reserveBoostSlot({ eventId: String(event._id), userId: 'org-1', position: 1, region: 'Togo', boostId: 'BOOST-B' })
+    const slotId = boostSlotId(normalizeBoostRegion('Togo'), 1)
+    // Simule la confirmation webhook qui fait passer le créneau en 'active'
+    // pendant qu'un appel de libération tardif (ex. retry réseau) arrive.
+    await BoostSlot.updateOne({ slotId }, { $set: { status: 'active', activeUntil: new Date(Date.now() + 7 * 24 * 3600_000) } })
+
+    await releaseBoostSlotIfPending(slotId, 'BOOST-B')
+
+    const stillActive = await BoostSlot.findOne({ slotId }).lean()
+    expect(stillActive).toBeTruthy()
+    expect(stillActive?.status).toBe('active')
+  })
+
+  it("ne touche pas un créneau 'pending' d'un AUTRE boostId (ex. réservé entre-temps par quelqu'un d'autre)", async () => {
+    const event = await Event.create({ name: 'Soirée', date: '2030-01-01', city: 'Lomé', region: 'Togo', organizerId: 'org-1', createdBy: 'org-1', places: [] })
+    await reserveBoostSlot({ eventId: String(event._id), userId: 'org-1', position: 1, region: 'Togo', boostId: 'BOOST-REAL' })
+    const slotId = boostSlotId(normalizeBoostRegion('Togo'), 1)
+
+    // Un appel de libération portant un boostId périmé/différent ne doit
+    // jamais supprimer la réservation réelle en cours.
+    await releaseBoostSlotIfPending(slotId, 'BOOST-STALE')
+
+    const stillPending = await BoostSlot.findOne({ slotId }).lean()
+    expect(stillPending).toBeTruthy()
+    expect(stillPending?.boostId).toBe('BOOST-REAL')
+  })
+
+  it("ne plante pas si le créneau n'existe pas du tout (no-op silencieux)", async () => {
+    await expect(releaseBoostSlotIfPending('togo__top_3', 'BOOST-INCONNU')).resolves.toBeUndefined()
   })
 })

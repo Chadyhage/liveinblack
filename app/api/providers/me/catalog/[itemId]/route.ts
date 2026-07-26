@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
+import { canProposeServices } from '@/lib/server/permissions'
 import { updateCatalogItem, deleteCatalogItem } from '@/lib/server/providerProfile'
 
 const patchSchema = z.object({
@@ -13,14 +14,10 @@ const patchSchema = z.object({
   available: z.boolean().optional(),
 })
 
-function requireProviderRole(roles: string[] | undefined) {
-  return Boolean(roles?.includes('prestataire'))
-}
-
 export async function PATCH(req: Request, { params }: { params: Promise<{ itemId: string }> }) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
-  if (!requireProviderRole(session.user.roles)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!canProposeServices(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const { itemId } = await params
   const parsed = patchSchema.safeParse(await req.json().catch(() => null))
@@ -34,7 +31,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ itemId
 export async function DELETE(_req: Request, { params }: { params: Promise<{ itemId: string }> }) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
-  if (!requireProviderRole(session.user.roles)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!canProposeServices(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const { itemId } = await params
   const result = await deleteCatalogItem({ id: session.user.id }, itemId)

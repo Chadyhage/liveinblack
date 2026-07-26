@@ -15,16 +15,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
+const KNOWN_APPLICATION_STATUSES = ['draft', 'submitted', 'under_review', 'resubmitted', 'needs_changes', 'rejected', 'approved']
+
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }
 const primaryBtn: React.CSSProperties = {
   display: 'inline-block',
   padding: '12px 22px',
-  borderRadius: 10,
+  borderRadius: 8,
   border: 'none',
   background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
   color: '#1a1508',
-  fontWeight: 700,
+  fontWeight: 800,
   fontSize: 13.5,
+  textTransform: 'uppercase',
+  letterSpacing: '.03em',
   textDecoration: 'none',
 }
 const secondaryBtn: React.CSSProperties = {
@@ -65,7 +69,7 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
 
   return (
     <section id={id} style={{ display: 'flex', flexDirection: 'column', gap: 10, scrollMarginTop: 20 }}>
-      <h2 style={{ fontSize: 13, fontWeight: 800, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{TYPE_LABEL[type]}</h2>
+      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{TYPE_LABEL[type]}</h2>
 
       {!application && roleStatus === 'active' && (
         <div style={{ ...cardStyle, border: '1px solid rgba(78,232,200,0.35)' }}>
@@ -155,6 +159,17 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
           </Link>
         </div>
       )}
+
+      {application && !KNOWN_APPLICATION_STATUSES.includes(application.status) && (
+        <div style={cardStyle}>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+            Ton dossier existe mais son statut n&apos;a pas pu être affiché correctement. Contacte le support si cela persiste.
+          </p>
+          <div style={{ marginTop: 16 }}>
+            <SupportLink />
+          </div>
+        </div>
+      )}
     </section>
   )
 }
@@ -175,7 +190,7 @@ export default async function MonDossierPage() {
           <Link href="/profile" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
             ← Mon profil
           </Link>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#fff', margin: '8px 0 0' }}>Mon dossier</h1>
+          <h1 className="font-display" style={{ fontSize: 26, color: '#fff', margin: '8px 0 0' }}>Mon dossier</h1>
         </div>
         <nav style={{ display: 'flex', gap: 16 }}>
           <a href="#organisateur" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>

@@ -56,6 +56,21 @@ const PROVIDER_TYPE_NAMES: Record<string, string> = {
   transport: 'Navette & logistique', staff: 'Staff événementiel', communication: 'Communication', bien_etre: 'Beauté & bien-être',
 }
 
+// Domaine whitelisté par next.config.ts (images.remotePatterns + CSP img-src)
+// — jamais un générateur externe non listé (picsum.photos, etc.), sinon les
+// images sont bloquées côté client sans erreur serveur visible.
+const UNSPLASH_PHOTO_IDS = [
+  '1470229722913-7c0e2dbbafd3', '1493676304819-0d7a8d026dcf', '1514525253161-7a46d19cd819',
+  '1470225620780-dba8ba36b745', '1518998053901-5348d3961a04',
+  '1522158637959-30385a09e0da', '1526367790999-0150786686a2', '1516450360452-9312f5e86fc7',
+  '1477281765962-ef34e8bb0967', '1496337589254-7e19d01cec44', '1429962714451-bb934ecdc4ec',
+]
+
+function unsplashUrl(seed: number, w = 1200, h = 800): string {
+  const id = UNSPLASH_PHOTO_IDS[seed % UNSPLASH_PHOTO_IDS.length]
+  return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&h=${h}&q=80`
+}
+
 const MENU_ITEMS = [
   { name: 'Bouteille Champagne', emoji: '🍾', price: 50000, category: 'Boissons' },
   { name: 'Cocktail signature', emoji: '🍹', price: 5000, category: 'Boissons' },
@@ -145,7 +160,7 @@ async function main() {
       zonesIntervention: [region.id],
       followersCount: randInt(10, 900),
       totalEventsCount: 0,
-      media: [{ id: `m${i}`, url: `https://picsum.photos/seed/org${i}/800/600`, type: 'image', visibility: 'public', displayOrder: 0 }],
+      media: [{ id: `m${i}`, url: unsplashUrl(i, 800, 600), type: 'image', visibility: 'public', displayOrder: 0 }],
       proPhone: `+228 9${randInt(0, 9)} ${randInt(10, 99)} ${randInt(10, 99)} ${randInt(10, 99)}`,
     })
     organizers.push({ userId: String(user._id), profile })
@@ -287,7 +302,7 @@ async function main() {
       city,
       region: region.name,
       currency,
-      imageUrl: `https://picsum.photos/seed/event${i}/1200/800`,
+      imageUrl: unsplashUrl(i),
       color: pick(['#c8a96e', '#4ee8c8', '#e05aaa', '#8b5cf6']),
       places,
       preorder: hasMenu,

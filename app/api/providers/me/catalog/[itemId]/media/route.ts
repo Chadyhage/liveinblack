@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
+import { canProposeServices } from '@/lib/server/permissions'
 import { addCatalogItemMedia, removeCatalogItemMedia } from '@/lib/server/providerProfile'
 import { publicMediaUploadReferenceSchema } from '@/lib/shared/publicMediaUploads'
 
@@ -10,14 +11,10 @@ const addSchema = z.union([
 ])
 const removeSchema = z.object({ mediaIndex: z.number().int().min(0) })
 
-function requireProviderRole(roles: string[] | undefined) {
-  return Boolean(roles?.includes('prestataire'))
-}
-
 export async function POST(req: Request, { params }: { params: Promise<{ itemId: string }> }) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
-  if (!requireProviderRole(session.user.roles)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!canProposeServices(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const { itemId } = await params
   const parsed = addSchema.safeParse(await req.json().catch(() => null))
@@ -34,7 +31,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ itemId:
 export async function DELETE(req: Request, { params }: { params: Promise<{ itemId: string }> }) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
-  if (!requireProviderRole(session.user.roles)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!canProposeServices(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const { itemId } = await params
   const parsed = removeSchema.safeParse(await req.json().catch(() => null))

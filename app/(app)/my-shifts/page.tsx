@@ -52,7 +52,7 @@ export default async function MesSoireesPage() {
         <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: 0 }}>
           Équipe
         </p>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', margin: '6px 0 4px' }}>Mes soirées</h1>
+        <h1 className="font-display" style={{ fontSize: 26, letterSpacing: '-0.5px', color: 'var(--text)', margin: '6px 0 4px' }}>Mes soirées</h1>
         <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.5 }}>
           Les événements où tu fais partie de l&apos;équipe. Ouvre le POS le jour J pour servir ou scanner.
         </p>
@@ -156,10 +156,12 @@ export default async function MesSoireesPage() {
                       width: '100%',
                       padding: '14px',
                       minHeight: 48,
-                      borderRadius: 12,
+                      borderRadius: 8,
                       border: '1px solid var(--border-strong)',
                       fontSize: 15,
                       fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '.03em',
                       color: 'var(--obsidian)',
                       background: meta.color,
                       display: 'flex',

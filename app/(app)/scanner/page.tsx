@@ -92,7 +92,7 @@ export default async function ScannerIndexPage() {
           <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
             Staff
           </p>
-          <h1 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.3px' }}>Scanner</h1>
+          <h1 className="font-display" style={{ fontSize: 26, margin: '0 0 6px', letterSpacing: '-0.3px' }}>Scanner</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Choisis un événement pour contrôler les entrées.</p>
         </div>
 

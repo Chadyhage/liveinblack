@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { isEventEnded } from '@/lib/shared/event-time'
@@ -142,8 +143,7 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
     <div style={{ ...cardStyle, opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}>
       <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || '#c8a96e'}33, var(--obsidian))` }}>
         {ev?.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={ev.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={ev.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.85), transparent 60%)' }} />
         <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: 6 }}>

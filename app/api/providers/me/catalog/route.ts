@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
+import { canProposeServices } from '@/lib/server/permissions'
 import { addCatalogItem } from '@/lib/server/providerProfile'
 
 const addSchema = z.object({
@@ -12,14 +13,10 @@ const addSchema = z.object({
   category: z.string().optional(),
 })
 
-function requireProviderRole(roles: string[] | undefined) {
-  return Boolean(roles?.includes('prestataire'))
-}
-
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
-  if (!requireProviderRole(session.user.roles)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!canProposeServices(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const parsed = addSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body' }, { status: 400 })

@@ -62,10 +62,10 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
           <LegalBackButton />
           <div>
             <h1
+              className="font-display"
               style={{
-                fontFamily: FONTS.display,
-                fontWeight: 800,
                 fontSize: 24,
+                letterSpacing: '.01em',
                 color: '#0B0B12',
                 margin: 0,
                 lineHeight: 1.2,

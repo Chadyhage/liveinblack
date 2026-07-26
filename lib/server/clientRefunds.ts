@@ -32,6 +32,11 @@ export async function requestClientRefund(caller: RefundCaller, orderId: string)
 
   if (order.status !== 'paid') return { ok: false, status: 409, error: 'order_not_paid' }
   if (order.clientRefundRequestedAt) return { ok: false, status: 409, error: 'already_requested' }
+  // Un billet gratuit (rail 'free') n'a aucun paiement Stripe/FedaPay à
+  // rembourser — sans ce garde, le ternaire ci-dessous retomberait sur
+  // recordFedapayRefund() faute de rail 'stripe', renvoyant une erreur
+  // technique opaque au lieu d'un refus métier clair.
+  if (order.rail === 'free') return { ok: false, status: 409, error: 'free_ticket_not_refundable' }
 
   const event = await Event.findById(order.eventId)
   if (!event) return { ok: false, status: 404, error: 'event_not_found' }

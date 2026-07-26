@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { canProposeServices } from '@/lib/server/permissions'
 import { getOrCreateMyProviderProfile } from '@/lib/server/providerProfile'
 import { getMySubscriptionOverview } from '@/lib/server/providerSubscriptions'
 import { getMyProviderReviews } from '@/lib/server/providerReviews'
@@ -17,14 +18,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-function requireProviderRole(roles: string[] | undefined) {
-  return Boolean(roles?.includes('prestataire'))
-}
-
 export default async function ProposerServicesPage() {
   const session = await auth()
   if (!session?.user) redirect('/login')
-  if (!requireProviderRole(session.user.roles)) redirect('/providers')
+  // canProposeServices bloque uniquement prestStatus==='rejected' — un
+  // dossier encore 'pending' garde l'accès à son espace pendant la review
+  // (décision produit confirmée, voir lib/server/__tests__/permissions.test.ts
+  // "autorise prestataire non rejeté (y compris en attente)").
+  if (!canProposeServices(session.user)) redirect('/providers')
 
   const caller = { id: session.user.id }
   const [profileResult, subscription, reviews] = await Promise.all([

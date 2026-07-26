@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { getMessages, sendMessage } from '@/lib/server/messaging'
+import { canOrderServices } from '@/lib/server/permissions'
 
 // GET : pagination par curseur (`?before=<messageId>&limit=`) — voir
 // lib/server/messaging.ts (getMessages) pour la sémantique exacte du
@@ -44,6 +45,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ convers
   const { conversationId } = await params
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
+
+  // 'catalog_item' = demander un service à un prestataire — un prestataire
+  // ne commande pas de services à un autre prestataire (canOrderServices).
+  // Vérifié ici plutôt que dans sendMessage() : sendMessage reste générique
+  // à tous les types de message, ce garde est spécifique au cas d'usage
+  // "demande de devis catalogue", pas à la messagerie en général.
+  if (parsed.data.type === 'catalog_item' && !canOrderServices(session.user)) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
 
   const result = await sendMessage({ id: session.user.id }, { conversationId, ...parsed.data })
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })

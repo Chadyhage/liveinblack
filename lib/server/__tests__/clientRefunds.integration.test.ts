@@ -188,4 +188,26 @@ describeIntegration('clientRefunds (intégration, vraie base) — demande de rem
     const refund = await EventRefund.findOne({ eventId: String(event._id), paymentRef: 'txn_test_1' }).lean()
     expect(refund?.status).toBe('pending_manual')
   })
+
+  // Régression : un billet gratuit (rail 'free') n'a ni stripeSessionId ni
+  // fedapayTxnId — sans ce garde explicite, le ternaire stripe/fedapay
+  // retombait sur recordFedapayRefund() qui échouait silencieusement
+  // (fedapayTxnId absent → `{ ok: false }` sans code d'erreur exploitable),
+  // au lieu d'un refus métier clair.
+  it("refuse un billet gratuit (rail 'free') avec free_ticket_not_refundable, même en fenêtre de report", async () => {
+    const event = await seedPostponedEvent()
+    const order = await seedPaidOrder(String(event._id), {
+      rail: 'free',
+      unitPriceMinor: 0,
+      feeMinor: 0,
+      stripeSessionId: null,
+      fedapayTxnId: null,
+    })
+
+    const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
+    expect(result).toEqual({ ok: false, status: 409, error: 'free_ticket_not_refundable' })
+
+    const updated = await Order.findById(order._id).lean()
+    expect(updated?.clientRefundRequestedAt).toBeFalsy()
+  })
 })

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
+import { canProposeServices } from '@/lib/server/permissions'
 import { getOrCreateMyProviderProfile, updateProviderProfile } from '@/lib/server/providerProfile'
 import { SOCIAL_NETWORKS } from '@/lib/shared/social'
 
@@ -21,14 +22,10 @@ const updateSchema = z.object({
   phone: z.string().optional(),
 })
 
-function requireProviderRole(roles: string[] | undefined) {
-  return Boolean(roles?.includes('prestataire'))
-}
-
 export async function GET() {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
-  if (!requireProviderRole(session.user.roles)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!canProposeServices(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const result = await getOrCreateMyProviderProfile({ id: session.user.id })
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
@@ -38,7 +35,7 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
-  if (!requireProviderRole(session.user.roles)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!canProposeServices(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const parsed = updateSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body' }, { status: 400 })

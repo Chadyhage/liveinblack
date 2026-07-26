@@ -23,6 +23,9 @@ import EventStaff from '../../models/EventStaff'
 import PromoCode from '../../models/PromoCode'
 import EventAccessCode from '../../models/EventAccessCode'
 import EventRefund from '../../models/EventRefund'
+import Boost from '../../models/Boost'
+import BoostSlot from '../../models/BoostSlot'
+import OrganizerProfile from '../../models/OrganizerProfile'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -49,6 +52,9 @@ beforeEach(async () => {
   await PromoCode.deleteMany({})
   await EventAccessCode.deleteMany({})
   await EventRefund.deleteMany({})
+  await Boost.deleteMany({})
+  await BoostSlot.deleteMany({})
+  await OrganizerProfile.deleteMany({})
 })
 
 async function seedEvent(ownerId = 'org-1') {
@@ -248,6 +254,39 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
       expect(await Event.findById(eventId).lean()).toBeNull()
       expect(await EventStaff.findOne({ eventId }).lean()).toBeNull()
       expect(await PromoCode.findOne({ eventId }).lean()).toBeNull()
+    })
+
+    // Régression : la suppression laissait auparavant des références
+    // orphelines vers l'événement supprimé — un Boost payé (achat réel,
+    // jamais supprimé, juste marqué 'cancelled' pour trace comptable), un
+    // BoostSlot 'pending' (simple verrou de position, supprimé), et une
+    // référence eventId dans la galerie média de l'organisateur (nettoyée,
+    // le média lui-même reste).
+    it('marque les Boost liés "cancelled", supprime les BoostSlot, et nettoie les références média orphelines', async () => {
+      const eventId = await seedEvent()
+      const boost = await Boost.create({
+        boostId: 'boost-1', eventId, position: 1, region: 'Togo', price: 20, days: 7,
+        userId: 'org-1', purchasedAt: new Date(), expiresAt: new Date(Date.now() + 7 * 24 * 3600_000), status: 'active',
+      })
+      const slot = await BoostSlot.create({
+        slotId: 'togo__top_2', boostId: 'boost-2', eventId, userId: 'org-1', position: 2, region: 'Togo',
+        status: 'pending', holdUntil: new Date(Date.now() + 24 * 3600_000),
+      })
+      const profile = await OrganizerProfile.create({
+        userId: 'org-1', publicName: 'Organisateur Test', slug: 'organisateur-test',
+        media: [{ id: 'm1', url: 'https://res.cloudinary.test/m1.jpg', eventId }],
+      })
+
+      const result = await deleteOrganizerEvent({ id: 'org-1' }, eventId)
+      expect(result.ok).toBe(true)
+
+      const boostAfter = await Boost.findById(boost._id).lean()
+      expect(boostAfter?.status).toBe('cancelled')
+
+      expect(await BoostSlot.findById(slot._id).lean()).toBeNull()
+
+      const profileAfter = await OrganizerProfile.findById(profile._id).lean()
+      expect(profileAfter?.media?.[0]?.eventId ?? null).toBeNull()
     })
   })
 })

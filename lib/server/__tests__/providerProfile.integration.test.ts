@@ -10,6 +10,13 @@ vi.mock('../cloudinary', async (importOriginal) => ({
   uploadDataUri: vi.fn(async (dataUri: string, folder: string) => ({ ok: true, url: `https://res.cloudinary.test/${folder}/mock.jpg` })),
 }))
 
+// Session mockée pour les tests de route ci-dessous (canProposeServices lit
+// activeRole/status/prestStatus depuis session.user) — voir mockSessionUser.
+let mockSessionUser: { id: string; activeRole: string; status: string; prestStatus?: string } | null = null
+vi.mock('@/auth', () => ({
+  auth: async () => (mockSessionUser ? { user: mockSessionUser } : null),
+}))
+
 import {
   getOrCreateMyProviderProfile,
   updateProviderProfile,
@@ -45,6 +52,7 @@ beforeEach(async () => {
   await ProviderProfile.deleteMany({})
   await Application.deleteMany({})
   await User.deleteMany({})
+  mockSessionUser = null
 })
 
 async function seedUser(overrides: Record<string, unknown> = {}) {
@@ -260,5 +268,73 @@ describeIntegration('Catalogue', () => {
     const result = await removeCatalogItemMedia({ id: userId }, itemId, 0)
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.profile.catalog[0].media).toHaveLength(1)
+  })
+})
+
+// Régression : ces 3 routes ne vérifiaient auparavant QUE
+// `roles.includes('prestataire')`, jamais `prestStatus` — un prestataire
+// `rejected` pouvait donc continuer à gérer son catalogue public. Corrigé en
+// remplaçant ce check par `canProposeServices` (lib/server/permissions.ts),
+// qui bloque `rejected` mais autorise explicitement `pending` (décision
+// produit confirmée par permissions.test.ts).
+describeIntegration('POST /api/providers/me/catalog — garde canProposeServices au niveau route', () => {
+  it('401 si non authentifié', async () => {
+    mockSessionUser = null
+    const { POST } = await import('../../../app/api/providers/me/catalog/route')
+    const req = new Request('http://localhost/api/providers/me/catalog', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Article' }),
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(401)
+  })
+
+  it("403 pour un prestataire dont le dossier est rejeté (prestStatus='rejected')", async () => {
+    const userId = await seedUser({ prestStatus: 'rejected' })
+    mockSessionUser = { id: userId, activeRole: 'prestataire', status: 'active', prestStatus: 'rejected' }
+    const { POST } = await import('../../../app/api/providers/me/catalog/route')
+    const req = new Request('http://localhost/api/providers/me/catalog', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Article' }),
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(403)
+    const json = await res.json()
+    expect(json.error).toBe('forbidden')
+
+    const profile = await ProviderProfile.findOne({ userId }).lean()
+    expect(profile?.catalog ?? []).toHaveLength(0)
+  })
+
+  it("200 pour un prestataire encore en attente (prestStatus='pending') — comportement produit voulu", async () => {
+    const userId = await seedUser({ prestStatus: 'pending' })
+    await getOrCreateMyProviderProfile({ id: userId })
+    mockSessionUser = { id: userId, activeRole: 'prestataire', status: 'active', prestStatus: 'pending' }
+    const { POST } = await import('../../../app/api/providers/me/catalog/route')
+    const req = new Request('http://localhost/api/providers/me/catalog', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Article' }),
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+
+    const profile = await ProviderProfile.findOne({ userId }).lean()
+    expect(profile?.catalog ?? []).toHaveLength(1)
+  })
+
+  it("403 pour un rôle actif différent de 'prestataire', même si roles[] le contient", async () => {
+    const userId = await seedUser({ activeRole: 'client', roles: ['client', 'prestataire'] })
+    mockSessionUser = { id: userId, activeRole: 'client', status: 'active' }
+    const { POST } = await import('../../../app/api/providers/me/catalog/route')
+    const req = new Request('http://localhost/api/providers/me/catalog', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Article' }),
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(403)
   })
 })

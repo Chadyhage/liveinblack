@@ -15,13 +15,13 @@ export default async function PaymentCancelledPage({ searchParams }: { searchPar
         <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 24px', background: 'rgba(200,169,110,.08)', border: '2px solid rgba(200,169,110,.4)', display: 'grid', placeItems: 'center', color: 'var(--gold)', fontSize: 36 }} aria-hidden="true">
           ×
         </div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.5px', margin: '0 0 10px' }}>Paiement annulé</h1>
+        <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.5px', margin: '0 0 10px' }}>Paiement annulé</h1>
         <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
           Aucun montant n&apos;a été débité. Tu peux retourner à l&apos;événement et réessayer quand tu veux.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
           {eventId && (
-            <Link href={`/events/${encodeURIComponent(eventId)}`} style={{ padding: '14px 20px', borderRadius: 12, fontSize: 14.5, fontWeight: 800, background: 'var(--gold)', color: '#181104', textDecoration: 'none' }}>
+            <Link href={`/events/${encodeURIComponent(eventId)}`} style={{ padding: '14px 20px', borderRadius: 8, fontSize: 14.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', background: 'var(--gold)', color: '#181104', textDecoration: 'none' }}>
               Retourner à l&apos;événement
             </Link>
           )}

@@ -34,6 +34,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' }, // nouveau stockage média
       { protocol: 'https', hostname: 'firebasestorage.googleapis.com' }, // URLs pré-migration (phase 10)
       { protocol: 'https', hostname: 'images.unsplash.com' }, // hero PublicLanding (legacy)
+      { protocol: 'https', hostname: '*.mzstatic.com' }, // pochettes iTunes (AmbientMusicPlayer), déjà autorisé en CSP img-src
+      { protocol: 'https', hostname: 'picsum.photos' }, // images placeholder de scripts/seed-bulk.ts (données de dev uniquement)
     ],
   },
   async headers() {

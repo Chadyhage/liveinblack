@@ -4,8 +4,16 @@
 // délibérés par rapport au legacy (C10 : appartenance vérifiée AVANT toute
 // lecture/écriture de messages ; validation réelle à l'envoi ; blocage
 // réellement appliqué côté serveur, y compris re-vérifié à l'envoi).
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
+
+// Session mockée pour les tests de route ci-dessous (canOrderServices lit
+// activeRole/status depuis session.user) — voir mockSessionUser.
+let mockSessionUser: { id: string; activeRole: string; status: string } | null = null
+vi.mock('@/auth', () => ({
+  auth: async () => (mockSessionUser ? { user: mockSessionUser } : null),
+}))
+
 import {
   createDirectConversation,
   listMyConversations,
@@ -40,6 +48,7 @@ afterAll(async () => {
 beforeEach(async () => {
   if (!RUN_INTEGRATION) return
   await Promise.all([Conversation.deleteMany({}), Message.deleteMany({}), User.deleteMany({}), Report.deleteMany({})])
+  mockSessionUser = null
 })
 
 // Toujours de VRAIS documents User Mongoose avec un VRAI ObjectId `.id` —
@@ -768,5 +777,79 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       expect(result.status).toBe(404)
       expect(result.error).toBe('user_not_found')
     })
+  })
+})
+
+// Régression : canOrderServices (lib/server/permissions.ts) n'était appelé
+// nulle part avant ce correctif — un prestataire connecté pouvait envoyer une
+// demande de devis catalogue ('catalog_item') à un AUTRE prestataire via
+// ProviderCatalogInquiry, alors que canOrderServices l'interdit explicitement.
+// Le garde vit au niveau ROUTE (POST /api/conversations/:id/messages), pas
+// dans sendMessage() qui reste générique à tous les types de message.
+describeIntegration("POST /api/conversations/[id]/messages — garde canOrderServices pour 'catalog_item'", () => {
+  it("403 quand l'appelant a le rôle actif prestataire", async () => {
+    const requester = await seedUser({ roles: ['prestataire'], activeRole: 'prestataire' })
+    const provider = await seedUser({ roles: ['prestataire'], activeRole: 'prestataire' })
+    const ProviderProfile = (await import('../../models/ProviderProfile')).default
+    await ProviderProfile.create({ userId: provider.id, name: 'Prestataire Test', catalog: [{ id: 'item-1', name: 'Prestation', available: true }] })
+
+    const conv = await createDirectConversation({ id: requester.id }, { otherUserId: provider.id })
+    if (!conv.ok) throw new Error('setup failed')
+
+    mockSessionUser = { id: requester.id, activeRole: 'prestataire', status: 'active' }
+    const { POST } = await import('../../../app/api/conversations/[conversationId]/messages/route')
+    const req = new Request('http://localhost/api/conversations/x/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'catalog_item', content: '', catalogItemId: 'item-1' }),
+    })
+    const res = await POST(req, { params: Promise.resolve({ conversationId: conv.conversation.id }) })
+    expect(res.status).toBe(403)
+    const json = await res.json()
+    expect(json.error).toBe('forbidden')
+
+    const count = await Message.countDocuments({ conversationId: conv.conversation.id, type: 'catalog_item' })
+    expect(count).toBe(0)
+  })
+
+  it('200 quand un client envoie la même demande', async () => {
+    const requester = await seedUser({ roles: ['client'], activeRole: 'client' })
+    const provider = await seedUser({ roles: ['prestataire'], activeRole: 'prestataire' })
+    const ProviderProfile = (await import('../../models/ProviderProfile')).default
+    await ProviderProfile.create({ userId: provider.id, name: 'Prestataire Test', catalog: [{ id: 'item-1', name: 'Prestation', available: true }] })
+
+    const conv = await createDirectConversation({ id: requester.id }, { otherUserId: provider.id })
+    if (!conv.ok) throw new Error('setup failed')
+
+    mockSessionUser = { id: requester.id, activeRole: 'client', status: 'active' }
+    const { POST } = await import('../../../app/api/conversations/[conversationId]/messages/route')
+    const req = new Request('http://localhost/api/conversations/x/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'catalog_item', content: '', catalogItemId: 'item-1' }),
+    })
+    const res = await POST(req, { params: Promise.resolve({ conversationId: conv.conversation.id }) })
+    expect(res.status).toBe(200)
+
+    const count = await Message.countDocuments({ conversationId: conv.conversation.id, type: 'catalog_item' })
+    expect(count).toBe(1)
+  })
+
+  it("n'applique PAS ce garde à un message texte normal (prestataire → prestataire autorisé)", async () => {
+    const requester = await seedUser({ roles: ['prestataire'], activeRole: 'prestataire' })
+    const provider = await seedUser({ roles: ['prestataire'], activeRole: 'prestataire' })
+
+    const conv = await createDirectConversation({ id: requester.id }, { otherUserId: provider.id })
+    if (!conv.ok) throw new Error('setup failed')
+
+    mockSessionUser = { id: requester.id, activeRole: 'prestataire', status: 'active' }
+    const { POST } = await import('../../../app/api/conversations/[conversationId]/messages/route')
+    const req = new Request('http://localhost/api/conversations/x/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'text', content: 'Bonjour' }),
+    })
+    const res = await POST(req, { params: Promise.resolve({ conversationId: conv.conversation.id }) })
+    expect(res.status).toBe(200)
   })
 })

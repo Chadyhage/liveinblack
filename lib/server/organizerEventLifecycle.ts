@@ -5,6 +5,9 @@ import EventStaff from '../models/EventStaff'
 import PromoCode from '../models/PromoCode'
 import EventAccessCode from '../models/EventAccessCode'
 import ResaleListing from '../models/ResaleListing'
+import Boost from '../models/Boost'
+import BoostSlot from '../models/BoostSlot'
+import OrganizerProfile from '../models/OrganizerProfile'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyScheduleChange } from './organizerFollowNotifications'
@@ -193,6 +196,16 @@ export async function deleteOrganizerEvent(caller: LifecycleCaller, eventId: str
     EventStaff.deleteOne({ eventId }),
     PromoCode.deleteMany({ eventId }),
     EventAccessCode.deleteMany({ eventId }),
+    // BoostSlot n'est qu'un verrou de position (position+région), sans valeur
+    // d'audit propre — supprimé entièrement pour libérer la position. Boost
+    // est le VRAI enregistrement d'achat (paiement réel) : conservé mais
+    // marqué 'cancelled', jamais supprimé, pour garder une trace comptable.
+    BoostSlot.deleteMany({ eventId }),
+    Boost.updateMany({ eventId }, { $set: { status: 'cancelled' } }),
+    // Un média de galerie organisateur peut être tagué avec l'événement
+    // supprimé (StudioClient) — le média lui-même reste (photo/vidéo réelle),
+    // seule la référence orpheline vers l'événement disparu est effacée.
+    OrganizerProfile.updateMany({ 'media.eventId': eventId }, { $set: { 'media.$[m].eventId': null } }, { arrayFilters: [{ 'm.eventId': eventId }] }),
   ])
 
   return { ok: true, deleted: true }

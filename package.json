@@ -16,10 +16,13 @@
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.2",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
     "jsqr": "^1.4.0",
     "libphonenumber-js": "^1.13.9",
+    "lucide-react": "^1.27.0",
     "mongodb": "^6.21.0",
     "mongoose": "^9.7.4",
     "next": "16.2.10",

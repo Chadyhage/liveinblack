@@ -1,12 +1,14 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getProviderByUserId } from '@/lib/server/providers'
 import { getPublishedReviews, getMyReviewFor } from '@/lib/server/providerReviews'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { REGION_OPTIONS } from '@/lib/shared/locations'
 import { fmtMoney } from '@/lib/shared/money'
 import { auth } from '@/auth'
+import { canOrderServices } from '@/lib/server/permissions'
 import ProviderReviewsClient from '@/app/components/ProviderReviewsClient'
 import ProviderCatalogInquiry from '@/app/components/ProviderCatalogInquiry'
 import { socialUrl } from '@/lib/shared/social'
@@ -42,6 +44,10 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
   if (!provider) notFound()
 
   const isSelf = session?.user?.id === id
+  // Anonyme : le bouton reste visible (redirige vers /login au clic, comme
+  // avant) ; connecté : seul un rôle actif prestataire ne peut pas commander
+  // de service à un autre prestataire (canOrderServices).
+  const canOrderCatalog = !session?.user || canOrderServices(session.user)
   const [reviews, myReview] = await Promise.all([getPublishedReviews(id), session?.user ? getMyReviewFor({ id: session.user.id }, id) : Promise.resolve(null)])
 
   const categories = getProviderCategories(provider)
@@ -61,21 +67,19 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
       </div>
       <div style={{ position: 'relative', height: 180, margin: '14px 22px 0', borderRadius: 18, overflow: 'hidden', background: `linear-gradient(135deg, ${categories[0]?.color || '#8b5cf6'}33, var(--obsidian))` }}>
         {provider.coverUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={provider.coverUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={provider.coverUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
         )}
       </div>
 
       <div style={{ padding: '0 22px', marginTop: -32, position: 'relative' }}>
         <div style={{ width: 72, height: 72, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 800 }}>
           {provider.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={provider.photoUrl} alt={provider.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <Image src={provider.photoUrl} alt={provider.name} width={72} height={72} style={{ objectFit: 'cover' }} />
           ) : (
             provider.name[0]?.toUpperCase()
           )}
         </div>
-        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '12px 0 0' }}>{provider.name}</h1>
+        <h1 className="font-display" style={{ fontSize: 30, letterSpacing: '.01em', margin: '12px 0 0' }}>{provider.name}</h1>
         {provider.headline && <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 0' }}>{provider.headline}</p>}
         <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
 
@@ -141,8 +145,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
                         {item.media[0].type === 'video' ? (
                           <video src={item.media[0].url} controls preload="metadata" playsInline aria-label={`Vidéo de ${item.name}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.media[0].url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <Image src={item.media[0].url} alt={item.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
                         )}
                       </div>
                     )}
@@ -157,7 +160,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
                         )}
                       </div>
                       {item.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '6px 0 0' }}>{item.description}</p>}
-                      {!isSelf && (
+                      {!isSelf && canOrderCatalog && (
                         <div style={{ marginTop: 12 }}>
                           <ProviderCatalogInquiry
                             providerId={provider.userId}
@@ -194,7 +197,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ marginTop: 24 }}>
-      <h2 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 8px', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{title}</h2>
+      <h2 style={{ fontSize: 11.5, fontWeight: 800, margin: '0 0 10px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</h2>
       {children}
     </section>
   )

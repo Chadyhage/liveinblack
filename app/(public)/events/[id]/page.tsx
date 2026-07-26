@@ -130,8 +130,7 @@ export default async function EventDetailPage({
       {/* HERO */}
       <div style={{ position: 'relative', margin: '14px 22px 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
         {event.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.92), transparent 55%)' }} />
         <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -142,7 +141,7 @@ export default async function EventDetailPage({
           {event.cancelled && (
             <span style={{ display: 'inline-block', marginBottom: 8, fontSize: 11, fontWeight: 800, color: '#fff', background: 'var(--pink)', padding: '4px 10px', borderRadius: 999 }}>ANNULÉ</span>
           )}
-          <h1 style={{ fontSize: 'clamp(22px, 5vw, 34px)', fontWeight: 800, margin: 0, letterSpacing: '-0.5px', textShadow: '0 2px 12px rgba(0,0,0,0.55)' }}>{event.name}</h1>
+          <h1 className="font-display" style={{ fontSize: 'clamp(26px, 6vw, 44px)', margin: 0, letterSpacing: '.01em', textShadow: '0 2px 12px rgba(0,0,0,0.55)' }}>{event.name}</h1>
           {event.subtitle && <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '6px 0 0' }}>{event.subtitle}</p>}
           {event.tags?.length ? (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
@@ -221,8 +220,7 @@ export default async function EventDetailPage({
               }}
             >
               {organizerProfile.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={organizerProfile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <Image src={organizerProfile.avatarUrl} alt="" width={40} height={40} style={{ objectFit: 'cover' }} />
               ) : (
                 organizerProfile.publicName?.[0]?.toUpperCase() || '?'
               )}
@@ -334,7 +332,7 @@ export default async function EventDetailPage({
           ) : (
             <Link
               href={loginHref}
-              style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 999, fontSize: 14, fontWeight: 700, color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
+              style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 8, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
             >
               Se connecter pour réserver
             </Link>
@@ -355,7 +353,7 @@ export default async function EventDetailPage({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ padding: '22px 22px 0' }}>
-      <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 10px' }}>{title}</h2>
+      <h2 style={{ fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--teal)', margin: '0 0 12px' }}>{title}</h2>
       {children}
     </section>
   )

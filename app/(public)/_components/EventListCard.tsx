@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import type { PublicEvent } from '@/lib/server/events'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
@@ -35,8 +36,7 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
     >
       <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
         {event.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt={event.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="220px" />
         )}
         {countdown && (
           <span
