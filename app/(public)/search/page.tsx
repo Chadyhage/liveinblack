@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 const RESULTS_CAP = 8
+const SUGGESTIONS = ['Afrobeat', 'Amapiano', 'House', 'Techno', 'Hip-Hop', 'Live band']
 
 // Port de src/pages/GlobalSearchPage.jsx — recherche texte simple à travers
 // événements, organisateurs et prestataires (remplace la recherche
@@ -73,20 +74,34 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
         <Button
           type="submit"
           variant="primary"
-          style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 3, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
+          style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 8, fontSize: 13 }}
         >
           Chercher
         </Button>
       </form>
 
       {!query ? (
-        <p style={{ color: 'var(--text-muted)' }}>Tape un mot-clé pour rechercher un événement, un organisateur ou un prestataire.</p>
+        <div>
+          <p style={{ color: 'var(--text-muted)', margin: '0 0 16px' }}>Tape un mot-clé pour rechercher un événement, un organisateur ou un prestataire.</p>
+          <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>Styles populaires</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {SUGGESTIONS.map((s) => (
+              <Link
+                key={s}
+                href={`/search?q=${encodeURIComponent(s)}`}
+                style={{ padding: '9px 16px', borderRadius: 999, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--text)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+              >
+                {s}
+              </Link>
+            ))}
+          </div>
+        </div>
       ) : totalResults === 0 ? (
         <div>
           <p style={{ color: 'var(--text-muted)', margin: '0 0 14px' }}>Aucun résultat pour « {query} ».</p>
           <Link
             href="/events"
-            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 3, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 8, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
           >
             Parcourir les événements
           </Link>
@@ -145,7 +160,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
 function ResultSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 30 }}>
-      <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>{title}</h2>
+      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>{title}</h2>
       {children}
     </section>
   )
