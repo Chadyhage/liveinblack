@@ -1,3 +1,4 @@
+import AuthSplitLayout from '../_components/AuthSplitLayout'
 import VerifyEmailClient from '@/app/components/VerifyEmailClient'
 
 export const dynamic = 'force-dynamic'
@@ -10,5 +11,9 @@ export default async function VerifyEmailPage({
   searchParams: Promise<{ email?: string; token?: string }>
 }) {
   const params = await searchParams
-  return <VerifyEmailClient email={params.email || null} token={params.token || null} />
+  return (
+    <AuthSplitLayout>
+      <VerifyEmailClient email={params.email || null} token={params.token || null} />
+    </AuthSplitLayout>
+  )
 }

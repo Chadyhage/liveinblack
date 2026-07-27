@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Card } from '@/app/components/ui'
+import { Button } from '@/app/components/ui'
 
 // Cible du verifyLink construit par lib/server/profile.ts:requestEmailChange
 // (?email=&token=), consommé par POST /api/profil/confirmer-email. Régression
@@ -15,12 +15,6 @@ import { Button, Card } from '@/app/components/ui'
 // autre appareil — même convention que /verify-email et /reset-password.
 
 const COLORS = { teal: '#4ee8c8', pink: '#e05aaa' }
-const CARD: React.CSSProperties = {
-  background: '#12131c',
-  border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 20,
-  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-}
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
   padding: '14px 20px', borderRadius: 8, cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
   textTransform: 'uppercase', letterSpacing: '.03em',
@@ -57,9 +51,9 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
   }, [email, token, missingParams])
 
   return (
-    <main style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+    <>
       <style>{`@keyframes lib-confirm-email-spin { to { transform: rotate(360deg) } }`}</style>
-      <Card style={{ ...CARD, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-confirm-email-spin 0.9s linear infinite' }} />
@@ -102,7 +96,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
             </div>
           </>
         )}
-      </Card>
-    </main>
+      </div>
+    </>
   )
 }

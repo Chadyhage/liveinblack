@@ -1,3 +1,4 @@
+import AuthSplitLayout from '../_components/AuthSplitLayout'
 import ConfirmEmailChangeClient from '@/app/components/ConfirmEmailChangeClient'
 
 export const dynamic = 'force-dynamic'
@@ -10,5 +11,9 @@ export default async function ConfirmEmailChangePage({
   searchParams: Promise<{ email?: string; token?: string }>
 }) {
   const params = await searchParams
-  return <ConfirmEmailChangeClient email={params.email || null} token={params.token || null} />
+  return (
+    <AuthSplitLayout>
+      <ConfirmEmailChangeClient email={params.email || null} token={params.token || null} />
+    </AuthSplitLayout>
+  )
 }

@@ -12,12 +12,6 @@ import { Button } from '@/app/components/ui'
 // le reste des pages de confirmation « one-shot » de cette migration.
 
 const COLORS = { teal: 'var(--teal)', pink: 'var(--pink)' }
-const CARD: React.CSSProperties = {
-  background: 'var(--surface-2)',
-  border: '1px solid var(--border)',
-  borderRadius: 20,
-  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-}
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
   padding: '14px 20px', borderRadius: 8, cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
   textTransform: 'uppercase', letterSpacing: '.03em',
@@ -88,9 +82,9 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
   }, [email, token, missingParams])
 
   return (
-    <main style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+    <>
       <style>{`@keyframes lib-verify-spin { to { transform: rotate(360deg) } }`}</style>
-      <div role="status" aria-live="polite" style={{ ...CARD, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: 'center' }}>
+      <div role="status" aria-live="polite" style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-verify-spin 0.9s linear infinite' }} />
@@ -171,6 +165,6 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
           </>
         )}
       </div>
-    </main>
+    </>
   )
 }

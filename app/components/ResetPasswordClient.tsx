@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
-import { Button, Card, Input, Label } from '@/app/components/ui'
+import { Button, Input, Label } from '@/app/components/ui'
 
 // Cible du resetLink construit par app/api/auth/request-password-reset/route.ts
 // (?email=&token=), consommé par POST /api/auth/reset-password. Mise en page
@@ -11,12 +11,6 @@ import { Button, Card, Input, Label } from '@/app/components/ui'
 // cohérent avec le reste des pages de confirmation « one-shot ».
 
 const COLORS = { teal: 'var(--teal)', pink: 'var(--pink)' }
-const CARD: React.CSSProperties = {
-  background: 'var(--surface-2)',
-  border: '1px solid var(--border)',
-  borderRadius: 20,
-  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-}
 const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 8 }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
   padding: '14px 20px', borderRadius: 8, cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
@@ -83,8 +77,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
   }
 
   return (
-    <main style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
-      <Card style={{ ...CARD, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: state === 'form' ? 'left' : 'center' }}>
+    <div style={{ width: '100%', maxWidth: 420, textAlign: state === 'form' ? 'left' : 'center' }}>
         {state === 'form' && (
           <>
             <h1 className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 8px' }}>Nouveau mot de passe</h1>
@@ -181,7 +174,6 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
             </div>
           </>
         )}
-      </Card>
-    </main>
+    </div>
   )
 }

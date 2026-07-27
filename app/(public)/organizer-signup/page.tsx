@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import AuthSplitLayout from '../_components/AuthSplitLayout'
 import OrganizerOnboardingWizard from '@/app/components/OrganizerOnboardingWizard'
 
 // Route PUBLIQUE (mode anonyme, pas de session) — port de
@@ -10,5 +11,17 @@ export const metadata: Metadata = {
 }
 
 export default function InscriptionOrganisateurPage() {
-  return <OrganizerOnboardingWizard mode="anonymous" />
+  return (
+    <AuthSplitLayout
+      tagline={
+        <>
+          CRÉE ET GÈRE
+          <br />
+          <span style={{ color: 'var(--gold)' }}>TES PROPRES ÉVÉNEMENTS.</span>
+        </>
+      }
+    >
+      <OrganizerOnboardingWizard mode="anonymous" />
+    </AuthSplitLayout>
+  )
 }

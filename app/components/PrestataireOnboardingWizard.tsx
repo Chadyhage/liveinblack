@@ -259,9 +259,16 @@ export default function PrestataireOnboardingWizard({
     }
   }
 
+  // mode==='anonymous' : rendu à l'intérieur de AuthSplitLayout (voir
+  // app/(public)/provider-signup/page.tsx), qui fournit déjà le plein écran
+  // + le visuel gauche — ce composant ne doit alors pas poser son propre
+  // <main> par-dessus. mode==='loggedIn' (onboarding-provider, connecté,
+  // dans le layout applicatif normal) garde son <main> plein écran d'origine.
+  const Shell = mode === 'anonymous' ? 'div' : 'main'
+
   if (submitted) {
     return (
-      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ ...cardStyle, maxWidth: 420, textAlign: 'center' }}>
           <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
@@ -273,7 +280,7 @@ export default function PrestataireOnboardingWizard({
             Retour à l&apos;accueil
           </a>
         </div>
-      </main>
+      </Shell>
     )
   }
 
@@ -281,7 +288,7 @@ export default function PrestataireOnboardingWizard({
   const types = form.prestataireTypes
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 60px' }}>
+    <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
       <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>Demande d&apos;espace</p>
@@ -694,7 +701,7 @@ export default function PrestataireOnboardingWizard({
                   : 'Le brouillon sera sauvegardé quand tu cliqueras sur Continuer.'}
         </p>
       </div>
-    </main>
+    </Shell>
   )
 }
 

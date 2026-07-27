@@ -1,3 +1,4 @@
+import AuthSplitLayout from '../_components/AuthSplitLayout'
 import ResetPasswordClient from '@/app/components/ResetPasswordClient'
 
 export const dynamic = 'force-dynamic'
@@ -10,5 +11,9 @@ export default async function ResetPasswordPage({
   searchParams: Promise<{ email?: string; token?: string }>
 }) {
   const params = await searchParams
-  return <ResetPasswordClient email={params.email || null} token={params.token || null} />
+  return (
+    <AuthSplitLayout>
+      <ResetPasswordClient email={params.email || null} token={params.token || null} />
+    </AuthSplitLayout>
+  )
 }

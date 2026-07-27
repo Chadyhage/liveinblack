@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import AuthSplitLayout from '../_components/AuthSplitLayout'
 import PrestataireOnboardingWizard from '@/app/components/PrestataireOnboardingWizard'
 
 // Route PUBLIQUE (mode anonyme, pas de session) — port de
@@ -10,5 +11,17 @@ export const metadata: Metadata = {
 }
 
 export default function InscriptionPrestatairePage() {
-  return <PrestataireOnboardingWizard mode="anonymous" />
+  return (
+    <AuthSplitLayout
+      tagline={
+        <>
+          DJ, SALLE, TRAITEUR…
+          <br />
+          <span style={{ color: 'var(--gold)' }}>PROPOSE TES SERVICES.</span>
+        </>
+      }
+    >
+      <PrestataireOnboardingWizard mode="anonymous" />
+    </AuthSplitLayout>
+  )
 }
