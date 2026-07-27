@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { safeInternalPath } from '@/lib/shared/safeNavigation'
-import { Button, Card, Input, Label, Select, Tabs } from '@/app/components/ui'
+import { Button, Input, Label, Select, Tabs } from '@/app/components/ui'
 
 // Port de src/pages/LoginPage.jsx (#118). La distinction legacy
 // role==='user' vs role==='client' n'existe plus côté backend (un seul rôle
@@ -375,8 +375,8 @@ export default function AuthForm() {
   // ── "Vérifie ton email" screen ──
   if (registeredEmail) {
     return (
-      <div style={{ width: '100%', maxWidth: 448, margin: '0 auto', padding: '48px 20px' }}>
-        <Card style={{ background: 'var(--surface-2)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: '38px 32px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ width: '100%', maxWidth: 420 }}>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -426,13 +426,13 @@ export default function AuthForm() {
           >
             Aller à la connexion
           </Button>
-        </Card>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: 448, margin: '0 auto', padding: '48px 20px' }}>
+    <div style={{ width: '100%', maxWidth: 420 }}>
       <style>{`
         @keyframes lb-spin { to { transform: rotate(360deg) } }
         .lb-role-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2) !important; background: rgba(255,255,255,0.05) !important }
@@ -446,7 +446,7 @@ export default function AuthForm() {
         .lb-banner-fade { animation: lb-fade-in 0.22s ease }
       `}</style>
 
-      <div style={{ textAlign: 'center', marginBottom: 26 }}>
+      <div style={{ marginBottom: 26 }}>
         <p className="font-display" style={{ fontSize: 28, letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
         </p>
@@ -455,7 +455,7 @@ export default function AuthForm() {
         </p>
       </div>
 
-      <Card style={{ background: 'var(--surface-2)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: '38px 32px' }}>
+      <div>
         {/* Mode tabs */}
         <Tabs
           value={mode}
@@ -760,7 +760,7 @@ export default function AuthForm() {
             </p>
           </form>
         )}
-      </Card>
+      </div>
 
       {showForgotModal && (
         <div
