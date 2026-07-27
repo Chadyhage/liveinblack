@@ -72,11 +72,12 @@ function errorMessage(code: string, data?: { nextChangeAllowedAt?: string }): st
 // de <Button variant="primary">, qui gère déjà elle-même l'opacité/curseur
 // disabled et le spinner de chargement.
 const goldButtonStyle: React.CSSProperties = {
-  borderRadius: 8,
+  borderRadius: 3,
   background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
   color: '#1a1508',
-  textTransform: 'uppercase',
-  letterSpacing: '.04em',
+  textTransform: 'none',
+  letterSpacing: 'normal',
+  fontWeight: 500,
 }
 
 type Panel = null | 'settings' | 'billets' | 'support'
@@ -135,7 +136,7 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
 
         {!isOrganizer && (
           <Card>
-            <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>Système de points</p>
+            <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Système de points</p>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
               Tu gagnes <strong style={{ color: '#fff' }}>1 point</strong> pour chaque ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs.
             </p>
@@ -237,7 +238,7 @@ function ConfirmModal({
             onClick={onConfirm}
             disabled={confirmDisabled}
             variant={danger ? 'danger' : 'primary'}
-            style={{ flex: 1, padding: '11px 0', borderRadius: 8, background: danger ? '#c2347f' : 'var(--teal-solid)', color: danger ? '#fff' : '#04120e', textTransform: 'uppercase', letterSpacing: '.04em' }}
+            style={{ flex: 1, padding: '11px 0', borderRadius: 3, background: danger ? '#c2347f' : 'var(--teal-solid)', color: danger ? '#fff' : '#04120e', textTransform: 'none', letterSpacing: 'normal' }}
           >
             {confirmLabel}
           </Button>
@@ -499,7 +500,7 @@ function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (
 }
 
 function EyebrowLabel({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>{children}</p>
+  return <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>{children}</p>
 }
 
 function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {

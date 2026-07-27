@@ -160,7 +160,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
               <line x1="19" y1="8" x2="19" y2="14" />
               <line x1="16" y1="11" x2="22" y2="11" />
             </svg>
-            <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Guestlist</p>
+            <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Guestlist</p>
           </div>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
             Invitations pour <span style={{ color: 'var(--teal)' }}>{event.name}</span>
@@ -220,15 +220,15 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
             fullWidth
             style={{
               padding: 12,
-              borderRadius: 8,
+              borderRadius: 3,
               border: 'none',
               background: adding || !name.trim() ? 'rgba(255,255,255,0.07)' : '#3ed6b5',
               color: adding || !name.trim() ? 'rgba(255,255,255,0.35)' : '#04120e',
               fontFamily: 'Inter, sans-serif',
               fontSize: 14,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '.03em',
+              fontWeight: 500,
+              textTransform: 'none',
+              letterSpacing: 'normal',
             }}
           >
             Ajouter à la guestlist
@@ -383,7 +383,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
               <Button
                 variant="danger"
                 onClick={doConfirmRemoveGuest}
-                style={{ flex: 1.4, padding: '11px', borderRadius: 8, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em' }}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 3, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
               >
                 Retirer
               </Button>

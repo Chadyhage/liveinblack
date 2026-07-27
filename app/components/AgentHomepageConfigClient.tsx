@@ -64,7 +64,7 @@ function normalizeForPreview(d: Draft): Draft {
   }
 }
 
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', marginBottom: 8 }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', marginBottom: 8 }
 
 export default function AgentHomepageConfigClient() {
   const [draft, setDraft] = useState<Draft>(defaultDraft())
@@ -223,7 +223,7 @@ export default function AgentHomepageConfigClient() {
         )}
 
       <Card style={{ padding: '16px 18px' }}>
-        <h3 style={{ margin: '0 0 6px', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Carrousel « Actualité »</h3>
+        <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Carrousel « Actualité »</h3>
         <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.6 }}>
           Un bandeau éditorial en haut de l&apos;accueil pour mettre en avant une sélection d&apos;événements (le gros
           événement du week-end, les nouveautés, une saison…). Il n&apos;apparaît que s&apos;il est activé et qu&apos;au
@@ -397,7 +397,7 @@ export default function AgentHomepageConfigClient() {
           disabled={saving}
           loading={saving}
           loadingText="Enregistrement…"
-          style={{ padding: '12px 22px', borderRadius: 8, fontSize: 14, textTransform: 'uppercase', letterSpacing: '.03em' }}
+          style={{ padding: '12px 22px', borderRadius: 3, fontWeight: 500, fontSize: 14, textTransform: 'none', letterSpacing: 'normal' }}
         >
           Enregistrer
         </Button>

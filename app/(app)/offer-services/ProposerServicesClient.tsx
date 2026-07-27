@@ -29,14 +29,14 @@ const card: React.CSSProperties = { background: '#0e0f16', border: '1px solid rg
 const primaryButton: React.CSSProperties = {
   minHeight: 44,
   border: '1px solid rgba(255,255,255,.14)',
-  borderRadius: 8,
+  borderRadius: 3,
   background: 'var(--violet-cta)',
   color: '#fff',
   fontFamily: FONT,
   fontSize: 13.5,
-  fontWeight: 800,
-  textTransform: 'uppercase',
-  letterSpacing: '.03em',
+  fontWeight: 500,
+  textTransform: 'none',
+  letterSpacing: 'normal',
   boxShadow: '0 6px 20px rgba(122,59,242,.35)',
 }
 const secondaryButton: React.CSSProperties = { ...primaryButton, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', color: 'rgba(255,255,255,.9)', fontWeight: 600, boxShadow: 'none' }
@@ -811,7 +811,7 @@ export default function ProposerServicesClient({
         {tab === 'profil' && (
           <div className="provider-profile-grid">
             <section style={{ ...card, padding: 18 }}>
-              <h2 style={{ fontFamily: FONT, fontSize: 12, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 5px' }}>Informations publiques</h2>
+              <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 5px' }}>Informations publiques</h2>
               <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.42)', lineHeight: 1.5, margin: '0 0 18px' }}>Ce sont les informations que les clients et organisateurs verront.</p>
               {hasUnsavedProfileChanges && (
                 <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'rgba(200,169,110,.10)', border: '1px solid rgba(200,169,110,.38)', color: 'rgba(255,255,255,.88)' }}>
@@ -948,7 +948,7 @@ export default function ProposerServicesClient({
           <section>
             <div className="provider-catalog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 13 }}>
               <div>
-                <h2 style={{ fontFamily: FONT, fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Mon catalogue</h2>
+                <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Mon catalogue</h2>
                 <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.42)', margin: '4px 0 0' }}>Les tarifs sont indicatifs. Le client te contacte ensuite pour tout organiser avec toi.</p>
               </div>
               {!showItemForm && (

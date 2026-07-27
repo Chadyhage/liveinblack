@@ -21,7 +21,7 @@ export default async function PaymentCancelledPage({ searchParams }: { searchPar
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
           {eventId && (
-            <Link href={`/events/${encodeURIComponent(eventId)}`} style={{ padding: '14px 20px', borderRadius: 8, fontSize: 14.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', background: 'var(--gold)', color: '#181104', textDecoration: 'none' }}>
+            <Link href={`/events/${encodeURIComponent(eventId)}`} style={{ padding: '14px 20px', borderRadius: 3, fontSize: 14.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', background: 'var(--gold)', color: '#181104', textDecoration: 'none' }}>
               Retourner à l&apos;événement
             </Link>
           )}

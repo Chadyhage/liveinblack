@@ -77,10 +77,10 @@ export default function PublicAboutPage() {
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
-            <Link href="/login?mode=register" style={{ padding: '14px 26px', borderRadius: 8, fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}>
+            <Link href="/login?mode=register" style={{ padding: '14px 26px', borderRadius: 3, fontSize: 15, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}>
               Créer mon compte
             </Link>
-            <Link href="/events" style={{ padding: '13px 24px', borderRadius: 8, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}>
+            <Link href="/events" style={{ padding: '13px 24px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}>
               Voir les événements
             </Link>
           </div>
@@ -94,7 +94,7 @@ function Section({ eyebrow, title, children }: { eyebrow: string; title: string;
   return (
     <section style={{ padding: '46px 22px', maxWidth: 1120, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 26 }}>
-        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: 0 }}>{eyebrow}</p>
+        <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: 0 }}>{eyebrow}</p>
         <h2 className="font-display" style={{ fontSize: 'clamp(23px,5.5vw,34px)', letterSpacing: '.01em', margin: '8px 0 0' }}>{title}</h2>
       </div>
       {children}

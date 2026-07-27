@@ -131,8 +131,8 @@ const SECTIONS = [
 type SectionKey = (typeof SECTIONS)[number]['key']
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
-const btnBase: React.CSSProperties = { borderRadius: 8, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em', width: '100%' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
+const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal', width: '100%' }
 const tealBtn: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
 const ghostBtn: React.CSSProperties = { ...btnBase, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'none', letterSpacing: 'normal' }
 
@@ -564,7 +564,7 @@ function RefundsSection({ refunds, setConfirm }: { refunds: RefundAlert[]; setCo
                 <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Événement : {r.eventName}</p>
                 <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{fmtDate(r.createdAt)}</p>
               </div>
-              <Button variant="primary" style={{ flexShrink: 0, width: 'auto', borderRadius: 8, padding: '10px 14px', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }} onClick={() => setConfirm({ type: 'completeRefund', refundId: r.id, label: fmtXOF(r.amountXOF), who: r.buyerEmail || 'cet acheteur' })}>
+              <Button variant="primary" style={{ flexShrink: 0, width: 'auto', borderRadius: 3, fontWeight: 500, padding: '10px 14px', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }} onClick={() => setConfirm({ type: 'completeRefund', refundId: r.id, label: fmtXOF(r.amountXOF), who: r.buyerEmail || 'cet acheteur' })}>
                 Marquer remboursé
               </Button>
             </div>
@@ -613,7 +613,7 @@ function AlertsSection({ alerts, setConfirm }: { alerts: PaymentAlertView[]; set
                 </div>
               )}
             </div>
-            <Button variant="primary" style={{ marginTop: 13, width: 'auto', padding: '10px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 12 }} onClick={() => setConfirm({ type: 'resolveAlert', alertId: a.id, label: ALERT_REASON_LABEL[a.reason] || a.reason })}>
+            <Button variant="primary" style={{ marginTop: 13, width: 'auto', padding: '10px 16px', borderRadius: 3, fontWeight: 500, border: '1px solid rgba(255,255,255,0.14)', textTransform: 'none', letterSpacing: 'normal', fontSize: 12 }} onClick={() => setConfirm({ type: 'resolveAlert', alertId: a.id, label: ALERT_REASON_LABEL[a.reason] || a.reason })}>
               Marquer comme examiné
             </Button>
           </div>

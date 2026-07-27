@@ -184,7 +184,7 @@ const TARIF_TYPE_LABEL: Record<string, string> = {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 function str(v: unknown): string {
   return v == null ? '' : String(v)
@@ -891,7 +891,7 @@ function DossierActions({
   displayName: string
   onAction: (action: ModerateAction, note?: string) => void
 }) {
-  const btnBase: React.CSSProperties = { borderRadius: 8, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.03em', width: '100%' }
+  const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal', width: '100%' }
   const teal: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
   const amber: React.CSSProperties = { ...btnBase, background: '#f59e0b', color: '#1a1508' }
   const pink: React.CSSProperties = { ...btnBase, background: '#c2347f', color: '#fff' }
@@ -1086,7 +1086,7 @@ function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: stri
           <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
             Annuler
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.03em' }}>
+          <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}>
             Confirmer
           </Button>
         </div>

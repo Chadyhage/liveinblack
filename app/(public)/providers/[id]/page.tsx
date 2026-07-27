@@ -197,7 +197,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ marginTop: 24 }}>
-      <h2 style={{ fontSize: 11.5, fontWeight: 800, margin: '0 0 10px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</h2>
+      <h2 style={{ fontSize: 14, fontWeight: 400, margin: '0 0 10px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
       {children}
     </section>
   )

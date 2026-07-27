@@ -160,7 +160,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
   return (
     <Modal onClose={onClose} maxWidth={660}>
         <div style={{ marginBottom: 20, paddingRight: 24 }}>
-          <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Booster mon événement</h2>
+          <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Booster mon événement</h2>
           <p
             style={{
               fontFamily: 'Inter, sans-serif',
@@ -199,7 +199,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
         ) : step === 'pay' && chosen && chosenTier ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div style={{ padding: 18, border: '1px solid rgba(200,169,110,0.3)', borderRadius: 14, background: 'rgba(255,255,255,0.04)' }}>
-              <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 Récapitulatif avant paiement
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
@@ -257,14 +257,14 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 fullWidth
                 style={{
                   minHeight: 52,
-                  borderRadius: 8,
+                  borderRadius: 3,
                   background: paying ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                   color: paying ? 'rgba(255,255,255,0.35)' : '#181206',
                   fontFamily: 'Inter, sans-serif',
                   fontSize: 14,
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '.03em',
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  letterSpacing: 'normal',
                   boxShadow: paying ? 'none' : '0 6px 20px rgba(200,169,110,0.25)',
                 }}
               >
@@ -275,7 +275,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div>
-              <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 1. Choisis ta position
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
@@ -330,7 +330,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, marginBottom: 10 }}>
                 <div>
-                  <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 5px' }}>
+                  <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 5px' }}>
                     2. Choisis la durée
                   </p>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{activePlan.description}</p>
@@ -398,11 +398,11 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
               fullWidth
               style={{
                 minHeight: 52,
-                borderRadius: 8,
+                borderRadius: 3,
                 fontFamily: 'Inter, sans-serif',
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '.03em',
+                fontWeight: 500,
+                textTransform: 'none',
+                letterSpacing: 'normal',
                 fontSize: 14,
                 background: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                 color: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.35)' : '#181206',

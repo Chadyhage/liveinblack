@@ -57,7 +57,7 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '0 0 8px' }}>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>
             Revenus billetterie + précommandes
           </span>
           <svg
@@ -90,13 +90,13 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
         )}
       </Button>
       <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: '16px 18px' }}>
-        <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>Billets émis</p>
+        <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Billets émis</p>
         <p style={{ font: '600 26px Inter, sans-serif', color: '#fff', margin: 0 }}>{totalTickets}</p>
       </div>
 
       {topEvents.length > 0 && (
         <div style={{ gridColumn: '1 / -1', border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: '16px 18px' }}>
-          <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>Par événement</p>
+          <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Par événement</p>
           <div style={{ display: 'grid', gap: 8 }}>
             {topEvents.map((e) => {
               const fill = Math.min(100, Math.round((e.soldCount / e.totalCapacity) * 100))

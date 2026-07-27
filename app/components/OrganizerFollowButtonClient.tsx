@@ -108,11 +108,11 @@ export default function OrganizerFollowButtonClient({
 
   const base: React.CSSProperties = {
     padding: compact ? '7px 14px' : '12px 22px',
-    borderRadius: 8,
+    borderRadius: 3,
     fontSize: compact ? 12 : 13,
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '.03em',
+    fontWeight: 500,
+    textTransform: 'none',
+    letterSpacing: 'normal',
     border: 'none',
     cursor: busy ? 'default' : 'pointer',
     width: appearance === 'premium' && !compact ? '100%' : undefined,

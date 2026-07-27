@@ -208,12 +208,12 @@ const S = {
     padding: '13px 20px',
     background: 'var(--violet-cta)',
     border: '1px solid rgba(255,255,255,0.14)',
-    borderRadius: 8,
+    borderRadius: 3,
     fontFamily: 'Inter, sans-serif',
     fontSize: 14,
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '.03em',
+    fontWeight: 500,
+    textTransform: 'none',
+    letterSpacing: 'normal',
     color: '#fff',
     cursor: 'pointer',
     boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
@@ -1011,7 +1011,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
         <Button
           variant="secondary"
           onClick={onClose}
-          style={{ padding: '12px 22px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', textTransform: 'uppercase', letterSpacing: '.03em' }}
+          style={{ padding: '12px 22px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', textTransform: 'none', letterSpacing: 'normal' }}
         >
           Retour au tableau de bord
         </Button>
@@ -1517,7 +1517,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       {step === 1 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Places &amp; Prix</p>
+            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Places &amp; Prix</p>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Configure chaque type de place que tu veux proposer.</p>
           </div>
 
@@ -1815,7 +1815,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       {step === 2 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
+            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Indique où se déroulera ton événement.</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1844,7 +1844,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       {/* ── Step 3 : Options avancées ── */}
       {step === 3 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Options avancées</p>
+          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
 
           <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(78,232,200,0.15)' }}>
             <div style={{ flex: 1 }}>
@@ -1955,7 +1955,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       {/* ── Step 4 : Récapitulatif & publication ── */}
       {step === 4 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Récapitulatif &amp; publication</p>
+          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Récapitulatif &amp; publication</p>
 
           {imagePreview && (
             <div style={{ borderRadius: 8, overflow: 'hidden', aspectRatio: '16/9' }}>

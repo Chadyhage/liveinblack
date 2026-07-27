@@ -84,7 +84,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
         {data && data.ticketCount > 0 && (
           <>
             <section style={{ marginBottom: 20 }}>
-              <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 Résumé par type de place
               </h2>
               <div style={{ display: 'grid', gap: 8 }}>
@@ -99,7 +99,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
 
             {data.preorderSummary.length > 0 && (
               <section style={{ marginBottom: 20 }}>
-                <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+                <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                   Précommandes (stock à prévoir)
                 </h2>
                 <div style={{ display: 'grid', gap: 8 }}>
@@ -114,7 +114,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
             )}
 
             <section>
-              <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 Détail par billet
               </h2>
               <div style={{ display: 'grid', gap: 8 }}>

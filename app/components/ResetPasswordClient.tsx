@@ -13,8 +13,8 @@ import { Button, Input, Label } from '@/app/components/ui'
 const COLORS = { teal: 'var(--teal)', pink: 'var(--pink)' }
 const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 8 }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 8, cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
-  textTransform: 'uppercase', letterSpacing: '.03em',
+  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 14.5, fontWeight: 500,
+  textTransform: 'none', letterSpacing: 'normal',
   border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
 })
 

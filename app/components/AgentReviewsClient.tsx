@@ -65,7 +65,7 @@ const TOAST_LABEL: Record<ModerationOp, string> = {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }
-const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 8, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.03em' }
+const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 3, fontWeight: 500, fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }
 
 function fmtDate(iso: string): string {
   try {
@@ -408,7 +408,7 @@ function ReviewCard({
 
       {review.reports.length > 0 && (
         <div style={{ marginTop: 10, padding: '9px 12px', borderRadius: 10, background: 'rgba(224,90,170,.06)', border: '1px solid rgba(224,90,170,.22)' }}>
-          <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#e05aaa', margin: '0 0 6px' }}>Signalements</p>
+          <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#e05aaa', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Signalements</p>
           {review.reports.map((rep) => (
             <p key={rep.id} style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.5 }}>
               <strong>{REASON_LABEL[rep.reason] || rep.reason}</strong> — {rep.reporterName || 'Membre'} · {fmtDate(rep.createdAt)}

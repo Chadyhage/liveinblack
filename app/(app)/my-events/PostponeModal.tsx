@@ -55,7 +55,7 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
 
   return (
     <Modal onClose={onClose} maxWidth={480}>
-        <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>Reporter l&rsquo;événement ?</h2>
+        <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Reporter l&rsquo;événement ?</h2>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 14px' }}>
           Les billets déjà vendus restent valables pour la nouvelle date — personne n&rsquo;est remboursé. Chaque acheteur est prévenu par e-mail (ancienne et nouvelle date).
         </p>
@@ -99,7 +99,7 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
             disabled={busy}
             loading={busy}
             loadingText="Report en cours…"
-            style={{ padding: '12px 0', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', textTransform: 'uppercase', letterSpacing: '.03em' }}
+            style={{ padding: '12px 0', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', textTransform: 'none', letterSpacing: 'normal' }}
           >
             Confirmer le report
           </Button>

@@ -136,7 +136,7 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
               <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
-            <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Codes d&apos;accès</p>
+            <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Codes d&apos;accès</p>
           </div>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
             Génère des codes uniques pour <span style={{ color: 'var(--gold)' }}>{event.name}</span>
@@ -190,14 +190,14 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
                 style={{
                   flex: 1,
                   padding: 12,
-                  borderRadius: 10,
+                  borderRadius: 3,
                   background: generating ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                   color: generating ? 'rgba(255,255,255,0.35)' : '#181206',
                   fontFamily: 'Inter, sans-serif',
                   fontSize: 13,
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '.03em',
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  letterSpacing: 'normal',
                 }}
               >
                 Générer
@@ -253,14 +253,14 @@ export default function AccessCodesModal({ event, onClose }: AccessCodesModalPro
               fullWidth
               style={{
                 padding: 12,
-                borderRadius: 10,
+                borderRadius: 3,
                 background: 'var(--gold)',
                 color: '#181206',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: 13,
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '.03em',
+                fontWeight: 500,
+                textTransform: 'none',
+                letterSpacing: 'normal',
               }}
             >
               {allCopied ? 'Tous les codes copiés' : 'Copier tous les codes'}

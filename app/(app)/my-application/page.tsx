@@ -21,14 +21,14 @@ const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '
 const primaryBtn: React.CSSProperties = {
   display: 'inline-block',
   padding: '12px 22px',
-  borderRadius: 8,
+  borderRadius: 3,
   border: 'none',
   background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
   color: '#1a1508',
-  fontWeight: 800,
+  fontWeight: 500,
   fontSize: 13.5,
-  textTransform: 'uppercase',
-  letterSpacing: '.03em',
+  textTransform: 'none',
+  letterSpacing: 'normal',
   textDecoration: 'none',
 }
 const secondaryBtn: React.CSSProperties = {
@@ -69,7 +69,7 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
 
   return (
     <section id={id} style={{ display: 'flex', flexDirection: 'column', gap: 10, scrollMarginTop: 20 }}>
-      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{TYPE_LABEL[type]}</h2>
+      <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{TYPE_LABEL[type]}</h2>
 
       {!application && roleStatus === 'active' && (
         <div style={{ ...cardStyle, border: '1px solid rgba(78,232,200,0.35)' }}>

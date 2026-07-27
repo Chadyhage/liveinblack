@@ -87,7 +87,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
       `}</style>
       <div className="organizer-directory__wrap">
         <header style={{ textAlign: 'center' }}>
-          <p style={{ margin: 0, color: 'var(--gold)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>L&apos;annuaire</p>
+          <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>L&apos;annuaire</p>
           <h1 className="font-display" style={{ margin: '10px 0 0', fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em' }}>
             Les organisateurs qui font<br /><span style={{ color: 'var(--gold)' }}>vibrer la nuit.</span>
           </h1>
@@ -131,13 +131,13 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
           <Button
             type="submit"
             variant="primary"
-            style={{ minHeight: 42, padding: '0 19px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13 }}
+            style={{ minHeight: 42, padding: '0 19px', borderRadius: 3, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
           >
             Filtrer
           </Button>
         </form>
 
-        <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+        <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>
           {filtered.length} organisateur{filtered.length !== 1 ? 's' : ''}
         </p>
 
@@ -165,7 +165,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                   </Link>
                   <Link href={`/organizers/${organizer.slug}`} className="organizer-directory__body">
                     <h2 style={{ margin: 0, fontSize: 27, lineHeight: 1.1 }}>{organizer.publicName}</h2>
-                    {(organizer.city || zones.length > 0) && <p style={{ margin: '7px 0 0', color: 'var(--gold)', fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase' }}>{[organizer.city, ...zones].filter(Boolean).slice(0, 3).join(' · ')}</p>}
+                    {(organizer.city || zones.length > 0) && <p style={{ margin: '7px 0 0', color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>{[organizer.city, ...zones].filter(Boolean).slice(0, 3).join(' · ')}</p>}
                     <p style={{ margin: '14px 0 0', color: 'var(--text-muted)', fontSize: 13.5, lineHeight: 1.6 }}>{organizer.shortDescription || 'Découvre sa programmation et son univers.'}</p>
                     {organizer.nextEvent && (
                       <p style={{ margin: '16px 0 0', paddingTop: 13, borderTop: '1px solid var(--border)', color: 'var(--text-faint)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
@@ -174,7 +174,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                     )}
                   </Link>
                   <div className="organizer-directory__actions">
-                    <Link href={`/organizers/${organizer.slug}`} style={{ display: 'block', padding: '12px 14px', borderRadius: 8, textAlign: 'center', textDecoration: 'none', color: '#0a0a0e', background: 'var(--gold)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 12.5 }}>Découvrir la page</Link>
+                    <Link href={`/organizers/${organizer.slug}`} style={{ display: 'block', padding: '12px 14px', borderRadius: 3, textAlign: 'center', textDecoration: 'none', color: '#0a0a0e', background: 'var(--gold)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5 }}>Découvrir la page</Link>
                     {!isSelf && (
                       <OrganizerFollowButtonClient
                         organizerId={organizer.userId}

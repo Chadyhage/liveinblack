@@ -232,7 +232,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           </p>
           <Link
             href="/organizer-studio?section=encaissement"
-            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 12.5, textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5, textDecoration: 'none' }}
           >
             Configurer mon encaissement
           </Link>
@@ -270,7 +270,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
       <OrganizerAnalytics events={events} />
 
       <section style={{ marginBottom: 28 }}>
-        <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 12px' }}>
+        <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>
           Mes soirées en cours
         </p>
         {upcomingEvents.length === 0 ? (
@@ -289,7 +289,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {cancelledEvents.length > 0 && (
         <section style={{ marginBottom: 28 }}>
-          <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 12px' }}>Annulés</p>
+          <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Annulés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {cancelledEvents.map((event) => (
               <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
@@ -320,7 +320,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {pastEvents.length > 0 && (
         <section>
-          <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 12px' }}>Événements passés</p>
+          <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Événements passés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {pastEvents.map((event) => (
               <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>

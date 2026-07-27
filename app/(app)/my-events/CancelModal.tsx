@@ -64,7 +64,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
 
   return (
     <Modal onClose={onClose} maxWidth={520}>
-        <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 14px' }}>
+        <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>
           {phase === 'confirm' ? "Supprimer l’événement ?" : "Annuler l’événement ?"}
         </h2>
 
@@ -89,7 +89,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
                 disabled={busy}
                 loading={busy}
                 loadingText="Suppression…"
-                style={{ padding: '12px 0', borderRadius: 8, background: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '.03em' }}
+                style={{ padding: '12px 0', borderRadius: 3, background: 'var(--pink)', textTransform: 'none', letterSpacing: 'normal' }}
               >
                 Supprimer
               </Button>
@@ -134,7 +134,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
                 disabled={busy}
                 loading={busy}
                 loadingText="Annulation en cours…"
-                style={{ padding: '12px 0', borderRadius: 8, background: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '.03em' }}
+                style={{ padding: '12px 0', borderRadius: 3, background: 'var(--pink)', textTransform: 'none', letterSpacing: 'normal' }}
               >
                 Confirmer l&apos;annulation
               </Button>

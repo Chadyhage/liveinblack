@@ -361,7 +361,7 @@ export default async function AccueilPage() {
       <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
           <div style={{ ...card, padding: 24, borderLeft: '3px solid rgba(139,92,246,.75)' }}>
-            <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--violet)', margin: 0 }}>Organisateur</p>
+            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--violet)', margin: 0 }}>Organisateur</p>
             <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
             <ul style={featList}>
               {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
@@ -371,7 +371,7 @@ export default async function AccueilPage() {
             <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: '#fff' }}>Créer un espace organisateur</Link>
           </div>
           <div style={{ ...card, padding: 24, borderLeft: '3px solid rgba(200,169,110,.75)' }}>
-            <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
+            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
             <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
             <ul style={featList}>
               {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
@@ -459,7 +459,7 @@ function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: s
   return (
     <section style={{ padding: '54px 22px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
       <div style={{ textAlign: 'center', marginBottom: 30 }}>
-        {eyebrow && <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: 0 }}>{eyebrow}</p>}
+        {eyebrow && <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: 0 }}>{eyebrow}</p>}
         <h2 className="font-display" style={{ fontSize: 'clamp(26px,6vw,42px)', letterSpacing: '.01em', margin: '10px 0 0' }}>{title}</h2>
         {sub && <p style={{ fontSize: 14.5, color: 'var(--text-muted)', margin: '10px auto 0', maxWidth: 520, lineHeight: 1.5 }}>{sub}</p>}
       </div>
@@ -482,8 +482,8 @@ function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string;
 // "Acheter"), couleurs LIVEINBLACK inchangées (décision client : polices/
 // mise en page oui, palette non).
 const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
-const btnPrimary: React.CSSProperties = { padding: '15px 28px', borderRadius: 8, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none', display: 'inline-block' }
-const btnGhost: React.CSSProperties = { padding: '14px 26px', borderRadius: 8, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none', display: 'inline-block' }
-const btnSolid: React.CSSProperties = { padding: '14px 22px', borderRadius: 8, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', textDecoration: 'none', display: 'inline-block', textAlign: 'center' }
+const btnPrimary: React.CSSProperties = { padding: '15px 28px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none', display: 'inline-block' }
+const btnGhost: React.CSSProperties = { padding: '14px 26px', borderRadius: 3, fontSize: 13.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none', display: 'inline-block' }
+const btnSolid: React.CSSProperties = { padding: '14px 22px', borderRadius: 3, fontSize: 13.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-block', textAlign: 'center' }
 const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }
 const featItem: React.CSSProperties = { fontSize: 13.5, color: 'var(--text-muted)', display: 'flex', gap: 9, alignItems: 'baseline' }

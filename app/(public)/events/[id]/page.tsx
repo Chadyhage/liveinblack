@@ -332,7 +332,7 @@ export default async function EventDetailPage({
           ) : (
             <Link
               href={loginHref}
-              style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 8, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
+              style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
             >
               Se connecter pour réserver
             </Link>
@@ -353,7 +353,7 @@ export default async function EventDetailPage({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ padding: '22px 22px 0' }}>
-      <h2 style={{ fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--teal)', margin: '0 0 12px' }}>{title}</h2>
+      <h2 style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 12px' }}>{title}</h2>
       {children}
     </section>
   )

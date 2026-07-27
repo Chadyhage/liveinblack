@@ -59,7 +59,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
       `}</style>
       <div style={{ maxWidth: 1120, margin: '0 auto' }}>
       <header style={{ textAlign: 'center', marginBottom: 26 }}>
-        <p style={{ margin: 0, color: 'var(--gold)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>L&apos;annuaire</p>
+        <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>L&apos;annuaire</p>
         <h1 className="font-display" style={{ fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em', margin: '10px 0 0' }}>Les prestataires qui font<br /><span style={{ color: 'var(--gold)' }}>vivre la nuit.</span></h1>
         <p style={{ maxWidth: 560, margin: '16px auto 0', color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>DJ, salles, sono, photo, boissons : trouve le bon partenaire et découvre directement ses offres.</p>
       </header>
@@ -83,7 +83,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
         <Button
           type="submit"
           variant="primary"
-          style={{ flexShrink: 0, padding: '12px 18px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13 }}
+          style={{ flexShrink: 0, padding: '12px 18px', borderRadius: 3, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
         >
           Filtrer
         </Button>
@@ -164,7 +164,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
       <section style={{ maxWidth: 820, margin: '54px auto 0', padding: '36px 24px', textAlign: 'center', borderRadius: 20, border: '1px solid rgba(200,169,110,.3)', background: 'var(--surface)' }}>
         <h2 className="font-display" style={{ margin: 0, fontSize: 32, letterSpacing: '.01em' }}>Tu es prestataire ?</h2>
         <p style={{ maxWidth: 500, margin: '10px auto 20px', color: 'var(--text-muted)', lineHeight: 1.6 }}>Crée ta vitrine, présente ton catalogue et échange directement avec les organisateurs.</p>
-        <Link href="/provider-signup" style={{ display: 'inline-block', padding: '13px 22px', borderRadius: 8, background: 'var(--gold)', color: '#090a0f', textDecoration: 'none', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', fontSize: 13.5 }}>Devenir prestataire</Link>
+        <Link href="/provider-signup" style={{ display: 'inline-block', padding: '13px 22px', borderRadius: 3, background: 'var(--gold)', color: '#090a0f', textDecoration: 'none', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5 }}>Devenir prestataire</Link>
       </section>
       </div>
     </main>

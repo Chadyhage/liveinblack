@@ -49,7 +49,7 @@ export default async function MesSoireesPage() {
   return (
     <main style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
       <div style={{ maxWidth: 620, margin: '0 auto' }}>
-        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: 0 }}>
+        <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--gold)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>
           Équipe
         </p>
         <h1 className="font-display" style={{ fontSize: 26, letterSpacing: '-0.5px', color: 'var(--text)', margin: '6px 0 4px' }}>Mes soirées</h1>
@@ -156,12 +156,12 @@ export default async function MesSoireesPage() {
                       width: '100%',
                       padding: '14px',
                       minHeight: 48,
-                      borderRadius: 8,
+                      borderRadius: 3,
                       border: '1px solid var(--border-strong)',
                       fontSize: 15,
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      letterSpacing: '.03em',
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      letterSpacing: 'normal',
                       color: 'var(--obsidian)',
                       background: meta.color,
                       display: 'flex',

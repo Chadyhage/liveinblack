@@ -73,7 +73,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
         <Button
           type="submit"
           variant="primary"
-          style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13 }}
+          style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 3, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
         >
           Chercher
         </Button>
@@ -86,7 +86,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
           <p style={{ color: 'var(--text-muted)', margin: '0 0 14px' }}>Aucun résultat pour « {query} ».</p>
           <Link
             href="/events"
-            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 8, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13, textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 3, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, textDecoration: 'none' }}
           >
             Parcourir les événements
           </Link>
@@ -145,7 +145,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
 function ResultSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 30 }}>
-      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>{title}</h2>
+      <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>{title}</h2>
       {children}
     </section>
   )

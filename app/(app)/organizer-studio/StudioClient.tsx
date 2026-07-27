@@ -324,7 +324,7 @@ export default function StudioClient({
       <div className="studio-profile-grid">
         {/* Informations publiques */}
         <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
-          <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px' }}>Informations publiques</h2>
+          <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Informations publiques</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: 14, marginBottom: 18 }}>
             <div>
@@ -466,7 +466,7 @@ export default function StudioClient({
 
         {/* Aperçu + statut */}
         <aside style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
-          <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px' }}>Aperçu de ma page</h2>
+          <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
             <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(78,232,200,0.12), rgba(200,169,110,0.12))' }} />
             <div style={{ padding: 16 }}>
@@ -505,10 +505,10 @@ export default function StudioClient({
       <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
           <div>
-            <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
+            <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
             <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Images 10 Mo max. Vidéos 8 Mo max. 12 médias au maximum recommandé pour une page lisible (non bloquant).</p>
           </div>
-          <label style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', cursor: 'pointer' }}>
+          <label style={{ padding: '10px 16px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', cursor: 'pointer' }}>
             {uploading === 'gallery' ? 'Envoi…' : '+ Ajouter un média'}
             <input
               type="file"
@@ -604,12 +604,12 @@ function saveButtonStyle(saving: boolean): React.CSSProperties {
     padding: 13,
     background: 'var(--gold)',
     border: '1px solid var(--gold)',
-    borderRadius: 8,
+    borderRadius: 3,
     color: 'var(--obsidian)',
     fontSize: 13,
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '.04em',
+    fontWeight: 500,
+    textTransform: 'none',
+    letterSpacing: 'normal',
     cursor: saving ? 'wait' : 'pointer',
     marginTop: 16,
   }
@@ -738,7 +738,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
 
   return (
     <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, display: 'grid', gap: 16 }} id="encaissement">
-      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Encaissement</h2>
+      <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
 
       <div style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}>
         {status.mode === 'manual' ? (

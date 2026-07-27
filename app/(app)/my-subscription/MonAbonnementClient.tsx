@@ -19,7 +19,7 @@ type SubscriptionOverview = Awaited<ReturnType<typeof getMySubscriptionOverview>
 const FONT = 'Inter, system-ui, sans-serif'
 const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
 const card: React.CSSProperties = { background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }
-const primaryButton: React.CSSProperties = { background: C.gold, color: C.obsidian, fontFamily: FONT, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em' }
+const primaryButton: React.CSSProperties = { background: C.gold, color: C.obsidian, fontFamily: FONT, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }
 
 function fmtDate(value: string | null | undefined): string {
   if (!value) return '—'
@@ -181,7 +181,7 @@ export default function MonAbonnementClient({ profile, subscription }: { profile
         </section>
 
         <section style={{ ...card, padding: 18, marginTop: 16 }}>
-          <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Historique des paiements</h2>
+          <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Historique des paiements</h2>
           <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '0 0 4px' }}>Tes reçus d&rsquo;abonnement.</p>
           {subscription.payments.length === 0 ? (
             <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)', margin: '16px 0 0' }}>Aucun paiement confirmé dans cet historique.</p>

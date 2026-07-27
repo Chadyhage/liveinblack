@@ -395,19 +395,19 @@ export default function PreferencesModal({
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>Tes préférences sont enregistrées.</p>
             <Button
               onClick={onClose}
-              style={{ padding: '13px 28px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em' }}
+              style={{ padding: '13px 28px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
             >
               Fermer
             </Button>
           </div>
         ) : (
           <>
-            <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: VIOLET, margin: '0 0 6px' }}>Personnalisation</p>
+            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: VIOLET, fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Personnalisation</p>
             <h2 className="font-display" style={{ fontSize: 23, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 18px' }}>Dis-nous ce que tu aimes</h2>
 
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: current.color }}>
+                <span style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: current.color, fontFamily: 'var(--font-display), sans-serif' }}>
                   Étape {step + 1} / {STEPS.length}
                 </span>
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{progress}%</span>
@@ -467,7 +467,7 @@ export default function PreferencesModal({
                 onClick={goNext}
                 disabled={saving}
                 fullWidth
-                style={{ flex: 1, padding: '15px 24px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em' }}
+                style={{ flex: 1, padding: '15px 24px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
               >
                 {isLast ? 'Terminer' : hasValue ? 'Continuer' : 'Passer cette étape'}
               </Button>

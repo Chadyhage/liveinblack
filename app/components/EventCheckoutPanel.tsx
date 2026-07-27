@@ -407,7 +407,7 @@ export default function EventCheckoutPanel({
 
   return (
     <section style={{ padding: '22px 22px 0' }}>
-      <h2 style={{ fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--teal)', margin: '0 0 12px' }}>Réservation</h2>
+      <h2 style={{ fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 12px' }}>Réservation</h2>
 
       {cancelNoticeVisible && (
         <div
@@ -824,13 +824,13 @@ export default function EventCheckoutPanel({
             fullWidth
             style={{
               padding: '16px',
-              borderRadius: 8,
+              borderRadius: 3,
               border: 'none',
               gap: 9,
               fontSize: 15,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '.04em',
+              fontWeight: 500,
+              textTransform: 'none',
+              letterSpacing: 'normal',
               color: buyDisabled ? 'var(--text-faint)' : '#04120e',
               background: buyDisabled ? 'var(--surface-2)' : 'linear-gradient(135deg,#c8a96e,#e0c48a)',
               boxShadow: buyDisabled ? 'none' : '0 8px 26px rgba(200,169,110,0.32)',
@@ -894,7 +894,7 @@ export default function EventCheckoutPanel({
         <div role="dialog" aria-modal="true" aria-labelledby="included-modal-title" onClick={() => setIncludedModal(null)} style={modalBackdrop}>
           <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 430, padding: 22, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-              <div><p style={{ margin: 0, color: 'var(--gold)', fontSize: 11, fontWeight: 800, letterSpacing: '.07em', textTransform: 'uppercase' }}>Inclus dans ce billet</p><h3 id="included-modal-title" style={{ margin: '3px 0 0', fontSize: 20 }}>{includedModal.type}</h3></div>
+              <div><p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>Inclus dans ce billet</p><h3 id="included-modal-title" style={{ margin: '3px 0 0', fontSize: 20 }}>{includedModal.type}</h3></div>
               <Button type="button" variant="ghost" onClick={() => setIncludedModal(null)} aria-label="Fermer" style={{ ...modalClose, position: 'static', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button>
             </div>
             <div style={{ display: 'grid', gap: 8, marginTop: 18 }}>
@@ -912,7 +912,7 @@ export default function EventCheckoutPanel({
       {showInfoModal && (
         <div role="dialog" aria-modal="true" aria-labelledby="show-info-title" onClick={() => setShowInfoModal(null)} style={modalBackdrop}>
           <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 430, padding: 24, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
-            <p style={{ margin: 0, color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnaliser le show</p>
+            <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Personnaliser le show</p>
             <h3 id="show-info-title" style={{ margin: '5px 0 4px', fontSize: 20 }}>{showInfoModal.option.label}</h3>
             <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 12 }}>Pour {showInfoModal.itemName} · billet {showInfoModal.ticketIndex + 1}</p>
             <label htmlFor="show-info-input" style={{ display: 'block', marginBottom: 6, color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>{showInfoModal.option.infoPrompt || 'Information à transmettre au staff'}</label>
@@ -926,7 +926,7 @@ export default function EventCheckoutPanel({
       {showConfirmation && selectedPlace && (
         <div role="dialog" aria-modal="true" aria-labelledby="checkout-confirm-title" onClick={() => !submitting && setShowConfirmation(false)} style={modalBackdrop}>
           <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 470, padding: 24, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.07em' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 22 }}>Récapitulatif</h3></div><Button type="button" variant="ghost" onClick={() => setShowConfirmation(false)} aria-label="Fermer" style={{ ...modalClose, position: 'static', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 22 }}>Récapitulatif</h3></div><Button type="button" variant="ghost" onClick={() => setShowConfirmation(false)} aria-label="Fermer" style={{ ...modalClose, position: 'static', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button></div>
             <div style={{ display: 'grid', gap: 9, marginTop: 20 }}>
               <SummaryRow label="Place" value={selectedPlace.type} />
               <SummaryRow label="Quantité" value={String(lineQty)} />
@@ -963,8 +963,8 @@ const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8
 const modalBackdrop: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(8px)' }
 const modalClose: React.CSSProperties = { position: 'absolute', zIndex: 2, top: 12, right: 12, width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,.2)', background: 'rgba(4,4,11,.78)', color: '#fff', fontSize: 21, cursor: 'pointer' }
 const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }
-const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 8, background: 'var(--gold)', color: '#181104', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13.5, cursor: 'pointer' }
-const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 8, background: 'transparent', color: 'var(--text)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13, cursor: 'pointer' }
+const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 3, background: 'var(--gold)', color: '#181104', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5, cursor: 'pointer' }
+const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 3, background: 'transparent', color: 'var(--text)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, cursor: 'pointer' }
 
 function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onClick: () => void; disabled?: boolean; label: string; ariaLabel: string; variant: 'ghost' | 'solid' }) {
   return (

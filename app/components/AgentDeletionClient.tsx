@@ -44,7 +44,7 @@ interface ToastState {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 const ROLE_LABEL: Record<string, string> = { organisateur: 'Organisateur', prestataire: 'Prestataire', client: 'Client', agent: 'Agent' }
 
@@ -348,7 +348,7 @@ function DetailPanel({
 
       {hasBlockers && (
         <div style={{ padding: '12px 14px', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.28)', borderRadius: 10 }}>
-          <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>Bloque l’approbation</p>
+          <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Bloque l’approbation</p>
           {detail.audit.blockers.map((b, i) => (
             <p key={i} style={{ fontSize: 12.5, color: 'rgba(224,90,170,0.9)', margin: '0 0 5px', lineHeight: 1.5 }}>
               • {b.label}
@@ -359,7 +359,7 @@ function DetailPanel({
 
       {detail.audit.warnings.length > 0 && (
         <div style={{ padding: '12px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.22)', borderRadius: 10 }}>
-          <p style={{ fontSize: 11.5, fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>Ce qui se passera à l’approbation</p>
+          <p style={{ fontSize: 14, fontWeight: 400, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Ce qui se passera à l’approbation</p>
           {detail.audit.warnings.map((w, i) => (
             <p key={i} style={{ fontSize: 12.5, color: 'rgba(245,158,11,0.85)', margin: '0 0 5px', lineHeight: 1.5 }}>
               • {w.label}
@@ -378,10 +378,11 @@ function DetailPanel({
             disabled={actionBusy || rejecting || hasBlockers}
             title={hasBlockers ? 'Résous les blocages ci-dessus avant d’approuver.' : undefined}
             style={{
-              borderRadius: 8,
+              borderRadius: 3,
+              fontWeight: 500,
               fontSize: 13,
-              textTransform: 'uppercase',
-              letterSpacing: '.03em',
+              textTransform: 'none',
+              letterSpacing: 'normal',
               background: '#c2347f',
               opacity: hasBlockers ? 0.45 : 1,
             }}
@@ -434,7 +435,7 @@ function DetailPanel({
                 disabled={actionBusy}
                 loading={actionBusy}
                 loadingText="…"
-                style={{ flex: 1, borderRadius: 8, background: '#c2347f', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.03em' }}
+                style={{ flex: 1, borderRadius: 3, fontWeight: 500, background: '#c2347f', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
               >
                 Confirmer la suppression
               </Button>

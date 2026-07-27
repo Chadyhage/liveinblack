@@ -91,7 +91,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
           <Button
             type="submit"
             variant="primary"
-            style={{ padding: '11px 18px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13 }}
+            style={{ padding: '11px 18px', borderRadius: 3, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
           >
             Chercher
           </Button>

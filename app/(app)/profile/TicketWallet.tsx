@@ -259,7 +259,7 @@ function SeatHoldsPanel() {
 
   return (
     <div style={{ ...cardStyle, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, border: '1px solid rgba(200,169,110,.35)' }}>
-      <p style={{ margin: 0, color: 'var(--gold)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em' }}>Places bloquées</p>
+      <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Places bloquées</p>
       {active.map((hold) => (
         <div key={hold.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
           <div>
@@ -289,7 +289,7 @@ function SeatHoldsPanel() {
 function Section({ label, groups, currentUserId }: { label: string; groups: TicketWalletGroupView[]; currentUserId: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '4px 0 0' }}>{label}</p>
+      <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
       {groups.map((g) => (
         <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classify(g)} />
       ))}
@@ -624,7 +624,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <p style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
+        <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
         <span style={{ fontSize: 12, color: 'var(--violet)', fontWeight: 700 }}>
           {assignedCount}/{hostedSeats.length} attribuées
         </span>

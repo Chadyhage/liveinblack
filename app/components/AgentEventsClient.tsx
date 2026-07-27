@@ -410,7 +410,7 @@ function AdminCancelModal({
             disabled={busy}
             loading={busy}
             loadingText="Annulation…"
-            style={{ flex: 1, padding: '11px 0', borderRadius: 8, background: '#c2347f', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}
+            style={{ flex: 1, padding: '11px 0', borderRadius: 3, fontWeight: 500, background: '#c2347f', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
           >
             Annuler l&apos;événement
           </Button>

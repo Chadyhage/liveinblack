@@ -33,15 +33,15 @@ const inquiryBtn: React.CSSProperties = {
   justifyContent: 'center',
   gap: 7,
   padding: '9px 12px',
-  borderRadius: 8,
+  borderRadius: 3,
   border: '1px solid var(--border-strong)',
   background: 'var(--violet-cta)',
   color: '#fff',
   fontFamily: FONT,
   fontSize: 12,
-  fontWeight: 800,
-  textTransform: 'uppercase',
-  letterSpacing: '.03em',
+  fontWeight: 500,
+  textTransform: 'none',
+  letterSpacing: 'normal',
   cursor: 'pointer',
 }
 const primaryBtn: React.CSSProperties = {
@@ -51,16 +51,16 @@ const primaryBtn: React.CSSProperties = {
   gap: 8,
   minHeight: 46,
   padding: '12px 18px',
-  borderRadius: 8,
+  borderRadius: 3,
   border: '1px solid var(--border-strong)',
   cursor: 'pointer',
   background: 'var(--violet-cta)',
   color: '#fff',
   fontFamily: FONT,
   fontSize: 13,
-  fontWeight: 800,
-  textTransform: 'uppercase',
-  letterSpacing: '.03em',
+  fontWeight: 500,
+  textTransform: 'none',
+  letterSpacing: 'normal',
 }
 const ghostBtn: React.CSSProperties = {
   flex: 1,
@@ -209,7 +209,7 @@ export default function ProviderCatalogInquiry({
             }}
           >
             <div style={{ width: 44, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
-            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 7px' }}>
+            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 7px' }}>
               Demande au prestataire
             </p>
             <h3 style={{ fontFamily: FONT, fontSize: 22, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: 'var(--text)' }}>

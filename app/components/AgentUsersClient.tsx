@@ -93,7 +93,7 @@ function fmtDate(iso: string | null): string {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal)', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 function Badge({ label, color, border, bg }: { label: string } & BadgeColors) {
   return (
@@ -636,13 +636,14 @@ function DetailPanel({
               style={{
                 width: '100%',
                 padding: '10px 0',
-                borderRadius: 8,
+                borderRadius: 3,
+                fontWeight: 500,
                 background: 'rgba(78,232,200,0.12)',
                 border: '1px solid rgba(78,232,200,0.4)',
                 color: 'var(--teal)',
                 fontSize: 12,
-                textTransform: 'uppercase',
-                letterSpacing: '.04em',
+                textTransform: 'none',
+                letterSpacing: 'normal',
               }}
             >
               Envoyer le lien de vérification
@@ -656,11 +657,12 @@ function DetailPanel({
               style={{
                 width: '100%',
                 padding: '10px 0',
-                borderRadius: 8,
+                borderRadius: 3,
+                fontWeight: 500,
                 border: '1px solid var(--border-strong)',
                 fontSize: 12,
-                textTransform: 'uppercase',
-                letterSpacing: '.04em',
+                textTransform: 'none',
+                letterSpacing: 'normal',
               }}
             >
               Marquer l&apos;email vérifié
@@ -673,11 +675,12 @@ function DetailPanel({
             style={{
               width: '100%',
               padding: '10px 0',
-              borderRadius: 8,
+              borderRadius: 3,
+              fontWeight: 500,
               background: 'transparent',
               fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: '.04em',
+              textTransform: 'none',
+              letterSpacing: 'normal',
             }}
           >
             Envoyer un lien de réinitialisation du mot de passe
@@ -744,7 +747,7 @@ function DetailPanel({
             variant="primary"
             onClick={() => onSetDisabled(false)}
             disabled={actionBusy}
-            style={{ width: '100%', padding: '12px 0', borderRadius: 8, border: '1px solid var(--border-strong)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}
+            style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, border: '1px solid var(--border-strong)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
           >
             Réactiver le compte
           </Button>
@@ -754,7 +757,7 @@ function DetailPanel({
               variant="secondary"
               onClick={() => setConfirmDisable(true)}
               disabled={actionBusy}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 8, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.55)', color: 'var(--gold)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.55)', color: 'var(--gold)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
             >
               Suspendre le compte
             </Button>
@@ -784,7 +787,7 @@ function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: stri
           <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
             Annuler
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+          <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}>
             Confirmer
           </Button>
         </div>

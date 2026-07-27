@@ -119,7 +119,7 @@ export default function AgentBoostsClient() {
 
             {data.conflicts.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#ff8c8c', margin: 0 }}>Conflits — action requise</p>
+                <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#ff8c8c', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Conflits — action requise</p>
                 {data.conflicts.map((b) => (
                   <BoostCard key={b.id} b={b} />
                 ))}
@@ -127,7 +127,7 @@ export default function AgentBoostsClient() {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Actifs ({data.active.length})</p>
+              <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({data.active.length})</p>
               {data.active.length === 0 ? (
                 <div style={{ ...cardStyle, padding: 26, textAlign: 'center' }}>
                   <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Aucun boost actif</p>
@@ -139,7 +139,7 @@ export default function AgentBoostsClient() {
 
             {data.expired.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Expirés ({data.expired.length})</p>
+                <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-faint)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Expirés ({data.expired.length})</p>
                 {data.expired.slice(0, 10).map((b) => (
                   <div key={b.id} style={{ opacity: 0.55 }}>
                     <BoostCard b={b} />

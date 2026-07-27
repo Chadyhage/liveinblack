@@ -1787,11 +1787,11 @@ export default function MessagesClient({
                           disabled={busy}
                           style={{
                             padding: '10px 20px',
-                            borderRadius: 8,
-                            fontWeight: 800,
+                            borderRadius: 3,
+                            fontWeight: 500,
                             fontSize: 13,
-                            textTransform: 'uppercase',
-                            letterSpacing: '.03em',
+                            textTransform: 'none',
+                            letterSpacing: 'normal',
                             color: '#fff',
                             background: busy ? 'rgba(143,86,255,0.5)' : 'var(--violet-cta)',
                             cursor: busy ? 'default' : 'pointer',
@@ -2997,7 +2997,7 @@ function ModalShell({ title, onClose, wide, children }: { title: string; onClose
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-          <h3 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{title}</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{title}</h3>
           <Button
             variant="ghost"
             onClick={onClose}
@@ -3031,9 +3031,10 @@ function ModalActions({ onCancel, onConfirm, confirmLabel, disabled }: { onCance
         disabled={disabled}
         size="sm"
         style={{
-          borderRadius: 8,
-          textTransform: 'uppercase',
-          letterSpacing: '.03em',
+          borderRadius: 3,
+          fontWeight: 500,
+          textTransform: 'none',
+          letterSpacing: 'normal',
         }}
       >
         {confirmLabel}
@@ -3096,7 +3097,7 @@ function NewDirectModal({
           variant="primary"
           onClick={() => email.trim() && onEmail(email.trim())}
           size="sm"
-          style={{ borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.03em' }}
+          style={{ borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
         >
           Valider
         </Button>
@@ -3172,7 +3173,7 @@ function NewGroupModal({
             variant="primary"
             onClick={() => onCreate(name, [...memberIds], avatarDataUrl)}
             size="sm"
-            style={{ borderRadius: 8, textTransform: 'uppercase', letterSpacing: '.03em' }}
+            style={{ borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
           >
             Créer le groupe
           </Button>
@@ -3889,10 +3890,11 @@ const rowButtonStyle: React.CSSProperties = {
 }
 
 const sectionLabelStyle: React.CSSProperties = {
-  fontSize: 11.5,
-  fontWeight: 800,
+  fontSize: 14,
+  fontWeight: 400,
   color: 'var(--teal)',
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  letterSpacing: '3.2px',
+  fontFamily: 'var(--font-display), sans-serif',
   margin: '0 0 8px',
 }

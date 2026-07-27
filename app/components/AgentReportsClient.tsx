@@ -309,7 +309,7 @@ export default function AgentReportsClient() {
                         disabled={busyId === r.id}
                         loading={busyId === r.id}
                         loadingText="…"
-                        style={{ flex: 1, padding: '9px 12px', borderRadius: 8, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12.5, textTransform: 'uppercase', letterSpacing: '.03em' }}
+                        style={{ flex: 1, padding: '9px 12px', borderRadius: 3, fontWeight: 500, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12.5, textTransform: 'none', letterSpacing: 'normal' }}
                       >
                         Confirmer
                       </Button>
@@ -319,7 +319,7 @@ export default function AgentReportsClient() {
                   <Button
                     variant="primary"
                     onClick={() => setActiveId(r.id)}
-                    style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12, textTransform: 'uppercase', letterSpacing: '.03em' }}
+                    style={{ padding: '10px 16px', borderRadius: 3, fontWeight: 500, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }}
                   >
                     Marquer comme traité
                   </Button>

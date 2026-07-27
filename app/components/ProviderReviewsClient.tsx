@@ -20,7 +20,7 @@ const GOLD = '#c8a96e'
 const TEAL = '#4ee8c8'
 
 const card: React.CSSProperties = { padding: 20, borderRadius: 16, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
-const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'var(--violet-cta)', color: '#fff', fontFamily: FONT, fontSize: 12.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', boxShadow: '0 6px 20px rgba(122,59,242,.35)' }
+const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 3, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'var(--violet-cta)', color: '#fff', fontFamily: FONT, fontSize: 12.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(122,59,242,.35)' }
 const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600 }
 const disabledBtn: React.CSSProperties = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
 
@@ -281,7 +281,7 @@ export default function ProviderReviewsClient({
 
       {showForm && (
         <Sheet onClose={() => !formBusy && setShowForm(false)}>
-          <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: GOLD, margin: '0 0 7px' }}>Avis client</p>
+          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: GOLD, margin: '0 0 7px' }}>Avis client</p>
           <h3 style={{ fontFamily: FONT, fontSize: 25, lineHeight: 1.08, letterSpacing: '-.7px', margin: '0 0 16px', color: '#fff' }}>{myReview && myReview.status === 'published' ? 'Modifier mon avis' : `Noter ${providerName || 'ce prestataire'}`}</h3>
 
           <div style={{ textAlign: 'center', padding: '6px 0 2px' }}>
@@ -337,7 +337,7 @@ export default function ProviderReviewsClient({
             </div>
           ) : (
             <>
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#ff8fb2', margin: '0 0 7px' }}>Signalement</p>
+              <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#ff8fb2', margin: '0 0 7px' }}>Signalement</p>
               <h3 style={{ fontFamily: FONT, fontSize: 24, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: '#fff' }}>Signaler cet avis</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
                 {REVIEW_REPORT_REASONS.map((reason) => (
