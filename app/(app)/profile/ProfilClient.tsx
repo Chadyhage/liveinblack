@@ -111,14 +111,17 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
   }
 
   return (
-    <main className="profile-main" style={{ minHeight: '100vh', padding: '28px 16px 48px' }}>
+    <main className="profile-main" style={{ minHeight: '100vh', padding: '8px 0 48px' }}>
       <style>{`
         @media (max-width: 480px) {
           .profile-main { padding-bottom: 120px; }
         }
+        @media (max-width: 780px) {
+          .profile-main-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
-      <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <div className="profile-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 340px) 1fr', gap: 20, alignItems: 'start' }}>
+        <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <AvatarUpload user={user} setUser={setUser} />
           <h2 className="font-display" style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0, textAlign: 'center' }}>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
           <p style={{ fontSize: 12, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{user.email}</p>
@@ -126,7 +129,15 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
             {roleInfo && <Badge tone={roleInfo.badgeTone}>{roleInfo.label}</Badge>}
             {!isOrganizer && <Badge tone="gold">{user.points || 0} pts</Badge>}
           </div>
-        </div>
+          <Button
+            onClick={() => setShowLogoutConfirm(true)}
+            variant="secondary"
+            fullWidth
+            style={{ marginTop: 8, padding: '13px 0', borderRadius: 7, border: '1px solid rgba(255,107,0,0.4)', background: 'transparent', color: 'var(--pink)', fontSize: 14 }}
+          >
+            Se déconnecter
+          </Button>
+        </Card>
 
         {!isOrganizer && (
           <Card>
@@ -136,15 +147,6 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
             </p>
           </Card>
         )}
-
-        <Button
-          onClick={() => setShowLogoutConfirm(true)}
-          variant="secondary"
-          fullWidth
-          style={{ padding: '13px 0', borderRadius: 7, border: '1px solid rgba(255,107,0,0.4)', background: 'transparent', color: 'var(--pink)', fontSize: 14 }}
-        >
-          Se déconnecter
-        </Button>
       </div>
 
       {showLogoutConfirm && (
@@ -421,14 +423,14 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
   const filtered = tokens.length === 0 ? entries : entries.filter((e) => tokens.every((t) => e.keywords.some((k) => normalizeQuery(k).includes(t)) || normalizeQuery(e.id).includes(t)))
 
   return (
-    <main className="profile-settings" style={{ minHeight: '100vh', padding: '20px 16px 48px' }}>
+    <main className="profile-settings" style={{ minHeight: '100vh', padding: '8px 0 48px' }}>
       <style>{`
         @media (max-width: 480px) {
           .profile-settings { padding-bottom: 120px; }
           .profile-demo-row { flex-direction: column; }
         }
       `}</style>
-      <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
             ‹
@@ -440,11 +442,11 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher un réglage — nom, e-mail, mot de passe…"
-          style={{ textOverflow: 'ellipsis' }}
+          style={{ maxWidth: 480, textOverflow: 'ellipsis' }}
         />
 
         {filtered.length === 0 ? (
-          <Card style={{textAlign: 'center'}}>
+          <Card style={{ maxWidth: 480, textAlign: 'center' }}>
             <p style={{ fontSize: 14, color: '#fff', margin: '0 0 6px' }}>Aucun réglage ne correspond à « {query} »</p>
             <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 12px' }}>Essaie « nom », « e-mail », « mot de passe », « confidentialité »…</p>
             <Button onClick={() => setQuery('')} variant="link" style={{ fontSize: 12.5, textDecoration: 'none' }}>
@@ -452,7 +454,11 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
             </Button>
           </Card>
         ) : (
-          filtered.map((entry) => <div key={entry.id}>{entry.render({ user, setUser })}</div>)
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 14, alignItems: 'start' }}>
+            {filtered.map((entry) => (
+              <div key={entry.id}>{entry.render({ user, setUser })}</div>
+            ))}
+          </div>
         )}
       </div>
     </main>
@@ -1139,8 +1145,13 @@ export function SupportPanel({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '20px 16px 48px' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <main style={{ minHeight: '100vh', padding: '8px 0 48px' }}>
+      <style>{`
+        @media (max-width: 780px) {
+          .support-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
             ‹
@@ -1148,21 +1159,23 @@ export function SupportPanel({ onBack }: { onBack: () => void }) {
           <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>Support / Aide</h1>
         </div>
 
-        <Card>
-          <EyebrowLabel>Questions fréquentes</EyebrowLabel>
-          <Accordion items={FAQ.map((f) => ({ question: f.q, answer: f.a }))} />
-        </Card>
+        <div className="support-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, alignItems: 'start' }}>
+          <Card>
+            <EyebrowLabel>Questions fréquentes</EyebrowLabel>
+            <Accordion items={FAQ.map((f) => ({ question: f.q, answer: f.a }))} />
+          </Card>
 
-        <Card style={{border: '1px solid rgba(200,169,110,0.25)'}}>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>Tu n&apos;as pas trouvé de réponse ? Écris-nous, on répond sous 24h.</p>
-          <Button onClick={copyEmail} variant="primary" style={{ ...goldButtonStyle, marginBottom: 10 }}>
-            {copied ? 'Adresse copiée' : "Copier l'adresse e-mail"}
-          </Button>
-          <p style={{ fontSize: 12.5, color: '#fff', margin: '0 0 10px' }}>{SUPPORT_EMAIL}</p>
-          <a href={`mailto:${SUPPORT_EMAIL}?subject=Support%20LIVEINBLACK`} style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
-            ou ouvrir mon application mail →
-          </a>
-        </Card>
+          <Card style={{border: '1px solid rgba(200,169,110,0.25)'}}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>Tu n&apos;as pas trouvé de réponse ? Écris-nous, on répond sous 24h.</p>
+            <Button onClick={copyEmail} variant="primary" style={{ ...goldButtonStyle, marginBottom: 10 }}>
+              {copied ? 'Adresse copiée' : "Copier l'adresse e-mail"}
+            </Button>
+            <p style={{ fontSize: 12.5, color: '#fff', margin: '0 0 10px' }}>{SUPPORT_EMAIL}</p>
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=Support%20LIVEINBLACK`} style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
+              ou ouvrir mon application mail →
+            </a>
+          </Card>
+        </div>
       </div>
     </main>
   )

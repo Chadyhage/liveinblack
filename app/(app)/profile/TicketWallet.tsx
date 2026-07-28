@@ -140,8 +140,8 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
   const upcomingSeatCount = buckets.upcoming.reduce((sum, g) => sum + g.myTickets.length, 0)
 
   return (
-    <main style={{ minHeight: '100vh', padding: '20px 16px 48px' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <main style={{ minHeight: '100vh', padding: '8px 0 48px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <BackHeader onBack={onBack} title="Mes billets" />
 
         <SeatHoldsPanel />
@@ -150,7 +150,7 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
           <EmptyWallet />
         ) : (
           <>
-            <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ ...cardStyle, maxWidth: 620, padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <TicketGlyph />
                 <div>
@@ -294,9 +294,11 @@ function Section({ label, groups, currentUserId }: { label: string; groups: Tick
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
-      {pageItems.map((g) => (
-        <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classify(g)} />
-      ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 10, alignItems: 'start' }}>
+        {pageItems.map((g) => (
+          <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classify(g)} />
+        ))}
+      </div>
       <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={groups.length} pageSize={GROUP_PAGE_SIZE} />
     </div>
   )

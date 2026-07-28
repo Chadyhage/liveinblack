@@ -189,8 +189,13 @@ export default async function MonDossierPage() {
   ])
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <main style={{ minHeight: '100vh', padding: '8px 0 60px' }}>
+      <style>{`
+        @media (max-width: 900px) {
+          .my-application-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
         <div>
           <Link href="/profile" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
             ← Mon profil
@@ -205,8 +210,10 @@ export default async function MonDossierPage() {
             ↓ Dossier prestataire
           </a>
         </nav>
-        <ApplicationCard id="organisateur" type="organisateur" application={organisateur} roleStatus={session.user.orgStatus} />
-        <ApplicationCard id="prestataire" type="prestataire" application={prestataire} roleStatus={session.user.prestStatus} />
+        <div className="my-application-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+          <ApplicationCard id="organisateur" type="organisateur" application={organisateur} roleStatus={session.user.orgStatus} />
+          <ApplicationCard id="prestataire" type="prestataire" application={prestataire} roleStatus={session.user.prestStatus} />
+        </div>
       </div>
     </main>
   )
