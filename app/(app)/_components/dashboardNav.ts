@@ -54,21 +54,20 @@ export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
     { label: 'Mon dossier', href: '/my-application', icon: FileText },
   ],
   // Reprend l'intégralité des onglets qui vivaient auparavant dans la barre
-  // horizontale interne d'AgentShell.tsx (#107) — l'utilisateur veut TOUT dans
-  // la sidebar, plus de second niveau de nav dupliqué en haut de page. Chaque
-  // lien pointe vers /agent?tab=X ; AgentShell lit ce paramètre au lieu de
-  // gérer son propre état de bouton (voir AgentShell.tsx).
+  // horizontale interne d'AgentShell.tsx (#107, supprimé) — chaque section a
+  // maintenant sa PROPRE route sous app/(app)/agent/, plus de query param
+  // `?tab=X` pour la navigation principale (liens de sidebar = vraies URLs).
   agent: [
     { label: 'Tableau de bord', href: '/agent', icon: Briefcase },
-    { label: 'Comptes', href: '/agent?tab=users', icon: Users },
-    { label: 'Événements', href: '/agent?tab=events', icon: CalendarDays },
-    { label: 'Dossiers', href: '/agent?tab=dossiers', icon: FileText },
-    { label: 'Boosts', href: '/agent?tab=boosts', icon: Zap },
-    { label: 'Paiements', href: '/agent?tab=payments', icon: CreditCard },
-    { label: 'Suppressions', href: '/agent?tab=deletions', icon: Trash2 },
-    { label: 'Signalements', href: '/agent?tab=reports', icon: Flag },
-    { label: 'Avis', href: '/agent?tab=reviews', icon: Star },
-    { label: 'Actualité', href: '/agent?tab=homepage', icon: Newspaper },
+    { label: 'Comptes', href: '/agent/comptes', icon: Users },
+    { label: 'Événements', href: '/agent/evenements', icon: CalendarDays },
+    { label: 'Dossiers', href: '/agent/dossiers', icon: FileText },
+    { label: 'Boosts', href: '/agent/boosts', icon: Zap },
+    { label: 'Paiements', href: '/agent/paiements', icon: CreditCard },
+    { label: 'Suppressions', href: '/agent/suppressions', icon: Trash2 },
+    { label: 'Signalements', href: '/agent/signalements', icon: Flag },
+    { label: 'Avis', href: '/agent/avis', icon: Star },
+    { label: 'Actualité', href: '/agent/actualite', icon: Newspaper },
   ],
 }
 

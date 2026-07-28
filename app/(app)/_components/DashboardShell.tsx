@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, type DashboardNavItem } from './dashboardNav'
-import type { Role } from '@/lib/server/permissions'
+import { getRoleLabel, type Role } from '@/lib/server/permissions'
 
 const SIDEBAR_WIDTH = 240
 
@@ -13,8 +13,9 @@ const PENDING_APPLICATION_STATUSES = new Set(['submitted', 'under_review', 'resu
 // Compteurs "en attente" affichés sur les liens Dossiers/Signalements/
 // Suppressions de la sidebar agent — vivaient auparavant dans la barre
 // d'onglets interne d'AgentShell.tsx (#107), déplacés ici avec la nav
-// elle-même (voir dashboardNav.ts, ROLE_NAV.agent). Clé = href exact du lien
-// pour ne pas dépendre d'une correspondance texte fragile.
+// elle-même (voir dashboardNav.ts, ROLE_NAV.agent). Clé = href réel exact
+// du lien (/agent/dossiers, etc.) pour ne pas dépendre d'une correspondance
+// texte fragile.
 function useAgentBadges(activeRole: Role): Partial<Record<string, number>> {
   const [pendingDossiers, setPendingDossiers] = useState(0)
   const [openReports, setOpenReports] = useState(0)
@@ -93,9 +94,9 @@ function useAgentBadges(activeRole: Role): Partial<Record<string, number>> {
 
   if (activeRole !== 'agent') return {}
   return {
-    '/agent?tab=dossiers': pendingDossiers,
-    '/agent?tab=reports': openReports,
-    '/agent?tab=deletions': pendingDeletions,
+    '/agent/dossiers': pendingDossiers,
+    '/agent/signalements': openReports,
+    '/agent/suppressions': pendingDeletions,
   }
 }
 
@@ -112,7 +113,6 @@ function useAgentBadges(activeRole: Role): Partial<Record<string, number>> {
 // le layout ne monte simplement pas ce composant sur ces routes-là.
 export default function DashboardShell({ activeRole, children }: { activeRole: Role; children: React.ReactNode }) {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
   const badges = useAgentBadges(activeRole)
 
   if (HIDE_SIDEBAR_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
@@ -122,17 +122,13 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   const items: DashboardNavItem[] = [...ROLE_NAV[activeRole], ...COMMON_NAV]
   const upsell = activeRole === 'client' ? CLIENT_UPSELL : []
 
-  // Plusieurs liens agent partagent le même pathname (/agent) et ne se
-  // distinguent que par `?tab=` (voir dashboardNav.ts) — comparer seulement
-  // le path marquerait TOUS ces liens actifs en même temps. On compare aussi
-  // le paramètre `tab` quand le lien en porte un ; absence des deux côtés
-  // (ex. "Tableau de bord" = /agent sans query) compte comme un match.
+  // Comparaison de path simple : "/profile" et "/agent" sont des racines
+  // partagées par plusieurs sous-routes réelles (/profile/billets,
+  // /agent/comptes, etc.) — les exclure du match par préfixe pour qu'elles
+  // ne restent pas actives en même temps qu'une sous-route.
   function isActive(href: string) {
-    const [path, queryStr] = href.split('?')
-    const pathMatches = pathname === path || (path !== '/profile' && pathname.startsWith(path + '/'))
-    if (!pathMatches) return false
-    const hrefTab = queryStr ? new URLSearchParams(queryStr).get('tab') : null
-    return hrefTab === searchParams.get('tab')
+    const [path] = href.split('?')
+    return pathname === path || (path !== '/profile' && path !== '/agent' && pathname.startsWith(path + '/'))
   }
 
   return (
@@ -150,7 +146,37 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           background: 'rgba(53,0,71,.92)',
         }}
       >
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '20px 12px' }}>
+        <div
+          style={{
+            padding: '18px 16px 14px',
+            borderBottom: '1px solid rgba(255,229,0,.14)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', letterSpacing: 0.2 }}>
+            {activeRole === 'agent' ? 'Administration' : getRoleLabel(activeRole)}
+          </span>
+          {activeRole === 'agent' && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                lineHeight: 1.4,
+                color: 'var(--gold)',
+                background: 'rgba(200,169,110,.14)',
+                border: '1px solid rgba(200,169,110,.3)',
+                borderRadius: 999,
+                padding: '1px 8px',
+              }}
+            >
+              Agent
+            </span>
+          )}
+        </div>
+
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 12px' }}>
           {items.map((item) => (
             <SidebarLink key={item.href} item={item} active={isActive(item.href)} badge={badges[item.href]} />
           ))}
@@ -165,7 +191,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         </nav>
       </aside>
 
-      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+      <div style={{ flex: 1, minWidth: 0, padding: '28px 32px' }}>{children}</div>
 
       <style>{`
         @media (max-width: 1099px) {

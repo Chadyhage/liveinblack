@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
-import { Button, Card, Input } from '@/app/components/ui'
+import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 15
 
 // Port de la section « Comptes » (tab === 'users') de src/pages/AgentPage.jsx
 // (#9 phase agent/admin) — recherche + filtres rôle/statut/en ligne, panneau
@@ -126,6 +128,7 @@ export default function AgentUsersClient() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [onlineOnly, setOnlineOnly] = useState(false)
+  const [page, setPage] = useState(1)
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detail, setDetail] = useState<UserDetail | null>(null)
@@ -142,6 +145,8 @@ export default function AgentUsersClient() {
     setToast({ message, kind })
     setTimeout(() => setToast(null), 3000)
   }
+
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(users, page, PAGE_SIZE), [users, page])
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams()
@@ -187,6 +192,10 @@ export default function AgentUsersClient() {
     return () => {
       cancelled = true
     }
+  }, [queryString])
+
+  useEffect(() => {
+    setPage(1)
   }, [queryString])
 
   function closeDetail() {
@@ -339,8 +348,8 @@ export default function AgentUsersClient() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Comptes</h1>
         </div>
@@ -439,14 +448,18 @@ export default function AgentUsersClient() {
         </p>
 
         {listLoading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
         ) : users.length === 0 ? (
           <Card style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Aucun compte trouvé</p>
           </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {users.map((u) => {
+            {pageItems.map((u) => {
               const st = statusLabel(u)
               return (
                 <Button
@@ -492,6 +505,8 @@ export default function AgentUsersClient() {
             })}
           </div>
         )}
+
+        <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={users.length} pageSize={PAGE_SIZE} />
       </div>
 
       {selectedId && (

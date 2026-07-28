@@ -191,8 +191,8 @@ export default function AgentHomepageConfigClient() {
 
   if (!loaded) {
     return (
-      <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+      <main>
+        <div>
           <Card style={{ padding: '28px 18px', textAlign: 'center' }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Chargement de la configuration…</span>
           </Card>
@@ -202,8 +202,8 @@ export default function AgentHomepageConfigClient() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Actualité</h1>
 
         {loadError && (

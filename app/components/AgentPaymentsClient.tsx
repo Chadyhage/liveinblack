@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button } from '@/app/components/ui'
+import { Button, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 15
 
 // Port de la fusion des 3 onglets legacy 'reversements' / 'remboursements' /
 // 'paiements' (src/pages/AgentPage.jsx) en un seul panneau (#9 phase
@@ -152,6 +154,12 @@ export default function AgentPaymentsClient() {
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
+  const [failedPayoutsPage, setFailedPayoutsPage] = useState(1)
+  const [payoutRequestsPage, setPayoutRequestsPage] = useState(1)
+  const [balancesNoReqPage, setBalancesNoReqPage] = useState(1)
+  const [refundsPage, setRefundsPage] = useState(1)
+  const [alertsPage, setAlertsPage] = useState(1)
+
   function showToast(message: string, kind: ToastState['kind']) {
     setToast({ message, kind })
     setTimeout(() => setToast(null), 3500)
@@ -173,6 +181,11 @@ export default function AgentPaymentsClient() {
       setBalancesNoReq(payoutsData.balancesNoReq)
       setRefunds(refundsData.refunds)
       setAlerts(alertsData.alerts)
+      setFailedPayoutsPage(1)
+      setPayoutRequestsPage(1)
+      setBalancesNoReqPage(1)
+      setRefundsPage(1)
+      setAlertsPage(1)
     } catch {
       setLoadError(true)
     } finally {
@@ -199,6 +212,11 @@ export default function AgentPaymentsClient() {
           setBalancesNoReq(payoutsData.balancesNoReq)
           setRefunds(refundsData.refunds)
           setAlerts(alertsData.alerts)
+          setFailedPayoutsPage(1)
+          setPayoutRequestsPage(1)
+          setBalancesNoReqPage(1)
+          setRefundsPage(1)
+          setAlertsPage(1)
         }
       } catch {
         if (!cancelled) setLoadError(true)
@@ -285,8 +303,8 @@ export default function AgentPaymentsClient() {
   const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, alerts: alerts.length }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Paiements</h1>
 
         {loadError && (
@@ -326,13 +344,28 @@ export default function AgentPaymentsClient() {
         </div>
 
         {loading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
         ) : section === 'payouts' ? (
-          <PayoutsSection failedPayouts={failedPayouts} payoutRequests={payoutRequests} balancesNoReq={balancesNoReq} setConfirm={setConfirm} />
+          <PayoutsSection
+            failedPayouts={failedPayouts}
+            payoutRequests={payoutRequests}
+            balancesNoReq={balancesNoReq}
+            setConfirm={setConfirm}
+            failedPayoutsPage={failedPayoutsPage}
+            setFailedPayoutsPage={setFailedPayoutsPage}
+            payoutRequestsPage={payoutRequestsPage}
+            setPayoutRequestsPage={setPayoutRequestsPage}
+            balancesNoReqPage={balancesNoReqPage}
+            setBalancesNoReqPage={setBalancesNoReqPage}
+          />
         ) : section === 'refunds' ? (
-          <RefundsSection refunds={refunds} setConfirm={setConfirm} />
+          <RefundsSection refunds={refunds} setConfirm={setConfirm} page={refundsPage} setPage={setRefundsPage} />
         ) : (
-          <AlertsSection alerts={alerts} setConfirm={setConfirm} />
+          <AlertsSection alerts={alerts} setConfirm={setConfirm} page={alertsPage} setPage={setAlertsPage} />
         )}
       </div>
 
@@ -368,13 +401,38 @@ function PayoutsSection({
   payoutRequests,
   balancesNoReq,
   setConfirm,
+  failedPayoutsPage,
+  setFailedPayoutsPage,
+  payoutRequestsPage,
+  setPayoutRequestsPage,
+  balancesNoReqPage,
+  setBalancesNoReqPage,
 }: {
   failedPayouts: FailedPayout[]
   payoutRequests: PayoutRequestView[]
   balancesNoReq: SellerBalanceView[]
   setConfirm: (a: ConfirmAction) => void
+  failedPayoutsPage: number
+  setFailedPayoutsPage: (p: number) => void
+  payoutRequestsPage: number
+  setPayoutRequestsPage: (p: number) => void
+  balancesNoReqPage: number
+  setBalancesNoReqPage: (p: number) => void
 }) {
   const empty = failedPayouts.length === 0 && payoutRequests.length === 0 && balancesNoReq.length === 0
+
+  const { pageItems: failedPayoutsPageItems, pageCount: failedPayoutsPageCount } = useMemo(
+    () => pagedSlice(failedPayouts, failedPayoutsPage, PAGE_SIZE),
+    [failedPayouts, failedPayoutsPage]
+  )
+  const { pageItems: payoutRequestsPageItems, pageCount: payoutRequestsPageCount } = useMemo(
+    () => pagedSlice(payoutRequests, payoutRequestsPage, PAGE_SIZE),
+    [payoutRequests, payoutRequestsPage]
+  )
+  const { pageItems: balancesNoReqPageItems, pageCount: balancesNoReqPageCount } = useMemo(
+    () => pagedSlice(balancesNoReq, balancesNoReqPage, PAGE_SIZE),
+    [balancesNoReq, balancesNoReqPage]
+  )
 
   if (empty) {
     return (
@@ -401,7 +459,7 @@ function PayoutsSection({
             Envoie l&apos;argent à la main depuis le dashboard FedaPay, PUIS marque payé ici (ça solde aussi le ledger — le cron n&apos;y retouchera pas).
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {failedPayouts.map((p) => (
+            {failedPayoutsPageItems.map((p) => (
               <div key={p.eventId} style={{ ...cardStyle, borderColor: 'rgba(224,90,170,0.3)', borderLeft: '3px solid rgba(224,90,170,0.6)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                   <div style={{ minWidth: 0 }}>
@@ -437,6 +495,7 @@ function PayoutsSection({
               </div>
             ))}
           </div>
+          <Pagination page={failedPayoutsPage} pageCount={failedPayoutsPageCount} onPageChange={setFailedPayoutsPage} totalItems={failedPayouts.length} pageSize={PAGE_SIZE} />
         </div>
       )}
 
@@ -444,10 +503,11 @@ function PayoutsSection({
         <div>
           <p style={sectionTitleStyle}>Demandes de virement — EUR ({payoutRequests.length})</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {payoutRequests.map((r) => (
+            {payoutRequestsPageItems.map((r) => (
               <PayoutCard key={r.requestId} sellerUid={r.sellerUid} sellerName={r.sellerName} sellerEmail={r.sellerEmail} amountDueCents={r.amountDueCents} amountDueXOF={r.amountDueXOF} payCents={r.payCents} requestId={r.requestId} requestedAt={r.requestedAt} mismatch={r.mismatch} setConfirm={setConfirm} />
             ))}
           </div>
+          <Pagination page={payoutRequestsPage} pageCount={payoutRequestsPageCount} onPageChange={setPayoutRequestsPage} totalItems={payoutRequests.length} pageSize={PAGE_SIZE} />
         </div>
       )}
 
@@ -455,10 +515,11 @@ function PayoutsSection({
         <div>
           <p style={sectionTitleStyle}>Soldes dus — sans demande ({balancesNoReq.length})</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {balancesNoReq.map((b) => (
+            {balancesNoReqPageItems.map((b) => (
               <PayoutCard key={b.sellerUid} sellerUid={b.sellerUid} sellerName={b.sellerName} sellerEmail={b.sellerEmail} amountDueCents={b.amountDueCents} amountDueXOF={b.amountDueXOF} payCents={b.amountDueCents} requestId={null} requestedAt={null} mismatch={false} setConfirm={setConfirm} />
             ))}
           </div>
+          <Pagination page={balancesNoReqPage} pageCount={balancesNoReqPageCount} onPageChange={setBalancesNoReqPage} totalItems={balancesNoReq.length} pageSize={PAGE_SIZE} />
         </div>
       )}
     </div>
@@ -541,7 +602,18 @@ function PayoutCard({
 
 // ──────────────────────────── Remboursements ────────────────────────────────
 
-function RefundsSection({ refunds, setConfirm }: { refunds: RefundAlert[]; setConfirm: (a: ConfirmAction) => void }) {
+function RefundsSection({
+  refunds,
+  setConfirm,
+  page,
+  setPage,
+}: {
+  refunds: RefundAlert[]
+  setConfirm: (a: ConfirmAction) => void
+  page: number
+  setPage: (p: number) => void
+}) {
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(refunds, page, PAGE_SIZE), [refunds, page])
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.55 }}>
@@ -554,7 +626,7 @@ function RefundsSection({ refunds, setConfirm }: { refunds: RefundAlert[]; setCo
           <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Aucun remboursement mobile money en attente</p>
         </div>
       ) : (
-        refunds.map((r) => (
+        pageItems.map((r) => (
           <div key={r.id} style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
               <div style={{ minWidth: 0 }}>
@@ -571,13 +643,25 @@ function RefundsSection({ refunds, setConfirm }: { refunds: RefundAlert[]; setCo
           </div>
         ))
       )}
+      {refunds.length > 0 && <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={refunds.length} pageSize={PAGE_SIZE} />}
     </div>
   )
 }
 
 // ──────────────────────────── Alertes paiement ──────────────────────────────
 
-function AlertsSection({ alerts, setConfirm }: { alerts: PaymentAlertView[]; setConfirm: (a: ConfirmAction) => void }) {
+function AlertsSection({
+  alerts,
+  setConfirm,
+  page,
+  setPage,
+}: {
+  alerts: PaymentAlertView[]
+  setConfirm: (a: ConfirmAction) => void
+  page: number
+  setPage: (p: number) => void
+}) {
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(alerts, page, PAGE_SIZE), [alerts, page])
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.55 }}>Vérifie le paiement dans Stripe ou FedaPay avant de rembourser ou de clôturer l&apos;alerte.</p>
@@ -586,7 +670,7 @@ function AlertsSection({ alerts, setConfirm }: { alerts: PaymentAlertView[]; set
           <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Aucune anomalie à traiter</p>
         </div>
       ) : (
-        alerts.map((a) => (
+        pageItems.map((a) => (
           <div key={a.id} style={{ ...cardStyle, padding: 18, borderColor: 'rgba(224,90,170,0.32)', borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
               <div>
@@ -619,6 +703,7 @@ function AlertsSection({ alerts, setConfirm }: { alerts: PaymentAlertView[]; set
           </div>
         ))
       )}
+      {alerts.length > 0 && <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={alerts.length} pageSize={PAGE_SIZE} />}
     </div>
   )
 }

@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Card, Input, Textarea } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 15
 
 // Port de la section « Signalements » de src/pages/AgentPage.jsx (#9 phase
 // agent/admin, tâche #103) — file de signalements d'utilisateurs. Voir
@@ -42,6 +44,8 @@ export default function AgentReportsClient() {
   const [listError, setListError] = useState(false)
   const [filter, setFilter] = useState<FilterKey>('open')
   const [search, setSearch] = useState('')
+
+  const [page, setPage] = useState(1)
 
   const [activeId, setActiveId] = useState<string | null>(null)
   const [note, setNote] = useState('')
@@ -135,6 +139,12 @@ export default function AgentReportsClient() {
     return [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [reports, search])
 
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(sorted, page, PAGE_SIZE), [sorted, page])
+
+  useEffect(() => {
+    setPage(1)
+  }, [filter, search])
+
   async function handleMark(id: string) {
     setBusyId(id)
     try {
@@ -160,8 +170,8 @@ export default function AgentReportsClient() {
   const openCount = filter === 'open' ? reports.length : undefined
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Signalements d&apos;utilisateurs</h1>
           {openCount ? (
@@ -229,7 +239,11 @@ export default function AgentReportsClient() {
         </div>
 
         {listLoading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
         ) : sorted.length === 0 ? (
           <Card style={{ padding: 32, textAlign: 'center' }}>
             <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>
@@ -238,7 +252,7 @@ export default function AgentReportsClient() {
           </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {sorted.map((r) => (
+            {pageItems.map((r) => (
               <Card
                 key={r.id}
                 style={{
@@ -328,6 +342,8 @@ export default function AgentReportsClient() {
             ))}
           </div>
         )}
+
+        <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={sorted.length} pageSize={PAGE_SIZE} />
       </div>
 
       {toast && (

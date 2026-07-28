@@ -193,6 +193,17 @@ input[type='radio'] {
   }
 }
 
+/* Skeleton du design system (app/components/ui/Skeleton.tsx) — même raison
+   que lb-spin ci-dessus : keyframes globales, pas de <style> par instance. */
+@keyframes lb-skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* Contrôles custom du design system (Checkbox/Radio/Switch, app/components/
    ui/) — le visuel coché/décoché est piloté en React (voir ces fichiers),
    seul le focus clavier reste géré ici en CSS. */

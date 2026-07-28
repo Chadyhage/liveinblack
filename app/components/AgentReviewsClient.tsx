@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Stars } from '@/app/components/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Input } from '@/app/components/ui'
+import { Button, Input, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 15
 
 // Port de src/components/AdminReviewsPanel.jsx (#9 phase agent/admin) —
 // modération des avis prestataires. Voir lib/server/providerReviews.ts
@@ -100,6 +102,7 @@ export default function AgentReviewsClient() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'reported' | ReviewStatus>('all')
   const [ratingFilter, setRatingFilter] = useState<'all' | '1' | '2' | '3' | '4' | '5'>('all')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -172,6 +175,12 @@ export default function AgentReviewsClient() {
     return sortForAgent(list)
   }, [reviews, statusFilter, ratingFilter, search])
 
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(filtered, page, PAGE_SIZE), [filtered, page])
+
+  useEffect(() => {
+    setPage(1)
+  }, [statusFilter, ratingFilter, search])
+
   async function act(review: AgentReviewView, op: ModerationOp, note?: string) {
     if (busyId) return
     setBusyId(review.id)
@@ -197,8 +206,8 @@ export default function AgentReviewsClient() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Modération des avis prestataires</h1>
           {reportedCount > 0 && (
@@ -276,7 +285,11 @@ export default function AgentReviewsClient() {
         </div>
 
         {listLoading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement des avis…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', margin: 0 }}>
@@ -285,7 +298,7 @@ export default function AgentReviewsClient() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {filtered.map((review) => (
+            {pageItems.map((review) => (
               <ReviewCard
                 key={review.id}
                 review={review}
@@ -309,6 +322,8 @@ export default function AgentReviewsClient() {
             ))}
           </div>
         )}
+
+        <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
       </div>
 
       {toast && (

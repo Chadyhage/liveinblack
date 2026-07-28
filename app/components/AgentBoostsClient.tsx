@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button } from '@/app/components/ui'
+import { Button, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 15
 
 // Port en LECTURE SEULE de la section « Boosts » de src/pages/AgentPage.jsx
 // (tab === 'boosts', #106 phase agent/admin) — voir lib/server/agentBoosts.ts
@@ -48,6 +50,7 @@ export default function AgentBoostsClient() {
   const [data, setData] = useState<BoostsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [page, setPage] = useState(1)
 
   async function load() {
     setLoading(true)
@@ -86,9 +89,16 @@ export default function AgentBoostsClient() {
     }
   }, [])
 
+  const activeList = useMemo(() => (data ? data.active.filter((b) => !b.conflict) : []), [data])
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(activeList, page, PAGE_SIZE), [activeList, page])
+
+  useEffect(() => {
+    setPage(1)
+  }, [data])
+
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Boosts</h1>
 
         {error && (
@@ -101,7 +111,11 @@ export default function AgentBoostsClient() {
         )}
 
         {loading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
         ) : !data ? null : (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
@@ -128,12 +142,15 @@ export default function AgentBoostsClient() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({data.active.length})</p>
-              {data.active.length === 0 ? (
+              {activeList.length === 0 ? (
                 <div style={{ ...cardStyle, padding: 26, textAlign: 'center' }}>
                   <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Aucun boost actif</p>
                 </div>
               ) : (
-                data.active.filter((b) => !b.conflict).map((b) => <BoostCard key={b.id} b={b} />)
+                <>
+                  {pageItems.map((b) => <BoostCard key={b.id} b={b} />)}
+                  <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={activeList.length} pageSize={PAGE_SIZE} />
+                </>
               )}
             </div>
 

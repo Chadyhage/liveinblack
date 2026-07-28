@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Avatar, Button, Card, Input, Textarea, Label } from '@/app/components/ui'
+import { useEffect, useMemo, useState } from 'react'
+import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 15
 
 // Port de la section « Suppressions » de src/pages/AgentPage.jsx (tab ===
 // 'suppressions', #9 phase agent/admin, tâche #104) — file des demandes de
@@ -58,6 +60,7 @@ export default function AgentDeletionClient() {
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detail, setDetail] = useState<DeletionRequestDetail | null>(null)
@@ -153,6 +156,12 @@ export default function AgentDeletionClient() {
     ? requests.filter((r) => r.userName.toLowerCase().includes(term) || r.userEmail.toLowerCase().includes(term) || r.reason.toLowerCase().includes(term))
     : requests
 
+  useEffect(() => {
+    setPage(1)
+  }, [term])
+
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(filtered, page, PAGE_SIZE), [filtered, page])
+
   async function handleApprove() {
     if (!detail) return
     setActionBusy(true)
@@ -199,8 +208,8 @@ export default function AgentDeletionClient() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Suppressions</h1>
           {requests.length > 0 && (
@@ -220,7 +229,11 @@ export default function AgentDeletionClient() {
         {requests.length > 0 && <Input placeholder="Rechercher par nom, email, raison…" value={search} onChange={(e) => setSearch(e.target.value)} />}
 
         {listLoading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <Card style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>{search ? 'Aucun résultat' : 'Aucune demande en attente'}</p>
@@ -228,11 +241,13 @@ export default function AgentDeletionClient() {
           </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {filtered.map((r) => (
+            {pageItems.map((r) => (
               <RequestCard key={r.id} request={r} onClick={() => setSelectedId(r.id)} />
             ))}
           </div>
         )}
+
+        <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
       </div>
 
       {selectedId && (

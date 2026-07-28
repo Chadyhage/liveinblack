@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Button, Input, Textarea, Label } from '@/app/components/ui'
+import { Button, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 15
 
 // Port de la section « Événements » (tab === 'events') de
 // src/pages/AgentPage.jsx (#9 phase agent/admin) — vue admin de TOUS les
@@ -74,6 +76,7 @@ export default function AgentEventsClient() {
   const [listError, setListError] = useState(false)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterKey>('all')
+  const [page, setPage] = useState(1)
 
   const [adminCancel, setAdminCancel] = useState<{ id: string; name: string } | null>(null)
   const [adminCancelMsg, setAdminCancelMsg] = useState('')
@@ -142,6 +145,12 @@ export default function AgentEventsClient() {
     })
   }, [events, filter, search])
 
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(filtered, page, PAGE_SIZE), [filtered, page])
+
+  useEffect(() => {
+    setPage(1)
+  }, [filter, search])
+
   async function handleAdminCancelEvent() {
     if (!adminCancel) return
     setAdminCancelBusy(true)
@@ -168,8 +177,8 @@ export default function AgentEventsClient() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Événements</h1>
         </div>
@@ -226,18 +235,24 @@ export default function AgentEventsClient() {
         </div>
 
         {listLoading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', margin: 0 }}>{events.length === 0 ? 'Aucun événement publié' : 'Aucun résultat'}</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {filtered.map((ev) => (
+            {pageItems.map((ev) => (
               <EventRow key={ev.id} event={ev} onCancel={() => { setAdminCancel({ id: ev.id, name: ev.name || 'cet événement' }); setAdminCancelMsg('') }} />
             ))}
           </div>
         )}
+
+        <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
       </div>
 
       {adminCancel && (

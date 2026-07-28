@@ -5,7 +5,9 @@ import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { X } from 'lucide-react'
-import { Avatar, Button, Card, Input, Textarea, Label } from '@/app/components/ui'
+import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 15
 
 // Port de la section « Dossiers » de src/pages/AgentPage.jsx (#9 phase
 // agent/admin) — file/queue de candidatures organisateur/prestataire, panneau
@@ -329,6 +331,7 @@ export default function AgentDossiersClient() {
   const [listError, setListError] = useState(false)
   const [section, setSection] = useState('pending')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detail, setDetail] = useState<ApplicationDetail | null>(null)
@@ -457,6 +460,12 @@ export default function AgentDossiersClient() {
     return [...byEmail.values()]
   }, [sorted])
 
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(grouped, page, PAGE_SIZE), [grouped, page])
+
+  useEffect(() => {
+    setPage(1)
+  }, [section, search])
+
   const totalAllPending = applications.filter((a) => a.status === 'submitted' || a.status === 'under_review' || a.status === 'resubmitted').length
 
   async function runAction(action: ModerateAction, note?: string) {
@@ -504,8 +513,8 @@ export default function AgentDossiersClient() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Dossiers</h1>
           {totalAllPending > 0 && (
@@ -561,7 +570,11 @@ export default function AgentDossiersClient() {
         )}
 
         {listLoading ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
         ) : grouped.length === 0 ? (
           <Card style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>{search ? 'Aucun résultat' : 'Aucun dossier'}</p>
@@ -576,7 +589,7 @@ export default function AgentDossiersClient() {
           </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {grouped.map((group) =>
+            {pageItems.map((group) =>
               group.length === 1 ? (
                 <AppCard key={group[0].id} app={group[0]} onClick={() => setSelectedId(group[0].id)} />
               ) : (
@@ -593,6 +606,8 @@ export default function AgentDossiersClient() {
             )}
           </div>
         )}
+
+        <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={grouped.length} pageSize={PAGE_SIZE} />
       </div>
 
       {selectedId && (

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button } from '@/app/components/ui'
+import { DonutChart } from '@/app/components/ui/charts/DonutChart'
+import { LineChartCard } from '@/app/components/ui/charts/LineChartCard'
 
 // Port de la section « Métriques business » + « Communauté » de l'onglet
 // Tableau de bord de src/pages/AgentPage.jsx (tab === 'dashboard', #101 phase
@@ -104,8 +106,8 @@ export default function AgentDashboardClient() {
   }, [])
 
   return (
-    <main style={{ minHeight: '100vh', padding: '32px 16px 80px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Tableau de bord</h1>
 
         {error && (
@@ -196,81 +198,18 @@ export default function AgentDashboardClient() {
                 <p style={{ ...sectionTitleStyle, margin: 0 }}>Nouveaux comptes — 30 derniers jours</p>
                 <p style={{ fontSize: 10, color: 'var(--teal)', margin: 0 }}>+{stats.community.newAccountsThisMonth}</p>
               </div>
-              <SignupBars days={stats.signupsLast30Days} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: 'var(--text-faint)', letterSpacing: '0.06em' }}>J-30</span>
-                <span style={{ fontSize: 10, color: 'var(--text-faint)', letterSpacing: '0.06em' }}>AUJOURD&apos;HUI</span>
-              </div>
+              <LineChartCard data={stats.signupsLast30Days.map((d) => ({ date: d.date, value: d.count }))} formatDate={fmtDay} />
             </section>
 
-            <section>
-              <p style={sectionTitleStyle}>Répartition par rôle</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {stats.roleBreakdown.map((r) => (
-                  <div key={r.role} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', width: 80, flexShrink: 0 }}>{ROLE_LABEL[r.role]}</span>
-                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: 99, height: 4, overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          height: '100%',
-                          borderRadius: 99,
-                          width: stats.community.totalUsers ? `${(r.count / stats.community.totalUsers) * 100}%` : '0%',
-                          background: ROLE_COLOR[r.role],
-                        }}
-                      />
-                    </div>
-                    <span style={{ fontSize: 10, color: '#fff', width: 16, textAlign: 'right' }}>{r.count}</span>
-                  </div>
-                ))}
-              </div>
+            <section style={cardStyle}>
+              <p style={{ ...sectionTitleStyle, marginBottom: 14 }}>Répartition par rôle</p>
+              <DonutChart
+                data={stats.roleBreakdown.map((r) => ({ label: ROLE_LABEL[r.role], value: r.count, color: ROLE_COLOR[r.role] }))}
+              />
             </section>
           </>
         )}
       </div>
     </main>
-  )
-}
-
-function SignupBars({ days }: { days: { date: string; count: number }[] }) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const max = Math.max(...days.map((d) => d.count), 1)
-  const active = activeIndex != null ? days[activeIndex] : null
-  return (
-    <div>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: 2, height: 60, marginBottom: 6, borderBottom: '1px solid var(--border)' }}>
-        {days.map((d, i) => {
-          const h = (d.count / max) * 100
-          return (
-            <Button
-              key={d.date}
-              variant="ghost"
-              onClick={() => setActiveIndex((cur) => (cur === i ? null : i))}
-              title={`${d.count} compte${d.count > 1 ? 's' : ''} le ${fmtDay(d.date)}`}
-              aria-label={`${fmtDay(d.date)} : ${d.count} compte${d.count > 1 ? 's' : ''}`}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 0, border: 'none' }}
-            >
-              <div
-                style={{
-                  width: '100%',
-                  minHeight: 2,
-                  height: `${Math.max(h, 4)}%`,
-                  background:
-                    activeIndex === i
-                      ? 'var(--teal)'
-                      : d.count > 0
-                        ? 'linear-gradient(180deg, rgba(255,229,0,0.85) 0%, rgba(255,229,0,0.30) 100%)'
-                        : 'rgba(255,255,255,0.04)',
-                  borderRadius: 1,
-                  transition: 'height 0.4s',
-                }}
-              />
-            </Button>
-          )
-        })}
-      </div>
-      <p style={{ fontSize: 10.5, color: active ? '#fff' : 'var(--text-faint)', margin: 0, minHeight: 14 }}>
-        {active ? `${fmtDay(active.date)} — ${active.count} compte${active.count > 1 ? 's' : ''}` : 'Touche une barre pour voir le détail du jour.'}
-      </p>
-    </div>
   )
 }
