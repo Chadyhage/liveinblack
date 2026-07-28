@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
 import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, type DashboardNavItem } from './dashboardNav'
 import { getRoleLabel, type Role } from '@/lib/server/permissions'
 
@@ -131,6 +132,10 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
     return pathname === path || (path !== '/profile' && path !== '/agent' && pathname.startsWith(path + '/'))
   }
 
+  function hasActiveDescendant(item: DashboardNavItem): boolean {
+    return !!item.children?.some((c) => isActive(c.href) || hasActiveDescendant(c))
+  }
+
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start' }}>
       <aside
@@ -178,7 +183,13 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 12px' }}>
           {items.map((item) => (
-            <SidebarLink key={item.href} item={item} active={isActive(item.href)} badge={badges[item.href]} />
+            <SidebarItem
+              key={item.href}
+              item={item}
+              isActive={isActive}
+              autoOpen={hasActiveDescendant(item)}
+              badge={badges[item.href]}
+            />
           ))}
           {upsell.length > 0 && (
             <>
@@ -202,7 +213,88 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   )
 }
 
-function SidebarLink({ item, active, muted, badge }: { item: DashboardNavItem; active: boolean; muted?: boolean; badge?: number }) {
+// Item de sidebar avec sous-menu expansible (ex. "Mon profil" → Mes
+// billets/Paramètres/Support/Événements intéressés/Organisateurs suivis,
+// voir dashboardNav.ts, COMMON_NAV). Ouvert par défaut si un enfant est actif
+// (`autoOpen`), sinon replié — état local, pas persisté entre navigations.
+function SidebarItem({
+  item,
+  isActive,
+  autoOpen,
+  badge,
+}: {
+  item: DashboardNavItem
+  isActive: (href: string) => boolean
+  autoOpen: boolean
+  badge?: number
+}) {
+  const [open, setOpen] = useState(autoOpen)
+
+  useEffect(() => {
+    if (autoOpen) setOpen(true)
+  }, [autoOpen])
+
+  if (!item.children || item.children.length === 0) {
+    return <SidebarLink item={item} active={isActive(item.href)} badge={badge} />
+  }
+
+  const Icon = item.icon
+  const active = isActive(item.href)
+
+  return (
+    <div>
+      <Link
+        href={item.href}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '10px 12px',
+          borderRadius: 8,
+          color: active ? 'var(--text)' : 'var(--text-muted)',
+          background: active ? 'rgba(255,229,0,.10)' : 'transparent',
+          borderLeft: active ? '3px solid var(--primary)' : '3px solid transparent',
+          fontSize: 13.5,
+          fontWeight: active ? 700 : 600,
+          textDecoration: 'none',
+        }}
+      >
+        <Icon size={17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
+        <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+        <span
+          role="button"
+          tabIndex={0}
+          aria-label={open ? 'Replier' : 'Déplier'}
+          aria-expanded={open}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setOpen((v) => !v)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              e.stopPropagation()
+              setOpen((v) => !v)
+            }
+          }}
+          style={{ display: 'flex', padding: 3, borderRadius: 6, flexShrink: 0 }}
+        >
+          <ChevronDown size={14} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s ease' }} />
+        </span>
+      </Link>
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, paddingLeft: 14 }}>
+          {item.children.map((child) => (
+            <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SidebarLink({ item, active, muted, badge, compact }: { item: DashboardNavItem; active: boolean; muted?: boolean; badge?: number; compact?: boolean }) {
   const Icon = item.icon
   return (
     <Link
@@ -212,17 +304,17 @@ function SidebarLink({ item, active, muted, badge }: { item: DashboardNavItem; a
         display: 'flex',
         alignItems: 'center',
         gap: 10,
-        padding: '10px 12px',
+        padding: compact ? '8px 12px' : '10px 12px',
         borderRadius: 8,
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
         background: active ? 'rgba(255,229,0,.10)' : 'transparent',
         borderLeft: active ? '3px solid var(--primary)' : '3px solid transparent',
-        fontSize: 13.5,
+        fontSize: compact ? 12.5 : 13.5,
         fontWeight: active ? 700 : 600,
         textDecoration: 'none',
       }}
     >
-      <Icon size={17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
+      <Icon size={compact ? 15 : 17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
       <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
       {!!badge && (
         <span

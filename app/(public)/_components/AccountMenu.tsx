@@ -466,7 +466,7 @@ export default function AccountMenu({
               </p>
             )}
             <MenuLink href="/profile" onClick={() => setAccountOpen(false)} icon={<User size={15} />} label="Mon profil" />
-            <MenuLink href="/profile?panel=billets" onClick={() => setAccountOpen(false)} icon={<Ticket size={15} />} label="Mes billets" />
+            <MenuLink href="/profile/billets" onClick={() => setAccountOpen(false)} icon={<Ticket size={15} />} label="Mes billets" />
             {dashboards.length > 0 && <div style={{ height: 1, background: 'var(--border)', margin: '6px 4px' }} />}
             {dashboards.map((d) => (
               <Button

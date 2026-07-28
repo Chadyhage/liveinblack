@@ -1,14 +1,13 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import TicketWalletPanel, { type TicketWalletGroupView } from './TicketWallet'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
-import { ChevronRight, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion } from '@/app/components/ui'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
@@ -81,8 +80,6 @@ const goldButtonStyle: React.CSSProperties = {
   fontWeight: 500,
 }
 
-type Panel = null | 'settings' | 'billets' | 'support'
-
 const ROLE_LABELS: Record<string, { label: string; badgeTone: 'teal' | 'violet' | 'gold' }> = {
   client: { label: 'Client', badgeTone: 'teal' },
   prestataire: { label: 'Prestataire', badgeTone: 'violet' },
@@ -90,25 +87,21 @@ const ROLE_LABELS: Record<string, { label: string; badgeTone: 'teal' | 'violet' 
   agent: { label: 'Agent', badgeTone: 'gold' },
 }
 
-export default function ProfilClient({ initialUser, initialTicketGroups }: { initialUser: ProfilUser; initialTicketGroups: TicketWalletGroupView[] }) {
-  const searchParams = useSearchParams()
-  const initialPanel = searchParams.get('panel')
-  const [panel, setPanel] = useState<Panel>(initialPanel === 'billets' || initialPanel === 'settings' || initialPanel === 'support' ? initialPanel : null)
+// Racine du dashboard "Mon profil" — identité/avatar/points uniquement.
+// Les anciens panneaux internes (Mes billets, Paramètres, Support) et la
+// navigation "Événements intéressés"/"Organisateurs suivis" sont maintenant
+// de vraies routes listées dans le sous-menu de la sidebar (voir
+// dashboardNav.ts, COMMON_NAV) plutôt que dans un menu rendu ici.
+export default function ProfilClient({ initialUser }: { initialUser: ProfilUser }) {
   const [user, setUser] = useState<ProfilUser>(initialUser)
-
-  if (panel === 'billets') return <TicketWalletPanel groups={initialTicketGroups} currentUserId={user.id} onBack={() => setPanel(null)} />
-  if (panel === 'settings') return <SettingsPanel user={user} setUser={setUser} onBack={() => setPanel(null)} />
-  if (panel === 'support') return <SupportPanel onBack={() => setPanel(null)} />
-
-  return <MainView user={user} setUser={setUser} onOpenPanel={setPanel} />
+  return <MainView user={user} setUser={setUser} />
 }
 
-function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (u: ProfilUser) => void; onOpenPanel: (p: Panel) => void }) {
+function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser) => void }) {
   const router = useRouter()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const roleInfo = ROLE_LABELS[user.role]
-  const isClient = user.role === 'client'
   const isOrganizer = user.role === 'organisateur'
 
   async function confirmLogout() {
@@ -144,14 +137,6 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
           </Card>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {isClient && <MenuRow label="Mes billets" onClick={() => onOpenPanel('billets')} />}
-          <MenuRow label="Événements intéressés" onClick={() => router.push('/profile/interested-events')} />
-          <MenuRow label="Organisateurs suivis" onClick={() => router.push('/profile/followed-organizers')} />
-          <MenuRow label="Paramètres du compte" onClick={() => onOpenPanel('settings')} />
-          <MenuRow label="Support / Aide" onClick={() => onOpenPanel('support')} />
-        </div>
-
         <Button
           onClick={() => setShowLogoutConfirm(true)}
           variant="secondary"
@@ -173,32 +158,6 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
         />
       )}
     </main>
-  )
-}
-
-function MenuRow({ label, onClick, gold }: { label: string; onClick: () => void; gold?: boolean }) {
-  return (
-    <Button
-      onClick={onClick}
-      variant="secondary"
-      fullWidth
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '15px 16px',
-        borderRadius: 7,
-        border: `1px solid ${gold ? 'rgba(255,229,0,0.28)' : 'var(--border)'}`,
-        background: gold ? 'rgba(255,229,0,0.07)' : 'var(--surface)',
-        color: '#fff',
-        fontSize: 13.5,
-        textTransform: 'uppercase',
-        letterSpacing: '0.02em',
-      }}
-    >
-      {label}
-      <ChevronRight size={17} strokeWidth={1.8} color="var(--teal)" aria-hidden="true" />
-    </Button>
   )
 }
 
@@ -440,7 +399,7 @@ function normalizeQuery(s: string): string {
     .trim()
 }
 
-function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (u: ProfilUser) => void; onBack: () => void }) {
+export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (u: ProfilUser) => void; onBack: () => void }) {
   const [query, setQuery] = useState('')
 
   const entries: SettingEntry[] = useMemo(
@@ -1156,7 +1115,7 @@ const FAQ = [
   { q: 'Comment créer un événement ?', a: "Rends-toi dans 'Mes Événements' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
 ]
 
-function SupportPanel({ onBack }: { onBack: () => void }) {
+export function SupportPanel({ onBack }: { onBack: () => void }) {
   const [copied, setCopied] = useState(false)
 
   async function copyEmail() {

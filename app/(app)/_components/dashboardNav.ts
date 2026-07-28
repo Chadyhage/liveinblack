@@ -18,6 +18,8 @@ import {
   Flag,
   Star,
   Newspaper,
+  Settings,
+  LifeBuoy,
 } from 'lucide-react'
 import type { Role } from '@/lib/server/permissions'
 
@@ -25,24 +27,40 @@ export interface DashboardNavItem {
   label: string
   href: string
   icon: LucideIcon
+  children?: DashboardNavItem[]
 }
 
 // Config pure (pas de JSX) pilotant la sidebar de app/(app)/_components/DashboardShell.tsx.
 // Réutilise uniquement des routes déjà existantes — aucune nouvelle page créée
 // pour ce module. "Commun" apparaît pour tous les rôles, complété par le bloc
 // spécifique à `activeRole`.
+//
+// "Mon profil" porte un sous-menu (`children`) — les items qui vivaient
+// auparavant DANS le rendu de /profile (menu interne de ProfilClient.tsx,
+// panneaux Mes billets/Paramètres/Support en state local `?panel=`) sont
+// maintenant de vraies routes listées ici, la sidebar est l'unique
+// navigation. Le portefeuille de billets/événements suivis n'est pas
+// spécifique au rôle client (n'importe quel compte peut avoir acheté des
+// billets), donc commun à tous les rôles plutôt que dans ROLE_NAV.client.
 export const COMMON_NAV: DashboardNavItem[] = [
   { label: 'Messages', href: '/messages', icon: MessageCircle },
-  { label: 'Mon profil', href: '/profile', icon: User },
+  {
+    label: 'Mon profil',
+    href: '/profile',
+    icon: User,
+    children: [
+      { label: 'Mes billets', href: '/profile/billets', icon: Ticket },
+      { label: 'Paramètres du compte', href: '/profile/parametres', icon: Settings },
+      { label: 'Support / Aide', href: '/profile/aide', icon: LifeBuoy },
+      { label: 'Événements intéressés', href: '/profile/interested-events', icon: Heart },
+      { label: 'Organisateurs suivis', href: '/profile/followed-organizers', icon: Users2 },
+    ],
+  },
   { label: 'Mes soirées (équipe)', href: '/my-shifts', icon: Users2 },
 ]
 
 export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
-  client: [
-    { label: 'Mes billets', href: '/profile?panel=billets', icon: Ticket },
-    { label: 'Événements intéressés', href: '/profile/interested-events', icon: Heart },
-    { label: 'Organisateurs suivis', href: '/profile/followed-organizers', icon: Users2 },
-  ],
+  client: [],
   organisateur: [
     { label: 'Mes événements', href: '/my-events', icon: CalendarDays },
     { label: 'Ma page publique', href: '/organizer-studio', icon: LayoutDashboard },
