@@ -66,7 +66,7 @@ export default function AgentShell() {
         </div>
       </div>
 
-      <div key={tab} style={{ maxWidth: 760, margin: '0 auto' }}>
+      <div key={tab} style={{ paddingTop: 16 }}>
         {tab === 'dashboard' && <AgentDashboardClient />}
         {tab === 'users' && <AgentUsersClient />}
         {tab === 'events' && <AgentEventsClient />}

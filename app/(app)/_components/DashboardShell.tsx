@@ -1,11 +1,103 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, type DashboardNavItem } from './dashboardNav'
 import type { Role } from '@/lib/server/permissions'
 
 const SIDEBAR_WIDTH = 240
+
+const PENDING_APPLICATION_STATUSES = new Set(['submitted', 'under_review', 'resubmitted'])
+
+// Compteurs "en attente" affichés sur les liens Dossiers/Signalements/
+// Suppressions de la sidebar agent — vivaient auparavant dans la barre
+// d'onglets interne d'AgentShell.tsx (#107), déplacés ici avec la nav
+// elle-même (voir dashboardNav.ts, ROLE_NAV.agent). Clé = href exact du lien
+// pour ne pas dépendre d'une correspondance texte fragile.
+function useAgentBadges(activeRole: Role): Partial<Record<string, number>> {
+  const [pendingDossiers, setPendingDossiers] = useState(0)
+  const [openReports, setOpenReports] = useState(0)
+  const [pendingDeletions, setPendingDeletions] = useState(0)
+
+  useEffect(() => {
+    if (activeRole !== 'agent') return
+    let cancelled = false
+    async function run() {
+      try {
+        const res = await fetch('/api/agent/applications')
+        const data = await res.json()
+        if (!cancelled && res.ok && data.ok) {
+          const count = (data.applications as { status: string }[]).filter((a) => PENDING_APPLICATION_STATUSES.has(a.status)).length
+          setPendingDossiers(count)
+        }
+      } catch {
+        // Badge non-critique — un échec silencieux laisse juste le compteur à
+        // 0, le panneau Dossiers lui-même affiche son propre bandeau d'erreur.
+      }
+    }
+    run()
+    // Même intervalle que le heartbeat de présence de MessagesClient.tsx —
+    // sans ça, une action de modération faite dans le panneau Dossiers ne se
+    // reflète jamais sur ce badge tant que la sidebar reste montée.
+    const interval = setInterval(run, 15000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [activeRole])
+
+  useEffect(() => {
+    if (activeRole !== 'agent') return
+    let cancelled = false
+    async function run() {
+      try {
+        const res = await fetch('/api/agent/reports?status=open')
+        const data = await res.json()
+        if (!cancelled && res.ok && data.ok) {
+          setOpenReports((data.reports as unknown[]).length)
+        }
+      } catch {
+        // idem
+      }
+    }
+    run()
+    const interval = setInterval(run, 15000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [activeRole])
+
+  useEffect(() => {
+    if (activeRole !== 'agent') return
+    let cancelled = false
+    async function run() {
+      try {
+        const res = await fetch('/api/agent/deletion-requests')
+        const data = await res.json()
+        if (!cancelled && res.ok && data.ok) {
+          setPendingDeletions((data.requests as unknown[]).length)
+        }
+      } catch {
+        // idem
+      }
+    }
+    run()
+    const interval = setInterval(run, 15000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [activeRole])
+
+  if (activeRole !== 'agent') return {}
+  return {
+    '/agent?tab=dossiers': pendingDossiers,
+    '/agent?tab=reports': openReports,
+    '/agent?tab=deletions': pendingDeletions,
+  }
+}
 
 // Sidebar façon "espace privé" (organisateur/prestataire/agent/client) —
 // n'existait pas jusqu'ici : chaque page de app/(app)/ était un écran
@@ -21,6 +113,7 @@ const SIDEBAR_WIDTH = 240
 export default function DashboardShell({ activeRole, children }: { activeRole: Role; children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const badges = useAgentBadges(activeRole)
 
   if (HIDE_SIDEBAR_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
     return <>{children}</>
@@ -54,12 +147,12 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           height: 'calc(100vh - 61px)',
           overflowY: 'auto',
           borderRight: '1px solid rgba(255,229,0,.14)',
-          background: 'rgba(17,19,27,.92)',
+          background: 'rgba(53,0,71,.92)',
         }}
       >
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '20px 12px' }}>
           {items.map((item) => (
-            <SidebarLink key={item.href} item={item} active={isActive(item.href)} />
+            <SidebarLink key={item.href} item={item} active={isActive(item.href)} badge={badges[item.href]} />
           ))}
           {upsell.length > 0 && (
             <>
@@ -83,11 +176,12 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   )
 }
 
-function SidebarLink({ item, active, muted }: { item: DashboardNavItem; active: boolean; muted?: boolean }) {
+function SidebarLink({ item, active, muted, badge }: { item: DashboardNavItem; active: boolean; muted?: boolean; badge?: number }) {
   const Icon = item.icon
   return (
     <Link
       href={item.href}
+      aria-label={badge ? `${item.label}, ${badge} en attente` : undefined}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -103,7 +197,23 @@ function SidebarLink({ item, active, muted }: { item: DashboardNavItem; active: 
       }}
     >
       <Icon size={17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
-      {item.label}
+      <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+      {!!badge && (
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 800,
+            lineHeight: 1.4,
+            color: '#fff',
+            background: 'rgba(224,90,170,0.85)',
+            borderRadius: 999,
+            padding: '1px 7px',
+            flexShrink: 0,
+          }}
+        >
+          {badge}
+        </span>
+      )}
     </Link>
   )
 }

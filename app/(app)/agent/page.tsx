@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { requireAgent } from '@/lib/server/agentGuard'
@@ -22,5 +23,9 @@ export default async function AgentPage() {
   if (!session?.user) redirect('/login')
   if (!requireAgent(session.user)) redirect('/')
 
-  return <AgentShell />
+  return (
+    <Suspense fallback={null}>
+      <AgentShell />
+    </Suspense>
+  )
 }
