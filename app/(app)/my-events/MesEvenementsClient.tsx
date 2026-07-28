@@ -16,7 +16,9 @@ import AccessCodesModal from './AccessCodesModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
-import { Button, Modal } from '@/app/components/ui'
+import { Button, Modal, Pagination, pagedSlice } from '@/app/components/ui'
+
+const PAST_PAGE_SIZE = 15
 
 // Port du tableau de bord organisateur (MesEvenementsPage.jsx, #7 phase
 // organisateur) — vue 'dashboard' (cette page) vs. 'create' (EventWizard,
@@ -47,6 +49,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [duplicating, setDuplicating] = useState<string | null>(null)
   const [now] = useState(() => Date.now())
+  const [pastPage, setPastPage] = useState(1)
 
   async function refreshEvents() {
     const res = await fetch('/api/organizer-events')
@@ -74,6 +77,8 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
     }
     return { upcomingEvents: upcoming, pastEvents: past, cancelledEvents: cancelled }
   }, [events, now])
+
+  const { pageItems: pagedPastEvents, pageCount: pastPageCount } = useMemo(() => pagedSlice(pastEvents, pastPage, PAST_PAGE_SIZE), [pastEvents, pastPage])
 
   function startCreate() {
     setEditingEventId(null)
@@ -322,7 +327,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         <section>
           <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Événements passés</p>
           <div style={{ display: 'grid', gap: 10 }}>
-            {pastEvents.map((event) => (
+            {pagedPastEvents.map((event) => (
               <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
                 <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', filter: 'grayscale(30%)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -347,6 +352,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
               </div>
             ))}
           </div>
+          <Pagination page={pastPage} pageCount={pastPageCount} onPageChange={setPastPage} totalItems={pastEvents.length} pageSize={PAST_PAGE_SIZE} />
         </section>
       )}
 

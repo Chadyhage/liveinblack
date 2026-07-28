@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { fmtMoney } from '@/lib/shared/money'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
+import { Pagination, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 20
 
 // Port de src/pages/InterestedEventsPage.jsx (#6 phase profil).
 
@@ -36,6 +39,8 @@ const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '
 
 export default function InterestedEventsClient({ initialItems }: { initialItems: EventInterestItemView[] }) {
   const [items, setItems] = useState(initialItems)
+  const [upcomingPage, setUpcomingPage] = useState(1)
+  const [inactivePage, setInactivePage] = useState(1)
 
   function remove(eventId: string) {
     setItems((list) => list.filter((i) => i.eventId !== eventId))
@@ -55,6 +60,9 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
     }
     return { upcoming, inactive }
   }, [items])
+
+  const { pageItems: pagedUpcoming, pageCount: upcomingPageCount } = pagedSlice(upcoming, upcomingPage, PAGE_SIZE)
+  const { pageItems: pagedInactive, pageCount: inactivePageCount } = pagedSlice(inactive, inactivePage, PAGE_SIZE)
 
   return (
     <main style={{ minHeight: '100vh', padding: '18px 16px 92px' }}>
@@ -90,21 +98,25 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
               {upcoming.length === 0 ? (
                 <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Aucun événement à venir dans ta liste pour l&apos;instant.</p>
               ) : (
-                <Grid>
-                  {upcoming.map((item) => (
-                    <InterestCard key={item.eventId} item={item} inactive={false} onRemoved={() => remove(item.eventId)} />
-                  ))}
-                </Grid>
+                <>
+                  <Grid>
+                    {pagedUpcoming.map((item) => (
+                      <InterestCard key={item.eventId} item={item} inactive={false} onRemoved={() => remove(item.eventId)} />
+                    ))}
+                  </Grid>
+                  <Pagination page={upcomingPage} pageCount={upcomingPageCount} onPageChange={setUpcomingPage} totalItems={upcoming.length} pageSize={PAGE_SIZE} />
+                </>
               )}
             </Section>
 
             {inactive.length > 0 && (
               <Section label={`Passés ou indisponibles ${inactive.length}`}>
                 <Grid>
-                  {inactive.map((item) => (
+                  {pagedInactive.map((item) => (
                     <InterestCard key={item.eventId} item={item} inactive onRemoved={() => remove(item.eventId)} />
                   ))}
                 </Grid>
+                <Pagination page={inactivePage} pageCount={inactivePageCount} onPageChange={setInactivePage} totalItems={inactive.length} pageSize={PAGE_SIZE} />
               </Section>
             )}
           </>

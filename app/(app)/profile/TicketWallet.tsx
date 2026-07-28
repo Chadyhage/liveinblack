@@ -6,7 +6,9 @@ import { X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
-import { Button, Input } from '@/app/components/ui'
+import { Button, Input, Pagination, pagedSlice } from '@/app/components/ui'
+
+const GROUP_PAGE_SIZE = 12
 
 // Port du panneau "Mes billets" de ProfilePage.jsx (#6 phase profil) — copies
 // mirroir des DTO JSON de lib/server/tickets.ts (même convention que
@@ -287,12 +289,15 @@ function SeatHoldsPanel() {
 }
 
 function Section({ label, groups, currentUserId }: { label: string; groups: TicketWalletGroupView[]; currentUserId: string }) {
+  const [page, setPage] = useState(1)
+  const { pageItems, pageCount } = pagedSlice(groups, page, GROUP_PAGE_SIZE)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
-      {groups.map((g) => (
+      {pageItems.map((g) => (
         <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classify(g)} />
       ))}
+      <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={groups.length} pageSize={GROUP_PAGE_SIZE} />
     </div>
   )
 }

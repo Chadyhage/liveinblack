@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
-import { Avatar, Button, Card, Checkbox } from '@/app/components/ui'
+import { Avatar, Button, Card, Checkbox, Pagination, pagedSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 20
 
 // Port de src/pages/FollowedOrganizersPage.jsx (#6 phase profil).
 
@@ -55,6 +57,8 @@ const DEFAULT_ALERTS: AlertSettings = {
 
 export default function FollowedOrganizersClient({ initialFollows, suggestions }: { initialFollows: FollowedOrganizerView[]; suggestions: OrganizerSuggestion[] }) {
   const [follows, setFollows] = useState(initialFollows)
+  const [page, setPage] = useState(1)
+  const { pageItems: pagedFollows, pageCount } = pagedSlice(follows, page, PAGE_SIZE)
 
   function remove(organizerId: string) {
     setFollows((list) => list.filter((f) => f.organizerId !== organizerId))
@@ -114,9 +118,10 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
           </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {follows.map((f) => (
+            {pagedFollows.map((f) => (
               <FollowCard key={f.organizerId} follow={f} onUnfollowed={() => remove(f.organizerId)} onPatch={(next) => patch(f.organizerId, next)} />
             ))}
+            <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={follows.length} pageSize={PAGE_SIZE} />
           </div>
         )}
 
