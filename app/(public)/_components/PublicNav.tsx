@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import AccountMenu from './AccountMenu'
-import { Button } from '@/app/components/ui'
+import { IconButton } from '@/app/components/ui'
 import { Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
@@ -21,6 +21,12 @@ const NAV_LINKS = [
 export interface DashboardNavLink {
   label: string
   href: string
+}
+
+function isCurrentPath(pathname: string, href: string) {
+  const path = href.split('#')[0].split('?')[0]
+  if (path === '/home') return pathname === '/home' || pathname === '/'
+  return pathname === path || pathname.startsWith(`${path}/`)
 }
 
 // Nav partagée par TOUTES les pages (publiques ET authentifiées, via
@@ -78,7 +84,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         padding: '14px 22px',
         background: 'rgba(7,8,13,0.86)',
         backdropFilter: 'blur(14px)',
-        borderBottom: '1px solid rgba(0,229,255,.16)',
+        borderBottom: '1px solid rgba(255,229,0,.16)',
       }}
     >
       <Link
@@ -95,16 +101,20 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
       </Link>
       <nav style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-        {NAV_LINKS.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="lb-navlink"
-            style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.055em' }}
-          >
-            {link.label}
-          </Link>
-        ))}
+        {NAV_LINKS.map((link) => {
+          const active = isCurrentPath(pathname, link.href)
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`lb-navlink${active ? ' lb-navlink-active' : ''}`}
+              aria-current={active ? 'page' : undefined}
+              style={{ position: 'relative', color: active ? 'var(--primary)' : 'var(--text-muted)', textDecoration: 'none', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.055em', padding: '8px 0' }}
+            >
+              {link.label}
+            </Link>
+          )
+        })}
         {status === 'authenticated' && session?.user && <AccountMenu user={session.user} />}
         {status === 'unauthenticated' && !onLoginPage && (
           <>
@@ -129,7 +139,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
               style={{
                 padding: '9px 18px',
                 borderRadius: 999,
-                border: '1px solid rgba(0,229,255,.55)',
+                border: '1px solid rgba(255,229,0,.55)',
                 color: 'var(--text)',
                 fontSize: 13,
                 fontWeight: 700,
@@ -156,24 +166,14 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           </>
         )}
         <span className="lb-navlink-mobile lb-burger">
-          <Button
-            variant="ghost"
+          <IconButton
             onClick={() => setMobileOpen((v) => !v)}
             aria-expanded={mobileOpen}
             aria-controls="lb-mobile-menu"
-            aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-            style={{
-              width: 38,
-              height: 38,
-              padding: 0,
-              borderRadius: 10,
-              border: '1px solid var(--border-strong)',
-              background: 'var(--surface)',
-              color: 'var(--text)',
-            }}
-          >
-            {mobileOpen ? <X size={18} strokeWidth={2} aria-hidden="true" /> : <Menu size={18} strokeWidth={2} aria-hidden="true" />}
-          </Button>
+            label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            icon={mobileOpen ? <X size={18} strokeWidth={2} aria-hidden="true" /> : <Menu size={18} strokeWidth={2} aria-hidden="true" />}
+            style={{ background: 'var(--surface)', color: 'var(--text)' }}
+          />
         </span>
       </nav>
 
@@ -197,45 +197,55 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
               <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 11, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Mon espace
               </p>
-              {dashboardLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  style={{
-                    padding: '14px 22px',
-                    color: 'var(--text)',
-                    textDecoration: 'none',
-                    fontSize: 14.5,
-                    fontWeight: 600,
-                    borderBottom: '1px solid var(--border)',
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {dashboardLinks.map((link) => {
+                const active = isCurrentPath(pathname, link.href)
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    aria-current={active ? 'page' : undefined}
+                    style={{
+                      padding: '14px 22px',
+                      color: active ? 'var(--primary)' : 'var(--text)',
+                      background: active ? 'rgba(255,229,0,.08)' : 'transparent',
+                      textDecoration: 'none',
+                      fontSize: 14.5,
+                      fontWeight: active ? 800 : 600,
+                      borderBottom: '1px solid var(--border)',
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              })}
               <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 11, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Site
               </p>
             </>
           )}
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              style={{
-                padding: '14px 22px',
-                color: 'var(--text)',
-                textDecoration: 'none',
-                fontSize: 14.5,
-                fontWeight: 600,
-                borderBottom: '1px solid var(--border)',
-              }}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const active = isCurrentPath(pathname, link.href)
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                aria-current={active ? 'page' : undefined}
+                style={{
+                  padding: '14px 22px',
+                  color: active ? 'var(--primary)' : 'var(--text)',
+                  background: active ? 'rgba(255,229,0,.08)' : 'transparent',
+                  textDecoration: 'none',
+                  fontSize: 14.5,
+                  fontWeight: active ? 800 : 600,
+                  borderBottom: '1px solid var(--border)',
+                }}
+              >
+                {link.label}
+              </Link>
+            )
+          })}
         </nav>
       )}
 
@@ -245,6 +255,18 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         @media (min-width: 1100px) {
           .lb-navlink { display: inline-block }
           .lb-navlink-mobile { display: none !important }
+        }
+        @media (min-width: 1100px) {
+          .lb-navlink-active::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -15px;
+            height: 3px;
+            border-radius: 999px;
+            background: var(--primary);
+          }
         }
       `}</style>
     </header>

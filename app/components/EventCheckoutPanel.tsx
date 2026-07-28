@@ -677,7 +677,7 @@ export default function EventCheckoutPanel({
             )}
 
             {discountedPlacePrice > 0 && (
-              <div style={{ padding: '9px 10px', borderRadius: 9, background: cancellationProtection ? 'rgba(78,232,200,.08)' : 'rgba(255,255,255,.035)' }}>
+              <div style={{ padding: '9px 10px', borderRadius: 'var(--radius-md)', background: cancellationProtection ? 'rgba(255,229,0,.08)' : 'rgba(255,255,255,.035)' }}>
                 <Checkbox
                   checked={cancellationProtection}
                   onChange={(event) => setCancellationProtection(event.target.checked)}
@@ -762,10 +762,10 @@ export default function EventCheckoutPanel({
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {availableShows.map((option) => {
                             const active = selectedShow?.showOptionId === option.id
-                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 8, border: `1px solid ${active ? 'var(--teal)' : 'var(--border-strong)'}`, background: active ? 'rgba(78,232,200,.1)' : 'var(--surface-2)', color: active ? 'var(--teal)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
+                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 'var(--radius-md)', border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`, background: active ? 'rgba(255,229,0,.1)' : 'var(--surface-2)', color: active ? 'var(--primary)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
                           })}
                         </div>
-                        {selectedShow && <p style={{ margin: '7px 0 0', color: 'var(--teal)', fontSize: 10.5 }}>Show choisi : {selectedShow.showLabel}{selectedShow.showInfo ? ` · ${selectedShow.showInfo}` : ''}</p>}
+                        {selectedShow && <p style={{ margin: '7px 0 0', color: 'var(--primary)', fontSize: 10.5 }}>Show choisi : {selectedShow.showLabel}{selectedShow.showInfo ? ` · ${selectedShow.showInfo}` : ''}</p>}
                       </div>
                     )}
                   </div>
@@ -952,19 +952,19 @@ export default function EventCheckoutPanel({
 }
 
 function IncludedRow({ label, emoji }: { label: string; emoji?: string }) {
-  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 11, border: '1px solid rgba(78,232,200,.22)', background: 'rgba(78,232,200,.05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--teal)" />}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--teal)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
+  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,229,0,.22)', background: 'rgba(255,229,0,.05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--primary)" />}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--primary)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
 }
 
 function SummaryRow({ label, value, accent, strong }: { label: string; value: string; accent?: boolean; strong?: boolean }) {
-  return <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span style={{ color: strong ? 'var(--text)' : 'var(--text-muted)', fontSize: strong ? 14 : 12.5, fontWeight: strong ? 800 : 500 }}>{label}</span><span style={{ color: accent ? 'var(--teal)' : strong ? 'var(--gold)' : 'var(--text)', fontSize: strong ? 18 : 12.5, fontWeight: strong ? 900 : 700, textAlign: 'right' }}>{value}</span></div>
+  return <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span style={{ color: strong ? 'var(--text)' : 'var(--text-muted)', fontSize: strong ? 14 : 12.5, fontWeight: strong ? 800 : 500 }}>{label}</span><span style={{ color: accent ? 'var(--primary)' : strong ? 'var(--gold)' : 'var(--text)', fontSize: strong ? 18 : 12.5, fontWeight: strong ? 900 : 700, textAlign: 'right' }}>{value}</span></div>
 }
 
 const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(200,169,110,.32)', background: 'rgba(200,169,110,.08)', color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }
 const modalBackdrop: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(8px)' }
 const modalClose: React.CSSProperties = { position: 'absolute', zIndex: 2, top: 12, right: 12, width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,.2)', background: 'rgba(4,4,11,.78)', color: '#fff', fontSize: 21, cursor: 'pointer' }
 const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }
-const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 3, background: 'var(--gold)', color: '#181104', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5, cursor: 'pointer' }
-const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 3, background: 'transparent', color: 'var(--text)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, cursor: 'pointer' }
+const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5, cursor: 'pointer' }
+const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', background: 'transparent', color: 'var(--text)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, cursor: 'pointer' }
 
 function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onClick: () => void; disabled?: boolean; label: string; ariaLabel: string; variant: 'ghost' | 'solid' }) {
   return (

@@ -54,7 +54,7 @@ export interface PlaylistClientProps {
 // Palette figée du redesign 2026-07 (voir CLAUDE.md) — les compositions avec
 // alpha (bordures/fonds teintés) ont besoin de la valeur hex brute, `var(--x)`
 // ne peut pas recevoir de suffixe alpha concaténé.
-const HEX = { teal: '#4ee8c8', gold: '#c8a96e', violet: '#8b5cf6', pink: '#e05aaa' }
+const HEX = { teal: '#ffe500', gold: '#ffe500', violet: '#ffe500', pink: '#ff7b7b' }
 const LIKE_BUDGET = 5
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -125,11 +125,7 @@ const PARTICIPANT_TABS: { key: 'top' | 'mine' | 'rules'; label: string }[] = [
 // SVG icônes — ports directs de PlaylistSystem.jsx (mêmes tracés, sans les
 // props de couleur configurable inutiles ici : la couleur vient du contexte).
 function LockIcon() {
-  return (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(255,255,255,0.3)" xmlns="http://www.w3.org/2000/svg">
-      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-    </svg>
-  )
+  return <svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(255,255,255,0.3)" xmlns="http://www.w3.org/2000/svg"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" /></svg>
 }
 function TicketIcon({ done }: { done: boolean }) {
   if (done) {
@@ -734,7 +730,7 @@ export default function PlaylistClient({
                 style={{
                   ...pillButtonStyle,
                   color: djSort === id ? 'var(--teal)' : 'var(--text-muted)',
-                  background: djSort === id ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
+                  background: djSort === id ? 'rgba(255,229,0,0.12)' : 'rgba(255,255,255,0.04)',
                   borderColor: djSort === id ? `${HEX.teal}66` : 'var(--border)',
                 }}
               >
@@ -898,7 +894,7 @@ export default function PlaylistClient({
                             borderRadius: 999,
                             flexShrink: 0,
                             border: isMine ? '1px solid rgba(255,255,255,0.06)' : liked ? `1px solid ${HEX.teal}66` : '1px solid var(--border-strong)',
-                            background: isMine ? 'rgba(255,255,255,0.04)' : liked ? 'rgba(78,232,200,0.16)' : 'rgba(255,255,255,0.08)',
+                            background: isMine ? 'rgba(255,255,255,0.04)' : liked ? 'rgba(255,229,0,0.16)' : 'rgba(255,255,255,0.08)',
                             cursor: isMine ? 'not-allowed' : 'pointer',
                           }}
                         >
@@ -932,7 +928,7 @@ export default function PlaylistClient({
                         padding: '14px 16px',
                         borderRadius: 14,
                         border: effectiveHasTicket ? `1px solid ${HEX.teal}44` : '1px solid var(--border-strong)',
-                        background: effectiveHasTicket ? 'rgba(78,232,200,0.04)' : 'rgba(255,255,255,0.03)',
+                        background: effectiveHasTicket ? 'rgba(255,229,0,0.04)' : 'rgba(255,255,255,0.03)',
                       }}
                     >
                       <div
@@ -944,7 +940,7 @@ export default function PlaylistClient({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: effectiveHasTicket ? 'rgba(78,232,200,0.1)' : 'rgba(255,255,255,0.05)',
+                          background: effectiveHasTicket ? 'rgba(255,229,0,0.1)' : 'rgba(255,255,255,0.05)',
                         }}
                       >
                         <TicketIcon done={effectiveHasTicket} />

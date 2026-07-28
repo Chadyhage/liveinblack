@@ -26,15 +26,15 @@ function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties 
   switch (variant) {
     case 'primary':
       return {
-        background: disabled ? 'rgba(78,232,200,0.35)' : 'var(--teal-solid)',
+        background: disabled ? 'rgba(255,229,0,0.35)' : 'var(--gold)',
         color: 'var(--obsidian)',
         border: '1px solid transparent',
       }
     case 'secondary':
       return {
-        background: 'var(--surface-2)',
+        background: 'transparent',
         color: 'var(--text)',
-        border: '1px solid var(--border-strong)',
+        border: '1px solid rgba(255,229,0,.55)',
       }
     case 'danger':
       return {

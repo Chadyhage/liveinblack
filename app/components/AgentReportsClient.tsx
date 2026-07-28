@@ -261,10 +261,10 @@ export default function AgentReportsClient() {
                       padding: '3px 9px',
                       borderRadius: 4,
                       flexShrink: 0,
-                      background: r.handled ? 'rgba(62,214,181,0.12)' : 'rgba(224,90,170,0.12)',
-                      border: `1px solid ${r.handled ? 'rgba(62,214,181,0.35)' : 'rgba(224,90,170,0.35)'}`,
+                      background: r.handled ? 'rgba(255,229,0,0.12)' : 'rgba(224,90,170,0.12)',
+                      border: `1px solid ${r.handled ? 'rgba(255,229,0,0.35)' : 'rgba(224,90,170,0.35)'}`,
                       fontSize: 10.5,
-                      color: r.handled ? 'var(--teal)' : '#e05aaa',
+                      color: r.handled ? 'var(--primary)' : '#e05aaa',
                       textTransform: 'uppercase',
                       letterSpacing: '0.06em',
                     }}

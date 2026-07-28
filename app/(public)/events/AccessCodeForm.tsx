@@ -46,7 +46,7 @@ export default function AccessCodeForm() {
           invalid={Boolean(error)}
           disabled={loading}
           maxLength={64}
-          style={{ flex: 1, minWidth: 0, borderRadius: 10, background: 'var(--obsidian)', fontSize: 13.5, textTransform: 'uppercase' }}
+          style={{ flex: 1, minWidth: 0, minHeight: 48, borderRadius: 'var(--radius-md)', background: 'var(--obsidian)', fontSize: 13.5, textTransform: 'uppercase' }}
         />
         <Button
           type="submit"
@@ -54,7 +54,7 @@ export default function AccessCodeForm() {
           disabled={loading || !code.trim()}
           loading={loading}
           loadingText="Vérification…"
-          style={{ padding: '11px 16px', borderRadius: 8, background: 'var(--gold)', color: '#181104', textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13 }}
+          style={{ minHeight: 48, padding: '11px 18px', borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13 }}
         >
           Ouvrir
         </Button>

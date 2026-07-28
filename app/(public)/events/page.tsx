@@ -11,7 +11,8 @@ import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shar
 import EventListCard from '../_components/EventListCard'
 import EventRow from '../_components/EventRow'
 import AccessCodeForm from './AccessCodeForm'
-import { Button, Input } from '@/app/components/ui'
+import { Button, EmptyState, Input, SectionHeader } from '@/app/components/ui'
+import { PageShell } from '@/app/components/layout'
 
 export const metadata: Metadata = {
   title: 'Événements — LIVEINBLACK',
@@ -77,21 +78,21 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   }
 
   return (
-    <div style={{ padding: '28px 0 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
-      <div style={{ padding: '0 22px', marginBottom: 24 }}>
-        <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.01em', margin: '0 0 16px' }}>Événements</h1>
-        <form action="/events" method="get" style={{ display: 'flex', gap: 8, maxWidth: 420 }}>
+    <PageShell maxWidth={1360}>
+      <div style={{ marginBottom: 36 }}>
+        <SectionHeader eyebrow="La programmation" title="Événements" description="Découvre les prochaines expériences, soirées et rendez-vous près de chez toi." compact />
+        <form action="/events" method="get" style={{ display: 'flex', gap: 10, maxWidth: 720, marginTop: 24 }}>
           <Input
             type="text"
             name="q"
             defaultValue={search}
             placeholder="Événement, ville, style…"
-            style={{ flex: 1, minWidth: 0, borderRadius: 10, fontSize: 13.5 }}
+            style={{ flex: 1, minWidth: 0, minHeight: 48, borderRadius: 'var(--radius-md)', fontSize: 14 }}
           />
           <Button
             type="submit"
             variant="primary"
-            style={{ padding: '11px 18px', borderRadius: 3, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
+            style={{ minHeight: 48, padding: '11px 22px', borderRadius: 'var(--radius-md)', textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
           >
             Chercher
           </Button>
@@ -109,7 +110,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
           <CategoryRails events={events} boostedIds={boostedIds} scores={scores} reasons={reasons} />
         </>
       )}
-    </div>
+    </PageShell>
   )
 }
 
@@ -130,19 +131,17 @@ function SearchResults({
   )
   if (results.length === 0) {
     return (
-      <div style={{ margin: '0 22px', padding: 30, textAlign: 'center', maxWidth: 460, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
-        <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: 0 }}>Aucun résultat pour « {query} ».</p>
-        <Link
-          href="/events"
-          style={{ marginTop: 16, display: 'inline-block', padding: '13px 24px', borderRadius: 999, fontSize: 14, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}
-        >
-          Voir tous les événements
-        </Link>
+      <div style={{ maxWidth: 620 }}>
+        <EmptyState
+          title={`Aucun résultat pour « ${query} »`}
+          description="Essaie un autre nom, une autre ville ou un style musical différent."
+          action={<Link href="/events" style={{ display: 'inline-flex', padding: '12px 18px', borderRadius: 'var(--radius-md)', fontSize: 12.5, fontWeight: 800, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none' }}>Voir tous les événements</Link>}
+        />
       </div>
     )
   }
   return (
-    <div style={{ padding: '0 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
       {results.map((event) => (
         <EventListCard key={event.id} event={event} reason={reasons[event.id]} />
       ))}

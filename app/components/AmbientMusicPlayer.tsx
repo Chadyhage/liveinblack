@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
+import { Pause, Play, Shuffle, Volume2 } from 'lucide-react'
 import { DISCS, subscribe, getState, getServerSnapshot, play, toggle, playRandom, setVolume, playTrack } from '@/lib/client/musicEngine'
 import { Button, Input, Slider } from '@/app/components/ui'
 
@@ -46,7 +47,7 @@ const DISC_ASSETS: Record<string, { img: string; bgPosition: string; filter: str
 
 // Platine vinyle/CD SVG — pastille de couleur dynamique, sillons fins, reflet
 // métallique rotatif et bras de lecture animé.
-function Vinyl({ size = 30, color = '#e05aaa', spinning, arm = false }: { size?: number; color?: string; spinning: boolean; arm?: boolean }) {
+function Vinyl({ size = 30, color = '#ffe500', spinning, arm = false }: { size?: number; color?: string; spinning: boolean; arm?: boolean }) {
   const gid = 'v-' + size + '-' + color.replace('#', '')
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: 'block', overflow: 'visible', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.45))' }}>
@@ -176,7 +177,7 @@ export default function AmbientMusicPlayer() {
   if (HIDE_ON_PUBLIC_SHOWCASE.some((p) => pathname?.startsWith(p))) return null
 
   const current = DISCS.find((d) => d.id === st.discId) || DISCS[0]
-  const accent = current.color
+  const accent = '#ffe500'
   const activeAsset = DISC_ASSETS[current.id]
   const track = st.track
   const bigCover = track?.cover ? track.cover.replace('100x100', '400x400').replace('60x60', '400x400') : null
@@ -308,7 +309,7 @@ export default function AmbientMusicPlayer() {
             bottom: 74,
             right: 0,
             width: 288,
-            background: '#12131c',
+            background: 'var(--surface-2)',
             border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: 20,
             boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
@@ -329,22 +330,16 @@ export default function AmbientMusicPlayer() {
                 gap: 5,
                 padding: '5px 10px',
                 borderRadius: 999,
-                background: 'rgba(224,90,170,0.14)',
-                border: '1px solid rgba(224,90,170,0.4)',
-                color: '#e05aaa',
+                background: 'rgba(255,229,0,0.12)',
+                border: '1px solid rgba(255,229,0,0.42)',
+                color: 'var(--primary)',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: 11,
                 fontWeight: 700,
                 transition: 'all 0.2s',
               }}
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="16 3 21 3 21 8" />
-                <line x1="4" y1="20" x2="21" y2="3" />
-                <polyline points="21 16 21 21 16 21" />
-                <line x1="15" y1="15" x2="21" y2="21" />
-                <line x1="4" y1="4" x2="9" y2="9" />
-              </svg>
+              <Shuffle size={13} strokeWidth={2.4} aria-hidden="true" />
               Au hasard
             </Button>
           </div>
@@ -409,16 +404,7 @@ export default function AmbientMusicPlayer() {
                   transition: 'transform 0.2s',
                 }}
               >
-                {st.playing ? (
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#0c0c12">
-                    <rect x="6" y="5" width="4" height="14" rx="1" />
-                    <rect x="14" y="5" width="4" height="14" rx="1" />
-                  </svg>
-                ) : (
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#0c0c12" style={{ marginLeft: 2 }}>
-                    <polygon points="6 4 20 12 6 20 6 4" />
-                  </svg>
-                )}
+                {st.playing ? <Pause size={14} strokeWidth={2.8} color="#171500" aria-hidden="true" /> : <Play size={14} strokeWidth={2.8} fill="#171500" color="#171500" aria-hidden="true" />}
               </Button>
             </div>
           </div>
@@ -433,9 +419,9 @@ export default function AmbientMusicPlayer() {
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                background: '#0b0c12',
+                background: 'var(--obsidian)',
                 border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 10,
+                borderRadius: 999,
                 padding: '11px 36px 11px 12px',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: 13,
@@ -534,7 +520,7 @@ export default function AmbientMusicPlayer() {
                     background: 'transparent',
                     border: '1px solid rgba(255,255,255,0.06)',
                     gridColumn: isLast ? '1 / span 2' : undefined,
-                    borderColor: isCur ? d.color : 'rgba(255,255,255,0.06)',
+                    borderColor: isCur ? accent : 'rgba(255,255,255,0.06)',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                     transition: 'border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.22,0.9,0.3,1)',
                   }}
@@ -551,12 +537,12 @@ export default function AmbientMusicPlayer() {
                     style={{
                       position: 'absolute',
                       inset: 0,
-                      background: isCur ? `linear-gradient(180deg, ${d.color}25 0%, rgba(10,10,14,0.92) 100%)` : 'linear-gradient(180deg, rgba(4,4,8,0.25) 0%, rgba(10,10,14,0.95) 100%)',
+                      background: isCur ? 'linear-gradient(180deg, rgba(255,229,0,0.16) 0%, rgba(10,10,14,0.92) 100%)' : 'linear-gradient(180deg, rgba(4,4,8,0.25) 0%, rgba(10,10,14,0.95) 100%)',
                       zIndex: 1,
                     }}
                   />
                   <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-                    <Vinyl size={22} color={d.color} spinning={isCur && st.playing} />
+                    <Vinyl size={22} color={accent} spinning={isCur && st.playing} />
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.1 }}>
                       <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: isCur ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.01em' }}>{d.name}</span>
                       <span
@@ -581,10 +567,7 @@ export default function AmbientMusicPlayer() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 2px' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-            </svg>
+            <Volume2 size={15} strokeWidth={2} color="rgba(255,255,255,0.52)" aria-hidden="true" />
             <Slider
               min="0"
               max="1"
@@ -609,7 +592,7 @@ export default function AmbientMusicPlayer() {
               minHeight: 44,
               padding: '11px 16px',
               borderRadius: 999,
-              background: '#12131c',
+              background: 'var(--surface-2)',
               border: '1px solid rgba(255,255,255,0.14)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
               display: 'flex',
@@ -633,7 +616,7 @@ export default function AmbientMusicPlayer() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#12131c',
+              background: 'var(--surface-2)',
               border: `2px solid ${st.playing ? accent : 'rgba(255,255,255,0.22)'}`,
               boxShadow: '0 10px 28px rgba(0,0,0,0.55)',
               transition: 'border-color 0.3s, box-shadow 0.3s',

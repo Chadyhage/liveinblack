@@ -8,6 +8,7 @@ import PreferencesModal, { summarizePreferences, type Preferences } from './Pref
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
+import { ChevronRight, Eye, EyeOff } from 'lucide-react'
 import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion } from '@/app/components/ui'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
@@ -155,7 +156,7 @@ function MainView({ user, setUser, onOpenPanel }: { user: ProfilUser; setUser: (
           onClick={() => setShowLogoutConfirm(true)}
           variant="secondary"
           fullWidth
-          style={{ padding: '13px 0', borderRadius: 12, border: '1px solid rgba(224,90,170,0.4)', background: 'transparent', color: '#e05aaa', fontSize: 14 }}
+          style={{ padding: '13px 0', borderRadius: 7, border: '1px solid rgba(255,107,0,0.4)', background: 'transparent', color: 'var(--pink)', fontSize: 14 }}
         >
           Se déconnecter
         </Button>
@@ -186,9 +187,9 @@ function MenuRow({ label, onClick, gold }: { label: string; onClick: () => void;
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '15px 16px',
-        borderRadius: 12,
-        border: `1px solid ${gold ? 'rgba(200,169,110,0.25)' : 'var(--border)'}`,
-        background: gold ? 'rgba(200,169,110,0.06)' : 'var(--surface)',
+        borderRadius: 7,
+        border: `1px solid ${gold ? 'rgba(255,229,0,0.28)' : 'var(--border)'}`,
+        background: gold ? 'rgba(255,229,0,0.07)' : 'var(--surface)',
         color: '#fff',
         fontSize: 13.5,
         textTransform: 'uppercase',
@@ -196,7 +197,7 @@ function MenuRow({ label, onClick, gold }: { label: string; onClick: () => void;
       }}
     >
       {label}
-      <span style={{ color: 'var(--text-faint)', fontSize: 16 }}>›</span>
+      <ChevronRight size={17} strokeWidth={1.8} color="var(--teal)" aria-hidden="true" />
     </Button>
   )
 }
@@ -504,7 +505,7 @@ function EyebrowLabel({ children }: { children: React.ReactNode }) {
 }
 
 function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {
-  return <p style={{ fontSize: 12.5, color: kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: '10px 0 0' }}>{text}</p>
+  return <p style={{ fontSize: 12.5, color: kind === 'ok' ? 'var(--teal)' : '#ff7b7b', margin: '10px 0 0' }}>{text}</p>
 }
 
 // Champ mot de passe avec bouton "Voir"/"Cacher" — même pattern que
@@ -538,7 +539,8 @@ function PasswordField({
         type="button"
         variant="link"
         onClick={() => setShow((v) => !v)}
-        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
+        icon={show ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
+        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}
       >
         {show ? 'Cacher' : 'Voir'}
       </Button>
@@ -1049,7 +1051,7 @@ function PasswordCard({ email }: { email: string }) {
         value={confirmPassword}
         onChange={setConfirmPassword}
         placeholder="Confirmer le nouveau mot de passe"
-        style={{ marginBottom: 12, border: mismatch ? '1px solid #e05aaa' : undefined }}
+        style={{ marginBottom: 12, border: mismatch ? '1px solid #ff7b7b' : undefined }}
       />
       <Button onClick={submit} disabled={saving || !currentPassword || !newPassword || !confirmPassword} loading={saving} loadingText="Mise à jour…" variant="primary" style={goldButtonStyle}>
         Mettre à jour le mot de passe
@@ -1117,7 +1119,7 @@ function DangerZoneCard() {
         <Button
           onClick={() => setShowConfirm(true)}
           variant="secondary"
-          style={{ padding: '11px 18px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.4)', background: 'transparent', color: '#e05aaa', fontSize: 13 }}
+          style={{ padding: '11px 18px', borderRadius: 7, border: '1px solid rgba(255,107,0,0.4)', background: 'transparent', color: 'var(--pink)', fontSize: 13 }}
         >
           Supprimer mon compte
         </Button>
@@ -1128,7 +1130,7 @@ function DangerZoneCard() {
           title="Supprimer mon compte"
           body={
             <>
-              Cette action est <strong style={{ color: '#e05aaa' }}>irréversible</strong>. Ton compte, tes billets et ton solde ne seront plus accessibles. Si tu es organisateur ou prestataire avec un dossier validé, ta demande sera d&apos;abord transmise à l&apos;équipe pour revue.
+              Cette action est <strong style={{ color: 'var(--pink)' }}>irréversible</strong>. Ton compte, tes billets et ton solde ne seront plus accessibles. Si tu es organisateur ou prestataire avec un dossier validé, ta demande sera d&apos;abord transmise à l&apos;équipe pour revue.
             </>
           }
           confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}
@@ -1138,7 +1140,7 @@ function DangerZoneCard() {
         >
           <Label>Confirme avec ton mot de passe</Label>
           <PasswordField value={password} onChange={setPassword} placeholder="Mot de passe" autoFocus />
-          {error && <p style={{ fontSize: 12, color: '#e05aaa', margin: '8px 0 0' }}>{error}</p>}
+          {error && <p style={{ fontSize: 12, color: '#ff7b7b', margin: '8px 0 0' }}>{error}</p>}
         </ConfirmModal>
       )}
     </Card>

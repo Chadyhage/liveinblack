@@ -84,7 +84,7 @@ function statusLabel(u: UserSummary): { label: string } & BadgeColors {
   if (u.disabled) return { label: 'DÉSACTIVÉ', color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' }
   if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' }
   if (u.status === 'rejected') return { label: 'REFUSÉ', color: '#e05aaa', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' }
-  return { label: 'ACTIF', color: 'var(--teal)', border: 'rgba(78,232,200,0.35)', bg: 'rgba(78,232,200,0.14)' }
+  return { label: 'ACTIF', color: 'var(--primary)', border: 'rgba(255,229,0,0.35)', bg: 'rgba(255,229,0,0.14)' }
 }
 
 function fmtDate(iso: string | null): string {

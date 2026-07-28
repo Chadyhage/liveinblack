@@ -7,10 +7,10 @@ import EventListCard from './EventListCard'
 export default function EventRow({ title, events, reasons }: { title: string; events: PublicEvent[]; reasons?: Record<string, string> }) {
   if (events.length === 0) return null
   return (
-    <div style={{ marginBottom: 30 }}>
-      <h2 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 12px', padding: '0 22px' }}>{title}</h2>
+    <div style={{ marginBottom: 38 }}>
+      <h2 style={{ fontSize: 19, fontWeight: 800, margin: '0 0 16px', padding: '0 0' }}>{title}</h2>
       <div style={{ position: 'relative' }}>
-        <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '0 22px 6px', scrollbarWidth: 'thin' }}>
+        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '0 0 8px', scrollbarWidth: 'thin' }}>
           {events.map((event) => (
             <EventListCard key={event.id} event={event} reason={reasons?.[event.id]} />
           ))}

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { AlertCircle, CheckCircle2, LockKeyhole } from 'lucide-react'
 import { getTicketDisplay } from '@/lib/server/tickets'
 import { fmtMoney } from '@/lib/shared/money'
 import TicketQr from './TicketQr'
@@ -36,9 +37,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
               justifyContent: 'center',
             }}
           >
-            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
+            <AlertCircle size={38} strokeWidth={1.8} color="var(--pink)" aria-hidden="true" />
           </div>
           <p style={{ fontWeight: 800, fontSize: 25, letterSpacing: '-0.4px', color: 'var(--pink)', margin: '0 0 10px' }}>Billet invalide</p>
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>
@@ -46,9 +45,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           </p>
           <div style={{ background: 'var(--surface)', border: '1px solid rgba(224,90,170,0.20)', borderRadius: 16, padding: '10px 16px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              </svg>
+              <LockKeyhole size={12} strokeWidth={1.5} color="var(--pink)" aria-hidden="true" />
               <p style={{ fontSize: 11, color: 'rgba(224,90,170,0.75)', margin: 0, letterSpacing: '0.04em' }}>Signature invalide · LIVEINBLACK</p>
             </div>
           </div>
@@ -91,23 +88,21 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
               height: 72,
               borderRadius: '50%',
               margin: '0 auto 14px',
-              background: 'rgba(78,232,200,0.10)',
-              border: '2.5px solid rgba(78,232,200,0.50)',
+              background: 'rgba(255,229,0,0.10)',
+              border: '2.5px solid rgba(255,229,0,0.50)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
+            <CheckCircle2 size={34} strokeWidth={2.5} color="var(--primary)" aria-hidden="true" />
           </div>
-          <p style={{ fontWeight: 800, fontSize: 26, color: 'var(--teal)', margin: '0 0 5px', letterSpacing: '-0.4px' }}>Billet valide</p>
+          <p style={{ fontWeight: 800, fontSize: 26, color: 'var(--primary)', margin: '0 0 5px', letterSpacing: '-0.4px' }}>Billet valide</p>
         </div>
 
         {ticket.guestName && (
           <div style={{ ...cardStyle, padding: '14px 20px', textAlign: 'center' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Invité</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Invité</p>
             <p style={{ fontWeight: 700, fontSize: 21, color: '#fff', margin: 0 }}>{ticket.guestName}</p>
           </div>
         )}
@@ -131,8 +126,8 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
             gap: 9,
             fontSize: 14.5,
             fontWeight: 700,
-            color: '#04120e',
-            background: 'var(--teal-solid)',
+            color: 'var(--primary-ink)',
+            background: 'var(--primary)',
             textDecoration: 'none',
           }}
         >
@@ -196,7 +191,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
                   borderBottom: i < ticket.preorders.length - 1 ? '1px solid var(--border)' : 'none',
                 }}
               >
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{item.name}{item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 3 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{item.name}{item.showLabel && <small style={{ display: 'block', color: 'var(--primary)', marginTop: 3 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>×{item.qty}</span>
                   <span style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>

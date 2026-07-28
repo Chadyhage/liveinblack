@@ -11,8 +11,8 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
-  sm: { padding: '9px 12px', fontSize: 12.5, borderRadius: 9 },
-  md: { padding: '12px 14px', fontSize: 13.5, borderRadius: 11 },
+  sm: { padding: '10px 12px', fontSize: 12.5, borderRadius: 'var(--radius-md)' },
+  md: { padding: '12px 14px', fontSize: 13.5, borderRadius: 'var(--radius-md)' },
 }
 
 // Champ texte custom de l'app — un <input> réel reste nécessaire sous le
@@ -42,7 +42,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           width: '100%',
           background: 'var(--surface-2)',
           color: 'var(--text)',
-          border: `1px solid ${invalid ? '#e05a5a' : focused ? 'var(--teal)' : 'var(--border-strong)'}`,
+          border: `1px solid ${invalid ? '#ff5b5b' : focused ? 'var(--teal)' : 'var(--border-strong)'}`,
           outline: 'none',
           fontFamily: 'inherit',
           transition: 'border-color 0.15s ease',

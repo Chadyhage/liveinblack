@@ -21,11 +21,11 @@ const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '
 const primaryBtn: React.CSSProperties = {
   display: 'inline-block',
   padding: '12px 22px',
-  borderRadius: 3,
+  borderRadius: 'var(--radius-pill)',
   border: 'none',
-  background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
-  color: '#1a1508',
-  fontWeight: 500,
+  background: 'var(--primary)',
+  color: 'var(--primary-ink)',
+  fontWeight: 800,
   fontSize: 13.5,
   textTransform: 'none',
   letterSpacing: 'normal',
@@ -63,7 +63,7 @@ function formatDate(iso: string): string {
 
 function SupportLink() {
   return (
-    <a href={`mailto:${SUPPORT_EMAIL}?subject=Question%20sur%20mon%20dossier`} style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
+    <a href={`mailto:${SUPPORT_EMAIL}?subject=Question%20sur%20mon%20dossier`} style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>
       Une question ? Contacte le support
     </a>
   )
@@ -77,8 +77,8 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{TYPE_LABEL[type]}</h2>
 
       {!application && roleStatus === 'active' && (
-        <div style={{ ...cardStyle, border: '1px solid rgba(78,232,200,0.35)' }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: '0 0 8px' }}>Compte déjà actif</p>
+        <div style={{ ...cardStyle, border: '1px solid rgba(255,229,0,0.35)' }}>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: '0 0 8px' }}>Compte déjà actif</p>
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
             Ton interface {type} est active, mais aucun dossier de candidature n&apos;est associé à ce compte (activation manuelle). Aucune action n&apos;est requise.
           </p>
@@ -152,8 +152,8 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       )}
 
       {application?.status === 'approved' && (
-        <div style={{ ...cardStyle, border: '1px solid rgba(78,232,200,0.35)' }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: '0 0 8px' }}>Dossier approuvé</p>
+        <div style={{ ...cardStyle, border: '1px solid rgba(255,229,0,0.35)' }}>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: '0 0 8px' }}>Dossier approuvé</p>
           {application.approvedAt && (
             <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 16px' }}>
               Compte activé le {new Date(application.approvedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}

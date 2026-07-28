@@ -108,7 +108,7 @@ export default function OrganizerFollowButtonClient({
 
   const base: React.CSSProperties = {
     padding: compact ? '7px 14px' : '12px 22px',
-    borderRadius: 3,
+    borderRadius: 'var(--radius-pill)',
     fontSize: compact ? 12 : 13,
     fontWeight: 500,
     textTransform: 'none',
@@ -120,10 +120,10 @@ export default function OrganizerFollowButtonClient({
   }
 
   const style: React.CSSProperties = following
-    ? { ...base, background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.35)', color: '#6feedd' }
+    ? { ...base, background: 'rgba(255,229,0,0.12)', border: '1px solid rgba(255,229,0,0.35)', color: 'var(--primary)' }
     : appearance === 'premium'
       ? { ...base, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)' }
-      : { ...base, background: 'var(--teal-solid)', color: '#04120e' }
+      : { ...base, background: 'var(--primary)', color: 'var(--primary-ink)' }
 
   return (
     <div ref={rootRef} style={{ position: 'relative', display: 'inline-block' }}>
@@ -136,7 +136,7 @@ export default function OrganizerFollowButtonClient({
         aria-expanded={following ? menuOpen : undefined}
         aria-haspopup={following ? 'menu' : undefined}
       >
-        {following && <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#6feedd', marginRight: 7 }} />}
+        {following && <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', marginRight: 7 }} />}
         {following ? 'Abonné(e)' : "S'abonner"}
       </Button>
 
@@ -161,14 +161,14 @@ export default function OrganizerFollowButtonClient({
             variant="danger"
             role="menuitem"
             onClick={unfollow}
-            style={{ display: 'block', width: '100%', borderRadius: 0, padding: '10px 16px', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', border: 'none', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap' }}
+            style={{ display: 'block', width: '100%', borderRadius: 'var(--radius-md)', padding: '10px 16px', background: 'rgba(255,123,123,0.14)', color: 'var(--pink)', border: 'none', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap' }}
           >
             Se désabonner
           </Button>
         </div>
       )}
 
-      {error && <p style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, fontSize: 11.5, color: '#e05aaa', whiteSpace: 'nowrap' }}>{error}</p>}
+      {error && <p style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, fontSize: 11.5, color: 'var(--pink)', whiteSpace: 'nowrap' }}>{error}</p>}
     </div>
   )
 }

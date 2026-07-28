@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import AmbientMusicPlayer from '@/app/components/AmbientMusicPlayer'
-import PublicNav from '@/app/(public)/_components/PublicNav'
+import { PublicNav } from '@/app/components/layout'
 import DashboardShell from './_components/DashboardShell'
 import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL } from './_components/dashboardNav'
 

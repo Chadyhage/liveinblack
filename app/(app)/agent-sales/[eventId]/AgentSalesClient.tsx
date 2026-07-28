@@ -123,7 +123,7 @@ export default function AgentSalesClient({
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash en attente</p>
         </div>
         <div style={cardStyle}>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#4ee8c8', margin: 0 }}>{dashboard.cashSettled}</p>
+          <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.cashSettled}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash réglé</p>
         </div>
         <div style={cardStyle}>

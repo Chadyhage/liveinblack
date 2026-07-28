@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import TabsSection from './TabsSection'
+import { PageShell } from '@/app/components/layout'
+import { SectionHeader } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: "C'est quoi LIVEINBLACK ? — LIVEINBLACK",
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
 // à l'exception du sélecteur de profil (voir TabsSection, client component).
 export default function PublicAboutPage() {
   return (
-    <div style={{ padding: '0 0 60px' }}>
+    <PageShell style={{ maxWidth: 'none', padding: 0 }}>
       <section style={{ maxWidth: 820, margin: '0 auto', padding: '48px 22px 20px', textAlign: 'center' }}>
         <p style={{ fontSize: 24, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
           L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
@@ -46,8 +48,8 @@ export default function PublicAboutPage() {
             ['3', 'Profite', "Scan à l'entrée, commande sur place, et vis chaque nuit à fond."],
           ].map(([n, t, d]) => (
             <div key={n} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 18px', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(78,232,200,.14)' }}>{n}</span>
-              <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{t}</p>
+              <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(255,229,0,.14)' }}>{n}</span>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{t}</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
             </div>
           ))}
@@ -71,32 +73,29 @@ export default function PublicAboutPage() {
       </Section>
 
       <section style={{ padding: '20px 22px 0' }}>
-        <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.14), transparent 60%), var(--surface-2)' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(255,229,0,.12), transparent 60%), var(--surface-2)' }}>
           <h2 className="font-display" style={{ fontSize: 'clamp(26px,6vw,40px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 500, lineHeight: 1.5 }}>
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
-            <Link href="/login?mode=register" style={{ padding: '14px 26px', borderRadius: 3, fontSize: 15, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}>
+            <Link href="/login?mode=register" style={{ padding: '14px 26px', borderRadius: 999, fontSize: 15, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none' }}>
               Créer mon compte
             </Link>
-            <Link href="/events" style={{ padding: '13px 24px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}>
+            <Link href="/events" style={{ padding: '13px 24px', borderRadius: 999, fontSize: 14, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}>
               Voir les événements
             </Link>
           </div>
         </div>
       </section>
-    </div>
+    </PageShell>
   )
 }
 
 function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   return (
     <section style={{ padding: '46px 22px', maxWidth: 1120, margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: 26 }}>
-        <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: 0 }}>{eyebrow}</p>
-        <h2 className="font-display" style={{ fontSize: 'clamp(23px,5.5vw,34px)', letterSpacing: '.01em', margin: '8px 0 0' }}>{title}</h2>
-      </div>
+      <SectionHeader eyebrow={eyebrow} title={title} align="center" level={2} />
       {children}
     </section>
   )

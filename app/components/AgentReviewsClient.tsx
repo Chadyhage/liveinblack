@@ -52,7 +52,7 @@ interface AgentReviewView {
 const REASON_LABEL: Record<string, string> = Object.fromEntries(REVIEW_REPORT_REASONS.map((r) => [r.id, r.label]))
 
 const STATUS_META: Record<ReviewStatus, { label: string; color: string; bg: string; border: string }> = {
-  published: { label: 'Publié', color: '#4ee8c8', bg: 'rgba(78,232,200,.10)', border: 'rgba(78,232,200,.35)' },
+  published: { label: 'Publié', color: 'var(--primary)', bg: 'rgba(255,229,0,.10)', border: 'rgba(255,229,0,.35)' },
   hidden: { label: 'Masqué', color: '#ff8fb2', bg: 'rgba(194,52,127,.12)', border: 'rgba(194,52,127,.4)' },
   deleted: { label: 'Supprimé', color: 'var(--text-faint)', bg: 'rgba(255,255,255,.06)', border: 'rgba(255,255,255,.16)' },
 }
@@ -65,7 +65,7 @@ const TOAST_LABEL: Record<ModerationOp, string> = {
 }
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }
-const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 3, fontWeight: 500, fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }
+const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 'var(--radius-md)', fontWeight: 700, fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }
 
 function fmtDate(iso: string): string {
   try {

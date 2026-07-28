@@ -11,7 +11,7 @@ import { Button } from '@/app/components/ui'
 // PaymentSuccessClient.tsx (même carte, mêmes tons) pour rester cohérent avec
 // le reste des pages de confirmation « one-shot » de cette migration.
 
-const COLORS = { teal: 'var(--teal)', pink: 'var(--pink)' }
+const COLORS = { teal: 'var(--primary)', pink: 'var(--pink)' }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
   padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 14.5, fontWeight: 500,
   textTransform: 'none', letterSpacing: 'normal',
@@ -96,7 +96,7 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
 
         {state === 'success' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(78,232,200,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(255,229,0,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
             <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>

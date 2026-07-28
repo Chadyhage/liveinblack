@@ -7,7 +7,8 @@ import { regionToCurrency, currencySymbol, payRailLabel } from '@/lib/shared/mon
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEditor'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
-import { Button, Input, Textarea, Select, Switch, Spinner } from '@/app/components/ui'
+import { Button, Input, Textarea, Select, Spinner } from '@/app/components/ui'
+import { IconClose, InputField, LockIcon, Pill, Toggle } from '@/app/components/features/organizer/WizardControls'
 
 // Port du wizard de création/édition d'événement en 5 étapes
 // (src/pages/MesEvenementsPage.jsx, vue 'create' — lignes ~2140-3274 pour le
@@ -236,124 +237,6 @@ const S = {
 // ─────────────────────────────────────────────────────────────────────────
 // Petits composants UI réutilisés dans tout le wizard
 // ─────────────────────────────────────────────────────────────────────────
-
-function LockIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(200,169,110,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="4" y="11" width="16" height="10" rx="2" />
-      <path d="M8 11 V7 a4 4 0 0 1 8 0 V11" />
-    </svg>
-  )
-}
-
-function IconClose({ size = 12, color = 'rgba(255,255,255,0.5)' }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" aria-hidden="true">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  )
-}
-
-// Toggle : fine wrapper autour du Switch custom partagé, qui remplace
-// l'ancien interrupteur bricolé (div role="switch" + couleur de fond animée)
-// — conserve la signature `onChange: () => void` (sans event) utilisée par
-// tous les appelants de ce fichier.
-function Toggle({ value, onChange, disabled = false }: { value: boolean; onChange: () => void; disabled?: boolean }) {
-  return <Switch checked={value} onChange={() => onChange()} disabled={disabled} />
-}
-
-function InputField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = 'text',
-  error,
-  style,
-  min,
-  max,
-  maxLength,
-  locked = false,
-}: {
-  label?: string
-  value: string | number
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  placeholder?: string
-  type?: string
-  error?: string
-  style?: React.CSSProperties
-  min?: string | number
-  max?: string | number
-  maxLength?: number
-  locked?: boolean
-}) {
-  return (
-    <div>
-      {label && (
-        <label style={{ ...S.label, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {label}
-          {locked && <LockIcon />}
-        </label>
-      )}
-      <Input
-        type={type}
-        min={min}
-        max={max}
-        maxLength={maxLength}
-        disabled={locked}
-        invalid={!!error}
-        title={locked ? 'Verrouillé — billets déjà vendus' : undefined}
-        style={{
-          ...S.inputBase,
-          opacity: locked ? 0.55 : 1,
-          background: locked ? 'rgba(200,169,110,0.04)' : S.inputBase.background,
-          ...style,
-        }}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-      />
-      {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{error}</p>}
-    </div>
-  )
-}
-
-function Pill({
-  label,
-  active,
-  onClick,
-  disabled = false,
-  accent = 'var(--teal)',
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-  disabled?: boolean
-  accent?: string
-}) {
-  return (
-    <Button
-      variant="ghost"
-      onClick={onClick}
-      disabled={disabled}
-      title={disabled ? 'Verrouillé — billets déjà vendus' : undefined}
-      style={{
-        padding: '8px 12px',
-        borderRadius: 999,
-        opacity: disabled ? 0.35 : 1,
-        border: active ? `1px solid ${accent}` : '1px solid rgba(255,255,255,0.10)',
-        background: active ? `${accent}22` : 'transparent',
-        color: active ? accent : 'rgba(255,255,255,0.5)',
-        fontFamily: 'Inter, sans-serif',
-        fontSize: 11,
-        fontWeight: 700,
-      }}
-    >
-      {label}
-    </Button>
-  )
-}
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers purs

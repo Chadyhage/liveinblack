@@ -258,7 +258,7 @@ function SignupBars({ days }: { days: { date: string; count: number }[] }) {
                     activeIndex === i
                       ? 'var(--teal)'
                       : d.count > 0
-                        ? 'linear-gradient(180deg, rgba(78,232,200,0.85) 0%, rgba(78,232,200,0.30) 100%)'
+                        ? 'linear-gradient(180deg, rgba(255,229,0,0.85) 0%, rgba(255,229,0,0.30) 100%)'
                         : 'rgba(255,255,255,0.04)',
                   borderRadius: 1,
                   transition: 'height 0.4s',

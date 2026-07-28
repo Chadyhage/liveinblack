@@ -20,7 +20,7 @@ export default function Tabs({ value, onChange, options, style }: TabsProps) {
         display: 'flex',
         background: 'var(--surface-2)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
+        borderRadius: 'var(--radius-md)',
         padding: 4,
         gap: 4,
         ...style,
@@ -35,10 +35,10 @@ export default function Tabs({ value, onChange, options, style }: TabsProps) {
             onClick={() => onChange(opt.value)}
             fullWidth
             style={{
-              borderRadius: 9,
-              border: active ? '1px solid var(--border-strong)' : '1px solid transparent',
-              background: active ? 'var(--surface)' : 'transparent',
-              color: active ? 'var(--text)' : 'var(--text-faint)',
+              borderRadius: 'var(--radius-md)',
+              border: active ? '1px solid rgba(255,229,0,.35)' : '1px solid transparent',
+              background: active ? 'rgba(255,229,0,.10)' : 'transparent',
+              color: active ? 'var(--gold)' : 'var(--text-faint)',
             }}
           >
             {opt.label}

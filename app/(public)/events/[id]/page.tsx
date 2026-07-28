@@ -14,10 +14,8 @@ import { isEventEnded } from '@/lib/shared/event-time'
 import { normalizeShowOptions } from '@/lib/shared/showOptions'
 import { canBook as canBookFn, getBookingBlockedReason } from '@/lib/server/permissions'
 import UnlockForm from './UnlockForm'
-import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
+import { EventCheckoutPanel, EventInterestButtonClient, ResaleListingsSection } from '@/app/components/features'
 import AgeVerificationGate from '@/app/components/AgeVerificationGate'
-import EventCheckoutPanel from '@/app/components/EventCheckoutPanel'
-import ResaleListingsSection from '@/app/components/ResaleListingsSection'
 import EventShareButton from './EventShareButton'
 
 // Port de src/pages/EventDetailPage.jsx (2861 lignes côté legacy). La sélection

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { AlertCircle } from 'lucide-react'
 import mongoose from 'mongoose'
 import { auth } from '@/auth'
 import { getDb } from '@/lib/db/mongoose'
@@ -53,13 +54,11 @@ function GateScreen({ title, message }: { title: string; message: string }) {
             justifyContent: 'center',
           }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-          </svg>
+          <AlertCircle size={32} strokeWidth={1.8} color="var(--pink)" aria-hidden="true" />
         </div>
         <p style={{ fontWeight: 800, fontSize: 22, color: 'var(--pink)', margin: '0 0 10px' }}>{title}</p>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
-        <Link href="/scanner" style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+        <Link href="/scanner" style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Événements
         </Link>
       </div>

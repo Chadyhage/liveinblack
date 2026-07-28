@@ -70,18 +70,18 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
   return (
     <main className="organizer-directory">
       <style>{`
-        .organizer-directory{width:100%;min-height:100vh;padding:46px 22px 76px;background:radial-gradient(circle 700px at 5% 0%,rgba(139,92,246,.17),transparent 64%),radial-gradient(circle 700px at 96% 18%,rgba(200,169,110,.12),transparent 60%)}
-        .organizer-directory__wrap{max-width:1120px;margin:0 auto}
-        .organizer-directory__filters{display:grid;grid-template-columns:minmax(220px,1.8fr) minmax(155px,.8fr) minmax(155px,.8fr) auto auto;gap:8px;align-items:center;max-width:920px;margin:26px auto 34px}
+        .organizer-directory{width:100%;min-height:100vh;padding:56px 22px 88px;background:radial-gradient(circle 700px at 5% 0%,rgba(255,229,0,.10),transparent 64%),radial-gradient(circle 700px at 96% 18%,rgba(255,208,0,.07),transparent 60%)}
+        .organizer-directory__wrap{max-width:1240px;margin:0 auto}
+        .organizer-directory__filters{display:grid;grid-template-columns:minmax(280px,1.8fr) minmax(180px,.8fr) minmax(180px,.8fr) auto auto;gap:10px;align-items:center;max-width:1100px;margin:30px auto 42px}
         .organizer-directory__field{min-width:0;padding:11px 14px;border-radius:999px;border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13px}
         .organizer-directory__check{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-muted);white-space:nowrap}
         .organizer-directory__grid{display:flex;flex-direction:column;gap:16px}
-        .organizer-directory__card{display:grid;grid-template-columns:minmax(240px,.9fr) minmax(300px,1.2fr) 200px;min-height:230px;overflow:hidden;border:1px solid var(--border);border-radius:18px;background:var(--surface);box-shadow:0 18px 45px rgba(0,0,0,.2);transition:transform .25s ease,border-color .25s ease}
-        .organizer-directory__card:hover{transform:translateY(-3px);border-color:rgba(78,232,200,.35)}
+        .organizer-directory__card{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(360px,1.2fr) 220px;min-height:260px;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface);box-shadow:0 18px 45px rgba(0,0,0,.2);transition:transform .25s ease,border-color .25s ease}
+        .organizer-directory__card:hover{transform:translateY(-3px);border-color:rgba(255,229,0,.35)}
         .organizer-directory__cover{position:relative;min-height:230px;overflow:hidden;background:linear-gradient(135deg,rgba(139,92,246,.35),rgba(200,169,110,.12),var(--obsidian))}
         .organizer-directory__cover:after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(4,4,11,.82),transparent 65%)}
-        .organizer-directory__body{position:relative;padding:34px 28px;color:inherit;text-decoration:none;display:flex;flex-direction:column;justify-content:center}
-        .organizer-directory__actions{padding:28px 20px;border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:10px}
+        .organizer-directory__body{position:relative;padding:38px 34px;color:inherit;text-decoration:none;display:flex;flex-direction:column;justify-content:center}
+        .organizer-directory__actions{padding:32px 24px;border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:12px}
         @media(max-width:820px){.organizer-directory__filters{grid-template-columns:1fr 1fr}.organizer-directory__filters button{grid-column:span 1}.organizer-directory__card{grid-template-columns:minmax(210px,.8fr) 1.2fr}.organizer-directory__actions{grid-column:1/-1;border-left:0;border-top:1px solid var(--border);padding:16px 20px;flex-direction:row;align-items:center}.organizer-directory__actions>*{flex:1}}
         @media(max-width:620px){.organizer-directory{padding:32px 14px 92px}.organizer-directory__filters{grid-template-columns:1fr}.organizer-directory__filters button{grid-column:auto}.organizer-directory__card{grid-template-columns:1fr}.organizer-directory__cover{min-height:170px}.organizer-directory__body{padding:30px 20px}.organizer-directory__actions{grid-column:auto}}
       `}</style>
@@ -102,14 +102,14 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             name="q"
             defaultValue={search}
             placeholder="Nom, ville, événement…"
-            style={{ minWidth: 0, borderRadius: 999, background: '#0b0c12', fontSize: 13 }}
+            style={{ minWidth: 0, minHeight: 48, borderRadius: 999, background: '#0b0c12', fontSize: 14 }}
           />
           <FilterSelect
             name="region"
             defaultValue={region}
             ariaLabel="Filtrer par région"
             options={[{ value: '', label: 'Toutes les régions' }, ...regions.map((item) => ({ value: item.id, label: `${item.flag} ${item.name}` }))]}
-            style={{ borderRadius: 999, background: '#0b0c12', fontSize: 13 }}
+            style={{ minHeight: 48, borderRadius: 999, background: '#0b0c12', fontSize: 14 }}
           />
           <FilterSelect
             name="sort"
@@ -119,7 +119,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
               { value: 'popular', label: 'Plus populaires' },
               { value: 'recent', label: 'Plus récents' },
             ]}
-            style={{ borderRadius: 999, background: '#0b0c12', fontSize: 13 }}
+            style={{ minHeight: 48, borderRadius: 999, background: '#0b0c12', fontSize: 14 }}
           />
           <Checkbox
             name="upcoming"
@@ -131,7 +131,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
           <Button
             type="submit"
             variant="primary"
-            style={{ minHeight: 42, padding: '0 19px', borderRadius: 3, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
+            style={{ minHeight: 48, padding: '0 22px', borderRadius: 999, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
           >
             Filtrer
           </Button>
@@ -152,7 +152,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
               const zones = getEntityRegionIds(organizer).map(getRegionName).filter(Boolean)
               const isSelf = session?.user?.id === organizer.userId
               return (
-                <article key={organizer.userId} className="organizer-directory__card">
+                  <article key={organizer.userId} className="organizer-directory__card lb-card">
                   <Link href={`/organizers/${organizer.slug}`} className="organizer-directory__cover" aria-label={`Découvrir ${organizer.publicName}`}>
                     {organizer.bannerUrl && (
                       <Image src={organizer.bannerUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 820px) 100vw, 240px" />
@@ -174,7 +174,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                     )}
                   </Link>
                   <div className="organizer-directory__actions">
-                    <Link href={`/organizers/${organizer.slug}`} style={{ display: 'block', padding: '12px 14px', borderRadius: 3, textAlign: 'center', textDecoration: 'none', color: '#0a0a0e', background: 'var(--gold)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5 }}>Découvrir la page</Link>
+                    <Link href={`/organizers/${organizer.slug}`} style={{ display: 'block', padding: '13px 16px', borderRadius: 999, textAlign: 'center', textDecoration: 'none', color: 'var(--primary-ink)', background: 'var(--primary)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5 }}>Découvrir la page</Link>
                     {!isSelf && (
                       <OrganizerFollowButtonClient
                         organizerId={organizer.userId}

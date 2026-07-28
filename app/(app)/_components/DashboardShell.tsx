@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, type DashboardNavItem } from './dashboardNav'
 import type { Role } from '@/lib/server/permissions'
 
@@ -20,6 +20,7 @@ const SIDEBAR_WIDTH = 240
 // le layout ne monte simplement pas ce composant sur ces routes-là.
 export default function DashboardShell({ activeRole, children }: { activeRole: Role; children: React.ReactNode }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   if (HIDE_SIDEBAR_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
     return <>{children}</>
@@ -28,9 +29,17 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   const items: DashboardNavItem[] = [...ROLE_NAV[activeRole], ...COMMON_NAV]
   const upsell = activeRole === 'client' ? CLIENT_UPSELL : []
 
+  // Plusieurs liens agent partagent le même pathname (/agent) et ne se
+  // distinguent que par `?tab=` (voir dashboardNav.ts) — comparer seulement
+  // le path marquerait TOUS ces liens actifs en même temps. On compare aussi
+  // le paramètre `tab` quand le lien en porte un ; absence des deux côtés
+  // (ex. "Tableau de bord" = /agent sans query) compte comme un match.
   function isActive(href: string) {
-    const path = href.split('?')[0]
-    return pathname === path || (path !== '/profile' && pathname.startsWith(path + '/'))
+    const [path, queryStr] = href.split('?')
+    const pathMatches = pathname === path || (path !== '/profile' && pathname.startsWith(path + '/'))
+    if (!pathMatches) return false
+    const hrefTab = queryStr ? new URLSearchParams(queryStr).get('tab') : null
+    return hrefTab === searchParams.get('tab')
   }
 
   return (
@@ -44,7 +53,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           top: 61,
           height: 'calc(100vh - 61px)',
           overflowY: 'auto',
-          borderRight: '1px solid rgba(0,229,255,.14)',
+          borderRight: '1px solid rgba(255,229,0,.14)',
           background: 'rgba(17,19,27,.92)',
         }}
       >
@@ -86,14 +95,14 @@ function SidebarLink({ item, active, muted }: { item: DashboardNavItem; active: 
         padding: '10px 12px',
         borderRadius: 8,
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
-        background: active ? 'rgba(0,229,255,.10)' : 'transparent',
-        borderLeft: active ? '2px solid var(--gold)' : '2px solid transparent',
+        background: active ? 'rgba(255,229,0,.10)' : 'transparent',
+        borderLeft: active ? '3px solid var(--primary)' : '3px solid transparent',
         fontSize: 13.5,
         fontWeight: active ? 700 : 600,
         textDecoration: 'none',
       }}
     >
-      <Icon size={17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--teal)' : 'currentColor'} />
+      <Icon size={17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
       {item.label}
     </Link>
   )

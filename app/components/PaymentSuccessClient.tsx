@@ -22,7 +22,7 @@ import { Button, Card } from '@/app/components/ui'
 // Couleurs alignées sur les custom properties de app/globals.css (:root) —
 // jamais de hex/rgba dupliqués ici, voir CLAUDE.md.
 const COLORS = {
-  teal: 'var(--teal)',
+  teal: 'var(--primary)',
   pink: 'var(--pink)',
   gold: 'var(--gold)',
   violet: 'var(--violet)',
@@ -193,7 +193,7 @@ export default function PaymentSuccessClient({
 
         {state === 'success' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(78,232,200,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(255,229,0,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
             <h1 className="font-display" style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.8px', color: '#fff', margin: '0 0 10px' }}>

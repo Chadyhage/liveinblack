@@ -164,7 +164,7 @@ function orderErrorMessage(code: string | undefined): string {
 
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'rgba(200,169,110,0.14)' },
-  served: { label: 'Servi', color: 'var(--teal)', bg: 'rgba(78,232,200,0.16)' },
+  served: { label: 'Servi', color: 'var(--primary)', bg: 'rgba(255,229,0,0.16)' },
   cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
 }
 
@@ -711,7 +711,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             {checkinResult && (
               <Card
                 style={{
-                  border: checkinResult.alreadyCheckedIn ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(78,232,200,0.35)',
+                  border: checkinResult.alreadyCheckedIn ? '1px solid rgba(200,169,110,0.35)' : '1px solid rgba(255,229,0,0.35)',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                 }}
               >
@@ -727,8 +727,8 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                       height: 64,
                       borderRadius: '50%',
                       margin: '0 auto 10px',
-                      background: checkinResult.alreadyCheckedIn ? 'rgba(200,169,110,0.10)' : 'rgba(78,232,200,0.10)',
-                      border: checkinResult.alreadyCheckedIn ? '2px solid rgba(200,169,110,0.50)' : '2px solid rgba(78,232,200,0.50)',
+                      background: checkinResult.alreadyCheckedIn ? 'rgba(200,169,110,0.10)' : 'rgba(255,229,0,0.10)',
+                      border: checkinResult.alreadyCheckedIn ? '2px solid rgba(200,169,110,0.50)' : '2px solid rgba(255,229,0,0.50)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -843,9 +843,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                               loadingText="…"
                               onClick={() => void handleServe(item)}
                               style={{
-                                border: '1px solid rgba(78,232,200,0.4)',
-                                color: 'var(--teal)',
-                                background: busyKey === serveKey ? 'rgba(255,255,255,0.03)' : 'rgba(78,232,200,0.1)',
+                                border: '1px solid rgba(255,229,0,0.4)',
+                                color: 'var(--primary)',
+                                background: busyKey === serveKey ? 'rgba(255,255,255,0.03)' : 'rgba(255,229,0,0.1)',
                                 minWidth: 64,
                               }}
                             >

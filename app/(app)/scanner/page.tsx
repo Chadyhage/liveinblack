@@ -6,6 +6,8 @@ import { auth } from '@/auth'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import EventStaff from '@/lib/models/EventStaff'
+import { EmptyState, SectionHeader } from '@/app/components/ui'
+import { PageShell } from '@/app/components/layout'
 
 // Liste les événements que l'utilisateur connecté peut RÉELLEMENT scanner :
 // ses propres événements (organizerId/createdBy) — PLUS, additivement, les
@@ -86,33 +88,12 @@ export default async function ScannerIndexPage() {
   const todayStr = new Date().toLocaleDateString('en-CA')
 
   return (
-    <main style={{ minHeight: '100vh', padding: '28px 16px 60px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
-            Staff
-          </p>
-          <h1 className="font-display" style={{ fontSize: 26, margin: '0 0 6px', letterSpacing: '-0.3px' }}>Scanner</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Choisis un événement pour contrôler les entrées.</p>
-        </div>
+    <PageShell maxWidth={760} narrow style={{ minHeight: '100vh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <SectionHeader eyebrow="Staff" title="Scanner" description="Choisis un événement pour contrôler les entrées." compact />
 
         {events.length === 0 ? (
-          <div
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 16,
-              padding: '40px 20px',
-              textAlign: 'center',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-            }}
-          >
-            <p style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px' }}>Aucun événement à scanner</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
-              Tu n&apos;as pour l&apos;instant aucun rôle staff sur un événement. Demande à l&apos;organisateur de
-              l&apos;événement de t&apos;ajouter comme staff depuis son espace organisateur.
-            </p>
-          </div>
+          <EmptyState title="Aucun événement à scanner" description="Demande à un organisateur de t’ajouter comme membre du staff depuis son espace organisateur." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* Pas de className Tailwind — juste un sélecteur :hover, impossible
@@ -152,8 +133,8 @@ export default async function ScannerIndexPage() {
                         style={{
                           fontSize: 10.5,
                           fontWeight: 700,
-                          color: 'var(--teal)',
-                          background: 'rgba(78,232,200,0.14)',
+                          color: 'var(--primary)',
+                          background: 'rgba(255,229,0,0.14)',
                           padding: '3px 9px',
                           borderRadius: 999,
                           textTransform: 'uppercase',
@@ -171,6 +152,6 @@ export default async function ScannerIndexPage() {
           </div>
         )}
       </div>
-    </main>
+    </PageShell>
   )
 }

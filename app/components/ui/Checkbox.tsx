@@ -58,7 +58,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
           style={{
             position: 'absolute',
             inset: 0,
-            borderRadius: 5,
+            borderRadius: 'var(--radius-sm)',
             border: `1.5px solid ${isChecked ? 'var(--teal-solid)' : 'var(--border-strong)'}`,
             background: isChecked ? 'var(--teal-solid)' : 'var(--surface-2)',
             display: 'flex',

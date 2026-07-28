@@ -1,5 +1,24 @@
 import type { LucideIcon } from 'lucide-react'
-import { MessageCircle, User, Ticket, Heart, Users2, CalendarDays, Store, FileText, CreditCard, LayoutDashboard, UserPlus, Briefcase } from 'lucide-react'
+import {
+  MessageCircle,
+  User,
+  Ticket,
+  Heart,
+  Users2,
+  CalendarDays,
+  Store,
+  FileText,
+  CreditCard,
+  LayoutDashboard,
+  UserPlus,
+  Briefcase,
+  Users,
+  Zap,
+  Trash2,
+  Flag,
+  Star,
+  Newspaper,
+} from 'lucide-react'
 import type { Role } from '@/lib/server/permissions'
 
 export interface DashboardNavItem {
@@ -34,7 +53,23 @@ export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
     { label: 'Mon abonnement', href: '/my-subscription', icon: CreditCard },
     { label: 'Mon dossier', href: '/my-application', icon: FileText },
   ],
-  agent: [{ label: 'Tableau de bord', href: '/agent', icon: Briefcase }],
+  // Reprend l'intégralité des onglets qui vivaient auparavant dans la barre
+  // horizontale interne d'AgentShell.tsx (#107) — l'utilisateur veut TOUT dans
+  // la sidebar, plus de second niveau de nav dupliqué en haut de page. Chaque
+  // lien pointe vers /agent?tab=X ; AgentShell lit ce paramètre au lieu de
+  // gérer son propre état de bouton (voir AgentShell.tsx).
+  agent: [
+    { label: 'Tableau de bord', href: '/agent', icon: Briefcase },
+    { label: 'Comptes', href: '/agent?tab=users', icon: Users },
+    { label: 'Événements', href: '/agent?tab=events', icon: CalendarDays },
+    { label: 'Dossiers', href: '/agent?tab=dossiers', icon: FileText },
+    { label: 'Boosts', href: '/agent?tab=boosts', icon: Zap },
+    { label: 'Paiements', href: '/agent?tab=payments', icon: CreditCard },
+    { label: 'Suppressions', href: '/agent?tab=deletions', icon: Trash2 },
+    { label: 'Signalements', href: '/agent?tab=reports', icon: Flag },
+    { label: 'Avis', href: '/agent?tab=reviews', icon: Star },
+    { label: 'Actualité', href: '/agent?tab=homepage', icon: Newspaper },
+  ],
 }
 
 // CTA de bas de sidebar, client uniquement — upsell vers les deux wizards

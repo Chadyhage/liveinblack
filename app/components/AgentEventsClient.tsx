@@ -47,7 +47,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 const STATUS_LABEL: Record<EventStatus, string> = { upcoming: 'À venir', past: 'Passé', cancelled: 'Annulé' }
 const STATUS_STYLE: Record<EventStatus, React.CSSProperties> = {
-  upcoming: { color: 'var(--teal)', borderColor: 'rgba(78,232,200,0.35)', background: 'rgba(78,232,200,0.08)' },
+  upcoming: { color: 'var(--primary)', borderColor: 'rgba(255,229,0,0.35)', background: 'rgba(255,229,0,0.08)' },
   past: { color: 'var(--text-faint)', borderColor: 'var(--border)', background: 'var(--surface-2)' },
   cancelled: { color: '#e05aaa', borderColor: 'rgba(224,90,170,0.35)', background: 'rgba(224,90,170,0.1)' },
 }

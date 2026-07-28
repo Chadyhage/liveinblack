@@ -60,7 +60,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
   const totalResults = matchedEvents.length + matchedOrganizers.length + matchedProviders.length
 
   return (
-    <div style={{ padding: '28px 22px 60px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
+    <div style={{ padding: '48px 22px 80px', maxWidth: 1280, margin: '0 auto', width: '100%' }}>
       <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.01em', margin: '0 0 16px' }}>Recherche</h1>
       <form action="/search" method="get" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxWidth: 480, marginBottom: 28 }}>
         <Input
@@ -68,13 +68,13 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
           name="q"
           defaultValue={query}
           placeholder="Événements, organisateurs, prestataires…"
-          style={{ flex: '1 1 220px', minWidth: 0, borderRadius: 10, fontSize: 13.5 }}
+          style={{ flex: '1 1 300px', minWidth: 0, minHeight: 48, borderRadius: 'var(--radius-md)', fontSize: 14 }}
           autoFocus
         />
         <Button
           type="submit"
           variant="primary"
-          style={{ flexShrink: 0, padding: '11px 18px', borderRadius: 8, fontSize: 13 }}
+          style={{ flexShrink: 0, minHeight: 48, padding: '11px 22px', borderRadius: 'var(--radius-md)', fontSize: 13 }}
         >
           Chercher
         </Button>
@@ -101,7 +101,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
           <p style={{ color: 'var(--text-muted)', margin: '0 0 14px' }}>Aucun résultat pour « {query} ».</p>
           <Link
             href="/events"
-            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 8, background: 'var(--teal-solid)', color: '#04120e', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '12px 18px', borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
           >
             Parcourir les événements
           </Link>
@@ -160,7 +160,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
 function ResultSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 30 }}>
-      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>{title}</h2>
+      <h2 style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>{title}</h2>
       {children}
     </section>
   )

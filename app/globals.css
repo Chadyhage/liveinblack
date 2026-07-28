@@ -3,25 +3,29 @@
 /* Design system LIVEINBLACK (voir CLAUDE.md) : surfaces opaques, CTA pleins,
    pas de glow néon ni de glassmorphism de contenu (blur toléré : nav/header). */
 :root {
-  --obsidian: #04040b;
-  --surface: #0e0f16; /* cartes */
-  --surface-2: #12131c; /* modals/menus */
-  --teal: #4ee8c8;
-  --teal-solid: #3ed6b5; /* CTA teal plein */
-  --gold: #c8a96e;
-  --pink: #e05aaa;
-  --violet: #8b5cf6;
-  --violet-cta: linear-gradient(180deg, #8f56ff, #7a3bf2); /* CTA principal auth/paiement — hex historique distinct de --violet, conservé pour fidélité legacy */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.18);
+  --obsidian: #43005d;
+  --surface: #5a0876; /* cartes */
+  --surface-2: #350047; /* modals/menus */
+  --primary: #ffe500;
+  --primary-strong: #ffd000;
+  --primary-ink: #171500;
+  /* Aliases de compatibilité : l'ancienne palette converge vers le jaune. */
+  --teal: var(--primary);
+  --teal-solid: var(--primary-strong);
+  --gold: var(--primary);
+  --pink: #ff7b7b;
+  --violet: var(--primary);
+  --violet-cta: linear-gradient(180deg, var(--primary), var(--primary-strong));
+  --border: rgba(255, 229, 0, 0.18);
+  --border-strong: rgba(255, 229, 0, 0.34);
   --text: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.6);
-  --text-faint: rgba(255, 255, 255, 0.52);
+  --text-muted: rgba(255, 255, 255, 0.76);
+  --text-faint: rgba(255, 255, 255, 0.62);
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-sm: 4px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
   --radius-pill: 999px;
   --space-1: 4px;
   --space-2: 8px;
@@ -33,7 +37,7 @@
   --z-floating: 45;
   --z-sheet: 200;
   --z-modal: 3000;
-  --focus-ring: 0 0 0 3px rgba(78, 232, 200, 0.35);
+  --focus-ring: 0 0 0 3px rgba(255, 229, 0, 0.28);
 
   --background: var(--obsidian);
   --foreground: var(--text);
@@ -53,14 +57,93 @@
    variables directement sans passer par ces règles/classes : la source
    unique de la police reste ici. */
 body {
+  position: relative;
+  isolation: isolate;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-open-sans), "Open Sans", Arial, sans-serif;
+  line-height: 1.5;
 }
 
-h1, h2, h3, h4, h5, h6, .heading {
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .62;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 420 420'%3E%3Cg fill='none' stroke='%237b168f' stroke-width='7' stroke-linecap='round' stroke-linejoin='round' opacity='.72'%3E%3Cpath d='M20 72c28-26 48-35 77-10l42 36c15 13 14 34-3 46l-37 27c-17 12-18 34-1 47l36 27'/%3E%3Cpath d='M305 24l61 24c22 9 29 36 14 54l-31 38c-13 16-8 39 11 48l37 18'/%3E%3Cpath d='M5 246c36-8 74-7 106 5 29 11 56 11 77-12l20-22'/%3E%3Cpath d='M241 188l47 4c18 2 28 21 18 37l-17 29c-11 18-1 42 19 47l67 15'/%3E%3Cpath d='M70 352l50-32c17-11 38-7 48 10l21 37'/%3E%3Ccircle cx='47' cy='143' r='18'/%3E%3Ccircle cx='47' cy='143' r='7'/%3E%3Cpath d='M155 54h34m-17-17v34M270 82h30m-15-15v30M335 284h39m-19-19v38'/%3E%3Cpath d='M100 219l11-15 11 15-11 15zM278 347l11-15 11 15-11 15z'/%3E%3C/g%3E%3Cg fill='%237b168f' opacity='.48'%3E%3Ccircle cx='370' cy='145' r='4'/%3E%3Ccircle cx='184' cy='290' r='5'/%3E%3Ccircle cx='32' cy='310' r='4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 420px 420px;
+  background-position: center top;
+}
+
+h1, h2, h3, .heading {
+  font-family: var(--font-display), Anton, Impact, sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+h4, h5, h6 {
   font-family: var(--font-montserrat), Montserrat, Arial, sans-serif;
   font-weight: 700;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.035em;
+}
+
+::selection {
+  color: var(--obsidian);
+  background: var(--gold);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--obsidian); }
+::-webkit-scrollbar-thumb { background: rgba(255, 229, 0, 0.32); border-radius: 999px; }
+
+.lb-card {
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.lb-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 229, 0, 0.42) !important;
+  background: var(--surface-2) !important;
+}
+
+.lb-card:focus-visible {
+  transform: translateY(-2px);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Compatibilité des écrans historiques : les anciens contrôles inline à
+   0/3px sont arrondis ici sans devoir réécrire chaque flux métier. */
+:where(button, a, [role='button'])[style*='border-radius: 3px'],
+:where(button, a, [role='button'])[style*='border-radius:3px'],
+:where(button, a, [role='button'])[style*='border-radius: 0'],
+:where(button, a, [role='button'])[style*='border-radius:0'] {
+  border-radius: var(--radius-md) !important;
+}
+
+@media (max-width: 720px) {
+  h1 { font-size: clamp(30px, 9vw, 46px); }
+  h2 { font-size: clamp(24px, 7vw, 36px); }
+}
+
+.lb-accent-line {
+  width: 42px;
+  height: 4px;
+  background: var(--primary);
+  display: block;
 }
 
 .font-display {
@@ -80,7 +163,7 @@ h1, h2, h3, h4, h5, h6, .heading {
    restaure un indicateur clavier commun sur tous les contrôles, y compris
    quand un composant définit outline:none localement. */
 :where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
-  outline: 2px solid var(--teal) !important;
+  outline: 2px solid var(--primary) !important;
   outline-offset: 3px !important;
   box-shadow: var(--focus-ring) !important;
 }
@@ -99,7 +182,7 @@ body.lb-cookie-consent-visible {
    utilisés (organizer-studio, wizards d'inscription, etc.). */
 input[type='checkbox'],
 input[type='radio'] {
-  accent-color: var(--teal);
+  accent-color: var(--primary);
 }
 
 /* Spinner du design system (app/components/ui/Spinner.tsx) — keyframes
@@ -114,7 +197,7 @@ input[type='radio'] {
    ui/) — le visuel coché/décoché est piloté en React (voir ces fichiers),
    seul le focus clavier reste géré ici en CSS. */
 :where(input[type='checkbox'], input[type='radio']):focus-visible ~ * {
-  outline: 2px solid var(--teal);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 

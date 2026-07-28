@@ -22,21 +22,22 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
   return (
     <Link
       href={`/events/${event.id}`}
+      className="lb-card"
       style={{
         display: 'block',
         flex: '0 0 auto',
-        width: 220,
+        width: 300,
         textDecoration: 'none',
         color: 'inherit',
         background: 'var(--surface)',
         border: '1px solid var(--border)',
-        borderRadius: 14,
+        borderRadius: 'var(--radius-xl)',
         overflow: 'hidden',
       }}
     >
-      <div style={{ position: 'relative', aspectRatio: '4/3', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
+      <div style={{ position: 'relative', aspectRatio: '16/10', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
         {event.imageUrl && (
-          <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="220px" />
+          <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 700px) 86vw, 300px" />
         )}
         {countdown && (
           <span
@@ -74,31 +75,31 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
                   gap: 5,
                   fontSize: 9.5,
                   fontWeight: 700,
-                  color: '#e5d8ff',
+                  color: 'var(--primary)',
                   background: 'rgba(5,6,10,0.88)',
                   padding: '4px 9px',
                   borderRadius: 999,
-                  border: '1px solid rgba(139,92,246,0.5)',
+                  border: '1px solid rgba(255,229,0,0.5)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}
               >
-                <span aria-hidden="true" style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--violet)', flexShrink: 0 }} />
+                <span aria-hidden="true" style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0 }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{reason}</span>
               </span>
             )}
           </div>
         )}
         {min != null && (
-          <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '3px 8px', borderRadius: 999, border: '1px solid rgba(200,169,110,.4)' }}>
+          <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: 'var(--primary)', background: 'rgba(5,6,10,.92)', padding: '3px 8px', borderRadius: 999, border: '1px solid rgba(255,229,0,.4)' }}>
             dès {fmtMoney(min, eventCurrency(event))}
           </span>
         )}
       </div>
-      <div style={{ padding: '10px 12px 12px' }}>
-        <p style={{ fontSize: 14, fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.name}</p>
-        <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '3px 0 0' }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ')}</p>
+      <div style={{ padding: '16px 16px 18px' }}>
+        <p style={{ fontSize: 16, lineHeight: 1.25, fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.name}</p>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '6px 0 0' }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ')}</p>
       </div>
     </Link>
   )

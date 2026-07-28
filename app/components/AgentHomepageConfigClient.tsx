@@ -18,12 +18,10 @@ import { Button, Card, Input, Switch } from '@/app/components/ui'
 
 const MAX_EVENTS = 12
 
-type Accent = 'teal' | 'gold' | 'pink'
+type Accent = 'gold'
 
 const ACCENTS: { key: Accent; label: string; dot: string; soft: string; border: string }[] = [
-  { key: 'teal', label: 'Teal', dot: '#4ee8c8', soft: 'rgba(78,232,200,0.14)', border: 'rgba(78,232,200,0.4)' },
-  { key: 'gold', label: 'Or', dot: '#c8a96e', soft: 'rgba(200,169,110,0.14)', border: 'rgba(200,169,110,0.4)' },
-  { key: 'pink', label: 'Rose', dot: '#e05aaa', soft: 'rgba(224,90,170,0.14)', border: 'rgba(224,90,170,0.4)' },
+  { key: 'gold', label: 'Jaune primaire', dot: '#ffe500', soft: 'rgba(255,229,0,0.14)', border: 'rgba(255,229,0,0.4)' },
 ]
 const ACCENT_BY_KEY = Object.fromEntries(ACCENTS.map((a) => [a.key, a])) as Record<Accent, (typeof ACCENTS)[number]>
 
@@ -48,7 +46,7 @@ interface EventOption {
 }
 
 function defaultDraft(): Draft {
-  return { active: false, title: DEFAULT_TITLE, subtitle: DEFAULT_SUBTITLE, accent: 'teal', eventIds: [] }
+  return { active: false, title: DEFAULT_TITLE, subtitle: DEFAULT_SUBTITLE, accent: 'gold', eventIds: [] }
 }
 
 // Aperçu = ce qui sera RÉELLEMENT enregistré (le serveur normalise aussi,
@@ -59,7 +57,7 @@ function normalizeForPreview(d: Draft): Draft {
     active: d.active === true,
     title: d.title.trim() ? d.title.trim().slice(0, 80) : DEFAULT_TITLE,
     subtitle: d.subtitle.slice(0, 140),
-    accent: ACCENT_BY_KEY[d.accent] ? d.accent : 'teal',
+    accent: ACCENT_BY_KEY[d.accent] ? d.accent : 'gold',
     eventIds: [...new Set(d.eventIds.filter(Boolean).map(String))].slice(0, MAX_EVENTS),
   }
 }
@@ -98,7 +96,7 @@ export default function AgentHomepageConfigClient() {
             active: Boolean(data.config.active),
             title: data.config.title ?? DEFAULT_TITLE,
             subtitle: data.config.subtitle ?? DEFAULT_SUBTITLE,
-            accent: ACCENT_BY_KEY[data.config.accent as Accent] ? data.config.accent : 'teal',
+            accent: ACCENT_BY_KEY[data.config.accent as Accent] ? data.config.accent : 'gold',
             eventIds: Array.isArray(data.config.eventIds) ? data.config.eventIds.map(String) : [],
           }
           setDraft(loadedDraft)

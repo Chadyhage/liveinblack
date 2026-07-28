@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from 'react'
 import Button from './Button'
+import { X } from 'lucide-react'
 
 export interface ModalProps {
   onClose: () => void
@@ -28,9 +29,9 @@ export default function Modal({ onClose, children, maxWidth = 520, hideClose, co
           maxWidth,
           maxHeight: '88vh',
           overflowY: 'auto',
-          background: '#12131c',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 20,
+          background: 'var(--surface-2)',
+          border: '1px solid rgba(255,229,0,0.18)',
+          borderRadius: 12,
           padding: 22,
           boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
           ...contentStyle,
@@ -41,9 +42,9 @@ export default function Modal({ onClose, children, maxWidth = 520, hideClose, co
             variant="ghost"
             onClick={onClose}
             aria-label="Fermer"
-            style={{ position: 'absolute', top: 14, right: 16, padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 26, lineHeight: 1 }}
+            style={{ position: 'absolute', top: 12, right: 12, width: 34, height: 34, padding: 0, color: 'rgba(255,255,255,0.58)', lineHeight: 1 }}
           >
-            ×
+            <X size={18} strokeWidth={1.8} aria-hidden="true" />
           </Button>
         )}
         {children}

@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Button } from '@/app/components/ui'
+import { useSearchParams } from 'next/navigation'
 import AgentDossiersClient from '@/app/components/AgentDossiersClient'
 import AgentDashboardClient from '@/app/components/AgentDashboardClient'
 import AgentUsersClient from '@/app/components/AgentUsersClient'
@@ -13,114 +12,24 @@ import AgentReportsClient from '@/app/components/AgentReportsClient'
 import AgentReviewsClient from '@/app/components/AgentReviewsClient'
 import AgentHomepageConfigClient from '@/app/components/AgentHomepageConfigClient'
 
-// Coquille à onglets de src/pages/AgentPage.jsx (#9 phase agent/admin, tâche
-// #107) — assemble tous les panneaux construits séparément (#97-106) derrière
-// une nav segmentée client-side, sans rechargement de page. Ordre des onglets
-// et libellés copiés du tableau `[{ key, label, count }]` de AgentPage.jsx
-// (nav segmentée juste sous la top bar). Legacy avait trois onglets financiers
-// distincts (reversements/remboursements/paiements) ; la tâche #102 les a
-// délibérément regroupés en un seul panneau « Paiements » à sous-sections —
-// on suit ce regroupement plutôt que de le défaire ici.
-//
-// Les badges de compteur ne sont portés que là où legacy ET le panneau
-// correspondant exposent déjà un compte bon marché à récupérer sans dupliquer
-// la logique métier d'un panneau tiers : Dossiers (en attente) et
-// Signalements (ouverts), comme cité en exemple dans le brief de la tâche.
+// Coquille de src/pages/AgentPage.jsx (#9 phase agent/admin, tâche #107) —
+// assemble tous les panneaux construits séparément (#97-106). La navigation
+// entre panneaux vit désormais dans la sidebar partagée (voir
+// app/(app)/_components/dashboardNav.ts, ROLE_NAV.agent) plutôt que dans une
+// barre d'onglets dupliquée ici : chaque lien de sidebar pointe vers
+// /agent?tab=X, ce composant lit juste `tab` depuis l'URL. Legacy avait trois
+// onglets financiers distincts (reversements/remboursements/paiements) ; la
+// tâche #102 les a délibérément regroupés en un seul panneau « Paiements » à
+// sous-sections — on suit ce regroupement plutôt que de le défaire ici.
 
 type TabKey = 'dashboard' | 'users' | 'events' | 'dossiers' | 'boosts' | 'payments' | 'deletions' | 'reports' | 'reviews' | 'homepage'
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'dashboard', label: 'Tableau de bord' },
-  { key: 'users', label: 'Comptes' },
-  { key: 'events', label: 'Événements' },
-  { key: 'dossiers', label: 'Dossiers' },
-  { key: 'boosts', label: 'Boosts' },
-  { key: 'payments', label: 'Paiements' },
-  { key: 'deletions', label: 'Suppressions' },
-  { key: 'reports', label: 'Signalements' },
-  { key: 'reviews', label: 'Avis' },
-  { key: 'homepage', label: 'Actualité' },
-]
-
-const PENDING_APPLICATION_STATUSES = new Set(['submitted', 'under_review', 'resubmitted'])
+const VALID_TABS = new Set<TabKey>(['dashboard', 'users', 'events', 'dossiers', 'boosts', 'payments', 'deletions', 'reports', 'reviews', 'homepage'])
 
 export default function AgentShell() {
-  const [tab, setTab] = useState<TabKey>('dashboard')
-  const [pendingDossiers, setPendingDossiers] = useState(0)
-  const [openReports, setOpenReports] = useState(0)
-  const [pendingDeletions, setPendingDeletions] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-    async function run() {
-      try {
-        const res = await fetch('/api/agent/applications')
-        const data = await res.json()
-        if (!cancelled && res.ok && data.ok) {
-          const count = (data.applications as { status: string }[]).filter((a) => PENDING_APPLICATION_STATUSES.has(a.status)).length
-          setPendingDossiers(count)
-        }
-      } catch {
-        // Nav badges are a non-critical convenience — un échec silencieux
-        // laisse juste le compteur à 0, le panneau Dossiers lui-même
-        // affichera son propre bandeau d'erreur de lecture.
-      }
-    }
-    run()
-    // Rafraîchi périodiquement (même intervalle que le heartbeat de présence
-    // de MessagesClient.tsx) — sans ça, une action de modération faite dans
-    // l'onglet Dossiers ne se reflète jamais sur ce badge de nav tant que le
-    // shell reste monté.
-    const interval = setInterval(run, 15000)
-    return () => {
-      cancelled = true
-      clearInterval(interval)
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    async function run() {
-      try {
-        const res = await fetch('/api/agent/reports?status=open')
-        const data = await res.json()
-        if (!cancelled && res.ok && data.ok) {
-          setOpenReports((data.reports as unknown[]).length)
-        }
-      } catch {
-        // idem
-      }
-    }
-    run()
-    const interval = setInterval(run, 15000)
-    return () => {
-      cancelled = true
-      clearInterval(interval)
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    async function run() {
-      try {
-        const res = await fetch('/api/agent/deletion-requests')
-        const data = await res.json()
-        if (!cancelled && res.ok && data.ok) {
-          setPendingDeletions((data.requests as unknown[]).length)
-        }
-      } catch {
-        // idem
-      }
-    }
-    run()
-    const interval = setInterval(run, 15000)
-    return () => {
-      cancelled = true
-      clearInterval(interval)
-    }
-  }, [])
-
-  const badges: Partial<Record<TabKey, number>> = { dossiers: pendingDossiers, reports: openReports, deletions: pendingDeletions }
+  const searchParams = useSearchParams()
+  const requestedTab = searchParams.get('tab') as TabKey | null
+  const tab: TabKey = requestedTab && VALID_TABS.has(requestedTab) ? requestedTab : 'dashboard'
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -157,81 +66,7 @@ export default function AgentShell() {
         </div>
       </div>
 
-      <div style={{ padding: '12px 16px 0', maxWidth: 760, margin: '0 auto', position: 'relative' }}>
-        <div
-          className="agent-shell-tabs"
-          style={{
-            display: 'flex',
-            gap: 6,
-            padding: 4,
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 12,
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-          }}
-        >
-          {TABS.map((t) => {
-            const active = t.key === tab
-            const count = badges[t.key] ?? 0
-            return (
-              <Button
-                key={t.key}
-                variant="ghost"
-                onClick={() => setTab(t.key)}
-                aria-label={count > 0 ? `${t.label}, ${count} en attente` : undefined}
-                style={{
-                  flexShrink: 0,
-                  gap: 6,
-                  padding: '8px 14px',
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  letterSpacing: '0.01em',
-                  background: active ? 'rgba(200,169,110,0.16)' : 'transparent',
-                  border: active ? '1px solid rgba(200,169,110,0.45)' : '1px solid transparent',
-                  borderRadius: 9,
-                  color: active ? 'var(--gold)' : 'var(--text-faint)',
-                }}
-              >
-                {t.label}
-                {count > 0 && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 800,
-                      lineHeight: 1.4,
-                      color: '#fff',
-                      background: 'rgba(224,90,170,0.85)',
-                      borderRadius: 999,
-                      padding: '1px 7px',
-                    }}
-                  >
-                    {count}
-                  </span>
-                )}
-              </Button>
-            )
-          })}
-        </div>
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: 4,
-            bottom: 4,
-            right: 16,
-            width: 28,
-            borderRadius: '0 12px 12px 0',
-            background: 'linear-gradient(90deg, transparent, var(--surface))',
-            pointerEvents: 'none',
-          }}
-        />
-        <style>{`
-          .agent-shell-tabs::-webkit-scrollbar { display: none; }
-        `}</style>
-      </div>
-
-      <div key={tab}>
+      <div key={tab} style={{ maxWidth: 760, margin: '0 auto' }}>
         {tab === 'dashboard' && <AgentDashboardClient />}
         {tab === 'users' && <AgentUsersClient />}
         {tab === 'events' && <AgentEventsClient />}

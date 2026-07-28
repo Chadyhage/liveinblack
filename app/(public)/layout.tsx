@@ -1,5 +1,4 @@
-import PublicNav from './_components/PublicNav'
-import Footer from './_components/Footer'
+import { Footer, PublicNav } from '@/app/components/layout'
 import AmbientMusicPlayer from '@/app/components/AmbientMusicPlayer'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -10,7 +9,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: `radial-gradient(circle 900px at 6% 4%, rgba(139,92,246,.16), transparent 60%), radial-gradient(circle 820px at 96% 38%, rgba(78,232,200,.08), transparent 56%), radial-gradient(circle 950px at 50% 100%, rgba(224,90,170,.09), transparent 60%), var(--obsidian)`,
+        background: `radial-gradient(circle 900px at 6% 4%, rgba(255,229,0,.10), transparent 60%), radial-gradient(circle 820px at 96% 38%, rgba(255,208,0,.07), transparent 56%), var(--obsidian)`,
         backgroundAttachment: 'fixed',
       }}
     >

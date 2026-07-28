@@ -25,6 +25,7 @@ import {
   Handshake,
 } from 'lucide-react'
 import { Button, Input, Textarea, Checkbox, Radio } from '@/app/components/ui'
+import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
 
 // ─────────────────────────── types (miroir des DTO JSON) ────────────────────
 // Copies volontaires des formes renvoyées par les routes HTTP (pas des
@@ -1384,9 +1385,9 @@ export default function MessagesClient({
             />
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '4px 8px 16px' }}>
-            {conversations.length === 0 && <EmptyState icon={<MessageCircle size={32} />} title="Aucune conversation" subtitle="Ajoute un contact et commence à discuter" />}
+            {conversations.length === 0 && <MessagingEmptyState icon={<MessageCircle size={32} />} title="Aucune conversation" subtitle="Ajoute un contact et commence à discuter" />}
             {conversations.length > 0 && filteredConversations.length === 0 && (
-              <EmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Essaie un autre terme de recherche" />
+              <MessagingEmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Essaie un autre terme de recherche" />
             )}
             {filteredConversations.map((conv) => {
               const label = conversationLabel(conv, currentUserId)
@@ -1478,7 +1479,7 @@ export default function MessagesClient({
         <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: '100vh' }}>
           {!activeConversation ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <EmptyState icon={<MessageCircle size={32} />} title="Choisis une conversation" subtitle="Sélectionne un contact ou un groupe pour commencer à discuter" />
+              <MessagingEmptyState icon={<MessageCircle size={32} />} title="Choisis une conversation" subtitle="Sélectionne un contact ou un groupe pour commencer à discuter" />
             </div>
           ) : (
             <>
@@ -1549,7 +1550,7 @@ export default function MessagesClient({
 
               <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', position: 'relative' }}>
                 {visibleMessages.length === 0 && inThreadSearchOpen && inThreadSearchQuery.trim() && (
-                  <EmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Aucun message ne correspond à ta recherche" />
+                  <MessagingEmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Aucun message ne correspond à ta recherche" />
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {visibleMessages.map((msg, idx) => {
@@ -2154,15 +2155,6 @@ function Badge({ count }: { count: number }) {
   )
 }
 
-function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '48px 24px', textAlign: 'center' }}>
-      <span style={{ fontSize: 32, opacity: 0.5 }}>{icon}</span>
-      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{title}</p>
-      <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0, maxWidth: 220 }}>{subtitle}</p>
-    </div>
-  )
-}
 
 function Avatar({
   userId,
@@ -3313,7 +3305,7 @@ function FriendsPanel({
 
       <div>
         <p style={sectionLabelStyle}>Mes amis ({friends.length})</p>
-        {friends.length === 0 && <EmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
+        {friends.length === 0 && <MessagingEmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
         {friends.map((f) => (
           <div key={f.userId} style={rowStyle}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>
@@ -3633,7 +3625,7 @@ function StarredModal({
   return (
     <ModalShell title="Messages importants" onClose={onClose} wide>
       {messages.length === 0 && (
-        <EmptyState icon={<Star size={32} />} title="Aucun message important" subtitle="Appui long (ou clic droit) sur un message → « Marquer important »" />
+        <MessagingEmptyState icon={<Star size={32} />} title="Aucun message important" subtitle="Appui long (ou clic droit) sur un message → « Marquer important »" />
       )}
       {messages.map((m) => (
         <div key={m.id} style={rowStyle}>
@@ -3862,17 +3854,6 @@ const inputStyle: React.CSSProperties = {
   fontSize: 13,
   marginBottom: 10,
   fontFamily: 'inherit',
-}
-
-const smallButtonStyle: React.CSSProperties = {
-  padding: '6px 12px',
-  borderRadius: 999,
-  border: '1px solid var(--border-strong)',
-  background: 'var(--surface)',
-  color: 'var(--text)',
-  fontSize: 12,
-  fontWeight: 600,
-  cursor: 'pointer',
 }
 
 const fullRowButtonStyle: React.CSSProperties = {

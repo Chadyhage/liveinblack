@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 export interface SelectOption {
   value: string
@@ -46,10 +47,6 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [open])
-
-  useEffect(() => {
-    if (open) setActiveIndex(Math.max(0, options.findIndex((o) => o.value === value)))
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps -- ne réagit qu'à l'ouverture, pas à chaque changement de `value`/`options`
 
   useEffect(() => {
     if (open && activeIndex >= 0) {
@@ -97,7 +94,10 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
         type="button"
         id={id}
         disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setActiveIndex(Math.max(0, options.findIndex((o) => o.value === value)))
+          setOpen((v) => !v)
+        }}
         onKeyDown={onTriggerKeyDown}
         role="combobox"
         aria-haspopup="listbox"
@@ -112,8 +112,8 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
           gap: 8,
           background: 'var(--surface-2)',
           color: selected ? 'var(--text)' : 'var(--text-faint)',
-          border: `1px solid ${invalid ? '#e05a5a' : open ? 'var(--teal)' : 'var(--border-strong)'}`,
-          borderRadius: 11,
+          border: `1px solid ${invalid ? '#ff5b5b' : open ? 'var(--teal)' : 'var(--border-strong)'}`,
+          borderRadius: 'var(--radius-md)',
           fontFamily: 'inherit',
           fontWeight: 600,
           textAlign: 'left',
@@ -125,9 +125,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected ? selected.label : placeholder}</span>
-        <svg width="11" height="7" viewBox="0 0 11 7" fill="none" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 0.15s ease' }}>
-          <path d="M1 1L5.5 5.5L10 1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 0.15s ease' }} />
       </button>
 
       {open && (
@@ -149,7 +147,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
             listStyle: 'none',
             background: 'var(--surface-2)',
             border: '1px solid var(--border-strong)',
-            borderRadius: 12,
+            borderRadius: 'var(--radius-md)',
             boxShadow: '0 12px 32px rgba(0,0,0,0.45)',
           }}
         >
@@ -168,7 +166,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
                 onClick={() => commit(i)}
                 style={{
                   padding: '9px 12px',
-                  borderRadius: 8,
+                  borderRadius: 'var(--radius-md)',
                   fontSize: 13,
                   fontWeight: isSelected ? 700 : 500,
                   color: opt.disabled ? 'var(--text-faint)' : isSelected ? 'var(--teal)' : 'var(--text)',

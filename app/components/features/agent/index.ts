@@ -1,0 +1,6 @@
+export { default as AgentDashboardClient } from '@/app/components/AgentDashboardClient'
+export { default as AgentDossiersClient } from '@/app/components/AgentDossiersClient'
+export { default as AgentEventsClient } from '@/app/components/AgentEventsClient'
+export { default as AgentPaymentsClient } from '@/app/components/AgentPaymentsClient'
+export { default as AgentReportsClient } from '@/app/components/AgentReportsClient'
+export { default as AgentReviewsClient } from '@/app/components/AgentReviewsClient'

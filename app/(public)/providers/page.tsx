@@ -51,7 +51,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
   }
 
   return (
-    <main className="provider-directory" style={{ padding: '46px 22px 76px', width: '100%', minHeight: '100vh', background: 'radial-gradient(circle 760px at 5% 0%, rgba(139,92,246,.16), transparent 65%), radial-gradient(circle 760px at 96% 24%, rgba(200,169,110,.12), transparent 62%)' }}>
+    <main className="provider-directory" style={{ padding: '56px 22px 88px', width: '100%', minHeight: '100vh', background: 'radial-gradient(circle 760px at 5% 0%, rgba(255,229,0,.10), transparent 65%), radial-gradient(circle 760px at 96% 24%, rgba(255,208,0,.07), transparent 62%)' }}>
       <style>{`
         .provider-directory__filters{display:grid;grid-template-columns:minmax(220px,1fr) minmax(170px,.45fr) auto;gap:8px;max-width:760px;margin:0 auto 18px}
         .provider-directory__field{min-width:0;padding:11px 14px;border-radius:var(--radius-pill);border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13.5px}
@@ -83,7 +83,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
         <Button
           type="submit"
           variant="primary"
-          style={{ flexShrink: 0, padding: '12px 18px', borderRadius: 3, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
+          style={{ flexShrink: 0, minHeight: 46, padding: '12px 20px', borderRadius: 999, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
         >
           Filtrer
         </Button>
@@ -115,7 +115,8 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
               <Link
                 key={p.userId}
                 href={`/providers/${encodeURIComponent(p.userId)}`}
-                style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}
+                className="lb-card"
+                style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}
               >
                 <div style={{ position: 'relative', height: 120, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))` }}>
                   {coverImage && (
@@ -164,7 +165,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
       <section style={{ maxWidth: 820, margin: '54px auto 0', padding: '36px 24px', textAlign: 'center', borderRadius: 20, border: '1px solid rgba(200,169,110,.3)', background: 'var(--surface)' }}>
         <h2 className="font-display" style={{ margin: 0, fontSize: 32, letterSpacing: '.01em' }}>Tu es prestataire ?</h2>
         <p style={{ maxWidth: 500, margin: '10px auto 20px', color: 'var(--text-muted)', lineHeight: 1.6 }}>Crée ta vitrine, présente ton catalogue et échange directement avec les organisateurs.</p>
-        <Link href="/provider-signup" style={{ display: 'inline-block', padding: '13px 22px', borderRadius: 3, background: 'var(--gold)', color: '#090a0f', textDecoration: 'none', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5 }}>Devenir prestataire</Link>
+        <Link href="/provider-signup" style={{ display: 'inline-block', padding: '13px 22px', borderRadius: 999, background: 'var(--primary)', color: 'var(--primary-ink)', textDecoration: 'none', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5 }}>Devenir prestataire</Link>
       </section>
       </div>
     </main>
