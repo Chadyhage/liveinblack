@@ -5,7 +5,7 @@ import mongoose, { Schema, model, models, type InferSchemaType, type Model } fro
 // ce que le compte a le droit d'utiliser, `activeRole` est l'interface
 // actuellement affichée. Les fonctions de lib/server/permissions.ts vérifient
 // toujours `activeRole`, jamais `roles` directement.
-const ROLES = ['client', 'organisateur', 'prestataire', 'agent'] as const
+export const ROLES = ['client', 'organisateur', 'prestataire', 'agent'] as const
 const STATUSES = ['active', 'pending', 'rejected'] as const
 const ROLE_APPROVAL_STATUSES = ['none', 'pending', 'active', 'rejected'] as const
 

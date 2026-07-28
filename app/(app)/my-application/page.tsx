@@ -51,6 +51,11 @@ const TYPE_CONTEXT: Record<'organisateur' | 'prestataire', string> = {
 const SUCCESS_PATH: Record<'organisateur' | 'prestataire', string> = { organisateur: '/my-events', prestataire: '/offer-services' }
 const SUCCESS_LABEL: Record<'organisateur' | 'prestataire', string> = { organisateur: 'Aller à mes événements', prestataire: 'Aller à mon espace prestataire' }
 const SUPPORT_EMAIL = 'hagechady@liveinblack.com'
+// Routes réelles en anglais (app/(app)/onboarding-organizer, .../onboarding-provider)
+// — `type` (organisateur/prestataire) ne peut pas être interpolé directement
+// dans l'URL comme le faisait `/onboarding-${type}` (générait des liens 404
+// vers /onboarding-organisateur et /onboarding-prestataire, qui n'existent pas).
+const EDIT_PATH: Record<'organisateur' | 'prestataire', string> = { organisateur: '/onboarding-organizer', prestataire: '/onboarding-provider' }
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -65,7 +70,7 @@ function SupportLink() {
 }
 
 function ApplicationCard({ type, application, roleStatus, id }: { type: 'organisateur' | 'prestataire'; application: ApplicationView | null; roleStatus: 'none' | 'pending' | 'active' | 'rejected'; id: string }) {
-  const editPath = `/onboarding-${type}`
+  const editPath = EDIT_PATH[type]
 
   return (
     <section id={id} style={{ display: 'flex', flexDirection: 'column', gap: 10, scrollMarginTop: 20 }}>

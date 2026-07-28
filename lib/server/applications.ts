@@ -8,6 +8,7 @@ import { sendEmail } from './email'
 import { validateOrganizerFormData, type OrganizerFormData, validatePrestataireFormData, type PrestataireFormData, getRequiredDocs } from '../shared/applicationValidation'
 import { applicationApprovedEmail, applicationRejectedEmail, applicationNeedsChangesEmail } from './email-templates'
 import { isPasswordPolicyCompliant } from '../shared/passwordPolicy'
+import { createNotification } from './notifications'
 import {
   APPLICATION_DOCUMENT_MAX_BYTES,
   type ApplicationDocumentInput,
@@ -669,12 +670,26 @@ export async function moderateApplication(
       if (isOrganisateur) user.orgStatus = 'active'
       else user.prestStatus = 'active'
       email = await sendEmail(user.email, applicationApprovedEmail(app.type))
+      await createNotification({
+        userId: String(user._id),
+        type: 'application_status',
+        title: `Dossier ${isOrganisateur ? 'organisateur' : 'prestataire'} approuvé`,
+        body: 'Ton dossier a été validé — ton espace est maintenant actif.',
+        link: '/my-application',
+      })
       break
     case 'request_changes':
       app.status = 'needs_changes'
       app.requestedChanges = trimmedNote
       app.reviewedAt = now
       email = await sendEmail(user.email, applicationNeedsChangesEmail(app.type, trimmedNote))
+      await createNotification({
+        userId: String(user._id),
+        type: 'application_status',
+        title: 'Modifications demandées sur ton dossier',
+        body: trimmedNote,
+        link: '/my-application',
+      })
       break
     case 'reject':
       app.status = 'rejected'
@@ -689,6 +704,13 @@ export async function moderateApplication(
       // actuellement, mais garde la parité si un futur flux le remet à 'pending').
       if (user.status === 'pending') user.status = 'active'
       email = await sendEmail(user.email, applicationRejectedEmail(app.type, trimmedNote))
+      await createNotification({
+        userId: String(user._id),
+        type: 'application_status',
+        title: 'Dossier refusé',
+        body: trimmedNote,
+        link: '/my-application',
+      })
       break
     case 'suspend':
       app.status = 'suspended'

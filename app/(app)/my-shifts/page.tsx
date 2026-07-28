@@ -21,20 +21,29 @@ const ROLE_META: Record<string, { label: string; color: string; desc: string }> 
   scan: { label: 'Contrôle entrée', color: '#8b5cf6', desc: "Scanne les billets à l'entrée" },
   manager: { label: 'Manager', color: 'var(--gold)', desc: 'Gestion complète de la soirée' },
   dj: { label: 'DJ', color: '#e05aaa', desc: 'Gère la playlist interactive de la soirée' },
+  // 'vendeur' (#C, lib/server/agentSales.ts) ajouté après le reste de cette
+  // page — manquait ici, ce qui faisait tomber sur le fallback générique
+  // (couleur grise, description vide) ET, pire, redirigeait vers le scanner
+  // au lieu de /agent-sales/[eventId] (voir roleHref ci-dessous).
+  vendeur: { label: 'Vente sur place', color: 'var(--gold)', desc: 'Vends des billets cash ou Mobile Money' },
 }
 
-// DJ → gestion de la playlist (#75/#47) ; tout autre rôle staff (scan,
-// serveur, manager) → le scanner, qui démarre en mode « contrôle entrée » et
-// bascule lui-même en mode « service » dès qu'un billet est scanné (voir
-// ScannerClient.tsx) — pas de state de navigation à transmettre, contrairement
-// au legacy qui passait `{ mode, eventId }` en state de route.
+// DJ → gestion de la playlist (#75/#47) ; vendeur → l'espace de vente sur
+// place (#C) ; tout autre rôle staff (scan, serveur, manager) → le scanner,
+// qui démarre en mode « contrôle entrée » et bascule lui-même en mode
+// « service » dès qu'un billet est scanné (voir ScannerClient.tsx) — pas de
+// state de navigation à transmettre, contrairement au legacy qui passait
+// `{ mode, eventId }` en state de route.
 function roleHref(eventId: string, role: string): string {
-  return role === 'dj' ? `/playlist/${eventId}` : `/scanner/${eventId}`
+  if (role === 'dj') return `/playlist/${eventId}`
+  if (role === 'vendeur') return `/agent-sales/${eventId}`
+  return `/scanner/${eventId}`
 }
 
 function roleCta(role: string): string {
   if (role === 'dj') return 'Gérer la playlist'
   if (role === 'scan') return 'Ouvrir le scan des entrées'
+  if (role === 'vendeur') return 'Ouvrir la vente sur place'
   return 'Ouvrir le POS bar'
 }
 

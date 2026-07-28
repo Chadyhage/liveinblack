@@ -2082,6 +2082,23 @@ export default function MessagesClient({
   )
 }
 
+// Décode le contenu `SYS::{...}` posté par postBlockSystemMessage
+// (lib/server/messaging.ts) — le texte affiché dépend de qui regarde ("Tu as
+// bloqué X" vs "X t'a bloqué"), donc jamais pré-traduit côté serveur. Cette
+// fonction manquait entièrement malgré le commentaire de messaging.ts qui la
+// référençait déjà : le JSON brut s'affichait tel quel dans la conversation.
+function systemMessageLabel(content: string | null, currentUserId: string): string {
+  if (!content || !content.startsWith('SYS::')) return content || ''
+  try {
+    const data = JSON.parse(content.slice(5)) as { kind: 'block' | 'unblock'; by: string; byName: string; target: string; targetName: string }
+    const iActed = data.by === currentUserId
+    if (data.kind === 'block') return iActed ? `Tu as bloqué ${data.targetName}.` : `${data.byName} t'a bloqué.`
+    return iActed ? `Tu as débloqué ${data.targetName}.` : `${data.byName} t'a débloqué.`
+  } catch {
+    return content
+  }
+}
+
 function messageTypeLabel(type: MessageType): string {
   if (type === 'image') return 'Photo'
   if (type === 'voice') return 'Message vocal'
@@ -2343,7 +2360,9 @@ function MessageRow({
   if (message.type === 'system') {
     return (
       <div style={{ textAlign: 'center', padding: '4px 0' }}>
-        <span style={{ fontSize: 11.5, color: 'var(--text-muted)', background: 'var(--surface)', borderRadius: 20, padding: '4px 12px' }}>{message.content}</span>
+        <span style={{ fontSize: 11.5, color: 'var(--text-muted)', background: 'var(--surface)', borderRadius: 20, padding: '4px 12px' }}>
+          {systemMessageLabel(message.content, currentUserId)}
+        </span>
       </div>
     )
   }

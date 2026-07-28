@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import AccountMenu from './AccountMenu'
 import { Button } from '@/app/components/ui'
+import { Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/home', label: 'Accueil' },
@@ -17,14 +18,26 @@ const NAV_LINKS = [
   { href: '/search', label: 'Recherche' },
 ]
 
-// Nav publique partagée par toutes les pages non-authentifiées. Backdrop-blur
-// toléré par le design system (CLAUDE.md) même si le contenu, lui, reste opaque.
+export interface DashboardNavLink {
+  label: string
+  href: string
+}
+
+// Nav partagée par TOUTES les pages (publiques ET authentifiées, via
+// app/(app)/layout.tsx qui passe `dashboardLinks`). Backdrop-blur toléré par
+// le design system (CLAUDE.md) même si le contenu, lui, reste opaque.
 //
 // Sous 720px, `.lb-navlink` passe en `display:none` sans aucun remplacement
 // auparavant — impossible de naviguer vers Prestataires/Organisateurs/C'est
 // quoi/Recherche depuis un mobile. Le bouton hamburger + tiroir ci-dessous
 // reprend exactement les mêmes liens pour ce cas.
-export default function PublicNav() {
+//
+// `dashboardLinks` (sidebar du rôle actif, voir DashboardShell.tsx) est
+// injecté dans CE MÊME tiroir plutôt que d'avoir un second hamburger séparé
+// pour la sidebar : deux boutons "menu" empilés sur mobile (un pour les
+// liens publics, un pour le dashboard) était confus — un seul point d'entrée,
+// comme sur Facebook mobile.
+export default function PublicNav({ dashboardLinks }: { dashboardLinks?: DashboardNavLink[] } = {}) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
   const onLoginPage = pathname === '/login'
@@ -62,20 +75,20 @@ export default function PublicNav() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '16px 22px',
-        background: 'rgba(4,4,11,0.72)',
+        padding: '14px 22px',
+        background: 'rgba(7,8,13,0.86)',
         backdropFilter: 'blur(14px)',
-        borderBottom: '1px solid var(--border)',
+        borderBottom: '1px solid rgba(0,229,255,.16)',
       }}
     >
       <Link
         href="/home"
         style={{
-          fontSize: 18,
-          letterSpacing: '0.08em',
+          fontSize: 17,
+          letterSpacing: '0.12em',
           color: 'var(--text)',
           textDecoration: 'none',
-          fontWeight: 600,
+          fontWeight: 800,
         }}
       >
         L<span style={{ color: 'var(--text)' }}>|</span>VE IN{' '}
@@ -87,7 +100,7 @@ export default function PublicNav() {
             key={link.href}
             href={link.href}
             className="lb-navlink"
-            style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13.5, fontWeight: 600 }}
+            style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.055em' }}
           >
             {link.label}
           </Link>
@@ -101,8 +114,8 @@ export default function PublicNav() {
               style={{
                 padding: '9px 18px',
                 borderRadius: 999,
-                background: 'var(--teal-solid)',
-                color: '#04120e',
+                background: 'var(--gold)',
+                color: '#171500',
                 fontSize: 13,
                 fontWeight: 700,
                 textDecoration: 'none',
@@ -116,7 +129,7 @@ export default function PublicNav() {
               style={{
                 padding: '9px 18px',
                 borderRadius: 999,
-                border: '1px solid var(--border-strong)',
+                border: '1px solid rgba(0,229,255,.55)',
                 color: 'var(--text)',
                 fontSize: 13,
                 fontWeight: 700,
@@ -159,20 +172,7 @@ export default function PublicNav() {
               color: 'var(--text)',
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              {mobileOpen ? (
-                <>
-                  <line x1="5" y1="5" x2="19" y2="19" />
-                  <line x1="19" y1="5" x2="5" y2="19" />
-                </>
-              ) : (
-                <>
-                  <line x1="4" y1="7" x2="20" y2="7" />
-                  <line x1="4" y1="12" x2="20" y2="12" />
-                  <line x1="4" y1="17" x2="20" y2="17" />
-                </>
-              )}
-            </svg>
+            {mobileOpen ? <X size={18} strokeWidth={2} aria-hidden="true" /> : <Menu size={18} strokeWidth={2} aria-hidden="true" />}
           </Button>
         </span>
       </nav>
@@ -192,6 +192,33 @@ export default function PublicNav() {
             boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
           }}
         >
+          {dashboardLinks && dashboardLinks.length > 0 && (
+            <>
+              <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 11, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Mon espace
+              </p>
+              {dashboardLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    padding: '14px 22px',
+                    color: 'var(--text)',
+                    textDecoration: 'none',
+                    fontSize: 14.5,
+                    fontWeight: 600,
+                    borderBottom: '1px solid var(--border)',
+                  }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 11, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Site
+              </p>
+            </>
+          )}
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}

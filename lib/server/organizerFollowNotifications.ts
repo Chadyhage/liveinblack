@@ -3,6 +3,7 @@ import OrganizerFollow from '../models/OrganizerFollow'
 import User from '../models/User'
 import { sendEmail } from './email'
 import { organizerNewEventEmail, organizerScheduleChangeEmail, type FollowedEventSummary } from './email-templates'
+import { createNotification } from './notifications'
 
 // LIVRAISON email des alertes d'abonnement organisateur — précédemment hors
 // périmètre (voir l'ancien en-tête de lib/server/organizerFollows.ts, qui
@@ -58,7 +59,8 @@ export interface NotifyOrganizerFollowersResult {
 async function fanOutToFollowers(
   organizerId: string,
   alertType: OrganizerFollowAlertType,
-  buildEmail: () => { subject: string; html: string }
+  buildEmail: () => { subject: string; html: string },
+  inAppNotification: { title: string; body: string; link: string }
 ): Promise<NotifyOrganizerFollowersResult> {
   await getDb()
 
@@ -84,6 +86,9 @@ async function fanOutToFollowers(
   const email = buildEmail()
   let sent = 0
   for (const user of users) {
+    // In-app d'abord, indépendamment de l'email (un compte sans email valide
+    // doit quand même voir la notification dans l'app).
+    await createNotification({ userId: String(user._id), type: 'organizer_activity', ...inAppNotification })
     if (!user.email) continue
     const result = await sendEmail(user.email, email)
     if (result.ok) sent++
@@ -102,7 +107,11 @@ export async function notifyNewEvent(
   organizerName: string,
   event: FollowedEventSummary
 ): Promise<NotifyOrganizerFollowersResult> {
-  return fanOutToFollowers(organizerId, 'newEvent', () => organizerNewEventEmail(event, organizerName))
+  return fanOutToFollowers(organizerId, 'newEvent', () => organizerNewEventEmail(event, organizerName), {
+    title: `${organizerName} organise un nouvel événement`,
+    body: event.name,
+    link: `/events/${event.id}`,
+  })
 }
 
 // ─────────────────────────── notifyScheduleChange ────────────────────────────
@@ -118,5 +127,9 @@ export async function notifyScheduleChange(
   kind: 'cancelled' | 'postponed',
   extra: { previousWhen?: string; newWhen?: string } = {}
 ): Promise<NotifyOrganizerFollowersResult> {
-  return fanOutToFollowers(organizerId, 'scheduleChanges', () => organizerScheduleChangeEmail(event, organizerName, kind, extra))
+  return fanOutToFollowers(organizerId, 'scheduleChanges', () => organizerScheduleChangeEmail(event, organizerName, kind, extra), {
+    title: kind === 'cancelled' ? `${event.name} a été annulé` : `${event.name} a été reporté`,
+    body: organizerName,
+    link: `/events/${event.id}`,
+  })
 }

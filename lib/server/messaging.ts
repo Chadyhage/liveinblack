@@ -6,6 +6,7 @@ import User from '../models/User'
 import ProviderProfile from '../models/ProviderProfile'
 import Report from '../models/Report'
 import { AUDIO_MIME_TYPES, IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
+import { upsertMessageNotification } from './notifications'
 
 // Port de src/utils/messaging.js vers un modèle Mongo un-document-par-message
 // (voir lib/models/Message.ts). Ferme l'audit C10 : le legacy stockait TOUS
@@ -697,6 +698,16 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
   await Conversation.updateOne(
     { _id: conversation._id },
     { $set: { lastMessage: lastMessageLabel, lastMessageAt: created.createdAt, lastSenderId: caller.id } }
+  )
+
+  // Une notification par destinataire, upsertée par conversation (anti-spam,
+  // voir upsertMessageNotification) — jamais pour l'expéditeur lui-même.
+  const conversationIdStr = String(conversation._id)
+  const recipientIds = conversation.participantIds.filter((id) => id !== caller.id)
+  await Promise.all(
+    recipientIds.map((recipientId) =>
+      upsertMessageNotification(recipientId, conversationIdStr, lastMessageLabel, `/messages?conversationId=${conversationIdStr}`)
+    )
   )
 
   const conversationSource = conversation.toObject({ flattenMaps: true }) as unknown as ConversationSource

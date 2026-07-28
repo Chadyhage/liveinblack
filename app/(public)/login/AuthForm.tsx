@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
@@ -131,6 +131,17 @@ export default function AuthForm() {
   const searchParams = useSearchParams()
   const next = safeInternalPath(searchParams.get('next'), '') || null
   const initialRole = searchParams.get('role')
+  const { status: sessionStatus } = useSession()
+
+  // Visiter /login avec une session déjà active affichait quand même le
+  // formulaire de connexion (nav en état connecté, contenu en état
+  // déconnecté) — redirige immédiatement au lieu de laisser cet état
+  // incohérent à l'écran.
+  useEffect(() => {
+    if (sessionStatus === 'authenticated') {
+      router.replace(next || '/profile')
+    }
+  }, [sessionStatus, next, router])
 
   const [mode, setMode] = useState<Mode>(searchParams.get('mode') === 'register' ? 'register' : 'login')
   const [regStep, setRegStep] = useState<1 | 2>(initialRole === 'client' ? 2 : 1)
@@ -371,6 +382,10 @@ export default function AuthForm() {
       setRegLoading(false)
     }
   }
+
+  // Session déjà active : le useEffect plus haut redirige, ceci évite juste
+  // le flash du formulaire de connexion pendant le court instant qui précède.
+  if (sessionStatus === 'authenticated') return null
 
   // ── "Vérifie ton email" screen ──
   if (registeredEmail) {

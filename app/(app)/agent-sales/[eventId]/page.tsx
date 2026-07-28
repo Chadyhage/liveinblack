@@ -21,10 +21,30 @@ export async function generateMetadata({ params }: { params: Promise<{ eventId: 
   }
 }
 
+// Icône/mise en page alignées sur le GateScreen de scanner/[eventId]/page.tsx
+// (même famille d'écran de garde staff-only) — elles avaient divergé, l'une
+// avec l'icône ronde rose, l'autre non.
 function GateScreen({ title, message }: { title: string; message: string }) {
   return (
     <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
       <div style={{ textAlign: 'center', maxWidth: 360 }}>
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            margin: '0 auto 22px',
+            background: 'rgba(224,90,170,0.08)',
+            border: '2px solid rgba(224,90,170,0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+        </div>
         <p style={{ fontWeight: 800, fontSize: 22, color: 'var(--pink)', margin: '0 0 10px' }}>{title}</p>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
         <Link href="/home" style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>

@@ -81,7 +81,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Déclenché par `update({ activeRole })` côté client (next-auth/react)
+      // après POST /api/account/active-role — sans cette branche, la session
+      // JWT resterait figée sur l'activeRole de la connexion initiale jusqu'à
+      // la prochaine reconnexion (30 jours), le switch de dashboard resterait
+      // sans effet dans le token malgré la mise à jour en base. `update()` est
+      // appelable directement côté client sans repasser par la route API : on
+      // NE FAIT JAMAIS confiance à la valeur envoyée sans la revérifier contre
+      // `user.roles` en base (même garde que la route), sans quoi n'importe
+      // quel compte pourrait s'auto-attribuer activeRole:'agent'.
+      if (trigger === 'update' && session && typeof (session as { activeRole?: unknown }).activeRole === 'string') {
+        const requestedRole = (session as { activeRole: string }).activeRole
+        await getDb()
+        const dbUser = await User.findById(token.sub).select('roles').lean()
+        if (dbUser?.roles.includes(requestedRole as Role)) {
+          token.activeRole = requestedRole
+        }
+        return token
+      }
+
       if (user) {
         const u = user as unknown as { roles: Role[]; activeRole: Role; status: AccountStatus; orgStatus?: RoleApprovalStatus; prestStatus?: RoleApprovalStatus; sessionVersion: number }
         token.roles = u.roles
