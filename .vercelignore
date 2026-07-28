@@ -1,0 +1,5 @@
+.next
+.next-broken-*
+.node_modules_pnpm_tainted_*
+old
+node_modules
