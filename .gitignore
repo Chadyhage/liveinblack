@@ -18,6 +18,11 @@ node_modules
 # legacy app build output (old/, Vite)
 dist
 
+# legacy Vite/Firebase app — gelé, jamais exécuté, gardé sur disque comme
+# référence de fidélité uniquement (voir CLAUDE.md) ; retiré du suivi git
+# pour ne pas alourdir le repo/les déploiements (729 Mo).
+/old/
+
 # misc
 .DS_Store
 *.pem
