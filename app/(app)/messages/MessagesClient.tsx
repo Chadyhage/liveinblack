@@ -24,7 +24,9 @@ import {
   Pause,
   Handshake,
 } from 'lucide-react'
-import { Button, Input, Textarea, Checkbox, Radio } from '@/app/components/ui'
+import { Button, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice } from '@/app/components/ui'
+
+const CONV_PAGE_SIZE = 20
 import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
 
 // ─────────────────────────── types (miroir des DTO JSON) ────────────────────
@@ -259,6 +261,17 @@ function avatarColorFor(userId: string): string {
   return AVATAR_COLORS[code % AVATAR_COLORS.length]
 }
 
+// Union par id, triée par id croissant (= ordre chronologique, voir
+// GetMessagesInput dans lib/server/messaging.ts) — `older` peut contenir des
+// messages déjà présents dans `existing` en cas de chevauchement de fenêtre,
+// jamais l'inverse ne doit produire de doublon visible dans le fil.
+function mergeMessagesById(older: MessageView[], existing: MessageView[]): MessageView[] {
+  const byId = new Map<string, MessageView>()
+  for (const m of older) byId.set(m.id, m)
+  for (const m of existing) byId.set(m.id, m)
+  return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+}
+
 function conversationLabel(conv: ConversationView, currentUserId: string): string {
   if (conv.type === 'group') return conv.name || 'Groupe'
   const other = conv.members.find((m) => m.userId !== currentUserId)
@@ -332,6 +345,8 @@ export default function MessagesClient({
   const [conversations, setConversations] = useState<ConversationView[]>(initialConversations)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageView[]>([])
+  const [hasMoreOlder, setHasMoreOlder] = useState(false)
+  const [loadingOlder, setLoadingOlder] = useState(false)
   const [composerText, setComposerText] = useState('')
   const [busy, setBusy] = useState(false)
   const [toasts, setToasts] = useState<{ id: number; message: string }[]>([])
@@ -376,6 +391,7 @@ export default function MessagesClient({
   const [muteMemberDialog, setMuteMemberDialog] = useState<{ userId: string; name: string } | null>(null)
   const [convContextMenu, setConvContextMenu] = useState<{ conversationId: string; x: number; y: number } | null>(null)
   const [convSearch, setConvSearch] = useState('')
+  const [convPage, setConvPage] = useState(1)
   const [showListMenu, setShowListMenu] = useState(false)
   const [forwardTargetPick, setForwardTargetPick] = useState<Set<string>>(new Set())
 
@@ -476,13 +492,52 @@ export default function MessagesClient({
     if (friendsRes.ok) setFriends(friendsRes.data.friends)
   }, [])
 
+  // Fenêtre "les 50 derniers messages" — utilisée à la fois pour le chargement
+  // initial d'une conversation et pour le polling live (toutes les 3s).
+  // MERGE par id plutôt que remplacement complet : si l'utilisateur a scrollé
+  // vers le haut et chargé de l'historique plus ancien (loadOlderMessages
+  // ci-dessous), un poll qui remplacerait `messages` effacerait cet
+  // historique à chaque tick. `hasMore` de cette fenêtre indique juste "il
+  // existe plus de 50 messages au total" — approximatif une fois de
+  // l'historique déjà chargé plus loin, mais sans risque (loadOlderMessages
+  // corrige avec son propre curseur `before` à l'appel suivant).
   const fetchMessages = useCallback(async (conversationId: string) => {
-    const res = await apiFetch<{ messages: MessageView[] }>(`/api/conversations/${conversationId}/messages?limit=50`)
-    if (res.ok && activeIdRef.current === conversationId) setMessages(res.data.messages)
+    const res = await apiFetch<{ messages: MessageView[]; hasMore: boolean }>(`/api/conversations/${conversationId}/messages?limit=50`)
+    if (!res.ok || activeIdRef.current !== conversationId) return
+    setMessages((prev) => mergeMessagesById(prev, res.data.messages))
+    setHasMoreOlder(res.data.hasMore)
   }, [])
+
+  const loadOlderMessages = useCallback(async () => {
+    const conversationId = activeIdRef.current
+    if (!conversationId || loadingOlder || !hasMoreOlder || messages.length === 0) return
+    const oldest = messages[0].id
+    setLoadingOlder(true)
+    const el = chatScrollRef.current
+    const prevScrollHeight = el?.scrollHeight ?? 0
+    try {
+      const res = await apiFetch<{ messages: MessageView[]; hasMore: boolean }>(
+        `/api/conversations/${conversationId}/messages?before=${oldest}&limit=50`
+      )
+      if (res.ok && activeIdRef.current === conversationId) {
+        setMessages((prev) => mergeMessagesById(res.data.messages, prev))
+        setHasMoreOlder(res.data.hasMore)
+        // Restaure la position de lecture : sans ça, préfixer des messages plus
+        // anciens en haut du fil ferait "sauter" visuellement le contenu que
+        // l'utilisateur était en train de lire.
+        requestAnimationFrame(() => {
+          if (el) el.scrollTop = el.scrollHeight - prevScrollHeight
+        })
+      }
+    } finally {
+      setLoadingOlder(false)
+    }
+  }, [loadingOlder, hasMoreOlder, messages])
 
   useEffect(() => {
     if (!activeId) return
+    setMessages([])
+    setHasMoreOlder(false)
     fetchMessages(activeId)
     apiFetch(`/api/conversations/${activeId}/read`, { method: 'POST' }).then(() => refreshConversations())
     const interval = setInterval(() => fetchMessages(activeId), 3000)
@@ -568,6 +623,7 @@ export default function MessagesClient({
     const el = chatScrollRef.current
     if (!el) return
     setShowScrollButton(el.scrollHeight - el.scrollTop - el.clientHeight > 120)
+    if (el.scrollTop < 80) loadOlderMessages()
   }
 
   function scrollToBottom() {
@@ -1321,6 +1377,12 @@ export default function MessagesClient({
     return conversationLabel(c, currentUserId).toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q)
   })
 
+  const { pageItems: pagedConversations, pageCount: convPageCount } = pagedSlice(filteredConversations, convPage, CONV_PAGE_SIZE)
+
+  useEffect(() => {
+    setConvPage(1)
+  }, [convSearch])
+
   const visibleMessages = inThreadSearchOpen && inThreadSearchQuery.trim()
     ? messages.filter((m) => (m.content || '').toLowerCase().includes(inThreadSearchQuery.trim().toLowerCase()))
     : messages
@@ -1389,7 +1451,7 @@ export default function MessagesClient({
             {conversations.length > 0 && filteredConversations.length === 0 && (
               <MessagingEmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Essaie un autre terme de recherche" />
             )}
-            {filteredConversations.map((conv) => {
+            {pagedConversations.map((conv) => {
               const label = conversationLabel(conv, currentUserId)
               const other = conv.type === 'direct' ? conv.members.find((m) => m.userId !== currentUserId) : null
               return (
@@ -1472,6 +1534,11 @@ export default function MessagesClient({
               )
             })}
           </div>
+          {convPageCount > 1 && (
+            <div style={{ padding: '4px 12px 10px' }}>
+              <Pagination page={convPage} pageCount={convPageCount} onPageChange={setConvPage} totalItems={filteredConversations.length} pageSize={CONV_PAGE_SIZE} />
+            </div>
+          )}
         </aside>
       )}
 
@@ -1549,6 +1616,11 @@ export default function MessagesClient({
               )}
 
               <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', position: 'relative' }}>
+                {loadingOlder && (
+                  <div style={{ textAlign: 'center', padding: '4px 0 10px' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Chargement des messages précédents…</span>
+                  </div>
+                )}
                 {visibleMessages.length === 0 && inThreadSearchOpen && inThreadSearchQuery.trim() && (
                   <MessagingEmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Aucun message ne correspond à ta recherche" />
                 )}

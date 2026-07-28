@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
-import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, type DashboardNavItem } from './dashboardNav'
+import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, FULL_BLEED_PREFIXES, type DashboardNavItem } from './dashboardNav'
 import { getRoleLabel, type Role } from '@/lib/server/permissions'
 
 const SIDEBAR_WIDTH = 240
@@ -120,6 +120,8 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
     return <>{children}</>
   }
 
+  const fullBleed = FULL_BLEED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))
+
   const items: DashboardNavItem[] = [...ROLE_NAV[activeRole], ...COMMON_NAV]
   const upsell = activeRole === 'client' ? CLIENT_UPSELL : []
 
@@ -202,7 +204,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         </nav>
       </aside>
 
-      <div style={{ flex: 1, minWidth: 0, padding: '28px 32px' }}>{children}</div>
+      <div style={{ flex: 1, minWidth: 0, ...(fullBleed ? {} : { padding: '28px 32px' }) }}>{children}</div>
 
       <style>{`
         @media (max-width: 1099px) {

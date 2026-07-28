@@ -98,5 +98,14 @@ export const CLIENT_UPSELL: DashboardNavItem[] = [
 
 // Routes immersives (plein écran, sans sidebar) — même esprit que HIDE_ON
 // dans app/components/AmbientMusicPlayer.tsx : la sidebar gênerait un flux
-// caméra/chat/wizard qui a besoin de tout l'écran.
-export const HIDE_SIDEBAR_PREFIXES = ['/messages', '/scanner', '/playlist', '/order', '/agent-sales', '/onboarding-organizer', '/onboarding-provider']
+// caméra/chat/wizard qui a besoin de tout l'écran. /messages n'en fait plus
+// partie (le client veut la sidebar visible aussi sur Messages, voir
+// FULL_BLEED_PREFIXES ci-dessous pour la mise en page 3 colonnes).
+export const HIDE_SIDEBAR_PREFIXES = ['/scanner', '/playlist', '/order', '/agent-sales', '/onboarding-organizer', '/onboarding-provider']
+
+// Routes où la sidebar reste visible mais la colonne de contenu ne doit PAS
+// recevoir le padding standard de DashboardShell — MessagesClient.tsx gère
+// déjà lui-même son propre layout plein écran à 2 colonnes (liste +
+// conversation), la sidebar s'ajoute simplement comme 3e colonne à gauche
+// sans toucher à ces 2 colonnes existantes.
+export const FULL_BLEED_PREFIXES = ['/messages']
