@@ -150,7 +150,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           height: 'calc(100vh - 61px)',
           overflowY: 'auto',
           borderRight: '1px solid rgba(255,229,0,.14)',
-          background: 'rgba(53,0,71,.92)',
+          background: 'var(--surface-2)',
         }}
       >
         <div
