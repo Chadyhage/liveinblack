@@ -13,7 +13,9 @@ import {
 import { regions } from '@/lib/shared/regions'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Checkbox, Input } from '@/app/components/ui'
+import { Button, Checkbox, Input, PageLinks, pageSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 20
 
 export const metadata: Metadata = {
   title: 'Organisateurs — LIVEINBLACK',
@@ -27,16 +29,18 @@ type DirectoryParams = {
   region?: string
   upcoming?: string
   sort?: string
+  page?: string
 }
 
 export default async function PublicOrganizersPage({ searchParams }: { searchParams: Promise<DirectoryParams> }) {
-  const [{ q, region = '', upcoming, sort = 'popular' }, organizers, session] = await Promise.all([
+  const [{ q, region = '', upcoming, sort = 'popular', page: pageParam }, organizers, session] = await Promise.all([
     searchParams,
     listPublicOrganizersWithNextEvent(),
     auth(),
   ])
   const search = (q || '').trim()
   const upcomingOnly = upcoming === '1'
+  const requestedPage = Math.max(1, Number(pageParam) || 1)
 
   const followResult = session?.user
     ? await listMyFollowedOrganizers({ id: session.user.id })
@@ -66,6 +70,18 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
       if (sort !== 'recent') return (b.followersCount || 0) - (a.followersCount || 0)
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     })
+
+  const { pageItems: paged, pageCount, safePage } = pageSlice(filtered, requestedPage, PAGE_SIZE)
+  function makeHref(p: number) {
+    const params = new URLSearchParams()
+    if (search) params.set('q', search)
+    if (region) params.set('region', region)
+    if (upcomingOnly) params.set('upcoming', '1')
+    if (sort !== 'popular') params.set('sort', sort)
+    if (p > 1) params.set('page', String(p))
+    const qs = params.toString()
+    return qs ? `/organizers?${qs}` : '/organizers'
+  }
 
   return (
     <main className="organizer-directory">
@@ -148,7 +164,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
           </div>
         ) : (
           <div className="organizer-directory__grid">
-            {filtered.map((organizer) => {
+            {paged.map((organizer) => {
               const zones = getEntityRegionIds(organizer).map(getRegionName).filter(Boolean)
               const isSelf = session?.user?.id === organizer.userId
               return (
@@ -190,6 +206,8 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             })}
           </div>
         )}
+
+        <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={filtered.length} pageSize={PAGE_SIZE} />
       </div>
     </main>
   )

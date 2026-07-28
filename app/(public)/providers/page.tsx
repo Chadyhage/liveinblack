@@ -7,7 +7,9 @@ import { getProviderCategories, getProviderCategory, PROVIDER_CATEGORIES } from 
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Input } from '@/app/components/ui'
+import { Button, Input, PageLinks, pageSlice } from '@/app/components/ui'
+
+const PAGE_SIZE = 24
 
 export const metadata: Metadata = {
   title: 'Prestataires — LIVEINBLACK',
@@ -26,10 +28,11 @@ function firstCatalogImage(catalog: { available?: boolean; media?: { url?: strin
 }
 
 // Port de src/pages/PublicPrestataires.jsx — annuaire public des prestataires.
-export default async function PublicPrestatairesPage({ searchParams }: { searchParams: Promise<{ q?: string; categorie?: string; region?: string }> }) {
-  const { q, categorie, region = '' } = await searchParams
+export default async function PublicPrestatairesPage({ searchParams }: { searchParams: Promise<{ q?: string; categorie?: string; region?: string; page?: string }> }) {
+  const { q, categorie, region = '', page: pageParam } = await searchParams
   const search = (q || '').trim()
   const category = categorie || ''
+  const requestedPage = Math.max(1, Number(pageParam) || 1)
 
   const providers = await listPublicProviders()
 
@@ -48,6 +51,17 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
   const counts = new Map<string, number>()
   for (const p of providers) {
     for (const c of getProviderCategories(p)) counts.set(c.id, (counts.get(c.id) || 0) + 1)
+  }
+
+  const { pageItems: paged, pageCount, safePage } = pageSlice(filtered, requestedPage, PAGE_SIZE)
+  function makeHref(p: number) {
+    const params = new URLSearchParams()
+    if (search) params.set('q', search)
+    if (category) params.set('categorie', category)
+    if (region) params.set('region', region)
+    if (p > 1) params.set('page', String(p))
+    const qs = params.toString()
+    return qs ? `/providers?${qs}` : '/providers'
   }
 
   return (
@@ -106,7 +120,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
         <p style={{ color: 'var(--text-muted)' }}>Aucun prestataire ne correspond à ta recherche.</p>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 16 }}>
-          {filtered.map((p) => {
+          {paged.map((p) => {
             const categories = getProviderCategories(p)
             const pc = categories[0] || getProviderCategory(p.prestataireType)
             const visibleCatalog = (p.catalog || []).filter((item) => item.available !== false)
@@ -162,6 +176,9 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
           })}
         </div>
       )}
+
+      <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={filtered.length} pageSize={PAGE_SIZE} />
+
       <section style={{ maxWidth: 820, margin: '54px auto 0', padding: '36px 24px', textAlign: 'center', borderRadius: 20, border: '1px solid rgba(200,169,110,.3)', background: 'var(--surface)' }}>
         <h2 className="font-display" style={{ margin: 0, fontSize: 32, letterSpacing: '.01em' }}>Tu es prestataire ?</h2>
         <p style={{ maxWidth: 500, margin: '10px auto 20px', color: 'var(--text-muted)', lineHeight: 1.6 }}>Crée ta vitrine, présente ton catalogue et échange directement avec les organisateurs.</p>

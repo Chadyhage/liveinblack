@@ -11,8 +11,10 @@ import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shar
 import EventListCard from '../_components/EventListCard'
 import EventRow from '../_components/EventRow'
 import AccessCodeForm from './AccessCodeForm'
-import { Button, EmptyState, Input, SectionHeader } from '@/app/components/ui'
+import { Button, EmptyState, Input, SectionHeader, PageLinks, pageSlice } from '@/app/components/ui'
 import { PageShell } from '@/app/components/layout'
+
+const SEARCH_PAGE_SIZE = 24
 
 export const metadata: Metadata = {
   title: 'Événements — LIVEINBLACK',
@@ -43,9 +45,10 @@ function sortByScore<T extends { id: string }>(events: T[], scores: Record<strin
   return [...events].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
 }
 
-export default async function EventsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams
+export default async function EventsPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
+  const { q, page: pageParam } = await searchParams
   const search = (q || '').trim()
+  const requestedPage = Math.max(1, Number(pageParam) || 1)
 
   const [events, boostedIds, session] = await Promise.all([listPublicEvents(), getBoostedEventIds(), auth()])
 
@@ -101,7 +104,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       </div>
 
       {search ? (
-        <SearchResults events={events} query={search} scores={scores} reasons={reasons} />
+        <SearchResults events={events} query={search} scores={scores} reasons={reasons} page={requestedPage} />
       ) : (
         <>
           {recommendations.length > 0 && (
@@ -119,11 +122,13 @@ function SearchResults({
   query,
   scores,
   reasons,
+  page,
 }: {
   events: PublicEvent[]
   query: string
   scores: Record<string, number>
   reasons: Record<string, string>
+  page: number
 }) {
   const results = sortByScore(
     events.filter((e) => matchesSearch(e, query)),
@@ -140,12 +145,21 @@ function SearchResults({
       </div>
     )
   }
+  const { pageItems: paged, pageCount, safePage } = pageSlice(results, page, SEARCH_PAGE_SIZE)
+  function makeHref(p: number) {
+    const params = new URLSearchParams({ q: query })
+    if (p > 1) params.set('page', String(p))
+    return `/events?${params.toString()}`
+  }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
-      {results.map((event) => (
-        <EventListCard key={event.id} event={event} reason={reasons[event.id]} />
-      ))}
-    </div>
+    <>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
+        {paged.map((event) => (
+          <EventListCard key={event.id} event={event} reason={reasons[event.id]} />
+        ))}
+      </div>
+      <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={results.length} pageSize={SEARCH_PAGE_SIZE} />
+    </>
   )
 }
 
