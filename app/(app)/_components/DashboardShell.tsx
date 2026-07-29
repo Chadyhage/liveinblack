@@ -101,6 +101,34 @@ function useAgentBadges(activeRole: Role): Partial<Record<string, number>> {
   }
 }
 
+// "Mes soirées (équipe)" n'a de contenu que pour les comptes ajoutés à une
+// équipe d'événement (serveur/porte/DJ/vendeur) — un lien affiché à tout le
+// monde alors qu'il est vide pour la quasi-totalité des utilisateurs. Masqué
+// par défaut (évite le clic-vers-écran-vide relevé par le client) tant que
+// l'appel n'a pas confirmé au moins une soirée.
+function useHasStaffedEvents(): boolean {
+  const [has, setHas] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      try {
+        const res = await fetch('/api/my-staffed-events')
+        const data = await res.json()
+        if (!cancelled && res.ok && data.ok) setHas((data.events as unknown[]).length > 0)
+      } catch {
+        // Non-critique — reste masqué en cas d'échec réseau.
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return has
+}
+
 // Sidebar façon "espace privé" (organisateur/prestataire/agent/client) —
 // n'existait pas jusqu'ici : chaque page de app/(app)/ était un écran
 // autonome sans navigation entre modules. Fixe à gauche sur desktop
@@ -115,6 +143,7 @@ function useAgentBadges(activeRole: Role): Partial<Record<string, number>> {
 export default function DashboardShell({ activeRole, children }: { activeRole: Role; children: React.ReactNode }) {
   const pathname = usePathname()
   const badges = useAgentBadges(activeRole)
+  const hasStaffedEvents = useHasStaffedEvents()
 
   if (HIDE_SIDEBAR_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
     return <>{children}</>
@@ -122,7 +151,9 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
 
   const fullBleed = FULL_BLEED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))
 
-  const items: DashboardNavItem[] = [...ROLE_NAV[activeRole], ...COMMON_NAV]
+  const items: DashboardNavItem[] = [...ROLE_NAV[activeRole], ...COMMON_NAV].filter(
+    (item) => item.href !== '/my-shifts' || hasStaffedEvents || pathname.startsWith('/my-shifts')
+  )
   const upsell = activeRole === 'client' ? CLIENT_UPSELL : []
 
   // Comparaison de path simple : "/profile" et "/agent" sont des racines
@@ -189,7 +220,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
               key={item.href}
               item={item}
               isActive={isActive}
-              autoOpen={hasActiveDescendant(item)}
+              autoOpen={isActive(item.href) || hasActiveDescendant(item)}
               badge={badges[item.href]}
             />
           ))}

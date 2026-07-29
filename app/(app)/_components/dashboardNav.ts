@@ -39,9 +39,16 @@ export interface DashboardNavItem {
 // auparavant DANS le rendu de /profile (menu interne de ProfilClient.tsx,
 // panneaux Mes billets/Paramètres/Support en state local `?panel=`) sont
 // maintenant de vraies routes listées ici, la sidebar est l'unique
-// navigation. Le portefeuille de billets/événements suivis n'est pas
-// spécifique au rôle client (n'importe quel compte peut avoir acheté des
-// billets), donc commun à tous les rôles plutôt que dans ROLE_NAV.client.
+// navigation. Ordre pensé pour mettre les actions fréquentes en premier
+// (Paramètres, Mes billets) et l'Aide en dernier (rarement consultée).
+// Le portefeuille de billets n'est pas spécifique au rôle client
+// (n'importe quel compte peut avoir acheté des billets), donc commun à tous
+// les rôles plutôt que dans ROLE_NAV.client.
+//
+// "Mes favoris" est un groupe séparé de "Mon profil" : suivre des
+// événements/organisateurs est une action de découverte, pas de gestion de
+// compte — les mélanger sous "Mon profil" les enterrait sans rapport
+// conceptuel avec paramètres/billets/aide.
 export const COMMON_NAV: DashboardNavItem[] = [
   { label: 'Messages', href: '/messages', icon: MessageCircle },
   {
@@ -49,9 +56,16 @@ export const COMMON_NAV: DashboardNavItem[] = [
     href: '/profile',
     icon: User,
     children: [
-      { label: 'Mes billets', href: '/profile/billets', icon: Ticket },
       { label: 'Paramètres du compte', href: '/profile/parametres', icon: Settings },
+      { label: 'Mes billets', href: '/profile/billets', icon: Ticket },
       { label: 'Support / Aide', href: '/profile/aide', icon: LifeBuoy },
+    ],
+  },
+  {
+    label: 'Mes favoris',
+    href: '/profile/interested-events',
+    icon: Heart,
+    children: [
       { label: 'Événements intéressés', href: '/profile/interested-events', icon: Heart },
       { label: 'Organisateurs suivis', href: '/profile/followed-organizers', icon: Users2 },
     ],
@@ -61,15 +75,18 @@ export const COMMON_NAV: DashboardNavItem[] = [
 
 export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
   client: [],
+  // Labels pensés pour un utilisateur non-technique : "Mon dossier" (jargon
+  // de revue agent) → "Mon inscription" ; "Ma page publique" ne disait pas
+  // qu'elle contient aussi la config des encaissements (Stripe/Mobile Money).
   organisateur: [
     { label: 'Mes événements', href: '/my-events', icon: CalendarDays },
-    { label: 'Ma page publique', href: '/organizer-studio', icon: LayoutDashboard },
-    { label: 'Mon dossier', href: '/my-application', icon: FileText },
+    { label: 'Ma page & paiements', href: '/organizer-studio', icon: LayoutDashboard },
+    { label: 'Mon inscription', href: '/my-application', icon: FileText },
   ],
   prestataire: [
     { label: 'Mon espace', href: '/offer-services', icon: Store },
     { label: 'Mon abonnement', href: '/my-subscription', icon: CreditCard },
-    { label: 'Mon dossier', href: '/my-application', icon: FileText },
+    { label: 'Mon inscription', href: '/my-application', icon: FileText },
   ],
   // Reprend l'intégralité des onglets qui vivaient auparavant dans la barre
   // horizontale interne d'AgentShell.tsx (#107, supprimé) — chaque section a
