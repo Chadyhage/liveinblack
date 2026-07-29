@@ -54,7 +54,7 @@ export interface PlaylistClientProps {
 // Palette figée du redesign 2026-07 (voir CLAUDE.md) — les compositions avec
 // alpha (bordures/fonds teintés) ont besoin de la valeur hex brute, `var(--x)`
 // ne peut pas recevoir de suffixe alpha concaténé.
-const HEX = { teal: '#ffe500', gold: '#ffe500', violet: '#ffe500', pink: '#ff7b7b' }
+const HEX = { teal: '#b8f34a', gold: '#b8f34a', violet: '#b8f34a', pink: '#ff7b7b' }
 const LIKE_BUDGET = 5
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -730,7 +730,7 @@ export default function PlaylistClient({
                 style={{
                   ...pillButtonStyle,
                   color: djSort === id ? 'var(--teal)' : 'var(--text-muted)',
-                  background: djSort === id ? 'rgba(255,229,0,0.12)' : 'rgba(255,255,255,0.04)',
+                  background: djSort === id ? 'rgba(184, 243, 74,0.12)' : 'rgba(255,255,255,0.04)',
                   borderColor: djSort === id ? `${HEX.teal}66` : 'var(--border)',
                 }}
               >
@@ -894,7 +894,7 @@ export default function PlaylistClient({
                             borderRadius: 999,
                             flexShrink: 0,
                             border: isMine ? '1px solid rgba(255,255,255,0.06)' : liked ? `1px solid ${HEX.teal}66` : '1px solid var(--border-strong)',
-                            background: isMine ? 'rgba(255,255,255,0.04)' : liked ? 'rgba(255,229,0,0.16)' : 'rgba(255,255,255,0.08)',
+                            background: isMine ? 'rgba(255,255,255,0.04)' : liked ? 'rgba(184, 243, 74,0.16)' : 'rgba(255,255,255,0.08)',
                             cursor: isMine ? 'not-allowed' : 'pointer',
                           }}
                         >
@@ -928,7 +928,7 @@ export default function PlaylistClient({
                         padding: '14px 16px',
                         borderRadius: 14,
                         border: effectiveHasTicket ? `1px solid ${HEX.teal}44` : '1px solid var(--border-strong)',
-                        background: effectiveHasTicket ? 'rgba(255,229,0,0.04)' : 'rgba(255,255,255,0.03)',
+                        background: effectiveHasTicket ? 'rgba(184, 243, 74,0.04)' : 'rgba(255,255,255,0.03)',
                       }}
                     >
                       <div
@@ -940,7 +940,7 @@ export default function PlaylistClient({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: effectiveHasTicket ? 'rgba(255,229,0,0.1)' : 'rgba(255,255,255,0.05)',
+                          background: effectiveHasTicket ? 'rgba(184, 243, 74,0.1)' : 'rgba(255,255,255,0.05)',
                         }}
                       >
                         <TicketIcon done={effectiveHasTicket} />

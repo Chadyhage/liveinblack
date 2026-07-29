@@ -79,7 +79,7 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
                   background: 'rgba(5,6,10,0.88)',
                   padding: '4px 9px',
                   borderRadius: 999,
-                  border: '1px solid rgba(255,229,0,0.5)',
+                  border: '1px solid rgba(184, 243, 74,0.5)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -92,7 +92,7 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
           </div>
         )}
         {min != null && (
-          <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: 'var(--primary)', background: 'rgba(5,6,10,.92)', padding: '3px 8px', borderRadius: 999, border: '1px solid rgba(255,229,0,.4)' }}>
+          <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: 'var(--primary)', background: 'rgba(5,6,10,.92)', padding: '3px 8px', borderRadius: 999, border: '1px solid rgba(184, 243, 74,.4)' }}>
             dès {fmtMoney(min, eventCurrency(event))}
           </span>
         )}

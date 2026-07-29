@@ -3,8 +3,8 @@ import type { CSSProperties, ReactNode } from 'react'
 export type BadgeTone = 'teal' | 'gold' | 'pink' | 'violet' | 'danger' | 'neutral'
 
 const TONE_STYLES: Record<BadgeTone, CSSProperties> = {
-  teal: { background: 'rgba(255,229,0,0.14)', color: 'var(--primary)' },
-  gold: { background: 'rgba(255,229,0,0.16)', color: 'var(--gold)' },
+  teal: { background: 'rgba(184, 243, 74,0.14)', color: 'var(--primary)' },
+  gold: { background: 'rgba(184, 243, 74,0.16)', color: 'var(--gold)' },
   pink: { background: 'rgba(255,107,0,0.14)', color: 'var(--pink)' },
   violet: { background: 'rgba(124,58,237,0.16)', color: 'var(--violet)' },
   danger: { background: 'rgba(224,90,90,0.16)', color: '#e05a5a' },

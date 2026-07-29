@@ -6,18 +6,18 @@
   --obsidian: #0a0810;
   --surface: #14101c; /* cartes */
   --surface-2: #0d0a14; /* modals/menus */
-  --primary: #ffe500;
-  --primary-strong: #ffd000;
-  --primary-ink: #171500;
-  /* Aliases de compatibilité : l'ancienne palette converge vers le jaune. */
+  --primary: #b8f34a;
+  --primary-strong: #9fe022;
+  --primary-ink: #10210a;
+  /* Aliases de compatibilité : l'ancienne palette converge vers le vert primaire. */
   --teal: var(--primary);
   --teal-solid: var(--primary-strong);
   --gold: var(--primary);
   --pink: #ff7b7b;
   --violet: var(--primary);
   --violet-cta: linear-gradient(180deg, var(--primary), var(--primary-strong));
-  --border: rgba(255, 229, 0, 0.18);
-  --border-strong: rgba(255, 229, 0, 0.34);
+  --border: rgba(184, 243, 74, 0.18);
+  --border-strong: rgba(184, 243, 74, 0.34);
   --text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.76);
   --text-faint: rgba(255, 255, 255, 0.62);
@@ -37,7 +37,7 @@
   --z-floating: 45;
   --z-sheet: 200;
   --z-modal: 3000;
-  --focus-ring: 0 0 0 3px rgba(255, 229, 0, 0.28);
+  --focus-ring: 0 0 0 3px rgba(184, 243, 74, 0.28);
 
   --background: var(--obsidian);
   --foreground: var(--text);

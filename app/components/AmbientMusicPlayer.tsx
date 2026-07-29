@@ -47,7 +47,7 @@ const DISC_ASSETS: Record<string, { img: string; bgPosition: string; filter: str
 
 // Platine vinyle/CD SVG — pastille de couleur dynamique, sillons fins, reflet
 // métallique rotatif et bras de lecture animé.
-function Vinyl({ size = 30, color = '#ffe500', spinning, arm = false }: { size?: number; color?: string; spinning: boolean; arm?: boolean }) {
+function Vinyl({ size = 30, color = '#b8f34a', spinning, arm = false }: { size?: number; color?: string; spinning: boolean; arm?: boolean }) {
   const gid = 'v-' + size + '-' + color.replace('#', '')
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: 'block', overflow: 'visible', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.45))' }}>
@@ -177,7 +177,7 @@ export default function AmbientMusicPlayer() {
   if (HIDE_ON_PUBLIC_SHOWCASE.some((p) => pathname?.startsWith(p))) return null
 
   const current = DISCS.find((d) => d.id === st.discId) || DISCS[0]
-  const accent = '#ffe500'
+  const accent = '#b8f34a'
   const activeAsset = DISC_ASSETS[current.id]
   const track = st.track
   const bigCover = track?.cover ? track.cover.replace('100x100', '400x400').replace('60x60', '400x400') : null
@@ -330,8 +330,8 @@ export default function AmbientMusicPlayer() {
                 gap: 5,
                 padding: '5px 10px',
                 borderRadius: 999,
-                background: 'rgba(255,229,0,0.12)',
-                border: '1px solid rgba(255,229,0,0.42)',
+                background: 'rgba(184, 243, 74,0.12)',
+                border: '1px solid rgba(184, 243, 74,0.42)',
                 color: 'var(--primary)',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: 11,
@@ -537,7 +537,7 @@ export default function AmbientMusicPlayer() {
                     style={{
                       position: 'absolute',
                       inset: 0,
-                      background: isCur ? 'linear-gradient(180deg, rgba(255,229,0,0.16) 0%, rgba(10,10,14,0.92) 100%)' : 'linear-gradient(180deg, rgba(4,4,8,0.25) 0%, rgba(10,10,14,0.95) 100%)',
+                      background: isCur ? 'linear-gradient(180deg, rgba(184, 243, 74,0.16) 0%, rgba(10,10,14,0.92) 100%)' : 'linear-gradient(180deg, rgba(4,4,8,0.25) 0%, rgba(10,10,14,0.95) 100%)',
                       zIndex: 1,
                     }}
                   />

@@ -65,7 +65,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
   }
 
   return (
-    <main className="provider-directory" style={{ padding: '56px 22px 88px', width: '100%', minHeight: '100vh', background: 'radial-gradient(circle 760px at 5% 0%, rgba(255,229,0,.10), transparent 65%), radial-gradient(circle 760px at 96% 24%, rgba(255,208,0,.07), transparent 62%)' }}>
+    <main className="provider-directory" style={{ padding: '56px 22px 88px', width: '100%', minHeight: '100vh', background: 'radial-gradient(circle 760px at 5% 0%, rgba(184, 243, 74,.10), transparent 65%), radial-gradient(circle 760px at 96% 24%, rgba(159, 224, 34,.07), transparent 62%)' }}>
       <style>{`
         .provider-directory__filters{display:grid;grid-template-columns:minmax(220px,1fr) minmax(170px,.45fr) auto;gap:8px;max-width:760px;margin:0 auto 18px}
         .provider-directory__field{min-width:0;padding:11px 14px;border-radius:var(--radius-pill);border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13.5px}

@@ -134,7 +134,7 @@ export default async function ScannerIndexPage() {
                           fontSize: 10.5,
                           fontWeight: 700,
                           color: 'var(--primary)',
-                          background: 'rgba(255,229,0,0.14)',
+                          background: 'rgba(184, 243, 74,0.14)',
                           padding: '3px 9px',
                           borderRadius: 999,
                           textTransform: 'uppercase',

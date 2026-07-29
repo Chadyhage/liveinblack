@@ -180,14 +180,14 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           top: 61,
           height: 'calc(100vh - 61px)',
           overflowY: 'auto',
-          borderRight: '1px solid rgba(255,229,0,.14)',
+          borderRight: '1px solid rgba(184, 243, 74,.14)',
           background: 'var(--surface-2)',
         }}
       >
         <div
           style={{
             padding: '18px 16px 14px',
-            borderBottom: '1px solid rgba(255,229,0,.14)',
+            borderBottom: '1px solid rgba(184, 243, 74,.14)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -285,7 +285,7 @@ function SidebarItem({
           padding: '10px 12px',
           borderRadius: 8,
           color: active ? 'var(--text)' : 'var(--text-muted)',
-          background: active ? 'rgba(255,229,0,.10)' : 'transparent',
+          background: active ? 'rgba(184, 243, 74,.10)' : 'transparent',
           borderLeft: active ? '3px solid var(--primary)' : '3px solid transparent',
           fontSize: 13.5,
           fontWeight: active ? 700 : 600,
@@ -340,7 +340,7 @@ function SidebarLink({ item, active, muted, badge, compact }: { item: DashboardN
         padding: compact ? '8px 12px' : '10px 12px',
         borderRadius: 8,
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
-        background: active ? 'rgba(255,229,0,.10)' : 'transparent',
+        background: active ? 'rgba(184, 243, 74,.10)' : 'transparent',
         borderLeft: active ? '3px solid var(--primary)' : '3px solid transparent',
         fontSize: compact ? 12.5 : 13.5,
         fontWeight: active ? 700 : 600,

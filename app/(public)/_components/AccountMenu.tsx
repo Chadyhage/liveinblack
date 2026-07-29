@@ -396,7 +396,7 @@ export default function AccountMenu({
                     width: '100%',
                     textAlign: 'left',
                     padding: '10px 14px',
-                    background: n.read ? 'transparent' : 'rgba(255,229,0,0.06)',
+                    background: n.read ? 'transparent' : 'rgba(184, 243, 74,0.06)',
                     border: 'none',
                     borderBottom: '1px solid var(--border)',
                     cursor: 'pointer',

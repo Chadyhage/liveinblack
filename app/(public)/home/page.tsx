@@ -38,8 +38,8 @@ const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?a
 // Accents du carrousel « Actualité » (#9 phase agent/admin, homepage-config) —
 // mêmes couleurs que ACTUALITE_ACCENTS côté agent (lib/models/HomepageConfig.ts).
 const ACTUALITE_ACCENTS: Record<string, { dot: string; soft: string; border: string }> = {
-  teal: { dot: '#ffe500', soft: 'rgba(255,229,0,0.14)', border: 'rgba(255,229,0,0.4)' },
-  gold: { dot: '#ffe500', soft: 'rgba(255,229,0,0.14)', border: 'rgba(255,229,0,0.4)' },
+  teal: { dot: '#b8f34a', soft: 'rgba(184, 243, 74,0.14)', border: 'rgba(184, 243, 74,0.4)' },
+  gold: { dot: '#b8f34a', soft: 'rgba(184, 243, 74,0.14)', border: 'rgba(184, 243, 74,0.4)' },
   pink: { dot: '#ff6b00', soft: 'rgba(255,107,0,0.14)', border: 'rgba(255,107,0,0.4)' },
 }
 
@@ -114,7 +114,7 @@ export default async function AccueilPage() {
             position: 'absolute',
             inset: 0,
             background:
-              'radial-gradient(ellipse at 50% 30%, rgba(255,229,0,.14), transparent 55%), radial-gradient(ellipse at 80% 80%, rgba(255,208,0,.07), transparent 50%), linear-gradient(to bottom, rgba(7,8,13,.72) 0%, rgba(7,8,13,.55) 40%, rgba(7,8,13,.98) 100%)',
+              'radial-gradient(ellipse at 50% 30%, rgba(184, 243, 74,.14), transparent 55%), radial-gradient(ellipse at 80% 80%, rgba(159, 224, 34,.07), transparent 50%), linear-gradient(to bottom, rgba(7,8,13,.72) 0%, rgba(7,8,13,.55) 40%, rgba(7,8,13,.98) 100%)',
           }}
         />
         <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
@@ -223,7 +223,7 @@ export default async function AccueilPage() {
 
       {session?.user && needsPreferences && (
         <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
-          <div style={{ ...card, padding: '22px 24px', borderColor: 'rgba(255,229,0,.35)', background: 'linear-gradient(120deg,rgba(255,229,0,.12),rgba(255,208,0,.04)),var(--surface)' }}>
+          <div style={{ ...card, padding: '22px 24px', borderColor: 'rgba(184, 243, 74,.35)', background: 'linear-gradient(120deg,rgba(184, 243, 74,.12),rgba(159, 224, 34,.04)),var(--surface)' }}>
             <p style={{ margin: 0, color: '#c9b0ff', fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
             <h2 style={{ margin: '7px 0 5px', fontSize: 21 }}>Des soirées vraiment faites pour toi</h2>
             <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12.5, lineHeight: 1.55 }}>Indique tes styles, tes villes et ton budget. Cela prend moins d&apos;une minute et reste modifiable.</p>
@@ -350,7 +350,7 @@ export default async function AccueilPage() {
             ['3', 'Présente ton QR', "Scan à l'entrée, et c'est parti."],
           ].map(([n, t, d]) => (
             <div key={n} style={{ ...card, padding: '20px 18px', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: 14, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(255,229,0,.14)' }}>{n}</span>
+              <span style={{ position: 'absolute', top: 14, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(184, 243, 74,.14)' }}>{n}</span>
               <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{t}</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
             </div>
@@ -480,7 +480,7 @@ function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string;
 // mise en page oui, palette non).
 const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
 const btnPrimary: React.CSSProperties = { padding: '15px 28px', borderRadius: 999, fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-block' }
-const btnGhost: React.CSSProperties = { padding: '14px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#fff', background: 'rgba(255,229,0,.08)', border: '1px solid rgba(255,229,0,.55)', textDecoration: 'none', display: 'inline-block' }
+const btnGhost: React.CSSProperties = { padding: '14px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#fff', background: 'rgba(184, 243, 74,.08)', border: '1px solid rgba(184, 243, 74,.55)', textDecoration: 'none', display: 'inline-block' }
 const btnSolid: React.CSSProperties = { padding: '14px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-block', textAlign: 'center' }
 const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }
 const featItem: React.CSSProperties = { fontSize: 13.5, color: 'var(--text-muted)', display: 'flex', gap: 9, alignItems: 'baseline' }

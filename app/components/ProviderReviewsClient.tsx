@@ -20,7 +20,7 @@ const GOLD = 'var(--primary)'
 const TEAL = 'var(--primary)'
 
 const card: React.CSSProperties = { padding: 20, borderRadius: 16, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
-const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontFamily: FONT, fontSize: 12.5, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(255,229,0,.18)' }
+const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontFamily: FONT, fontSize: 12.5, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(184, 243, 74,.18)' }
 const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600 }
 const disabledBtn: React.CSSProperties = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
 
@@ -237,7 +237,7 @@ export default function ProviderReviewsClient({
                       <Stars value={review.rating} size={14} />
                       <span style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
                       {review.verified && (
-                        <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, color: TEAL, background: 'rgba(255,229,0,.10)', border: '1px solid rgba(255,229,0,.35)', borderRadius: 999, padding: '2px 8px' }}>
+                        <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, color: TEAL, background: 'rgba(184, 243, 74,.10)', border: '1px solid rgba(184, 243, 74,.35)', borderRadius: 999, padding: '2px 8px' }}>
                           Avis vérifié
                         </span>
                       )}

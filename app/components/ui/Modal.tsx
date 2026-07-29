@@ -30,7 +30,7 @@ export default function Modal({ onClose, children, maxWidth = 520, hideClose, co
           maxHeight: '88vh',
           overflowY: 'auto',
           background: 'var(--surface-2)',
-          border: '1px solid rgba(255,229,0,0.18)',
+          border: '1px solid rgba(184, 243, 74,0.18)',
           borderRadius: 12,
           padding: 22,
           boxShadow: '0 24px 64px rgba(0,0,0,0.55)',

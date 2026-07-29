@@ -64,7 +64,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
           ← Prestataires
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 230, margin: '18px 22px 0', borderRadius: 'var(--radius-xl)', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(255,229,0,.28), var(--obsidian))' }}>
+      <div style={{ position: 'relative', height: 230, margin: '18px 22px 0', borderRadius: 'var(--radius-xl)', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(184, 243, 74,.28), var(--obsidian))' }}>
         {provider.coverUrl && (
           <Image src={provider.coverUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
         )}

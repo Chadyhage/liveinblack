@@ -54,7 +54,7 @@ const btnPrimary: React.CSSProperties = {
   letterSpacing: 'normal',
   color: '#04120e',
   width: '100%',
-  boxShadow: '0 6px 20px rgba(255,229,0,0.18)',
+  boxShadow: '0 6px 20px rgba(184, 243, 74,0.18)',
 }
 const btnGold: React.CSSProperties = {
   padding: '15px 24px',
@@ -117,7 +117,7 @@ function RoleIcon({ role, size = 21 }: { role: RegRole; size?: number }) {
 // Hex littéraux ici (et pas var(--teal)/var(--violet)/var(--gold)) car on a
 // besoin de suffixer une transparence (1a/3a) — mêmes valeurs que les vars.
 const ROLE_CARDS: { role: RegRole; title: string; desc: string; badge: string | null; accent: string }[] = [
-  { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: '#ffe500' },
+  { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: '#b8f34a' },
   { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements', badge: 'Validation requise', accent: '#8b5cf6' },
   { role: 'prestataire', title: 'Prestataire', desc: 'DJ, salle, matériel, traiteur…', badge: 'Validation requise', accent: '#c8a96e' },
 ]
@@ -488,7 +488,7 @@ export default function AuthForm() {
           </div>
         )}
         {mode === 'login' && !loginError && loginInfo && (
-          <div className="lb-banner-fade" style={{ marginBottom: 16, padding: '11px 14px', background: 'rgba(255,229,0,0.10)', border: '1px solid rgba(255,229,0,0.35)', borderRadius: 10, fontSize: 13, color: 'var(--primary)', textAlign: 'center', lineHeight: 1.5 }}>
+          <div className="lb-banner-fade" style={{ marginBottom: 16, padding: '11px 14px', background: 'rgba(184, 243, 74,0.10)', border: '1px solid rgba(184, 243, 74,0.35)', borderRadius: 10, fontSize: 13, color: 'var(--primary)', textAlign: 'center', lineHeight: 1.5 }}>
             {loginInfo}
           </div>
         )}

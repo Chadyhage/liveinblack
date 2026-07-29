@@ -36,8 +36,8 @@ export default function Tabs({ value, onChange, options, style }: TabsProps) {
             fullWidth
             style={{
               borderRadius: 'var(--radius-md)',
-              border: active ? '1px solid rgba(255,229,0,.35)' : '1px solid transparent',
-              background: active ? 'rgba(255,229,0,.10)' : 'transparent',
+              border: active ? '1px solid rgba(184, 243, 74,.35)' : '1px solid transparent',
+              background: active ? 'rgba(184, 243, 74,.10)' : 'transparent',
               color: active ? 'var(--gold)' : 'var(--text-faint)',
             }}
           >

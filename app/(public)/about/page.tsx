@@ -48,7 +48,7 @@ export default function PublicAboutPage() {
             ['3', 'Profite', "Scan à l'entrée, commande sur place, et vis chaque nuit à fond."],
           ].map(([n, t, d]) => (
             <div key={n} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 18px', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(255,229,0,.14)' }}>{n}</span>
+              <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(184, 243, 74,.14)' }}>{n}</span>
           <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{t}</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
             </div>
@@ -73,7 +73,7 @@ export default function PublicAboutPage() {
       </Section>
 
       <section style={{ padding: '20px 22px 0' }}>
-          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(255,229,0,.12), transparent 60%), var(--surface-2)' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
           <h2 className="font-display" style={{ fontSize: 'clamp(26px,6vw,40px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 500, lineHeight: 1.5 }}>
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.

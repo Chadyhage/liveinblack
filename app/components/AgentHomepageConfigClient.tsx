@@ -21,7 +21,7 @@ const MAX_EVENTS = 12
 type Accent = 'gold'
 
 const ACCENTS: { key: Accent; label: string; dot: string; soft: string; border: string }[] = [
-  { key: 'gold', label: 'Jaune primaire', dot: '#ffe500', soft: 'rgba(255,229,0,0.14)', border: 'rgba(255,229,0,0.4)' },
+  { key: 'gold', label: 'Jaune primaire', dot: '#b8f34a', soft: 'rgba(184, 243, 74,0.14)', border: 'rgba(184, 243, 74,0.4)' },
 ]
 const ACCENT_BY_KEY = Object.fromEntries(ACCENTS.map((a) => [a.key, a])) as Record<Accent, (typeof ACCENTS)[number]>
 

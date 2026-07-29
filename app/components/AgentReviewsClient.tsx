@@ -54,7 +54,7 @@ interface AgentReviewView {
 const REASON_LABEL: Record<string, string> = Object.fromEntries(REVIEW_REPORT_REASONS.map((r) => [r.id, r.label]))
 
 const STATUS_META: Record<ReviewStatus, { label: string; color: string; bg: string; border: string }> = {
-  published: { label: 'Publié', color: 'var(--primary)', bg: 'rgba(255,229,0,.10)', border: 'rgba(255,229,0,.35)' },
+  published: { label: 'Publié', color: 'var(--primary)', bg: 'rgba(184, 243, 74,.10)', border: 'rgba(184, 243, 74,.35)' },
   hidden: { label: 'Masqué', color: '#ff8fb2', bg: 'rgba(194,52,127,.12)', border: 'rgba(194,52,127,.4)' },
   deleted: { label: 'Supprimé', color: 'var(--text-faint)', bg: 'rgba(255,255,255,.06)', border: 'rgba(255,255,255,.16)' },
 }

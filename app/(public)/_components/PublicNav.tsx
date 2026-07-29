@@ -84,7 +84,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         padding: '14px 22px',
         background: 'rgba(7,8,13,0.86)',
         backdropFilter: 'blur(14px)',
-        borderBottom: '1px solid rgba(255,229,0,.16)',
+        borderBottom: '1px solid rgba(184, 243, 74,.16)',
       }}
     >
       <Link
@@ -139,7 +139,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
               style={{
                 padding: '9px 18px',
                 borderRadius: 999,
-                border: '1px solid rgba(255,229,0,.55)',
+                border: '1px solid rgba(184, 243, 74,.55)',
                 color: 'var(--text)',
                 fontSize: 13,
                 fontWeight: 700,
@@ -208,7 +208,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                     style={{
                       padding: '14px 22px',
                       color: active ? 'var(--primary)' : 'var(--text)',
-                      background: active ? 'rgba(255,229,0,.08)' : 'transparent',
+                      background: active ? 'rgba(184, 243, 74,.08)' : 'transparent',
                       textDecoration: 'none',
                       fontSize: 14.5,
                       fontWeight: active ? 800 : 600,
@@ -235,7 +235,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                 style={{
                   padding: '14px 22px',
                   color: active ? 'var(--primary)' : 'var(--text)',
-                  background: active ? 'rgba(255,229,0,.08)' : 'transparent',
+                  background: active ? 'rgba(184, 243, 74,.08)' : 'transparent',
                   textDecoration: 'none',
                   fontSize: 14.5,
                   fontWeight: active ? 800 : 600,

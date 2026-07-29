@@ -86,14 +86,14 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
   return (
     <main className="organizer-directory">
       <style>{`
-        .organizer-directory{width:100%;min-height:100vh;padding:56px 22px 88px;background:radial-gradient(circle 700px at 5% 0%,rgba(255,229,0,.10),transparent 64%),radial-gradient(circle 700px at 96% 18%,rgba(255,208,0,.07),transparent 60%)}
+        .organizer-directory{width:100%;min-height:100vh;padding:56px 22px 88px;background:radial-gradient(circle 700px at 5% 0%,rgba(184, 243, 74,.10),transparent 64%),radial-gradient(circle 700px at 96% 18%,rgba(159, 224, 34,.07),transparent 60%)}
         .organizer-directory__wrap{max-width:1240px;margin:0 auto}
         .organizer-directory__filters{display:grid;grid-template-columns:minmax(280px,1.8fr) minmax(180px,.8fr) minmax(180px,.8fr) auto auto;gap:10px;align-items:center;max-width:1100px;margin:30px auto 42px}
         .organizer-directory__field{min-width:0;padding:11px 14px;border-radius:999px;border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13px}
         .organizer-directory__check{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-muted);white-space:nowrap}
         .organizer-directory__grid{display:flex;flex-direction:column;gap:16px}
         .organizer-directory__card{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(360px,1.2fr) 220px;min-height:260px;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface);box-shadow:0 18px 45px rgba(0,0,0,.2);transition:transform .25s ease,border-color .25s ease}
-        .organizer-directory__card:hover{transform:translateY(-3px);border-color:rgba(255,229,0,.35)}
+        .organizer-directory__card:hover{transform:translateY(-3px);border-color:rgba(184, 243, 74,.35)}
         .organizer-directory__cover{position:relative;min-height:230px;overflow:hidden;background:linear-gradient(135deg,rgba(139,92,246,.35),rgba(200,169,110,.12),var(--obsidian))}
         .organizer-directory__cover:after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(4,4,11,.82),transparent 65%)}
         .organizer-directory__body{position:relative;padding:38px 34px;color:inherit;text-decoration:none;display:flex;flex-direction:column;justify-content:center}

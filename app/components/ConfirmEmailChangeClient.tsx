@@ -14,7 +14,7 @@ import { Button } from '@/app/components/ui'
 // cliqué depuis un email, potentiellement hors session active ou sur un
 // autre appareil — même convention que /verify-email et /reset-password.
 
-const COLORS = { teal: '#ffe500', pink: '#ff7b7b' }
+const COLORS = { teal: '#b8f34a', pink: '#ff7b7b' }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
   padding: '14px 20px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
   textTransform: 'none', letterSpacing: 'normal',
@@ -65,7 +65,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
 
         {state === 'success' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(255,229,0,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(184, 243, 74,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
             <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>

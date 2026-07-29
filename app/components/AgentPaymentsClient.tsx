@@ -488,7 +488,7 @@ function PayoutsSection({
                     Événement ANNULÉ (ou supprimé) — cette recette rembourse les acheteurs (section Remboursements). Ne rien verser à l&apos;organisateur.
                   </p>
                 ) : (
-                  <Button variant="primary" style={{ ...tealBtn, marginTop: 12, background: 'rgba(255,229,0,0.16)', border: '1px solid rgba(255,229,0,0.5)', color: 'var(--primary)' }} onClick={() => setConfirm({ type: 'markPayoutPaid', eventId: p.eventId, label: fmtXOF(p.amountDueXOF), who: p.sellerName })}>
+                  <Button variant="primary" style={{ ...tealBtn, marginTop: 12, background: 'rgba(184, 243, 74,0.16)', border: '1px solid rgba(184, 243, 74,0.5)', color: 'var(--primary)' }} onClick={() => setConfirm({ type: 'markPayoutPaid', eventId: p.eventId, label: fmtXOF(p.amountDueXOF), who: p.sellerName })}>
                     Marquer payé ({fmtXOF(p.amountDueXOF)})
                   </Button>
                 )}
@@ -580,9 +580,9 @@ function PayoutCard({
             marginTop: payCents > 0 ? 8 : 12,
             padding: '9px 12px',
             borderRadius: 10,
-            background: 'rgba(255,229,0,0.07)',
-            border: '1px solid rgba(255,229,0,0.2)',
-            color: 'rgba(255,229,0,0.85)',
+            background: 'rgba(184, 243, 74,0.07)',
+            border: '1px solid rgba(184, 243, 74,0.2)',
+            color: 'rgba(184, 243, 74,0.85)',
             fontSize: 10.5,
             lineHeight: 1.5,
           }}

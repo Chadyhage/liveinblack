@@ -677,7 +677,7 @@ export default function EventCheckoutPanel({
             )}
 
             {discountedPlacePrice > 0 && (
-              <div style={{ padding: '9px 10px', borderRadius: 'var(--radius-md)', background: cancellationProtection ? 'rgba(255,229,0,.08)' : 'rgba(255,255,255,.035)' }}>
+              <div style={{ padding: '9px 10px', borderRadius: 'var(--radius-md)', background: cancellationProtection ? 'rgba(184, 243, 74,.08)' : 'rgba(255,255,255,.035)' }}>
                 <Checkbox
                   checked={cancellationProtection}
                   onChange={(event) => setCancellationProtection(event.target.checked)}
@@ -762,7 +762,7 @@ export default function EventCheckoutPanel({
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {availableShows.map((option) => {
                             const active = selectedShow?.showOptionId === option.id
-                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 'var(--radius-md)', border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`, background: active ? 'rgba(255,229,0,.1)' : 'var(--surface-2)', color: active ? 'var(--primary)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
+                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 'var(--radius-md)', border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`, background: active ? 'rgba(184, 243, 74,.1)' : 'var(--surface-2)', color: active ? 'var(--primary)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
                           })}
                         </div>
                         {selectedShow && <p style={{ margin: '7px 0 0', color: 'var(--primary)', fontSize: 10.5 }}>Show choisi : {selectedShow.showLabel}{selectedShow.showInfo ? ` · ${selectedShow.showInfo}` : ''}</p>}
@@ -952,7 +952,7 @@ export default function EventCheckoutPanel({
 }
 
 function IncludedRow({ label, emoji }: { label: string; emoji?: string }) {
-  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,229,0,.22)', background: 'rgba(255,229,0,.05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--primary)" />}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--primary)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
+  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(184, 243, 74,.22)', background: 'rgba(184, 243, 74,.05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--primary)" />}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--primary)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
 }
 
 function SummaryRow({ label, value, accent, strong }: { label: string; value: string; accent?: boolean; strong?: boolean }) {

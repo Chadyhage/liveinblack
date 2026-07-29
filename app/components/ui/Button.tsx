@@ -26,7 +26,7 @@ function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties 
   switch (variant) {
     case 'primary':
       return {
-        background: disabled ? 'rgba(255,229,0,0.35)' : 'var(--gold)',
+        background: disabled ? 'rgba(184, 243, 74,0.35)' : 'var(--gold)',
         color: 'var(--obsidian)',
         border: '1px solid transparent',
       }
@@ -34,7 +34,7 @@ function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties 
       return {
         background: 'transparent',
         color: 'var(--text)',
-        border: '1px solid rgba(255,229,0,.55)',
+        border: '1px solid rgba(184, 243, 74,.55)',
       }
     case 'danger':
       return {
