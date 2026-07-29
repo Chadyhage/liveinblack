@@ -1,8 +1,10 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
+import { Settings, Ticket, LifeBuoy, Heart } from 'lucide-react'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
@@ -129,6 +131,12 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
             {roleInfo && <Badge tone={roleInfo.badgeTone}>{roleInfo.label}</Badge>}
             {!isOrganizer && <Badge tone="gold">{user.points || 0} pts</Badge>}
           </div>
+          {/* Le nom/téléphone/année de naissance s'éditent sur Paramètres du
+              compte (formulaires plus lourds) — lien direct ici pour ne pas
+              faire deviner où se trouve "modifier mes infos". */}
+          <Link href="/profile/parametres" style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
+            Modifier mes informations →
+          </Link>
           <Button
             onClick={() => setShowLogoutConfirm(true)}
             variant="secondary"
@@ -139,14 +147,23 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
           </Button>
         </Card>
 
-        {!isOrganizer && (
-          <Card>
-            <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Système de points</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-              Tu gagnes <strong style={{ color: '#fff' }}>1 point</strong> pour chaque ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs.
-            </p>
-          </Card>
-        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {!isOrganizer && (
+            <Card>
+              <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Système de points</p>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+                Tu gagnes <strong style={{ color: '#fff' }}>1 point</strong> pour chaque ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs.
+              </p>
+            </Card>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+            <QuickAccessCard href="/profile/parametres" icon={<Settings size={18} />} label="Paramètres du compte" />
+            <QuickAccessCard href="/profile/billets" icon={<Ticket size={18} />} label="Mes billets" />
+            <QuickAccessCard href="/profile/interested-events" icon={<Heart size={18} />} label="Mes favoris" />
+            <QuickAccessCard href="/profile/aide" icon={<LifeBuoy size={18} />} label="Support / Aide" />
+          </div>
+        </div>
       </div>
 
       {showLogoutConfirm && (
@@ -160,6 +177,33 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
         />
       )}
     </main>
+  )
+}
+
+// Cartes de raccourci vers les 4 sous-destinations du sous-menu "Mon profil"
+// (voir dashboardNav.ts) — rend /profile utile en lui-même plutôt qu'un
+// écran quasi vide qui force à repérer le sous-menu de la sidebar.
+function QuickAccessCard({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 8,
+        padding: '18px 12px',
+        borderRadius: 14,
+        border: '1px solid var(--border)',
+        background: 'var(--surface)',
+        color: 'var(--text)',
+        textDecoration: 'none',
+        textAlign: 'center',
+      }}
+    >
+      <span style={{ color: 'var(--teal)' }}>{icon}</span>
+      <span style={{ fontSize: 12.5, fontWeight: 600 }}>{label}</span>
+    </Link>
   )
 }
 
