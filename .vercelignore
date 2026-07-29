@@ -3,3 +3,7 @@
 .node_modules_pnpm_tainted_*
 old
 node_modules
+# Lockfile pnpm non suivi (artefact d'un process tiers, pas d'origine npm de
+# ce repo) — sa présence fait basculer Vercel vers pnpm au lieu de npm et
+# casse un script pré-existant qui suppose une résolution npm classique.
+pnpm-lock.yaml
